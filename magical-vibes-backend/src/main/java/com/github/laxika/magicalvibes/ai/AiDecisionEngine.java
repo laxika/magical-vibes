@@ -120,10 +120,10 @@ public abstract class AiDecisionEngine {
             case "CHOOSE_CARD_FROM_HAND" -> handleCardChoice(gameData);
             case "CHOOSE_PERMANENT" -> choiceHandler.handlePermanentChoice(gameData);
             case "CHOOSE_MULTIPLE_PERMANENTS" -> choiceHandler.handleMultiPermanentChoice(gameData);
-            case "CHOOSE_FROM_LIST" -> choiceHandler.handleColorChoice(gameData);
-            case "MAY_ABILITY_CHOICE" -> choiceHandler.handleMayAbilityChoice(gameData);
+            case "CHOOSE_FROM_LIST" -> handleListChoice(gameData);
+            case "MAY_ABILITY_CHOICE" -> handleMayAbilityChoice(gameData);
             case "X_VALUE_CHOICE" -> choiceHandler.handleXValueChoice(gameData);
-            case "SCRY" -> choiceHandler.handleScry(gameData);
+            case "SCRY" -> handleScry(gameData);
             case "REORDER_LIBRARY_CARDS" -> choiceHandler.handleReorderCards(gameData);
             case "CHOOSE_CARD_FROM_LIBRARY" -> choiceHandler.handleLibrarySearch(gameData);
             case "CHOOSE_CARD_FROM_GRAVEYARD" -> choiceHandler.handleGraveyardChoice(gameData);
@@ -146,10 +146,22 @@ public abstract class AiDecisionEngine {
 
     protected abstract void handleBlockers(GameData gameData);
 
-    // ===== Card Choice (overridable by Medium AI) =====
+    // ===== Overridable Choice Handlers =====
 
     protected void handleCardChoice(GameData gameData) {
         choiceHandler.handleCardChoice(gameData);
+    }
+
+    protected void handleMayAbilityChoice(GameData gameData) {
+        choiceHandler.handleMayAbilityChoice(gameData);
+    }
+
+    protected void handleScry(GameData gameData) {
+        choiceHandler.handleScry(gameData);
+    }
+
+    protected void handleListChoice(GameData gameData) {
+        choiceHandler.handleColorChoice(gameData);
     }
 
     // ===== Mulligan =====

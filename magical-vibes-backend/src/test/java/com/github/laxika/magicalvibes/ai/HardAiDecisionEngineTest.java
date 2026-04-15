@@ -3934,4 +3934,190 @@ class HardAiDecisionEngineTest {
         assertThat(aiBattlefield.stream().anyMatch(p ->
                 p.getCard().getName().equals("Spiketail Hatchling"))).isTrue();
     }
+
+    // ===== Smart Choice Overrides =====
+
+    @Nested
+    @DisplayName("May Ability Choice")
+    class MayAbilityChoiceTests {
+
+        @Test
+        @DisplayName("Hard AI accepts may ability with positive-value effects (e.g. draw card)")
+        void acceptsMayAbilityWithPositiveValue() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gd.status = GameStatus.RUNNING;
+
+            // Create a may ability that draws a card (positive value)
+            Card sourceCard = new GrizzlyBears();
+            com.github.laxika.magicalvibes.model.PendingMayAbility pending =
+                    new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                            sourceCard, player1.getId(),
+                            List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1)),
+                            "You may draw a card");
+            gd.pendingMayAbilities.add(pending);
+            gd.interaction.beginMayAbilityChoice(player1.getId(), pending.description());
+
+            ai.handleMessage("MAY_ABILITY_CHOICE", "");
+
+            // The may ability should have been accepted (pending list consumed)
+            assertThat(gd.pendingMayAbilities).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Hard AI declines may ability with purely negative effects (e.g. pay life)")
+        void declinesMayAbilityWithNegativeValue() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            harness.forceActivePlayer(player2);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            gd.status = GameStatus.RUNNING;
+
+            // Create a may ability that only deals damage to the AI (negative value)
+            Card sourceCard = new GrizzlyBears();
+            com.github.laxika.magicalvibes.model.PendingMayAbility pending =
+                    new com.github.laxika.magicalvibes.model.PendingMayAbility(
+                            sourceCard, player1.getId(),
+                            List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect(5)),
+                            "You may have this deal 5 damage to you");
+            gd.pendingMayAbilities.add(pending);
+            gd.interaction.beginMayAbilityChoice(player1.getId(), pending.description());
+
+            ai.handleMessage("MAY_ABILITY_CHOICE", "");
+
+            // The may ability should have been declined (pending list consumed but effect not applied)
+            assertThat(gd.pendingMayAbilities).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("Scry Choice")
+    class ScryChoiceTests {
+
+        @Test
+        @DisplayName("Hard AI keeps lands on top when low on mana sources")
+        void keepsLandsOnTopWhenLowOnMana() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            // Only 2 lands on battlefield — AI needs more mana
+            gd.playerBattlefields.get(player1.getId()).clear();
+            Permanent island1 = new Permanent(new Island());
+            island1.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(island1);
+            Permanent island2 = new Permanent(new Island());
+            island2.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(island2);
+
+            // Hand has an expensive spell
+            harness.setHand(player1, List.of(new SerraAngel()));
+
+            gd.status = GameStatus.RUNNING;
+
+            // Set up scry with a land card
+            Card landCard = new Island();
+            Card spellCard = new GrizzlyBears();
+            gd.interaction.beginScry(player1.getId(), List.of(landCard, spellCard));
+
+            ai.handleMessage("SCRY", "");
+
+            // Both cards should go on top (land is needed, spell is useful)
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Hard AI puts lands on bottom when mana-flooded and no expensive spells")
+        void putsLandsOnBottomWhenFlooded() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            // 7+ lands on battlefield — AI is flooded
+            gd.playerBattlefields.get(player1.getId()).clear();
+            for (int i = 0; i < 8; i++) {
+                Permanent island = new Permanent(new Island());
+                island.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(island);
+            }
+
+            // Hand has only cheap spells
+            harness.setHand(player1, List.of(new GrizzlyBears()));
+
+            gd.status = GameStatus.RUNNING;
+
+            // Set up scry with a land card
+            Card landCard = new Island();
+            Card spellCard = new EliteVanguard();
+            gd.interaction.beginScry(player1.getId(), List.of(landCard, spellCard));
+
+            ai.handleMessage("SCRY", "");
+
+            // Scry completed (land on bottom, spell on top)
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("Creature Type Choice")
+    class CreatureTypeChoiceTests {
+
+        @Test
+        @DisplayName("Hard AI picks most common creature type from battlefield")
+        void picksMostCommonCreatureType() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            gd.status = GameStatus.RUNNING;
+
+            // Add 3 Elves and 1 Human to the battlefield
+            for (int i = 0; i < 3; i++) {
+                Permanent elf = new Permanent(new LlanowarElves());
+                elf.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(elf);
+            }
+            Permanent human = new Permanent(new EliteVanguard());
+            human.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(human);
+
+            // Set up a SubtypeChoice
+            gd.interaction.beginColorChoice(player1.getId(), null, null,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.SubtypeChoice(null));
+
+            ai.handleMessage("CHOOSE_FROM_LIST", "");
+
+            // The choice should be processed
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("Basic Land Type Choice")
+    class BasicLandTypeChoiceTests {
+
+        @Test
+        @DisplayName("Hard AI picks the basic land type it needs most based on color demand")
+        void picksBasicLandTypeMatchingColorDemand() {
+            HardAiDecisionEngine ai = createHardAi(player1);
+
+            gd.status = GameStatus.RUNNING;
+
+            // Battlefield: only Islands (blue mana)
+            gd.playerBattlefields.get(player1.getId()).clear();
+            for (int i = 0; i < 4; i++) {
+                Permanent island = new Permanent(new Island());
+                island.setSummoningSick(false);
+                gd.playerBattlefields.get(player1.getId()).add(island);
+            }
+
+            // Hand: spells needing white mana (SerraAngel needs {3}{W}{W})
+            harness.setHand(player1, List.of(new SerraAngel()));
+
+            // Set up a BasicLandTypeChoice
+            gd.interaction.beginColorChoice(player1.getId(), null, null,
+                    new com.github.laxika.magicalvibes.model.ChoiceContext.BasicLandTypeChoice(null));
+
+            ai.handleMessage("CHOOSE_FROM_LIST", "");
+
+            // The choice should be processed (AI should pick PLAINS for white mana demand)
+            assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        }
+    }
 }

@@ -6,10 +6,14 @@ import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -51,10 +55,13 @@ import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
+import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
+import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
+import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -2837,5 +2844,261 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
 
         return totalDamage;
+    }
+
+    // ===== Smart Choice Overrides =====
+
+    /**
+     * Evaluates "may" abilities using SpellEvaluator instead of always accepting.
+     * Accepts the ability if the net value of its effects is positive, considering
+     * the current board state. For example, a "may draw a card and lose 1 life"
+     * trigger is evaluated as draw value minus life loss, and declined when the
+     * AI is at very low life.
+     */
+    @Override
+    protected void handleMayAbilityChoice(GameData gameData) {
+        InteractionContext.MayAbilityChoice mayChoice = gameData.interaction.mayAbilityChoiceContext();
+        if (mayChoice == null || !aiPlayer.getId().equals(mayChoice.playerId())) {
+            choiceHandler.handleMayAbilityChoice(gameData);
+            return;
+        }
+
+        // Access the pending ability to evaluate its effects
+        if (gameData.pendingMayAbilities.isEmpty()) {
+            // No pending ability data — fall back to accepting
+            log.info("AI (Hard): Accepting may ability (no pending data) in game {}", gameId);
+            send(() -> messageHandler.handleMayAbilityChosen(selfConnection,
+                    new MayAbilityChosenRequest(null, true)));
+            return;
+        }
+
+        PendingMayAbility pending = gameData.pendingMayAbilities.getFirst();
+        double value = spellEvaluator.evaluateAbilityEffects(gameData, pending.effects(), aiPlayer.getId());
+
+        // If the ability has a mana cost, factor that in — paying mana is a real cost
+        if (pending.manaCost() != null && !pending.manaCost().isEmpty()) {
+            ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+            ManaCost cost = new ManaCost(pending.manaCost());
+            if (!cost.canPay(virtualPool, 0)) {
+                // Can't afford it — decline
+                log.info("AI (Hard): Declining may ability '{}' (can't afford mana cost {}) in game {}",
+                        pending.description(), pending.manaCost(), gameId);
+                send(() -> messageHandler.handleMayAbilityChosen(selfConnection,
+                        new MayAbilityChosenRequest(null, false)));
+                return;
+            }
+            // Deduct mana value as opportunity cost
+            value -= cost.getManaValue() * 1.5;
+        }
+
+        boolean accept = value > 0;
+        log.info("AI (Hard): {} may ability '{}' (value={}) in game {}",
+                accept ? "Accepting" : "Declining", pending.description(),
+                String.format("%.1f", value), gameId);
+        send(() -> messageHandler.handleMayAbilityChosen(selfConnection,
+                new MayAbilityChosenRequest(null, accept)));
+    }
+
+    /**
+     * Board-aware scry that considers the AI's current mana situation.
+     * Keeps lands on top when the AI needs more mana sources to cast spells in hand,
+     * and puts lands on bottom only when mana-flooded (6+ sources and no expensive spells).
+     * Spells are sorted by near-term castability: cheaper spells go on top.
+     */
+    @Override
+    protected void handleScry(GameData gameData) {
+        InteractionContext.Scry scryContext = gameData.interaction.scryContext();
+        if (scryContext == null || !aiPlayer.getId().equals(scryContext.playerId())) {
+            choiceHandler.handleScry(gameData);
+            return;
+        }
+
+        List<Card> cards = scryContext.cards();
+        if (cards == null || cards.isEmpty()) {
+            return;
+        }
+
+        List<Permanent> aiBattlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        long manaSourceCount = aiBattlefield.stream()
+                .filter(p -> p.getCard().hasType(CardType.LAND)
+                        || p.getCard().getEffects(EffectSlot.ON_TAP).stream()
+                                .anyMatch(e -> e instanceof ManaProducingEffect))
+                .count();
+
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        boolean hasExpensiveSpells = hand.stream()
+                .filter(c -> !c.hasType(CardType.LAND) && c.getManaCost() != null)
+                .anyMatch(c -> c.getManaValue() > manaSourceCount);
+
+        // Need land: fewer than 4 sources, or has expensive spells we can't yet cast
+        boolean needsLand = manaSourceCount < 4 || (manaSourceCount < 7 && hasExpensiveSpells);
+
+        List<Integer> topOrder = new ArrayList<>();
+        List<Integer> bottomOrder = new ArrayList<>();
+
+        for (int i = 0; i < cards.size(); i++) {
+            Card card = cards.get(i);
+            if (card.hasType(CardType.LAND)) {
+                if (needsLand) {
+                    topOrder.add(i);
+                } else {
+                    bottomOrder.add(i);
+                }
+            } else {
+                topOrder.add(i);
+            }
+        }
+
+        // Sort spells on top by mana value ascending (play cheapest first)
+        final List<Card> scryCards = cards;
+        topOrder.sort(Comparator.comparingInt(i -> scryCards.get(i).hasType(CardType.LAND) ? 0 : scryCards.get(i).getManaValue()));
+
+        log.info("AI (Hard): Scry {} — keeping {} on top (needsLand={}), {} on bottom in game {}",
+                cards.size(), topOrder.size(), needsLand, bottomOrder.size(), gameId);
+        send(() -> messageHandler.handleScryCompleted(selfConnection,
+                new ScryCompletedRequest(topOrder, bottomOrder)));
+    }
+
+    /**
+     * Smart creature type choice: picks the most common creature type among
+     * creatures the AI controls, to maximize tribal synergy from the effect.
+     */
+    @Override
+    protected void handleListChoice(GameData gameData) {
+        InteractionContext.ColorChoice colorChoice = gameData.interaction.colorChoiceContextView();
+        if (colorChoice == null || !aiPlayer.getId().equals(colorChoice.playerId())) {
+            choiceHandler.handleColorChoice(gameData);
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice) {
+            String bestSubtype = findMostCommonCreatureType(gameData);
+            log.info("AI (Hard): Choosing creature type {} in game {}", bestSubtype, gameId);
+            final String subtype = bestSubtype;
+            send(() -> messageHandler.handleListChoice(selfConnection,
+                    new ChosenFromListRequest(null, subtype)));
+            return;
+        }
+
+        if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice
+                || colorChoice.context() instanceof ChoiceContext.AddBasicLandTypeChoice) {
+            String bestLandType = findMostNeededBasicLandType(gameData);
+            log.info("AI (Hard): Choosing basic land type {} in game {}", bestLandType, gameId);
+            final String landType = bestLandType;
+            send(() -> messageHandler.handleListChoice(selfConnection,
+                    new ChosenFromListRequest(null, landType)));
+            return;
+        }
+
+        // All other list choices (color, card name, permanent type, etc.) — delegate to base handler
+        choiceHandler.handleColorChoice(gameData);
+    }
+
+    /**
+     * Finds the most common creature type among creatures the AI controls.
+     * Falls back to the most common type in hand if the battlefield is empty,
+     * then to HUMAN as a last resort.
+     */
+    private String findMostCommonCreatureType(GameData gameData) {
+        Map<CardSubtype, Integer> typeCounts = new EnumMap<>(CardSubtype.class);
+
+        // Count subtypes on the battlefield (most relevant for tribal effects)
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        for (Permanent perm : battlefield) {
+            if (!gameQueryService.isCreature(gameData, perm)) continue;
+            for (CardSubtype subtype : perm.getCard().getSubtypes()) {
+                if (isCreatureSubtype(subtype)) {
+                    typeCounts.merge(subtype, 1, Integer::sum);
+                }
+            }
+        }
+
+        // Also consider hand creatures (less weight — they're not in play yet)
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        for (Card card : hand) {
+            if (!card.hasType(CardType.CREATURE)) continue;
+            for (CardSubtype subtype : card.getSubtypes()) {
+                if (isCreatureSubtype(subtype)) {
+                    typeCounts.merge(subtype, 1, Integer::sum);
+                }
+            }
+        }
+
+        return typeCounts.entrySet().stream()
+                .max(Map.Entry.comparingByValue())
+                .map(e -> e.getKey().name())
+                .orElse("HUMAN");
+    }
+
+    /**
+     * Returns true if the subtype is a creature subtype (not a land subtype like ISLAND,
+     * FOREST, etc. or a spell subtype like AURA, EQUIPMENT).
+     */
+    private static boolean isCreatureSubtype(CardSubtype subtype) {
+        return switch (subtype) {
+            case PLAINS, ISLAND, SWAMP, MOUNTAIN, FOREST,
+                 AURA, EQUIPMENT, VEHICLE -> false;
+            default -> true;
+        };
+    }
+
+    /**
+     * Determines the basic land type the AI needs most based on color demand analysis.
+     * Compares the colored mana requirements of spells in hand and on the battlefield
+     * (activated abilities) against the AI's current mana production to find the
+     * biggest color gap.
+     */
+    private String findMostNeededBasicLandType(GameData gameData) {
+        Map<ManaColor, Integer> demand = new EnumMap<>(ManaColor.class);
+        Map<ManaColor, Integer> supply = new EnumMap<>(ManaColor.class);
+
+        // Calculate demand from hand
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayer.getId(), List.of());
+        for (Card card : hand) {
+            if (card.hasType(CardType.LAND) || card.getManaCost() == null) continue;
+            ManaCost cost = new ManaCost(card.getManaCost());
+            for (Map.Entry<ManaColor, Integer> entry : cost.getColoredCosts().entrySet()) {
+                demand.merge(entry.getKey(), entry.getValue(), Integer::sum);
+            }
+        }
+
+        // Calculate supply from battlefield
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        for (Permanent perm : battlefield) {
+            for (ManaColor color : manaManager.getProducedColors(perm.getCard())) {
+                supply.merge(color, 1, Integer::sum);
+            }
+        }
+
+        // Find the color with the largest deficit (demand - supply)
+        ManaColor mostNeeded = null;
+        int biggestDeficit = 0;
+        for (Map.Entry<ManaColor, Integer> entry : demand.entrySet()) {
+            ManaColor color = entry.getKey();
+            if (color == ManaColor.COLORLESS) continue;
+            int deficit = entry.getValue() - supply.getOrDefault(color, 0);
+            if (deficit > biggestDeficit || mostNeeded == null) {
+                biggestDeficit = deficit;
+                mostNeeded = color;
+            }
+        }
+
+        // If no demand detected, pick the color we produce least of
+        if (mostNeeded == null) {
+            mostNeeded = supply.entrySet().stream()
+                    .filter(e -> e.getKey() != ManaColor.COLORLESS)
+                    .min(Map.Entry.comparingByValue())
+                    .map(Map.Entry::getKey)
+                    .orElse(ManaColor.BLUE);
+        }
+
+        return switch (mostNeeded) {
+            case WHITE -> "PLAINS";
+            case BLUE -> "ISLAND";
+            case BLACK -> "SWAMP";
+            case RED -> "MOUNTAIN";
+            case GREEN -> "FOREST";
+            default -> "ISLAND";
+        };
     }
 }
