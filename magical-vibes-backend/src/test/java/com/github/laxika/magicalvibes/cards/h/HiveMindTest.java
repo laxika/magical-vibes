@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.b.BlackSunsZenith;
 import com.github.laxika.magicalvibes.cards.b.Boomerang;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -366,6 +367,38 @@ class HiveMindTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.gameLog).anyMatch(log ->
                 log.contains("copy") && log.contains("Counsel of the Soratami"));
+    }
+
+    // ===== Copy of shuffle-into-library spell ceases to exist =====
+
+    @Test
+    @DisplayName("Copy of Black Sun's Zenith does not get shuffled into opponent's library (CR 707.10a)")
+    void copyOfShuffleIntoLibrarySpellDoesNotPolluteDeck() {
+        HiveMind hiveMind = new HiveMind();
+        harness.addToBattlefield(player1, hiveMind);
+
+        BlackSunsZenith bsz = new BlackSunsZenith();
+        harness.setHand(player1, List.of(bsz));
+        harness.addMana(player1, ManaColor.BLACK, 3); // X=1
+
+        int p2DeckBefore = gd.playerDecks.get(player2.getId()).size();
+
+        harness.castSorcery(player1, 0, 1);
+        // Resolve Hive Mind triggered ability → creates copy for player2
+        harness.passBothPriorities();
+        // Resolve copy (controlled by player2)
+        harness.passBothPriorities();
+
+        // Copy ceases to exist per CR 707.10a — must NOT be in player2's library
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(p2DeckBefore);
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .noneMatch(c -> c.getName().equals("Black Sun's Zenith"));
+
+        // Resolve original → shuffled into player1's library (correct behavior)
+        harness.passBothPriorities();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Black Sun's Zenith"));
+        assertThat(gd.stack).isEmpty();
     }
 
     // ===== Targeted instant — damage copy hits correct target =====

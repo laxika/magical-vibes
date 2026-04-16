@@ -44,6 +44,12 @@ public class LibraryShuffleResolutionService {
      */
     @HandlesEffect(ShuffleIntoLibraryEffect.class)
     void resolveShuffleIntoLibrary(GameData gameData, StackEntry entry) {
+        // CR 707.10a — copies cease to exist when they leave the stack; they never
+        // enter any zone.  The spell disposition handler in StackResolutionService
+        // already guards against this, but the effect handler fires first during
+        // normal effect resolution, so we need the guard here too.
+        if (entry.isCopy()) return;
+
         List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
         deck.add(entry.getCard());
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
