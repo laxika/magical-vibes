@@ -355,6 +355,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `UntapSelfEffect()` — untap self
 - `DoesntUntapDuringUntapStepEffect()` — doesn't untap (static)
 - `UntapAllControlledPermanentsEffect(PermanentPredicate)` — untap all matching
+- `TapAllAttackingCreaturesEffect()` — tap all attacking creatures
+- `SkipNextUntapAllAttackingCreaturesEffect()` — attacking creatures skip next untap
 
 ## Control / steal
 

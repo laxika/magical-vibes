@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapAllAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapPermanentsOfTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.TapAllAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsOfTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
@@ -64,6 +66,42 @@ public class TapUntapResolutionService {
         });
 
         log.info("Game {} - {} taps creatures matching filters", gameData.id, entry.getCard().getName());
+    }
+
+    @HandlesEffect(TapAllAttackingCreaturesEffect.class)
+    private void resolveTapAllAttackingCreatures(GameData gameData, StackEntry entry) {
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!p.isAttacking()) return;
+            if (!gameQueryService.isCreature(gameData, p)) return;
+
+            boolean wasTapped = p.isTapped();
+            p.tap();
+            if (!wasTapped) {
+                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, p);
+                count[0]++;
+            }
+        });
+
+        String logMsg = entry.getCard().getName() + " taps " + count[0] + " attacking creature(s).";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} taps {} attacking creature(s)", gameData.id, entry.getCard().getName(), count[0]);
+    }
+
+    @HandlesEffect(SkipNextUntapAllAttackingCreaturesEffect.class)
+    private void resolveSkipNextUntapAllAttackingCreatures(GameData gameData, StackEntry entry) {
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, p) -> {
+            if (!p.isAttacking()) return;
+            if (!gameQueryService.isCreature(gameData, p)) return;
+
+            p.setSkipUntapCount(p.getSkipUntapCount() + 1);
+            count[0]++;
+        });
+
+        String logMsg = entry.getCard().getName() + " prevents " + count[0] + " attacking creature(s) from untapping during their controller's next untap step.";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} skip next untap set on {} attacking creature(s)", gameData.id, entry.getCard().getName(), count[0]);
     }
 
     @HandlesEffect(TapSelfEffect.class)

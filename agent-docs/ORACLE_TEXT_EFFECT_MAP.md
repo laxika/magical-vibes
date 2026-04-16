@@ -188,6 +188,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "untap target [permanent]" | `UntapTargetPermanentEffect(predicate)` | SPELL/ability | |
 | "untap all [permanents] you control" | `UntapAllControlledPermanentsEffect(predicate)` | SPELL | |
 | "CARDNAME doesn't untap during your untap step" | `DoesntUntapDuringUntapStepEffect()` | STATIC | |
+| "tap all attacking creatures" | `TapAllAttackingCreaturesEffect()` | SPELL/trigger | no targeting |
+| "those creatures don't untap during their controller's next untap step" (attacking creatures) | `SkipNextUntapAllAttackingCreaturesEffect()` | SPELL/trigger | pair with `TapAllAttackingCreaturesEffect` |
 
 ## Control / steal
 
