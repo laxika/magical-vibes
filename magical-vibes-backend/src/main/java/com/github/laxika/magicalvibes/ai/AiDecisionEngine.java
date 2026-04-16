@@ -355,7 +355,7 @@ public abstract class AiDecisionEngine {
         try {
             messageHandler.handleDeclareBlockers(selfConnection, request);
         } catch (Exception e) {
-            log.warn("AI: Blocker declaration rejected in game {}: {}. Falling back to no blockers.", gameId, e.getMessage());
+            log.warn("AI: Blocker declaration rejected in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
             try {
                 messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of()));
             } catch (Exception e2) {

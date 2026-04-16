@@ -645,10 +645,11 @@ public class TriggerCollectionService {
         boolean[] anyTriggered = {false};
         var ctx = new TriggerContext.LifeLoss(losingPlayerId, lifeLostAmount);
 
+        // Snapshot: handlers may modify the battlefield (e.g. Mindcrank mills → Undead Alchemist creates tokens)
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerId.equals(losingPlayerId)) return;
 
-            for (Permanent perm : battlefield) {
+            for (Permanent perm : List.copyOf(battlefield)) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_OPPONENT_LOSES_LIFE)) {
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
                     if (registry.dispatch(match, EffectSlot.ON_OPPONENT_LOSES_LIFE, effect, ctx)) {
