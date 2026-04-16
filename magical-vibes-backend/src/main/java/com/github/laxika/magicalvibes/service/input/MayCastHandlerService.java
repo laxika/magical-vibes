@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -342,6 +343,114 @@ public class MayCastHandlerService {
             log.info("Game {} - {} declines to cast {} from graveyard", gameData.id, playerName, cardToCast.getName());
         }
 
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Handles the "may cast from hand without paying mana cost" choice (e.g. Counterlash).
+     * Each eligible card gets its own PendingMayAbility; accepting one removes the rest.
+     */
+    public void handleMayCastFromHandWithoutPaying(GameData gameData, Player player, boolean accepted,
+                                                    PendingMayAbility ability) {
+        Card cardToCast = ability.sourceCard();
+        String playerName = player.getUsername();
+
+        if (!accepted) {
+            String logEntry = playerName + " declines to cast " + cardToCast.getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} declines to cast {} from hand (Counterlash)", gameData.id, playerName, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Verify the card is still in hand
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        int cardIndex = -1;
+        for (int i = 0; i < hand.size(); i++) {
+            if (hand.get(i).getId().equals(cardToCast.getId())) {
+                cardIndex = i;
+                break;
+            }
+        }
+
+        if (cardIndex == -1) {
+            String logEntry = cardToCast.getName() + " is no longer in hand.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} no longer in hand for cast-from-hand", gameData.id, cardToCast.getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        // Remove remaining may-cast-from-hand abilities (only cast one spell)
+        gameData.pendingMayAbilities.removeIf(pma ->
+                pma.effects().stream().anyMatch(e -> e instanceof MayCastFromHandWithoutPayingManaCostEffect));
+
+        // Remove from hand and cast
+        hand.remove(cardIndex);
+        castCardFromHandWithoutPaying(gameData, player, cardToCast);
+    }
+
+    private void castCardFromHandWithoutPaying(GameData gameData, Player player, Card card) {
+        UUID playerId = player.getId();
+        String playerName = player.getUsername();
+
+        StackEntryType spellType = switch (card.getType()) {
+            case CREATURE -> StackEntryType.CREATURE_SPELL;
+            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
+            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
+            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
+            case SORCERY -> StackEntryType.SORCERY_SPELL;
+            case INSTANT -> StackEntryType.INSTANT_SPELL;
+            default -> throw new IllegalStateException("Unsupported card type: " + card.getType());
+        };
+
+        // Permanent spells have empty SPELL effects — ETB is processed on battlefield entry
+        boolean isPermanentSpell = card.hasType(CardType.CREATURE)
+                || card.hasType(CardType.ARTIFACT)
+                || card.hasType(CardType.ENCHANTMENT)
+                || card.hasType(CardType.PLANESWALKER);
+        List<CardEffect> spellEffects = isPermanentSpell
+                ? List.of()
+                : new ArrayList<>(card.getEffects(EffectSlot.SPELL));
+
+        if (EffectResolution.needsTarget(card)) {
+            List<UUID> validTargets = buildValidSpellTargets(gameData, card, spellEffects);
+
+            if (validTargets.isEmpty()) {
+                // No valid targets — card goes to graveyard
+                graveyardService.addCardToGraveyard(gameData, playerId, card);
+                String logEntry = card.getName() + " has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} cast-from-hand has no valid targets", gameData.id, card.getName());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.HandCastSpellTarget(card, playerId, spellEffects, spellType));
+            playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
+                    "Choose a target for " + card.getName() + ".");
+
+            String logEntry = playerName + " casts " + card.getName() + " without paying its mana cost — choosing target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} casts {} from hand, choosing target", gameData.id, playerName, card.getName());
+            return; // Wait for target choice
+        }
+
+        // Non-targeted spell — put directly on stack
+        gameData.stack.add(new StackEntry(
+                spellType, card, playerId, card.getName(),
+                spellEffects, 0, (UUID) null, null
+        ));
+
+        gameData.recordSpellCast(playerId, card);
+        gameData.priorityPassedBy.clear();
+
+        String logEntry = playerName + " casts " + card.getName() + " without paying its mana cost.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} casts {} from hand without paying mana", gameData.id, playerName, card.getName());
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -124,6 +125,14 @@ public class MayAbilityHandlerService {
         UUID pendingTargetId = gameData.interaction.pendingEquipmentAttachTargetId();
         if (pendingEquipId != null && pendingTargetId != null) {
             mayMiscHandlerService.handleEquipmentAttachChoice(gameData, player, accepted, pendingEquipId, pendingTargetId);
+            return;
+        }
+
+        // Cast-from-hand-without-paying — e.g. Counterlash (one may ability per eligible card)
+        boolean isMayCastFromHand = ability.effects().stream()
+                .anyMatch(e -> e instanceof MayCastFromHandWithoutPayingManaCostEffect);
+        if (isMayCastFromHand) {
+            mayCastHandlerService.handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability);
             return;
         }
 

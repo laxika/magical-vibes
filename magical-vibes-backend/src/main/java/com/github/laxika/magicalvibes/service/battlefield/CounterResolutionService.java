@@ -11,18 +11,24 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndCreateTreasureTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoisonedEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterlashEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -208,6 +214,82 @@ public class CounterResolutionService {
             permanentControlResolutionService.applyCreateToken(
                     gameData, entry.getControllerId(), treasures, entry.getCard().getSetCode());
         }
+    }
+
+    /**
+     * Resolves Counterlash: counters the targeted spell, then lets the controller may-cast a spell
+     * from hand that shares a card type with the countered spell, without paying its mana cost.
+     *
+     * <p>Per Counterlash rulings: if the target spell can't be countered, the controller may still
+     * cast a spell from hand. If the target is no longer on the stack (illegal target), the whole
+     * spell fizzles and no casting is offered.</p>
+     *
+     * @param gameData the current game state
+     * @param entry    the stack entry of Counterlash being resolved
+     */
+    @HandlesEffect(CounterlashEffect.class)
+    void resolveCounterlash(GameData gameData, StackEntry entry) {
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null) return;
+
+        // Find target on stack — need it even if uncounterable (for card types)
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counterlash target no longer on stack", gameData.id);
+            return;
+        }
+
+        // Gather card types from the targeted spell
+        Set<CardType> matchingTypes = new HashSet<>();
+        matchingTypes.add(targetEntry.getCard().getType());
+        matchingTypes.addAll(targetEntry.getCard().getAdditionalTypes());
+
+        // Try to counter the spell (still offer casting even if uncounterable)
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
+        } else if (gameQueryService.isProtectedFromCounterBySpellColor(gameData, targetEntry.getControllerId(), entry)) {
+            log.info("Game {} - {} cannot be countered by {} spells",
+                    gameData.id, targetEntry.getCard().getName(),
+                    entry.getCard().getColor().name().toLowerCase());
+        } else {
+            counterSpell(gameData, entry, targetEntry);
+        }
+
+        // "You may cast a spell that shares a card type with it from your hand without paying its mana cost"
+        UUID controllerId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+        if (hand == null || hand.isEmpty()) return;
+
+        List<Card> eligible = hand.stream()
+                .filter(c -> !c.hasType(CardType.LAND) && sharesCardType(c, matchingTypes))
+                .toList();
+
+        if (!eligible.isEmpty()) {
+            // Queue one may ability per eligible card (reversed so first card is first prompt)
+            for (int i = eligible.size() - 1; i >= 0; i--) {
+                Card c = eligible.get(i);
+                gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                        c, controllerId,
+                        List.of(new MayCastFromHandWithoutPayingManaCostEffect()),
+                        "Cast " + c.getName() + " without paying its mana cost?"
+                ));
+            }
+        }
+    }
+
+    private boolean sharesCardType(Card card, Set<CardType> types) {
+        if (types.contains(card.getType())) return true;
+        for (CardType additionalType : card.getAdditionalTypes()) {
+            if (types.contains(additionalType)) return true;
+        }
+        return false;
     }
 
     /**

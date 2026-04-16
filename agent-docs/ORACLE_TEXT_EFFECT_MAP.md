@@ -88,6 +88,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 |---|---|---|---|
 | "counter target spell" | `CounterSpellEffect()` | SPELL | Targeting auto-derived |
 | "counter target spell unless its controller pays {N}" | `CounterUnlessPaysEffect(N)` | SPELL | |
+| "counter target spell. You may cast a spell that shares a card type with it from your hand without paying its mana cost" | `CounterlashEffect()` | SPELL | Queues per-card PendingMayAbility with MayCastFromHandWithoutPayingManaCostEffect |
 | "this spell can't be countered" | `CantBeCounteredEffect()` | STATIC | |
 
 ## Draw / discard
