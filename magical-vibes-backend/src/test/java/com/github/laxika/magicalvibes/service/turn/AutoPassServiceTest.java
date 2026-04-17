@@ -102,8 +102,8 @@ class AutoPassServiceTest {
         }
 
         @Test
-        @DisplayName("Stops when stack is non-empty")
-        void stopsWhenStackIsNonEmpty() {
+        @DisplayName("Stops when stack is non-empty and priority holder has playable cards")
+        void stopsWhenStackNonEmptyAndHasPlayableCards() {
             gd.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     new Card(),
@@ -112,9 +112,112 @@ class AutoPassServiceTest {
                     List.of()
             ));
 
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
             sut.resolveAutoPass(gd, ignored -> {});
 
-            assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+            verify(gameBroadcastService).broadcastGameState(gd);
+            verify(stackResolutionService, never()).resolveTopOfStack(any());
+        }
+
+        @Test
+        @DisplayName("Stops when stack is non-empty and priority holder has instant-speed ability")
+        void stopsWhenStackNonEmptyAndHasActivatedAbility() {
+            gd.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    new Card(),
+                    player1Id,
+                    "Test trigger",
+                    List.of()
+            ));
+
+            Card card = createCardWithAbility(
+                    new ActivatedAbility(true, "{1}", List.of(new DealDamageToAnyTargetEffect(1)),
+                            "Deal 1 damage"));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            verify(gameBroadcastService).broadcastGameState(gd);
+            verify(stackResolutionService, never()).resolveTopOfStack(any());
+        }
+
+        @Test
+        @DisplayName("Auto-passes and resolves stack when neither player can respond")
+        void autoPassesAndResolvesStackWhenNeitherCanRespond() {
+            gd.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    new Card(),
+                    player1Id,
+                    "Test trigger",
+                    List.of()
+            ));
+
+            // Player1 gets priority, can't respond → auto-pass
+            // Player2 gets priority, can't respond → auto-pass
+            // Both passed (null) → resolve stack
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id, (UUID) null);
+            when(gameBroadcastService.getPlayableCardIndices(any(), any())).thenReturn(List.of());
+
+            org.mockito.Mockito.doAnswer(inv -> {
+                gd.stack.clear();
+                gd.status = GameStatus.FINISHED;
+                return null;
+            }).when(stackResolutionService).resolveTopOfStack(gd);
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            verify(stackResolutionService).resolveTopOfStack(gd);
+        }
+
+        @Test
+        @DisplayName("Stops after stack resolution when awaiting input")
+        void stopsAfterStackResolutionWhenAwaitingInput() {
+            gd.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    new Card(),
+                    player1Id,
+                    "Test trigger",
+                    List.of()
+            ));
+
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn((UUID) null);
+            org.mockito.Mockito.doAnswer(inv -> {
+                gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+                return null;
+            }).when(stackResolutionService).resolveTopOfStack(gd);
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            verify(stackResolutionService).resolveTopOfStack(gd);
+            verify(gameBroadcastService).broadcastGameState(gd);
+        }
+
+        @Test
+        @DisplayName("Stops after stack resolution when pending may abilities exist")
+        void stopsAfterStackResolutionWhenPendingMayAbilities() {
+            gd.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    new Card(),
+                    player1Id,
+                    "Test trigger",
+                    List.of()
+            ));
+
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn((UUID) null);
+            org.mockito.Mockito.doAnswer(inv -> {
+                gd.pendingMayAbilities.add(
+                        new PendingMayAbility(new Card(), player1Id, List.of(), "May draw a card"));
+                return null;
+            }).when(stackResolutionService).resolveTopOfStack(gd);
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            verify(stackResolutionService).resolveTopOfStack(gd);
             verify(gameBroadcastService).broadcastGameState(gd);
         }
 
@@ -375,7 +478,10 @@ class AutoPassServiceTest {
             gd.pendingManaAbilityTriggers.add(pendingTrigger);
             gd.priorityPassedBy.add(player1Id);
 
-            // After flush, stack is non-empty so auto-pass stops
+            // After flush, stack is non-empty; priority holder can respond so loop stops
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
             sut.resolveAutoPass(gd, ignored -> {});
 
             assertThat(gd.stack).hasSize(1);
