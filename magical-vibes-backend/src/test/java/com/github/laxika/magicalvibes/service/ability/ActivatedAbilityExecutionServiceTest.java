@@ -804,11 +804,12 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            // Mana ability resolves immediately (no stack entry for mana)
-            // Only the death trigger should be on the stack
-            assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(gameData.stack.getFirst().getEffectsToResolve())
+            // CR 603.3: Mana ability resolves immediately (no stack entry for mana).
+            // Death trigger is deferred to pendingManaAbilityTriggers, NOT placed on the stack.
+            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.pendingManaAbilityTriggers).hasSize(1);
+            assertThat(gameData.pendingManaAbilityTriggers.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gameData.pendingManaAbilityTriggers.getFirst().getEffectsToResolve())
                     .anyMatch(e -> e instanceof DrawCardEffect);
         }
 
@@ -1090,6 +1091,131 @@ class ActivatedAbilityExecutionServiceTest {
 
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().isNonTargeting()).isFalse();
+        }
+    }
+
+    // =========================================================================
+    // CR 603.3: Mana-ability sacrifice defers triggers to pendingManaAbilityTriggers
+    // =========================================================================
+
+    @Nested
+    @DisplayName("mana-ability trigger deferral (CR 603.3)")
+    class ManaAbilityTriggerDeferral {
+
+        @Test
+        @DisplayName("Sacrifice-cost triggers deferred to pendingManaAbilityTriggers for mana abilities")
+        void sacrificeCostTriggersDeferredForManaAbility() {
+            Card card = createCard("Test Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.COLORLESS, 2));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}, Sacrifice: Add {C}{C}.");
+
+            stubIsCreature(perm, false);
+
+            // Simulate a death trigger being pushed onto the stack by removePermanentToGraveyard
+            doAnswer(inv -> {
+                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        new Card(), player2Id, "Viridian Revel trigger", List.of(new DrawCardEffect())));
+                return true;
+            }).when(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            // Trigger should be deferred, NOT on the stack
+            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.pendingManaAbilityTriggers).hasSize(1);
+            assertThat(gameData.pendingManaAbilityTriggers.getFirst().getDescription())
+                    .isEqualTo("Viridian Revel trigger");
+        }
+
+        @Test
+        @DisplayName("No pending triggers when mana ability sacrifice produces no triggers")
+        void noPendingTriggersWhenNoTriggersFired() {
+            Card card = createCard("Test Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.COLORLESS, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}, Sacrifice: Add {C}.");
+
+            stubIsCreature(perm, false);
+            when(permanentRemovalService.removePermanentToGraveyard(gameData, perm)).thenReturn(true);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            assertThat(gameData.stack).isEmpty();
+            assertThat(gameData.pendingManaAbilityTriggers).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Priority NOT cleared when mana-ability triggers are deferred")
+        void priorityNotClearedOnDeferral() {
+            Card card = createCard("Test Artifact", CardType.ARTIFACT);
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new AwardManaEffect(ManaColor.COLORLESS, 1));
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}, Sacrifice: Add {C}.");
+
+            stubIsCreature(perm, false);
+
+            // Pre-set priority state
+            gameData.priorityPassedBy.add(player2Id);
+
+            doAnswer(inv -> {
+                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                        new Card(), player2Id, "trigger", List.of()));
+                return true;
+            }).when(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
+
+            // Priority should be preserved (not cleared) — it's deferred
+            assertThat(gameData.priorityPassedBy).contains(player2Id);
+        }
+
+        @Test
+        @DisplayName("Non-mana ability with sacrifice flushes pending mana-ability triggers on top")
+        void nonManaAbilityFlushesPendingManaAbilityTriggers() {
+            // Pre-populate pending triggers (from a prior mana ability activation)
+            StackEntry pendingTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    new Card(), player2Id, "Pending Viridian Revel", List.of());
+            gameData.pendingManaAbilityTriggers.add(pendingTrigger);
+
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            // Non-mana ability: no ManaProducingEffect, has a target
+            List<CardEffect> effects = List.of(new ReturnTargetPermanentToHandEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Return target permanent to hand.");
+
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target"));
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
+
+            // Stack: ability (bottom), then flushed pending trigger (top)
+            assertThat(gameData.stack).hasSize(2);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            assertThat(gameData.stack.getLast().getDescription()).isEqualTo("Pending Viridian Revel");
+            assertThat(gameData.pendingManaAbilityTriggers).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Non-mana ability with no pending triggers does not change stack")
+        void nonManaAbilityNoPendingTriggersNoChange() {
+            Card card = createCreature("Test Creature");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            List<CardEffect> effects = List.of(new ReturnTargetPermanentToHandEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects,
+                    "{T}: Return target permanent to hand.");
+
+            Permanent target = addReadyPermanent(player2Id, createCreature("Target"));
+
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
+
+            // Only the ability itself on the stack
+            assertThat(gameData.stack).hasSize(1);
+            assertThat(gameData.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
+            assertThat(gameData.pendingManaAbilityTriggers).isEmpty();
         }
     }
 

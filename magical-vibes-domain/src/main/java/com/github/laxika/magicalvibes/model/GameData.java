@@ -64,6 +64,9 @@ public class GameData {
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
     public final InteractionState interaction = new InteractionState();
     public final List<StackEntry> stack = Collections.synchronizedList(new ArrayList<>());
+    /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
+     *  would receive priority, so they don't block sorcery-speed spell casting. */
+    public final List<StackEntry> pendingManaAbilityTriggers = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Tracks all non-token card IDs put into each player's graveyard from any zone this turn (e.g. Garna, the Bloodflame). */
@@ -728,6 +731,7 @@ public class GameData {
 
         // --- List<StackEntry> (deep copy each StackEntry) ---
         this.stack.forEach(se -> copy.stack.add(new StackEntry(se)));
+        this.pendingManaAbilityTriggers.forEach(se -> copy.pendingManaAbilityTriggers.add(new StackEntry(se)));
 
         // --- InteractionState ---
         InteractionState copiedInteraction = this.interaction.deepCopy();

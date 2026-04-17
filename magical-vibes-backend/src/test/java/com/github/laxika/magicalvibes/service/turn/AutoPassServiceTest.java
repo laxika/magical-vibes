@@ -367,6 +367,39 @@ class AutoPassServiceTest {
         }
 
         @Test
+        @DisplayName("Flushes pending mana-ability triggers to stack (CR 603.3)")
+        void flushesPendingManaAbilityTriggers() {
+            StackEntry pendingTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    new Card(), player2Id, "Viridian Revel trigger", List.of());
+            gd.pendingManaAbilityTriggers.add(pendingTrigger);
+            gd.priorityPassedBy.add(player1Id);
+
+            // After flush, stack is non-empty so auto-pass stops
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).isEqualTo("Viridian Revel trigger");
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            // Priority should be cleared so both players get a chance to respond
+            assertThat(gd.priorityPassedBy).isEmpty();
+            verify(gameBroadcastService).broadcastGameState(gd);
+        }
+
+        @Test
+        @DisplayName("No-op when no pending mana-ability triggers")
+        void noOpWhenNoPendingManaAbilityTriggers() {
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            // Game finishes immediately so loop exits
+            gd.status = GameStatus.FINISHED;
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("Broadcasts once when second player has playable cards after first auto-passes")
         void broadcastsAfterSingleAutoPass() {
             // First call: player1 has priority, nothing to play → auto-pass

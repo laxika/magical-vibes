@@ -69,6 +69,14 @@ public class AutoPassService {
     public void resolveAutoPass(GameData gameData, Consumer<GameData> advanceStep) {
         if (gameData.status != GameStatus.RUNNING) return;
 
+        // CR 603.3 / 117.5: Flush any mana-ability triggers that are still pending.
+        // This ensures they reach the stack before auto-pass can skip past them.
+        if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
+            gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+            gameData.pendingManaAbilityTriggers.clear();
+            gameData.priorityPassedBy.clear();
+        }
+
         // Process any pending spell-target triggers (e.g. Livewire Lash)
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSpellTargetTriggers.isEmpty()) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);

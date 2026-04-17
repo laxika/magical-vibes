@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -792,6 +793,39 @@ class SpellCastingServiceTest {
                     gd.playerHands.get(player1Id), createCreature("Dummy", "{G}"));
 
             assertThat(gd.priorityPassedBy).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Flushes pending mana-ability triggers to stack (CR 603.3)")
+        void flushesPendingManaAbilityTriggers() {
+            // Simulate a mana ability that deferred a trigger (e.g. Viridian Revel from Shrine sacrifice)
+            var pendingTrigger = new com.github.laxika.magicalvibes.model.StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    new Card(), player2Id, "Viridian Revel trigger", List.of(new DrawCardEffect(1)));
+            gd.pendingManaAbilityTriggers.add(pendingTrigger);
+
+            Card dummy = createCreature("Dummy", "{G}");
+            svc.finishSpellCast(gd, player1Id, player1,
+                    gd.playerHands.get(player1Id), dummy);
+
+            // The spell is on the stack, plus the flushed trigger on top
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getDescription()).isEqualTo("Viridian Revel trigger");
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+        }
+
+        @Test
+        @DisplayName("No-op when no pending mana-ability triggers")
+        void noOpWhenNoPendingManaAbilityTriggers() {
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+
+            Card dummy = createCreature("Dummy", "{G}");
+            svc.finishSpellCast(gd, player1Id, player1,
+                    gd.playerHands.get(player1Id), dummy);
+
+            // Only verify the method completes normally without errors
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(dummy), eq(player1Id), anyBoolean());
         }
     }
 

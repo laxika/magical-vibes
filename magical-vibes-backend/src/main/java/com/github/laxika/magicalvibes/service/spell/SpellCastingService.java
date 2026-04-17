@@ -1779,6 +1779,12 @@ public class SpellCastingService {
 
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, castFromHand);
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+        // CR 603.3: Flush triggers deferred from mana abilities activated to pay for this spell.
+        // They go on top of the spell (and spell-cast triggers) so they resolve first.
+        if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
+            gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+            gameData.pendingManaAbilityTriggers.clear();
+        }
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }

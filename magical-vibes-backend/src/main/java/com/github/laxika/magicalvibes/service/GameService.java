@@ -154,6 +154,15 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
 
+            // CR 603.3: Flush triggers deferred from mana-ability activations.
+            // They go on the stack now (the next time a player would receive priority)
+            // and both players must pass again before the top resolves.
+            if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
+                gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+                gameData.pendingManaAbilityTriggers.clear();
+                gameData.priorityPassedBy.clear();
+            }
+
             gameData.priorityPassedBy.add(player.getId());
             log.info("Game {} - {} passed priority on step {} (passed: {}/2)",
                     gameData.id, player.getUsername(), gameData.currentStep, gameData.priorityPassedBy.size());

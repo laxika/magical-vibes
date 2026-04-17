@@ -251,14 +251,13 @@ public class ActivatedAbilityExecutionService {
 
         if (isManaAbility) {
             resolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
-            // Mana resolves immediately, then deferred triggers go on the stack.
-            // CR 605.3b: Activating a mana ability does not change who has priority.
-            // Only clear priority when deferred triggers are pushed onto the stack,
-            // since those require both players to pass priority again.
+            // CR 603.3: Triggered abilities from mana-ability costs (sacrifice, tap)
+            // wait until the next time a player would receive priority before going
+            // on the stack.  This prevents them from blocking sorcery-speed spell
+            // casting when a mana ability is activated to pay for a spell.
             if (!deferredTapTriggers.isEmpty() || !deferredCostTriggers.isEmpty()) {
-                gameData.stack.addAll(deferredTapTriggers);
-                gameData.stack.addAll(deferredCostTriggers);
-                gameData.priorityPassedBy.clear();
+                gameData.pendingManaAbilityTriggers.addAll(deferredTapTriggers);
+                gameData.pendingManaAbilityTriggers.addAll(deferredCostTriggers);
             }
             return;
         }
@@ -276,6 +275,12 @@ public class ActivatedAbilityExecutionService {
         gameData.stack.addAll(deferredTapTriggers);
         // Add death triggers from sacrifice/exile ON TOP so they resolve first (per CR 603.3)
         gameData.stack.addAll(deferredCostTriggers);
+        // Flush any deferred mana-ability triggers (e.g. from mana abilities activated
+        // earlier to pay for this ability) — they go on top per CR 603.3.
+        if (!gameData.pendingManaAbilityTriggers.isEmpty()) {
+            gameData.stack.addAll(gameData.pendingManaAbilityTriggers);
+            gameData.pendingManaAbilityTriggers.clear();
+        }
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
