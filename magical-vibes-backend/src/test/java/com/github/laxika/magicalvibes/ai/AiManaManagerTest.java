@@ -459,6 +459,72 @@ class AiManaManagerTest {
         }
 
         @Test
+        @DisplayName("dual land cannot pay both colored costs from a single tap")
+        void dualLandCannotPayBothColors() {
+            addUntappedDualLand("Rootbound Crag", ManaColor.RED, ManaColor.GREEN);
+
+            VirtualManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            // Either color individually can be paid
+            assertThat(new com.github.laxika.magicalvibes.model.ManaCost("{R}").canPay(pool)).isTrue();
+            assertThat(new com.github.laxika.magicalvibes.model.ManaCost("{G}").canPay(pool)).isTrue();
+            // But not {R}{G} — one tap can only produce one color
+            assertThat(new com.github.laxika.magicalvibes.model.ManaCost("{R}{G}").canPay(pool)).isFalse();
+        }
+
+        @Test
+        @DisplayName("two duals can pay both colors with getTotal respecting each tap")
+        void twoDualsCanPayBothColors() {
+            addUntappedDualLand("Crag 1", ManaColor.RED, ManaColor.GREEN);
+            addUntappedDualLand("Crag 2", ManaColor.RED, ManaColor.GREEN);
+
+            VirtualManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            // Each dual adds 2 raw but overcounts by 1 — effective total = 2 (one per tap)
+            assertThat(pool.getTotal()).isEqualTo(2);
+            assertThat(new com.github.laxika.magicalvibes.model.ManaCost("{R}{G}").canPay(pool)).isTrue();
+            // Still can't pay three colored mana though
+            assertThat(new com.github.laxika.magicalvibes.model.ManaCost("{R}{R}{G}").canPay(pool)).isFalse();
+        }
+
+        @Test
+        @DisplayName("per-color overcount zero for duals and pain lands (each ability is distinct color)")
+        void perColorOvercountZeroForDistinctColors() {
+            addUntappedDualLand("Shivan Reef Lite", ManaColor.BLUE, ManaColor.RED);
+
+            VirtualManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getPerColorOvercount(ManaColor.BLUE)).isZero();
+            assertThat(pool.getPerColorOvercount(ManaColor.RED)).isZero();
+        }
+
+        @Test
+        @DisplayName("per-color overcount tracks same-color inflation from multi-ability source")
+        void perColorOvercountForSameColorAbilities() {
+            // Hypothetical source with two abilities that both add Red.
+            // Since the source only taps once, per-color overcount for Red should be 1
+            // (2 red added, max from any one ability = 1).
+            Card card = new Card();
+            card.setName("Hypothetical Red Producer");
+            card.setType(CardType.LAND);
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.RED)), "Add R (a)"));
+            card.addActivatedAbility(new ActivatedAbility(
+                    true, null, List.of(new AwardManaEffect(ManaColor.RED)), "Add R (b)"));
+            Permanent perm = new Permanent(card);
+            perm.setSummoningSick(false);
+            gd.playerBattlefields.get(player1Id).add(perm);
+            lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
+            lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
+            lenient().when(gameQueryService.getOverriddenLandManaColor(gd, perm)).thenReturn(null);
+
+            VirtualManaPool pool = manager.buildVirtualManaPool(gd, player1Id);
+            assertThat(pool.getPerColorOvercount(ManaColor.RED)).isEqualTo(1);
+            // Effective RED = 2 added - 1 overcount = 1
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(1);
+            assertThat(pool.getTotal()).isEqualTo(1);
+            // Cannot pay {R}{R} because the source only taps once
+            assertThat(new com.github.laxika.magicalvibes.model.ManaCost("{R}{R}").canPay(pool)).isFalse();
+        }
+
+        @Test
         @DisplayName("copies existing creature mana from current pool")
         void copiesExistingCreatureMana() {
             gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 2);
@@ -1144,8 +1210,8 @@ class AiManaManagerTest {
         }
 
         @Test
-        @DisplayName("adjusts index when sacrifice mana ability removes permanent from battlefield")
-        void adjustsIndexAfterSacrifice() {
+        @DisplayName("handles sacrifice mana ability that removes source from battlefield")
+        void handlesSacrificeMidLoop() {
             // Shrine of Boundless Growth (sacrifice for mana) at index 0
             Permanent shrine = addUntappedChargeCounterColorlessManaArtifact("Shrine of Boundless Growth", 1);
             // Forest at index 1
@@ -1153,27 +1219,97 @@ class AiManaManagerTest {
 
             AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
 
-            // When Shrine is activated at index 0, it sacrifices itself (removed from list)
-            // and adds 1 colorless mana. This shifts Forest from index 1 to index 0.
+            // When Forest is tapped (picked first for colored G demand), add green mana
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+                return null;
+            }).when(action).tap(eq(1), eq(null));
+
+            // When Shrine is activated, it sacrifices itself and adds 1 colorless mana
             lenient().doAnswer(invocation -> {
                 gd.playerBattlefields.get(player1Id).remove(shrine);
                 gd.playerManaPools.get(player1Id).add(ManaColor.COLORLESS, 1);
                 return null;
             }).when(action).tap(eq(0), eq(0));
 
-            // When Forest is tapped (now at index 0 after shrine removal), add green mana
-            lenient().doAnswer(invocation -> {
-                gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
-                return null;
-            }).when(action).tap(eq(0), eq(null));
-
             // Cost is {1}{G} — needs both colorless from Shrine and green from Forest
             manager.tapLandsForCost(gd, player1Id, "{1}{G}", 0, action);
 
-            // Both should have been tapped: Shrine at original index 0, then Forest at
-            // adjusted index 0 (after Shrine was removed)
-            verify(action).tap(0, 0);      // Shrine activated
-            verify(action).tap(0, null);   // Forest tapped (shifted to index 0)
+            // Color-aware order: Forest tapped first (matches unmet G), then Shrine for generic.
+            // Shrine sacrificing itself between iterations doesn't break the loop since each
+            // iteration re-scans the (now-shorter) battlefield.
+            verify(action).tap(1, null);
+            verify(action).tap(0, 0);
+        }
+
+        @Test
+        @DisplayName("prefers land producing unmet colored over basic of wrong color")
+        void prefersMatchingColoredOverOtherBasic() {
+            // [Island, Mountain] for cost {R} — Mountain should be picked even though it's later.
+            addUntappedLand("Island", ManaColor.BLUE);
+            addUntappedLand("Mountain", ManaColor.RED);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
+                return null;
+            }).when(action).tap(eq(1), eq(null));
+
+            manager.tapLandsForCost(gd, player1Id, "{R}", 0, action);
+
+            verify(action).tap(1, null);
+            verify(action, never()).tap(eq(0), any());
+        }
+
+        @Test
+        @DisplayName("taps both Mountains for 1RR even when Islands precede them on battlefield")
+        void tapsRightColorForDoubleRed() {
+            // [Island, Island, Mountain, Mountain] for cost {1}{R}{R}.
+            // Old slot-order iteration would tap Island, Island, Mountain and fail (R=1 < 2).
+            // Color-aware picking should tap both Mountains first, then one Island for generic.
+            addUntappedLand("Island 1", ManaColor.BLUE);
+            addUntappedLand("Island 2", ManaColor.BLUE);
+            addUntappedLand("Mountain 1", ManaColor.RED);
+            addUntappedLand("Mountain 2", ManaColor.RED);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                int idx = invocation.getArgument(0);
+                Permanent perm = gd.playerBattlefields.get(player1Id).get(idx);
+                ManaColor color = perm.getCard().getName().startsWith("Mountain") ? ManaColor.RED : ManaColor.BLUE;
+                gd.playerManaPools.get(player1Id).add(color, 1);
+                return null;
+            }).when(action).tap(any(int.class), eq(null));
+
+            manager.tapLandsForCost(gd, player1Id, "{1}{R}{R}", 0, action);
+
+            // Both Mountains must be tapped for the RR requirement
+            verify(action).tap(2, null);
+            verify(action).tap(3, null);
+            // And exactly one Island covers the generic 1
+            ManaPool pool = gd.playerManaPools.get(player1Id);
+            assertThat(pool.get(ManaColor.RED)).isEqualTo(2);
+            assertThat(pool.get(ManaColor.BLUE)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("prefers specialized basic over dual land when both can pay colored")
+        void prefersBasicOverDual() {
+            // Rootbound Crag (R/G) at index 0, Mountain at index 1. Cost {R}.
+            // Both can pay {R}, but Mountain is specialized so should be tapped to save the dual.
+            addUntappedDualLand("Rootbound Crag", ManaColor.RED, ManaColor.GREEN);
+            addUntappedLand("Mountain", ManaColor.RED);
+
+            AiManaManager.ManaTapAction action = mock(AiManaManager.ManaTapAction.class);
+            lenient().doAnswer(invocation -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.RED, 1);
+                return null;
+            }).when(action).tap(eq(1), eq(null));
+
+            manager.tapLandsForCost(gd, player1Id, "{R}", 0, action);
+
+            verify(action).tap(1, null);
+            verify(action, never()).tap(eq(0), any());
         }
     }
 

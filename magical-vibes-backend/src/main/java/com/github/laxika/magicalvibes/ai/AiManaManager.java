@@ -27,7 +27,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -169,15 +171,20 @@ public class AiManaManager {
 
     /**
      * Adds mana from activated mana abilities to the virtual pool.
-     * For permanents with multiple free-tap mana abilities (e.g. dual lands),
-     * all possible colors are added but the total is corrected via flexibleOvercount
-     * since the permanent can only be tapped once.
+     * For permanents with multiple free-tap mana abilities (e.g. dual lands, pain lands),
+     * all possible colors are added but the source can only be tapped once. The total
+     * and per-color inflation is recorded on the {@link VirtualManaPool} so
+     * {@code canPay} sees the actual realizable mana.
      *
      * @param permanent the permanent on the battlefield (null for hypothetical card evaluation)
      */
     private void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature, Permanent permanent,
                                                         GameData gameData, UUID playerId) {
-        int manaAbilityCount = 0;
+        EnumMap<ManaColor, Integer> totalByColor = new EnumMap<>(ManaColor.class);
+        EnumMap<ManaColor, Integer> maxPerAbilityByColor = new EnumMap<>(ManaColor.class);
+        int totalAdded = 0;
+        int maxAbilityTotal = 0;
+
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
             if (!isFreeTapManaAbility(ability)) {
                 continue;
@@ -188,35 +195,56 @@ public class AiManaManager {
             if (!canMeetTimingRestriction(ability, gameData, playerId, permanent)) {
                 continue;
             }
-            manaAbilityCount++;
+
+            EnumMap<ManaColor, Integer> abilityByColor = new EnumMap<>(ManaColor.class);
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof AwardManaEffect manaEffect) {
-                    virtual.add(manaEffect.color(), manaEffect.amount());
-                    if (isCreature) {
-                        virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
-                    }
+                    abilityByColor.merge(manaEffect.color(), manaEffect.amount(), Integer::sum);
                 } else if (effect instanceof AwardAnyColorManaEffect aace) {
-                    virtual.add(ManaColor.COLORLESS, aace.amount());
-                    if (isCreature) {
-                        virtual.addCreatureMana(ManaColor.COLORLESS, aace.amount());
-                    }
+                    abilityByColor.merge(ManaColor.COLORLESS, aace.amount(), Integer::sum);
                 } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
                     if (permanent != null) {
                         int count = permanent.getChargeCounters();
                         if (count > 0) {
-                            virtual.add(ManaColor.COLORLESS, count);
-                            if (isCreature) {
-                                virtual.addCreatureMana(ManaColor.COLORLESS, count);
-                            }
+                            abilityByColor.merge(ManaColor.COLORLESS, count, Integer::sum);
                         }
                     }
                 }
             }
+
+            int abilityTotal = 0;
+            for (Map.Entry<ManaColor, Integer> e : abilityByColor.entrySet()) {
+                ManaColor color = e.getKey();
+                int amount = e.getValue();
+                virtual.add(color, amount);
+                if (isCreature) {
+                    virtual.addCreatureMana(color, amount);
+                }
+                totalByColor.merge(color, amount, Integer::sum);
+                maxPerAbilityByColor.merge(color, amount, Integer::max);
+                abilityTotal += amount;
+            }
+            totalAdded += abilityTotal;
+            if (abilityTotal > maxAbilityTotal) {
+                maxAbilityTotal = abilityTotal;
+            }
         }
-        // Each permanent can only be tapped once, but we added mana for all abilities.
-        // Track the over-count so getTotal() returns the correct effective total.
-        if (manaAbilityCount > 1 && virtual instanceof VirtualManaPool vmp) {
-            vmp.addFlexibleOvercount(manaAbilityCount - 1);
+
+        // The source can only be tapped once, but we added mana for every ability.
+        // Correct the over-counting on the virtual pool:
+        //   flexibleOvercount (total)     = totalAdded - maxAbilityTotal
+        //   perColorOvercount[c] (each c) = sum of c across abilities - max c in any single ability
+        if (virtual instanceof VirtualManaPool vmp) {
+            int totalOvercount = totalAdded - maxAbilityTotal;
+            if (totalOvercount > 0) {
+                vmp.addFlexibleOvercount(totalOvercount);
+            }
+            for (Map.Entry<ManaColor, Integer> e : totalByColor.entrySet()) {
+                int perColorOvercount = e.getValue() - maxPerAbilityByColor.getOrDefault(e.getKey(), 0);
+                if (perColorOvercount > 0) {
+                    vmp.addPerColorOvercount(e.getKey(), perColorOvercount);
+                }
+            }
         }
     }
 
@@ -294,42 +322,18 @@ public class AiManaManager {
         // a NEW input prompt (e.g. color choice), not when we're already awaiting
         // input for something else (e.g. ATTACKER_DECLARATION during attack tax payment).
         AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
-        for (int i = 0; i < battlefield.size(); i++) {
-            Permanent perm = battlefield.get(i);
-            if (perm.isTapped()) {
+        while (true) {
+            int index = pickBestTapIndex(gameData, aiPlayerId, battlefield, cost, currentPool,
+                    skipChoiceSources, false, visited);
+            if (index < 0) {
+                return;
+            }
+            visited.add(battlefield.get(index));
+            if (!tapCandidate(gameData, aiPlayerId, battlefield, index, cost, currentPool, action)) {
                 continue;
             }
-            if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
-                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
-                continue;
-            }
-            if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
-                continue;
-            }
-
-            int sizeBefore = battlefield.size();
-            if (hasOnTapManaEffects(perm.getCard())) {
-                action.tap(i, null);
-            } else {
-                // Skip mana abilities that would trigger a color choice (e.g. Birds of Paradise)
-                // when paying attack tax, to avoid overwriting the ATTACKER_DECLARATION state.
-                if (skipChoiceSources && wouldManaAbilityTriggerChoice(perm.getCard())) {
-                    continue;
-                }
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm, gameData, aiPlayerId);
-                if (abilityIndex == null) {
-                    continue;
-                }
-                action.tap(i, abilityIndex);
-            }
-            // If the tap action removed a permanent (e.g. SacrificeSelfCost), adjust
-            // the loop index so we don't skip the next permanent in the list.
-            int removed = sizeBefore - battlefield.size();
-            if (removed > 0) {
-                i -= removed;
-            }
-
             currentPool = gameData.playerManaPools.get(aiPlayerId);
             if (cost.canPay(currentPool, costModifier)) {
                 return;
@@ -354,38 +358,18 @@ public class AiManaManager {
         }
 
         AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
-        for (int i = 0; i < battlefield.size(); i++) {
-            Permanent perm = battlefield.get(i);
-            if (perm.isTapped()) {
+        while (true) {
+            int index = pickBestTapIndex(gameData, aiPlayerId, battlefield, cost, currentPool,
+                    false, true, visited);
+            if (index < 0) {
+                return;
+            }
+            visited.add(battlefield.get(index));
+            if (!tapCandidate(gameData, aiPlayerId, battlefield, index, cost, currentPool, action)) {
                 continue;
             }
-            if (!gameQueryService.isCreature(gameData, perm)) {
-                continue;
-            }
-            if (perm.isSummoningSick()
-                    && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
-                continue;
-            }
-            if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
-                continue;
-            }
-
-            int sizeBefore = battlefield.size();
-            if (hasOnTapManaEffects(perm.getCard())) {
-                action.tap(i, null);
-            } else {
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm, gameData, aiPlayerId);
-                if (abilityIndex == null) {
-                    continue;
-                }
-                action.tap(i, abilityIndex);
-            }
-            int removed = sizeBefore - battlefield.size();
-            if (removed > 0) {
-                i -= removed;
-            }
-
             currentPool = gameData.playerManaPools.get(aiPlayerId);
             if (cost.canPayCreatureOnly(currentPool, costModifier)) {
                 return;
@@ -400,13 +384,7 @@ public class AiManaManager {
         ManaCost cost = new ManaCost(card.getManaCost());
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
-        boolean alreadyPaid;
-        if (card.getXColorRestriction() != null) {
-            alreadyPaid = cost.canPay(currentPool, xValue, card.getXColorRestriction(), costModifier);
-        } else {
-            alreadyPaid = cost.canPay(currentPool, xValue + costModifier);
-        }
-        if (alreadyPaid) {
+        if (isXSpellPaid(cost, card, currentPool, xValue, costModifier)) {
             return;
         }
 
@@ -416,13 +394,86 @@ public class AiManaManager {
         }
 
         AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+
+        while (true) {
+            int index = pickBestTapIndex(gameData, aiPlayerId, battlefield, cost, currentPool,
+                    false, false, visited);
+            if (index < 0) {
+                return;
+            }
+            visited.add(battlefield.get(index));
+            if (!tapCandidate(gameData, aiPlayerId, battlefield, index, cost, currentPool, action)) {
+                continue;
+            }
+            currentPool = gameData.playerManaPools.get(aiPlayerId);
+            if (isXSpellPaid(cost, card, currentPool, xValue, costModifier)) {
+                return;
+            }
+            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
+                return;
+            }
+        }
+    }
+
+    private static boolean isXSpellPaid(ManaCost cost, Card card, ManaPool pool, int xValue, int costModifier) {
+        if (card.getXColorRestriction() != null) {
+            return cost.canPay(pool, xValue, card.getXColorRestriction(), costModifier);
+        }
+        return cost.canPay(pool, xValue + costModifier);
+    }
+
+    /**
+     * Taps the permanent at {@code index} for mana. Returns {@code true} if the tap
+     * action ran, {@code false} if the candidate is no longer usable (e.g. a mana
+     * ability that would trigger a color choice under {@code skipChoiceSources}).
+     * The method adjusts for the edge case where the tap action removes the permanent
+     * from the battlefield (e.g. SacrificeSelfCost) — callers re-query the battlefield
+     * list each iteration so index invalidation is not a concern here.
+     */
+    private boolean tapCandidate(GameData gameData, UUID aiPlayerId, List<Permanent> battlefield,
+                                 int index, ManaCost cost, ManaPool currentPool, ManaTapAction action) {
+        Permanent perm = battlefield.get(index);
+        Card card = perm.getCard();
+        if (hasOnTapManaEffects(card)) {
+            action.tap(index, null);
+            return true;
+        }
+        Integer abilityIndex = chooseBestManaAbilityIndex(card, cost, currentPool, perm, gameData, aiPlayerId);
+        if (abilityIndex == null) {
+            return false;
+        }
+        action.tap(index, abilityIndex);
+        return true;
+    }
+
+    /**
+     * Picks the battlefield index of the best untapped mana source to tap next,
+     * prioritizing sources that produce a color still unmet by the current cost.
+     * Permanents in {@code visited} are skipped (already picked in a previous iteration)
+     * so the loop never retargets the same source twice in one tapping pass.
+     * Returns -1 if no usable candidate remains.
+     */
+    private int pickBestTapIndex(GameData gameData, UUID aiPlayerId, List<Permanent> battlefield,
+                                  ManaCost cost, ManaPool currentPool,
+                                  boolean skipChoiceSources, boolean creaturesOnly,
+                                  Set<Permanent> visited) {
+        int bestIndex = -1;
+        int bestScore = Integer.MIN_VALUE;
 
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent perm = battlefield.get(i);
+            if (visited.contains(perm)) {
+                continue;
+            }
             if (perm.isTapped()) {
                 continue;
             }
-            if (gameQueryService.isCreature(gameData, perm) && perm.isSummoningSick()
+            boolean isCreature = gameQueryService.isCreature(gameData, perm);
+            if (creaturesOnly && !isCreature) {
+                continue;
+            }
+            if (isCreature && perm.isSummoningSick()
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) {
                 continue;
             }
@@ -430,35 +481,90 @@ public class AiManaManager {
                 continue;
             }
 
-            int sizeBefore = battlefield.size();
-            if (hasOnTapManaEffects(perm.getCard())) {
-                action.tap(i, null);
-            } else {
-                Integer abilityIndex = chooseBestManaAbilityIndex(perm.getCard(), cost, currentPool, perm, gameData, aiPlayerId);
+            Card card = perm.getCard();
+            boolean hasOnTap = hasOnTapManaEffects(card);
+            if (!hasOnTap) {
+                if (skipChoiceSources && wouldManaAbilityTriggerChoice(card)) {
+                    continue;
+                }
+                Integer abilityIndex = chooseBestManaAbilityIndex(card, cost, currentPool, perm, gameData, aiPlayerId);
                 if (abilityIndex == null) {
                     continue;
                 }
-                action.tap(i, abilityIndex);
-            }
-            int removed = sizeBefore - battlefield.size();
-            if (removed > 0) {
-                i -= removed;
             }
 
-            currentPool = gameData.playerManaPools.get(aiPlayerId);
-            boolean canPayNow;
-            if (card.getXColorRestriction() != null) {
-                canPayNow = cost.canPay(currentPool, xValue, card.getXColorRestriction(), costModifier);
-            } else {
-                canPayNow = cost.canPay(currentPool, xValue + costModifier);
-            }
-            if (canPayNow) {
-                return;
-            }
-            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
-                return;
+            int score = scoreTapCandidate(card, cost, currentPool);
+            if (score > bestScore) {
+                bestScore = score;
+                bestIndex = i;
             }
         }
+        return bestIndex;
+    }
+
+    /**
+     * Scores a tap candidate based on how well its produced colors match the unmet
+     * colored requirements of the cost. Higher scores tap earlier. Priorities:
+     * <ol>
+     *     <li>Candidates that can produce an unmet colored requirement rank highest.
+     *         Among those, more specialized sources (fewer possible colors) win so
+     *         versatile dual/pain lands are saved for later demand.</li>
+     *     <li>When all colored needs are met, any source is fine for generic cost;
+     *         we still prefer specialized ones to preserve flexibility.</li>
+     *     <li>Candidates that cannot help an unmet color are last-resort.</li>
+     * </ol>
+     * Sources with side-effects (e.g. pain land damage) get a small penalty.
+     */
+    private int scoreTapCandidate(Card card, ManaCost cost, ManaPool currentPool) {
+        Set<ManaColor> produced = getProducedColors(card);
+        Map<ManaColor, Integer> coloredCosts = cost.getColoredCosts();
+
+        boolean helpsUnmet = false;
+        boolean anyUnmet = false;
+        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
+            int unmet = entry.getValue() - currentPool.get(entry.getKey());
+            if (unmet > 0) {
+                anyUnmet = true;
+                if (produced.contains(entry.getKey())) {
+                    helpsUnmet = true;
+                }
+            }
+        }
+
+        int versatilityPenalty = Math.max(0, produced.size() - 1) * 5;
+        int score;
+        if (anyUnmet && helpsUnmet) {
+            score = 100 - versatilityPenalty;
+        } else if (anyUnmet) {
+            // Unmet colored demand exists but this source can't help — save for generic/later.
+            score = 10 - versatilityPenalty / 5;
+        } else {
+            // All colored demand met — any source works for generic. Prefer specialized.
+            score = 50 - versatilityPenalty;
+        }
+
+        if (hasManaAbilityWithDamageCost(card)) {
+            score -= 2;
+        }
+        return score;
+    }
+
+    /**
+     * Returns true if any free-tap mana ability on this card has a
+     * {@link DealDamageToControllerEffect} side effect (pain lands).
+     */
+    private static boolean hasManaAbilityWithDamageCost(Card card) {
+        for (ActivatedAbility ability : card.getActivatedAbilities()) {
+            if (!isFreeTapManaAbility(ability)) {
+                continue;
+            }
+            for (CardEffect effect : ability.getEffects()) {
+                if (effect instanceof DealDamageToControllerEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     int calculateMaxAffordableX(Card card, ManaPool pool, int costModifier) {
