@@ -58,6 +58,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -501,6 +502,96 @@ class MediumAiDecisionEngineTest {
 
             verify(mockMessageHandler).handlePlayCard(any(), any());
             verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+        }
+
+        // ===== Identity-based cast detection (explore-refill regression) =====
+
+        @Test
+        @DisplayName("Medium AI detects cast success when ETB refills hand with a land (e.g. Explore)")
+        void detectsCastSuccessWhenEtbRefillsHandWithLand() throws Exception {
+            // Regression: Queen's Agent ETB triggers Explore which can refill hand with a land,
+            // leaving hand.size() unchanged. The fix uses identity (hand.contains) not size.
+            Card creature = new Card();
+            creature.setName("Queen's Agent");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{5}{B}");
+            creature.setPower(3);
+            creature.setToughness(3);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
+
+            ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
+            pool.add(ManaColor.BLACK, 1);
+            pool.add(ManaColor.COLORLESS, 5);
+
+            Mockito.doAnswer(inv -> {
+                List<Card> hand = mockGd.playerHands.get(mockAiPlayer.getId());
+                hand.remove(creature);
+                Card revealedLand = new Card();
+                revealedLand.setName("Forest");
+                revealedLand.setType(CardType.LAND);
+                hand.add(revealedLand);
+                return null;
+            }).when(mockMessageHandler).handlePlayCard(any(), any());
+
+            createEngine().handleMessage("GAME_STATE", "");
+
+            verify(mockMessageHandler).handlePlayCard(any(), any());
+            verify(mockMessageHandler, never()).handlePassPriority(any(), any());
+        }
+
+        @Test
+        @DisplayName("Medium AI still detects genuine silent failure when hand has other cards")
+        void detectsGenuineFailureWhenHandHasOtherCards() throws Exception {
+            Card creature = new Card();
+            creature.setName("Test Bear");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{1}{G}");
+            creature.setPower(2);
+            creature.setToughness(2);
+            Card sibling = new Card();
+            sibling.setName("Other Card");
+            sibling.setType(CardType.SORCERY);
+            sibling.setManaCost("{10}{U}{U}");
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(sibling);
+
+            ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
+            pool.add(ManaColor.GREEN, 1);
+            pool.add(ManaColor.COLORLESS, 1);
+
+            createEngine().handleMessage("GAME_STATE", "");
+
+            verify(mockMessageHandler).handlePlayCard(any(), any());
+            verify(mockMessageHandler).handlePassPriority(any(), any());
+        }
+
+        @Test
+        @DisplayName("Medium AI does not throw when ETB refills hand with a null-cost land")
+        void noExceptionWhenEtbRefillsHandWithNullCostLand() throws Exception {
+            Card creature = new Card();
+            creature.setName("Queen's Agent");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{5}{B}");
+            creature.setPower(3);
+            creature.setToughness(3);
+            mockGd.playerHands.get(mockAiPlayer.getId()).add(creature);
+
+            ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());
+            pool.add(ManaColor.BLACK, 1);
+            pool.add(ManaColor.COLORLESS, 5);
+
+            Mockito.doAnswer(inv -> {
+                List<Card> hand = mockGd.playerHands.get(mockAiPlayer.getId());
+                hand.remove(creature);
+                Card revealedLand = new Card();
+                revealedLand.setName("Forest");
+                revealedLand.setType(CardType.LAND);
+                hand.add(revealedLand);
+                return null;
+            }).when(mockMessageHandler).handlePlayCard(any(), any());
+
+            assertThatCode(() -> createEngine().handleMessage("GAME_STATE", ""))
+                    .doesNotThrowAnyException();
         }
 
         @Test

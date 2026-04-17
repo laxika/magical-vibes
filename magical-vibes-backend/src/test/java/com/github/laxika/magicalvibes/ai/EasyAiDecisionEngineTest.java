@@ -49,6 +49,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -319,6 +320,104 @@ class EasyAiDecisionEngineTest {
 
         verify(messageHandler).handlePlayCard(any(), any());
         verify(messageHandler, never()).handlePassPriority(any(), any());
+    }
+
+    // ===== Identity-based cast detection (explore-refill regression) =====
+
+    @Test
+    @DisplayName("Easy AI detects cast success when ETB refills hand with a land (e.g. Explore)")
+    void detectsCastSuccessWhenEtbRefillsHandWithLand() throws Exception {
+        // Regression: Queen's Agent ETB triggers Explore which can refill hand with a land,
+        // leaving hand.size() unchanged. The fix uses identity (hand.contains) not size.
+        Card creature = new Card();
+        creature.setName("Queen's Agent");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{5}{B}");
+        creature.setPower(3);
+        creature.setToughness(3);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.BLACK, 1);
+        pool.add(ManaColor.COLORLESS, 5);
+
+        Mockito.doAnswer(inv -> {
+            // Simulate explore: remove the creature from hand, add a land (null mana cost)
+            List<Card> hand = gd.playerHands.get(aiPlayer.getId());
+            hand.remove(creature);
+            Card revealedLand = new Card();
+            revealedLand.setName("Forest");
+            revealedLand.setType(CardType.LAND);
+            // Lands have null manaCost — this is what triggered the downstream NPE
+            hand.add(revealedLand);
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        verify(messageHandler).handlePlayCard(any(), any());
+        // Cast succeeded (creature is no longer in hand) — AI must NOT pass priority
+        verify(messageHandler, never()).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI still detects genuine silent failure when hand has other cards")
+    void detectsGenuineFailureWhenHandHasOtherCards() throws Exception {
+        // Hand has two cards — the castable creature plus a sibling.
+        // Simulate a silent failure (handlePlayCard does nothing). Size-based detection
+        // would also work here, but identity detection must still see the creature in hand.
+        Card creature = new Card();
+        creature.setName("Test Bear");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{1}{G}");
+        creature.setPower(2);
+        creature.setToughness(2);
+        Card sibling = new Card();
+        sibling.setName("Other Card");
+        sibling.setType(CardType.SORCERY);
+        sibling.setManaCost("{10}{U}{U}"); // Unaffordable — AI won't pick it
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+        gd.playerHands.get(aiPlayer.getId()).add(sibling);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.GREEN, 1);
+        pool.add(ManaColor.COLORLESS, 1);
+
+        createEngine().handleMessage("GAME_STATE", "");
+
+        verify(messageHandler).handlePlayCard(any(), any());
+        verify(messageHandler).handlePassPriority(any(), any());
+    }
+
+    @Test
+    @DisplayName("Easy AI does not throw when ETB refills hand with a null-cost land")
+    void noExceptionWhenEtbRefillsHandWithNullCostLand() throws Exception {
+        // Guards against NPE: before the fix, the stale-hand detection returned "failed",
+        // leading downstream code paths to operate on a now-land card with null mana cost.
+        Card creature = new Card();
+        creature.setName("Queen's Agent");
+        creature.setType(CardType.CREATURE);
+        creature.setManaCost("{5}{B}");
+        creature.setPower(3);
+        creature.setToughness(3);
+        gd.playerHands.get(aiPlayer.getId()).add(creature);
+
+        ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
+        pool.add(ManaColor.BLACK, 1);
+        pool.add(ManaColor.COLORLESS, 5);
+
+        Mockito.doAnswer(inv -> {
+            List<Card> hand = gd.playerHands.get(aiPlayer.getId());
+            hand.remove(creature);
+            Card revealedLand = new Card();
+            revealedLand.setName("Forest");
+            revealedLand.setType(CardType.LAND);
+            hand.add(revealedLand);
+            return null;
+        }).when(messageHandler).handlePlayCard(any(), any());
+
+        assertThatCode(() -> createEngine().handleMessage("GAME_STATE", ""))
+                .doesNotThrowAnyException();
     }
 
     // ===== Blocker eligibility uses canBlock =====

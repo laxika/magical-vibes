@@ -206,7 +206,6 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
-        int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;
         final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
@@ -217,11 +216,12 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
-        if (hand.size() >= handSizeBefore) {
-            Card failedCard = hand.size() > cardIndex ? hand.get(cardIndex) : null;
+        // Identity check: hand size alone is unreliable because ETB/cast triggers
+        // can add cards back to hand (e.g. Explore), masking a successful cast.
+        if (hand.contains(card)) {
             ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
             log.warn("AI (Easy): PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
-                    gameId, failedCard != null ? failedCard.getName() : "?", cardIndex,
+                    gameId, card.getName(), cardIndex,
                     gameData.currentStep, aiPlayer.getId().equals(gameData.activePlayerId),
                     gameData.stack.isEmpty(), actualPool != null ? actualPool.toMap() : "null",
                     gameData.priorityPassedBy);
@@ -329,7 +329,6 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
             return true; // Mana ability triggered a pending choice; will resume after it resolves
         }
-        int handSizeBefore = hand.size();
         final UUID finalTargetId = targetId;
         final Integer finalXValue = xValue;
         final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
@@ -338,7 +337,9 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         final List<UUID> finalMultiTargetIds = multiTargetIds;
         send(() -> messageHandler.handlePlayCard(selfConnection,
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
-        if (hand.size() >= handSizeBefore) {
+        // Identity check: hand size alone is unreliable because ETB/cast triggers
+        // can add cards back to hand (e.g. Explore), masking a successful cast.
+        if (hand.contains(card)) {
             log.warn("AI: Instant cast failed silently in game {}", gameId);
             return false;
         }

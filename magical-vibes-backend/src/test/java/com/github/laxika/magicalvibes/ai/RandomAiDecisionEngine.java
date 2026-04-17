@@ -270,7 +270,6 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             if (tapManaForSpell(gameData, card, xValue, targetingTax)) {
                 return true; // Mana ability triggered a pending choice; will resume after it resolves
             }
-            int handSizeBefore = hand.size();
             final UUID finalTargetId = targetId;
             final Integer finalXValue = xValue;
             final Integer finalExileGraveyardCardIndex = exileGraveyardCardIndex;
@@ -281,7 +280,10 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             send(() -> messageHandler.handlePlayCard(selfConnection,
                     new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null)));
 
-            if (hand.size() >= handSizeBefore) {
+            // Identity check: hand size alone is unreliable because ETB/cast triggers
+            // can add cards back to hand (e.g. Explore revealing a land), masking a
+            // successful cast.
+            if (hand.contains(card)) {
                 ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
                 log.warn("Random AI: PlayCard failed silently in game {}. Card='{}' index={} step={} activePlayer={} isActive={} stackEmpty={} actualPool={} virtualPool={} priorityPassed={}",
                         gameId, card.getName(), cardIndex, gameData.currentStep,

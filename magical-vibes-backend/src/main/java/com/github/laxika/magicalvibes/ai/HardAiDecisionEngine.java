@@ -192,14 +192,16 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
+        Card landCard = hand.get(bestLandIndex);
         log.info("AI (Hard): Playing land {} (best of {} options, spell value={}, coverage={}) in game {}",
-                hand.get(bestLandIndex).getName(), landIndices.size(),
+                landCard.getName(), landIndices.size(),
                 String.format("%.1f", bestSpellValue), bestColorCoverage, gameId);
-        int handSizeBefore = hand.size();
         final int idx = bestLandIndex;
         send(() -> messageHandler.handlePlayCard(selfConnection,
                 new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
-        if (hand.size() >= handSizeBefore) {
+        // Identity check: hand size alone is unreliable because landfall/ETB triggers
+        // can add cards to hand (e.g. "draw a card" effects), masking a successful play.
+        if (hand.contains(landCard)) {
             log.warn("AI: Land play failed silently in game {}", gameId);
             return false;
         }
@@ -1063,7 +1065,6 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (tapManaForSpell(gameData, plan.card, plan.xValue, plan.targetingTax)) {
             return true;
         }
-        int handSizeBefore = hand.size();
         final int idx = plan.handIndex;
         final UUID fTargetId = plan.targetId;
         final Integer fXValue = plan.xValue;
@@ -1075,11 +1076,12 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, null, null, fSacrifice,
                         null, null, null, null, null, fExileIndices, null, null, null)));
-        if (hand.size() >= handSizeBefore) {
-            Card failedCard = hand.size() > idx ? hand.get(idx) : null;
+        // Identity check: hand size alone is unreliable because ETB/cast triggers
+        // can add cards back to hand (e.g. Explore), masking a successful cast.
+        if (hand.contains(plan.card)) {
             ManaPool actualPool = gameData.playerManaPools.get(aiPlayer.getId());
             log.warn("{}: PlayCard failed silently in game {}. Card='{}' index={} step={} isActive={} stackEmpty={} pool={} priorityPassed={}",
-                    logLabel, gameId, failedCard != null ? failedCard.getName() : "?", idx,
+                    logLabel, gameId, plan.card.getName(), idx,
                     gameData.currentStep, aiPlayer.getId().equals(gameData.activePlayerId),
                     gameData.stack.isEmpty(), actualPool != null ? actualPool.toMap() : "null",
                     gameData.priorityPassedBy);
@@ -1345,7 +1347,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     // ===== Spell Casting (evaluator-based fallback) =====
 
-    private boolean tryCastSpell(GameData gameData) {
+    boolean tryCastSpell(GameData gameData) {
         List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
         if (hand == null) {
             return false;
@@ -2655,12 +2657,13 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (tapManaForSpell(gameData, burnCard, null, 0)) {
                 return true; // Mana ability triggered a pending choice
             }
-            int handSizeBefore = hand.size();
             final int idx = cardIndex;
             final UUID targetId = opponentId;
             send(() -> messageHandler.handlePlayCard(selfConnection,
                     new PlayCardRequest(idx, null, targetId, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
-            if (hand.size() >= handSizeBefore) {
+            // Identity check: hand size alone is unreliable because ETB/cast triggers
+            // can add cards back to hand, masking a successful cast.
+            if (hand.contains(burnCard)) {
                 log.warn("AI (Hard): Burn-to-face lethal cast failed in game {}", gameId);
                 return false;
             }
