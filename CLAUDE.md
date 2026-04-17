@@ -19,6 +19,8 @@ When implementing a card, follow this lookup order:
 3. **EFFECTS_QUICK_REFERENCE.md** — Compact lookup of all ~210 effects. Check when the oracle text map doesn't cover your case.
 4. Only consult the detailed docs below when the above aren't enough.
 
+**Important: Never `Read` these doc files in full.** They are large and will waste tokens. Always use `Grep` with keywords extracted from the card's oracle text (e.g. `"prevent.*combat"`, `"tap.*attacking"`, `"don't untap"`, `"destroy.*target"`). This returns only the relevant rows instead of thousands of lines.
+
 Full agent-docs reference:
 - EFFECTS_INDEX.md — Full details for every effect (detailed descriptions, usage notes).
 - ACTIVATED_ABILITY_GUIDE.md — All ActivatedAbility constructor overloads with "use this when" guidance, EffectSlot reference (all 28 slots with when each fires), and cost effects.
