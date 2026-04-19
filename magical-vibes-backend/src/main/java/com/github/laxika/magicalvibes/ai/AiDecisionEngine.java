@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
@@ -318,11 +319,16 @@ public abstract class AiDecisionEngine {
      * then taps lands to pay the tax before the declaration is sent.
      * Uses only mana sources that won't trigger interactive choices (e.g. skips
      * Birds of Paradise) to avoid corrupting the ATTACKER_DECLARATION interaction state.
+     *
+     * <p>Also enforces CR 508.1b: if the final list is a single attacker with
+     * "can't attack alone" (Jackal Familiar, etc.), drops it. Adding another
+     * attacker isn't safe once tax has been paid, so we just clear the list —
+     * AIs that want to keep Jackal attacking should pair it before calling this.
      */
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
         int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
         if (taxPerCreature <= 0 || attackerIndices.isEmpty()) {
-            return attackerIndices;
+            return dropLoneCantAttackAlone(gameData, attackerIndices);
         }
         int maxAffordable = getMaxAffordableAttackers(gameData);
         if (maxAffordable <= 0) {
@@ -345,7 +351,25 @@ public abstract class AiDecisionEngine {
                     .filter(idx -> idx < battlefield.size() && !battlefield.get(idx).isTapped())
                     .toList();
         }
-        return capped;
+        return dropLoneCantAttackAlone(gameData, capped);
+    }
+
+    /**
+     * CR 508.1b: if the only remaining attacker has "can't attack alone",
+     * return an empty list. Used as the final legality gate before declaration.
+     */
+    private List<Integer> dropLoneCantAttackAlone(GameData gameData, List<Integer> attackerIndices) {
+        if (attackerIndices.size() != 1) {
+            return attackerIndices;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
+        if (battlefield == null) {
+            return attackerIndices;
+        }
+        Permanent sole = battlefield.get(attackerIndices.getFirst());
+        boolean cantAttackAlone = sole.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance);
+        return cantAttackAlone ? List.of() : attackerIndices;
     }
 
     /**

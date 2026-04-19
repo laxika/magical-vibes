@@ -440,12 +440,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gameData, aiPlayer.getId(), availableIndices);
         attackerIndices = enforceMustAttack(attackerIndices, mustAttackIndices);
 
-        // CR 508.1b: if only one attacker selected and it can't attack alone, fix it
+        // CR 508.1b: if only one attacker selected and it can't attack alone, try to
+        // pair it with another available attacker before tax prep. prepareAttackersForTax
+        // applies a final safety net if it can't.
         if (attackerIndices.size() == 1) {
             Permanent sole = battlefield.get(attackerIndices.getFirst());
             if (sole.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(CantAttackOrBlockAloneEffect.class::isInstance)) {
-                // Try to add another random attacker; if none available, remove the lone attacker
                 List<Integer> others = new ArrayList<>(availableIndices);
                 others.removeAll(attackerIndices);
                 if (!others.isEmpty()) {

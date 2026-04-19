@@ -1805,6 +1805,71 @@ class AiDecisionEngineTest {
         assertThat(result).isEmpty();
     }
 
+    // ===== prepareAttackersForTax enforces CR 508.1b (can't attack alone) =====
+
+    @Test
+    @DisplayName("prepareAttackersForTax drops lone Jackal Familiar even without an attack tax")
+    void prepareAttackersForTaxDropsLoneJackalWithoutTax() {
+        // No opponent tax source. AI has Jackal + Bears, only Jackal is requested as attacker.
+        // Without this guard the AI would produce an illegal "Jackal attacks alone" declaration.
+        Permanent jackal = new Permanent(new com.github.laxika.magicalvibes.cards.j.JackalFamiliar());
+        jackal.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(jackal);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax drops Jackal Familiar when tax capping leaves it alone")
+    void prepareAttackersForTaxDropsJackalWhenTaxCapsCompanion() {
+        // Opponent has Baird (tax {1} per attacker).
+        Permanent baird = new Permanent(new BairdStewardOfArgive());
+        baird.setSummoningSick(false);
+        gd.playerBattlefields.get(human.getId()).add(baird);
+
+        // AI has Jackal at index 0 + Llanowar Elves at index 1 (only mana source, {G}).
+        // Max affordable = 1, so capped = [0] (Jackal). Elves gets tapped for tax and
+        // isn't kept, leaving Jackal alone — which must be dropped.
+        Permanent jackal = new Permanent(new com.github.laxika.magicalvibes.cards.j.JackalFamiliar());
+        jackal.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(jackal);
+
+        Permanent elves = new Permanent(new LlanowarElves());
+        elves.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(elves);
+
+        harness.forceActivePlayer(aiPlayer);
+        harness.forceStep(TurnStep.DECLARE_ATTACKERS);
+        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("prepareAttackersForTax keeps lone Jackal untouched when another attacker is present")
+    void prepareAttackersForTaxKeepsJackalWhenCompanionSurvives() {
+        // No tax — multi-attacker list stays as-is.
+        Permanent jackal = new Permanent(new com.github.laxika.magicalvibes.cards.j.JackalFamiliar());
+        jackal.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(jackal);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(aiPlayer.getId()).add(bears);
+
+        List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1));
+
+        assertThat(result).containsExactly(0, 1);
+    }
+
     // ===== tryPlayLand silent failure recovery =====
 
     @Nested
