@@ -129,35 +129,10 @@ public class AutoPassService {
             }
             if (gameData.status == GameStatus.FINISHED) return;
 
-            // When stack is non-empty, auto-pass for players who cannot respond
+            // When stack is non-empty, never auto-pass — players must explicitly pass
             if (!gameData.stack.isEmpty()) {
-                UUID stackPriorityHolder = gameQueryService.getPriorityPlayerId(gameData);
-                if (stackPriorityHolder == null) {
-                    // Both passed — resolve top of stack
-                    stackResolutionService.resolveTopOfStack(gameData);
-                    if (gameData.interaction.isAwaitingInput() || !gameData.pendingMayAbilities.isEmpty()) {
-                        gameBroadcastService.broadcastGameState(gameData);
-                        return;
-                    }
-                    gameData.priorityPassedBy.clear();
-                    continue;
-                }
-
-                List<Integer> stackPlayable = gameBroadcastService.getPlayableCardIndices(gameData, stackPriorityHolder);
-                boolean hasActivatable = hasInstantSpeedActivatedAbility(gameData, stackPriorityHolder);
-
-                if (!stackPlayable.isEmpty() || hasActivatable) {
-                    // Player can respond — stop and let them decide
-                    gameBroadcastService.broadcastGameState(gameData);
-                    return;
-                }
-
-                // Auto-pass for this player (no responses available)
-                String stackPlayerName = gameData.playerIdToName.get(stackPriorityHolder);
-                log.info("Game {} - Auto-passing priority for {} with stack (no responses available)",
-                        gameData.id, stackPlayerName);
-                gameData.priorityPassedBy.add(stackPriorityHolder);
-                continue;
+                gameBroadcastService.broadcastGameState(gameData);
+                return;
             }
 
             UUID priorityHolder = gameQueryService.getPriorityPlayerId(gameData);
