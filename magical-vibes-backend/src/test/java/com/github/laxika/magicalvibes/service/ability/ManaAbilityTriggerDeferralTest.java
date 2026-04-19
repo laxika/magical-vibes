@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.cards.c.ContaminatedBond;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeadenMyr;
+import com.github.laxika.magicalvibes.cards.r.RelicPutrescence;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.ShrineOfBoundlessGrowth;
 import com.github.laxika.magicalvibes.cards.v.ViridianRevel;
@@ -68,6 +71,17 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         return shrine;
     }
 
+    /**
+     * Arms {@code player} with a playable instant so {@code resolveAutoPass}
+     * stops instead of resolving the trigger and leaving us unable to inspect
+     * the intermediate stack state. Needed because CR 117.5 / our engine now
+     * auto-passes unresponsive players when the stack is non-empty.
+     */
+    private void armWithInstantResponse(Player player) {
+        harness.setHand(player, List.of(new Shock()));
+        harness.addMana(player, ManaColor.RED, 1);
+    }
+
     // =========================================================================
     // Core bug fix: sorcery-speed spell cast after mana-ability sacrifice
     // =========================================================================
@@ -82,6 +96,8 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             setupShrineScenario(2);
             harness.addMana(player2, ManaColor.GREEN, 1);
             harness.setHand(player2, List.of(new GrizzlyBears())); // costs {1}{G}
+            // Arm player1 with a response so auto-pass doesn't resolve the trigger.
+            armWithInstantResponse(player1);
 
             // Activate Shrine mana ability — sacrifices an artifact, triggering Viridian Revel.
             // Shrine is the only permanent on player2's battlefield → index 0.
@@ -105,6 +121,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             setupShrineScenario(3);
             harness.setHand(player2, List.of(new Divination())); // costs {2}{U}
             harness.addMana(player2, ManaColor.BLUE, 1);
+            armWithInstantResponse(player1);
 
             // Activate Shrine (index 0) — 3 colorless + 1 blue = enough for {2}{U}
             harness.activateAbility(player2, 0, null, null);
@@ -134,6 +151,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             setupShrineScenario(2);
             harness.addMana(player2, ManaColor.GREEN, 1);
             harness.setHand(player2, List.of(new GrizzlyBears()));
+            armWithInstantResponse(player1);
 
             harness.activateAbility(player2, 0, null, null);
             harness.castCreature(player2, 0);
@@ -152,6 +170,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             setupShrineScenario(3);
             harness.addMana(player2, ManaColor.BLUE, 1);
             harness.setHand(player2, List.of(new Divination()));
+            armWithInstantResponse(player1);
 
             harness.activateAbility(player2, 0, null, null);
             harness.castSorcery(player2, 0, 0);
@@ -176,6 +195,8 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         @DisplayName("Passing priority flushes pending mana-ability triggers to the stack")
         void passingPriorityFlushesPendingTriggers() {
             setupShrineScenario(1);
+            // Arm player1 so auto-pass stops once she has priority to respond to the trigger.
+            armWithInstantResponse(player1);
 
             // Activate Shrine mana ability (standalone, not paying for a spell)
             harness.activateAbility(player2, 0, null, null);
@@ -196,6 +217,10 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         @DisplayName("Priority is cleared when pending triggers are flushed via passPriority")
         void priorityClearedOnFlush() {
             setupShrineScenario(1);
+            // Arm player1 so after flush + auto-pass cascade, player1 is offered priority
+            // (auto-pass bails on line 149 of resolveAutoPass) and priorityPassedBy keeps
+            // the flush-cleared state we're asserting on.
+            armWithInstantResponse(player1);
 
             // Player1 (non-active) already passed, player2 (active) hasn't
             gd.priorityPassedBy.clear();
@@ -261,6 +286,8 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
 
             harness.addMana(player2, ManaColor.GREEN, 1);
             harness.setHand(player2, List.of(new GrizzlyBears()));
+            // Arm player1 so auto-pass bails on the top trigger instead of resolving.
+            armWithInstantResponse(player1);
 
             // Activate first shrine (index 0)
             harness.activateAbility(player2, 0, null, null);
@@ -299,6 +326,9 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         @DisplayName("Pending triggers are flushed to stack by resolveAutoPass")
         void resolveAutoPassFlushesPendingTriggers() {
             setupShrineScenario(1);
+            // Arm player1 so the trigger sits on the stack for inspection rather than
+            // resolving immediately via the auto-pass cascade.
+            armWithInstantResponse(player1);
 
             // Activate Shrine — trigger goes to pending
             harness.activateAbility(player2, 0, null, null);
@@ -369,6 +399,97 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
     }
 
     // =========================================================================
+    // CR 603.2: basic mana tap (AbilityActivationService.tapPermanent) defers
+    // enchanted-permanent-tap triggers (Relic Putrescence fuzz-bug repro)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("CR 603.2: basic-mana tap defers enchanted-permanent-tap triggers")
+    class BasicManaTapTriggerDeferral {
+
+        /**
+         * Puts a Leaden Myr (artifact creature, {T}: add {B}) on {@code controller}'s
+         * battlefield and attaches a Relic Putrescence controlled by the same player.
+         * Forces active player and main phase so tapPermanent will succeed.
+         */
+        private Permanent setupEnchantedMyr(Player controller) {
+            harness.addToBattlefield(controller, new LeadenMyr());
+            Permanent myr = gd.playerBattlefields.get(controller.getId()).getFirst();
+            myr.setSummoningSick(false);
+
+            Permanent aura = new Permanent(new RelicPutrescence());
+            aura.setAttachedTo(myr.getId());
+            gd.playerBattlefields.get(controller.getId()).add(aura);
+
+            harness.forceActivePlayer(controller);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            return myr;
+        }
+
+        @Test
+        @DisplayName("Tapping enchanted artifact for mana defers Relic Putrescence trigger")
+        void enchantedTapDefersTrigger() {
+            setupEnchantedMyr(player2);
+
+            harness.tapPermanent(player2, 0);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+            assertThat(gd.pendingManaAbilityTriggers.getFirst().getCard().getName())
+                    .isEqualTo("Relic Putrescence");
+            assertThat(gd.pendingManaAbilityTriggers.getFirst().getEntryType())
+                    .isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        }
+
+        @Test
+        @DisplayName("Sorcery-speed aura castable after tap-trigger (fuzz bug repro)")
+        void sorcerySpeedSpellCastableAfterTapTrigger() {
+            Permanent myr = setupEnchantedMyr(player2);
+            harness.addMana(player2, ManaColor.BLACK, 1); // plus {B} from tapping Leaden Myr
+            harness.setHand(player2, List.of(new ContaminatedBond())); // {2}{B}, enchant creature
+            // Arm player1 so auto-pass bails on the flushed trigger and we can inspect
+            // the stack (Contaminated Bond on bottom, Relic Putrescence trigger on top).
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.tapPermanent(player2, 0); // tap Leaden Myr → Relic Putrescence triggers, deferred
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+
+            // Before the fix this would throw "Card is not playable" because stackEmpty=false.
+            // (Contaminated Bond costs {2}{B}; we only have {1}{B}, but a second tap of the Myr
+            //  is illegal — so bump the pool directly to isolate the stack-empty check.)
+            harness.addMana(player2, ManaColor.BLACK, 1);
+            harness.castEnchantment(player2, 0, myr.getId());
+
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Contaminated Bond");
+            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Relic Putrescence");
+        }
+
+        @Test
+        @DisplayName("Passing priority flushes a deferred tap-trigger to the stack")
+        void passingPriorityFlushesDeferredTapTrigger() {
+            setupEnchantedMyr(player2);
+            // Arm player1 so auto-pass bails once the trigger is on the stack.
+            harness.setHand(player1, List.of(new Shock()));
+            harness.addMana(player1, ManaColor.RED, 1);
+
+            harness.tapPermanent(player2, 0);
+            assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+
+            harness.passPriority(player2);
+
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Relic Putrescence");
+        }
+    }
+
+    // =========================================================================
     // No-trigger case: mana ability without opponent trigger works normally
     // =========================================================================
 
@@ -392,6 +513,8 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
 
             harness.addMana(player2, ManaColor.GREEN, 1);
             harness.setHand(player2, List.of(new GrizzlyBears()));
+            // Arm player1 so auto-pass bails when the spell is on the stack.
+            armWithInstantResponse(player1);
 
             harness.activateAbility(player2, 0, null, null);
 

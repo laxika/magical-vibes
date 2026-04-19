@@ -559,10 +559,20 @@ public class SpellCastingService {
                 contributions.add(creatureColor != null ? ManaColor.fromCode(creatureColor.getCode()) : null);
                 validatedCreatures.add(creature);
             }
-            // Tap all convoke creatures (after validation to ensure atomic failure)
+            // Tap all convoke creatures (after validation to ensure atomic failure).
+            // CR 603.2 + 603.3: any "whenever enchanted permanent becomes tapped" triggers
+            // are deferred so they don't sit on the stack mid-cast; finishSpellCast()
+            // flushes pendingManaAbilityTriggers onto the stack above the spell.
+            int stackBeforeTriggers = gameData.stack.size();
             for (Permanent creature : validatedCreatures) {
                 creature.tap();
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, creature);
+            }
+            if (gameData.stack.size() > stackBeforeTriggers) {
+                List<StackEntry> deferred = new ArrayList<>(
+                        gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
+                gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
+                gameData.pendingManaAbilityTriggers.addAll(deferred);
             }
             convokeContributions = contributions;
         }

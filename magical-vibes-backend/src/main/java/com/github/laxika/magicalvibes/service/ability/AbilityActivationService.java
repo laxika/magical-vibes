@@ -189,13 +189,22 @@ public class AbilityActivationService {
 
         log.info("Game {} - {} taps {}", gameData.id, player.getUsername(), permanent.getCard().getName());
 
-        // Check for "whenever a player taps a land for mana" triggers (e.g. Manabarbs)
+        // CR 603.2 + 603.3: triggers from a mana ability (a land tapping for mana or
+        // the enchanted permanent becoming tapped) wait until a player next would
+        // receive priority before going on the stack. Defer them into
+        // pendingManaAbilityTriggers so they don't block sorcery-speed spell casting
+        // when mana is being tapped to pay a cost.
+        int stackBeforeTriggers = gameData.stack.size();
         if (permanent.getCard().hasType(CardType.LAND)) {
             triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId());
         }
-
-        // Check for "whenever enchanted permanent becomes tapped" triggers (e.g. Relic Putrescence)
         triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+        if (gameData.stack.size() > stackBeforeTriggers) {
+            List<StackEntry> deferred = new ArrayList<>(
+                    gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
+            gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()).clear();
+            gameData.pendingManaAbilityTriggers.addAll(deferred);
+        }
 
         gameBroadcastService.broadcastGameState(gameData);
     }
