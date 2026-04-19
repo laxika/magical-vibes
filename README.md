@@ -33,4 +33,4 @@ An experimental online Magic game engine. The goal is to show that modern agents
 If you get stuck then ask Gemini. :) Or feel free to create an issue on GitHub.
 
 **How to run fizz tests from the command line:**
-- Card fuzzing: `.\gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.ai.RandomAiFuzzTest" -DrunCardFuzz=true -DfuzzGames=5 --info --rerun  > fuzz.log 2>&1`
+- Card fuzzing: `.\gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.ai.RandomAiFuzzTest" -DrunCardFuzz=true -DfuzzGames=5 -Dorg.gradle.jvmargs="-Xmx6g" --info --rerun  > fuzz.log 2>&1`
