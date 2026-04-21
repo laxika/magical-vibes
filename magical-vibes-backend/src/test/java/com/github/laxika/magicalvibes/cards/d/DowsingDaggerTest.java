@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LostVale;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -104,14 +105,17 @@ class DowsingDaggerTest extends BaseCardTest {
     // ===== Back face structure =====
 
     @Test
-    @DisplayName("Lost Vale has tap-for-3-mana-of-any-color on ON_TAP slot")
+    @DisplayName("Lost Vale has tap-for-3-mana-of-any-color activated ability")
     void backFaceHasManaAbility() {
         LostVale card = new LostVale();
 
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isInstanceOf(AwardAnyColorManaEffect.class);
-        AwardAnyColorManaEffect manaEffect = (AwardAnyColorManaEffect) card.getEffects(EffectSlot.ON_TAP).getFirst();
+        assertThat(card.getEffects(EffectSlot.ON_TAP)).isEmpty();
+        assertThat(card.getActivatedAbilities()).hasSize(1);
+        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
+        assertThat(ability.isRequiresTap()).isTrue();
+        assertThat(ability.getEffects()).hasSize(1);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardAnyColorManaEffect.class);
+        AwardAnyColorManaEffect manaEffect = (AwardAnyColorManaEffect) ability.getEffects().getFirst();
         assertThat(manaEffect.amount()).isEqualTo(3);
     }
 

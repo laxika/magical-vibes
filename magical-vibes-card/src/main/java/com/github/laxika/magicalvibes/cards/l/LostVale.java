@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
+
+import java.util.List;
 
 /**
  * Lost Vale — back face of Dowsing Dagger.
@@ -13,7 +15,11 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 public class LostVale extends Card {
 
     public LostVale() {
-        // {T}: Add three mana of any one color.
-        addEffect(EffectSlot.ON_TAP, new AwardAnyColorManaEffect(3));
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(new AwardAnyColorManaEffect(3)),
+                "{T}: Add three mana of any one color."
+        ));
     }
 }
