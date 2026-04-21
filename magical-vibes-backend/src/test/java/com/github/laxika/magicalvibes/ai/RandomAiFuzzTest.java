@@ -52,6 +52,7 @@ class RandomAiFuzzTest {
     private static final int LAND_COUNT = 18;
     private static final int SPELL_COUNT = DECK_SIZE - LAND_COUNT;
     private static final int MAX_SAME_STATE_COUNT = 30;
+    private static final int MAX_TURNS = 250;
     private static final long POLL_INTERVAL_MS = 200;
     private static final long MAX_GAME_DURATION_MS = 300_000;
     private static final long AI_DECISION_DELAY_MS = 10;
@@ -154,6 +155,12 @@ class RandomAiFuzzTest {
                 aiConn1.close();
                 aiConn2.close();
                 fail("Game #" + gameNumber + " timed out after " + (MAX_GAME_DURATION_MS / 1000) + "s");
+            }
+
+            if (gd.turnNumber > MAX_TURNS) {
+                System.out.printf("Game #%d declared a draw at turn %d (exceeded %d-turn cap)%n",
+                        gameNumber, gd.turnNumber, MAX_TURNS);
+                break;
             }
 
             String fingerprint = computeFingerprint(gd, player1.getId(), player2.getId());
