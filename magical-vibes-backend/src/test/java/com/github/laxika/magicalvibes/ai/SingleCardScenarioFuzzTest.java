@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,12 +41,12 @@ import static org.assertj.core.api.Assertions.fail;
  *
  * <p>Unlike {@link RandomAiFuzzTest} this skips turn progression entirely — each
  * iteration is a single cast + resolve. Each side of the battlefield is stuffed
- * with 30–50 random permanents (creatures, artifacts, enchantments, planeswalkers)
- * sampled from every registered printing to maximise the chance of triggering
- * static effects, cast triggers, and state-based-action cascades. Cards with
- * features this fuzzer doesn't model yet (X costs, modal spells, multi-target,
- * damage distribution, sacrifice costs, graveyard-exile costs, spell targets)
- * are skipped and counted.</p>
+ * with 30–50 random permanents plus up to {@value #AURA_MAX_PER_SIDE} auras
+ * attached to same-side permanents, and graveyards are seeded with up to
+ * {@value #GRAVEYARD_MAX_PER_SIDE} random instants/sorceries so graveyard
+ * interactions have material. Cards with features this fuzzer doesn't model yet
+ * (X costs, modal spells, multi-target, damage distribution, sacrifice costs,
+ * graveyard-exile costs, spell targets) are skipped and counted.</p>
  *
  * <p>System properties:
  * <ul>
@@ -62,11 +63,15 @@ class SingleCardScenarioFuzzTest {
     private static final int DEFAULT_ITERATIONS = 100;
     private static final int JUNK_MIN_PER_SIDE = 30;
     private static final int JUNK_MAX_PER_SIDE = 50;
+    private static final int AURA_MAX_PER_SIDE = 6;
+    private static final int GRAVEYARD_MAX_PER_SIDE = 10;
     private static final int MANA_PER_COLOR = 30;
     private static final int STACK_RESOLVE_STEPS = 40;
     private static final int STACK_INVARIANT_CAP = 200;
 
     private static List<CardPrinting> permanentPool;
+    private static List<CardPrinting> auraPool;
+    private static List<CardPrinting> spellPool;
 
     @Test
     void scenarioFuzz() {
@@ -77,7 +82,7 @@ class SingleCardScenarioFuzzTest {
         // Constructing a harness boots Spring + loads Scryfall oracle data into the
         // registry. Without this warm-up, Card.getName()/hasType() return nulls.
         new GameTestHarness();
-        initializePermanentPool();
+        initializePools();
 
         List<CardPrinting> targets = resolveTargetPrintings(cardFilter);
         if (targets.isEmpty()) {
@@ -133,6 +138,8 @@ class SingleCardScenarioFuzzTest {
 
         populateRandomBattlefield(harness, p1, rng);
         populateRandomBattlefield(harness, p2, rng);
+        populateRandomGraveyard(harness, p1, rng);
+        populateRandomGraveyard(harness, p2, rng);
         harness.setLife(p1, 1 + rng.nextInt(40));
         harness.setLife(p2, 1 + rng.nextInt(40));
         giveAllMana(harness, p1);
@@ -266,41 +273,88 @@ class SingleCardScenarioFuzzTest {
 
     private void populateRandomBattlefield(GameTestHarness harness, Player p, Random rng) {
         int count = JUNK_MIN_PER_SIDE + rng.nextInt(JUNK_MAX_PER_SIDE - JUNK_MIN_PER_SIDE + 1);
+        List<Permanent> field = harness.getGameData().playerBattlefields.get(p.getId());
         for (int i = 0; i < count; i++) {
             CardPrinting printing = permanentPool.get(rng.nextInt(permanentPool.size()));
             Permanent perm = harness.addToBattlefieldAndReturn(p, printing.createCard());
             perm.setSummoningSick(false);
         }
+
+        // Attach some auras to random same-side permanents. Pick attach targets from
+        // the pre-aura snapshot so auras can't end up enchanting other auras.
+        if (!auraPool.isEmpty()) {
+            List<Permanent> attachTargets = new ArrayList<>(field);
+            int auraCount = rng.nextInt(AURA_MAX_PER_SIDE + 1);
+            for (int i = 0; i < auraCount && !attachTargets.isEmpty(); i++) {
+                CardPrinting printing = auraPool.get(rng.nextInt(auraPool.size()));
+                Permanent auraPerm = harness.addToBattlefieldAndReturn(p, printing.createCard());
+                Permanent target = attachTargets.get(rng.nextInt(attachTargets.size()));
+                auraPerm.setAttachedTo(target.getId());
+            }
+        }
+    }
+
+    private void populateRandomGraveyard(GameTestHarness harness, Player p, Random rng) {
+        if (spellPool.isEmpty()) {
+            return;
+        }
+        int count = rng.nextInt(GRAVEYARD_MAX_PER_SIDE + 1);
+        List<Card> graveyard = harness.getGameData().playerGraveyards.get(p.getId());
+        for (int i = 0; i < count; i++) {
+            CardPrinting printing = spellPool.get(rng.nextInt(spellPool.size()));
+            graveyard.add(printing.createCard());
+        }
     }
 
     /**
-     * Builds a pool of permanent printings to use as random junk on battlefields.
-     * Excludes lands (played, not put directly), instants/sorceries (not permanents),
-     * and auras (orphaned auras on the battlefield are an invalid state).
+     * Splits every registered printing into three buckets:
+     * <ul>
+     *   <li>{@code permanentPool} — non-aura permanents (creatures, artifacts, enchantments, planeswalkers).
+     *       Used as battlefield junk.</li>
+     *   <li>{@code auraPool} — auras. Attached to a random same-side permanent when seeded onto a battlefield.
+     *       If an aura's attachment is illegal, state-based actions will put it into the graveyard — that's
+     *       accurate rules behaviour and part of the chaos.</li>
+     *   <li>{@code spellPool} — instants and sorceries. Seeded into graveyards so graveyard-interaction
+     *       effects (flashback, scavenge, delve, etc.) have something to chew on.</li>
+     * </ul>
+     * Lands are excluded from every pool.
      */
-    private static synchronized void initializePermanentPool() {
+    private static synchronized void initializePools() {
         if (permanentPool != null) {
             return;
         }
-        List<CardPrinting> pool = new ArrayList<>();
+        List<CardPrinting> permanents = new ArrayList<>();
+        List<CardPrinting> auras = new ArrayList<>();
+        List<CardPrinting> spells = new ArrayList<>();
         for (CardSet set : CardSet.values()) {
             for (CardPrinting printing : set.getPrintings()) {
                 Card sample = printing.createCard();
-                if (sample.hasType(CardType.LAND)) continue;
-                if (sample.hasType(CardType.INSTANT)) continue;
-                if (sample.hasType(CardType.SORCERY)) continue;
-                if (sample.isAura()) continue;
-                pool.add(printing);
+                if (sample.hasType(CardType.LAND)) {
+                    continue;
+                }
+                if (sample.isAura()) {
+                    auras.add(printing);
+                } else if (sample.hasType(CardType.INSTANT) || sample.hasType(CardType.SORCERY)) {
+                    spells.add(printing);
+                } else {
+                    permanents.add(printing);
+                }
             }
         }
-        permanentPool = pool;
-        System.out.printf("Scenario fuzz: permanent pool initialized with %d printings%n", pool.size());
+        permanentPool = permanents;
+        auraPool = auras;
+        spellPool = spells;
+        System.out.printf("Scenario fuzz: pool sizes — permanents=%d auras=%d spells=%d%n",
+                permanents.size(), auras.size(), spells.size());
     }
 
     private void resolveStack(GameTestHarness harness) {
         GameData gd = harness.getGameData();
         for (int i = 0; i < STACK_RESOLVE_STEPS; i++) {
             if (gd.stack.isEmpty()) {
+                return;
+            }
+            if (gd.status != GameStatus.RUNNING) {
                 return;
             }
             if (gd.interaction.isAwaitingInput()) {
