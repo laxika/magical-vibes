@@ -17,8 +17,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "deals N damage to each creature and each planeswalker" | `MassDamageEffect(N, false, false, true, null)` | SPELL | damagesPlaneswalkers=true |
 | "deals X damage to any target" | `DealXDamageToAnyTargetEffect()` | SPELL | X-cost |
 | "deals X damage to target creature" | `DealXDamageToTargetCreatureEffect()` | SPELL | X-cost |
-| "deals damage equal to its power to target" | `FirstTargetDealsPowerDamageToSecondTargetEffect()` | SPELL | Bite — multi-target |
-| "fights target creature" | `FirstTargetFightsSecondTargetEffect()` | SPELL | Multi-target |
+| "deals damage equal to its power to target" | `FirstTargetDealsPowerDamageToSecondTargetEffect()` | SPELL | Bite — multi-target. Effect impl uses `gameQueryService.getPowerBasedDamage(gd, source)` — do NOT call `getEffectivePower` directly; the helper clamps negative power to 0 per CR 510.1a. |
+| "fights target creature" | `FirstTargetFightsSecondTargetEffect()` | SPELL | Multi-target. Same rule: use `getPowerBasedDamage`, not `getEffectivePower`. |
 | "target creature fights another target creature" | `FirstTargetFightsSecondTargetEffect()` | SPELL | Multi-target, any two creatures; distinct is the default |
 | "deals N damage to you" | `DealDamageToControllerEffect(N)` | SPELL/trigger | Self-damage |
 

@@ -1201,7 +1201,7 @@ class DamageResolutionServiceTest {
             stubCreatureSourceRedirects();
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
-            when(gameQueryService.getEffectivePower(gd, bears)).thenReturn(2);
+            when(gameQueryService.getPowerBasedDamage(gd, bears)).thenReturn(2);
             when(gameQueryService.isPreventedFromDealingDamage(gd, bears)).thenReturn(false);
             when(gameQueryService.hasProtectionFromSource(eq(gd), eq(angel), any(Permanent.class))).thenReturn(false);
             // Stub controller for the biting creature (used for trigger sourceControllerId)
@@ -1231,7 +1231,7 @@ class DamageResolutionServiceTest {
             stubCreatureSourceRedirects();
             when(gameQueryService.findPermanentById(gd, myAngel.getId())).thenReturn(myAngel);
             when(gameQueryService.findPermanentById(gd, theirAngel.getId())).thenReturn(theirAngel);
-            when(gameQueryService.getEffectivePower(gd, myAngel)).thenReturn(4);
+            when(gameQueryService.getPowerBasedDamage(gd, myAngel)).thenReturn(4);
             when(gameQueryService.isPreventedFromDealingDamage(gd, myAngel)).thenReturn(false);
             when(gameQueryService.hasProtectionFromSource(eq(gd), eq(theirAngel), any(Permanent.class))).thenReturn(false);
             // Stub controller for the biting creature (used for trigger sourceControllerId)

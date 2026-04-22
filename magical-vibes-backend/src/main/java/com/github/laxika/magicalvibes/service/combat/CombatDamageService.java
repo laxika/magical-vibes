@@ -1374,6 +1374,9 @@ public class CombatDamageService {
 
     private boolean needsManualDamageAssignment(GameData gameData, Permanent atk, List<Integer> livingBlockerIndices) {
         if (livingBlockerIndices.isEmpty()) return false;
+        // A creature with 0 or negative power deals no combat damage (CR 510.1a),
+        // so there is nothing for the player to distribute.
+        if (gameQueryService.getEffectiveCombatDamage(gameData, atk) <= 0) return false;
         if (livingBlockerIndices.size() >= 2) return true;
         if (gameQueryService.hasKeyword(gameData, atk, Keyword.TRAMPLE)) return true;
         if (assignsCombatDamageAsThoughUnblocked(atk)) return true;

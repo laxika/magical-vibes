@@ -34,6 +34,14 @@ public class ExampleCard extends Card {
   - Targeting is computed from effects — no `setNeedsTarget` call needed.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/s/Shock.java`
 
+- **Power-based damage (fight, bite, Pack Hunt, Berserker, Arc-Lightning-style source damage, planeswalker power-to-loyalty):**
+  - `GameQueryService` exposes three related but distinct queries. Pick the right one:
+    - `getEffectivePower(gameData, creature)` — **raw signed stat.** Use for predicates, crew, X-cost, AI evaluation, display, and P/T math. Can be negative.
+    - `getEffectiveCombatDamage(gameData, creature)` — **combat only.** Clamped to ≥ 0 and honors Belligerent-Brontodon / Bark-of-Doran "assign combat damage equal to toughness" static effects. Used by `CombatDamageService`.
+    - `getPowerBasedDamage(gameData, creature)` — **non-combat "deals damage equal to its power" effects.** Clamped to ≥ 0 but ignores toughness-assign effects (they are combat-only). Used by `DamageResolutionService`.
+  - When implementing a new "deals damage equal to its power" effect, call `getPowerBasedDamage` and pass the result directly to `dealDamageAndDestroyIfLethal` / `dealDamageToPlayer` — do **not** add a manual `if (power > 0)` guard; the helper already clamps, and the damage primitives gate triggers on `damage > 0`.
+  - Rationale: a single `getEffectivePower` call with a manual guard is the historical source of "stuck game" bugs (attacker with negative effective power sent a negative damage total to the engine). The three-way split makes "signed stat" vs. "damage amount" a compile-time-visible distinction.
+
 - Multi-step spell resolution with shared target:
   - chain effects in order with repeated `addEffect(EffectSlot.SPELL, ...)`
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/c/Condemn.java`

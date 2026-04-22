@@ -57,6 +57,16 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 
 ## Damage
 
+> **Power-based damage convention.** Any effect that deals damage equal to a creature's power
+> (fight, bite, Pack Hunt, Berserker, Arc-Lightning-style source damage, planeswalker
+> power-to-loyalty, `FirstTargetDealsPowerDamageToSecondTargetEffect`,
+> `FirstTargetFightsSecondTargetEffect`, `MassFightTargetCreatureEffect`,
+> `SourceFightsTargetCreatureEffect`, `DealDamageEqualToSourcePowerToAnyTargetEffect`,
+> `PackHuntEffect`) must read the amount via
+> `gameQueryService.getPowerBasedDamage(gameData, source)` — **never** via
+> `getEffectivePower` with a manual `> 0` guard. The helper clamps negative power to 0 per
+> CR 510.1a so the damage primitives never see negative values.
+
 - `DealDamageToAnyTargetEffect(int damage, boolean cantRegenerate)` — any target
 - `DealDamageEqualToSourcePowerToAnyTargetEffect()` — source power to any target
 - `DealDamageEqualToSourceToughnessToTargetCreatureEffect()` — source toughness to creature

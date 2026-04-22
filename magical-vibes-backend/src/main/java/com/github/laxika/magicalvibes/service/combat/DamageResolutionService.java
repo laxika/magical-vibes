@@ -1019,9 +1019,7 @@ public class DamageResolutionService {
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (source == null) return;
 
-        int power = gameQueryService.getEffectivePower(gameData, source);
-        if (power <= 0) return;
-
+        int power = gameQueryService.getPowerBasedDamage(gameData, source);
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);
@@ -1070,44 +1068,41 @@ public class DamageResolutionService {
 
         String cardName = entry.getCard().getName();
 
-        // Determine source power: use effective power if on battlefield, else fall back to card base power
+        // Determine source power: use effective power if on battlefield, else fall back to card base power.
+        // Clamped to 0 per CR — creatures with 0 or negative power deal no damage.
         int sourcePower;
         if (source != null) {
-            sourcePower = gameQueryService.getEffectivePower(gameData, source);
+            sourcePower = gameQueryService.getPowerBasedDamage(gameData, source);
         } else {
-            sourcePower = entry.getCard().getPower() != null ? entry.getCard().getPower() : 0;
+            sourcePower = Math.max(0, entry.getCard().getPower() != null ? entry.getCard().getPower() : 0);
         }
 
         // Source deals damage equal to its power to target
-        if (sourcePower > 0) {
-            if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
-                int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower, entry);
-                if (dealCreatureDamage(gameData, entry, target, sourceDamage)) {
-                    gameData.pendingLethalDamageDestructions.add(target);
-                }
-                gameBroadcastService.logAndBroadcast(gameData,
-                        cardName + " deals " + sourceDamage + " damage to " + target.getCard().getName() + ".");
-            } else {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        cardName + "'s damage to " + target.getCard().getName() + " is prevented.");
+        if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, target, entry.getCard()))) {
+            int sourceDamage = gameQueryService.applyDamageMultiplier(gameData, sourcePower, entry);
+            if (dealCreatureDamage(gameData, entry, target, sourceDamage)) {
+                gameData.pendingLethalDamageDestructions.add(target);
             }
+            gameBroadcastService.logAndBroadcast(gameData,
+                    cardName + " deals " + sourceDamage + " damage to " + target.getCard().getName() + ".");
+        } else {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    cardName + "'s damage to " + target.getCard().getName() + " is prevented.");
         }
 
         // Target deals damage equal to its power back to source (only if source is still on the battlefield)
         if (source != null) {
-            int targetPower = gameQueryService.getEffectivePower(gameData, target);
-            if (targetPower > 0) {
-                if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard()))) {
-                    int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
-                    if (dealCreatureDamage(gameData, entry, source, targetDamage, target)) {
-                        gameData.pendingLethalDamageDestructions.add(source);
-                    }
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            target.getCard().getName() + " deals " + targetDamage + " damage to " + cardName + ".");
-                } else {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            target.getCard().getName() + "'s damage to " + cardName + " is prevented.");
+            int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
+            if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, source, target.getCard()))) {
+                int targetDamage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
+                if (dealCreatureDamage(gameData, entry, source, targetDamage, target)) {
+                    gameData.pendingLethalDamageDestructions.add(source);
                 }
+                gameBroadcastService.logAndBroadcast(gameData,
+                        target.getCard().getName() + " deals " + targetDamage + " damage to " + cardName + ".");
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        target.getCard().getName() + "'s damage to " + cardName + " is prevented.");
             }
         }
 
@@ -1156,16 +1151,14 @@ public class DamageResolutionService {
                 ? gameQueryService.findPermanentById(gameData, sourcePermanentId) : null;
 
         if (sourcePlaneswalker != null) {
-            int targetPower = gameQueryService.getEffectivePower(gameData, target);
-            if (targetPower > 0) {
-                int newLoyalty = Math.max(0, sourcePlaneswalker.getLoyaltyCounters() - targetPower);
-                sourcePlaneswalker.setLoyaltyCounters(newLoyalty);
-                gameBroadcastService.logAndBroadcast(gameData,
-                        target.getCard().getName() + " deals " + targetPower + " damage to " + cardName
-                                + ". (" + cardName + " now has " + newLoyalty + " loyalty.)");
-                log.info("Game {} - {} takes {} damage from {}, loyalty now {}",
-                        gameData.id, cardName, targetPower, target.getCard().getName(), newLoyalty);
-            }
+            int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
+            int newLoyalty = Math.max(0, sourcePlaneswalker.getLoyaltyCounters() - targetPower);
+            sourcePlaneswalker.setLoyaltyCounters(newLoyalty);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    target.getCard().getName() + " deals " + targetPower + " damage to " + cardName
+                            + ". (" + cardName + " now has " + newLoyalty + " loyalty.)");
+            log.info("Game {} - {} takes {} damage from {}, loyalty now {}",
+                    gameData.id, cardName, targetPower, target.getCard().getName(), newLoyalty);
         }
 
         gameOutcomeService.checkWinCondition(gameData);
@@ -1212,23 +1205,22 @@ public class DamageResolutionService {
 
         // Step 2: Each creature tapped this way deals damage equal to its power to target creature
         for (Permanent hunter : tappedHunters) {
-            int hunterPower = gameQueryService.getEffectivePower(gameData, hunter);
-            if (hunterPower > 0) {
-                if (!(gameQueryService.isDamagePreventable(gameData)
-                        && gameQueryService.hasProtectionFromSource(gameData, target, hunter.getCard()))) {
-                    int damage = gameQueryService.applyDamageMultiplier(gameData, hunterPower, entry);
-                    if (dealCreatureDamage(gameData, entry, target, damage, hunter)) {
-                        gameData.pendingLethalDamageDestructions.add(target);
-                    }
-                } else {
-                    gameBroadcastService.logAndBroadcast(gameData,
-                            hunter.getCard().getName() + "'s damage to " + target.getCard().getName() + " is prevented.");
+            int hunterPower = gameQueryService.getPowerBasedDamage(gameData, hunter);
+            if (!(gameQueryService.isDamagePreventable(gameData)
+                    && gameQueryService.hasProtectionFromSource(gameData, target, hunter.getCard()))) {
+                int damage = gameQueryService.applyDamageMultiplier(gameData, hunterPower, entry);
+                if (dealCreatureDamage(gameData, entry, target, damage, hunter)) {
+                    gameData.pendingLethalDamageDestructions.add(target);
                 }
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        hunter.getCard().getName() + "'s damage to " + target.getCard().getName() + " is prevented.");
             }
         }
 
-        // Step 3: Target creature deals damage equal to its power divided evenly among tapped creatures
-        int targetPower = gameQueryService.getEffectivePower(gameData, target);
+        // Step 3: Target creature deals damage equal to its power divided evenly among tapped creatures.
+        // Skip entirely when targetPower is 0 — the division below would produce no damage and spam 0-damage log lines.
+        int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
         if (targetPower > 0) {
             int baseDamage = targetPower / tappedHunters.size();
             int remainder = targetPower % tappedHunters.size();
@@ -1334,6 +1326,9 @@ public class DamageResolutionService {
      * and keywords are checked directly on it. When null, falls back to entry-based lookup.
      */
     private boolean dealCreatureDamage(GameData gameData, StackEntry entry, Permanent target, int rawDamage, Permanent damageSource) {
+        // Defense in depth: a creature can never deal negative damage. Guards against any upstream
+        // computation (e.g. future power-based effects) that might produce a negative value.
+        rawDamage = Math.max(0, rawDamage);
         // Apply source-specific redirect shields (e.g. Harm's Way) before creature prevention
         UUID targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         UUID sourcePermId = damageSource != null ? damageSource.getId() : entry.getSourcePermanentId();
@@ -1414,8 +1409,10 @@ public class DamageResolutionService {
      * Used for effects where "the damage can't be prevented" (e.g. Combust).
      */
     private boolean dealCreatureDamageUnpreventable(GameData gameData, StackEntry entry, Permanent target, int rawDamage) {
+        // Defense in depth: a creature can never deal negative damage. Guards against any upstream
+        // computation (e.g. future power-based effects) that might produce a negative value.
         // Skip applyCreaturePreventionShield — damage is unpreventable
-        int damage = rawDamage;
+        int damage = Math.max(0, rawDamage);
 
         if (entry.getSourcePermanentId() != null) {
             graveyardService.recordCreatureDamagedByPermanent(gameData, entry.getSourcePermanentId(), target, damage);
@@ -1761,11 +1758,7 @@ public class DamageResolutionService {
             return;
         }
 
-        int power = gameQueryService.getEffectivePower(gameData, biter);
-        if (power <= 0) {
-            return;
-        }
-
+        int power = gameQueryService.getPowerBasedDamage(gameData, biter);
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
         dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage, biter);
     }
@@ -1792,33 +1785,29 @@ public class DamageResolutionService {
         }
 
         // First creature deals damage equal to its power to second creature
-        int firstPower = gameQueryService.getEffectivePower(gameData, first);
-        if (firstPower > 0) {
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, first)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        first.getCard().getName() + "'s damage is prevented.");
-            } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, second, first)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        second.getCard().getName() + " has protection — damage from " + first.getCard().getName() + " prevented.");
-            } else {
-                int damage = gameQueryService.applyDamageMultiplier(gameData, firstPower, entry);
-                dealDamageAndDestroyIfLethal(gameData, entry, second, damage, first);
-            }
+        int firstPower = gameQueryService.getPowerBasedDamage(gameData, first);
+        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, first)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    first.getCard().getName() + "'s damage is prevented.");
+        } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, second, first)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    second.getCard().getName() + " has protection — damage from " + first.getCard().getName() + " prevented.");
+        } else {
+            int damage = gameQueryService.applyDamageMultiplier(gameData, firstPower, entry);
+            dealDamageAndDestroyIfLethal(gameData, entry, second, damage, first);
         }
 
         // Second creature deals damage equal to its power to first creature
-        int secondPower = gameQueryService.getEffectivePower(gameData, second);
-        if (secondPower > 0) {
-            if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, second)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        second.getCard().getName() + "'s damage is prevented.");
-            } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, first, second)) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        first.getCard().getName() + " has protection — damage from " + second.getCard().getName() + " prevented.");
-            } else {
-                int damage = gameQueryService.applyDamageMultiplier(gameData, secondPower, entry);
-                dealDamageAndDestroyIfLethal(gameData, entry, first, damage, second);
-            }
+        int secondPower = gameQueryService.getPowerBasedDamage(gameData, second);
+        if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.isPreventedFromDealingDamage(gameData, second)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    second.getCard().getName() + "'s damage is prevented.");
+        } else if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, first, second)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    first.getCard().getName() + " has protection — damage from " + second.getCard().getName() + " prevented.");
+        } else {
+            int damage = gameQueryService.applyDamageMultiplier(gameData, secondPower, entry);
+            dealDamageAndDestroyIfLethal(gameData, entry, first, damage, second);
         }
     }
 
@@ -1848,32 +1837,29 @@ public class DamageResolutionService {
         }
 
         // Step 1: Target creature deals damage equal to its power to each other creature
-        int targetPower = gameQueryService.getEffectivePower(gameData, target);
-        if (targetPower > 0) {
-            boolean targetPrevented = gameQueryService.isDamagePreventable(gameData)
-                    && gameQueryService.isPreventedFromDealingDamage(gameData, target);
-            if (targetPrevented) {
-                gameBroadcastService.logAndBroadcast(gameData,
-                        target.getCard().getName() + "'s damage is prevented.");
-            } else {
-                for (Permanent other : otherCreatures) {
-                    if (gameQueryService.isDamagePreventable(gameData)
-                            && gameQueryService.hasProtectionFromSource(gameData, other, target)) {
-                        gameBroadcastService.logAndBroadcast(gameData,
-                                other.getCard().getName() + " has protection — damage from "
-                                        + target.getCard().getName() + " prevented.");
-                        continue;
-                    }
-                    int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
-                    dealDamageAndDestroyIfLethal(gameData, entry, other, damage, target);
+        int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
+        boolean targetPrevented = gameQueryService.isDamagePreventable(gameData)
+                && gameQueryService.isPreventedFromDealingDamage(gameData, target);
+        if (targetPrevented) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    target.getCard().getName() + "'s damage is prevented.");
+        } else {
+            for (Permanent other : otherCreatures) {
+                if (gameQueryService.isDamagePreventable(gameData)
+                        && gameQueryService.hasProtectionFromSource(gameData, other, target)) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            other.getCard().getName() + " has protection — damage from "
+                                    + target.getCard().getName() + " prevented.");
+                    continue;
                 }
+                int damage = gameQueryService.applyDamageMultiplier(gameData, targetPower, entry);
+                dealDamageAndDestroyIfLethal(gameData, entry, other, damage, target);
             }
         }
 
         // Step 2: Each other creature deals damage equal to its power to the targeted creature
         for (Permanent other : otherCreatures) {
-            int otherPower = gameQueryService.getEffectivePower(gameData, other);
-            if (otherPower <= 0) continue;
+            int otherPower = gameQueryService.getPowerBasedDamage(gameData, other);
 
             if (gameQueryService.isDamagePreventable(gameData)
                     && gameQueryService.isPreventedFromDealingDamage(gameData, other)) {

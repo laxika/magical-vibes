@@ -976,6 +976,62 @@ class GameQueryServiceTest {
 
             assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(2);
         }
+
+        @Test
+        @DisplayName("clamps to 0 when power is negative (CR 510.1a)")
+        void clampsNegativePowerToZero() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            perm.setMinusOneMinusOneCounters(5);
+
+            assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(-3);
+            assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(0);
+        }
+    }
+
+    // ===== getPowerBasedDamage =====
+
+    @Nested
+    @DisplayName("getPowerBasedDamage")
+    class GetPowerBasedDamage {
+
+        @Test
+        @DisplayName("returns power normally")
+        void returnsPowerNormally() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+
+            assertThat(gqs.getPowerBasedDamage(gd, perm)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("clamps to 0 when power is negative")
+        void clampsNegativePowerToZero() {
+            Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            perm.setMinusOneMinusOneCounters(5);
+
+            assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(-3);
+            assertThat(gqs.getPowerBasedDamage(gd, perm)).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("returns 0 for a 0-power creature")
+        void returnsZeroForZeroPower() {
+            Permanent perm = addPermanent(player1Id, createCreature("Zero Power", 0, 1, CardColor.RED));
+
+            assertThat(gqs.getPowerBasedDamage(gd, perm)).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("ignores Belligerent-Brontodon-style toughness-assign effect (combat-only)")
+        void ignoresToughnessAssignEffect() {
+            Permanent attacker = addPermanent(player1Id, createCreature("Wimpy Dinosaur", 1, 5, CardColor.GREEN));
+            // Belligerent Brontodon-style: other own creatures assign combat damage equal to toughness
+            addPermanent(player1Id, createCreatureWithStaticEffect("Belligerent Brontodon", 4, 4, CardColor.GREEN,
+                    new com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect(GrantScope.OWN_CREATURES)));
+
+            // Combat damage uses toughness (5), but non-combat power-based damage still uses power (1).
+            assertThat(gqs.getEffectiveCombatDamage(gd, attacker)).isEqualTo(5);
+            assertThat(gqs.getPowerBasedDamage(gd, attacker)).isEqualTo(1);
+        }
     }
 
     // ===== hasProtectionFrom =====

@@ -1148,15 +1148,32 @@ public class GameQueryService {
 
         // Controller-scoped: always use toughness (e.g. Belligerent Brontodon)
         if (hasControllerToughnessAssignEffect(gameData, creature)) {
-            return toughness;
+            return Math.max(0, toughness);
         }
 
         // Equipment/aura-scoped: use toughness only when toughness > power
         if (toughness > power && hasAuraWithEffect(gameData, creature, AssignCombatDamageWithToughnessEffect.class)) {
-            return toughness;
+            return Math.max(0, toughness);
         }
 
-        return power;
+        // CR 510.1a: a creature assigns combat damage equal to its power. A creature with
+        // 0 or negative power assigns 0 combat damage.
+        return Math.max(0, power);
+    }
+
+    /**
+     * Returns the amount of damage a creature deals for non-combat effects that deal damage
+     * equal to the creature's power (fight, bite, Arc-Lightning-style, Hunters, Berserker,
+     * planeswalker power-damage, etc.). Equivalent to {@code Math.max(0, getEffectivePower(...))}.
+     * <p>
+     * A creature with 0 or negative power deals 0 damage.
+     * <p>
+     * Do NOT use this for combat damage assignment — use {@link #getEffectiveCombatDamage} instead,
+     * which also handles Belligerent-Brontodon / Bark-of-Doran "assign damage equal to toughness"
+     * effects that apply only in combat.
+     */
+    public int getPowerBasedDamage(GameData gameData, Permanent creature) {
+        return Math.max(0, getEffectivePower(gameData, creature));
     }
 
     /**
