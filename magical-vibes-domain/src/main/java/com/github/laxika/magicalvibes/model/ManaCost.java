@@ -15,11 +15,11 @@ public class ManaCost {
     private final int genericCost;
     private final Map<ManaColor, Integer> coloredCosts;
     private final Map<ManaColor, Integer> phyrexianCosts;
-    private final boolean hasX;
+    private final int xSymbolCount;
 
     public ManaCost(String manaCostString) {
         int generic = 0;
-        boolean foundX = false;
+        int xCount = 0;
         Map<ManaColor, Integer> colored = new EnumMap<>(ManaColor.class);
         Map<ManaColor, Integer> phyrexian = new EnumMap<>(ManaColor.class);
 
@@ -27,7 +27,7 @@ public class ManaCost {
         while (matcher.find()) {
             String symbol = matcher.group(1);
             if (symbol.equals("X")) {
-                foundX = true;
+                xCount++;
             } else if (symbol.endsWith("/P")) {
                 // Phyrexian mana (e.g. R/P) — can be paid with its color or 2 life
                 ManaColor color = ManaColor.fromCode(symbol.substring(0, symbol.length() - 2));
@@ -45,11 +45,19 @@ public class ManaCost {
         this.genericCost = generic;
         this.coloredCosts = colored;
         this.phyrexianCosts = phyrexian;
-        this.hasX = foundX;
+        this.xSymbolCount = xCount;
     }
 
     public boolean hasX() {
-        return hasX;
+        return xSymbolCount > 0;
+    }
+
+    /**
+     * Number of {X} symbols in the cost. For {X}{X}{X}{W} this is 3, meaning the chosen X value
+     * is multiplied by 3 to determine the actual generic mana that must be paid.
+     */
+    public int getXSymbolCount() {
+        return xSymbolCount;
     }
 
     /**
@@ -164,7 +172,7 @@ public class ManaCost {
             remaining -= entry.getValue();
         }
 
-        return remaining >= genericCost + xValue;
+        return remaining >= genericCost + xValue * xSymbolCount;
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext) {
@@ -227,7 +235,7 @@ public class ManaCost {
             remaining += extraGreen - kickedOnlyGreenUsedForColored;
         }
 
-        return remaining >= genericCost + xValue;
+        return remaining >= genericCost + xValue * xSymbolCount;
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext) {
@@ -284,7 +292,7 @@ public class ManaCost {
         // accounts for subtype mana used for colored costs being compensated.
         remaining += pool.getSubtypeCreatureManaTotal(subtypeCreatureContext);
 
-        return remaining >= genericCost + xValue;
+        return remaining >= genericCost + xValue * xSymbolCount;
     }
 
     /**
@@ -304,7 +312,7 @@ public class ManaCost {
             remaining -= entry.getValue();
         }
 
-        return remaining >= genericCost + xValue;
+        return remaining >= genericCost + xValue * xSymbolCount;
     }
 
     /**
@@ -322,7 +330,7 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue;
+        int remainingGeneric = genericCost + xValue * xSymbolCount;
 
         // Spend flashback-only mana for generic costs first (most restricted)
         if (remainingGeneric > 0) {
@@ -357,7 +365,7 @@ public class ManaCost {
         if (coloredCosts.containsKey(xColorRestriction)) {
             restrictedAvailable -= coloredCosts.get(xColorRestriction);
         }
-        if (restrictedAvailable < xValue) {
+        if (restrictedAvailable < xValue * xSymbolCount) {
             return false;
         }
 
@@ -365,7 +373,7 @@ public class ManaCost {
         for (int count : coloredCosts.values()) {
             remaining -= count;
         }
-        remaining -= xValue;
+        remaining -= xValue * xSymbolCount;
 
         return remaining >= genericCost + additionalGenericCost;
     }
@@ -375,6 +383,9 @@ public class ManaCost {
      * Returns 0 if the base cost (colored + generic) cannot be paid.
      */
     public int calculateMaxX(ManaPool pool) {
+        if (xSymbolCount <= 0) {
+            return 0;
+        }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
                 return 0;
@@ -386,7 +397,7 @@ public class ManaCost {
             remaining -= count;
         }
 
-        return Math.max(0, remaining - genericCost);
+        return Math.max(0, (remaining - genericCost) / xSymbolCount);
     }
 
     /**
@@ -395,6 +406,9 @@ public class ManaCost {
      * Returns 0 if the base cost cannot be paid.
      */
     public int calculateMaxX(ManaPool pool, ManaColor xColorRestriction, int additionalGenericCost) {
+        if (xSymbolCount <= 0) {
+            return 0;
+        }
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             if (pool.get(entry.getKey()) < entry.getValue()) {
                 return 0;
@@ -412,7 +426,8 @@ public class ManaCost {
         }
 
         int maxFromGeneric = remaining - genericCost - additionalGenericCost;
-        return Math.max(0, Math.min(restrictedAvailable, maxFromGeneric));
+        int cap = Math.min(restrictedAvailable, maxFromGeneric);
+        return Math.max(0, cap / xSymbolCount);
     }
 
     public void pay(ManaPool pool) {
@@ -426,7 +441,7 @@ public class ManaCost {
             }
         }
 
-        payGenericPreferColorless(pool, genericCost + xValue);
+        payGenericPreferColorless(pool, genericCost + xValue * xSymbolCount);
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext) {
@@ -465,7 +480,7 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue;
+        int remainingGeneric = genericCost + xValue * xSymbolCount;
 
         // Spend more-restrictive mana first: Myr-only before artifact-only
         if (myrContext && remainingGeneric > 0) {
@@ -531,7 +546,7 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue;
+        int remainingGeneric = genericCost + xValue * xSymbolCount;
 
         // Spend subtype creature mana for generic costs first (most restricted)
         if (remainingGeneric > 0) {
@@ -594,7 +609,8 @@ public class ManaCost {
             }
         }
 
-        for (int i = 0; i < xValue; i++) {
+        int totalX = xValue * xSymbolCount;
+        for (int i = 0; i < totalX; i++) {
             pool.remove(xColorRestriction);
         }
 
