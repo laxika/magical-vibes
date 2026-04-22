@@ -1,0 +1,340 @@
+package com.github.laxika.magicalvibes.ai;
+
+import com.github.laxika.magicalvibes.cards.CardPrinting;
+import com.github.laxika.magicalvibes.cards.CardSet;
+import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.testutil.GameTestHarness;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Supplier;
+
+import static org.assertj.core.api.Assertions.fail;
+
+/**
+ * Per-card scenario fuzz: given a target card, set up a randomized board state,
+ * put the card in hand, pick a random legal target, cast it, and let it resolve.
+ * Assertion is "no exception thrown + simple invariants hold".
+ *
+ * <p>Unlike {@link RandomAiFuzzTest} this skips turn progression entirely — each
+ * iteration is a single cast + resolve, so it runs in milliseconds. Cards with
+ * features this fuzzer doesn't model yet (X costs, modal spells, multi-target,
+ * damage distribution, sacrifice costs, graveyard-exile costs, spell targets)
+ * are skipped and counted.</p>
+ *
+ * <p>System properties:
+ * <ul>
+ *   <li>{@code -DrunScenarioFuzz=true} — required to enable the test</li>
+ *   <li>{@code -DscenarioCard=Name} — restrict to matching card name or class (optional; default: all)</li>
+ *   <li>{@code -DscenarioIterations=N} — iterations per printing (default: 100)</li>
+ *   <li>{@code -DscenarioSeed=X} — fixed seed across all iterations, for reproducing failures</li>
+ * </ul>
+ */
+@Tag("scryfall")
+@EnabledIfSystemProperty(named = "runScenarioFuzz", matches = "true")
+class SingleCardScenarioFuzzTest {
+
+    private static final int DEFAULT_ITERATIONS = 100;
+    private static final int MAX_JUNK_PER_SIDE = 4;
+    private static final int MANA_PER_COLOR = 15;
+    private static final int STACK_RESOLVE_STEPS = 20;
+    private static final int STACK_INVARIANT_CAP = 50;
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static final Supplier<Card>[] JUNK_CREATURES = new Supplier[]{
+            (Supplier<Card>) GrizzlyBears::new,
+            (Supplier<Card>) HillGiant::new,
+            (Supplier<Card>) SuntailHawk::new,
+            (Supplier<Card>) EliteVanguard::new,
+    };
+
+    @Test
+    void scenarioFuzz() {
+        String cardFilter = System.getProperty("scenarioCard");
+        int iterations = Integer.getInteger("scenarioIterations", DEFAULT_ITERATIONS);
+        Long fixedSeed = Long.getLong("scenarioSeed");
+
+        // Constructing a harness boots Spring + loads Scryfall oracle data into the
+        // registry. Without this warm-up, Card.getName() returns null during filtering.
+        new GameTestHarness();
+
+        List<CardPrinting> targets = resolveTargetPrintings(cardFilter);
+        if (targets.isEmpty()) {
+            fail("No card printings matched filter: " + cardFilter);
+        }
+        System.out.printf("Scenario fuzz: %d printing(s), %d iterations each%n",
+                targets.size(), iterations);
+
+        int executed = 0;
+        int skipped = 0;
+        for (CardPrinting printing : targets) {
+            String label = describe(printing);
+            for (int i = 1; i <= iterations; i++) {
+                long seed = fixedSeed != null ? fixedSeed : System.nanoTime();
+                try {
+                    if (runScenario(printing, new Random(seed))) {
+                        executed++;
+                    } else {
+                        skipped++;
+                    }
+                } catch (Throwable t) {
+                    fail(String.format("Scenario failed: card=%s iter=%d seed=%d cause=%s",
+                            label, i, seed, t), t);
+                }
+            }
+        }
+        System.out.printf("Scenario fuzz: executed=%d skipped=%d%n", executed, skipped);
+    }
+
+    // ------------------------------------------------------------------
+    // One scenario
+    // ------------------------------------------------------------------
+
+    private boolean runScenario(CardPrinting printing, Random rng) {
+        Card card = printing.createCard();
+        if (card.hasType(CardType.LAND)) {
+            return false;
+        }
+        if (card.getManaCost() == null) {
+            return false;
+        }
+        if (hasUnsupportedComplexity(card)) {
+            return false;
+        }
+
+        GameTestHarness harness = new GameTestHarness();
+        harness.skipMulligan();
+        harness.clearMessages();
+
+        Player p1 = harness.getPlayer1();
+        Player p2 = harness.getPlayer2();
+        GameData gd = harness.getGameData();
+
+        populateRandomBattlefield(harness, p1, rng);
+        populateRandomBattlefield(harness, p2, rng);
+        harness.setLife(p1, 1 + rng.nextInt(40));
+        harness.setLife(p2, 1 + rng.nextInt(40));
+        giveAllMana(harness, p1);
+
+        harness.setHand(p1, List.of(card));
+
+        UUID targetId = null;
+        if (EffectResolution.needsTarget(card) || card.isAura()) {
+            targetId = pickRandomLegalTarget(harness.getTargetLegalityService(), gd, card, p1.getId(), rng);
+            if (targetId == null) {
+                return false;
+            }
+        }
+
+        try {
+            castByType(harness, p1, card, targetId);
+        } catch (IllegalStateException | IllegalArgumentException cantCast) {
+            // Cast rejected (e.g. timing) — not an engine bug, try a different seed next iteration
+            return false;
+        }
+
+        resolveStack(harness);
+        assertInvariants(gd);
+        return true;
+    }
+
+    // ------------------------------------------------------------------
+    // Complexity gate
+    // ------------------------------------------------------------------
+
+    private boolean hasUnsupportedComplexity(Card card) {
+        ManaCost cost = new ManaCost(card.getManaCost());
+        if (cost.hasX()) {
+            return true;
+        }
+        if (card.getSpellTargets().size() > 1) {
+            return true;
+        }
+        if (EffectResolution.needsDamageDistribution(card)) {
+            return true;
+        }
+        if (EffectResolution.needsSpellTarget(card)) {
+            return true;
+        }
+        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
+            if (e instanceof ChooseOneEffect
+                    || e instanceof SacrificeCreatureCost
+                    || e instanceof SacrificeArtifactCost
+                    || e instanceof SacrificePermanentCost
+                    || e instanceof ExileCardFromGraveyardCost) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ------------------------------------------------------------------
+    // Target picking
+    // ------------------------------------------------------------------
+
+    private UUID pickRandomLegalTarget(TargetLegalityService legality, GameData gd, Card card,
+                                       UUID controllerId, Random rng) {
+        List<UUID> legal = new ArrayList<>();
+        for (UUID pid : gd.orderedPlayerIds) {
+            if (legality.checkSpellTargeting(gd, card, pid, null, controllerId).isEmpty()) {
+                legal.add(pid);
+            }
+        }
+        for (UUID pid : gd.orderedPlayerIds) {
+            for (Permanent perm : gd.playerBattlefields.getOrDefault(pid, List.of())) {
+                if (legality.checkSpellTargeting(gd, card, perm.getId(), Zone.BATTLEFIELD, controllerId).isEmpty()) {
+                    legal.add(perm.getId());
+                }
+            }
+        }
+        if (legal.isEmpty()) {
+            return null;
+        }
+        return legal.get(rng.nextInt(legal.size()));
+    }
+
+    // ------------------------------------------------------------------
+    // Cast dispatch
+    // ------------------------------------------------------------------
+
+    private void castByType(GameTestHarness harness, Player player, Card card, UUID targetId) {
+        if (card.hasType(CardType.INSTANT)) {
+            if (targetId != null) {
+                harness.castInstant(player, 0, targetId);
+            } else {
+                harness.castInstant(player, 0);
+            }
+        } else if (card.hasType(CardType.SORCERY)) {
+            if (targetId != null) {
+                harness.castSorcery(player, 0, 0, targetId);
+            } else {
+                harness.castSorcery(player, 0, 0);
+            }
+        } else if (card.hasType(CardType.CREATURE)) {
+            if (targetId != null) {
+                harness.castCreature(player, 0, 0, targetId);
+            } else {
+                harness.castCreature(player, 0);
+            }
+        } else if (card.hasType(CardType.ENCHANTMENT)) {
+            if (targetId != null) {
+                harness.castEnchantment(player, 0, targetId);
+            } else {
+                harness.castEnchantment(player, 0);
+            }
+        } else if (card.hasType(CardType.ARTIFACT)) {
+            if (targetId != null) {
+                harness.castArtifact(player, 0, targetId);
+            } else {
+                harness.castArtifact(player, 0);
+            }
+        } else if (card.hasType(CardType.PLANESWALKER)) {
+            harness.castPlaneswalker(player, 0);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Setup helpers
+    // ------------------------------------------------------------------
+
+    private void giveAllMana(GameTestHarness harness, Player p) {
+        for (ManaColor c : ManaColor.values()) {
+            harness.addMana(p, c, MANA_PER_COLOR);
+        }
+    }
+
+    private void populateRandomBattlefield(GameTestHarness harness, Player p, Random rng) {
+        int count = rng.nextInt(MAX_JUNK_PER_SIDE + 1);
+        for (int i = 0; i < count; i++) {
+            Card junk = JUNK_CREATURES[rng.nextInt(JUNK_CREATURES.length)].get();
+            Permanent perm = harness.addToBattlefieldAndReturn(p, junk);
+            perm.setSummoningSick(false);
+        }
+    }
+
+    private void resolveStack(GameTestHarness harness) {
+        GameData gd = harness.getGameData();
+        for (int i = 0; i < STACK_RESOLVE_STEPS; i++) {
+            if (gd.stack.isEmpty()) {
+                return;
+            }
+            if (gd.interaction.isAwaitingInput()) {
+                return;
+            }
+            harness.passBothPriorities();
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Invariants
+    // ------------------------------------------------------------------
+
+    private void assertInvariants(GameData gd) {
+        if (gd.stack.size() > STACK_INVARIANT_CAP) {
+            throw new AssertionError("Stack grew to " + gd.stack.size());
+        }
+        Set<UUID> seen = new HashSet<>();
+        for (UUID pid : gd.orderedPlayerIds) {
+            for (Permanent p : gd.playerBattlefields.getOrDefault(pid, List.of())) {
+                if (!seen.add(p.getId())) {
+                    throw new AssertionError("Permanent " + p.getId() + " appears in multiple battlefields");
+                }
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Printing enumeration
+    // ------------------------------------------------------------------
+
+    private List<CardPrinting> resolveTargetPrintings(String filter) {
+        List<CardPrinting> all = new ArrayList<>();
+        for (CardSet set : CardSet.values()) {
+            all.addAll(set.getPrintings());
+        }
+        if (filter == null || filter.isBlank()) {
+            return all;
+        }
+        List<CardPrinting> matches = new ArrayList<>();
+        for (CardPrinting p : all) {
+            Card sample = p.createCard();
+            if (sample.getName().equalsIgnoreCase(filter)
+                    || sample.getClass().getSimpleName().equalsIgnoreCase(filter)) {
+                matches.add(p);
+            }
+        }
+        return matches;
+    }
+
+    private String describe(CardPrinting printing) {
+        Card sample = printing.createCard();
+        return sample.getName() + " [" + sample.getClass().getSimpleName() + "]";
+    }
+}
