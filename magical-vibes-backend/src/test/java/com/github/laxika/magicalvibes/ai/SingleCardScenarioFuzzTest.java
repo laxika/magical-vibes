@@ -2,10 +2,6 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
-import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -34,7 +30,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.fail;
 
@@ -44,7 +39,10 @@ import static org.assertj.core.api.Assertions.fail;
  * Assertion is "no exception thrown + simple invariants hold".
  *
  * <p>Unlike {@link RandomAiFuzzTest} this skips turn progression entirely — each
- * iteration is a single cast + resolve, so it runs in milliseconds. Cards with
+ * iteration is a single cast + resolve. Each side of the battlefield is stuffed
+ * with 30–50 random permanents (creatures, artifacts, enchantments, planeswalkers)
+ * sampled from every registered printing to maximise the chance of triggering
+ * static effects, cast triggers, and state-based-action cascades. Cards with
  * features this fuzzer doesn't model yet (X costs, modal spells, multi-target,
  * damage distribution, sacrifice costs, graveyard-exile costs, spell targets)
  * are skipped and counted.</p>
@@ -62,18 +60,13 @@ import static org.assertj.core.api.Assertions.fail;
 class SingleCardScenarioFuzzTest {
 
     private static final int DEFAULT_ITERATIONS = 100;
-    private static final int MAX_JUNK_PER_SIDE = 4;
-    private static final int MANA_PER_COLOR = 15;
-    private static final int STACK_RESOLVE_STEPS = 20;
-    private static final int STACK_INVARIANT_CAP = 50;
+    private static final int JUNK_MIN_PER_SIDE = 30;
+    private static final int JUNK_MAX_PER_SIDE = 50;
+    private static final int MANA_PER_COLOR = 30;
+    private static final int STACK_RESOLVE_STEPS = 40;
+    private static final int STACK_INVARIANT_CAP = 200;
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static final Supplier<Card>[] JUNK_CREATURES = new Supplier[]{
-            (Supplier<Card>) GrizzlyBears::new,
-            (Supplier<Card>) HillGiant::new,
-            (Supplier<Card>) SuntailHawk::new,
-            (Supplier<Card>) EliteVanguard::new,
-    };
+    private static List<CardPrinting> permanentPool;
 
     @Test
     void scenarioFuzz() {
@@ -82,8 +75,9 @@ class SingleCardScenarioFuzzTest {
         Long fixedSeed = Long.getLong("scenarioSeed");
 
         // Constructing a harness boots Spring + loads Scryfall oracle data into the
-        // registry. Without this warm-up, Card.getName() returns null during filtering.
+        // registry. Without this warm-up, Card.getName()/hasType() return nulls.
         new GameTestHarness();
+        initializePermanentPool();
 
         List<CardPrinting> targets = resolveTargetPrintings(cardFilter);
         if (targets.isEmpty()) {
@@ -271,12 +265,36 @@ class SingleCardScenarioFuzzTest {
     }
 
     private void populateRandomBattlefield(GameTestHarness harness, Player p, Random rng) {
-        int count = rng.nextInt(MAX_JUNK_PER_SIDE + 1);
+        int count = JUNK_MIN_PER_SIDE + rng.nextInt(JUNK_MAX_PER_SIDE - JUNK_MIN_PER_SIDE + 1);
         for (int i = 0; i < count; i++) {
-            Card junk = JUNK_CREATURES[rng.nextInt(JUNK_CREATURES.length)].get();
-            Permanent perm = harness.addToBattlefieldAndReturn(p, junk);
+            CardPrinting printing = permanentPool.get(rng.nextInt(permanentPool.size()));
+            Permanent perm = harness.addToBattlefieldAndReturn(p, printing.createCard());
             perm.setSummoningSick(false);
         }
+    }
+
+    /**
+     * Builds a pool of permanent printings to use as random junk on battlefields.
+     * Excludes lands (played, not put directly), instants/sorceries (not permanents),
+     * and auras (orphaned auras on the battlefield are an invalid state).
+     */
+    private static synchronized void initializePermanentPool() {
+        if (permanentPool != null) {
+            return;
+        }
+        List<CardPrinting> pool = new ArrayList<>();
+        for (CardSet set : CardSet.values()) {
+            for (CardPrinting printing : set.getPrintings()) {
+                Card sample = printing.createCard();
+                if (sample.hasType(CardType.LAND)) continue;
+                if (sample.hasType(CardType.INSTANT)) continue;
+                if (sample.hasType(CardType.SORCERY)) continue;
+                if (sample.isAura()) continue;
+                pool.add(printing);
+            }
+        }
+        permanentPool = pool;
+        System.out.printf("Scenario fuzz: permanent pool initialized with %d printings%n", pool.size());
     }
 
     private void resolveStack(GameTestHarness harness) {
