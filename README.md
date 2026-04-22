@@ -34,3 +34,4 @@ If you get stuck then ask Gemini. :) Or feel free to create an issue on GitHub.
 
 **How to run fizz tests from the command line:**
 - Card fuzzing: `.\gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.ai.RandomAiFuzzTest" -DrunCardFuzz=true -DfuzzGames=5 -Dorg.gradle.jvmargs="-Xmx6g" --info --rerun  > fuzz.log 2>&1`
+- Scenario fuzzing (loops every printing until failure): `.\gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.ai.SingleCardScenarioFuzzTest" -DrunScenarioFuzz=true -Dorg.gradle.jvmargs="-Xmx6g" --info --rerun  > scenario-fuzz.log 2>&1`

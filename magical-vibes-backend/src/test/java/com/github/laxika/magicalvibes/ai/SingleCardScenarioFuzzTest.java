@@ -55,6 +55,10 @@ import static org.assertj.core.api.Assertions.fail;
  *   <li>{@code -DscenarioIterations=N} — iterations per printing (default: 100)</li>
  *   <li>{@code -DscenarioSeed=X} — fixed seed across all iterations, for reproducing failures</li>
  * </ul>
+ *
+ * <p>If none of {@code scenarioCard}, {@code scenarioIterations}, or {@code scenarioSeed}
+ * is set, the test loops forever (until a failure or external interrupt). Setting any of
+ * them runs exactly one pass as configured.</p>
  */
 @Tag("scryfall")
 @EnabledIfSystemProperty(named = "runScenarioFuzz", matches = "true")
@@ -76,8 +80,10 @@ class SingleCardScenarioFuzzTest {
     @Test
     void scenarioFuzz() {
         String cardFilter = System.getProperty("scenarioCard");
-        int iterations = Integer.getInteger("scenarioIterations", DEFAULT_ITERATIONS);
+        Integer iterationsOverride = Integer.getInteger("scenarioIterations");
         Long fixedSeed = Long.getLong("scenarioSeed");
+        boolean loopForever = cardFilter == null && iterationsOverride == null && fixedSeed == null;
+        int iterations = iterationsOverride != null ? iterationsOverride : DEFAULT_ITERATIONS;
 
         // Constructing a harness boots Spring + loads Scryfall oracle data into the
         // registry. Without this warm-up, Card.getName()/hasType() return nulls.
@@ -88,27 +94,38 @@ class SingleCardScenarioFuzzTest {
         if (targets.isEmpty()) {
             fail("No card printings matched filter: " + cardFilter);
         }
-        System.out.printf("Scenario fuzz: %d printing(s), %d iterations each%n",
-                targets.size(), iterations);
+        System.out.printf("Scenario fuzz: %d printing(s), %d iterations each%s%n",
+                targets.size(), iterations, loopForever ? " (looping until failure)" : "");
 
         int executed = 0;
         int skipped = 0;
-        for (CardPrinting printing : targets) {
-            String label = describe(printing);
-            for (int i = 1; i <= iterations; i++) {
-                long seed = fixedSeed != null ? fixedSeed : System.nanoTime();
-                try {
-                    if (runScenario(printing, new Random(seed))) {
-                        executed++;
-                    } else {
-                        skipped++;
+        int pass = 0;
+        do {
+            pass++;
+            if (loopForever) {
+                System.out.printf("Scenario fuzz: starting pass #%d%n", pass);
+            }
+            for (CardPrinting printing : targets) {
+                String label = describe(printing);
+                for (int i = 1; i <= iterations; i++) {
+                    long seed = fixedSeed != null ? fixedSeed : System.nanoTime();
+                    try {
+                        if (runScenario(printing, new Random(seed))) {
+                            executed++;
+                        } else {
+                            skipped++;
+                        }
+                    } catch (Throwable t) {
+                        fail(String.format("Scenario failed: card=%s pass=%d iter=%d seed=%d cause=%s",
+                                label, pass, i, seed, t), t);
                     }
-                } catch (Throwable t) {
-                    fail(String.format("Scenario failed: card=%s iter=%d seed=%d cause=%s",
-                            label, i, seed, t), t);
                 }
             }
-        }
+            if (loopForever) {
+                System.out.printf("Scenario fuzz: pass #%d complete (cumulative executed=%d skipped=%d)%n",
+                        pass, executed, skipped);
+            }
+        } while (loopForever);
         System.out.printf("Scenario fuzz: executed=%d skipped=%d%n", executed, skipped);
     }
 
