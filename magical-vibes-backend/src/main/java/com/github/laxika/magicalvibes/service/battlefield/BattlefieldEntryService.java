@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -642,14 +643,24 @@ public class BattlefieldEntryService {
                         // Token copy case (CR 603.3): no target was chosen at cast time
                         // because the token wasn't cast. The controller must choose a target
                         // as the triggered ability is put on the stack.
-                        if (card.getSpellTargets().size() > 1) {
-                            // Multi-target ETB on a token copy (e.g. Burning Sun's Avatar):
-                            // multi-target selection at trigger time is not yet implemented.
-                            log.warn("Game {} - {} ETB has multiple target groups on a token copy; trigger skipped (not yet supported)",
+                        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                        UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+
+                        if (card.getSpellTargets().size() > 1 || hasGroupWithMaxTargetsGreaterThanOne(card)) {
+                            // Multi-target ETB on a token copy (e.g. Burning Sun's Avatar, or a
+                            // single group with "up to N" targets): choose slot-by-slot at
+                            // trigger time, accumulating into targetIds.
+                            gameData.pendingETBTokenMultiTargetTriggers.add(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                    card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
+                            for (int i = 0; i < extraWizardTriggers; i++) {
+                                gameData.pendingETBTokenMultiTargetTriggers.add(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                        card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
+                            }
+                            String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
+                            gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                            log.info("Game {} - {} ETB multi-target trigger queued (token copy)",
                                     gameData.id, card.getName());
                         } else {
-                            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                            UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
                             TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
 
                             gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
@@ -704,6 +715,10 @@ public class BattlefieldEntryService {
                 if (!gameData.pendingETBTokenTargetTriggers.isEmpty()
                         && !gameData.interaction.isAwaitingInput()) {
                     processNextETBTokenTargetTrigger(gameData);
+                }
+                if (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()
+                        && !gameData.interaction.isAwaitingInput()) {
+                    processNextETBTokenMultiTargetTrigger(gameData);
                 }
             }
         }
@@ -820,6 +835,153 @@ public class BattlefieldEntryService {
                     gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    /**
+     * Processes the next pending multi-target ETB trigger on a token copy (CR 603.3).
+     * Walks the source card's target groups slot-by-slot: each group accepts up to
+     * {@code maxTargets} targets before advancing to the next group. Valid player/permanent
+     * targets are computed from the group's filter and the effects mapped to that group.
+     * A mandatory group that can't reach its {@code minTargets} causes the trigger to be
+     * removed (CR 603.6c); an optional group with no (remaining) legal targets auto-advances.
+     * Once a group's minimum is met, the controller may end the group early by selecting
+     * their own player ID as the "done" signal.
+     */
+    public void processNextETBTokenMultiTargetTrigger(GameData gameData) {
+        while (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()) {
+            PermanentChoiceContext.ETBTokenMultiTargetTrigger pending = gameData.pendingETBTokenMultiTargetTriggers.peekFirst();
+            Card card = pending.sourceCard();
+            List<SpellTarget> groups = card.getSpellTargets();
+            int idx = pending.currentGroupIndex();
+            int chosenInGroup = pending.chosenInCurrentGroup();
+
+            // All groups satisfied → push final ETB onto the stack.
+            if (idx >= groups.size()) {
+                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
+                pushMultiTargetETBStackEntry(gameData, pending);
+                continue;
+            }
+
+            SpellTarget group = groups.get(idx);
+
+            // Group's max targets reached → advance to next group.
+            if (chosenInGroup >= group.getMaxTargets()) {
+                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
+                gameData.pendingETBTokenMultiTargetTriggers.addFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
+                        pending.chosenTargetsSoFar(), idx + 1, 0));
+                continue;
+            }
+
+            List<CardEffect> groupEffects = effectsForTargetGroup(card, pending.effects(), group.getIndex());
+            boolean canTargetPlayer = groupEffects.stream().anyMatch(CardEffect::canTargetPlayer);
+            boolean canTargetPermanent = groupEffects.stream().anyMatch(CardEffect::canTargetPermanent);
+
+            List<UUID> validPlayerTargets = new ArrayList<>();
+            if (canTargetPlayer) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    if (pending.chosenTargetsSoFar().contains(pid)) continue;
+                    if (matchesPlayerTargetFilter(pending.controllerId(), pid, group.getFilter())) {
+                        validPlayerTargets.add(pid);
+                    }
+                }
+            }
+
+            List<UUID> validPermanentTargets = new ArrayList<>();
+            if (canTargetPermanent) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
+                        if (matchesPermanentTargetFilter(gameData, p, group.getFilter(), groupEffects)) {
+                            validPermanentTargets.add(p.getId());
+                        }
+                    }
+                }
+            }
+
+            boolean noLegalTargets = validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty();
+
+            if (noLegalTargets) {
+                if (chosenInGroup < group.getMinTargets()) {
+                    // Can't meet the mandatory minimum → trigger removed (CR 603.6c).
+                    gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
+                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    log.info("Game {} - {} ETB multi-target trigger skipped (no valid targets for mandatory group {} at slot {})",
+                            gameData.id, card.getName(), idx, chosenInGroup);
+                    continue;
+                }
+                // Minimum met (or none required) → advance to next group.
+                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
+                gameData.pendingETBTokenMultiTargetTriggers.addFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
+                        pending.chosenTargetsSoFar(), idx + 1, 0));
+                continue;
+            }
+
+            // Once the group's minimum is met, let the controller end the group early by
+            // selecting their own player ID (CR 601.2c — "up to" groups can choose fewer).
+            boolean minMet = chosenInGroup >= group.getMinTargets();
+            if (minMet && !validPlayerTargets.contains(pending.controllerId())) {
+                validPlayerTargets.add(pending.controllerId());
+            }
+
+            gameData.interaction.setPermanentChoiceContext(pending);
+            String slotLabel = "target " + (idx + 1)
+                    + (group.getMaxTargets() > 1 ? "." + (chosenInGroup + 1) : "");
+            String prompt = minMet
+                    ? card.getName() + "'s ability — Choose " + slotLabel + " (or yourself to stop)."
+                    : card.getName() + "'s ability — Choose " + slotLabel + ".";
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validPermanentTargets, validPlayerTargets, prompt);
+
+            log.info("Game {} - {} ETB multi-target trigger awaiting target (group {} slot {})",
+                    gameData.id, card.getName(), idx, chosenInGroup);
+            return;
+        }
+    }
+
+    /**
+     * Pushes the final ETB triggered ability onto the stack after all target groups
+     * on a multi-target token copy have been satisfied.
+     */
+    private void pushMultiTargetETBStackEntry(GameData gameData,
+                                               PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
+        Card card = pending.sourceCard();
+        StackEntry etbEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                pending.controllerId(),
+                card.getName() + "'s ETB ability",
+                new ArrayList<>(pending.effects()),
+                0,
+                null,
+                pending.sourcePermanentId(),
+                Map.of(),
+                null,
+                List.of(),
+                new ArrayList<>(pending.chosenTargetsSoFar())
+        );
+        gameData.stack.add(etbEntry);
+        String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, etbLog);
+        log.info("Game {} - {} ETB multi-target ability pushed onto stack", gameData.id, card.getName());
+    }
+
+    private boolean hasGroupWithMaxTargetsGreaterThanOne(Card card) {
+        return card.getSpellTargets().stream().anyMatch(g -> g.getMaxTargets() > 1);
+    }
+
+    private List<CardEffect> effectsForTargetGroup(Card card, List<CardEffect> effects, int groupIndex) {
+        List<CardEffect> matched = new ArrayList<>();
+        for (CardEffect effect : effects) {
+            if (card.getEffectTargetIndex(effect) == groupIndex) {
+                matched.add(effect);
+            }
+        }
+        return matched;
     }
 
     private boolean matchesPlayerTargetFilter(UUID controllerId, UUID candidatePlayerId, TargetFilter targetFilter) {

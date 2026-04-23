@@ -1142,6 +1142,7 @@ public class PermanentControlResolutionService {
             for (ActivatedAbility ability : imprintedCard.getActivatedAbilities()) {
                 tokenCard.addActivatedAbility(ability);
             }
+            tokenCard.copyTargetingFrom(imprintedCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
@@ -1227,6 +1228,7 @@ public class PermanentControlResolutionService {
             for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
                 tokenCard.addActivatedAbility(ability);
             }
+            tokenCard.copyTargetingFrom(sourceCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
 
@@ -1292,6 +1294,7 @@ public class PermanentControlResolutionService {
             for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
                 tokenCard.addActivatedAbility(ability);
             }
+            tokenCard.copyTargetingFrom(sourceCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
@@ -1375,6 +1378,7 @@ public class PermanentControlResolutionService {
             for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
                 tokenCard.addActivatedAbility(ability);
             }
+            tokenCard.copyTargetingFrom(sourceCard);
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);

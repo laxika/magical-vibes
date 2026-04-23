@@ -608,6 +608,72 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleETBTokenMultiTargetTrigger(GameData gameData, UUID chosenId,
+                                                   PermanentChoiceContext.ETBTokenMultiTargetTrigger etbMtt) {
+        int groupIdx = etbMtt.currentGroupIndex();
+        int chosenInGroup = etbMtt.chosenInCurrentGroup();
+        int groupMin = etbMtt.sourceCard().getSpellTargets().get(groupIdx).getMinTargets();
+
+        // Once the group's minimum has been met, a response equal to the controller's own
+        // player ID means "stop adding targets in this group".
+        boolean groupDone = chosenInGroup >= groupMin
+                && chosenId.equals(etbMtt.controllerId())
+                && gameData.playerIdToName.containsKey(chosenId);
+
+        List<UUID> updatedChosen;
+        int nextGroupIdx;
+        int nextChosenInGroup;
+        if (groupDone) {
+            updatedChosen = etbMtt.chosenTargetsSoFar();
+            nextGroupIdx = groupIdx + 1;
+            nextChosenInGroup = 0;
+            log.info("Game {} - {} ETB multi-target trigger ended group {} after {} target(s)",
+                    gameData.id, etbMtt.sourceCard().getName(), groupIdx, chosenInGroup);
+        } else {
+            updatedChosen = new ArrayList<>(etbMtt.chosenTargetsSoFar());
+            updatedChosen.add(chosenId);
+            nextGroupIdx = groupIdx;
+            nextChosenInGroup = chosenInGroup + 1;
+            String targetName = getTargetDisplayName(gameData, chosenId);
+            String logEntry = etbMtt.sourceCard().getName() + "'s ETB ability — target "
+                    + (groupIdx + 1) + ": " + targetName + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} ETB multi-target trigger chose {} (group {} slot {})",
+                    gameData.id, etbMtt.sourceCard().getName(), targetName, groupIdx, chosenInGroup);
+        }
+
+        // Replace head of the queue with the advanced state; then let the processor decide
+        // whether to prompt again (more slots / next group) or push the final ETB.
+        gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
+        gameData.pendingETBTokenMultiTargetTriggers.addFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
+                updatedChosen, nextGroupIdx, nextChosenInGroup));
+
+        battlefieldEntryService.processNextETBTokenMultiTargetTrigger(gameData);
+
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
+        if (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
+            battlefieldEntryService.processNextETBTokenTargetTrigger(gameData);
+            return;
+        }
+
+        if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
+            battlefieldEntryService.processNextETBSpellTargetTrigger(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleETBTokenTargetTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -630,6 +696,11 @@ public class PermanentChoiceTriggerHandlerService {
 
         if (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
             battlefieldEntryService.processNextETBTokenTargetTrigger(gameData);
+            return;
+        }
+
+        if (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()) {
+            battlefieldEntryService.processNextETBTokenMultiTargetTrigger(gameData);
             return;
         }
 

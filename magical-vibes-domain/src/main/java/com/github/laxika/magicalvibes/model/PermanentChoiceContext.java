@@ -114,6 +114,19 @@ public sealed interface PermanentChoiceContext {
     record ETBTokenTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                  UUID sourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {}
 
+    /**
+     * ETB trigger on a token copy of a creature with multiple target groups or groups with
+     * {@code maxTargets > 1} (e.g. Burning Sun's Avatar: mandatory opponent/planeswalker +
+     * optional creature; or "up to 3 target creatures"). Targets are chosen slot-by-slot at
+     * trigger time: each group can accept up to {@code maxTargets} targets before advancing.
+     * Chosen targets accumulate in {@code chosenTargetsSoFar}. A response equal to
+     * {@code controllerId} signals "done with this group" — only valid once the group's
+     * minimum has been met.
+     */
+    record ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                      UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                      int currentGroupIndex, int chosenInCurrentGroup) implements PermanentChoiceContext {}
+
     /** Saga chapter ability that targets a permanent (e.g. Phyrexian Scriptures chapter I).
      *  {@code targetFilters} restricts valid targets (e.g. "creature an opponent controls"); null/empty = any creature. */
     record SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
