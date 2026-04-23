@@ -67,6 +67,11 @@ public class GameData {
     /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
      *  would receive priority, so they don't block sorcery-speed spell casting. */
     public final List<StackEntry> pendingManaAbilityTriggers = Collections.synchronizedList(new ArrayList<>());
+    /** CR 603.2 / 603.3 — depth counter for nested mana-ability resolution. While > 0,
+     *  triggered abilities that fire from effects resolving inside a mana ability (e.g. a life-gain
+     *  effect triggering Sanguine Bond) route to {@link #pendingManaAbilityTriggers} instead of the
+     *  main stack. Incremented/decremented in a try/finally pair around mana-ability resolution. */
+    public int manaAbilityResolutionDepth;
     public final Map<UUID, List<Card>> playerGraveyards = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> creatureCardsPutIntoGraveyardFromBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** Tracks all non-token card IDs put into each player's graveyard from any zone this turn (e.g. Garna, the Bloodflame). */
@@ -376,6 +381,20 @@ public class GameData {
         this.createdByUsername = createdByUsername;
         this.createdAt = LocalDateTime.now();
         this.status = GameStatus.WAITING;
+    }
+
+    /**
+     * Routes a triggered-ability {@link StackEntry} to the main stack, or to
+     * {@link #pendingManaAbilityTriggers} when a mana ability is currently resolving
+     * (CR 603.2 / 603.3). Deferred triggers are flushed by the existing flush points
+     * (priority grant, auto-pass, {@code SpellCastingService.finishSpellCast}).
+     */
+    public void enqueueTrigger(StackEntry entry) {
+        if (manaAbilityResolutionDepth > 0) {
+            pendingManaAbilityTriggers.add(entry);
+        } else {
+            stack.add(entry);
+        }
     }
 
     /**

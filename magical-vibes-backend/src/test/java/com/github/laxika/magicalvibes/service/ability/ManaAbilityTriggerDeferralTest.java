@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.c.ContaminatedBond;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeadenMyr;
+import com.github.laxika.magicalvibes.cards.p.PristineTalisman;
 import com.github.laxika.magicalvibes.cards.r.RelicPutrescence;
+import com.github.laxika.magicalvibes.cards.s.SanguineBond;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.ShrineOfBoundlessGrowth;
 import com.github.laxika.magicalvibes.cards.v.ViridianRevel;
@@ -486,6 +488,83 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             assertThat(gd.pendingManaAbilityTriggers).isEmpty();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Relic Putrescence");
+        }
+    }
+
+    // =========================================================================
+    // CR 603.2: life-gain from a mana ability (Pristine Talisman) defers
+    // the Sanguine Bond trigger, so a sorcery-speed spell is still castable
+    // on the same priority window (fuzz-log repro).
+    // =========================================================================
+
+    @Nested
+    @DisplayName("CR 603.2: life-gain from a mana ability defers Sanguine Bond trigger")
+    class LifeGainFromManaAbility {
+
+        /**
+         * Puts Pristine Talisman (index 0) and Sanguine Bond (index 1) on {@code controller}'s
+         * battlefield, both untapped and not summoning sick. Forces main phase and active player.
+         */
+        private Permanent setupTalismanAndSanguineBond(Player controller) {
+            Permanent talisman = new Permanent(new PristineTalisman());
+            talisman.setSummoningSick(false);
+            gd.playerBattlefields.get(controller.getId()).add(talisman);
+
+            Permanent bond = new Permanent(new SanguineBond());
+            bond.setSummoningSick(false);
+            gd.playerBattlefields.get(controller.getId()).add(bond);
+
+            harness.forceActivePlayer(controller);
+            harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+            harness.clearPriorityPassed();
+            return talisman;
+        }
+
+        @Test
+        @DisplayName("Sorcery castable after Pristine Talisman life gain triggers Sanguine Bond")
+        void sorceryCastableAfterSanguineBondTrigger() {
+            setupTalismanAndSanguineBond(player2);
+            harness.setHand(player2, List.of(new Divination())); // {2}{U}
+            harness.addMana(player2, ManaColor.BLUE, 1);
+            harness.addMana(player2, ManaColor.COLORLESS, 2);
+            armWithInstantResponse(player1);
+
+            // Activate Pristine Talisman (index 0) — adds {C} + 1 life → Sanguine Bond triggers.
+            harness.activateAbility(player2, 0, null, null);
+
+            // Before the fix, the Sanguine Bond trigger went straight to the stack,
+            // blocking the sorcery cast. Now it must sit in the deferred queue.
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+            assertThat(gd.pendingManaAbilityTriggers.getFirst().getCard().getName())
+                    .isEqualTo("Sanguine Bond");
+
+            // Sorcery-speed cast on the same priority window must succeed.
+            harness.castSorcery(player2, 0, 0);
+
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Divination");
+            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Sanguine Bond");
+        }
+
+        @Test
+        @DisplayName("Passing priority flushes the deferred Sanguine Bond trigger onto the stack")
+        void passingPriorityFlushesSanguineBondTrigger() {
+            setupTalismanAndSanguineBond(player2);
+            armWithInstantResponse(player1);
+
+            harness.activateAbility(player2, 0, null, null);
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+
+            harness.passPriority(player2);
+
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Sanguine Bond");
         }
     }
 

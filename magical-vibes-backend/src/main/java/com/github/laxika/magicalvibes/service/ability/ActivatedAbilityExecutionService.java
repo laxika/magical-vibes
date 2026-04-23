@@ -309,6 +309,18 @@ public class ActivatedAbilityExecutionService {
     }
 
     private void resolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects) {
+        // CR 603.2 / 603.3: triggers fired from effects resolving inside a mana ability
+        // (e.g. Pristine Talisman's life-gain triggering Sanguine Bond) must queue and
+        // wait for the next priority window, not land on the stack immediately.
+        gameData.manaAbilityResolutionDepth++;
+        try {
+            doResolveManaAbility(gameData, playerId, player, permanent, snapshotEffects);
+        } finally {
+            gameData.manaAbilityResolutionDepth--;
+        }
+    }
+
+    private void doResolveManaAbility(GameData gameData, UUID playerId, Player player, Permanent permanent, List<CardEffect> snapshotEffects) {
         boolean isCreatureSource = gameQueryService.isCreature(gameData, permanent);
 
         // Damping Sphere replacement: if a land is tapped for two or more mana, it produces {C} instead.

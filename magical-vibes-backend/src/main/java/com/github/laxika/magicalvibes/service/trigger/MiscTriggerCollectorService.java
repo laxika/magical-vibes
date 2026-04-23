@@ -99,7 +99,7 @@ public class MiscTriggerCollectorService {
     @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
     private boolean handleSacrificeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
-        match.gameData().stack.add(new StackEntry(
+        match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 as.sacrificingPlayerId(),
@@ -118,7 +118,7 @@ public class MiscTriggerCollectorService {
             return false;
         }
         String cardName = match.permanent().getCard().getName();
-        match.gameData().stack.add(new StackEntry(
+        match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 as.sacrificingPlayerId(),
@@ -142,7 +142,7 @@ public class MiscTriggerCollectorService {
         TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
         GiveEnchantedPermanentControllerPoisonCountersEffect resolved =
                 new GiveEnchantedPermanentControllerPoisonCountersEffect(e.amount(), ept.tappedPermanentControllerId());
-        match.gameData().stack.add(new StackEntry(
+        match.gameData().enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -188,7 +188,7 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
-        gameData.stack.add(new StackEntry(
+        gameData.enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -241,7 +241,7 @@ public class MiscTriggerCollectorService {
         UUID opponentId = gameQueryService.getOpponentId(gameData, match.controllerId());
 
         TargetPlayerLosesLifeEffect resolved = new TargetPlayerLosesLifeEffect(lg.lifeGainedAmount());
-        gameData.stack.add(new StackEntry(
+        gameData.enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
@@ -300,7 +300,7 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
 
-        gameData.stack.add(new StackEntry(
+        gameData.enqueueTrigger(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
