@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.cards.b.BlisterstickShaman;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.HomaridExplorer;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -142,6 +145,120 @@ class CacklingCounterpartTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
+    }
+
+    // ===== Token copy ETB target selection (CR 603.3) =====
+
+    @Test
+    @DisplayName("Token copy of creature with targeted ETB prompts for target at trigger time")
+    void tokenCopyOfTargetedETBPromptsForTarget() {
+        harness.addToBattlefield(player1, new HomaridExplorer());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID originalHomaridId = harness.getPermanentId(player1, "Homarid Explorer");
+        harness.castInstant(player1, 0, originalHomaridId);
+        harness.passBothPriorities(); // Cackling Counterpart resolves → token created → ETB target prompt
+
+        // Engine must be awaiting a target choice for the token's ETB ability.
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Token of Homarid Explorer mills the chosen player when its ETB resolves")
+    void tokenHomaridExplorerMillsChosenPlayer() {
+        // Trim Bob's deck so we can easily see mill counts.
+        List<com.github.laxika.magicalvibes.model.Card> deck = gd.playerDecks.get(player2.getId());
+        while (deck.size() > 10) {
+            deck.removeFirst();
+        }
+
+        harness.addToBattlefield(player1, new HomaridExplorer());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID originalHomaridId = harness.getPermanentId(player1, "Homarid Explorer");
+        harness.castInstant(player1, 0, originalHomaridId);
+        harness.passBothPriorities(); // resolves CC → token ETB awaits target
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        // The ETB is now on the stack targeting Bob.
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+
+        harness.passBothPriorities(); // resolve the ETB trigger
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(4);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
+    }
+
+    @Test
+    @DisplayName("Token of Blisterstick Shaman deals 1 damage to chosen any-target")
+    void tokenBlisterstickShamanDealsDamageToAnyTarget() {
+        harness.addToBattlefield(player1, new BlisterstickShaman());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        int startingLife = gd.getLife(player2.getId());
+
+        UUID originalId = harness.getPermanentId(player1, "Blisterstick Shaman");
+        harness.castInstant(player1, 0, originalId);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
+
+        harness.passBothPriorities(); // resolve the ETB trigger
+        assertThat(gd.getLife(player2.getId())).isEqualTo(startingLife - 1);
+    }
+
+    @Test
+    @DisplayName("Token copy of creature without targeted ETB does not prompt for a target")
+    void tokenCopyOfNonTargetedETBDoesNotPrompt() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
+        harness.castInstant(player1, 0, bearsId);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Token of Homarid Explorer can target the controller (self-mill)")
+    void tokenHomaridExplorerCanTargetSelf() {
+        List<com.github.laxika.magicalvibes.model.Card> deck = gd.playerDecks.get(player1.getId());
+        while (deck.size() > 10) {
+            deck.removeFirst();
+        }
+
+        harness.addToBattlefield(player1, new HomaridExplorer());
+        harness.setHand(player1, List.of(new CacklingCounterpart()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        UUID originalHomaridId = harness.getPermanentId(player1, "Homarid Explorer");
+        harness.castInstant(player1, 0, originalHomaridId);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .filteredOn(c -> !c.getName().equals("Cackling Counterpart"))
+                .hasSize(4);
     }
 
     @Test

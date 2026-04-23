@@ -1157,7 +1157,9 @@ public class PermanentControlResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - Token copy of {} created via {}", gameData.id, imprintedCard.getName(), sourcePermanent.getCard().getName());
 
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+            // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
+            // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
         }
     }
 
@@ -1242,7 +1244,9 @@ public class PermanentControlResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(), sourceCard.getName());
 
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+            // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
+            // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
         }
     }
 
@@ -1296,7 +1300,9 @@ public class PermanentControlResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - Token copy of {} created via Mirrorworks-like ability", gameData.id, sourceCard.getName());
 
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+            // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
+            // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
         }
     }
 
@@ -1377,7 +1383,9 @@ public class PermanentControlResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - Token copy of {} created via Helm of the Host", gameData.id, sourceCard.getName());
 
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, tokenPermanent.getId(), false);
+            // Pass null targetId: the token wasn't cast, so no target was chosen. Any targeted
+            // ETB ability chooses its target at trigger time (CR 603.3) via the ETBTokenTargetTrigger path.
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, entry.getControllerId(), tokenCard, null, false);
         }
     }
 

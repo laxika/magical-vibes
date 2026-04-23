@@ -608,6 +608,45 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleETBTokenTargetTrigger(GameData gameData, UUID targetId, PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                etbTtt.sourceCard(),
+                etbTtt.controllerId(),
+                etbTtt.sourceCard().getName() + "'s ETB ability",
+                new ArrayList<>(etbTtt.effects()),
+                targetId,
+                etbTtt.sourcePermanentId()
+        );
+        if (etbTtt.targetFilter() != null) {
+            entry.setTargetFilter(etbTtt.targetFilter());
+        }
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, targetId);
+        String logEntry = etbTtt.sourceCard().getName() + "'s ETB ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} ETB token-target trigger targets {}", gameData.id, etbTtt.sourceCard().getName(), targetName);
+
+        if (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
+            battlefieldEntryService.processNextETBTokenTargetTrigger(gameData);
+            return;
+        }
+
+        if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
+            battlefieldEntryService.processNextETBSpellTargetTrigger(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleEndStepTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EndStepTriggerTarget est) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

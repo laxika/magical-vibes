@@ -105,6 +105,15 @@ public sealed interface PermanentChoiceContext {
     record ETBSpellTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                  StackEntryPredicate spellFilter) implements PermanentChoiceContext {}
 
+    /**
+     * ETB trigger on a token copy that needs to choose a target at trigger time (CR 603.3).
+     * Used when a token copy is created of a creature with a targeted ETB ability
+     * (e.g. Cackling Counterpart → Homarid Explorer). The target can't be chosen at cast
+     * time because the token wasn't cast — it's created directly on the battlefield.
+     */
+    record ETBTokenTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                 UUID sourcePermanentId, TargetFilter targetFilter) implements PermanentChoiceContext {}
+
     /** Saga chapter ability that targets a permanent (e.g. Phyrexian Scriptures chapter I).
      *  {@code targetFilters} restricts valid targets (e.g. "creature an opponent controls"); null/empty = any creature. */
     record SagaChapterTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

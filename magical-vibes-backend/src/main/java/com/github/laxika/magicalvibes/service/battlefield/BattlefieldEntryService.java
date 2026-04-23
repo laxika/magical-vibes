@@ -53,6 +53,10 @@ import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetP
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -583,7 +587,10 @@ public class BattlefieldEntryService {
 
                 // Put non-special effects on the stack as before
                 if (!otherEffects.isEmpty()) {
-                    if (!EffectResolution.needsTarget(card) || targetId != null || !targetIds.isEmpty()) {
+                    boolean cardNeedsTarget = EffectResolution.needsTarget(card);
+                    boolean hasTarget = targetId != null || !targetIds.isEmpty();
+
+                    if (!cardNeedsTarget || hasTarget) {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
@@ -631,6 +638,31 @@ public class BattlefieldEntryService {
                             gameBroadcastService.logAndBroadcast(gameData, etbLog);
                             log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
                         }
+                    } else {
+                        // Token copy case (CR 603.3): no target was chosen at cast time
+                        // because the token wasn't cast. The controller must choose a target
+                        // as the triggered ability is put on the stack.
+                        if (card.getSpellTargets().size() > 1) {
+                            // Multi-target ETB on a token copy (e.g. Burning Sun's Avatar):
+                            // multi-target selection at trigger time is not yet implemented.
+                            log.warn("Game {} - {} ETB has multiple target groups on a token copy; trigger skipped (not yet supported)",
+                                    gameData.id, card.getName());
+                        } else {
+                            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                            UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+                            TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
+
+                            gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                                    card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                            for (int i = 0; i < extraWizardTriggers; i++) {
+                                gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                                        card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                            }
+                            String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
+                            gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                            log.info("Game {} - {} ETB trigger queued for target selection (token copy)",
+                                    gameData.id, card.getName());
+                        }
                     }
                 }
 
@@ -668,6 +700,10 @@ public class BattlefieldEntryService {
                 if (!gameData.pendingETBSpellTargetTriggers.isEmpty()
                         && !gameData.interaction.isAwaitingInput()) {
                     processNextETBSpellTargetTrigger(gameData);
+                }
+                if (!gameData.pendingETBTokenTargetTriggers.isEmpty()
+                        && !gameData.interaction.isAwaitingInput()) {
+                    processNextETBTokenTargetTrigger(gameData);
                 }
             }
         }
@@ -728,6 +764,92 @@ public class BattlefieldEntryService {
             log.info("Game {} - {} ETB spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
             return;
         }
+    }
+
+    /**
+     * Processes the next pending ETB trigger on a token copy that needs to choose a target
+     * (CR 603.3). Computes valid player/permanent targets from the effects' target types
+     * and the card's target filter, then prompts the controller. If no legal targets exist,
+     * the trigger is removed from the stack (CR 603.6c).
+     */
+    public void processNextETBTokenTargetTrigger(GameData gameData) {
+        while (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
+            PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.pendingETBTokenTargetTriggers.peekFirst();
+
+            boolean canTargetPlayer = pending.effects().stream().anyMatch(CardEffect::canTargetPlayer);
+            boolean canTargetPermanent = pending.effects().stream().anyMatch(CardEffect::canTargetPermanent);
+
+            List<UUID> validPlayerTargets = new ArrayList<>();
+            if (canTargetPlayer) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    if (matchesPlayerTargetFilter(pending.controllerId(), pid, pending.targetFilter())) {
+                        validPlayerTargets.add(pid);
+                    }
+                }
+            }
+
+            List<UUID> validPermanentTargets = new ArrayList<>();
+            if (canTargetPermanent) {
+                for (UUID pid : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                    if (battlefield == null) continue;
+                    for (Permanent p : battlefield) {
+                        if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(), pending.effects())) {
+                            validPermanentTargets.add(p.getId());
+                        }
+                    }
+                }
+            }
+
+            if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
+                gameData.pendingETBTokenTargetTriggers.removeFirst();
+                String etbLog = pending.sourceCard().getName() + "'s enter-the-battlefield ability has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                log.info("Game {} - {} ETB token-target trigger skipped (no valid targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pendingETBTokenTargetTriggers.removeFirst();
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validPermanentTargets, validPlayerTargets,
+                    pending.sourceCard().getName() + "'s ability — Choose a target.");
+
+            log.info("Game {} - {} ETB token-target trigger awaiting target selection",
+                    gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
+    private boolean matchesPlayerTargetFilter(UUID controllerId, UUID candidatePlayerId, TargetFilter targetFilter) {
+        if (!(targetFilter instanceof PlayerPredicateTargetFilter playerFilter)) {
+            // No player-specific filter → any player is a legal player target.
+            return true;
+        }
+        PlayerPredicate predicate = playerFilter.predicate();
+        if (predicate instanceof PlayerRelationPredicate relation) {
+            return switch (relation.relation()) {
+                case ANY -> true;
+                case SELF -> controllerId != null && controllerId.equals(candidatePlayerId);
+                case OPPONENT -> controllerId != null && !controllerId.equals(candidatePlayerId);
+            };
+        }
+        return true;
+    }
+
+    private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
+                                                  TargetFilter targetFilter, List<CardEffect> effects) {
+        if (targetFilter == null) {
+            // No card-level filter: default to creatures when an effect can target permanents
+            // (matches MTG's most common targeted ETB pattern — target creature).
+            return gameQueryService.isCreature(gameData, permanent);
+        }
+        if (targetFilter instanceof PlayerPredicateTargetFilter) {
+            // Filter targets players only; no permanent matches.
+            return false;
+        }
+        return gameQueryService.checkTargetFilter(targetFilter, permanent).isEmpty();
     }
 
     private void handleGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,

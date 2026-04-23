@@ -117,6 +117,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleLifeGainTrigger(gameData, permanentId, lgt);
         } else if (context instanceof PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
             triggerHandler.handleETBSpellTargetTrigger(gameData, permanentId, etbStt);
+        } else if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
+            triggerHandler.handleETBTokenTargetTrigger(gameData, permanentId, etbTtt);
         } else if (context instanceof PermanentChoiceContext.EndStepTriggerTarget est) {
             triggerHandler.handleEndStepTrigger(gameData, permanentId, est);
         } else if (context instanceof PermanentChoiceContext.ExploreTriggerTarget ett) {

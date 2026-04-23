@@ -147,6 +147,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.ETBSpellTargetTrigger> pendingETBSpellTargetTriggers = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.ETBTokenTargetTrigger> pendingETBTokenTargetTriggers = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.UpkeepPlayerTargetTrigger> pendingUpkeepPlayerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger> pendingUpkeepMultiPlayerTargets = new ArrayDeque<>();
@@ -835,6 +836,7 @@ public class GameData {
         copy.pendingAttackTriggerTargets.addAll(this.pendingAttackTriggerTargets);
         copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
         copy.pendingETBSpellTargetTriggers.addAll(this.pendingETBSpellTargetTriggers);
+        copy.pendingETBTokenTargetTriggers.addAll(this.pendingETBTokenTargetTriggers);
         copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
         copy.pendingUpkeepPlayerTargets.addAll(this.pendingUpkeepPlayerTargets);
         copy.pendingUpkeepMultiPlayerTargets.addAll(this.pendingUpkeepMultiPlayerTargets);
