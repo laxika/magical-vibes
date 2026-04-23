@@ -59,11 +59,13 @@ class ChromaticStarTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Chromatic Star"));
 
-        // Mana ability resolves immediately — no stack entry for the mana,
-        // only the death trigger (draw card) should be on the stack
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Chromatic Star");
+        // CR 603.3: the death trigger from the sacrifice-as-cost waits in
+        // pendingManaAbilityTriggers — not on the stack — so it doesn't block
+        // sorcery-speed casting in the same priority window.
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
+        assertThat(gd.pendingManaAbilityTriggers.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.pendingManaAbilityTriggers.getFirst().getCard().getName()).isEqualTo("Chromatic Star");
 
         // Should be immediately awaiting color choice (mana ability, no priority pass needed)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
