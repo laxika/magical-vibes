@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.cards.e.EvilPresence;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
+import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -212,6 +214,29 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, opponentCreature)).isEqualTo(2);
     }
 
+    // ===== Aura's enchant restriction respected on reattach =====
+
+    @Test
+    @DisplayName("Land-enchanting aura can only be reattached to a land")
+    void landAuraOnlyReattachesToLand() {
+        Permanent sourceLand = addLand(player2, new Island());
+        Permanent aura = addAuraAttachedTo(player2, new EvilPresence(), sourceLand);
+        Permanent creature = addCreatureReady(player2);
+        Permanent otherLand = addLand(player1, new Island());
+
+        harness.setHand(player1, List.of(new AuraGraft()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, aura.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        // Only the other land should be a valid reattach target — not the creature
+        assertThat(gd.interaction.permanentChoice().validIds())
+                .contains(otherLand.getId())
+                .doesNotContain(creature.getId(), sourceLand.getId());
+    }
+
     // ===== Self-targeting (own aura) =====
 
     @Test
@@ -405,6 +430,12 @@ class AuraGraftTest extends BaseCardTest {
         auraPerm.setAttachedTo(target.getId());
         gd.playerBattlefields.get(owner.getId()).add(auraPerm);
         return auraPerm;
+    }
+
+    private Permanent addLand(Player player, com.github.laxika.magicalvibes.model.Card landCard) {
+        Permanent perm = new Permanent(landCard);
+        gd.playerBattlefields.get(player.getId()).add(perm);
+        return perm;
     }
 }
 

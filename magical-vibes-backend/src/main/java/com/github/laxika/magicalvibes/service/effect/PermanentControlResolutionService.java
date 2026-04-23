@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -922,16 +923,25 @@ public class PermanentControlResolutionService {
             log.info("Game {} - {} gains control of {}", gameData.id, casterName, aura.getCard().getName());
         }
 
-        List<UUID> validCreatureIds = new ArrayList<>();
+        TargetFilter auraFilter = aura.getCard().getTargetFilter();
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(aura.getCard().getId())
+                .withSourceControllerId(casterId);
+        List<UUID> validTargetIds = new ArrayList<>();
         gameData.forEachPermanent((pid, p) -> {
-            if (gameQueryService.isCreature(gameData, p) && !p.getId().equals(aura.getAttachedTo())) {
-                validCreatureIds.add(p.getId());
+            if (p.getId().equals(aura.getId())) return;
+            if (p.getId().equals(aura.getAttachedTo())) return;
+            if (auraFilter != null) {
+                if (gameQueryService.checkTargetFilter(auraFilter, p, filterContext).isPresent()) return;
+            } else if (!gameQueryService.isCreature(gameData, p)) {
+                return;
             }
+            validTargetIds.add(p.getId());
         });
 
-        if (!validCreatureIds.isEmpty()) {
+        if (!validTargetIds.isEmpty()) {
             gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.AuraGraft(aura.getId()));
-            playerInputService.beginPermanentChoice(gameData, casterId, validCreatureIds,
+            playerInputService.beginPermanentChoice(gameData, casterId, validTargetIds,
                     "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
         } else {
             String logEntry = aura.getCard().getName() + " stays attached to its current target (no other valid permanents).";
