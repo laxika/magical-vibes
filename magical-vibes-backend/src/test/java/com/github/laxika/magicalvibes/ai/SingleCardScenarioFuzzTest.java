@@ -70,7 +70,7 @@ class SingleCardScenarioFuzzTest {
     private static final int AURA_MAX_PER_SIDE = 6;
     private static final int GRAVEYARD_MAX_PER_SIDE = 10;
     private static final int MANA_PER_COLOR = 30;
-    private static final int STACK_RESOLVE_STEPS = 40;
+    private static final int STACK_RESOLVE_STEPS = 500;
     private static final int STACK_INVARIANT_CAP = 200;
 
     private static List<CardPrinting> permanentPool;
@@ -178,7 +178,9 @@ class SingleCardScenarioFuzzTest {
             return false;
         }
 
-        resolveStack(harness);
+        if (!resolveStack(harness)) {
+            return false;
+        }
         assertInvariants(gd);
         return true;
     }
@@ -365,20 +367,28 @@ class SingleCardScenarioFuzzTest {
                 permanents.size(), auras.size(), spells.size());
     }
 
-    private void resolveStack(GameTestHarness harness) {
+    /**
+     * Drains the stack by passing both players' priority until it empties. Returns
+     * {@code true} if the stack fully resolved (or the game ended naturally), or
+     * {@code false} if resolution stalled on an input prompt the fuzzer can't
+     * answer — in which case the iteration is counted as skipped rather than
+     * executed. Throws if the safety cap is exceeded, since that signals an
+     * infinite-loop bug in the engine.
+     */
+    private boolean resolveStack(GameTestHarness harness) {
         GameData gd = harness.getGameData();
-        for (int i = 0; i < STACK_RESOLVE_STEPS; i++) {
-            if (gd.stack.isEmpty()) {
-                return;
-            }
-            if (gd.status != GameStatus.RUNNING) {
-                return;
-            }
+        int steps = 0;
+        while (!gd.stack.isEmpty() && gd.status == GameStatus.RUNNING) {
             if (gd.interaction.isAwaitingInput()) {
-                return;
+                return false;
+            }
+            if (++steps > STACK_RESOLVE_STEPS) {
+                throw new AssertionError("Stack did not drain within " + STACK_RESOLVE_STEPS
+                        + " pass-priority rounds (size=" + gd.stack.size() + ")");
             }
             harness.passBothPriorities();
         }
+        return true;
     }
 
     // ------------------------------------------------------------------
