@@ -61,6 +61,16 @@ public class ManaCost {
     }
 
     /**
+     * Multiplier applied to the {@code xValue} argument in canPay/pay. Callers for non-X spells
+     * pass the additional generic cost modifier (e.g. Thalia +1, Wizard -1) via {@code xValue};
+     * that value must be added directly, not zeroed out. For X spells, {@code xValue} is the
+     * chosen X value and gets multiplied by the number of {X} symbols (CR 107.3b).
+     */
+    private int effectiveXMultiplier() {
+        return Math.max(1, xSymbolCount);
+    }
+
+    /**
      * Returns an unmodifiable view of the colored mana requirements.
      * Used by AI mana management to determine which colors are needed.
      */
@@ -172,7 +182,7 @@ public class ManaCost {
             remaining -= entry.getValue();
         }
 
-        return remaining >= genericCost + xValue * xSymbolCount;
+        return remaining >= genericCost + xValue * effectiveXMultiplier();
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext) {
@@ -235,7 +245,7 @@ public class ManaCost {
             remaining += extraGreen - kickedOnlyGreenUsedForColored;
         }
 
-        return remaining >= genericCost + xValue * xSymbolCount;
+        return remaining >= genericCost + xValue * effectiveXMultiplier();
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext, boolean myrContext, boolean restrictedRedContext, boolean kickedOnlyGreenContext, boolean instantSorceryOnlyColorlessContext, Set<CardSubtype> subtypeCreatureContext) {
@@ -292,7 +302,7 @@ public class ManaCost {
         // accounts for subtype mana used for colored costs being compensated.
         remaining += pool.getSubtypeCreatureManaTotal(subtypeCreatureContext);
 
-        return remaining >= genericCost + xValue * xSymbolCount;
+        return remaining >= genericCost + xValue * effectiveXMultiplier();
     }
 
     /**
@@ -312,7 +322,7 @@ public class ManaCost {
             remaining -= entry.getValue();
         }
 
-        return remaining >= genericCost + xValue * xSymbolCount;
+        return remaining >= genericCost + xValue * effectiveXMultiplier();
     }
 
     /**
@@ -330,7 +340,7 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue * xSymbolCount;
+        int remainingGeneric = genericCost + xValue * effectiveXMultiplier();
 
         // Spend flashback-only mana for generic costs first (most restricted)
         if (remainingGeneric > 0) {
@@ -441,7 +451,7 @@ public class ManaCost {
             }
         }
 
-        payGenericPreferColorless(pool, genericCost + xValue * xSymbolCount);
+        payGenericPreferColorless(pool, genericCost + xValue * effectiveXMultiplier());
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext) {
@@ -480,7 +490,7 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue * xSymbolCount;
+        int remainingGeneric = genericCost + xValue * effectiveXMultiplier();
 
         // Spend more-restrictive mana first: Myr-only before artifact-only
         if (myrContext && remainingGeneric > 0) {
@@ -546,7 +556,7 @@ public class ManaCost {
             }
         }
 
-        int remainingGeneric = genericCost + xValue * xSymbolCount;
+        int remainingGeneric = genericCost + xValue * effectiveXMultiplier();
 
         // Spend subtype creature mana for generic costs first (most restricted)
         if (remainingGeneric > 0) {
