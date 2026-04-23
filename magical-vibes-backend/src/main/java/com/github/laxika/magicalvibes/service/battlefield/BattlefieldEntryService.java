@@ -639,10 +639,12 @@ public class BattlefieldEntryService {
                             gameBroadcastService.logAndBroadcast(gameData, etbLog);
                             log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
                         }
-                    } else {
+                    } else if (card.isToken()) {
                         // Token copy case (CR 603.3): no target was chosen at cast time
                         // because the token wasn't cast. The controller must choose a target
                         // as the triggered ability is put on the stack.
+                        // For non-token casts with "up to N" abilities where 0 was chosen,
+                        // the ETB still triggers but has no effect — we skip queueing it.
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
