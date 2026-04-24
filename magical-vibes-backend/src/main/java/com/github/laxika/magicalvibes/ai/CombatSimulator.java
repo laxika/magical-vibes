@@ -228,6 +228,12 @@ public class CombatSimulator {
 
     /**
      * Finds the best blocker assignments for the AI as defender.
+     *
+     * <p>Single attacker-centric pass: each attacker's required block count is computed up
+     * front from its combat flags (lure, mustBlockIfAble, menace) and atomically allocated
+     * from the remaining candidate pool. A menace attacker's count must be 0 or ≥ 2 — if
+     * fewer than 2 candidates exist, no blocker is "able to block" (CR 509.1a + 702.110b),
+     * so the attacker is skipped.
      */
     public List<int[]> findBestBlockers(GameData gameData, UUID aiPlayerId,
                                         List<Integer> attackerIndices,
@@ -241,7 +247,6 @@ public class CombatSimulator {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
         int aiLife = gameData.getLife(aiPlayerId);
 
-        // Build attacker and blocker info
         List<CreatureInfo> attackerInfos = new ArrayList<>();
         for (int idx : attackerIndices) {
             Permanent perm = oppBattlefield.get(idx);
@@ -254,167 +259,156 @@ public class CombatSimulator {
             blockerInfos.add(buildCreatureInfo(gameData, perm, idx, aiPlayerId, opponentId));
         }
 
-        // Sort attackers by threat (highest power first)
-        attackerInfos.sort(Comparator.comparingDouble(CreatureInfo::creatureScore).reversed());
+        // Priority: lure first (forces all able), then mustBlockIfAble, then regular by threat desc.
+        // Within lures, menace+lure sorts ahead so it claims a legal 2+ pool before a non-menace
+        // lure can drain candidates.
+        List<CreatureInfo> sortedAttackers = new ArrayList<>(attackerInfos);
+        sortedAttackers.sort((a, b) -> {
+            int lureCmp = Boolean.compare(hasLureEffect(gameData, b.perm), hasLureEffect(gameData, a.perm));
+            if (lureCmp != 0) return lureCmp;
+            int menaceCmp = Boolean.compare(b.menace, a.menace);
+            if (menaceCmp != 0) return menaceCmp;
+            int mbCmp = Boolean.compare(hasMustBeBlockedIfAbleEffect(gameData, b.perm),
+                                        hasMustBeBlockedIfAbleEffect(gameData, a.perm));
+            if (mbCmp != 0) return mbCmp;
+            return Double.compare(b.creatureScore, a.creatureScore);
+        });
 
-        // Calculate total incoming damage to determine if lethal
         int totalIncoming = attackerInfos.stream().mapToInt(CreatureInfo::power).sum();
-        boolean lethalIncoming = totalIncoming >= aiLife;
-
-        List<int[]> assignments = new ArrayList<>(); // [blockerIdx, attackerIdx]
         boolean[] blockerUsed = new boolean[aiBattlefield.size()];
+        List<int[]> assignments = new ArrayList<>();
 
-        // Phase 1: Enforce "must be blocked by all creatures" (Lure / Prized Unicorn):
-        // any blocker that can block a lure attacker MUST do so — assign these first.
-        List<CreatureInfo> lureAttackers = attackerInfos.stream()
-                .filter(a -> hasLureEffect(gameData, a.perm))
-                .toList();
-        if (!lureAttackers.isEmpty()) {
-            Set<Integer> lureAttackerIndicesBlocked = new HashSet<>();
-            for (CreatureInfo blocker : blockerInfos) {
-                for (CreatureInfo lureAttacker : lureAttackers) {
-                    if (blockerUsed[blocker.index]) break;
-                    if (!canBlock(gameData, blocker, lureAttacker)) continue;
-                    assignments.add(new int[]{blocker.index, lureAttacker.index});
-                    blockerUsed[blocker.index] = true;
-                    lureAttackerIndicesBlocked.add(lureAttacker.index);
-                }
-            }
-            // Update incoming damage estimate: blocked lure attackers won't deal face damage
-            for (CreatureInfo lureAttacker : lureAttackers) {
-                if (lureAttackerIndicesBlocked.contains(lureAttacker.index)) {
-                    totalIncoming -= lureAttacker.power;
-                }
-            }
-            lethalIncoming = totalIncoming >= aiLife;
-        }
-
-        // Phase 1b: Enforce "must be blocked if able" (Gaea's Protector style):
-        // at least one blocker must block each such attacker if able.
-        List<CreatureInfo> mustBeBlockedAttackers = attackerInfos.stream()
-                .filter(a -> hasMustBeBlockedIfAbleEffect(gameData, a.perm))
-                .toList();
-        for (CreatureInfo mustBlockAttacker : mustBeBlockedAttackers) {
-            boolean alreadyBlocked = assignments.stream()
-                    .anyMatch(a -> a[1] == mustBlockAttacker.index);
-            if (alreadyBlocked) continue;
-
-            CreatureInfo bestBlocker = null;
-            double bestValue = Double.NEGATIVE_INFINITY;
-            for (CreatureInfo blocker : blockerInfos) {
-                if (blockerUsed[blocker.index]) continue;
-                if (!canBlock(gameData, blocker, mustBlockAttacker)) continue;
-                double value = evaluateBlock(mustBlockAttacker, blocker);
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestBlocker = blocker;
-                }
-            }
-            if (bestBlocker != null) {
-                assignments.add(new int[]{bestBlocker.index, mustBlockAttacker.index});
-                blockerUsed[bestBlocker.index] = true;
-                totalIncoming -= mustBlockAttacker.power;
-                lethalIncoming = totalIncoming >= aiLife;
-            }
-        }
-
-        // Phase 2: Evaluate regular blocks for remaining unused blockers
-        for (CreatureInfo attacker : attackerInfos) {
+        for (CreatureInfo attacker : sortedAttackers) {
             if (attacker.cantBeBlocked) continue;
 
-            List<CreatureInfo> available = blockerInfos.stream()
+            List<CreatureInfo> candidates = blockerInfos.stream()
                     .filter(b -> !blockerUsed[b.index])
                     .filter(b -> canBlock(gameData, b, attacker))
                     .toList();
+            if (candidates.isEmpty()) continue;
 
-            if (available.isEmpty()) continue;
+            // Menace: no creature is "able to block" alone, so with <2 candidates skip entirely.
+            if (attacker.menace && candidates.size() < 2) continue;
 
-            // Handle menace: need 2 blockers
-            if (attacker.menace) {
-                int[] bestPair = findBestBlockerPairForMenace(attacker, available, blockerUsed);
-                if (bestPair != null) {
-                    assignments.add(new int[]{bestPair[0], attacker.index});
-                    assignments.add(new int[]{bestPair[1], attacker.index});
-                    blockerUsed[bestPair[0]] = true;
-                    blockerUsed[bestPair[1]] = true;
-                    totalIncoming -= attacker.power;
-                    lethalIncoming = totalIncoming >= aiLife;
-                } else if (lethalIncoming && available.size() >= 2) {
-                    // Chump block with cheapest pair
-                    List<CreatureInfo> sorted = available.stream()
-                            .sorted(Comparator.comparingDouble(CreatureInfo::creatureScore))
-                            .toList();
-                    if (sorted.size() >= 2) {
-                        assignments.add(new int[]{sorted.get(0).index, attacker.index});
-                        assignments.add(new int[]{sorted.get(1).index, attacker.index});
-                        blockerUsed[sorted.get(0).index] = true;
-                        blockerUsed[sorted.get(1).index] = true;
-                        totalIncoming -= attacker.power;
-                        lethalIncoming = totalIncoming >= aiLife;
-                    }
+            boolean lure = hasLureEffect(gameData, attacker.perm);
+            boolean mustBlock = hasMustBeBlockedIfAbleEffect(gameData, attacker.perm);
+            boolean lethalIncoming = totalIncoming >= aiLife;
+
+            List<CreatureInfo> chosen;
+            if (lure) {
+                // Every creature able to block must block — assign all candidates.
+                chosen = new ArrayList<>(candidates);
+            } else if (mustBlock) {
+                // At least 1 required; menace bumps to 2.
+                int needed = attacker.menace ? 2 : 1;
+                chosen = attacker.menace
+                        ? pickMenaceBlockers(attacker, candidates, lethalIncoming)
+                        : List.of(pickBestSingleBlocker(attacker, candidates));
+                if (chosen.size() < needed) {
+                    // Menace lookup didn't find a favorable or chump pair — force the
+                    // cheapest pair so the mandatory block still happens.
+                    chosen = forceCheapestPair(candidates);
                 }
-                continue;
+            } else if (attacker.menace) {
+                // Voluntary menace block: only worth it with a favorable pair, or chump-lethal.
+                chosen = pickMenaceBlockers(attacker, candidates, lethalIncoming);
+            } else {
+                // Voluntary single block: take the best single blocker if favorable or lethal.
+                CreatureInfo best = pickBestSingleBlocker(attacker, candidates);
+                double bestValue = best != null
+                        ? (attacker.trample ? evaluateTrampleBlock(attacker, best) : evaluateBlock(attacker, best))
+                        : Double.NEGATIVE_INFINITY;
+                chosen = (best != null && (bestValue > 0 || lethalIncoming)) ? List.of(best) : List.of();
             }
 
-            // Find best single blocker
-            CreatureInfo bestBlocker = null;
-            double bestBlockValue = Double.NEGATIVE_INFINITY;
+            if (chosen.isEmpty()) continue;
 
-            for (CreatureInfo blocker : available) {
-                double blockValue = attacker.trample
-                        ? evaluateTrampleBlock(attacker, blocker)
-                        : evaluateBlock(attacker, blocker);
-                if (blockValue > bestBlockValue) {
-                    bestBlockValue = blockValue;
-                    bestBlocker = blocker;
-                }
+            for (CreatureInfo b : chosen) {
+                assignments.add(new int[]{b.index, attacker.index});
+                blockerUsed[b.index] = true;
             }
 
-            // Only block if favorable or if lethal incoming
-            if (bestBlocker != null && (bestBlockValue > 0 || lethalIncoming)) {
-                assignments.add(new int[]{bestBlocker.index, attacker.index});
-                blockerUsed[bestBlocker.index] = true;
+            // Update incoming damage estimate. For a single non-trample blocker, all damage
+            // is stopped; for a single trample blocker, excess still lands. 2+ blockers
+            // stop all damage (defender assigns damage; even chump pairs absorb it).
+            if (attacker.trample && chosen.size() == 1) {
+                int stopped = Math.min(attacker.power, chosen.get(0).toughness);
+                totalIncoming -= stopped;
+            } else {
+                totalIncoming -= attacker.power;
+            }
 
-                if (attacker.trample) {
-                    // With trample, excess damage beyond blocker toughness still reaches the player
-                    int trampleExcess = Math.max(0, attacker.power - bestBlocker.toughness);
-                    totalIncoming -= (attacker.power - trampleExcess);
-                    lethalIncoming = totalIncoming >= aiLife;
-
-                    // While trample excess is still lethal, keep adding blockers to reduce it
-                    while (trampleExcess > 0 && lethalIncoming) {
-                        List<CreatureInfo> stillAvailable = blockerInfos.stream()
-                                .filter(b -> !blockerUsed[b.index])
-                                .filter(b -> canBlock(gameData, b, attacker))
-                                .toList();
-
-                        if (stillAvailable.isEmpty()) break;
-
-                        // Pick the blocker that reduces the most trample damage (highest min(excess, toughness)),
-                        // breaking ties by preferring the least valuable blocker
-                        final int currentExcess = trampleExcess;
-                        CreatureInfo bestAdditional = stillAvailable.stream()
-                                .max(Comparator.comparingInt((CreatureInfo b) -> Math.min(currentExcess, b.toughness))
-                                        .thenComparingDouble(b -> -b.creatureScore))
-                                .orElse(null);
-
-                        if (bestAdditional == null) break;
-
-                        int reduction = Math.min(trampleExcess, bestAdditional.toughness);
-                        assignments.add(new int[]{bestAdditional.index, attacker.index});
-                        blockerUsed[bestAdditional.index] = true;
-                        trampleExcess -= reduction;
-                        totalIncoming -= reduction;
-                        lethalIncoming = totalIncoming >= aiLife;
-                    }
-                } else {
-                    totalIncoming -= attacker.power;
-                    lethalIncoming = totalIncoming >= aiLife;
+            // Trample soakers: if a single blocker isn't enough and damage is still lethal,
+            // pile on more blockers to shrink the trample excess.
+            if (attacker.trample && chosen.size() == 1 && totalIncoming >= aiLife) {
+                int trampleExcess = Math.max(0, attacker.power - chosen.get(0).toughness);
+                while (trampleExcess > 0 && totalIncoming >= aiLife) {
+                    final int currentExcess = trampleExcess;
+                    CreatureInfo bestAdditional = blockerInfos.stream()
+                            .filter(b -> !blockerUsed[b.index])
+                            .filter(b -> canBlock(gameData, b, attacker))
+                            .max(Comparator.comparingInt((CreatureInfo b) -> Math.min(currentExcess, b.toughness))
+                                    .thenComparingDouble(b -> -b.creatureScore))
+                            .orElse(null);
+                    if (bestAdditional == null) break;
+                    int reduction = Math.min(trampleExcess, bestAdditional.toughness);
+                    assignments.add(new int[]{bestAdditional.index, attacker.index});
+                    blockerUsed[bestAdditional.index] = true;
+                    trampleExcess -= reduction;
+                    totalIncoming -= reduction;
                 }
             }
         }
 
         return assignments;
+    }
+
+    private List<CreatureInfo> pickMenaceBlockers(CreatureInfo attacker, List<CreatureInfo> candidates,
+                                                  boolean lethalIncoming) {
+        if (candidates.size() < 2) return List.of();
+        int[] bestPair = findBestBlockerPairForMenace(attacker, candidates, null);
+        if (bestPair != null) {
+            CreatureInfo a = findByIndex(candidates, bestPair[0]);
+            CreatureInfo b = findByIndex(candidates, bestPair[1]);
+            if (a != null && b != null) return List.of(a, b);
+        }
+        if (lethalIncoming) {
+            List<CreatureInfo> sorted = candidates.stream()
+                    .sorted(Comparator.comparingDouble(CreatureInfo::creatureScore))
+                    .toList();
+            return List.of(sorted.get(0), sorted.get(1));
+        }
+        return List.of();
+    }
+
+    private List<CreatureInfo> forceCheapestPair(List<CreatureInfo> candidates) {
+        if (candidates.size() < 2) return List.of();
+        List<CreatureInfo> sorted = candidates.stream()
+                .sorted(Comparator.comparingDouble(CreatureInfo::creatureScore))
+                .toList();
+        return List.of(sorted.get(0), sorted.get(1));
+    }
+
+    private CreatureInfo pickBestSingleBlocker(CreatureInfo attacker, List<CreatureInfo> candidates) {
+        CreatureInfo best = null;
+        double bestValue = Double.NEGATIVE_INFINITY;
+        for (CreatureInfo blocker : candidates) {
+            double value = attacker.trample
+                    ? evaluateTrampleBlock(attacker, blocker)
+                    : evaluateBlock(attacker, blocker);
+            if (value > bestValue) {
+                bestValue = value;
+                best = blocker;
+            }
+        }
+        return best;
+    }
+
+    private static CreatureInfo findByIndex(List<CreatureInfo> list, int index) {
+        for (CreatureInfo c : list) {
+            if (c.index == index) return c;
+        }
+        return null;
     }
 
     /**
@@ -469,38 +463,55 @@ public class CombatSimulator {
         }
         boolean[] blockerUsed = new boolean[aiBattlefield.size()];
 
-        // Phase 1: Lure — any blocker that can block a lure attacker must do so
+        // Sort lure attackers so menace+lure comes first: a menace+lure attacker requires
+        // exactly its candidate pool size >= 2, and a non-menace lure that would drain the
+        // pool first could leave the menace one in an illegal 1-blocker state.
+        List<Integer> lureAttackerOrder = new ArrayList<>();
         for (int ai = 0; ai < attackerInfos.size(); ai++) {
+            if (hasLureEffect(gameData, attackerInfos.get(ai).perm)) lureAttackerOrder.add(ai);
+        }
+        lureAttackerOrder.sort((a, b) -> Boolean.compare(attackerInfos.get(b).menace, attackerInfos.get(a).menace));
+
+        // Phase 1: Lure — every blocker able to block a lure attacker must do so.
+        // Menace exception (CR 509.1a + 702.110b): a creature can't be "able to block"
+        // a menace attacker unless another can legally join, so with <2 candidates the
+        // attacker goes unblocked.
+        for (int ai : lureAttackerOrder) {
             CreatureInfo lureAttacker = attackerInfos.get(ai);
-            if (!hasLureEffect(gameData, lureAttacker.perm)) continue;
+            List<CreatureInfo> candidates = new ArrayList<>();
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
                 if (!canBlock(gameData, blocker, lureAttacker)) continue;
+                candidates.add(blocker);
+            }
+            if (lureAttacker.menace && candidates.size() < 2) continue;
+            for (CreatureInfo blocker : candidates) {
                 forcedAssignments.get(ai).add(blocker);
                 blockerUsed[blocker.index] = true;
             }
         }
 
-        // Phase 1b: Must-block-if-able — at least one blocker per such attacker
+        // Phase 1b: Must-block-if-able — at least one blocker per such attacker, or two
+        // if the attacker has menace. If fewer than the required count is available, no
+        // creature is "able to block" so the attacker goes unblocked.
         for (int ai = 0; ai < attackerInfos.size(); ai++) {
             CreatureInfo mustBlockAttacker = attackerInfos.get(ai);
             if (!hasMustBeBlockedIfAbleEffect(gameData, mustBlockAttacker.perm)) continue;
             if (!forcedAssignments.get(ai).isEmpty()) continue;
 
-            CreatureInfo bestBlocker = null;
-            double bestValue = Double.NEGATIVE_INFINITY;
+            int needed = mustBlockAttacker.menace ? 2 : 1;
+            List<CreatureInfo> scored = new ArrayList<>();
             for (CreatureInfo blocker : blockerInfos) {
                 if (blockerUsed[blocker.index]) continue;
                 if (!canBlock(gameData, blocker, mustBlockAttacker)) continue;
-                double value = evaluateBlock(mustBlockAttacker, blocker);
-                if (value > bestValue) {
-                    bestValue = value;
-                    bestBlocker = blocker;
-                }
+                scored.add(blocker);
             }
-            if (bestBlocker != null) {
-                forcedAssignments.get(ai).add(bestBlocker);
-                blockerUsed[bestBlocker.index] = true;
+            if (scored.size() < needed) continue;
+            scored.sort(Comparator.comparingDouble((CreatureInfo b) -> evaluateBlock(mustBlockAttacker, b)).reversed());
+            for (int i = 0; i < needed; i++) {
+                CreatureInfo blocker = scored.get(i);
+                forcedAssignments.get(ai).add(blocker);
+                blockerUsed[blocker.index] = true;
             }
         }
 
@@ -546,6 +557,10 @@ public class CombatSimulator {
         }
 
         double bestScore = Double.NEGATIVE_INFINITY;
+        // Record at least one valid fallback so we never return the empty-block default
+        // if the initial best-score search yields no improvement (e.g. every non-forced
+        // state is menace-invalid).
+        boolean haveValidChoice = false;
 
         do {
             // Add free blocker choices to the assignment map
@@ -556,18 +571,24 @@ public class CombatSimulator {
                 }
             }
 
-            double score = evaluateDefenderCombat(attackerInfos, forcedAssignments, aiLife, aiPoison);
+            // CSP validity: a menace attacker must have 0 or ≥2 blockers. Reject invalid
+            // candidate states rather than scoring them — this keeps the search from
+            // returning an illegal declaration the server will refuse.
+            if (isValidBlockerAssignment(attackerInfos, forcedAssignments)) {
+                double score = evaluateDefenderCombat(attackerInfos, forcedAssignments, aiLife, aiPoison);
 
-            // Apply pessimism for opponent's potential combat tricks: a block that
-            // looks profitable now could flip to a disaster if the opponent pumps an
-            // attacker (e.g. 3/3 blocking 2/3 becomes a blocker loss after Giant Growth).
-            if (threatEstimate.hasThreat()) {
-                score -= computeBlockTrickRisk(attackerInfos, forcedAssignments, aiLife, aiPoison, threatEstimate);
-            }
+                // Apply pessimism for opponent's potential combat tricks: a block that
+                // looks profitable now could flip to a disaster if the opponent pumps an
+                // attacker (e.g. 3/3 blocking 2/3 becomes a blocker loss after Giant Growth).
+                if (threatEstimate.hasThreat()) {
+                    score -= computeBlockTrickRisk(attackerInfos, forcedAssignments, aiLife, aiPoison, threatEstimate);
+                }
 
-            if (score > bestScore) {
-                bestScore = score;
-                System.arraycopy(choices, 0, bestChoices, 0, n);
+                if (score > bestScore) {
+                    bestScore = score;
+                    System.arraycopy(choices, 0, bestChoices, 0, n);
+                    haveValidChoice = true;
+                }
             }
 
             // Reset lists back to forced-only
@@ -578,6 +599,13 @@ public class CombatSimulator {
                 }
             }
         } while (incrementMixedRadix(choices, legalTargets));
+
+        // If every non-forced state was invalid (e.g. the only free blocker creates a menace
+        // 1-blocker violation for every attacker), fall back to the all-zero "don't block"
+        // free-blocker configuration, which is always valid given valid forced assignments.
+        if (!haveValidChoice) {
+            java.util.Arrays.fill(bestChoices, 0);
+        }
 
         // Apply best choices
         for (int bi = 0; bi < n; bi++) {
@@ -750,6 +778,22 @@ public class CombatSimulator {
             }
         }
         return result;
+    }
+
+    /**
+     * CSP constraint check for the exhaustive search: every attacker's block count must
+     * satisfy its legality rules. Currently checks menace (count ∈ {0} ∪ [2, ∞]).
+     * Extend with CanBeBlockedByAtMostN / "can't be blocked by more than 1" if/when
+     * the simulator starts tracking those restrictions.
+     */
+    private static boolean isValidBlockerAssignment(List<CreatureInfo> attackerInfos,
+                                                    List<List<CreatureInfo>> assignments) {
+        for (int ai = 0; ai < attackerInfos.size(); ai++) {
+            CreatureInfo attacker = attackerInfos.get(ai);
+            int count = assignments.get(ai).size();
+            if (attacker.menace && count == 1) return false;
+        }
+        return true;
     }
 
     private static boolean incrementMixedRadix(int[] choices, List<List<Integer>> legalTargets) {

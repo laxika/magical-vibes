@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -29,10 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -469,123 +468,123 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
-        // Find all attacking creatures that can be blocked
+        // Collect attackers (skip unblockable ones) and sort by priority:
+        //   lure > menace-lure > mustBlockIfAble > regular (power desc).
+        // Lure goes first because it forces all able blockers; within lure, menace jumps ahead
+        // so a menace+lure attacker claims a legal 2+ pool before a non-menace lure drains it.
         List<int[]> attackers = new ArrayList<>();
         for (int i = 0; i < opponentBattlefield.size(); i++) {
             Permanent perm = opponentBattlefield.get(i);
-            if (perm.isAttacking()) {
-                if (gameQueryService.hasCantBeBlocked(gameData, perm)) continue;
-
-                attackers.add(new int[]{i,
-                        gameQueryService.getEffectivePower(gameData, perm),
-                        gameQueryService.getEffectiveToughness(gameData, perm)});
-            }
+            if (!perm.isAttacking()) continue;
+            if (gameQueryService.hasCantBeBlocked(gameData, perm)) continue;
+            attackers.add(new int[]{i,
+                    gameQueryService.getEffectivePower(gameData, perm),
+                    gameQueryService.getEffectiveToughness(gameData, perm)});
         }
 
-        attackers.sort((a, b) -> Integer.compare(b[1], a[1]));
+        attackers.sort((a, b) -> {
+            Permanent pa = opponentBattlefield.get(a[0]);
+            Permanent pb = opponentBattlefield.get(b[0]);
+            int lureCmp = Boolean.compare(hasLureEffect(gameData, pb), hasLureEffect(gameData, pa));
+            if (lureCmp != 0) return lureCmp;
+            int menaceCmp = Boolean.compare(
+                    gameQueryService.hasKeyword(gameData, pb, Keyword.MENACE),
+                    gameQueryService.hasKeyword(gameData, pa, Keyword.MENACE));
+            if (menaceCmp != 0) return menaceCmp;
+            int mbCmp = Boolean.compare(hasMustBeBlockedIfAble(gameData, pb),
+                                        hasMustBeBlockedIfAble(gameData, pa));
+            if (mbCmp != 0) return mbCmp;
+            return Integer.compare(b[1], a[1]);
+        });
 
         List<BlockerAssignment> assignments = new ArrayList<>();
         boolean[] blockerUsed = new boolean[battlefield.size()];
 
         int totalIncomingDamage = attackers.stream().mapToInt(a -> a[1]).sum();
         int myLife = gameData.getLife(aiPlayer.getId());
-        boolean lethalIncoming = totalIncomingDamage >= myLife;
 
         for (int[] attacker : attackers) {
             int attackerIdx = attacker[0];
             int attackerPower = attacker[1];
             int attackerToughness = attacker[2];
             Permanent attackingPerm = opponentBattlefield.get(attackerIdx);
-            boolean attackerHasMenace = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.MENACE);
-            List<Integer> availableBlockers = getAvailableBlockersForAttacker(
-                    gameData, battlefield, blockerUsed, attackingPerm
-            );
+            boolean menace = gameQueryService.hasKeyword(gameData, attackingPerm, Keyword.MENACE);
+            boolean lure = hasLureEffect(gameData, attackingPerm);
+            boolean mustBlock = hasMustBeBlockedIfAble(gameData, attackingPerm);
+            boolean lethalIncoming = totalIncomingDamage >= myLife;
 
-            // Find cheapest blocker that can kill attacker and survive
-            int bestBlockerIdx = -1;
-            int bestBlockerValue = Integer.MAX_VALUE;
+            List<Integer> candidates = getAvailableBlockersForAttacker(gameData, battlefield, blockerUsed, attackingPerm);
+            if (candidates.isEmpty()) continue;
+            // Menace: no creature is "able to block" alone — with <2 candidates, skip.
+            if (menace && candidates.size() < 2) continue;
 
-            for (int j : availableBlockers) {
-                Permanent blocker = battlefield.get(j);
-                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
-                int blockerToughness = gameQueryService.getEffectiveToughness(gameData, blocker);
-
-                if (blockerPower >= attackerToughness && attackerPower < blockerToughness) {
-                    int value = blocker.getCard().getManaValue();
-                    if (value < bestBlockerValue) {
-                        bestBlockerIdx = j;
-                        bestBlockerValue = value;
-                    }
+            List<Integer> chosen;
+            if (lure) {
+                // Every able blocker must block this attacker.
+                chosen = new ArrayList<>(candidates);
+            } else if (menace) {
+                // Menace attacker: need a favorable pair, or chump pair if lethal, or force pair if mandatory.
+                List<Integer> favorablePair = selectBestFavorablePair(gameData, battlefield, candidates, attackerPower, attackerToughness);
+                if (favorablePair != null) {
+                    chosen = favorablePair;
+                } else if (lethalIncoming || mustBlock) {
+                    chosen = pickCheapestBlockers(battlefield, candidates, 2);
+                } else {
+                    chosen = List.of();
+                }
+            } else {
+                // Non-menace regular attacker.
+                int killAndSurviveIdx = findCheapestKillingBlocker(gameData, battlefield, candidates, attackerPower, attackerToughness);
+                List<Integer> favorablePair = selectBestFavorablePair(gameData, battlefield, candidates, attackerPower, attackerToughness);
+                if (killAndSurviveIdx != -1) {
+                    chosen = List.of(killAndSurviveIdx);
+                } else if (favorablePair != null) {
+                    chosen = favorablePair;
+                } else if (lethalIncoming || mustBlock) {
+                    chosen = pickCheapestBlockers(battlefield, candidates, 1);
+                } else {
+                    chosen = List.of();
                 }
             }
 
-            List<Integer> bestPair = selectBestFavorablePair(gameData, battlefield, availableBlockers, attackerPower, attackerToughness);
+            if (chosen.isEmpty()) continue;
 
-            if (attackerHasMenace) {
-                if (bestPair != null) {
-                    assignments.add(new BlockerAssignment(bestPair.get(0), attackerIdx));
-                    assignments.add(new BlockerAssignment(bestPair.get(1), attackerIdx));
-                    blockerUsed[bestPair.get(0)] = true;
-                    blockerUsed[bestPair.get(1)] = true;
-                    totalIncomingDamage -= attackerPower;
-                    lethalIncoming = totalIncomingDamage >= myLife;
-                } else if (lethalIncoming && availableBlockers.size() >= 2) {
-                    List<Integer> chumpPair = pickCheapestBlockers(battlefield, availableBlockers, 2);
-                    assignments.add(new BlockerAssignment(chumpPair.get(0), attackerIdx));
-                    assignments.add(new BlockerAssignment(chumpPair.get(1), attackerIdx));
-                    blockerUsed[chumpPair.get(0)] = true;
-                    blockerUsed[chumpPair.get(1)] = true;
-                    totalIncomingDamage -= attackerPower;
-                    lethalIncoming = totalIncomingDamage >= myLife;
-                }
-                continue;
-            }
-
-            if (bestBlockerIdx != -1) {
-                assignments.add(new BlockerAssignment(bestBlockerIdx, attackerIdx));
-                blockerUsed[bestBlockerIdx] = true;
-                totalIncomingDamage -= attackerPower;
-                lethalIncoming = totalIncomingDamage >= myLife;
-            } else if (bestPair != null) {
-                assignments.add(new BlockerAssignment(bestPair.get(0), attackerIdx));
-                assignments.add(new BlockerAssignment(bestPair.get(1), attackerIdx));
-                blockerUsed[bestPair.get(0)] = true;
-                blockerUsed[bestPair.get(1)] = true;
-                totalIncomingDamage -= attackerPower;
-                lethalIncoming = totalIncomingDamage >= myLife;
-            } else if (lethalIncoming) {
-                for (int j : availableBlockers) {
-                    assignments.add(new BlockerAssignment(j, attackerIdx));
-                    blockerUsed[j] = true;
-                    totalIncomingDamage -= attackerPower;
-                    lethalIncoming = totalIncomingDamage >= myLife;
-                    break;
-                }
-            }
-        }
-
-        // Satisfy "must be blocked if able" requirements (Gaea's Protector style).
-        // At least one blocker must block each such attacker if able.
-        Set<Integer> alreadyBlockedAttackers = new HashSet<>();
-        for (BlockerAssignment a : assignments) {
-            alreadyBlockedAttackers.add(a.attackerIndex());
-        }
-        for (int[] attacker : attackers) {
-            int attackerIdx = attacker[0];
-            if (alreadyBlockedAttackers.contains(attackerIdx)) continue;
-            Permanent attackingPerm = opponentBattlefield.get(attackerIdx);
-            if (!hasMustBeBlockedIfAble(gameData, attackingPerm)) continue;
-            List<Integer> availableBlockers = getAvailableBlockersForAttacker(
-                    gameData, battlefield, blockerUsed, attackingPerm);
-            if (!availableBlockers.isEmpty()) {
-                int blockerIdx = availableBlockers.getFirst();
+            for (int blockerIdx : chosen) {
                 assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
                 blockerUsed[blockerIdx] = true;
             }
+            totalIncomingDamage -= attackerPower;
         }
 
         log.info("AI: Declaring {} blockers in game {}", assignments.size(), gameId);
         sendBlockerDeclaration(gameData, new DeclareBlockersRequest(assignments));
+    }
+
+    private int findCheapestKillingBlocker(GameData gameData, List<Permanent> battlefield,
+                                           List<Integer> availableBlockers,
+                                           int attackerPower, int attackerToughness) {
+        int bestBlockerIdx = -1;
+        int bestBlockerValue = Integer.MAX_VALUE;
+        for (int j : availableBlockers) {
+            Permanent blocker = battlefield.get(j);
+            int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+            int blockerToughness = gameQueryService.getEffectiveToughness(gameData, blocker);
+            if (blockerPower >= attackerToughness && attackerPower < blockerToughness) {
+                int value = blocker.getCard().getManaValue();
+                if (value < bestBlockerValue) {
+                    bestBlockerIdx = j;
+                    bestBlockerValue = value;
+                }
+            }
+        }
+        return bestBlockerIdx;
+    }
+
+    private boolean hasLureEffect(GameData gameData, Permanent attacker) {
+        boolean hasOnCard = attacker.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(MustBeBlockedByAllCreaturesEffect.class::isInstance);
+        if (hasOnCard) return true;
+        return gameQueryService.hasAuraWithEffect(gameData, attacker, MustBeBlockedByAllCreaturesEffect.class);
     }
 
     private boolean hasMustBeBlockedIfAble(GameData gameData, Permanent attacker) {

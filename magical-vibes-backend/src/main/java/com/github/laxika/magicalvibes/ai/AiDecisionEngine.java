@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -380,12 +381,27 @@ public abstract class AiDecisionEngine {
         try {
             messageHandler.handleDeclareBlockers(selfConnection, request);
         } catch (Exception e) {
-            log.warn("AI: Blocker declaration rejected in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
-            try {
-                messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of()));
-            } catch (Exception e2) {
-                log.error("AI: Empty blocker declaration also failed in game {}", gameId, e2);
-            }
+            log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
+            sendEmptyBlockerFallback();
+            return;
+        }
+
+        // GameMessageHandler.handleDeclareBlockers swallows IllegalStateException
+        // internally (it sends an error to the connection rather than re-throwing).
+        // If the game is still awaiting blockers after the call, the declaration
+        // was rejected — fall back to empty blockers so the game doesn't get stuck.
+        if (!request.blockerAssignments().isEmpty()
+                && gameData.interaction.isAwaitingInput(AwaitingInput.BLOCKER_DECLARATION)) {
+            log.warn("AI: Blocker declaration rejected in game {} (still awaiting blockers); falling back to no blockers.", gameId);
+            sendEmptyBlockerFallback();
+        }
+    }
+
+    private void sendEmptyBlockerFallback() {
+        try {
+            messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of()));
+        } catch (Exception e) {
+            log.error("AI: Empty blocker declaration also failed in game {}", gameId, e);
         }
     }
 

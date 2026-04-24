@@ -1788,4 +1788,203 @@ class CombatSimulatorTest {
         // (including the lethal-flip sentinel) must result.
         assertThat(penalty).isGreaterThan(500.0);
     }
+
+    // ===== Menace interaction with mandatory-block effects =====
+    // These guard the slot-based allocation: a menace attacker must have 0 or ≥ 2
+    // blockers, even when lure or must-block-if-able would otherwise force exactly 1.
+
+    @Test
+    @DisplayName("Greedy: lure+menace with a single able blocker assigns zero blockers")
+    void greedyLureMenaceSingleCandidateSkipped() {
+        Permanent unicorn = new Permanent(new PrizedUnicorn());
+        unicorn.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        unicorn.setSummoningSick(false);
+        unicorn.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(unicorn);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockers(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Lone blocker can't legally block a menace attacker, so lure doesn't force it.
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Greedy: lure+menace with two able blockers forces both to block")
+    void greedyLureMenaceTwoCandidatesBothBlock() {
+        Permanent unicorn = new Permanent(new PrizedUnicorn());
+        unicorn.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        unicorn.setSummoningSick(false);
+        unicorn.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(unicorn);
+
+        Permanent bears1 = new Permanent(new GrizzlyBears());
+        bears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears1);
+        Permanent bears2 = new Permanent(new GrizzlyBears());
+        bears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears2);
+
+        List<int[]> blockers = simulator.findBestBlockers(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @DisplayName("Greedy: must-block-if-able + menace with one candidate assigns zero blockers")
+    void greedyMustBlockMenaceSingleCandidateSkipped() {
+        Permanent protector = new Permanent(new GaeasProtector());
+        protector.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        protector.setSummoningSick(false);
+        protector.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(protector);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockers(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        // Cannot satisfy both "must be blocked" and menace with one creature, so no block.
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Greedy: must-block-if-able + menace with two candidates assigns a pair")
+    void greedyMustBlockMenaceTwoCandidatesAssignsPair() {
+        Permanent protector = new Permanent(new GaeasProtector());
+        protector.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        protector.setSummoningSick(false);
+        protector.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(protector);
+
+        Permanent bears1 = new Permanent(new GrizzlyBears());
+        bears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears1);
+        Permanent bears2 = new Permanent(new GrizzlyBears());
+        bears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears2);
+
+        List<int[]> blockers = simulator.findBestBlockers(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: lure+menace with a single able blocker assigns zero blockers")
+    void exhaustiveLureMenaceSingleCandidateSkipped() {
+        Permanent unicorn = new Permanent(new PrizedUnicorn());
+        unicorn.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        unicorn.setSummoningSick(false);
+        unicorn.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(unicorn);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: lure+menace with two able blockers forces both to block")
+    void exhaustiveLureMenaceTwoCandidatesBothBlock() {
+        Permanent unicorn = new Permanent(new PrizedUnicorn());
+        unicorn.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        unicorn.setSummoningSick(false);
+        unicorn.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(unicorn);
+
+        Permanent bears1 = new Permanent(new GrizzlyBears());
+        bears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears1);
+        Permanent bears2 = new Permanent(new GrizzlyBears());
+        bears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears2);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: must-block-if-able + menace with one candidate assigns zero blockers")
+    void exhaustiveMustBlockMenaceSingleCandidateSkipped() {
+        Permanent protector = new Permanent(new GaeasProtector());
+        protector.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        protector.setSummoningSick(false);
+        protector.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(protector);
+
+        Permanent bears = new Permanent(new GrizzlyBears());
+        bears.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0));
+
+        assertThat(blockers).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Exhaustive: must-block-if-able + menace with two candidates assigns a pair")
+    void exhaustiveMustBlockMenaceTwoCandidatesAssignsPair() {
+        Permanent protector = new Permanent(new GaeasProtector());
+        protector.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        protector.setSummoningSick(false);
+        protector.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(protector);
+
+        Permanent bears1 = new Permanent(new GrizzlyBears());
+        bears1.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears1);
+        Permanent bears2 = new Permanent(new GrizzlyBears());
+        bears2.setSummoningSick(false);
+        gd.playerBattlefields.get(player1.getId()).add(bears2);
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1));
+
+        assertThat(blockers).hasSize(2);
+        assertThat(blockers).allMatch(b -> b[1] == 0);
+    }
+
+    @Test
+    @DisplayName("Exhaustive: regular menace never returned with exactly one blocker")
+    void exhaustiveMenaceNeverOneBlocker() {
+        // Regular (non-lure, non-must-block) menace attacker. The enumeration must
+        // never return a 1-blocker state — that would be an illegal declaration.
+        Permanent menaceCreature = new Permanent(new GrizzlyBears());
+        menaceCreature.getCard().setKeywords(EnumSet.of(Keyword.MENACE));
+        menaceCreature.setSummoningSick(false);
+        menaceCreature.setAttacking(true);
+        gd.playerBattlefields.get(player2.getId()).add(menaceCreature);
+
+        // 3 candidates — enumeration considers {0, 1, 2, 3} counts; 1 must be rejected.
+        for (int i = 0; i < 3; i++) {
+            Permanent aiBears = new Permanent(new GrizzlyBears());
+            aiBears.setSummoningSick(false);
+            gd.playerBattlefields.get(player1.getId()).add(aiBears);
+        }
+
+        List<int[]> blockers = simulator.findBestBlockersExhaustive(
+                gd, player1.getId(), List.of(0), List.of(0, 1, 2));
+
+        long menaceBlockerCount = blockers.stream().filter(b -> b[1] == 0).count();
+        assertThat(menaceBlockerCount).isNotEqualTo(1);
+    }
 }

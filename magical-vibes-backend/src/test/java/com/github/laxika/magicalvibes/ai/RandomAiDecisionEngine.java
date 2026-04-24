@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -491,7 +492,6 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
-        // Find all attacking creatures that can be blocked
         List<Integer> attackerIndices = new ArrayList<>();
         for (int i = 0; i < opponentBattlefield.size(); i++) {
             Permanent perm = opponentBattlefield.get(i);
@@ -499,13 +499,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 attackerIndices.add(i);
             }
         }
-
         if (attackerIndices.isEmpty()) {
             sendBlockerDeclaration(gameData, new DeclareBlockersRequest(List.of()));
             return;
         }
 
-        // Find all available blockers using the same canBlock() check as the game engine
         List<Integer> availableBlockerIndices = new ArrayList<>();
         for (int j = 0; j < battlefield.size(); j++) {
             Permanent blocker = battlefield.get(j);
@@ -514,82 +512,46 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
         }
 
-        List<BlockerAssignment> assignments = new ArrayList<>();
-        boolean[] blockerUsed = new boolean[battlefield.size()];
-
-        // Phase 1: Satisfy lure (MustBeBlockedByAllCreatures) requirements.
-        // Every creature that CAN block a lure attacker MUST do so.
-        Set<Integer> lureAttackerIndices = findLureAttackers(gameData, opponentBattlefield);
-        if (!lureAttackerIndices.isEmpty()) {
-            for (int blockerIdx : availableBlockerIndices) {
-                if (blockerUsed[blockerIdx]) continue;
-                Permanent blocker = battlefield.get(blockerIdx);
-                for (int attackerIdx : lureAttackerIndices) {
-                    Permanent attacker = opponentBattlefield.get(attackerIdx);
-                    if (canBlock(gameData, blocker, attacker)) {
-                        assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
-                        blockerUsed[blockerIdx] = true;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Phase 2: Satisfy per-creature mustBlockIds requirements (Provoke, etc.)
+        // Resolve per-creature mustBlockIds (Provoke, etc.): blocker → attacker pairs it's
+        // obligated to attempt. Collected per-attacker so menace/lure logic can fold them
+        // in atomically.
+        Map<Integer, List<Integer>> provokedBlockersByAttacker = new HashMap<>();
         for (int blockerIdx : availableBlockerIndices) {
-            if (blockerUsed[blockerIdx]) continue;
             Permanent blocker = battlefield.get(blockerIdx);
             if (blocker.getMustBlockIds().isEmpty()) continue;
-
             for (UUID mustBlockId : blocker.getMustBlockIds()) {
                 for (int attackerIdx : attackerIndices) {
                     Permanent attacker = opponentBattlefield.get(attackerIdx);
                     if (attacker.getId().equals(mustBlockId) && canBlock(gameData, blocker, attacker)) {
-                        assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
-                        blockerUsed[blockerIdx] = true;
+                        provokedBlockersByAttacker.computeIfAbsent(attackerIdx, k -> new ArrayList<>()).add(blockerIdx);
                         break;
                     }
                 }
-                if (blockerUsed[blockerIdx]) break;
             }
         }
 
-        // Phase 2.5: Satisfy "must be blocked if able" requirements (Gaea's Protector style).
-        // At least one blocker must block each such attacker if able.
+        Set<Integer> lureAttackerIndices = findLureAttackers(gameData, opponentBattlefield);
         Set<Integer> mustBeBlockedAttackerIndices = findMustBeBlockedAttackers(gameData, opponentBattlefield);
-        if (!mustBeBlockedAttackerIndices.isEmpty()) {
-            Set<Integer> alreadyBlockedAttackers = new HashSet<>();
-            for (BlockerAssignment a : assignments) {
-                alreadyBlockedAttackers.add(a.attackerIndex());
-            }
-            for (int attackerIdx : mustBeBlockedAttackerIndices) {
-                if (alreadyBlockedAttackers.contains(attackerIdx)) continue;
-                Permanent attacker = opponentBattlefield.get(attackerIdx);
-                for (int blockerIdx : availableBlockerIndices) {
-                    if (blockerUsed[blockerIdx]) continue;
-                    Permanent blocker = battlefield.get(blockerIdx);
-                    if (canBlock(gameData, blocker, attacker)) {
-                        assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
-                        blockerUsed[blockerIdx] = true;
-                        break;
-                    }
-                }
-            }
-        }
 
-        // Phase 3: Randomly assign remaining blockers to remaining attackers
-        List<Integer> remainingAttackers = new ArrayList<>(attackerIndices);
-        Collections.shuffle(remainingAttackers, rng);
+        // Sort by priority group: lure → menace-lure → mustBlockIfAble → provoked → regular.
+        // Random within each group (Random AI preserves randomness but respects constraint priority).
+        List<Integer> sortedAttackers = new ArrayList<>(attackerIndices);
+        Collections.shuffle(sortedAttackers, rng);
+        sortedAttackers.sort((a, b) -> Integer.compare(priorityGroup(gameData, opponentBattlefield, b,
+                lureAttackerIndices, mustBeBlockedAttackerIndices, provokedBlockersByAttacker),
+                priorityGroup(gameData, opponentBattlefield, a,
+                        lureAttackerIndices, mustBeBlockedAttackerIndices, provokedBlockersByAttacker)));
 
-        for (int attackerIdx : remainingAttackers) {
-            // 50% chance to try blocking this attacker
-            if (!rng.nextBoolean()) {
-                continue;
-            }
+        List<BlockerAssignment> assignments = new ArrayList<>();
+        boolean[] blockerUsed = new boolean[battlefield.size()];
 
+        for (int attackerIdx : sortedAttackers) {
             Permanent attacker = opponentBattlefield.get(attackerIdx);
+            boolean menace = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE);
+            boolean lure = lureAttackerIndices.contains(attackerIdx);
+            boolean mustBlock = mustBeBlockedAttackerIndices.contains(attackerIdx);
+            List<Integer> provoked = provokedBlockersByAttacker.getOrDefault(attackerIdx, List.of());
 
-            // Collect unused blockers that can legally block this attacker, in random order
             List<Integer> candidates = new ArrayList<>();
             for (int blockerIdx : availableBlockerIndices) {
                 if (blockerUsed[blockerIdx]) continue;
@@ -599,27 +561,53 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 }
             }
             if (candidates.isEmpty()) continue;
+            // Menace: no creature is "able to block" alone — with <2 candidates, skip.
+            if (menace && candidates.size() < 2) continue;
 
-            // Menace requires at least 2 blockers — skip if we don't have enough candidates
-            boolean hasMenace = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE);
-            if (hasMenace && candidates.size() < 2) {
-                continue;
+            List<Integer> chosen;
+            if (lure) {
+                // Every able blocker must block this attacker.
+                chosen = new ArrayList<>(candidates);
+            } else if (!provoked.isEmpty()) {
+                // Provoked blockers must block; add a menace partner if required.
+                List<Integer> provokedUnused = new ArrayList<>();
+                for (int p : provoked) {
+                    if (!blockerUsed[p] && candidates.contains(p)) provokedUnused.add(p);
+                }
+                if (provokedUnused.isEmpty()) {
+                    chosen = List.of();
+                } else if (menace && provokedUnused.size() == 1) {
+                    int partner = -1;
+                    for (int c : candidates) {
+                        if (c != provokedUnused.get(0)) { partner = c; break; }
+                    }
+                    chosen = partner != -1 ? List.of(provokedUnused.get(0), partner) : List.of();
+                } else {
+                    chosen = new ArrayList<>(provokedUnused);
+                }
+            } else if (mustBlock) {
+                List<Integer> shuffled = new ArrayList<>(candidates);
+                Collections.shuffle(shuffled, rng);
+                int needed = menace ? 2 : 1;
+                chosen = shuffled.subList(0, Math.min(needed, shuffled.size()));
+            } else {
+                // Voluntary block: 50% to try, randomly pick 1 (or 2 with menace).
+                if (!rng.nextBoolean()) continue;
+                List<Integer> shuffled = new ArrayList<>(candidates);
+                Collections.shuffle(shuffled, rng);
+                int needed = menace ? 2 : 1;
+                chosen = shuffled.subList(0, Math.min(needed, shuffled.size()));
             }
 
-            Collections.shuffle(candidates, rng);
-            if (hasMenace) {
-                // Assign exactly 2 blockers for menace creatures
-                assignments.add(new BlockerAssignment(candidates.get(0), attackerIdx));
-                blockerUsed[candidates.get(0)] = true;
-                assignments.add(new BlockerAssignment(candidates.get(1), attackerIdx));
-                blockerUsed[candidates.get(1)] = true;
-            } else {
-                assignments.add(new BlockerAssignment(candidates.get(0), attackerIdx));
-                blockerUsed[candidates.get(0)] = true;
+            if (chosen.isEmpty()) continue;
+
+            for (int blockerIdx : chosen) {
+                assignments.add(new BlockerAssignment(blockerIdx, attackerIdx));
+                blockerUsed[blockerIdx] = true;
             }
         }
 
-        // CR 509.1b: if only one unique blocker and it can't block alone, remove it
+        // CR 509.1b: if only one unique blocker and it can't block alone, remove it.
         Set<Integer> uniqueBlockerIndices = new HashSet<>();
         for (BlockerAssignment a : assignments) {
             uniqueBlockerIndices.add(a.blockerIndex());
@@ -634,6 +622,24 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
 
         log.info("Random AI: Declaring {} blockers in game {}", assignments.size(), gameId);
         sendBlockerDeclaration(gameData, new DeclareBlockersRequest(assignments));
+    }
+
+    /**
+     * Priority rank for attacker iteration. Higher ranks are processed first so the most
+     * constrained attackers claim their required blockers before less-constrained ones drain
+     * the pool.
+     */
+    private int priorityGroup(GameData gameData, List<Permanent> opponentBattlefield, int attackerIdx,
+                              Set<Integer> lureAttackers, Set<Integer> mustBlockAttackers,
+                              Map<Integer, List<Integer>> provokedByAttacker) {
+        Permanent attacker = opponentBattlefield.get(attackerIdx);
+        boolean lure = lureAttackers.contains(attackerIdx);
+        boolean menace = gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE);
+        if (lure && menace) return 5;
+        if (lure) return 4;
+        if (mustBlockAttackers.contains(attackerIdx)) return 3;
+        if (provokedByAttacker.containsKey(attackerIdx)) return 2;
+        return 1;
     }
 
     // ===== Block legality check =====
