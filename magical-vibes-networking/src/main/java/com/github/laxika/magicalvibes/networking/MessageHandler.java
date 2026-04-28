@@ -36,6 +36,8 @@ import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 
+import java.util.UUID;
+
 public interface MessageHandler {
 
     void handleLogin(Connection connection, LoginRequest request) throws Exception;
@@ -117,4 +119,6 @@ public interface MessageHandler {
     void handleTimeout(Connection connection);
 
     void handleError(Connection connection, String message) throws Exception;
+
+    void handleConnectionClosed(UUID playerId);
 }

@@ -22,19 +22,22 @@ public class GameOutcomeService {
     private final GameRegistry gameRegistry;
     private final DraftRegistry draftRegistry;
     private final DraftService draftService;
+    private final GameTimeoutService gameTimeoutService;
 
     public GameOutcomeService(GameQueryService gameQueryService,
                               GameBroadcastService gameBroadcastService,
                               SessionManager sessionManager,
                               GameRegistry gameRegistry,
                               DraftRegistry draftRegistry,
-                              @Lazy DraftService draftService) {
+                              @Lazy DraftService draftService,
+                              @Lazy GameTimeoutService gameTimeoutService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.sessionManager = sessionManager;
         this.gameRegistry = gameRegistry;
         this.draftRegistry = draftRegistry;
         this.draftService = draftService;
+        this.gameTimeoutService = gameTimeoutService;
     }
 
     public boolean checkWinCondition(GameData gameData) {
@@ -76,6 +79,7 @@ public class GameOutcomeService {
 
                 notifyDraftIfTournamentGame(gameData, winnerId);
 
+                gameTimeoutService.onGameFinished(gameData);
                 gameRegistry.remove(gameData.id);
 
                 log.info("Game {} - {} wins! {} is at {} life, {} poison", gameData.id, winnerName,
@@ -100,6 +104,7 @@ public class GameOutcomeService {
 
         notifyDraftIfTournamentGame(gameData, winnerId);
 
+        gameTimeoutService.onGameFinished(gameData);
         gameRegistry.remove(gameData.id);
 
         log.info("Game {} - {} wins!", gameData.id, winnerName);

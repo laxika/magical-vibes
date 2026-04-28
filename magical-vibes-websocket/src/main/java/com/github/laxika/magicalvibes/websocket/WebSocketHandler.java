@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.websocket;
 
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
@@ -151,7 +152,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         log.info("WebSocket connection closed: {} with status: {}", session.getId(), status);
-        sessionManager.unregisterSession(session.getId());
+        notifyConnectionClosed(session);
 
         ScheduledFuture<?> task = timeoutTasks.remove(session.getId());
         if (task != null) {
@@ -162,11 +163,23 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
         log.error("WebSocket transport error for session: {}", session.getId(), exception);
-        sessionManager.unregisterSession(session.getId());
+        notifyConnectionClosed(session);
 
         ScheduledFuture<?> task = timeoutTasks.remove(session.getId());
         if (task != null) {
             task.cancel(false);
+        }
+    }
+
+    private void notifyConnectionClosed(WebSocketSession session) {
+        Player player = sessionManager.getPlayer(session.getId());
+        sessionManager.unregisterSession(session.getId());
+        if (player != null) {
+            try {
+                messageHandler.handleConnectionClosed(player.getId());
+            } catch (Exception e) {
+                log.error("Error in connection-closed handler for player {}", player.getId(), e);
+            }
         }
     }
 }

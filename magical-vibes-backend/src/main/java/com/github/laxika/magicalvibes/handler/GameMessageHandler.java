@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.service.CardBrowserService;
 import com.github.laxika.magicalvibes.service.DeckService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.GameTimeoutService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -91,6 +92,7 @@ public class GameMessageHandler implements MessageHandler {
     private final CardBrowserService cardBrowserService;
     private final ValidTargetService validTargetService;
     private final DeckService deckService;
+    private final GameTimeoutService gameTimeoutService;
 
     public GameMessageHandler(LoginService loginService,
             GameService gameService,
@@ -104,7 +106,8 @@ public class GameMessageHandler implements MessageHandler {
             DraftRegistry draftRegistry,
             CardBrowserService cardBrowserService,
             ValidTargetService validTargetService,
-            DeckService deckService) {
+            DeckService deckService,
+            GameTimeoutService gameTimeoutService) {
         this.loginService = loginService;
         this.gameService = gameService;
         this.gameBroadcastService = gameBroadcastService;
@@ -118,6 +121,7 @@ public class GameMessageHandler implements MessageHandler {
         this.cardBrowserService = cardBrowserService;
         this.validTargetService = validTargetService;
         this.deckService = deckService;
+        this.gameTimeoutService = gameTimeoutService;
     }
 
     @Override
@@ -160,6 +164,7 @@ public class GameMessageHandler implements MessageHandler {
             if (response.getActiveGame() != null) {
                 GameData activeGame = gameRegistry.getGameForPlayer(response.getUserId());
                 sessionManager.setInGame(connection.getId());
+                gameTimeoutService.onPlayerReconnect(response.getUserId());
                 log.info("Connection {} registered for user {} ({}) - rejoining active game {}", connection.getId(), response.getUserId(), response.getUsername(), response.getActiveGame().id());
                 if (activeGame != null) {
                     gameService.resendAwaitingInput(activeGame, response.getUserId());
@@ -1044,13 +1049,32 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        // If the player is leaving a WAITING game, cancel it and notify lobby users
         GameData gameData = gameRegistry.getGameForPlayer(player.getId());
-        if (gameData != null && gameData.status == GameStatus.WAITING) {
-            LobbyGame lobbyGame = new LobbyGame(gameData.id, gameData.gameName,
-                    gameData.createdByUsername, gameData.playerIds.size(), gameData.status);
-            gameRegistry.remove(gameData.id);
-            broadcastToLobby(MessageType.GAME_REMOVED, lobbyGame);
+        if (gameData != null) {
+            if (gameData.status == GameStatus.WAITING) {
+                // Leaving a WAITING game: cancel it and notify lobby users
+                LobbyGame lobbyGame = new LobbyGame(gameData.id, gameData.gameName,
+                        gameData.createdByUsername, gameData.playerIds.size(), gameData.status);
+                gameRegistry.remove(gameData.id);
+                broadcastToLobby(MessageType.GAME_REMOVED, lobbyGame);
+            } else if (gameData.status != GameStatus.FINISHED) {
+                // Leaving an in-progress game: vs AI → close immediately; human-vs-human → concede.
+                sessionManager.clearInGame(connection.getId());
+                if (gameTimeoutService.isVsAi(gameData)) {
+                    gameTimeoutService.onPlayerDisconnect(player.getId());
+                } else {
+                    try {
+                        gameService.surrender(gameData, player);
+                    } catch (IllegalStateException e) {
+                        log.warn("Player {} tried to leave already-finished game {}", player.getId(), gameData.id);
+                    }
+                }
+
+                var games = lobbyService.listRunningGames();
+                var response = new com.github.laxika.magicalvibes.networking.message.LobbyGamesResponse(games);
+                connection.sendMessage(objectMapper.writeValueAsString(response));
+                return;
+            }
         }
 
         // Mark player as back in the lobby so they receive future lobby broadcasts
@@ -1101,6 +1125,11 @@ public class GameMessageHandler implements MessageHandler {
         log.warn("Sending error to {}: {}", connection.getId(), message);
         ErrorMessage error = new ErrorMessage(message);
         connection.sendMessage(objectMapper.writeValueAsString(error));
+    }
+
+    @Override
+    public void handleConnectionClosed(UUID playerId) {
+        gameTimeoutService.onPlayerDisconnect(playerId);
     }
 
     private void sendJoinMessage(Connection connection, MessageType type, JoinGame game) throws Exception {
