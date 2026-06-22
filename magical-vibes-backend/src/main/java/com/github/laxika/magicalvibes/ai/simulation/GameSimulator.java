@@ -240,7 +240,7 @@ public class GameSimulator {
                 gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, triggerTargetCollector);
         CreatureControlService creatureControlService = new CreatureControlService(gameBroadcastService, gameQueryService);
         DamagePreventionService damagePreventionService = new DamagePreventionService(gameQueryService);
-        GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, noOpSession, gameRegistry, draftRegistry, null);
+        GameOutcomeService gameOutcomeService = new GameOutcomeService(gameQueryService, gameBroadcastService, noOpSession, gameRegistry, draftRegistry, null, null);
         DrawService drawService = new DrawService(gameQueryService, gameBroadcastService, gameOutcomeService, triggeredAbilityQueueService);
         BattlefieldEntryService battlefieldEntryService = new BattlefieldEntryService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, null, null);
         CloneService cloneService = new CloneService(gameQueryService, gameBroadcastService, playerInputService, legendRuleService, battlefieldEntryService);
