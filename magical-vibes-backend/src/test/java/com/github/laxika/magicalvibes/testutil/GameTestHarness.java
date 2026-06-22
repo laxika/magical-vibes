@@ -197,7 +197,7 @@ public class GameTestHarness {
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, cardViewFactory, triggerTargetCollector);
         CreatureControlService creatureControlService = new CreatureControlService(staticGameBroadcastService, staticGameQueryService);
         DamagePreventionService damagePreventionService = new DamagePreventionService(staticGameQueryService);
-        GameOutcomeService gameOutcomeService = new GameOutcomeService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticGameRegistry, draftRegistry, null);
+        GameOutcomeService gameOutcomeService = new GameOutcomeService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticGameRegistry, draftRegistry, null, null);
         staticDrawService = new DrawService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, triggeredAbilityQueueService);
         staticBattlefieldEntryService = new BattlefieldEntryService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, cardViewFactory, null, null);
         CloneService cloneService = new CloneService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLegendRuleService, staticBattlefieldEntryService);
@@ -371,7 +371,7 @@ public class GameTestHarness {
         staticMessageHandler = new GameMessageHandler(
                 null, staticGameService, staticGameBroadcastService, staticLobbyService, staticGameRegistry,
                 staticSessionManager, new JacksonConfig().objectMapper(),
-                null, null, draftRegistry, null, validTargetService, null);
+                null, null, draftRegistry, null, validTargetService, null, null);
     }
 
     // ---- Per-test instance state ----
