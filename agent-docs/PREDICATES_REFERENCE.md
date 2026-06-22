@@ -89,7 +89,8 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryManaValuePredicate` | `(int manaValue)` | spells with exact mana value |
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
-| `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player |
+| `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
+| `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The enchanted player's ID is supplied externally by the evaluating service (`GameQueryService.matchesStackEntryPredicate(entry, predicate, enchantedPlayerId)`). Used by Curse of Echoes |
 | `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
 | `StackEntryTargetsYouOrCreatureYouControlPredicate` | `()` | spells/abilities targeting you or a creature you control |
 | `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |

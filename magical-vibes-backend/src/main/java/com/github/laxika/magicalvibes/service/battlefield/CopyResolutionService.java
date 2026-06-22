@@ -125,6 +125,19 @@ public class CopyResolutionService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(castingPlayerId)) continue;
 
+            // "each other player MAY copy" (Curse of Echoes): let the player decide.
+            // Accepting creates a single copy for that player (with its own retarget choice).
+            if (effect.optional()) {
+                PendingMayAbility mayCopy = new PendingMayAbility(
+                        entry.getCard(),
+                        playerId,
+                        List.of(new CopyControllerCastSpellEffect(spellSnapshot, playerId)),
+                        "Copy " + spellCard.getName() + "?"
+                );
+                gameData.pendingMayAbilities.add(mayCopy);
+                continue;
+            }
+
             Card copyCard = createCopyCard(spellCard);
             StackEntry copyEntry = createCopyStackEntry(spellSnapshot, copyCard, playerId, spellSnapshot.getTargetId());
 
