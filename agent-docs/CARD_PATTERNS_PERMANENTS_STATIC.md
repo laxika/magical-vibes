@@ -61,6 +61,7 @@ All paths relative to `cards/`.
 | Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
 | Double damage (controller's all sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect(null, true) — doubles all damage from sources you control (combat, spells, abilities) |
 | Double damage (controller's spells by color) | `f/FireServant.java` | STATIC DoubleControllerDamageEffect(AllOf[TypeIn(INSTANT,SORCERY), ColorIn(RED)], false) — doubles only red instant/sorcery damage |
+| Double damage to enchanted player (Curse) | `c/CurseOfBloodletting.java` | STATIC DoubleDamageToEnchantedPlayerEffect — enchant player curse; doubles all damage dealt to the enchanted player (spell/ability via DamageResolutionService.dealDamageToPlayer, combat via CombatDamageService.applyPlayerDamage), using GameQueryService.getEnchantedPlayerDamageMultiplier. Stacks multiplicatively with Furnace of Rath |
 | Play lands from GY | `c/CrucibleOfWorlds.java` | STATIC PlayLandsFromGraveyardEffect |
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |

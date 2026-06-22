@@ -102,6 +102,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `FirstTargetFightsSecondTargetEffect()` — fight
 - `MassFightTargetCreatureEffect()` — Alpha Brawl-style mass fight
 - `DoubleDamageEffect()` — double all damage (static)
+- `DoubleDamageToEnchantedPlayerEffect()` — double damage dealt to enchanted player (static Curse)
 - `DoubleControllerDamageEffect(StackEntryPredicate, boolean)` — double controller's damage
 - `DealDividedDamageAmongTargetCreaturesEffect(int)` — divided among creatures
 - `DealDividedDamageAmongAnyTargetsEffect(int)` — divided among any targets

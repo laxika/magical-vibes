@@ -1048,6 +1048,10 @@ public class CombatDamageService {
 
 
     private void applyPlayerDamage(GameData gameData, CombatDamageState state, UUID defenderId) {
+        // Curse of Bloodletting and similar: double combat damage dealt to the enchanted player (replacement effect)
+        int playerMultiplier = gameQueryService.getEnchantedPlayerDamageMultiplier(gameData, defenderId);
+        state.damageToDefendingPlayer *= playerMultiplier;
+        state.poisonDamageToDefendingPlayer *= playerMultiplier;
         state.damageToDefendingPlayer = damagePreventionService.applyPlayerPreventionShield(gameData, defenderId, state.damageToDefendingPlayer);
         processPendingRedirectDamage(gameData);
         state.damageToDefendingPlayer = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, defenderId, state.damageToDefendingPlayer, "combat", true);

@@ -146,6 +146,8 @@ class CombatDamageServiceTest {
                 });
         when(gameQueryService.applyCombatDamageMultiplier(eq(gameData), anyInt(), any(), any()))
                 .thenAnswer(inv -> (int) inv.getArgument(1));
+        lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gameData), any(UUID.class)))
+                .thenReturn(1);
         when(damagePreventionService.applyCreaturePreventionShield(
                 eq(gameData), any(Permanent.class), anyInt(), anyBoolean()))
                 .thenAnswer(inv -> (int) inv.getArgument(2));

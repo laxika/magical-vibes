@@ -105,6 +105,8 @@ class DamageResolutionServiceTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerLifeTotals.put(player1Id, 20);
         gd.playerLifeTotals.put(player2Id, 20);
+
+        lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
     }
 
     // ===== Helper methods =====

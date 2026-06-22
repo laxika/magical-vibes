@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -1402,6 +1403,50 @@ class GameQueryServiceTest {
         @DisplayName("applyDamageMultiplier with no effect returns same value")
         void applyMultiplierNoEffect() {
             assertThat(gqs.applyDamageMultiplier(gd, 3)).isEqualTo(3);
+        }
+    }
+
+    // ===== getEnchantedPlayerDamageMultiplier =====
+
+    @Nested
+    @DisplayName("getEnchantedPlayerDamageMultiplier")
+    class EnchantedPlayerDamageMultiplier {
+
+        @Test
+        @DisplayName("returns 1 by default")
+        void returnsOneByDefault() {
+            assertThat(gqs.getEnchantedPlayerDamageMultiplier(gd, player2Id)).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("returns 2 with one Curse of Bloodletting enchanting the player")
+        void returnsTwoWithOneCurse() {
+            addCurseEnchanting(player1Id, player2Id);
+
+            assertThat(gqs.getEnchantedPlayerDamageMultiplier(gd, player2Id)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("returns 4 with two Curses enchanting the player")
+        void returnsFourWithTwoCurses() {
+            addCurseEnchanting(player1Id, player2Id);
+            addCurseEnchanting(player1Id, player2Id);
+
+            assertThat(gqs.getEnchantedPlayerDamageMultiplier(gd, player2Id)).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("does not apply to a player the curse does not enchant")
+        void doesNotApplyToOtherPlayer() {
+            addCurseEnchanting(player1Id, player2Id);
+
+            assertThat(gqs.getEnchantedPlayerDamageMultiplier(gd, player1Id)).isEqualTo(1);
+        }
+
+        private void addCurseEnchanting(UUID controllerId, UUID enchantedPlayerId) {
+            Permanent curse = addPermanent(controllerId,
+                    createEnchantmentWithStaticEffect("Curse of Bloodletting", new DoubleDamageToEnchantedPlayerEffect()));
+            curse.setAttachedTo(enchantedPlayerId);
         }
     }
 

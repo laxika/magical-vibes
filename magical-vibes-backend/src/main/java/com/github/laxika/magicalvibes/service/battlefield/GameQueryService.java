@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.ETBDoubleTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
@@ -2072,6 +2073,25 @@ public class GameQueryService {
         gameData.forEachPermanent((playerId, p) -> {
             for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof DoubleDamageEffect) {
+                    multiplier[0] *= 2;
+                }
+            }
+        });
+        return multiplier[0];
+    }
+
+    /**
+     * Returns the damage multiplier that applies to damage dealt to a specific player based on
+     * {@link DoubleDamageToEnchantedPlayerEffect} Curse Auras enchanting that player (e.g. Curse
+     * of Bloodletting). Each Curse enchanting the player doubles the multiplier; multiple instances
+     * stack multiplicatively. Returns {@code 1} when no such Curse enchants the player.
+     */
+    public int getEnchantedPlayerDamageMultiplier(GameData gameData, UUID playerId) {
+        int[] multiplier = {1};
+        gameData.forEachPermanent((controllerId, p) -> {
+            if (!p.isAttached() || !playerId.equals(p.getAttachedTo())) return;
+            for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof DoubleDamageToEnchantedPlayerEffect) {
                     multiplier[0] *= 2;
                 }
             }
