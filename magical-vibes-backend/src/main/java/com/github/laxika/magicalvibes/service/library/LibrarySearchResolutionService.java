@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryForCardsTo
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithSubtypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureSearchLibraryForCreatureToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -955,6 +956,65 @@ public class LibrarySearchResolutionService {
                 .build(), prompt, true);
 
         log.info("Game {} - {} searches library for {} card ({} matches)", gameData.id, playerName, subtypeName, matchingCards.size());
+    }
+
+    /**
+     * Curse of Misfortunes: searches the controller's library for a Curse card that doesn't have
+     * the same name as a Curse attached to the source aura's enchanted player, puts it onto the
+     * battlefield attached to that player, then shuffles. The enchanted player is read from the
+     * source permanent's {@code attachedTo} (preserved through the upkeep "may" trigger).
+     */
+    @HandlesEffect(SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect.class)
+    void resolveSearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayer(GameData gameData, StackEntry entry,
+                                                                            SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        Permanent source = sourcePermanentId == null ? null
+                : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null || !source.isAttached()) return;
+        UUID enchantedPlayerId = source.getAttachedTo();
+
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        // Collect the names of Curses currently attached to the enchanted player so we can exclude them.
+        Set<String> attachedCurseNames = new HashSet<>();
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (perm.isAttached() && enchantedPlayerId.equals(perm.getAttachedTo())
+                    && gameQueryService.cardHasSubtype(perm.getCard(), CardSubtype.CURSE, gameData, ownerId)) {
+                attachedCurseNames.add(perm.getCard().getName());
+            }
+        });
+
+        List<Card> matchingCards = deck.stream()
+                .filter(card -> gameQueryService.cardHasSubtype(card, CardSubtype.CURSE, gameData, controllerId))
+                .filter(card -> !attachedCurseNames.contains(card.getName()))
+                .toList();
+
+        if (matchingCards.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            String logMsg = playerName + " searches their library but finds no eligible Curse cards. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - {} searches library, no eligible Curse cards found", gameData.id, playerName);
+            return;
+        }
+
+        String prompt = "Search your library for a Curse card and put it onto the battlefield attached to the enchanted player.";
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+                .canFailToFind(true)
+                .destination(LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER)
+                .attachToPlayerId(enchantedPlayerId)
+                .build(), prompt, true);
+
+        log.info("Game {} - {} searches library for a Curse card ({} matches)", gameData.id, playerName, matchingCards.size());
     }
 
     @HandlesEffect(SearchLibraryForCreatureWithExactMVToBattlefieldEffect.class)

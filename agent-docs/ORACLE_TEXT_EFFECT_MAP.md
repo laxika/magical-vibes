@@ -128,6 +128,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "search your library for a basic land card, put it into your hand" | `SearchLibraryForBasicLandToHandEffect()` | SPELL | |
 | "search your library for a basic land card, put it onto the battlefield tapped" | `SearchLibraryForCardTypesToBattlefieldEffect(CardTypePredicate(LAND, basic), true)` | SPELL | |
 | "search your library for a [type] card, reveal it, put it into your hand" | `SearchLibraryForCardTypesToHandEffect(predicate)` | SPELL | |
+| "you may search your library for a Curse card, put it onto the battlefield attached to [target] player" | `MayEffect(SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect(CardSubtype.CURSE), prompt)` | trigger | Bitterheart Witch — `canTargetPlayer()=true`, target chosen at trigger time |
+| "at the beginning of your upkeep, you may search your library for a Curse card that doesn't have the same name as a Curse attached to enchanted player, put it onto the battlefield attached to that player, then shuffle" | `MayEffect(SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect(), prompt)` | UPKEEP_TRIGGERED | Curse of Misfortunes — enchanted player derived from source aura's `attachedTo`; excludes Curses already attached to that player by name |
 | "scry N" | `ScryEffect(N)` | SPELL/trigger | |
 | "surveil N" | `SurveilEffect(N)` | SPELL/trigger | |
 | "shuffle your library" | `ShuffleLibraryEffect()` | SPELL | |

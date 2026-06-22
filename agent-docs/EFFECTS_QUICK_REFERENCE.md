@@ -236,6 +236,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `SearchLibraryForCardTypesToBattlefieldEffect(CardPredicate, boolean tapped)` or `(CardPredicate, boolean, int max)` — filtered to battlefield
 - `SearchLibraryForCreatureWithMVXOrLessToHandEffect()` — creature MV<=X to hand
 - `SearchLibraryForCreatureWithSubtypeToBattlefieldEffect(CardSubtype)` — creature subtype to battlefield
+- `SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect()` — Curse (name not shared with one already on enchanted player) onto battlefield attached to enchanted player; Curse of Misfortunes
 - `SearchLibraryForCreatureWithExactMVToBattlefieldEffect(int mvOffset)` — Birthing Pod
 - `SearchLibraryForCardToTopOfLibraryEffect()` — any card to top
 - `SearchLibraryForCreatureToTopOfLibraryEffect()` — creature to top
