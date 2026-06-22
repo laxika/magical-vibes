@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -528,16 +529,24 @@ class SpellCastTriggerCollectorServiceTest {
     @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — CopySpellForEachOtherPlayerEffect")
     class AnyPlayerCopySpellForEachOtherPlayer {
 
+        private static CopySpellForEachOtherPlayerEffect instantSorceryCopy() {
+            return new CopySpellForEachOtherPlayerEffect(
+                    new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)));
+        }
+
         @Test
-        @DisplayName("puts triggered ability on stack for instant on the stack")
-        void triggersForInstantOnStack() {
-            Permanent perm = createPermanent("Radiate");
-            var effect = new CopySpellForEachOtherPlayerEffect();
+        @DisplayName("puts triggered ability on stack when the spell is on the stack and the filter matches")
+        void triggersWhenFilterMatches() {
+            Permanent perm = createPermanent("Hive Mind");
+            var effect = instantSorceryCopy();
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
+            StackEntry spellOnStack = new StackEntry(
+                    StackEntryType.INSTANT_SPELL, spellCard, player1Id, "Lightning Bolt", new ArrayList<>());
             gd.stack.add(spellOnStack);
+            when(gameQueryService.matchesStackEntryPredicate(eq(spellOnStack), eq(effect.spellFilter()), any()))
+                    .thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
@@ -552,8 +561,8 @@ class SpellCastTriggerCollectorServiceTest {
         @Test
         @DisplayName("returns false when spell is not found on the stack")
         void returnsFalseWhenSpellNotOnStack() {
-            Permanent perm = createPermanent("Radiate");
-            var effect = new CopySpellForEachOtherPlayerEffect();
+            Permanent perm = createPermanent("Hive Mind");
+            var effect = instantSorceryCopy();
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
@@ -568,7 +577,7 @@ class SpellCastTriggerCollectorServiceTest {
         @Test
         @DisplayName("returns false when trigger already has a spell snapshot")
         void returnsFalseWhenSnapshotNotNull() {
-            Permanent perm = createPermanent("Radiate");
+            Permanent perm = createPermanent("Hive Mind");
             var snapshot = new StackEntry(createCard("Dummy"), player1Id);
             var effect = new CopySpellForEachOtherPlayerEffect(snapshot, player1Id);
             Card spellCard = createInstant("Lightning Bolt");
@@ -582,12 +591,18 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("returns false when spell is not an instant or sorcery")
-        void returnsFalseWhenNotInstantOrSorcery() {
-            Permanent perm = createPermanent("Radiate");
-            var effect = new CopySpellForEachOtherPlayerEffect();
+        @DisplayName("returns false when the spell filter rejects the cast (e.g. a creature spell)")
+        void returnsFalseWhenFilterRejects() {
+            Permanent perm = createPermanent("Hive Mind");
+            var effect = instantSorceryCopy();
             Card spellCard = createCard("Grizzly Bears"); // creature
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            StackEntry spellOnStack = new StackEntry(
+                    StackEntryType.CREATURE_SPELL, spellCard, player1Id, "Grizzly Bears", new ArrayList<>());
+            gd.stack.add(spellOnStack);
+            when(gameQueryService.matchesStackEntryPredicate(eq(spellOnStack), eq(effect.spellFilter()), any()))
+                    .thenReturn(false);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),

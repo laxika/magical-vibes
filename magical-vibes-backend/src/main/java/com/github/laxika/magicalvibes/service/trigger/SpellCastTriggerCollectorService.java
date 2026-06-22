@@ -150,22 +150,28 @@ public class SpellCastTriggerCollectorService {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (trigger.spellSnapshot() != null) return false;
 
-        Card spellCard = sc.spellCard();
-        if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return false;
-
         // Find the spell on the stack
         StackEntry spellEntry = null;
         for (StackEntry se : match.gameData().stack) {
-            if (se.getCard().getId().equals(spellCard.getId())) {
+            if (se.getCard().getId().equals(sc.spellCard().getId())) {
                 spellEntry = se;
                 break;
             }
         }
         if (spellEntry == null) return false;
 
+        // The spell filter fully expresses what triggers the copy — instant/sorcery type, plus
+        // (for Curse of Echoes) controlled-by-the-enchanted-player. Evaluated against the cast
+        // spell's stack entry, with the source aura's attachedTo as the enchanted-player context.
+        if (trigger.spellFilter() != null
+                && !gameQueryService.matchesStackEntryPredicate(spellEntry, trigger.spellFilter(),
+                        match.permanent().getAttachedTo())) {
+            return false;
+        }
+
         StackEntry snapshot = new StackEntry(spellEntry);
         CopySpellForEachOtherPlayerEffect resolutionEffect =
-                new CopySpellForEachOtherPlayerEffect(snapshot, sc.castingPlayerId());
+                new CopySpellForEachOtherPlayerEffect(snapshot, sc.castingPlayerId(), trigger.optional());
 
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

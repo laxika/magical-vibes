@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -3049,6 +3050,72 @@ class GameQueryServiceTest {
 
             assertThat(gqs.getOverriddenLandManaColor(gd, land)).isNull();
             assertThat(gqs.getOverriddenLandManaColor(gd, otherLand)).isEqualTo(ManaColor.BLACK);
+        }
+    }
+
+    @Nested
+    @DisplayName("matchesStackEntryPredicate — enchanted-player filter")
+    class MatchesStackEntryPredicateEnchantedPlayer {
+
+        private StackEntry instantControlledBy(UUID controllerId) {
+            Card bolt = new Card();
+            bolt.setName("Lightning Bolt");
+            bolt.setType(CardType.INSTANT);
+            return new StackEntry(StackEntryType.INSTANT_SPELL, bolt, controllerId, "Lightning Bolt", new ArrayList<>());
+        }
+
+        @Test
+        @DisplayName("matches when the entry is controlled by the enchanted player")
+        void matchesWhenControlledByEnchantedPlayer() {
+            StackEntry entry = instantControlledBy(player2Id);
+
+            boolean result = gqs.matchesStackEntryPredicate(
+                    entry, new StackEntryControlledByEnchantedPlayerPredicate(), player2Id);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("does not match when the entry is controlled by another player")
+        void doesNotMatchWhenControlledByAnotherPlayer() {
+            StackEntry entry = instantControlledBy(player1Id);
+
+            boolean result = gqs.matchesStackEntryPredicate(
+                    entry, new StackEntryControlledByEnchantedPlayerPredicate(), player2Id);
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("does not match when there is no enchanted-player context")
+        void doesNotMatchWithoutEnchantedPlayerContext() {
+            StackEntry entry = instantControlledBy(player2Id);
+
+            boolean result = gqs.matchesStackEntryPredicate(
+                    entry, new StackEntryControlledByEnchantedPlayerPredicate(), null);
+
+            assertThat(result).isFalse();
+        }
+
+        @Test
+        @DisplayName("AllOf combines instant/sorcery type with the enchanted-player filter")
+        void allOfTypeAndEnchantedPlayer() {
+            StackEntryAllOfPredicate filter = new StackEntryAllOfPredicate(List.of(
+                    new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
+                    new StackEntryControlledByEnchantedPlayerPredicate()));
+
+            // Instant cast by the enchanted player → matches.
+            assertThat(gqs.matchesStackEntryPredicate(instantControlledBy(player2Id), filter, player2Id)).isTrue();
+            // Instant cast by someone else → fails the enchanted-player clause.
+            assertThat(gqs.matchesStackEntryPredicate(instantControlledBy(player1Id), filter, player2Id)).isFalse();
+
+            // Creature cast by the enchanted player → fails the type clause.
+            Card bears = new Card();
+            bears.setName("Grizzly Bears");
+            bears.setType(CardType.CREATURE);
+            StackEntry creature = new StackEntry(
+                    StackEntryType.CREATURE_SPELL, bears, player2Id, "Grizzly Bears", new ArrayList<>());
+            assertThat(gqs.matchesStackEntryPredicate(creature, filter, player2Id)).isFalse();
         }
     }
 }

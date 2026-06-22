@@ -75,6 +75,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -2187,6 +2188,20 @@ public class GameQueryService {
      * Evaluates a {@link StackEntryPredicate} against a stack entry for damage multiplier purposes.
      */
     private boolean matchesStackEntryPredicate(StackEntry entry, StackEntryPredicate predicate) {
+        return matchesStackEntryPredicate(entry, predicate, null);
+    }
+
+    /**
+     * Evaluates a {@link StackEntryPredicate} against a stack entry, supporting predicates that
+     * reference the "enchanted player" — the player the evaluating source permanent is attached to.
+     *
+     * @param enchantedPlayerId the player the source aura is attached to, or {@code null} when no
+     *                          such context applies (e.g. damage-multiplier evaluation)
+     */
+    public boolean matchesStackEntryPredicate(StackEntry entry, StackEntryPredicate predicate, UUID enchantedPlayerId) {
+        if (predicate instanceof StackEntryControlledByEnchantedPlayerPredicate) {
+            return enchantedPlayerId != null && enchantedPlayerId.equals(entry.getControllerId());
+        }
         if (predicate instanceof StackEntryTypeInPredicate typeIn) {
             return typeIn.spellTypes().contains(entry.getEntryType());
         }
@@ -2200,18 +2215,18 @@ public class GameQueryService {
         }
         if (predicate instanceof StackEntryAllOfPredicate allOf) {
             for (StackEntryPredicate nested : allOf.predicates()) {
-                if (!matchesStackEntryPredicate(entry, nested)) return false;
+                if (!matchesStackEntryPredicate(entry, nested, enchantedPlayerId)) return false;
             }
             return true;
         }
         if (predicate instanceof StackEntryAnyOfPredicate anyOf) {
             for (StackEntryPredicate nested : anyOf.predicates()) {
-                if (matchesStackEntryPredicate(entry, nested)) return true;
+                if (matchesStackEntryPredicate(entry, nested, enchantedPlayerId)) return true;
             }
             return false;
         }
         if (predicate instanceof StackEntryNotPredicate not) {
-            return !matchesStackEntryPredicate(entry, not.predicate());
+            return !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
         }
         return false;
     }
