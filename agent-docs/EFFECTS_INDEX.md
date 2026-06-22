@@ -1106,6 +1106,7 @@ Pass `null` as filter to allow any card.
 | `CantSearchLibrariesEffect` | `()` | players can't search libraries; any player may pay {2} to ignore until end of turn (static, Leonin Arbiter) |
 | `PlayersCannotDrawCardsEffect` | `()` | players can't draw cards (static, Omen Machine) |
 | `LimitSpellsPerTurnEffect` | `(int maxSpells)` | each player can cast at most N spells per turn (static) |
+| `LimitSpellsForEnchantedPlayerEffect` | `(int maxSpells)` | enchanted player can cast at most N spells per turn (static, Curse Aura on a player, e.g. Curse of Exhaustion) |
 | `IncreaseOpponentCastCostEffect` | `(Set<CardType> affectedTypes, int amount)` | opponent's spells of types cost N more (static) |
 | `IncreaseSpellCostEffect` | `(CardPredicate predicate, int amount)` | matching spells cost N more for all players (static, symmetric; e.g. Thalia with CardNotPredicate(CardTypePredicate(CREATURE))) |
 | `IncreaseOpponentCostForTargetingControlledSubtypeEffect` | `(CardSubtype subtype, int amount)` | opponent spells/abilities that target a permanent with this subtype you control cost N more (static; e.g. Kopala with MERFOLK, 2) |

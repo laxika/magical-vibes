@@ -38,7 +38,8 @@ All paths relative to `cards/`.
 | Can't lose + life gain draw + life loss exile + LTB lose | `l/LichsMastery.java` | STATIC CantLoseGameEffect + GrantKeywordEffect(HEXPROOF, SELF), ON_CONTROLLER_GAINS_LIFE DrawCardsEqualToLifeGainedEffect, ON_CONTROLLER_LOSES_LIFE ExileForEachLifeLostEffect, ON_SELF_LEAVES_BATTLEFIELD ControllerLosesGameOnLeavesEffect |
 | Controller shroud | `t/TrueBeliever.java` | STATIC GrantControllerShroudEffect |
 | Can't cast type | `s/SteelGolem.java` | STATIC CantCastSpellTypeEffect |
-| Limit spells | `r/RuleOfLaw.java` | STATIC LimitSpellsPerTurnEffect |
+| Limit spells (all players) | `r/RuleOfLaw.java` | STATIC LimitSpellsPerTurnEffect |
+| Limit spells (enchanted player) | `c/CurseOfExhaustion.java` | STATIC LimitSpellsForEnchantedPlayerEffect |
 | Tax attackers | `w/WindbornMuse.java` | STATIC RequirePaymentToAttackEffect |
 | Tax opponent spells | `a/AuraOfSilence.java` | STATIC IncreaseOpponentCastCostEffect |
 | Tax matching spells (all players) | `t/ThaliaGuardianOfThraben.java` | STATIC IncreaseSpellCostEffect(CardNotPredicate(CardTypePredicate(CREATURE)), 1) — symmetric, affects all players |

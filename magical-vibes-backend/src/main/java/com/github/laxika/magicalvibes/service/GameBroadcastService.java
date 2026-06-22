@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
@@ -334,7 +335,7 @@ public class GameBroadcastService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData);
+        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
 
@@ -558,7 +559,7 @@ public class GameBroadcastService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData);
+        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
         Optional<UUID> graveyardCastSourceId = findGraveyardCastSourcePermanentId(gameData, playerId);
@@ -663,7 +664,7 @@ public class GameBroadcastService {
         boolean stackEmpty = gameData.stack.isEmpty();
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData);
+        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttackExile = isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
@@ -785,7 +786,7 @@ public class GameBroadcastService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN;
         boolean stackEmpty = gameData.stack.isEmpty();
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData);
+        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
         boolean spellLimitReached = spellsCast >= maxSpells;
         boolean cantCastDueToAttack = isPlayerPreventedFromCasting(gameData, playerId);
         Set<CardType> restrictedSpellTypes = getRestrictedSpellTypes(gameData, playerId);
@@ -1080,19 +1081,26 @@ public class GameBroadcastService {
         return false;
     }
 
-    int getMaxSpellsPerTurn(GameData gameData) {
+    int getMaxSpellsPerTurn(GameData gameData, UUID playerId) {
+        int limit = Integer.MAX_VALUE;
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof LimitSpellsPerTurnEffect limit) {
-                        return limit.maxSpells();
+                    // Rule of Law etc.: applies to every player globally.
+                    if (effect instanceof LimitSpellsPerTurnEffect global) {
+                        limit = Math.min(limit, global.maxSpells());
+                    }
+                    // Curse of Exhaustion etc.: only applies to the enchanted player.
+                    if (effect instanceof LimitSpellsForEnchantedPlayerEffect curse
+                            && perm.isAttached() && playerId.equals(perm.getAttachedTo())) {
+                        limit = Math.min(limit, curse.maxSpells());
                     }
                 }
             }
         }
-        return Integer.MAX_VALUE;
+        return limit;
     }
 
     Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
@@ -1330,7 +1338,7 @@ public class GameBroadcastService {
      */
     public boolean isSpellCastingAllowed(GameData gameData, UUID playerId, Card card) {
         int spellsCast = gameData.getSpellsCastThisTurnCount(playerId);
-        int maxSpells = getMaxSpellsPerTurn(gameData);
+        int maxSpells = getMaxSpellsPerTurn(gameData, playerId);
         if (spellsCast >= maxSpells) return false;
         if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
         Set<CardType> restricted = getRestrictedSpellTypes(gameData, playerId);
