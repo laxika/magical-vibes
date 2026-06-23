@@ -649,6 +649,8 @@ public class PlayerInteractionResolutionService {
         }
 
         gameData.interaction.setDiscardRemainingCount(effect.amount());
+        gameData.pendingExileFromHandPlayPermissionController =
+                effect.controllerMayPlay() ? entry.getControllerId() : null;
         playerInputService.beginExileFromHandChoice(gameData, targetPlayerId, sourcePermanentId);
     }
 
