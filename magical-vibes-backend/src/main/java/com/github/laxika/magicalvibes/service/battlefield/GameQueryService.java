@@ -1686,6 +1686,19 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the player has protection from the given color until end of turn
+     * (e.g. Faith's Shield fateful hour). Such a player can't be targeted by spells or abilities
+     * of that color and can't be dealt damage by sources of that color.
+     */
+    public boolean playerHasProtectionFromColor(GameData gameData, UUID playerId, CardColor color) {
+        if (color == null) {
+            return false;
+        }
+        Set<CardColor> colors = gameData.playerProtectionFromColorsUntilEndOfTurn.get(playerId);
+        return colors != null && colors.contains(color);
+    }
+
+    /**
      * Returns {@code true} if the player controls a permanent with
      * {@link AllowExtraLoyaltyActivationEffect}, allowing planeswalker loyalty abilities
      * to be activated twice per turn instead of once (Oath of Teferi).

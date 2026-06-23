@@ -357,7 +357,7 @@ public class GameSimulator {
                 battlefieldEntryService, gameQueryService, gameBroadcastService, turnProgressionService, targetLegalityService, permanentRemovalService, triggerCollectionService);
         ChoiceHandlerService listChoiceHandlerService = new ChoiceHandlerService(
                 noOpSession, gameQueryService, warpWorldService, battlefieldEntryService, gameBroadcastService,
-                playerInputService, turnProgressionService, legendRuleService);
+                playerInputService, turnProgressionService, legendRuleService, effectResolutionService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 drawService, gameQueryService, graveyardService, battlefieldEntryService, gameBroadcastService,
                 playerInputService, triggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService, playerInteractionResolutionService, exileService);

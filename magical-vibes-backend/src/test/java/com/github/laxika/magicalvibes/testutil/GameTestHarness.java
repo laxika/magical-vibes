@@ -315,7 +315,7 @@ public class GameTestHarness {
                 staticBattlefieldEntryService, staticGameQueryService, staticGameBroadcastService, turnProgressionService, staticTargetLegalityService, staticPermanentRemovalService, staticTriggerCollectionService);
         ChoiceHandlerService listChoiceHandlerService = new ChoiceHandlerService(
                 staticSessionManager, staticGameQueryService, warpWorldService, staticBattlefieldEntryService, staticGameBroadcastService,
-                staticPlayerInputService, turnProgressionService, staticLegendRuleService);
+                staticPlayerInputService, turnProgressionService, staticLegendRuleService, effectResolutionService);
         CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
                 staticDrawService, staticGameQueryService, graveyardService, staticBattlefieldEntryService, staticGameBroadcastService,
                 staticPlayerInputService, staticTriggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService, playerInteractionResolutionService, exileService);

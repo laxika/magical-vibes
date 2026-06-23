@@ -273,6 +273,11 @@ public class TargetLegalityService {
         if (target == null && needsTarget && gameData.playerIds.contains(targetId)) {
             String playerReason = checkPlayerUntargetableReason(gameData, targetId, controllerId);
             if (playerReason != null) return Optional.of(playerReason);
+            if (card != null && card.getColor() != null
+                    && gameQueryService.playerHasProtectionFromColor(gameData, targetId, card.getColor())) {
+                return Optional.of(gameData.playerIdToName.get(targetId)
+                        + " has protection from " + card.getColor().name().toLowerCase());
+            }
         }
 
         if (target == null
@@ -397,6 +402,10 @@ public class TargetLegalityService {
                     // Player target: check hexproof/shroud at resolution time
                     String playerReason = checkPlayerUntargetableReason(gameData, entry.getTargetId(), entry.getControllerId());
                     if (playerReason != null) {
+                        targetFizzled = true;
+                    } else if (entry.getCard() != null && entry.getCard().getColor() != null
+                            && gameQueryService.playerHasProtectionFromColor(gameData, entry.getTargetId(),
+                                    entry.getCard().getColor())) {
                         targetFizzled = true;
                     }
                 } else if (targetPerm != null) {
