@@ -79,6 +79,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -2041,11 +2042,29 @@ public class DamageResolutionService {
         if (targetId == null || !gameData.playerIds.contains(targetId)) return;
 
         if (!isDamageSourcePreventedWithLog(gameData, entry)) {
-            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+            int amount = effect.damageEqualsAttachedCount() != null
+                    ? countPermanentsAttachedToPlayer(gameData, targetId, effect.damageEqualsAttachedCount())
+                    : effect.damage();
+            int rawDamage = gameQueryService.applyDamageMultiplier(gameData, amount, entry);
             dealDamageToPlayer(gameData, entry, targetId, rawDamage);
         }
 
         gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Counts the permanents currently attached to the given player that match the predicate
+     * (e.g. Curses attached to that player for Curse of Thirst).
+     */
+    private int countPermanentsAttachedToPlayer(GameData gameData, UUID playerId, PermanentPredicate predicate) {
+        int[] count = {0};
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (perm.isAttached() && playerId.equals(perm.getAttachedTo())
+                    && gameQueryService.matchesPermanentPredicate(gameData, perm, predicate)) {
+                count[0]++;
+            }
+        });
+        return count[0];
     }
 
     /**

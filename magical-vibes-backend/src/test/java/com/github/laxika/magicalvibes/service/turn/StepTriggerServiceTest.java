@@ -31,6 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -735,7 +737,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of the Bloody Tome");
             curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
-                    new DealDamageToEnchantedPlayerEffect(2, null));
+                    new DealDamageToEnchantedPlayerEffect(2));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id);
             gd.playerBattlefields.get(player2Id).add(cursePerm);
@@ -746,6 +748,27 @@ class StepTriggerServiceTest {
             DealDamageToEnchantedPlayerEffect bakedEffect =
                     (DealDamageToEnchantedPlayerEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
             assertThat(bakedEffect.affectedPlayerId()).isEqualTo(player1Id);
+        }
+
+        @Test
+        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED preserves the attached-count predicate when baking player ID")
+        void enchantedPlayerUpkeepPreservesAttachedCountPredicate() {
+            gd.turnNumber = 2;
+            PermanentPredicate predicate = new PermanentHasSubtypePredicate(CardSubtype.CURSE);
+            Card curseCard = createCardWithName("Curse of Thirst");
+            curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
+                    DealDamageToEnchantedPlayerEffect.attachedCount(predicate));
+            Permanent cursePerm = new Permanent(curseCard);
+            cursePerm.setAttachedTo(player1Id);
+            gd.playerBattlefields.get(player2Id).add(cursePerm);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isNotEmpty();
+            DealDamageToEnchantedPlayerEffect bakedEffect =
+                    (DealDamageToEnchantedPlayerEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(bakedEffect.affectedPlayerId()).isEqualTo(player1Id);
+            assertThat(bakedEffect.damageEqualsAttachedCount()).isEqualTo(predicate);
         }
 
         @Test

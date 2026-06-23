@@ -451,7 +451,7 @@ public class StepTriggerService {
                 if (effect instanceof ExileCardsFromOwnGraveyardEffect e) {
                     effectForStack = new ExileCardsFromOwnGraveyardEffect(e.count(), enchantedPlayerId);
                 } else if (effect instanceof DealDamageToEnchantedPlayerEffect e) {
-                    effectForStack = new DealDamageToEnchantedPlayerEffect(e.damage(), enchantedPlayerId);
+                    effectForStack = new DealDamageToEnchantedPlayerEffect(e.damage(), e.damageEqualsAttachedCount(), enchantedPlayerId);
                 }
 
                 gameData.stack.add(new StackEntry(
