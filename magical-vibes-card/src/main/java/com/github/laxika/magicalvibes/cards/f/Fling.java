@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
 @CardRegistration(set = "M11", collectorNumber = "139")
+@CardRegistration(set = "DKA", collectorNumber = "90")
 public class Fling extends Card {
 
     public Fling() {
