@@ -117,6 +117,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "target player loses N life" | `TargetPlayerLosesLifeEffect(N)` | SPELL | |
 | "each opponent loses N life" | `EachOpponentLosesLifeEffect(N)` | SPELL/trigger | |
 | "each opponent loses N life and you gain life equal to the life lost" | `EachOpponentLosesLifeAndControllerGainsLifeLostEffect(N)` | SPELL | Drain |
+| "whenever you gain life, draw a card" | `DrawCardEffect(1)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `d/DrogskolReaver.java` |
 | "double target player's life total" | `DoubleTargetPlayerLifeEffect()` | SPELL | |
 | "players can't gain life" | `PlayersCantGainLifeEffect()` | STATIC | |
 
