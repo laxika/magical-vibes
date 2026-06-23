@@ -591,6 +591,18 @@ public class BattlefieldEntryService {
                     boolean cardNeedsTarget = EffectResolution.needsTarget(card);
                     boolean hasTarget = targetId != null || !targetIds.isEmpty();
 
+                    // A permanent that entered without a target chosen at cast time — a token copy,
+                    // or a creature put onto the battlefield from a graveyard via undying,
+                    // reanimation, etc. — must still choose targets for its mandatory ETB as the
+                    // ability is put on the stack (CR 603.3b). Cast spells with "up to" targets that
+                    // chose 0 targets are excluded; they passed through cast-time target selection.
+                    List<Permanent> enteredBf = gameData.playerBattlefields.get(controllerId);
+                    Permanent justEnteredPermanent = enteredBf != null && !enteredBf.isEmpty()
+                            ? enteredBf.getLast() : null;
+                    boolean enteredFromGraveyard = justEnteredPermanent != null
+                            && justEnteredPermanent.getEnteredFromGraveyardOwnerId() != null;
+                    boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard;
+
                     if (!cardNeedsTarget || hasTarget) {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
@@ -639,10 +651,11 @@ public class BattlefieldEntryService {
                             gameBroadcastService.logAndBroadcast(gameData, etbLog);
                             log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
                         }
-                    } else if (card.isToken()) {
-                        // Token copy case (CR 603.3): no target was chosen at cast time
-                        // because the token wasn't cast. The controller must choose a target
-                        // as the triggered ability is put on the stack.
+                    } else if (choosesTargetAtTriggerTime) {
+                        // CR 603.3: no target was chosen at cast time because the permanent
+                        // wasn't cast (token copy, or returned from a graveyard via undying /
+                        // reanimation). The controller must choose a target as the triggered
+                        // ability is put on the stack.
                         // For non-token casts with "up to N" abilities where 0 was chosen,
                         // the ETB still triggers but has no effect — we skip queueing it.
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
@@ -660,7 +673,7 @@ public class BattlefieldEntryService {
                             }
                             String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
                             gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                            log.info("Game {} - {} ETB multi-target trigger queued (token copy)",
+                            log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
                                     gameData.id, card.getName());
                         } else {
                             TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
@@ -673,7 +686,7 @@ public class BattlefieldEntryService {
                             }
                             String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
                             gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                            log.info("Game {} - {} ETB trigger queued for target selection (token copy)",
+                            log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
                                     gameData.id, card.getName());
                         }
                     }
