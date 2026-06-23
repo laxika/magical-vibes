@@ -60,6 +60,7 @@ new slot into a pipeline is an engine change.
 |---|---|---|
 | `ON_DEATH` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleLosesLifeEqualToPower` | Death |
 | `ON_EQUIPPED_CREATURE_DIES` | `DeathTriggerCollectorService.handleEquippedCreatureDeathDefault` | Death |
+| `ON_ALLY_CREATURE_DIES` (targeting variants) | `TriggerCollectionService.checkAllyCreatureDeathTriggers` | Death |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` (targeting branches) | `DeathTriggerCollectorService.addEnchantedPermanentDeathEntry` | Death |
 | `ON_ATTACK` (attached-permanent flavour) | `CombatTriggerService` aura/equipment flow | Attack |
 | `ON_ATTACK` / `ON_ALLY_CREATURE_ATTACKS` | `CombatAttackService.declareAttackers` | Attack |
@@ -77,7 +78,7 @@ new slot into a pipeline is an engine change.
 Slots that currently **only ever push non-targeting entries** (no pending queue):
 `ON_TAP`, `ON_ENTER_BATTLEFIELD`, `STATIC`, `ON_SACRIFICE`, `ON_BLOCK`, `UPKEEP_TRIGGERED`,
 `GRAVEYARD_UPKEEP_TRIGGERED`, `EACH_UPKEEP_TRIGGERED`, `OPPONENT_UPKEEP_TRIGGERED`,
-`ON_ALLY_CREATURE_DIES`, `ON_DAMAGED_CREATURE_DIES`, `ON_ANY_CREATURE_DIES`,
+`ON_DAMAGED_CREATURE_DIES`, `ON_ANY_CREATURE_DIES`,
 `ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,
 `ON_COMBAT_DAMAGE_TO_PLAYER`, `ON_COMBAT_DAMAGE_TO_CREATURE`, `ON_DAMAGE_TO_PLAYER`,
 `ON_DEALT_DAMAGE`, `ON_BECOMES_BLOCKED`, `DRAW_TRIGGERED`, `EACH_DRAW_TRIGGERED`,

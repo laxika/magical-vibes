@@ -864,6 +864,15 @@ public class TriggerCollectionService {
                     var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
                     registry.dispatch(match, EffectSlot.ON_ALLY_CREATURE_DIES, resolvedEffect, ctx);
                     anyEffectFired = true;
+                } else if (resolvedEffect.canTargetPlayer() || resolvedEffect.canTargetPermanent()) {
+                    // Targeted "another creature you control dies" trigger (e.g. Diregraf Captain):
+                    // route through the death target pipeline so the controller picks a target as the
+                    // ability is put on the stack (CR 603.3d). The source card here is the watching
+                    // permanent, so its own target filter (e.g. opponent-only) is honoured.
+                    gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+                            perm.getCard(), dyingCreatureControllerId, new ArrayList<>(List.of(resolvedEffect))
+                    ));
+                    anyEffectFired = true;
                 } else {
                     stackEffects.add(resolvedEffect);
                 }
