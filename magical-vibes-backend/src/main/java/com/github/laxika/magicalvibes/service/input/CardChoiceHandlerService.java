@@ -267,6 +267,12 @@ public class CardChoiceHandlerService {
             exileService.exileCard(gameData, playerId, card);
         }
 
+        // Grant the controlling player permission to play this card for as long as it remains
+        // exiled (e.g. Fiend of the Shadows). Does not expire at end of turn.
+        if (gameData.pendingExileFromHandPlayPermissionController != null) {
+            gameData.exilePlayPermissions.put(card.getId(), gameData.pendingExileFromHandPlayPermissionController);
+        }
+
         String logEntry = player.getUsername() + " exiles " + card.getName() + " from hand.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} exiles {} from hand", gameData.id, player.getUsername(), card.getName());
@@ -280,6 +286,7 @@ public class CardChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearCardChoice();
             gameData.interaction.setDiscardRemainingCount(0);
+            gameData.pendingExileFromHandPlayPermissionController = null;
 
             // Resume resolving remaining effects
             if (gameData.pendingEffectResolutionEntry != null) {

@@ -300,6 +300,10 @@ public class GameData {
     public final Set<UUID> exilePlayPermissionsExpireEndOfTurn = ConcurrentHashMap.newKeySet();
     /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
     public UUID knowledgePoolSourcePermanentId;
+    /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
+     *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
+     *  the exiling effect does not grant play permission to a controller. */
+    public UUID pendingExileFromHandPlayPermissionController;
 
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
@@ -904,6 +908,7 @@ public class GameData {
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
+        copy.pendingExileFromHandPlayPermissionController = this.pendingExileFromHandPlayPermissionController;
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->
