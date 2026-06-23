@@ -43,6 +43,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 |---|---|---|---|
 | "other [subtype] creatures you control get +X/+Y" | `StaticBoostEffect(X, Y, Set.of(), OWN_CREATURES, PermanentHasAnySubtypePredicate(subtype))` | STATIC | Lord |
 | "creatures you control get +X/+Y" | `StaticBoostEffect(X, Y, Set.of(), OWN_CREATURES, null)` | STATIC | Anthem |
+| "fateful hour — as long as you have 5 or less life, other creatures you control get +X/+Y" | `ControllerLifeAtOrBelowThresholdConditionalEffect(5, StaticBoostEffect(X, Y, OWN_CREATURES))` | STATIC | Gavony Ironwright |
+| "as long as you have N or more life, [self/creatures] get +X/+Y [and keywords]" | `ControllerLifeThresholdConditionalEffect(N, StaticBoostEffect(X, Y, keywords, scope))` | STATIC | Serra Ascendant |
 | "other [subtype] creatures get +X/+Y" (all players) | `StaticBoostEffect(X, Y, Set.of(), ALL_CREATURES, PermanentHasAnySubtypePredicate(subtype))` | STATIC | Global lord |
 | "creatures opponents control get -X/-Y" | `StaticBoostEffect(-X, -Y, Set.of(), OPPONENT_CREATURES, null)` | STATIC | |
 | "enchanted creature gets +X/+Y" | `StaticBoostEffect(X, Y, Set.of(), ENCHANTED_CREATURE, null)` | STATIC | Aura |

@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCou
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
@@ -1130,6 +1131,49 @@ public class StaticEffectResolutionService {
                 }
             }
         }
+    }
+
+    @HandlesStaticEffect(value = ControllerLifeAtOrBelowThresholdConditionalEffect.class, selfOnly = true)
+    private void resolveControllerLifeAtOrBelowThresholdConditionalSelf(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControllerLifeAtOrBelowThresholdConditionalEffect) effect;
+        if (!isControllerLifeAtOrBelow(context, conditional.lifeThreshold())) return;
+        CardEffect wrapped = conditional.wrapped();
+        if (wrapped instanceof StaticBoostEffect boost) {
+            if (boost.scope() == GrantScope.SELF || boost.scope() == GrantScope.ALL_OWN_CREATURES) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            }
+        } else if (wrapped instanceof GrantKeywordEffect grant) {
+            if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                accumulator.addKeywords(grant.keywords());
+            }
+        }
+    }
+
+    @HandlesStaticEffect(ControllerLifeAtOrBelowThresholdConditionalEffect.class)
+    private void resolveControllerLifeAtOrBelowThresholdConditionalOthers(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControllerLifeAtOrBelowThresholdConditionalEffect) effect;
+        if (!isControllerLifeAtOrBelow(context, conditional.lifeThreshold())) return;
+        CardEffect wrapped = conditional.wrapped();
+        if (wrapped instanceof StaticBoostEffect boost && boost.scope() != GrantScope.SELF) {
+            if (matchesCreatureScope(context, boost.scope(), boost.filter())) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            }
+        } else if (wrapped instanceof GrantKeywordEffect grant && grant.scope() != GrantScope.SELF) {
+            if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
+                accumulator.addKeywords(grant.keywords());
+            }
+        }
+    }
+
+    private boolean isControllerLifeAtOrBelow(StaticEffectContext context, int threshold) {
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return false;
+        int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 20);
+        return lifeTotal <= threshold;
     }
 
     @HandlesStaticEffect(value = ControllerGraveyardCardThresholdConditionalEffect.class, selfOnly = true)
