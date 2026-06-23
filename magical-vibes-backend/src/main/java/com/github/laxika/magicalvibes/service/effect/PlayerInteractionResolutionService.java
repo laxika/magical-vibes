@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndRandomDiscardWithSharedTypeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardsPerCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCombatDamageLootEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToControlledCreatureCountEffect;
@@ -382,6 +383,39 @@ public class PlayerInteractionResolutionService {
         String logEntry = playerName + " draws " + count + " card" + (count != 1 ? "s" : "") + " from " + cardName + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} draws {} from {}", gameData.id, playerName, count, cardName);
+    }
+
+    @HandlesEffect(DrawCardsPerCreatureCardInGraveyardEffect.class)
+    void resolveDrawCardsPerCreatureCardInGraveyard(GameData gameData, StackEntry entry,
+                                                    DrawCardsPerCreatureCardInGraveyardEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String cardName = entry.getCard().getName();
+
+        int creatureCount = 0;
+        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
+        if (graveyard != null) {
+            for (Card card : graveyard) {
+                if (card.hasType(CardType.CREATURE)) {
+                    creatureCount++;
+                }
+            }
+        }
+
+        int drawCount = creatureCount * effect.cardsPerCreature();
+        if (drawCount <= 0) {
+            String logEntry = playerName + " draws 0 cards from " + cardName + " (no creature cards in graveyard).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} draws 0 from {} (no creature cards in graveyard)", gameData.id, playerName, cardName);
+            return;
+        }
+
+        applyDrawCards(gameData, controllerId, drawCount);
+
+        String logEntry = playerName + " draws " + drawCount + " card" + (drawCount != 1 ? "s" : "")
+                + " from " + cardName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} draws {} from {}", gameData.id, playerName, drawCount, cardName);
     }
 
     @HandlesEffect(DiscardCardEffect.class)

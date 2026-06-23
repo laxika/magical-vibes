@@ -211,6 +211,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Draw / discard / hand manipulation
 
 - `DrawCardEffect(int)` — draw N
+- `DrawCardsPerCreatureCardInGraveyardEffect(int)` — draw N per creature card in your graveyard
 - `EachPlayerDrawsCardEffect(int)` — each player draws N
 - `DrawCardForTargetPlayerEffect(int)` or `(int, boolean requiresUntapped, boolean targets)` — target draws
 - `DrawXCardsEffect()` — draw X

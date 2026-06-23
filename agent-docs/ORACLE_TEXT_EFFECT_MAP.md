@@ -97,6 +97,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 |---|---|---|---|
 | "draw N cards" / "draw a card" | `DrawCardEffect(N)` | SPELL/trigger | |
 | "draw X cards" | `DrawXCardsEffect()` | SPELL | X-cost |
+| "draw a card for each creature card in your graveyard" | `DrawCardsPerCreatureCardInGraveyardEffect(1)` | SPELL | |
 | "target player draws N cards" | `DrawCardForTargetPlayerEffect(N)` | SPELL | |
 | "each player draws N cards" | `EachPlayerDrawsCardEffect(N)` | SPELL | |
 | "draw N cards, then discard M cards" | `DrawAndDiscardCardEffect(N, M)` | SPELL | Loot |
