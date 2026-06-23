@@ -1,8 +1,12 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.DraftData;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -10,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -57,6 +63,9 @@ public class GameOutcomeService {
                     continue;
                 }
 
+                // "Whenever a player loses the game" triggers (e.g. Withengar Unbound).
+                firePlayerLosesGameTriggers(gameData, playerId);
+
                 gameData.status = GameStatus.FINISHED;
 
                 // During MCTS simulation, only set the status — skip all external side effects
@@ -91,6 +100,10 @@ public class GameOutcomeService {
     }
 
     public void declareWinner(GameData gameData, UUID winnerId) {
+        // "Whenever a player loses the game" triggers (e.g. Withengar Unbound).
+        // In 2-player the loser is the winner's opponent.
+        firePlayerLosesGameTriggers(gameData, gameQueryService.getOpponentId(gameData, winnerId));
+
         gameData.status = GameStatus.FINISHED;
 
         if (gameData.simulation) return;
@@ -108,6 +121,43 @@ public class GameOutcomeService {
         gameRegistry.remove(gameData.id);
 
         log.info("Game {} - {} wins!", gameData.id, winnerName);
+    }
+
+    /**
+     * Puts {@link EffectSlot#ON_PLAYER_LOSES_GAME} triggers (e.g. Withengar Unbound's
+     * "Whenever a player loses the game, put thirteen +1/+1 counters on it") onto the stack
+     * for every permanent on the battlefield that has such a trigger.
+     *
+     * <p>This engine is strictly 2-player and the game ends the instant a player loses, so
+     * these triggers go onto the stack but the game finishes before they can resolve. The
+     * wiring is kept so the ability is modeled correctly should multiplayer ever exist.
+     */
+    private void firePlayerLosesGameTriggers(GameData gameData, UUID losingPlayerId) {
+        if (gameData.simulation || losingPlayerId == null) {
+            return;
+        }
+
+        gameData.forEachPermanent((controllerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_PLAYER_LOSES_GAME);
+            if (effects.isEmpty()) {
+                return;
+            }
+
+            StackEntry se = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    controllerId,
+                    perm.getCard().getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    perm.getId());
+            se.setNonTargeting(true);
+            gameData.stack.add(se);
+
+            String logEntry = perm.getCard().getName() + "'s triggered ability goes on the stack ("
+                    + gameData.playerIdToName.get(losingPlayerId) + " loses the game).";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        });
     }
 
     private void notifyDraftIfTournamentGame(GameData gameData, UUID winnerId) {

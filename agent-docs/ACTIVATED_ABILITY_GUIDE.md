@@ -463,3 +463,4 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_SELF_LEAVES_BATTLEFIELD` | This permanent leaves the battlefield (any means) |
 | `ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD` | Your Aura or Equipment dies |
 | `ON_TRANSFORM_TO_BACK_FACE` | This permanent transforms to back face |
+| `ON_PLAYER_LOSES_GAME` | A player loses the game (fired in `GameOutcomeService`; 2-player engine ends before it resolves) |

@@ -125,5 +125,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this permanent transforms from its front face to its back face.
      *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
      *  permanent's card reference is switched to the back face. */
-    ON_TRANSFORM_TO_BACK_FACE
+    ON_TRANSFORM_TO_BACK_FACE,
+    /** Triggers whenever a player loses the game. Fired from {@code GameOutcomeService}
+     *  at the moment a player is determined to lose (life/poison loss in
+     *  {@code checkWinCondition}, or a direct loss via {@code declareWinner}).
+     *  Note: this engine is strictly 2-player and the game ends the instant a player
+     *  loses, so in practice this trigger goes onto the stack but the game finishes
+     *  before it can resolve. Used by Withengar Unbound. */
+    ON_PLAYER_LOSES_GAME
 }

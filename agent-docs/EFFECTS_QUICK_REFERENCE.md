@@ -331,6 +331,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PowerToughnessEqualToCardsInHandEffect()` — P/T = hand size
 - `PowerToughnessEqualToControllerLifeTotalEffect()` — P/T = life total
 - `PutCountersOnSourceEffect(int power, int toughness, int amount)` — counters on self
+- `PutCounterOnSelfEffect(CounterType)` — one counter of a type on self
+- `PutCountersOnSelfEffect(CounterType, int count)` — N counters of a type on self (e.g. Withengar Unbound: 13 +1/+1)
 - `PutPlusOnePlusOneCounterOnTargetCreatureEffect(int)` — +1/+1 on target
 - `PutMinusOneMinusOneCounterOnTargetCreatureEffect(int)` — -1/-1 on target
 - `PutPlusOnePlusOneCounterOnEachOwnCreatureEffect()` or `(int)` — +1/+1 on each own creature

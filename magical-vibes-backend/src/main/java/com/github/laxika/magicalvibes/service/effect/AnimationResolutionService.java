@@ -297,6 +297,17 @@ public class AnimationResolutionService {
                 return;
             }
             String frontName = self.getCard().getName();
+
+            // CR 301.5c / 701.x: an attached Equipment that transforms into a permanent that
+            // is no longer an Equipment (e.g. Elbrus, the Binding Blade -> Withengar Unbound)
+            // becomes unattached. This mirrors Elbrus's "unattach Elbrus, then transform it".
+            if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+                self.setAttachedTo(null);
+                String unattachLog = frontName + " becomes unattached.";
+                gameBroadcastService.logAndBroadcast(gameData, unattachLog);
+                log.info("Game {} - {} unattached (transformed into non-Equipment)", gameData.id, frontName);
+            }
+
             self.setCard(backFace);
             self.setTransformed(true);
             String logEntry = frontName + " transforms into " + backFace.getName() + ".";

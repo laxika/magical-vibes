@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -237,6 +238,17 @@ public class PermanentCounterResolutionService {
         String logEntry = self.getCard().getName() + " gets a " + counterName + " counter.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets a {} counter", gameData.id, self.getCard().getName(), counterName);
+    }
+
+    @HandlesEffect(PutCountersOnSelfEffect.class)
+    private void resolvePutCountersOnSelf(GameData gameData, StackEntry entry, PutCountersOnSelfEffect effect) {
+        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
+        if (self == null) {
+            return;
+        }
+
+        placeCounterOnPermanent(gameData, entry, self, effect.counterType(), effect.count());
     }
 
     @HandlesEffect(PutCounterOnSelfThenTransformIfThresholdEffect.class)
