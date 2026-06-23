@@ -420,6 +420,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `NoMaximumHandSizeEffect()` — no max hand size (static)
 - `IncreaseOpponentCastCostEffect(Set<CardType>, int)` — opponents' spells cost more
 - `ReduceOwnCastCostForCardTypeEffect(Set<CardType>, int)` — own spells cost less
+- `ReduceOwnCastCostPerCreatureCardInGraveyardEffect(int)` — this spell costs N less per creature card in your graveyard (Ghoultree)
 - `LimitSpellsPerTurnEffect(int)` — max spells per turn (all players)
 - `LimitSpellsForEnchantedPlayerEffect(int)` — max spells per turn for the enchanted player (Curse Aura)
 - `CantSearchLibrariesEffect()` — can't search (static)
