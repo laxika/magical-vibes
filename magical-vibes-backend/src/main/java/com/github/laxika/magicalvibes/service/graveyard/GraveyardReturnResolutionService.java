@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCre
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -581,6 +582,7 @@ public class GraveyardReturnResolutionService {
         if (enterTapped) {
             permanent.tap();
         }
+        permanent.setEnteredFromGraveyardOwnerId(controllerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (enterAttacking) {
             permanent.setAttacking(true);
@@ -595,6 +597,37 @@ public class GraveyardReturnResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+    }
+
+    /**
+     * Resolves an {@link UndyingReturnEffect} (CR 702.93) by returning the dying card from its owner's
+     * graveyard to the battlefield under its owner's control with a +1/+1 counter on it. The entry is
+     * flagged as entering from the owner's graveyard so "enters from your graveyard" triggers (e.g.
+     * Flayer of the Hatebound) fire. Fizzles silently if the card is no longer in a graveyard.
+     */
+    @HandlesEffect(UndyingReturnEffect.class)
+    void resolveUndyingReturn(GameData gameData, StackEntry entry) {
+        Card card = entry.getCard();
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (ownerId == null) {
+            log.info("Game {} - {} undying return fizzles (no longer in a graveyard)", gameData.id, card.getName());
+            return;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+
+        Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+        Permanent permanent = new Permanent(card);
+        permanent.setPlusOnePlusOneCounters(1);
+        permanent.setEnteredFromGraveyardOwnerId(ownerId);
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
+
+        String playerName = gameData.playerIdToName.get(ownerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " returns " + card.getName() + " to the battlefield with a +1/+1 counter (undying).");
+        log.info("Game {} - {} returns via undying with a +1/+1 counter", gameData.id, card.getName());
+
+        handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
     }
 
     private void applyPermanentGrants(Permanent permanent, CardColor grantColor, CardSubtype grantSubtype) {
@@ -613,6 +646,7 @@ public class GraveyardReturnResolutionService {
         if (grantHaste) {
             permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
+        permanent.setEnteredFromGraveyardOwnerId(controllerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (exileAtEndStep) {
             gameData.pendingTokenExilesAtEndStep.add(permanent.getId());

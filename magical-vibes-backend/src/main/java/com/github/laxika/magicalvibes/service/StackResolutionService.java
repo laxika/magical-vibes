@@ -124,6 +124,13 @@ public class StackResolutionService {
             }
         }
 
+        if (!gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+            triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         if (!gameData.pendingSagaChapterTargets.isEmpty()) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {

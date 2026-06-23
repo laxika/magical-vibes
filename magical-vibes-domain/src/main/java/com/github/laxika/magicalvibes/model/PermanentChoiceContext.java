@@ -101,6 +101,11 @@ public sealed interface PermanentChoiceContext {
 
     record LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
+    /** "Whenever a creature enters from your graveyard, that creature deals damage equal to its power to
+     *  any target." The {@code sourcePermanentId} points at the creature that entered (the damage source);
+     *  {@code sourceCard} is the permanent whose ability triggered (e.g. Flayer of the Hatebound). */
+    record EntersFromGraveyardTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+
     /** ETB trigger that needs to target a spell on the stack (e.g. Naru Meha's copy ability). */
     record ETBSpellTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                  StackEntryPredicate spellFilter) implements PermanentChoiceContext {}

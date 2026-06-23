@@ -60,6 +60,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
     ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,
+    /** Triggers whenever this creature or another creature enters the battlefield from the
+     *  controller's graveyard. Checked in {@code BattlefieldEntryService.checkEntersFromGraveyardTriggers}
+     *  after a creature enters, using the {@code enteredFromGraveyardOwnerId} flag on the entering
+     *  permanent. Routed into the any-target pipeline ({@code pendingEntersFromGraveyardTriggerTargets}).
+     *  Used by Flayer of the Hatebound. */
+    ON_CREATURE_ENTERS_FROM_GRAVEYARD,
     ON_CONTROLLER_GAINS_LIFE,
     ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE,
     ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,

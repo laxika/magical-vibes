@@ -14,13 +14,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
+import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -452,6 +456,7 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId);
                 triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
+                collectUndyingTrigger(gameData, target, ownerId);
             }
             if (wasArtifact) {
                 triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
@@ -462,6 +467,29 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkAllyAuraOrEquipmentPutIntoGraveyardTriggers(gameData, target.getCard(), controllerId);
             }
         }
+    }
+
+    /**
+     * Undying (CR 702.93): when a creature with undying dies, if it had no +1/+1 counters on it, push a
+     * triggered ability that returns it from the graveyard to the battlefield with a +1/+1 counter. The
+     * "if it had no +1/+1 counters" intervening-if uses the counter count at the moment it died (the
+     * permanent has already left the battlefield, so this is last-known information).
+     */
+    private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID ownerId) {
+        if (!dyingPermanent.hasKeyword(Keyword.UNDYING)) return;
+        if (dyingPermanent.getPlusOnePlusOneCounters() > 0) return;
+
+        Card dyingCard = dyingPermanent.getOriginalCard();
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                dyingCard,
+                ownerId,
+                dyingCard.getName() + "'s undying ability",
+                new ArrayList<>(List.of(new UndyingReturnEffect()))
+        ));
+        String triggerLog = dyingCard.getName() + "'s undying ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} undying triggers", gameData.id, dyingCard.getName());
     }
 
     /**

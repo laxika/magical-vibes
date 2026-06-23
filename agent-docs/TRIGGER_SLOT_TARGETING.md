@@ -41,6 +41,7 @@ target selection — this invariant is guarded by `CardEffectTargetingConsistenc
 | Discard-self (`pendingDiscardSelfTriggers`) | —                  | ✅ all players | ✅ creatures + planeswalkers only | ❌ | ❌ | ❌ | ❌ |
 | Spell-target (`pendingSpellTargetTriggers`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via generic `TargetFilter.matchesFilters`) | ❌ | ❌ |
 | Life-gain (`pendingLifeGainTriggerTargets`) | —                  | ✅ all players | ✅ creatures only | ❌ | ❌ | ❌ | ❌ |
+| Enters-from-graveyard (`pendingEntersFromGraveyardTriggerTargets`) | — | ✅ all players | ✅ creatures + planeswalkers (any target) | ❌ | ❌ | ❌ | ❌ |
 | Explore (`pendingExploreTriggerTargets`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |
 | Emblem (`pendingEmblemTriggerTargets`)      | —                  | ❌            | ✅ any permanent  | via bespoke `opponentControlledOnly` boolean | ❌ | ❌ | ❌ |
 | Saga chapter (`pendingSagaChapterTargets`)  | —                  | "up to one" skip via self-target | ✅ creatures only | ❌ | ✅ (via chapter-level `Set<TargetFilter>`) | ❌ | ✅ first effect's `targetPredicate()` |
@@ -71,6 +72,7 @@ new slot into a pipeline is an engine change.
 | `ON_CONTROLLER_CASTS_SPELL` / `ON_ANY_PLAYER_CASTS_SPELL` (targeting variants) | `SpellCastTriggerCollectorService` | Spell-target |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` (targeting branch) | `DamageTriggerCollectorService` | Spell-target |
 | `ON_CONTROLLER_GAINS_LIFE` | `MiscTriggerCollectorService` | Life-gain |
+| `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | `BattlefieldEntryService.checkEntersFromGraveyardTriggers` | Enters-from-graveyard (any target) |
 | `ON_ALLY_CREATURE_EXPLORES` | `TriggerCollectionService.checkExploreTriggers` | Explore |
 | Planeswalker ultimate emblems | `DrawService` / `TriggerCollectionService` | Emblem |
 | `SAGA_CHAPTER_I` / `SAGA_CHAPTER_II` / `SAGA_CHAPTER_III` | `StepTriggerService.processSagaChapters` / `StackResolutionService` | Saga chapter |

@@ -207,6 +207,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ShuffleTargetCardsFromGraveyardIntoLibraryEffect(CardPredicate, int)` — target player shuffles N cards
 - `ReturnDyingCreatureToBattlefieldAndAttachSourceEffect()` — reanimate + equip
 - `PutCardFromOpponentGraveyardOntoBattlefieldEffect(boolean tapped)` — opponent's card to battlefield
+- `UndyingReturnEffect()` — Undying (CR 702.93) resolution: return the dying card from its owner's graveyard to the battlefield with a +1/+1 counter. Do NOT add to a card directly; it is pushed automatically by `PermanentRemovalService` when a creature with the `UNDYING` keyword dies with no +1/+1 counters. The keyword is loaded from Scryfall.
 - `PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect()` — opponent's creature with exile
 
 ## Draw / discard / hand manipulation

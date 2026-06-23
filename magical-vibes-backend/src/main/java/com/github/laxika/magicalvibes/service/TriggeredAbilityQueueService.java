@@ -238,6 +238,41 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextEntersFromGraveyardTriggerTarget(GameData gameData) {
+        while (!gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+            PermanentChoiceContext.EntersFromGraveyardTriggerTarget pending =
+                    gameData.pendingEntersFromGraveyardTriggerTargets.peekFirst();
+
+            // "Any target" — every creature and planeswalker on every battlefield, plus every player.
+            List<UUID> validPermanentTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (gameQueryService.isCreature(gameData, p)
+                            || p.getCard().hasType(CardType.PLANESWALKER)) {
+                        validPermanentTargets.add(p.getId());
+                    }
+                }
+            }
+
+            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
+
+            // There are always valid targets (at least the players).
+            gameData.pendingEntersFromGraveyardTriggerTargets.removeFirst();
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
+                    validPermanentTargets, validPlayerTargets,
+                    pending.sourceCard().getName() + "'s ability - Choose any target.");
+
+            String logEntry = pending.sourceCard().getName() + "'s triggered ability - choose any target.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} enters-from-graveyard trigger awaiting target selection",
+                    gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     public void processNextEmblemTriggerTarget(GameData gameData) {
         while (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
             PermanentChoiceContext.EmblemTriggerTarget pending = gameData.pendingEmblemTriggerTargets.peekFirst();
