@@ -129,6 +129,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `DestroySourcePermanentEffect()` — destroy source
 - `DestroyCreatureBlockingThisEffect()` — destroy blocker
 - `DestroyTargetPermanentAndGainLifeEqualToManaValueEffect()` — destroy + life = MV
+- `DestroyTargetCreatureAndGainLifeEqualToToughnessEffect(PermanentPredicate?)` — destroy + life = toughness; predicate arg makes life gain conditional (e.g. `PermanentHasSubtypePredicate(HUMAN)`)
 - `SacrificeCreatureEffect()` — target player sacrifices creature
 - `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect()` — sacrifice + life = toughness
 - `ControllerSacrificesCreatureEffect()` — controller sacrifices (non-targeting)

@@ -1455,7 +1455,8 @@ public class DestructionResolutionService {
      * Life is gained regardless of whether destruction succeeds.
      */
     @HandlesEffect(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class)
-    void resolveDestroyTargetCreatureAndGainLifeEqualToToughness(GameData gameData, StackEntry entry) {
+    void resolveDestroyTargetCreatureAndGainLifeEqualToToughness(GameData gameData, StackEntry entry,
+                                                                 DestroyTargetCreatureAndGainLifeEqualToToughnessEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
@@ -1463,12 +1464,18 @@ public class DestructionResolutionService {
 
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);
 
-        // Attempt to destroy (life gain happens regardless)
+        // Capture whether the life-gain condition is met before destruction removes the permanent
+        boolean gainsLife = effect.lifeGainCondition() == null
+                || gameQueryService.matchesPermanentPredicate(gameData, target, effect.lifeGainCondition());
+
+        // Attempt to destroy (life gain, when applicable, happens regardless of destruction result)
         tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
         // Gain life equal to toughness regardless of destruction result
-        lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), toughness,
-                "equal to " + target.getCard().getName() + "'s toughness");
+        if (gainsLife) {
+            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), toughness,
+                    "equal to " + target.getCard().getName() + "'s toughness");
+        }
     }
 
     private void createTokenForPlayer(GameData gameData, UUID controllerId,
