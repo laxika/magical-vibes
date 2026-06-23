@@ -78,7 +78,7 @@ new slot into a pipeline is an engine change.
 | `SAGA_CHAPTER_I` / `SAGA_CHAPTER_II` / `SAGA_CHAPTER_III` | `StepTriggerService.processSagaChapters` / `StackResolutionService` | Saga chapter |
 
 Slots that currently **only ever push non-targeting entries** (no pending queue):
-`ON_TAP`, `ON_ENTER_BATTLEFIELD`, `STATIC`, `ON_SACRIFICE`, `ON_BLOCK`, `UPKEEP_TRIGGERED`,
+`ON_TAP`, `STATIC`, `ON_SACRIFICE`, `ON_BLOCK`, `UPKEEP_TRIGGERED`,
 `GRAVEYARD_UPKEEP_TRIGGERED`, `EACH_UPKEEP_TRIGGERED`, `OPPONENT_UPKEEP_TRIGGERED`,
 `ON_DAMAGED_CREATURE_DIES`, `ON_ANY_CREATURE_DIES`,
 `ON_ALLY_NONTOKEN_CREATURE_DIES`, `ON_ANY_NONTOKEN_CREATURE_DIES`, `ON_OPPONENT_CREATURE_DIES`,
@@ -101,6 +101,19 @@ Slots that currently **only ever push non-targeting entries** (no pending queue)
 `GRAVEYARD_ON_ALLY_CREATURES_ATTACK`,
 `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY`,
 `ON_TRANSFORM_TO_BACK_FACE`.
+
+## `ON_ENTER_BATTLEFIELD` targeted triggers
+
+A targeted ETB (the card has a `TargetFilter` and a mandatory `ON_ENTER_BATTLEFIELD` effect, e.g.
+Pierce Strider, Geralf's Messenger) normally has its target chosen **at cast time** and the trigger
+is pushed directly onto the stack with that target. When the permanent enters **without a cast** —
+a token copy, or a creature put onto the battlefield from a graveyard via undying / reanimation /
+flicker — there is no cast-time target, so `BattlefieldEntryService.processCreatureETBEffects`
+routes the trigger through `pendingETBTokenTargetTriggers` (single target) or
+`pendingETBTokenMultiTargetTriggers` (multi-target), letting the controller choose the target as the
+ability is put on the stack (CR 603.3b / 603.6c). The entering permanent's
+`getEnteredFromGraveyardOwnerId()` distinguishes a graveyard return from a cast; "up to N" cast
+spells that chose 0 targets are unaffected because they passed through cast-time selection.
 
 If the card you are implementing needs one of these slots **and** a user target choice (either player
 or permanent), **that is an engine change**. The work required is:
