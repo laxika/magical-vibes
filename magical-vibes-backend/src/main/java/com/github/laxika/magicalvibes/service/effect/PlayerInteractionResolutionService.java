@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPla
 import com.github.laxika.magicalvibes.model.effect.RevealRandomHandCardAndPlayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureToCreateTokensEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
@@ -1065,6 +1066,43 @@ public class PlayerInteractionResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} choosing {} to sacrifice for {}",
                 gameData.id, playerName, effect.permanentDescription(), entry.getCard().getName());
+    }
+
+    @HandlesEffect(SacrificeCreatureToCreateTokensEqualToToughnessEffect.class)
+    void resolveSacrificeCreatureToCreateTokensEqualToToughness(GameData gameData, StackEntry entry,
+                                                                SacrificeCreatureToCreateTokensEqualToToughnessEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        List<UUID> validIds = new ArrayList<>();
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (gameQueryService.isCreature(gameData, p)
+                        && gameQueryService.matchesPermanentPredicate(gameData, p, effect.filter())) {
+                    validIds.add(p.getId());
+                }
+            }
+        }
+
+        if (validIds.isEmpty()) {
+            String logEntry = playerName + " has no creature to sacrifice for " + entry.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no creature to sacrifice for {}",
+                    gameData.id, playerName, entry.getCard().getName());
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness(
+                        controllerId, entry.getCard(), effect.tokenTemplate()));
+        playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
+                entry.getCard().getName() + " — Choose a creature to sacrifice.");
+
+        String logEntry = playerName + " is choosing a creature to sacrifice for " + entry.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} choosing a creature to sacrifice for {}",
+                gameData.id, playerName, entry.getCard().getName());
     }
 
     private void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {

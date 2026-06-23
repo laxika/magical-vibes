@@ -132,6 +132,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `DestroyTargetCreatureAndGainLifeEqualToToughnessEffect(PermanentPredicate?)` — destroy + life = toughness; predicate arg makes life gain conditional (e.g. `PermanentHasSubtypePredicate(HUMAN)`)
 - `SacrificeCreatureEffect()` — target player sacrifices creature
 - `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect()` — sacrifice + life = toughness
+- `SacrificeCreatureToCreateTokensEqualToToughnessEffect(CreateTokenEffect template, PermanentPredicate filter)` — controller sacrifices a matching creature, then creates X copies of `template` where X = sacrificed creature's toughness (template `amount` ignored). Wrap in `MayEffect` for "you may sacrifice" (e.g. Feed the Pack)
 - `ControllerSacrificesCreatureEffect()` — controller sacrifices (non-targeting)
 - `SacrificeAttackingCreaturesEffect(int base, int metalcraft)` — sacrifice attackers
 - `EachOpponentSacrificesCreatureEffect()` — each opponent sacrifices

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -429,6 +430,59 @@ public class PermanentChoiceBattlefieldHandlerService {
                 ctx.sourceCard().getName() + "'s effect",
                 new ArrayList<>(List.of(ctx.thenEffect()))
         ));
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleSacrificeCreatureCreateTokensEqualToToughness(GameData gameData, UUID permanentId,
+                                                                    PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness ctx) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        // Capture effective toughness before removing from battlefield (static bonuses still apply)
+        int toughness = gameQueryService.getEffectiveToughness(gameData, target);
+
+        permanentRemovalService.removePermanentToGraveyard(gameData, target);
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        String logEntry = playerName + " sacrifices " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
+                target.getCard().getName(), ctx.sourceCard().getName());
+
+        // Create X tokens, where X is the sacrificed creature's toughness
+        if (toughness > 0) {
+            CreateTokenEffect t = ctx.tokenTemplate();
+            CreateTokenEffect sized = new CreateTokenEffect(
+                    t.primaryType(), toughness, t.tokenName(), t.power(), t.toughness(),
+                    t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
+                    t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
+                    t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary());
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    ctx.sourceCard(),
+                    ctx.controllerId(),
+                    ctx.sourceCard().getName() + "'s effect",
+                    new ArrayList<>(List.of(sized))
+            ));
+        }
 
         stateBasedActionService.performStateBasedActions(gameData);
 
