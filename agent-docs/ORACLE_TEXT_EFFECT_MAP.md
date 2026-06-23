@@ -70,6 +70,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "destroy all creatures" | `DestroyAllPermanentsEffect(PermanentIsCreaturePredicate())` | SPELL | |
 | "destroy all [type]" | `DestroyAllPermanentsEffect(predicate)` | SPELL | Filtered wipe |
 | "sacrifice a creature" | `SacrificeCreatureEffect()` | SPELL | Target player sacrifices |
+| "you may sacrifice a nontoken creature. If you do, create X 2/2 Wolf tokens, where X is its toughness" | `MayEffect(SacrificeCreatureToCreateTokensEqualToToughnessEffect(template, PermanentNotPredicate(PermanentIsTokenPredicate)))` | trigger | Feed the Pack; X = sacrificed creature's toughness |
 | "each opponent sacrifices a creature" | `EachOpponentSacrificesCreatureEffect()` | SPELL/trigger | |
 | "sacrifice CARDNAME" | `SacrificeSelfEffect()` | trigger/ability | |
 

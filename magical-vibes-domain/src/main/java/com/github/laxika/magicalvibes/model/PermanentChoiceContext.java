@@ -150,6 +150,10 @@ public sealed interface PermanentChoiceContext {
     /** "Sacrifice a [permanent]. If you do, [effect]." (e.g. The First Eruption chapter III). */
     record SacrificePermanentThen(UUID controllerId, Card sourceCard, CardEffect thenEffect) implements PermanentChoiceContext {}
 
+    /** "Sacrifice a creature. If you do, create X tokens, where X is its toughness." (e.g. Feed the Pack). */
+    record SacrificeCreatureCreateTokensEqualToToughness(UUID controllerId, Card sourceCard,
+                                                         com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate) implements PermanentChoiceContext {}
+
     /** Explore trigger that needs to target a creature an opponent controls
      *  (e.g. Lurking Chupacabra: "Whenever a creature you control explores, target creature
      *  an opponent controls gets -2/-2 until end of turn."). */
