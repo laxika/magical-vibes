@@ -117,6 +117,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleCapriciousEfreetOwnTarget(gameData, permanentId, ceo);
         } else if (context instanceof PermanentChoiceContext.LifeGainTriggerAnyTarget lgt) {
             triggerHandler.handleLifeGainTrigger(gameData, permanentId, lgt);
+        } else if (context instanceof PermanentChoiceContext.EntersFromGraveyardTriggerTarget efg) {
+            triggerHandler.handleEntersFromGraveyardTrigger(gameData, permanentId, efg);
         } else if (context instanceof PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
             triggerHandler.handleETBSpellTargetTrigger(gameData, permanentId, etbStt);
         } else if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {

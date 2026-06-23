@@ -112,6 +112,11 @@ public class AutoPassService {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
         }
 
+        // Process any pending enters-from-graveyard targeted triggers
+        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+            triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
+        }
+
         // Process any pending saga chapter targeted triggers
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSagaChapterTargets.isEmpty()) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);

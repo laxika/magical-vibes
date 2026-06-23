@@ -569,6 +569,38 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleEntersFromGraveyardTrigger(GameData gameData, UUID targetId,
+                                                 PermanentChoiceContext.EntersFromGraveyardTriggerTarget efg) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                efg.sourceCard(),
+                efg.controllerId(),
+                efg.sourceCard().getName() + "'s ability",
+                new ArrayList<>(efg.effects()),
+                null,
+                efg.sourcePermanentId());
+        entry.setTargetId(targetId);
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, targetId);
+        String logEntry = efg.sourceCard().getName() + "'s triggered ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} enters-from-graveyard trigger targets {}", gameData.id, efg.sourceCard().getName(), targetName);
+
+        if (!gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+            triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleETBSpellTargetTrigger(GameData gameData, UUID cardId, PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
         // Find the target spell name on the stack
         String targetName = "";

@@ -36,7 +36,8 @@ public enum Keyword {
     TRANSFORM,
     KICKER,
     CREW,
-    EXPLORE;
+    EXPLORE,
+    UNDYING;
 
     /**
      * Maps each landwalk keyword to the land subtype it walks over.

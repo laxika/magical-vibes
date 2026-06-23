@@ -156,6 +156,7 @@ public class GameData {
     public final Deque<PermanentChoiceContext.CapriciousEfreetOwnTarget> pendingCapriciousEfreetTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.EndStepTriggerTarget> pendingEndStepTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.LifeGainTriggerAnyTarget> pendingLifeGainTriggerTargets = new ArrayDeque<>();
+    public final Deque<PermanentChoiceContext.EntersFromGraveyardTriggerTarget> pendingEntersFromGraveyardTriggerTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SagaChapterTarget> pendingSagaChapterTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SagaChapterGraveyardTarget> pendingSagaChapterGraveyardTargets = new ArrayDeque<>();
     public final Deque<PermanentChoiceContext.SpellGraveyardTargetTrigger> pendingSpellGraveyardTargetTriggers = new ArrayDeque<>();
@@ -853,6 +854,7 @@ public class GameData {
         copy.pendingCapriciousEfreetTargets.addAll(this.pendingCapriciousEfreetTargets);
         copy.pendingEndStepTriggerTargets.addAll(this.pendingEndStepTriggerTargets);
         copy.pendingLifeGainTriggerTargets.addAll(this.pendingLifeGainTriggerTargets);
+        copy.pendingEntersFromGraveyardTriggerTargets.addAll(this.pendingEntersFromGraveyardTriggerTargets);
         copy.pendingSagaChapterTargets.addAll(this.pendingSagaChapterTargets);
         copy.pendingSagaChapterGraveyardTargets.addAll(this.pendingSagaChapterGraveyardTargets);
         copy.pendingSpellGraveyardTargetTriggers.addAll(this.pendingSpellGraveyardTargetTriggers);

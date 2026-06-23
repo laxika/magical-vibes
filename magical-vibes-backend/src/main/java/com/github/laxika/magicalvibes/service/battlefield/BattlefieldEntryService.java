@@ -731,10 +731,60 @@ public class BattlefieldEntryService {
         checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
         checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+        checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (card.hasType(CardType.LAND)) {
             checkOpponentLandEntersTriggers(gameData, controllerId, card);
             checkAllyLandEntersTriggers(gameData, controllerId, card);
         }
+    }
+
+    /**
+     * Fires "whenever this creature or another creature enters from your graveyard" triggers
+     * (e.g. Flayer of the Hatebound). The entering creature carries an
+     * {@code enteredFromGraveyardOwnerId} set when it was put onto the battlefield from a graveyard;
+     * this method scans every battlefield for permanents with
+     * {@link EffectSlot#ON_CREATURE_ENTERS_FROM_GRAVEYARD} controlled by that graveyard's owner and
+     * routes each effect into the any-target trigger pipeline, with the entering creature as the
+     * damage source.
+     */
+    void checkEntersFromGraveyardTriggers(GameData gameData, UUID enteringControllerId, Card enteringCreature) {
+        if (enteringCreature.getToughness() == null) return;
+
+        Permanent enteringPermanent = null;
+        List<Permanent> controllerBf = gameData.playerBattlefields.get(enteringControllerId);
+        if (controllerBf != null) {
+            for (Permanent p : controllerBf) {
+                if (p.getCard() == enteringCreature) {
+                    enteringPermanent = p;
+                    break;
+                }
+            }
+        }
+        if (enteringPermanent == null || enteringPermanent.getEnteredFromGraveyardOwnerId() == null) {
+            return;
+        }
+
+        UUID graveyardOwnerId = enteringPermanent.getEnteredFromGraveyardOwnerId();
+        UUID enteringPermanentId = enteringPermanent.getId();
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            // "your graveyard" — the watching permanent's controller must own the graveyard the creature left.
+            if (!playerId.equals(graveyardOwnerId)) return;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                gameData.pendingEntersFromGraveyardTriggerTargets.add(
+                        new PermanentChoiceContext.EntersFromGraveyardTriggerTarget(
+                                perm.getCard(), playerId, new ArrayList<>(List.of(effect)), enteringPermanentId));
+                String triggerLog = perm.getCard().getName() + "'s ability triggers ("
+                        + enteringCreature.getName() + " entered from a graveyard).";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers ({} entered from graveyard)",
+                        gameData.id, perm.getCard().getName(), enteringCreature.getName());
+            }
+        });
     }
 
     /**

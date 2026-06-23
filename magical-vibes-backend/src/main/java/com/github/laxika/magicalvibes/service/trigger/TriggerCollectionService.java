@@ -768,6 +768,10 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextLifeGainTriggerTarget(gameData);
     }
 
+    public void processNextEntersFromGraveyardTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextEntersFromGraveyardTriggerTarget(gameData);
+    }
+
     public void processNextSagaChapterTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
     }

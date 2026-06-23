@@ -449,6 +449,7 @@ Pass `null` as filter to allow any card.
 | `PutCardFromOpponentGraveyardOntoBattlefieldEffect` | `(boolean tapped)` | put target artifact/creature with MV=X from opponent's graveyard onto battlefield under your control (tapped if `tapped=true`), then mill that player X cards |
 | `PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect` | `()` | put target creature card from opponent's graveyard onto battlefield under your control with haste; exile at beginning of next end step; if it would leave the battlefield, exile it instead |
 | `PutImprintedCreatureOntoBattlefieldEffect` | `()` | when this creature dies, reveal imprinted card; if creature, put onto battlefield (Clone Shell dies trigger) |
+| `UndyingReturnEffect` | `()` | Undying (CR 702.93) resolution half: return the dying card from its owner's graveyard to the battlefield with a +1/+1 counter, flagged as entering from the graveyard. Pushed automatically by `PermanentRemovalService.collectUndyingTrigger` when a creature with `Keyword.UNDYING` dies with no +1/+1 counters — never add it to a card. The `UNDYING` keyword is loaded from Scryfall. Used by Flayer of the Hatebound |
 | `PutImprintedCardIntoOwnersHandEffect` | `()` | when this permanent dies, put the imprinted (exiled) card into its owner's hand (Hoarding Dragon dies trigger) |
 
 ## Draw / discard / hand manipulation
