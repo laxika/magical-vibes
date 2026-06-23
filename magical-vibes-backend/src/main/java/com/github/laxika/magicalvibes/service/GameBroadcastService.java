@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsSu
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
@@ -1280,6 +1281,10 @@ public class GameBroadcastService {
                 int totalCreatures = countCreaturesOnAllBattlefields(gameData);
                 reduction += perCreatureReduce.amountPerCreature() * totalCreatures;
             }
+            if (effect instanceof ReduceOwnCastCostPerCreatureCardInGraveyardEffect graveyardReduce) {
+                int creatureCards = countCreatureCardsInGraveyard(gameData, playerId);
+                reduction += graveyardReduce.amountPerCreature() * creatureCards;
+            }
             if (effect instanceof ReduceOwnCastCostIfControlsSubtypeEffect subtypeReduce) {
                 if (controlsSubtype(gameData, playerId, subtypeReduce.subtype())) {
                     reduction += subtypeReduce.amount();
@@ -1469,6 +1474,10 @@ public class GameBroadcastService {
                 int totalCreatures = countCreaturesOnAllBattlefields(gameData);
                 reduction += perCreatureReduce.amountPerCreature() * totalCreatures;
             }
+            if (effect instanceof ReduceOwnCastCostPerCreatureCardInGraveyardEffect graveyardReduce) {
+                int creatureCards = countCreatureCardsInGraveyard(gameData, playerId);
+                reduction += graveyardReduce.amountPerCreature() * creatureCards;
+            }
             if (effect instanceof ReduceOwnCastCostIfControlsSubtypeEffect subtypeReduce) {
                 if (controlsSubtype(gameData, playerId, subtypeReduce.subtype())) {
                     reduction += subtypeReduce.amount();
@@ -1592,6 +1601,18 @@ public class GameBroadcastService {
             total += countCreaturesControlled(gameData, pid);
         }
         return total;
+    }
+
+    private int countCreatureCardsInGraveyard(GameData gameData, UUID playerId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+        if (graveyard == null) return 0;
+        int count = 0;
+        for (Card card : graveyard) {
+            if (card.hasType(CardType.CREATURE)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public int getAttackPaymentPerCreature(GameData gameData, UUID attackingPlayerId) {

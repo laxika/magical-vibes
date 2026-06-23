@@ -56,6 +56,7 @@ All paths relative to `cards/`.
 | +1/+0 per other subtype you control | `r/RatColony.java` | STATIC BoostSelfPerOtherControlledSubtypeEffect(RAT, 1, 0) |
 | Cost reduction | `a/AvatarOfMight.java` | STATIC ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect |
 | Subtype cost reduction | `d/DanithaCapashenParagon.java` | STATIC ReduceOwnCastCostForSubtypeEffect(Set.of(AURA, EQUIPMENT), 1) — from battlefield permanent |
+| Cost reduction per creature card in graveyard | `g/Ghoultree.java` | STATIC ReduceOwnCastCostPerCreatureCardInGraveyardEffect(1) — this spell costs {1} less per creature card in your graveyard |
 | Creature mana only | `m/MyrSuperion.java` | setRequiresCreatureMana(true) — can only be cast with mana produced by creatures |
 | No max hand size | `s/Spellbook.java` | STATIC NoMaximumHandSizeEffect |
 | Toughness as combat damage (controller) | `b/BelligerentBrontodon.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES) — all your creatures assign combat damage equal to toughness |
