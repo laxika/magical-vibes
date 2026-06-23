@@ -85,6 +85,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -3116,6 +3117,28 @@ class GameQueryServiceTest {
             StackEntry creature = new StackEntry(
                     StackEntryType.CREATURE_SPELL, bears, player2Id, "Grizzly Bears", new ArrayList<>());
             assertThat(gqs.matchesStackEntryPredicate(creature, filter, player2Id)).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("playerHasProtectionFromColor")
+    class PlayerHasProtectionFromColor {
+
+        @Test
+        @DisplayName("Returns true only for a color the player is protected from")
+        void returnsTrueForProtectedColor() {
+            gd.playerProtectionFromColorsUntilEndOfTurn
+                    .computeIfAbsent(player1Id, k -> new HashSet<>()).add(CardColor.RED);
+
+            assertThat(gqs.playerHasProtectionFromColor(gd, player1Id, CardColor.RED)).isTrue();
+            assertThat(gqs.playerHasProtectionFromColor(gd, player1Id, CardColor.BLUE)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false for a player with no protection and for a null color")
+        void returnsFalseWhenNoProtection() {
+            assertThat(gqs.playerHasProtectionFromColor(gd, player2Id, CardColor.RED)).isFalse();
+            assertThat(gqs.playerHasProtectionFromColor(gd, player1Id, null)).isFalse();
         }
     }
 }

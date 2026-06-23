@@ -38,6 +38,12 @@ public sealed interface ChoiceContext {
 
     record ProtectionColorChoice(UUID targetId, boolean includeArtifacts) implements ChoiceContext {}
 
+    /**
+     * A single color choice that grants the chosen controller and each permanent they control
+     * protection from the chosen color until end of turn (e.g. Faith's Shield fateful hour).
+     */
+    record MassProtectionColorChoice(UUID controllerId) implements ChoiceContext {}
+
     record SubtypeChoice(UUID permanentId) implements ChoiceContext {}
 
     record BasicLandTypeChoice(UUID permanentId) implements ChoiceContext {}

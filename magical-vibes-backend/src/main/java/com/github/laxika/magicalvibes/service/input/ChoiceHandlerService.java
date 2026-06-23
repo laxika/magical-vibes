@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -59,6 +60,7 @@ public class ChoiceHandlerService {
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final LegendRuleService legendRuleService;
+    private final EffectResolutionService effectResolutionService;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)) {
@@ -111,6 +113,10 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ProtectionColorChoice ctx) {
             handleProtectionColorChoice(gameData, player, colorName, ctx);
+            return;
+        }
+        if (colorChoice.context() instanceof ChoiceContext.MassProtectionColorChoice ctx) {
+            handleMassProtectionColorChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SubtypeChoice ctx) {
@@ -471,6 +477,55 @@ public class ChoiceHandlerService {
 
         gameData.priorityPassedBy.clear();
         gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
+    private void handleMassProtectionColorChoice(GameData gameData, Player player, String chosenValue,
+            ChoiceContext.MassProtectionColorChoice ctx) {
+        gameData.interaction.clearAwaitingInput();
+        gameData.interaction.clearColorChoice();
+
+        CardColor color = CardColor.valueOf(chosenValue);
+        String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
+
+        // The controller gains protection from the chosen color until end of turn.
+        gameData.playerProtectionFromColorsUntilEndOfTurn
+                .computeIfAbsent(ctx.controllerId(), k -> new java.util.HashSet<>())
+                .add(color);
+
+        // Each permanent the controller controls gains protection from the chosen color.
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield != null) {
+            for (Permanent permanent : battlefield) {
+                permanent.getProtectionFromColorsUntilEndOfTurn().add(color);
+            }
+        }
+
+        String playerName = gameData.playerIdToName.get(ctx.controllerId());
+        String logEntry = playerName + " and each permanent they control gain protection from "
+                + colorName.toLowerCase() + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} and their permanents gain protection from {} until end of turn",
+                gameData.id, playerName, colorName.toLowerCase());
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        resumeAndAutoPass(gameData);
+    }
+
+    /**
+     * Resumes resolving any remaining effects on the spell/ability that paused for this choice,
+     * then continues the normal auto-pass flow.
+     */
+    private void resumeAndAutoPass(GameData gameData) {
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
         turnProgressionService.resolveAutoPass(gameData);
     }
 

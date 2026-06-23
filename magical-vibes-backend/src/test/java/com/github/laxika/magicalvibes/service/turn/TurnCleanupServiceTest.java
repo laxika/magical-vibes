@@ -357,6 +357,17 @@ class TurnCleanupServiceTest {
         }
 
         @Test
+        @DisplayName("Clears playerProtectionFromColorsUntilEndOfTurn")
+        void clearsPlayerProtectionFromColors() {
+            gd.playerProtectionFromColorsUntilEndOfTurn.put(player1Id,
+                    new java.util.HashSet<>(Set.of(CardColor.RED)));
+
+            sut.resetEndOfTurnModifiers(gd);
+
+            assertThat(gd.playerProtectionFromColorsUntilEndOfTurn).isEmpty();
+        }
+
+        @Test
         @DisplayName("Clears playerSourceDamagePreventionIds")
         void clearsPlayerSourceDamagePreventionIds() {
             gd.playerSourceDamagePreventionIds.put(player1Id, Set.of(UUID.randomUUID()));

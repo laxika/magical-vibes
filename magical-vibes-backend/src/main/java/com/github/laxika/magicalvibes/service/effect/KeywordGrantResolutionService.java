@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSupertypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect;
@@ -221,6 +222,12 @@ public class KeywordGrantResolutionService {
         }
 
         playerInputService.beginProtectionColorChoice(gameData, entry.getControllerId(), target.getId(), effect.includeArtifacts());
+    }
+
+    @HandlesEffect(GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect.class)
+    private void resolveGrantProtectionChoiceToControllerAndPermanents(GameData gameData, StackEntry entry,
+            GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect effect) {
+        playerInputService.beginMassProtectionColorChoice(gameData, entry.getControllerId());
     }
 
     @HandlesEffect(GrantProtectionFromCardTypeUntilEndOfTurnEffect.class)

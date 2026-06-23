@@ -138,6 +138,18 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose protection", gameData.id, playerName);
     }
 
+    public void beginMassProtectionColorChoice(GameData gameData, UUID controllerId) {
+        ChoiceContext.MassProtectionColorChoice ctx = new ChoiceContext.MassProtectionColorChoice(controllerId);
+        gameData.interaction.beginColorChoice(controllerId, null, null, ctx);
+
+        List<String> options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, controllerId),
+                new ChooseFromListMessage(options, "Choose a color."));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        log.info("Game {} - Awaiting {} to choose protection (you and your permanents)", gameData.id, playerName);
+    }
+
     public void beginKeywordChoice(GameData gameData, UUID playerId, UUID targetId, List<Keyword> options) {
         ChoiceContext.KeywordGrantChoice choiceContext = new ChoiceContext.KeywordGrantChoice(targetId, options);
         gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
