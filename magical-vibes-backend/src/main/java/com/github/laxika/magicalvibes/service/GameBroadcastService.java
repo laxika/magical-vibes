@@ -579,21 +579,25 @@ public class GameBroadcastService {
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             boolean emblemFlashback = flashback.isEmpty() && !grantedFlashback
                     && hasEmblemGrantedFlashback(gameData, playerId, card);
+            boolean isGraveyardCast = graveyardCast.isPresent()
+                    && flashback.isEmpty()
+                    && !grantedFlashback
+                    && !emblemFlashback
+                    && isGraveyardCastAvailable(gameData, playerId, graveyardCast.get());
 
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
-            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && graveyardCast.isEmpty()
+            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast
                     && graveyardCastSourceId.isPresent()) {
                 // Card must be a non-land permanent type with at least one unused type slot
                 isGrantedGraveyardCast = hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
-            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && graveyardCast.isEmpty()
+            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast
                     && !isGrantedGraveyardCast) {
                 continue;
             }
 
-            boolean isGraveyardCast = graveyardCast.isPresent() && flashback.isEmpty() && !grantedFlashback && !emblemFlashback;
             boolean isInstantSpeed = card.hasType(CardType.INSTANT);
             boolean canCastTiming = isInstantSpeed || (isActivePlayer && isMainPhase && stackEmpty);
             if (!canCastTiming) {
@@ -1020,6 +1024,19 @@ public class GameBroadcastService {
             }
         }
         return Optional.empty();
+    }
+
+    public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {
+        if (graveyardCast.controllerControlsPredicate() == null) {
+            return true;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        return battlefield.stream()
+                .anyMatch(permanent -> gameQueryService.matchesPermanentPredicate(
+                        gameData, permanent, graveyardCast.controllerControlsPredicate()));
     }
 
     /**

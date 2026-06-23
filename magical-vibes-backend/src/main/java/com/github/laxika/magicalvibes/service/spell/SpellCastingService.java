@@ -1235,7 +1235,8 @@ public class SpellCastingService {
         boolean emblemFlashback = flashbackOpt.isEmpty() && !grantedFlashback
                 && gameBroadcastService.hasEmblemGrantedFlashback(gameData, playerId, card);
         boolean isGraveyardCast = graveyardCastOpt.isPresent() && flashbackOpt.isEmpty()
-                && !grantedFlashback && !emblemFlashback;
+                && !grantedFlashback && !emblemFlashback
+                && gameBroadcastService.isGraveyardCastAvailable(gameData, playerId, graveyardCastOpt.get());
 
         // Check if this card is castable via a Muldrotha-style static graveyard permanent cast effect
         boolean isGrantedGraveyardCast = false;
