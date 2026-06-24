@@ -50,6 +50,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroL
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureEnteringDontCauseTriggersEffect;
@@ -526,6 +528,29 @@ public class GameQueryService {
      */
     public boolean canPlayersCastSpellsFromGraveyards(GameData gameData) {
         return !anyBattlefieldHasStaticEffect(gameData, PlayersCantCastSpellsFromGraveyardsEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if players are allowed to cast spells from libraries.
+     * Returns {@code false} when a {@link PlayersCantCastSpellsFromLibrariesEffect}
+     * is on any battlefield (e.g. Grafdigger's Cage).
+     */
+    public boolean canPlayersCastSpellsFromLibraries(GameData gameData) {
+        return !anyBattlefieldHasStaticEffect(gameData, PlayersCantCastSpellsFromLibrariesEffect.class);
+    }
+
+    /**
+     * Returns {@code true} if the given card is barred from entering the battlefield from a
+     * graveyard or library by a {@link CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect}
+     * on any battlefield (e.g. Grafdigger's Cage). The card is tested against each such effect's
+     * filter, so only matching cards (e.g. creature cards) are blocked.
+     */
+    public boolean isCardBlockedFromEnteringFromGraveyardOrLibrary(GameData gameData, Card card) {
+        return gameData.anyPermanentMatches(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .filter(CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect.class::isInstance)
+                        .map(CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect.class::cast)
+                        .anyMatch(e -> matchesCardPredicate(card, e.filter(), null)));
     }
 
     /**
