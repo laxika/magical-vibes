@@ -11,6 +11,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "deals N damage to target creature" | `DealDamageToTargetCreatureEffect(N)` | SPELL | Creature-only targeting |
 | "deals N damage to target creature or planeswalker" | `DealDamageToTargetCreatureOrPlaneswalkerEffect(N)` | SPELL | |
 | "deals N damage to target opponent or planeswalker" | `DealDamageToTargetOpponentOrPlaneswalkerEffect(N)` | SPELL | |
+| "deals N damage to target opponent and N damage to up to M target creatures that player controls" | `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(N, N, M)` | `ON_TRANSFORM_TO_BACK_FACE` | Two-step transform trigger target choice; use M=1 for "up to one" |
 | "deals N damage to target player" | `DealDamageToTargetPlayerEffect(N)` | SPELL | |
 | "deals N damage to each opponent" | `DealDamageToEachOpponentEffect(N)` | SPELL/trigger | No targeting |
 | "deals N damage to each player" | `DealDamageToEachPlayerEffect(N)` | SPELL | No targeting |

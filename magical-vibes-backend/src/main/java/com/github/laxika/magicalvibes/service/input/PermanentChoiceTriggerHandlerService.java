@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -168,6 +170,135 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handleTransformOpponentTarget(GameData gameData, UUID opponentId,
+                                              PermanentChoiceContext.TransformOpponentThenCreatureTarget tot) {
+        int maxCreatureTargets = maxTransformCreatureTargets(tot.effects());
+
+        if (maxCreatureTargets == 0) {
+            pushTransformOpponentCreatureTrigger(gameData, tot.sourceCard(), tot.controllerId(),
+                    tot.effects(), tot.sourcePermanentId(), opponentId, List.of());
+            continueAfterTransformTarget(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.TransformCreatureTarget next =
+                new PermanentChoiceContext.TransformCreatureTarget(
+                        tot.sourceCard(), tot.controllerId(), tot.effects(), tot.sourcePermanentId(),
+                        opponentId, List.of(), maxCreatureTargets);
+        if (!promptNextTransformCreatureTarget(gameData, next)) {
+            pushTransformOpponentCreatureTrigger(gameData, tot.sourceCard(), tot.controllerId(),
+                    tot.effects(), tot.sourcePermanentId(), opponentId, List.of());
+            continueAfterTransformTarget(gameData);
+        }
+    }
+
+    public void handleTransformCreatureTarget(GameData gameData, UUID chosenId,
+                                              PermanentChoiceContext.TransformCreatureTarget tct) {
+        if (chosenId.equals(tct.controllerId())) {
+            pushTransformOpponentCreatureTrigger(gameData, tct.sourceCard(), tct.controllerId(),
+                    tct.effects(), tct.sourcePermanentId(), tct.opponentId(), tct.creatureIds());
+            continueAfterTransformTarget(gameData);
+            return;
+        }
+
+        List<UUID> updatedCreatureIds = new ArrayList<>(tct.creatureIds());
+        updatedCreatureIds.add(chosenId);
+
+        if (updatedCreatureIds.size() >= tct.maxCreatureTargets()) {
+            pushTransformOpponentCreatureTrigger(gameData, tct.sourceCard(), tct.controllerId(),
+                    tct.effects(), tct.sourcePermanentId(), tct.opponentId(), updatedCreatureIds);
+            continueAfterTransformTarget(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.TransformCreatureTarget next =
+                new PermanentChoiceContext.TransformCreatureTarget(
+                        tct.sourceCard(), tct.controllerId(), tct.effects(), tct.sourcePermanentId(),
+                        tct.opponentId(), updatedCreatureIds, tct.maxCreatureTargets());
+        if (!promptNextTransformCreatureTarget(gameData, next)) {
+            pushTransformOpponentCreatureTrigger(gameData, tct.sourceCard(), tct.controllerId(),
+                    tct.effects(), tct.sourcePermanentId(), tct.opponentId(), updatedCreatureIds);
+            continueAfterTransformTarget(gameData);
+        }
+    }
+
+    private void pushTransformOpponentCreatureTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+                                                      List<CardEffect> effects, UUID sourcePermanentId,
+                                                      UUID opponentId, List<UUID> creatureIds) {
+        List<UUID> targetIds = new ArrayList<>();
+        targetIds.add(opponentId);
+        targetIds.addAll(creatureIds);
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s transform ability",
+                new ArrayList<>(effects),
+                sourcePermanentId,
+                targetIds
+        );
+        gameData.stack.add(entry);
+
+        String opponentName = getTargetDisplayName(gameData, opponentId);
+        String logEntry = sourceCard.getName() + "'s ability targets " + opponentName;
+        if (!creatureIds.isEmpty()) {
+            List<String> creatureNames = creatureIds.stream()
+                    .map(id -> getTargetDisplayName(gameData, id))
+                    .toList();
+            logEntry += " and " + String.join(", ", creatureNames);
+        }
+        gameBroadcastService.logAndBroadcast(gameData, logEntry + ".");
+    }
+
+    private boolean promptNextTransformCreatureTarget(GameData gameData,
+                                                      PermanentChoiceContext.TransformCreatureTarget context) {
+        List<UUID> validCreatureTargets = new ArrayList<>();
+        List<Permanent> opponentBattlefield = gameData.playerBattlefields.get(context.opponentId());
+        if (opponentBattlefield != null) {
+            for (Permanent permanent : opponentBattlefield) {
+                if (context.creatureIds().contains(permanent.getId())) {
+                    continue;
+                }
+                if (gameQueryService.isCreature(gameData, permanent)) {
+                    validCreatureTargets.add(permanent.getId());
+                }
+            }
+        }
+
+        if (validCreatureTargets.isEmpty()) {
+            return false;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(context);
+        int remaining = context.maxCreatureTargets() - context.creatureIds().size();
+        playerInputService.beginAnyTargetChoice(gameData, context.controllerId(), validCreatureTargets,
+                List.of(context.controllerId()), context.sourceCard().getName()
+                        + "'s ability - Choose up to " + remaining + " more target "
+                        + (remaining == 1 ? "creature" : "creatures")
+                        + " that opponent controls.");
+        return true;
+    }
+
+    private int maxTransformCreatureTargets(List<CardEffect> effects) {
+        return effects.stream()
+                .filter(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect.class::isInstance)
+                .map(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect.class::cast)
+                .mapToInt(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect::maxCreatureTargets)
+                .findFirst()
+                .orElse(1);
+    }
+
+    private void continueAfterTransformTarget(GameData gameData) {
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;

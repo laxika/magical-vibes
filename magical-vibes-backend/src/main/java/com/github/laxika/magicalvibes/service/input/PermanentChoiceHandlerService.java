@@ -129,6 +129,10 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleEndStepTrigger(gameData, permanentId, est);
         } else if (context instanceof PermanentChoiceContext.ExploreTriggerTarget ett) {
             triggerHandler.handleExploreTrigger(gameData, permanentId, ett);
+        } else if (context instanceof PermanentChoiceContext.TransformOpponentThenCreatureTarget tot) {
+            triggerHandler.handleTransformOpponentTarget(gameData, permanentId, tot);
+        } else if (context instanceof PermanentChoiceContext.TransformCreatureTarget tct) {
+            triggerHandler.handleTransformCreatureTarget(gameData, permanentId, tct);
         } else if (context instanceof PermanentChoiceContext.SagaChapterTarget sct) {
             triggerHandler.handleSagaChapterTarget(gameData, permanentId, sct);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {

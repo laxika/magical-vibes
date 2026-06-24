@@ -78,6 +78,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToTargetCreatureEffect(int)` or `(int, boolean unpreventable)` — target creature
 - `DealDamageToTargetCreatureOrPlaneswalkerEffect(int)` — creature or planeswalker
 - `DealDamageToTargetOpponentOrPlaneswalkerEffect(int)` — opponent or planeswalker
+- `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(int opponentDamage, int creatureDamage, int maxCreatureTargets)` — target opponent plus up to N creatures that player controls
 - `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(int)` — all target controls
 - `DealDamageToAllCreaturesTargetControlsEffect(int)` — creatures target controls
 - `DealDamageToTargetPlayerEffect(int)` — target player

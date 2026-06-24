@@ -132,6 +132,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
      *  permanent's card reference is switched to the back face. */
     ON_TRANSFORM_TO_BACK_FACE,
+    /** Triggers when this permanent transforms from its back face to its front face.
+     *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
+     *  permanent's card reference is switched back to the original front face. */
+    ON_TRANSFORM_TO_FRONT_FACE,
     /** Triggers whenever a player loses the game. Fired from {@code GameOutcomeService}
      *  at the moment a player is determined to lose (life/poison loss in
      *  {@code checkWinCondition}, or a direct loss via {@code declareWinner}).

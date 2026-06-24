@@ -164,4 +164,13 @@ public sealed interface PermanentChoiceContext {
      *  an opponent controls gets -2/-2 until end of turn."). */
     record ExploreTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
+    /** Transform trigger that first chooses a target opponent, then up to one creature that player controls. */
+    record TransformOpponentThenCreatureTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                               UUID sourcePermanentId) implements PermanentChoiceContext {}
+
+    /** Creature choices for TransformOpponentThenCreatureTarget. Choosing controllerId means no more creature targets. */
+    record TransformCreatureTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID opponentId, List<UUID> creatureIds,
+                                   int maxCreatureTargets) implements PermanentChoiceContext {}
+
 }

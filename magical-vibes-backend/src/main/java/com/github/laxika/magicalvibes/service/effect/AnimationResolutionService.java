@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimateControlledPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
@@ -315,7 +318,7 @@ public class AnimationResolutionService {
             log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
 
             // Fire ON_TRANSFORM_TO_BACK_FACE triggers from the back face card
-            fireTransformToBackFaceTriggers(gameData, self, backFace);
+            fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
         } else {
             // Transform back to front face
             String backName = self.getCard().getName();
@@ -324,15 +327,16 @@ public class AnimationResolutionService {
             String logEntry = backName + " transforms into " + originalCard.getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+
+            fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
         }
     }
 
     /**
-     * Fires triggered abilities from the back face's {@link EffectSlot#ON_TRANSFORM_TO_BACK_FACE}
-     * slot after a permanent transforms into its back face (e.g. Werewolf Ransacker).
+     * Fires triggered abilities from transform trigger slots after a permanent transforms.
      */
-    private void fireTransformToBackFaceTriggers(GameData gameData, Permanent self, Card backFace) {
-        List<CardEffect> effects = backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
+    private void fireTransformTriggers(GameData gameData, Permanent self, Card triggerCard, EffectSlot slot) {
+        List<CardEffect> effects = triggerCard.getEffects(slot);
         if (effects.isEmpty()) {
             return;
         }
@@ -344,10 +348,37 @@ public class AnimationResolutionService {
 
         for (CardEffect e : effects) {
             if (e instanceof MayEffect may) {
-                gameData.queueMayAbility(backFace, controllerId, may, null, self.getId());
-                String triggerLog = backFace.getName() + "'s transform ability triggers.";
+                gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
+                String triggerLog = triggerCard.getName() + "'s transform ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, backFace.getName());
+                log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, triggerCard.getName());
+            } else if (e instanceof DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect) {
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.TransformOpponentThenCreatureTarget(
+                                triggerCard, controllerId, effects, self.getId()));
+                List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                        .filter(pid -> !pid.equals(controllerId))
+                        .toList();
+                playerInputService.beginAnyTargetChoice(gameData, controllerId, List.of(), opponents,
+                        triggerCard.getName() + "'s ability - Choose target opponent.");
+                String triggerLog = triggerCard.getName() + "'s transform ability triggers - choose target opponent.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} transform trigger awaiting opponent target", gameData.id, triggerCard.getName());
+                return;
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        triggerCard,
+                        controllerId,
+                        triggerCard.getName() + "'s transform ability",
+                        effects,
+                        null,
+                        self.getId()
+                ));
+                String triggerLog = triggerCard.getName() + "'s transform ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} transform trigger pushed onto stack", gameData.id, triggerCard.getName());
+                return;
             }
         }
     }

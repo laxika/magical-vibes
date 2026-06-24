@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSecondaryTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndDealDamageByHighestManaValueEffect;
@@ -666,6 +667,45 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    @HandlesEffect(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect.class)
+    void resolveDealDamageToTargetOpponentAndUpToOneCreatureThatPlayerControls(
+            GameData gameData,
+            StackEntry entry,
+            DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect effect
+    ) {
+        List<UUID> targets = entry.getTargetIds();
+        if (targets == null || targets.isEmpty()) {
+            return;
+        }
+
+        if (isDamageSourcePreventedWithLog(gameData, entry)) {
+            return;
+        }
+
+        UUID opponentId = targets.getFirst();
+        if (gameData.playerIds.contains(opponentId) && !opponentId.equals(entry.getControllerId())) {
+            int opponentDamage = gameQueryService.applyDamageMultiplier(gameData, effect.opponentDamage(), entry);
+            dealDamageToPlayer(gameData, entry, opponentId, opponentDamage);
+        }
+
+        for (int i = 1; i < targets.size(); i++) {
+            UUID creatureId = targets.get(i);
+            Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
+            UUID creatureControllerId = creature != null
+                    ? gameQueryService.findPermanentController(gameData, creatureId)
+                    : null;
+            if (creature != null
+                    && opponentId.equals(creatureControllerId)
+                    && gameQueryService.isCreature(gameData, creature)
+                    && !isDamagePreventedForCreature(gameData, entry, creature)) {
+                int creatureDamage = gameQueryService.applyDamageMultiplier(gameData, effect.creatureDamage(), entry);
+                dealDamageAndDestroyIfLethal(gameData, entry, creature, creatureDamage);
+            }
+        }
+
         gameOutcomeService.checkWinCondition(gameData);
     }
 
