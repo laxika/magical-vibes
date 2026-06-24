@@ -578,7 +578,7 @@ public class GraveyardReturnResolutionService {
                                          boolean enterTapped, boolean enterAttacking) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         // The card stays in the graveyard it was being returned from (the caller already removed it).
-        if (isCardBlockedFromEnteringFromZone(gameData, card)) {
+        if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
             String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
                     + " onto the battlefield from a graveyard; it stays in the graveyard.";
@@ -627,7 +627,7 @@ public class GraveyardReturnResolutionService {
 
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield, so the
         // undying return does nothing and the card stays in the graveyard.
-        if (isCardBlockedFromEnteringFromZone(gameData, card)) {
+        if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameBroadcastService.logAndBroadcast(gameData,
                     card.getName() + " can't return from the graveyard (undying); it stays in the graveyard.");
             log.info("Game {} - {} undying return blocked (can't enter from a graveyard)", gameData.id, card.getName());
@@ -652,10 +652,10 @@ public class GraveyardReturnResolutionService {
 
     /**
      * Returns {@code true} if the given card is currently barred from entering the battlefield from
-     * a graveyard or library (e.g. a creature card while Grafdigger's Cage is on the battlefield).
+     * {@code zone} (e.g. a creature card while Grafdigger's Cage is on the battlefield).
      */
-    private boolean isCardBlockedFromEnteringFromZone(GameData gameData, Card card) {
-        return gameQueryService.isCardBlockedFromEnteringFromGraveyardOrLibrary(gameData, card);
+    private boolean isCardBlockedFromEnteringFromZone(GameData gameData, Card card, Zone zone) {
+        return gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, zone);
     }
 
     private void applyPermanentGrants(Permanent permanent, CardColor grantColor, CardSubtype grantSubtype) {
@@ -670,7 +670,7 @@ public class GraveyardReturnResolutionService {
     private void putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
                                                          boolean grantHaste, boolean exileAtEndStep) {
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
-        if (isCardBlockedFromEnteringFromZone(gameData, card)) {
+        if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
             String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
                     + " onto the battlefield from a graveyard; it stays in the graveyard.";

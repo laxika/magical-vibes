@@ -129,9 +129,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
-| "players can't cast spells from graveyards" | `PlayersCantCastSpellsFromGraveyardsEffect()` | STATIC | Ashes of the Abhorrent, Grafdigger's Cage. Gated in flashback/graveyard-cast paths via `GameQueryService.canPlayersCastSpellsFromGraveyards` |
-| "players can't cast spells from libraries" | `PlayersCantCastSpellsFromLibrariesEffect()` | STATIC | Grafdigger's Cage. Gated in `playCardFromLibraryTop` via `GameQueryService.canPlayersCastSpellsFromLibraries` |
-| "creature cards in graveyards and libraries can't enter the battlefield" | `CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect(new CardTypePredicate(CREATURE))` | STATIC | Grafdigger's Cage. Filter selects which cards are blocked (null = all). Blocks reanimation/undying + library-search-to-battlefield; gated via `GameQueryService.isCardBlockedFromEnteringFromGraveyardOrLibrary`. Blocked card stays in its zone |
+| "players can't cast spells from graveyards" | `PlayersCantCastSpellsFromZonesEffect(Set.of(Zone.GRAVEYARD))` | STATIC | Ashes of the Abhorrent. Gated in flashback/graveyard-cast paths via `GameQueryService.canPlayersCastSpellsFromZone(gd, Zone.GRAVEYARD)` |
+| "players can't cast spells from graveyards or libraries" | `PlayersCantCastSpellsFromZonesEffect(Set.of(Zone.GRAVEYARD, Zone.LIBRARY))` | STATIC | Grafdigger's Cage. Gated via `GameQueryService.canPlayersCastSpellsFromZone(gd, zone)` (graveyard cast/flashback + `playCardFromLibraryTop`). Only `GRAVEYARD`/`LIBRARY` enforced |
+| "creature cards in graveyards and libraries can't enter the battlefield" | `CardsCantEnterBattlefieldFromZonesEffect(new CardTypePredicate(CREATURE), Set.of(Zone.GRAVEYARD, Zone.LIBRARY))` | STATIC | Grafdigger's Cage. Filter selects which cards are blocked (null = all); `zones` selects which source zones are blocked (only `GRAVEYARD`/`LIBRARY` enforced). Blocks reanimation/undying + library-search-to-battlefield; gated via `GameQueryService.isCardBlockedFromEnteringFromZone(gd, card, zone)`. Blocked card stays in its zone |
 
 ## Library manipulation
 

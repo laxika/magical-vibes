@@ -426,9 +426,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `LimitSpellsForEnchantedPlayerEffect(int)` — max spells per turn for the enchanted player (Curse Aura)
 - `CantSearchLibrariesEffect()` — can't search (static)
 - `AlternativeCostForSpellsEffect(String, CardPredicate)` — alternative cast cost
-- `PlayersCantCastSpellsFromGraveyardsEffect()` — no player can cast from graveyards (static, global)
-- `PlayersCantCastSpellsFromLibrariesEffect()` — no player can cast from libraries (static, global)
-- `CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect(CardPredicate filter)` — cards matching `filter` (null = all) in graveyards/libraries can't enter the battlefield; blocks reanimation/undying/library-search-to-battlefield (static, global — Grafdigger's Cage passes `CardTypePredicate(CREATURE)`)
+- `PlayersCantCastSpellsFromZonesEffect(Set<Zone> zones)` — no player can cast from any zone in `zones` (static, global; only `GRAVEYARD`/`LIBRARY` enforced — Ashes of the Abhorrent passes `Set.of(GRAVEYARD)`, Grafdigger's Cage passes `Set.of(GRAVEYARD, LIBRARY)`)
+- `CardsCantEnterBattlefieldFromZonesEffect(CardPredicate filter, Set<Zone> zones)` — cards matching `filter` (null = all) can't enter the battlefield from any zone in `zones`; blocks reanimation/undying/library-search-to-battlefield (static, global; only `GRAVEYARD`/`LIBRARY` enforced — Grafdigger's Cage passes `CardTypePredicate(CREATURE)` and `Set.of(GRAVEYARD, LIBRARY)`)
 
 ## Choose / name
 

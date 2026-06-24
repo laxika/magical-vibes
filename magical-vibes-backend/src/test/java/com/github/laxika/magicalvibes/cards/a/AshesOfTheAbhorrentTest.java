@@ -7,14 +7,16 @@ import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,13 +27,16 @@ class AshesOfTheAbhorrentTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC effects: PlayersCantCastSpellsFromGraveyardsEffect and PlayersCantActivateAbilitiesOfGraveyardCardsEffect")
+    @DisplayName("Has STATIC effects: PlayersCantCastSpellsFromZonesEffect(GRAVEYARD) and PlayersCantActivateAbilitiesOfGraveyardCardsEffect")
     void hasStaticEffects() {
         AshesOfTheAbhorrent card = new AshesOfTheAbhorrent();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PlayersCantCastSpellsFromGraveyardsEffect);
+                .filteredOn(e -> e instanceof PlayersCantCastSpellsFromZonesEffect)
+                .singleElement()
+                .satisfies(e -> assertThat(((PlayersCantCastSpellsFromZonesEffect) e).zones())
+                        .isEqualTo(Set.of(Zone.GRAVEYARD)));
         assertThat(card.getEffects(EffectSlot.STATIC))
                 .anyMatch(e -> e instanceof PlayersCantActivateAbilitiesOfGraveyardCardsEffect);
     }

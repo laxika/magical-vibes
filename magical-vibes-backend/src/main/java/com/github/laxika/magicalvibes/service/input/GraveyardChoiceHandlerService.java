@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -151,7 +152,7 @@ public class GraveyardChoiceHandlerService {
                 case BATTLEFIELD -> {
                     // Grafdigger's Cage etc.: a matching card (e.g. a creature card) can't enter the
                     // battlefield from a graveyard; it stays in the graveyard it was being returned from.
-                    if (gameQueryService.isCardBlockedFromEnteringFromGraveyardOrLibrary(gameData, card)) {
+                    if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
                         UUID returnTo = cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId;
                         gameData.playerGraveyards.computeIfAbsent(returnTo, k -> new ArrayList<>()).add(card);
                         gameBroadcastService.logAndBroadcast(gameData, card.getName()

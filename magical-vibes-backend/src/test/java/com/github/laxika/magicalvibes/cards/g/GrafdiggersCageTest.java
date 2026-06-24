@@ -10,15 +10,16 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromGraveyardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromLibrariesEffect;
+import com.github.laxika.magicalvibes.model.effect.CardsCantEnterBattlefieldFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsFromZonesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -29,20 +30,24 @@ class GrafdiggersCageTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has three STATIC effects: can't-enter, can't-cast-from-graveyards, can't-cast-from-libraries")
+    @DisplayName("Has two STATIC effects: can't-enter and can't-cast-from-zones (graveyards + libraries)")
     void hasStaticEffects() {
         GrafdiggersCage card = new GrafdiggersCage();
 
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect)
+                .filteredOn(e -> e instanceof CardsCantEnterBattlefieldFromZonesEffect)
                 .singleElement()
-                .satisfies(e -> assertThat(((CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect) e).filter())
-                        .isEqualTo(new CardTypePredicate(CardType.CREATURE)));
+                .satisfies(e -> {
+                    CardsCantEnterBattlefieldFromZonesEffect effect = (CardsCantEnterBattlefieldFromZonesEffect) e;
+                    assertThat(effect.filter()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
+                    assertThat(effect.zones()).isEqualTo(Set.of(Zone.GRAVEYARD, Zone.LIBRARY));
+                });
         assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PlayersCantCastSpellsFromGraveyardsEffect);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PlayersCantCastSpellsFromLibrariesEffect);
+                .filteredOn(e -> e instanceof PlayersCantCastSpellsFromZonesEffect)
+                .singleElement()
+                .satisfies(e -> assertThat(((PlayersCantCastSpellsFromZonesEffect) e).zones())
+                        .isEqualTo(Set.of(Zone.GRAVEYARD, Zone.LIBRARY)));
     }
 
     // ===== Players can't cast spells from graveyards =====
