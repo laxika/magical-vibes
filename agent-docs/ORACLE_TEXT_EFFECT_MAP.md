@@ -124,6 +124,14 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "double target player's life total" | `DoubleTargetPlayerLifeEffect()` | SPELL | |
 | "players can't gain life" | `PlayersCantGainLifeEffect()` | STATIC | |
 
+## Graveyard / library hate (static, global)
+
+| Oracle text phrase | Effect | Slot | Notes |
+|---|---|---|---|
+| "players can't cast spells from graveyards" | `PlayersCantCastSpellsFromGraveyardsEffect()` | STATIC | Ashes of the Abhorrent, Grafdigger's Cage. Gated in flashback/graveyard-cast paths via `GameQueryService.canPlayersCastSpellsFromGraveyards` |
+| "players can't cast spells from libraries" | `PlayersCantCastSpellsFromLibrariesEffect()` | STATIC | Grafdigger's Cage. Gated in `playCardFromLibraryTop` via `GameQueryService.canPlayersCastSpellsFromLibraries` |
+| "creature cards in graveyards and libraries can't enter the battlefield" | `CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect(new CardTypePredicate(CREATURE))` | STATIC | Grafdigger's Cage. Filter selects which cards are blocked (null = all). Blocks reanimation/undying + library-search-to-battlefield; gated via `GameQueryService.isCardBlockedFromEnteringFromGraveyardOrLibrary`. Blocked card stays in its zone |
+
 ## Library manipulation
 
 | Oracle text phrase | Effect | Slot | Notes |

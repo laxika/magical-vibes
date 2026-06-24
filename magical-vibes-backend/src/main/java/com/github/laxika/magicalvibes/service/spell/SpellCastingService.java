@@ -1545,6 +1545,11 @@ public class SpellCastingService {
             throw new IllegalStateException("Game is not running");
         }
 
+        // Grafdigger's Cage etc.: players can't cast spells from libraries.
+        if (!gameQueryService.canPlayersCastSpellsFromLibraries(gameData)) {
+            throw new IllegalStateException("Spells can't be cast from libraries");
+        }
+
         UUID playerId = player.getId();
 
         // Verify the player can cast from top of library

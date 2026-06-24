@@ -111,6 +111,9 @@ public class GraveyardChoiceHandlerService {
             }
 
             Card card;
+            // Owner of the graveyard the card is leaving — used to return it if a continuous effect
+            // (e.g. Grafdigger's Cage) stops a creature card from entering the battlefield.
+            UUID cardGraveyardOwnerId = null;
             if (destination == GraveyardChoiceDestination.MAY_ABILITY_TARGET) {
                 // MAY_ABILITY_TARGET: get reference without removal — the effect handler will exile it
                 if (cardPool != null) {
@@ -121,11 +124,13 @@ public class GraveyardChoiceHandlerService {
             } else if (cardPool != null) {
                 // Cross-graveyard choice: card pool contains cards from any graveyard
                 card = cardPool.get(cardIndex);
+                cardGraveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
                 permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
             } else {
                 // Standard choice: indices into the player's own graveyard
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                 card = graveyard.remove(cardIndex);
+                cardGraveyardOwnerId = playerId;
             }
 
             switch (destination) {
@@ -144,6 +149,17 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
                 case BATTLEFIELD -> {
+                    // Grafdigger's Cage etc.: a matching card (e.g. a creature card) can't enter the
+                    // battlefield from a graveyard; it stays in the graveyard it was being returned from.
+                    if (gameQueryService.isCardBlockedFromEnteringFromGraveyardOrLibrary(gameData, card)) {
+                        UUID returnTo = cardGraveyardOwnerId != null ? cardGraveyardOwnerId : playerId;
+                        gameData.playerGraveyards.computeIfAbsent(returnTo, k -> new ArrayList<>()).add(card);
+                        gameBroadcastService.logAndBroadcast(gameData, card.getName()
+                                + " can't enter the battlefield from a graveyard; it stays in the graveyard.");
+                        log.info("Game {} - {} blocked from entering the battlefield from a graveyard",
+                                gameData.id, card.getName());
+                        break;
+                    }
                     Permanent perm = new Permanent(card);
                     if (grantColor != null) {
                         perm.getGrantedColors().add(grantColor);

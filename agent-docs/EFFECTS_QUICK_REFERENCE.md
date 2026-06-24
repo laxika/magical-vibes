@@ -425,6 +425,9 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `LimitSpellsForEnchantedPlayerEffect(int)` — max spells per turn for the enchanted player (Curse Aura)
 - `CantSearchLibrariesEffect()` — can't search (static)
 - `AlternativeCostForSpellsEffect(String, CardPredicate)` — alternative cast cost
+- `PlayersCantCastSpellsFromGraveyardsEffect()` — no player can cast from graveyards (static, global)
+- `PlayersCantCastSpellsFromLibrariesEffect()` — no player can cast from libraries (static, global)
+- `CardsCantEnterBattlefieldFromGraveyardsAndLibrariesEffect(CardPredicate filter)` — cards matching `filter` (null = all) in graveyards/libraries can't enter the battlefield; blocks reanimation/undying/library-search-to-battlefield (static, global — Grafdigger's Cage passes `CardTypePredicate(CREATURE)`)
 
 ## Choose / name
 

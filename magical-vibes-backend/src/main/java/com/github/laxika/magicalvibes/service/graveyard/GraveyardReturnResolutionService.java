@@ -576,6 +576,17 @@ public class GraveyardReturnResolutionService {
     private void putCardOntoBattlefield(GameData gameData, UUID controllerId, Card card,
                                          CardColor grantColor, CardSubtype grantSubtype,
                                          boolean enterTapped, boolean enterAttacking) {
+        // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
+        // The card stays in the graveyard it was being returned from (the caller already removed it).
+        if (isCardBlockedFromEnteringFromZone(gameData, card)) {
+            gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+            String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
+                    + " onto the battlefield from a graveyard; it stays in the graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, blockedLog);
+            log.info("Game {} - {} blocked from entering the battlefield from a graveyard", gameData.id, card.getName());
+            return;
+        }
+
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         applyPermanentGrants(permanent, grantColor, grantSubtype);
@@ -614,6 +625,15 @@ public class GraveyardReturnResolutionService {
             return;
         }
 
+        // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield, so the
+        // undying return does nothing and the card stays in the graveyard.
+        if (isCardBlockedFromEnteringFromZone(gameData, card)) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    card.getName() + " can't return from the graveyard (undying); it stays in the graveyard.");
+            log.info("Game {} - {} undying return blocked (can't enter from a graveyard)", gameData.id, card.getName());
+            return;
+        }
+
         permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
@@ -630,6 +650,14 @@ public class GraveyardReturnResolutionService {
         handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
     }
 
+    /**
+     * Returns {@code true} if the given card is currently barred from entering the battlefield from
+     * a graveyard or library (e.g. a creature card while Grafdigger's Cage is on the battlefield).
+     */
+    private boolean isCardBlockedFromEnteringFromZone(GameData gameData, Card card) {
+        return gameQueryService.isCardBlockedFromEnteringFromGraveyardOrLibrary(gameData, card);
+    }
+
     private void applyPermanentGrants(Permanent permanent, CardColor grantColor, CardSubtype grantSubtype) {
         if (grantColor != null) {
             permanent.getGrantedColors().add(grantColor);
@@ -641,6 +669,16 @@ public class GraveyardReturnResolutionService {
 
     private void putCardOntoBattlefieldWithHasteAndExile(GameData gameData, UUID controllerId, Card card,
                                                          boolean grantHaste, boolean exileAtEndStep) {
+        // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
+        if (isCardBlockedFromEnteringFromZone(gameData, card)) {
+            gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+            String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
+                    + " onto the battlefield from a graveyard; it stays in the graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, blockedLog);
+            log.info("Game {} - {} blocked from entering the battlefield from a graveyard", gameData.id, card.getName());
+            return;
+        }
+
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
         if (grantHaste) {

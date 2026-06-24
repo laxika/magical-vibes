@@ -751,19 +751,32 @@ public class LibraryChoiceHandlerService {
     private void placeCardsOnBattlefieldSimultaneously(GameData gameData, List<Card> cards,
                                                         UUID ownerId, boolean tapped) {
         List<Permanent> permanents = new ArrayList<>();
+        List<Card> placedCards = new ArrayList<>();
         String ownerName = gameData.playerIdToName.get(ownerId);
 
         // Snapshot enter-tapped types ONCE before any permanent enters (CR 608.2f)
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
 
+        // Grafdigger's Cage etc.: matching cards (e.g. creature cards) in libraries can't enter the
+        // battlefield. Any blocked card stays in the library, which is then shuffled.
+        boolean anyBlocked = false;
+
         // Phase 1: Place all permanents on the battlefield simultaneously
         for (Card card : cards) {
+            if (gameQueryService.isCardBlockedFromEnteringFromGraveyardOrLibrary(gameData, card)) {
+                gameData.playerDecks.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(card);
+                anyBlocked = true;
+                gameBroadcastService.logAndBroadcast(gameData, card.getName()
+                        + " can't enter the battlefield from a library; it stays in the library.");
+                continue;
+            }
             Permanent perm = new Permanent(card);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm, enterTappedTypes);
             if (tapped) {
                 perm.tap();
             }
             permanents.add(perm);
+            placedCards.add(card);
 
             String entersLog = tapped
                     ? card.getName() + " enters the battlefield tapped under " + ownerName + "'s control."
@@ -771,9 +784,13 @@ public class LibraryChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, entersLog);
         }
 
+        if (anyBlocked) {
+            java.util.Collections.shuffle(gameData.playerDecks.get(ownerId));
+        }
+
         // Phase 2: Process ETB triggers after all permanents are on the battlefield (CR 608.2f)
-        for (int i = 0; i < cards.size(); i++) {
-            Card card = cards.get(i);
+        for (int i = 0; i < placedCards.size(); i++) {
+            Card card = placedCards.get(i);
             Permanent perm = permanents.get(i);
 
             if (card.hasType(CardType.CREATURE)) {
