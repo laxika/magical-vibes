@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerXEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilTypeMillAndBoostAttackerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -80,6 +81,15 @@ public class MillResolutionService {
     @HandlesEffect(MillTargetPlayerEffect.class)
     void resolveMillTargetPlayer(GameData gameData, StackEntry entry, MillTargetPlayerEffect mill) {
         graveyardService.resolveMillPlayer(gameData, entry.getTargetId(), mill.count());
+    }
+
+    /**
+     * Mills the target player for X cards, using the spell's chosen X value.
+     */
+    @HandlesEffect(MillTargetPlayerXEffect.class)
+    void resolveMillTargetPlayerX(GameData gameData, StackEntry entry, MillTargetPlayerXEffect effect) {
+        int multiplier = entry.isCastWithFlashback() ? effect.castWithFlashbackMultiplier() : 1;
+        graveyardService.resolveMillPlayer(gameData, entry.getTargetId(), entry.getXValue() * multiplier);
     }
 
     /**

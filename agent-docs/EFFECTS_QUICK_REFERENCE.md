@@ -265,6 +265,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `MillControllerEffect(int)` — self-mill N
 - `MillTargetPlayerEffect(int)` — mill target N
+- `MillTargetPlayerXEffect(int)` — target mills X, optional flashback multiplier
 - `MillTargetPlayerByChargeCountersEffect()` — mill = charge counters
 - `MillHalfLibraryEffect()` — mill half
 - `MillEachPlayerEffect(int)` — mill each player N

@@ -457,6 +457,14 @@ public class SpellCastingService {
                 .findFirst().orElse(null);
         boolean needsExileTargeting = exileReturnEffect != null;
 
+        if (targetId == null && targetIds.isEmpty()
+                && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget
+                && card.getMaxTargets() == 0
+                && !EffectResolution.needsDamageDistribution(card)
+                && !needsExileTargeting && !needsSingleGraveyardTargeting && !needsGraveyardEffectTargeting) {
+            throw new IllegalStateException("Spell requires a target");
+        }
+
         // Validate target if specified (can be a permanent or a player)
         if (targetId != null && !unwrappedNeedsSpellTarget) {
             if (needsExileTargeting) {

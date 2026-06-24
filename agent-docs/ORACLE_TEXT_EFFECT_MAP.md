@@ -154,6 +154,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "target player mills N cards" / "puts the top N cards into their graveyard" | `MillTargetPlayerEffect(N)` | SPELL | |
+| "target player mills X cards" | `MillTargetPlayerXEffect(multiplier)` | SPELL | Use multiplier `2` for "if cast from a graveyard, twice that many" flashback spells |
 | "each opponent mills N cards" | `MillEachOpponentEffect(N)` | SPELL/trigger | |
 | "each player mills N cards" | `MillControllerEffect(N)` + `EachOpponentMillsEffect(N)` | SPELL/trigger | Combine two effects — no targeting. See `GhoulcallersBell`, `ChillOfForeboding` |
 | "mill N cards" (self) | `MillControllerEffect(N)` | SPELL/trigger | |
