@@ -35,6 +35,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackW
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndAllWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayCastNonlandThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -496,6 +498,40 @@ public class ExileResolutionService {
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Returns all cards exiled with the source permanent to the battlefield under their
+     * owners' control. The source permanent's ID is carried on the stack entry via
+     * {@code sourcePermanentId} (set when the death trigger was collected). Used by Helvault.
+     */
+    @HandlesEffect(ReturnAllCardsExiledWithSourceEffect.class)
+    void resolveReturnAllCardsExiledWithSource(GameData gameData, StackEntry entry) {
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        if (sourcePermanentId == null) {
+            return;
+        }
+
+        List<ExiledCardEntry> toReturn = gameData.exiledCards.stream()
+                .filter(e -> sourcePermanentId.equals(e.sourcePermanentId()))
+                .toList();
+
+        for (ExiledCardEntry exiledEntry : toReturn) {
+            Card card = exiledEntry.card();
+            UUID ownerId = exiledEntry.ownerId();
+            if (!gameData.removeFromExile(card.getId())) {
+                continue;
+            }
+
+            Permanent perm = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, perm);
+            String logEntry = card.getName() + " returns to the battlefield under "
+                    + gameData.playerIdToName.get(ownerId) + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returns from exile via {} (put into graveyard from battlefield)",
+                    gameData.id, card.getName(), entry.getCard().getName());
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
+        }
     }
 
     /**

@@ -272,6 +272,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ExileTargetPlayerGraveyardEffect()` — exile target's graveyard
 - `ExileAllCreaturesEffect()` — exile all creatures
 - `ExileAllPermanentsEffect(PermanentPredicate)` — exile matching permanents
+- `ExileTargetPermanentAndTrackWithSourceEffect()` — exile + track exiled card with source permanent (cards "exiled with" it)
+- `ReturnAllCardsExiledWithSourceEffect()` — ON_DEATH trigger: return all cards exiled with the source to the battlefield under owners' control (Helvault)
 - `ReturnTargetCardFromExileToHandEffect(CardPredicate, boolean ownedOnly)` — exile to hand
 
 ## Tokens
