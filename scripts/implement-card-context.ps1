@@ -8,7 +8,9 @@ param(
     [Parameter(Position = 2)]
     [string] $ClassName,
 
-    [switch] $SkipScryfall
+    [switch] $SkipScryfall,
+
+    [switch] $Full
 )
 
 $ErrorActionPreference = "Stop"
@@ -149,6 +151,31 @@ function Get-KnownPatternMatches {
 
     $knownPatterns = @(
         @{
+            Match = "Put target creature on top of its owner's library"
+            Reference = "Excommunicate"
+            Effect = "PutTargetOnTopOfLibraryEffect"
+            TargetFilter = "PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(), `"Target must be a creature`")"
+            Imports = @(
+                "com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect",
+                "com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate",
+                "com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter"
+            )
+            ConstructorLines = @(
+                "target(new PermanentPredicateTargetFilter(",
+                "        new PermanentIsCreaturePredicate(),",
+                "        `"Target must be a creature`"",
+                ")).addEffect(EffectSlot.SPELL, new PutTargetOnTopOfLibraryEffect());"
+            )
+            TestNotes = @(
+                "assert EffectResolution.needsTarget(card)",
+                "assert target filter equals creature-only PermanentPredicateTargetFilter",
+                "cast with castInstant/castSorcery according to type_line and assert stack entry type",
+                "assert noncreature permanent target is rejected; include another valid creature so the card is playable",
+                "resolve and assert target leaves battlefield, is not in graveyard, and is deck.getFirst() for its owner",
+                "remove target before resolution and assert fizzle plus unchanged owner library size"
+            )
+        },
+        @{
             Match = "Put any number of target .* cards from your graveyard on top of your library"
             Reference = "FranticSalvage"
             Effect = "PutTargetCardsFromGraveyardOnTopOfLibraryEffect"
@@ -190,6 +217,65 @@ function Get-KnownPatternMatches {
     }
 
     return @($knownPatterns | Where-Object { $OracleText -match $_.Match })
+}
+
+function Write-FastPathTemplate {
+    param(
+        [object[]] $KnownMatches,
+        [string] $ClassName,
+        [string] $SetCode,
+        [string] $CollectorNumber,
+        [string] $PackageLetter
+    )
+
+    $templatedMatches = @($KnownMatches | Where-Object { $_.ConstructorLines -and $_.Imports })
+    if ($templatedMatches.Count -eq 0) {
+        Write-Host "No exact fast-path template available."
+        return $false
+    }
+    if ($templatedMatches.Count -gt 1) {
+        Write-Host "Multiple possible templates found; inspect known pattern matches before using one."
+        return $false
+    }
+
+    $match = $templatedMatches[0]
+    Write-Host "Confidence: exact known pattern"
+    Write-Host "Reference: $($match.Reference)"
+    Write-Host "Effect: $($match.Effect)"
+    if ($match.TargetFilter) {
+        Write-Host "Target filter: $($match.TargetFilter)"
+    }
+
+    Write-Host ""
+    Write-Host "Card skeleton:"
+    Write-Host "package com.github.laxika.magicalvibes.cards.$PackageLetter;"
+    Write-Host ""
+    Write-Host "import com.github.laxika.magicalvibes.cards.CardRegistration;"
+    Write-Host "import com.github.laxika.magicalvibes.model.Card;"
+    Write-Host "import com.github.laxika.magicalvibes.model.EffectSlot;"
+    foreach ($import in $match.Imports) {
+        Write-Host "import $import;"
+    }
+    Write-Host ""
+    Write-Host "@CardRegistration(set = `"$($SetCode.ToUpperInvariant())`", collectorNumber = `"$CollectorNumber`")"
+    Write-Host "public class $ClassName extends Card {"
+    Write-Host ""
+    Write-Host "    public $ClassName() {"
+    foreach ($line in $match.ConstructorLines) {
+        Write-Host "        $line"
+    }
+    Write-Host "    }"
+    Write-Host "}"
+
+    if ($match.TestNotes -and $match.TestNotes.Count -gt 0) {
+        Write-Host ""
+        Write-Host "Minimal test checklist:"
+        foreach ($note in $match.TestNotes) {
+            Write-Host "- $note"
+        }
+    }
+
+    return $true
 }
 
 function Get-UsagePatterns {
@@ -258,42 +344,66 @@ if ($knownMatches.Count -gt 0) {
     Write-Host "No known pattern match."
 }
 
-Write-Section "Effect Doc Hits"
-$docPaths = @(
-    "agent-docs/CARD_PATTERN_INDEX.md",
-    "agent-docs/ORACLE_TEXT_EFFECT_MAP.md",
-    "agent-docs/EFFECTS_QUICK_REFERENCE.md"
-)
-$docKeywords = Get-OracleKeywords -OracleText $oracleText
-if ($docKeywords.Count -eq 0) {
-    Write-Host "No Oracle-derived keywords available."
+$packageLetter = $ClassName.Substring(0, 1).ToLowerInvariant()
+
+Write-Section "Fast Path Template"
+$hasFastPathTemplate = $false
+if ($classHits.Count -gt 0) {
+    Write-Host "Existing class found. Prefer adding a @CardRegistration for this printing if it is the same Oracle card."
 } else {
-    foreach ($keyword in $docKeywords) {
-        Write-Host "-- $keyword"
-        $hits = Invoke-RepoSearch -Pattern $keyword -Paths $docPaths -MaxResults 12
-        Write-LinesOrNone -Lines $hits -NoneText "  No hits."
-    }
+    $hasFastPathTemplate = Write-FastPathTemplate `
+        -KnownMatches $knownMatches `
+        -ClassName $ClassName `
+        -SetCode $SetCode `
+        -CollectorNumber $CollectorNumber `
+        -PackageLetter $packageLetter
 }
 
-Write-Section "Existing Usages"
-$usagePatterns = Get-UsagePatterns -OracleText $oracleText -KnownMatches $knownMatches
-if ($usagePatterns.Count -eq 0) {
-    Write-Host "No usage patterns available."
+$skipBroadContext = ($hasFastPathTemplate -or $classHits.Count -gt 0) -and -not $Full
+if ($skipBroadContext) {
+    Write-Section "Broad Context"
+    if ($classHits.Count -gt 0) {
+        Write-Host "Skipped because an existing class was found. Re-run with -Full to include Effect Doc Hits and Existing Usages."
+    } else {
+        Write-Host "Skipped because an exact fast-path template was found. Re-run with -Full to include Effect Doc Hits and Existing Usages."
+    }
 } else {
-    foreach ($pattern in $usagePatterns) {
-        Write-Host "-- $pattern"
-        $hits = Invoke-RepoSearch -Pattern $pattern -Paths @(
-            "magical-vibes-card/src/main/java",
-            "magical-vibes-backend/src/test/java",
-            "magical-vibes-domain/src/main/java",
-            "magical-vibes-backend/src/main/java"
-        ) -MaxResults 15
-        Write-LinesOrNone -Lines $hits -NoneText "  No hits."
+    Write-Section "Effect Doc Hits"
+    $docPaths = @(
+        "agent-docs/CARD_PATTERN_INDEX.md",
+        "agent-docs/ORACLE_TEXT_EFFECT_MAP.md",
+        "agent-docs/EFFECTS_QUICK_REFERENCE.md"
+    )
+    $docKeywords = Get-OracleKeywords -OracleText $oracleText
+    if ($docKeywords.Count -eq 0) {
+        Write-Host "No Oracle-derived keywords available."
+    } else {
+        foreach ($keyword in $docKeywords) {
+            Write-Host "-- $keyword"
+            $hits = Invoke-RepoSearch -Pattern $keyword -Paths $docPaths -MaxResults 12
+            Write-LinesOrNone -Lines $hits -NoneText "  No hits."
+        }
+    }
+
+    Write-Section "Existing Usages"
+    $usagePatterns = Get-UsagePatterns -OracleText $oracleText -KnownMatches $knownMatches
+    if ($usagePatterns.Count -eq 0) {
+        Write-Host "No usage patterns available."
+    } else {
+        foreach ($pattern in $usagePatterns) {
+            Write-Host "-- $pattern"
+            $hits = Invoke-RepoSearch -Pattern $pattern -Paths @(
+                "magical-vibes-card/src/main/java",
+                "magical-vibes-backend/src/test/java",
+                "magical-vibes-domain/src/main/java",
+                "magical-vibes-backend/src/main/java"
+            ) -MaxResults 15
+            Write-LinesOrNone -Lines $hits -NoneText "  No hits."
+        }
     }
 }
 
 Write-Section "Suggested Files"
-$packageLetter = $ClassName.Substring(0, 1).ToLowerInvariant()
 Write-Host "Card: magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/$packageLetter/$ClassName.java"
 Write-Host "Test: magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/$packageLetter/${ClassName}Test.java"
 
