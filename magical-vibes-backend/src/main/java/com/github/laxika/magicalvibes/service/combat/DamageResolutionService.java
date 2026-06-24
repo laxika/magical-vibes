@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndRece
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAttackedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSecondaryTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
@@ -620,6 +621,37 @@ public class DamageResolutionService {
 
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, effect.cantRegenerate());
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    @HandlesEffect(DealDamageToAttackedTargetEffect.class)
+    void resolveDealDamageToAttackedTarget(GameData gameData, StackEntry entry, DealDamageToAttackedTargetEffect effect) {
+        UUID targetId = entry.getAttackedTargetId();
+        if (targetId == null) return;
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, effect.damage(), entry);
+        if (gameData.playerIds.contains(targetId)) {
+            if (!isDamageSourcePreventedWithLog(gameData, entry)) {
+                dealDamageToPlayer(gameData, entry, targetId, rawDamage);
+            }
+            gameOutcomeService.checkWinCondition(gameData);
+            return;
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        if (target == null || !target.getCard().hasType(CardType.PLANESWALKER)) return;
+        Card source = entry.getEffectiveDamageSourceCard();
+        if (isDamageSourcePreventedWithLog(gameData, entry)
+                || isSourcePermanentPreventedFromDealingDamage(gameData, entry)
+                || gameQueryService.hasProtectionFromSource(gameData, target, source)) {
+            gameBroadcastService.logAndBroadcast(gameData, source.getName() + "'s damage is prevented.");
+            return;
+        }
+
+        int newLoyalty = Math.max(0, target.getLoyaltyCounters() - rawDamage);
+        target.setLoyaltyCounters(newLoyalty);
+        gameBroadcastService.logAndBroadcast(gameData,
+                source.getName() + " deals " + rawDamage + " damage to " + target.getCard().getName() + ".");
         gameOutcomeService.checkWinCondition(gameData);
     }
 

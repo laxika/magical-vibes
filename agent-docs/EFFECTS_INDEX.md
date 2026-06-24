@@ -129,6 +129,7 @@ Effects in the `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` sl
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `DealDamageToAnyTargetEffect` | `(int damage, boolean cantRegenerate)` | deal N damage to any target |
+| `DealDamageToAttackedTargetEffect` | `(int damage)` | deal N damage to the player or planeswalker attacked by the creature that caused this attack trigger. Uses `StackEntry.attackedTargetId`, populated by `CombatAttackService` for `ON_ALLY_CREATURE_ATTACKS` triggers; this is not targeting. Used by Hellrider |
 | `DealDamageEqualToSourcePowerToAnyTargetEffect` | `()` | deal damage equal to source permanent's power to any target (uses effective power at resolution) |
 | `DealDamageEqualToSourceToughnessToTargetCreatureEffect` | `()` | deal damage equal to source permanent's toughness to target creature (uses effective toughness at resolution) |
 | `SourceFightsTargetCreatureEffect` | `()` | source permanent and target creature deal damage to each other equal to their respective powers (fight mechanic). Both use effective power at resolution |

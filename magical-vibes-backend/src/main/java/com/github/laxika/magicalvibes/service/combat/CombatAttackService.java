@@ -439,7 +439,7 @@ public class CombatAttackService {
                 }
                 if (matchingEffects.isEmpty()) continue;
 
-                gameData.stack.add(new StackEntry(
+                StackEntry attackTrigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         playerId,
@@ -447,7 +447,9 @@ public class CombatAttackService {
                         matchingEffects,
                         null,
                         perm.getId()
-                ));
+                );
+                attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
+                gameData.stack.add(attackTrigger);
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                 gameData.gameLog.add(triggerLog);
                 log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS trigger for {} attacking",

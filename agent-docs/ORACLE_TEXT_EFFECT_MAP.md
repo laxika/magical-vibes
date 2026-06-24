@@ -7,6 +7,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "deals N damage to any target" | `DealDamageToAnyTargetEffect(N, false)` | SPELL | Targeting auto-derived |
+| "deals N damage to the player or planeswalker it's attacking" | `DealDamageToAttackedTargetEffect(N)` | `ON_ALLY_CREATURE_ATTACKS`/attack trigger | Uses the attacking creature's `attackedTargetId` context captured by `CombatAttackService`; not a targeted ability |
 | "deals N damage to target creature" | `DealDamageToTargetCreatureEffect(N)` | SPELL | Creature-only targeting |
 | "deals N damage to target creature or planeswalker" | `DealDamageToTargetCreatureOrPlaneswalkerEffect(N)` | SPELL | |
 | "deals N damage to target opponent or planeswalker" | `DealDamageToTargetOpponentOrPlaneswalkerEffect(N)` | SPELL | |

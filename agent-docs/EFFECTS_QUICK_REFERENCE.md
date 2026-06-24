@@ -68,6 +68,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 > CR 510.1a so the damage primitives never see negative values.
 
 - `DealDamageToAnyTargetEffect(int damage, boolean cantRegenerate)` — any target
+- `DealDamageToAttackedTargetEffect(int damage)` — damage to the player or planeswalker attacked by the creature that caused the attack trigger
 - `DealDamageEqualToSourcePowerToAnyTargetEffect()` — source power to any target
 - `DealDamageEqualToSourceToughnessToTargetCreatureEffect()` — source toughness to creature
 - `SourceFightsTargetCreatureEffect()` — source fights target
