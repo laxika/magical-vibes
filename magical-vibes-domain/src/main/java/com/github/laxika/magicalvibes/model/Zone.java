@@ -14,5 +14,7 @@ public enum Zone {
     /** The shared stack where spells and abilities wait to resolve, last in first out (CR 405). */
     STACK,
     /** Exile: a holding zone for cards removed from the game, face up unless stated otherwise (CR 406). */
-    EXILE
+    EXILE,
+    /** A player's hand: cards they can normally cast or play from (CR 402). */
+    HAND
 }

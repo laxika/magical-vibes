@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CastFromHandConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -232,6 +233,8 @@ public class EffectResolutionService {
                     gameQueryService.isMorbidMet(gameData);
             case KickedConditionalEffect ignored ->
                     entry.isKicked();
+            case CastFromHandConditionalEffect sourceCheck ->
+                    sourceCheck.sourceZone() == entry.getSourceZone();
             case NotKickedConditionalEffect ignored ->
                     !entry.isKicked();
             case DidntAttackConditionalEffect ignored ->

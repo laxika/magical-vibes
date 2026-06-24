@@ -664,6 +664,7 @@ public class SpellCastingService {
             if (kicked && kickerEffect != null) {
                 entry.setKicked(true);
             }
+            entry.setSourceZone(Zone.HAND);
             gameData.stack.add(entry);
             finishSpellCast(gameData, playerId, player, hand, card);
         } else if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
@@ -952,6 +953,9 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null && !gameData.stack.isEmpty()) {
                 gameData.stack.getLast().setKicked(true);
+            }
+            if (!gameData.stack.isEmpty()) {
+                gameData.stack.getLast().setSourceZone(Zone.HAND);
             }
             finishSpellCast(gameData, playerId, player, hand, card);
         }
@@ -1363,6 +1367,7 @@ public class SpellCastingService {
                     entryType, card, playerId, card.getName(),
                     List.of(), 0, targetId, null
             );
+            stackEntry.setSourceZone(Zone.GRAVEYARD);
             gameData.stack.add(stackEntry);
             if (grantedHavengulCast) {
                 queueHavengulLichCastTrigger(gameData, playerId, card);
@@ -1401,6 +1406,7 @@ public class SpellCastingService {
                     null, Map.of(), null, List.of(), List.of()
             );
             stackEntry.setCastWithFlashback(true);
+            stackEntry.setSourceZone(Zone.GRAVEYARD);
             gameData.stack.add(stackEntry);
             finishSpellCast(gameData, playerId, player, graveyard, card, false);
             return;
@@ -1440,6 +1446,7 @@ public class SpellCastingService {
             }
         }
         stackEntry.setCastWithFlashback(true);
+        stackEntry.setSourceZone(Zone.GRAVEYARD);
         gameData.stack.add(stackEntry);
 
         finishSpellCast(gameData, playerId, player, graveyard, card, false);

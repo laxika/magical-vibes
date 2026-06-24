@@ -50,7 +50,7 @@ Other wrappers:
 - `NthSpellCastTriggerEffect(int, List<CardEffect>)` — Nth spell trigger
 - `NoSpellsCastLastTurnConditionalEffect(CardEffect)` — werewolf front
 - `TwoOrMoreSpellsCastLastTurnConditionalEffect(CardEffect)` — werewolf back
-- `CastFromHandConditionalEffect(CardEffect)` — cast from hand only
+- `CastFromHandConditionalEffect(CardEffect)` or `(Zone, CardEffect)` — cast from source zone only; defaults to HAND
 - `KickedConditionalEffect(CardEffect)` — kicked adds effect
 
 See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker count, etc.)

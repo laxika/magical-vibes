@@ -364,6 +364,7 @@ public class GraveyardChoiceHandlerService {
             if (pendingFlashback) {
                 spellEntry.setCastWithFlashback(true);
             }
+            spellEntry.setSourceZone(pendingFlashback ? Zone.GRAVEYARD : Zone.HAND);
             gameData.stack.add(spellEntry);
 
             gameData.recordSpellCast(controllerId, pendingCard);

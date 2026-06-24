@@ -29,6 +29,7 @@ public class StackEntry {
     @Setter private boolean nonTargeting;
     @Setter private boolean returnToHandAfterResolving;
     @Setter private boolean castWithFlashback;
+    @Setter private Zone sourceZone;
     @Setter private boolean kicked;
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
@@ -195,6 +196,7 @@ public class StackEntry {
         this.nonTargeting = source.nonTargeting;
         this.returnToHandAfterResolving = source.returnToHandAfterResolving;
         this.castWithFlashback = source.castWithFlashback;
+        this.sourceZone = source.sourceZone;
         this.kicked = source.kicked;
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
