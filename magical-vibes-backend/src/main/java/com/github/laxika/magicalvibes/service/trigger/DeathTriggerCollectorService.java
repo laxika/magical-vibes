@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
@@ -107,6 +108,27 @@ public class DeathTriggerCollectorService {
         } else {
             match.gameData().queueMayAbility(sd.dyingCard(), sd.controllerId(), may);
         }
+        return true;
+    }
+
+    @CollectsTrigger(value = ReturnAllCardsExiledWithSourceEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleReturnAllCardsExiledWithSource(TriggerMatchContext match,
+            ReturnAllCardsExiledWithSourceEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        // Carry the dying permanent's ID so resolution can look up cards exiled with it.
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                dyingPermanent.getId()
+        ));
         return true;
     }
 
