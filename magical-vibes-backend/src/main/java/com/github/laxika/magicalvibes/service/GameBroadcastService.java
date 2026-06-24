@@ -581,21 +581,27 @@ public class GameBroadcastService {
                     && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
             boolean emblemFlashback = flashback.isEmpty() && !grantedFlashback
                     && hasEmblemGrantedFlashback(gameData, playerId, card);
+            boolean grantedHavengulCast = flashback.isEmpty()
+                    && !grantedFlashback
+                    && !emblemFlashback
+                    && card.hasType(CardType.CREATURE)
+                    && hasHavengulCastPermission(gameData, card, playerId);
             boolean isGraveyardCast = graveyardCast.isPresent()
                     && flashback.isEmpty()
                     && !grantedFlashback
                     && !emblemFlashback
+                    && !grantedHavengulCast
                     && isGraveyardCastAvailable(gameData, playerId, graveyardCast.get());
 
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
-            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast
+            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
                     && graveyardCastSourceId.isPresent()) {
                 // Card must be a non-land permanent type with at least one unused type slot
                 isGrantedGraveyardCast = hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
-            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast
+            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
                     && !isGrantedGraveyardCast) {
                 continue;
             }
@@ -607,7 +613,7 @@ public class GameBroadcastService {
             }
 
             // GraveyardCast, granted flashback, emblem flashback, and granted graveyard cast use the card's mana cost
-            String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || isGrantedGraveyardCast)
+            String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast || isGrantedGraveyardCast)
                     ? card.getManaCost()
                     : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             if (manaCostStr == null) {
@@ -1026,6 +1032,12 @@ public class GameBroadcastService {
             }
         }
         return Optional.empty();
+    }
+
+    private boolean hasHavengulCastPermission(GameData gameData, Card card, UUID playerId) {
+        GameData.GraveyardCreatureCastPermission permission =
+                gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.get(card.getId());
+        return permission != null && playerId.equals(permission.castingPlayerId());
     }
 
     public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {

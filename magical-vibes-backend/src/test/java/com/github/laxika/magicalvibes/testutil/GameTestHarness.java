@@ -592,6 +592,11 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(), exileGraveyardCardIndices);
     }
 
+    public void castFromGraveyard(Player player, UUID graveyardCardId) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardId, null, null, List.of(), null, null);
+    }
+
     public void castFromExile(Player player, UUID exileCardId) {
         ensurePriority(player);
         gameService.playCardFromExile(gameData, player, exileCardId, null, null);

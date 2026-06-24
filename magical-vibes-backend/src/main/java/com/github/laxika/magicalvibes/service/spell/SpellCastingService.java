@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingC
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import lombok.RequiredArgsConstructor;
@@ -1210,6 +1211,25 @@ public class SpellCastingService {
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
+        List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
+        playFlashbackSpellFromLocation(gameData, player, graveyard, graveyardCardIndex, xValue, targetId,
+                targetIds, exileGraveyardCardIndices, chosenGraveyardType);
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, UUID graveyardCardId, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
+        GraveyardCardLocation location = findGraveyardCardLocation(gameData, graveyardCardId);
+        if (location == null) {
+            throw new IllegalArgumentException("Invalid graveyard card id");
+        }
+        playFlashbackSpellFromLocation(gameData, player, location.graveyard(), location.index(), xValue, targetId,
+                targetIds, exileGraveyardCardIndices, chosenGraveyardType);
+    }
+
+    private void playFlashbackSpellFromLocation(GameData gameData, Player player, List<Card> graveyard,
+                                    int graveyardCardIndex, Integer xValue, UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
@@ -1222,7 +1242,6 @@ public class SpellCastingService {
         }
 
         UUID playerId = player.getId();
-        List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         if (graveyard == null || graveyardCardIndex < 0 || graveyardCardIndex >= graveyard.size()) {
             throw new IllegalArgumentException("Invalid graveyard card index");
         }
@@ -1234,14 +1253,19 @@ public class SpellCastingService {
                 && gameData.cardsGrantedFlashbackUntilEndOfTurn.contains(card.getId());
         boolean emblemFlashback = flashbackOpt.isEmpty() && !grantedFlashback
                 && gameBroadcastService.hasEmblemGrantedFlashback(gameData, playerId, card);
+        boolean grantedHavengulCast = flashbackOpt.isEmpty()
+                && !grantedFlashback
+                && !emblemFlashback
+                && card.hasType(CardType.CREATURE)
+                && hasHavengulCastPermission(gameData, card, playerId);
         boolean isGraveyardCast = graveyardCastOpt.isPresent() && flashbackOpt.isEmpty()
-                && !grantedFlashback && !emblemFlashback
+                && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
                 && gameBroadcastService.isGraveyardCastAvailable(gameData, playerId, graveyardCastOpt.get());
 
         // Check if this card is castable via a Muldrotha-style static graveyard permanent cast effect
         boolean isGrantedGraveyardCast = false;
         Optional<UUID> graveyardCastSourceId = Optional.empty();
-        if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast) {
+        if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast) {
             graveyardCastSourceId = gameBroadcastService.findGraveyardCastSourcePermanentId(gameData, playerId);
             if (graveyardCastSourceId.isPresent()) {
                 Set<CardType> typesCastFromGraveyard = gameData.permanentTypesCastFromGraveyardThisTurn
@@ -1250,7 +1274,8 @@ public class SpellCastingService {
             }
         }
 
-        if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !isGraveyardCast && !isGrantedGraveyardCast) {
+        if (flashbackOpt.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+                && !isGraveyardCast && !isGrantedGraveyardCast) {
             throw new IllegalStateException("Card cannot be cast from graveyard");
         }
 
@@ -1266,7 +1291,7 @@ public class SpellCastingService {
 
         // Validate and pay mana cost (graveyard cast, granted flashback, emblem flashback,
         // and granted graveyard cast all use the card's normal mana cost)
-        String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || isGrantedGraveyardCast)
+        String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast || isGrantedGraveyardCast)
                 ? card.getManaCost()
                 : flashbackOpt.get().getCost(ManaCastingCost.class)
                         .orElseThrow(() -> new IllegalStateException("Flashback has no mana cost"))
@@ -1299,7 +1324,7 @@ public class SpellCastingService {
         ExileNCardsFromGraveyardCost exileNCost = extractAndRemoveExileNCardsFromGraveyardCost(spellEffects);
         payExileNCardsFromGraveyardCost(gameData, player, card, exileNCost, exileGraveyardCardIndices);
 
-        if (isGraveyardCast || isGrantedGraveyardCast) {
+        if (isGraveyardCast || grantedHavengulCast || isGrantedGraveyardCast) {
             // GraveyardCast / granted graveyard cast: permanent spell — enters battlefield on resolution, no exile
             if (isGrantedGraveyardCast && graveyardCastSourceId.isPresent()) {
                 // Track which permanent type slot was used, keyed by the granting permanent's UUID
@@ -1331,6 +1356,9 @@ public class SpellCastingService {
                     List.of(), 0, targetId, null
             );
             gameData.stack.add(stackEntry);
+            if (grantedHavengulCast) {
+                queueHavengulLichCastTrigger(gameData, playerId, card);
+            }
             finishSpellCast(gameData, playerId, player, graveyard, card, false);
             return;
         }
@@ -1728,6 +1756,60 @@ public class SpellCastingService {
                     p -> gameQueryService.matchesPermanentPredicate(gameData, p, kickerEffect.sacrificePredicate()));
         }
     }
+
+    private void queueHavengulLichCastTrigger(GameData gameData, UUID playerId, Card castCard) {
+        GameData.GraveyardCreatureCastPermission permission =
+                gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.remove(castCard.getId());
+        if (permission == null) {
+            return;
+        }
+
+        UUID sourcePermanentId = permission.sourcePermanentId();
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        Card sourceCard = source != null ? source.getCard() : castCard;
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                playerId,
+                sourceCard.getName() + "'s ability",
+                List.of(new GrantSourceActivatedAbilitiesUntilEndOfTurnEffect(
+                        new ArrayList<>(castCard.getActivatedAbilities()),
+                        castCard.getName())),
+                0,
+                null,
+                sourcePermanentId,
+                Map.of(),
+                null,
+                List.of(),
+                List.of()
+        ));
+    }
+
+    private boolean hasHavengulCastPermission(GameData gameData, Card card, UUID playerId) {
+        GameData.GraveyardCreatureCastPermission permission =
+                gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.get(card.getId());
+        return permission != null && playerId.equals(permission.castingPlayerId());
+    }
+
+    private GraveyardCardLocation findGraveyardCardLocation(GameData gameData, UUID cardId) {
+        if (cardId == null) {
+            return null;
+        }
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) {
+                continue;
+            }
+            for (int i = 0; i < graveyard.size(); i++) {
+                if (cardId.equals(graveyard.get(i).getId())) {
+                    return new GraveyardCardLocation(graveyard, i);
+                }
+            }
+        }
+        return null;
+    }
+
+    private record GraveyardCardLocation(List<Card> graveyard, int index) {}
 
     private void payAlternateCastingCost(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds) {
         AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class)

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantDamageToOpponentCreature
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSubtypeEffect;
@@ -358,6 +360,53 @@ public class KeywordGrantResolutionService {
         String logEntry = entry.getCard().getName() + " grants flashback to " + targetCard.getName() + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} grants flashback to {} until end of turn", gameData.id, entry.getCard().getName(), targetCard.getName());
+    }
+
+    @HandlesEffect(GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect.class)
+    private void resolveGrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilities(GameData gameData, StackEntry entry,
+            GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect effect) {
+        UUID targetCardId = !entry.getTargetCardIds().isEmpty()
+                ? entry.getTargetCardIds().getFirst()
+                : entry.getTargetId();
+        if (targetCardId == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " — no target selected.");
+            return;
+        }
+
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target no longer in graveyard).");
+            return;
+        }
+        if (!targetCard.hasType(CardType.CREATURE)) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (target is not a creature card).");
+            return;
+        }
+
+        gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.put(targetCard.getId(),
+                new GameData.GraveyardCreatureCastPermission(entry.getSourcePermanentId(), entry.getControllerId()));
+
+        String logEntry = entry.getCard().getName() + " allows " + targetCard.getName()
+                + " to be cast from a graveyard this turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} grants graveyard cast permission for {}", gameData.id, entry.getCard().getName(), targetCard.getName());
+    }
+
+    @HandlesEffect(GrantSourceActivatedAbilitiesUntilEndOfTurnEffect.class)
+    private void resolveGrantSourceActivatedAbilitiesUntilEndOfTurn(GameData gameData, StackEntry entry,
+            GrantSourceActivatedAbilitiesUntilEndOfTurnEffect effect) {
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            gameBroadcastService.logAndBroadcast(gameData, entry.getDescription() + " fizzles (source no longer on battlefield).");
+            return;
+        }
+
+        source.getTemporaryActivatedAbilities().addAll(effect.abilities());
+        String logEntry = source.getCard().getName() + " gains activated abilities of "
+                + effect.copiedFromCardName() + " until end of turn.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} gains {} activated ability/abilities from {}", gameData.id,
+                source.getCard().getName(), effect.abilities().size(), effect.copiedFromCardName());
     }
 
     @HandlesEffect(GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect.class)

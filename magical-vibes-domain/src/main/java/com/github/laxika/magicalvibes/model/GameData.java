@@ -274,6 +274,13 @@ public class GameData {
      *  The flashback cost for these cards equals their mana cost. Cleared at end of turn. */
     public final Set<UUID> cardsGrantedFlashbackUntilEndOfTurn = ConcurrentHashMap.newKeySet();
 
+    public record GraveyardCreatureCastPermission(UUID sourcePermanentId, UUID castingPlayerId) {}
+
+    /** Targeted creature cards that may be cast from a graveyard this turn.
+     *  Maps graveyard card UUID -> source permanent and casting player (e.g. Havengul Lich).
+     *  Cleared at end of turn. */
+    public final Map<UUID, GraveyardCreatureCastPermission> graveyardCreatureCastPermissionsUntilEndOfTurn = new ConcurrentHashMap<>();
+
     /** Players whose instant/sorcery spells are automatically copied until end of turn
      *  (e.g. The Mirari Conjecture chapter III). Cleared at end of turn. */
     public final Set<UUID> playersWithSpellCopyUntilEndOfTurn = ConcurrentHashMap.newKeySet();

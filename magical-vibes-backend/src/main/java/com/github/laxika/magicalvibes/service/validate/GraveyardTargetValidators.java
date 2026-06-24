@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -67,6 +68,23 @@ public class GraveyardTargetValidators {
             throw new IllegalStateException("Target must be a creature card");
         }
         // Opponent-graveyard check is enforced in SpellCastingService (which has playerId context)
+    }
+
+    @ValidatesTarget(GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect.class)
+    public void validateGrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilities(TargetValidationContext ctx) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Ability requires a graveyard target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Ability requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (!graveyardCard.hasType(CardType.CREATURE)) {
+            throw new IllegalStateException("Target must be a creature card");
+        }
     }
 
     @ValidatesTarget(ExileTargetCardFromGraveyardAndImprintOnSourceEffect.class)

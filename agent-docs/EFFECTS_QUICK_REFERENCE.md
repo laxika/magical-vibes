@@ -209,6 +209,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutCardFromOpponentGraveyardOntoBattlefieldEffect(boolean tapped)` — opponent's card to battlefield
 - `UndyingReturnEffect()` — Undying (CR 702.93) resolution: return the dying card from its owner's graveyard to the battlefield with a +1/+1 counter. Do NOT add to a card directly; it is pushed automatically by `PermanentRemovalService` when a creature with the `UNDYING` keyword dies with no +1/+1 counters. The keyword is loaded from Scryfall.
 - `PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect()` — opponent's creature with exile
+- `GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect()` — target creature card in any graveyard may be cast this turn; when cast, source gains its activated abilities
+- `GrantSourceActivatedAbilitiesUntilEndOfTurnEffect(List<ActivatedAbility>, String)` — delayed source grant used after casting the selected graveyard creature
 
 ## Draw / discard / hand manipulation
 

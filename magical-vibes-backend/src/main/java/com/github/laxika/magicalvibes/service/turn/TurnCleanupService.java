@@ -95,6 +95,7 @@ public class TurnCleanupService {
         gameData.playerProtectionFromColorsUntilEndOfTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
+        gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)

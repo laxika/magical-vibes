@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardE
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardsFromOpponentGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -554,6 +555,8 @@ public class ValidTargetService {
             return c.hasType(CardType.CREATURE);
         } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
+        } else if (effect instanceof GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect) {
+            return c.hasType(CardType.CREATURE);
         } else if (effect instanceof ExileTargetCardFromGraveyardEffect e && e.requiredType() != null) {
             return c.hasType(e.requiredType());
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
