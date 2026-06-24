@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -1985,6 +1987,23 @@ class GameQueryServiceTest {
 
             assertThat(gqs.matchesCardPredicate(aura, new CardIsAuraPredicate(), null)).isTrue();
             assertThat(gqs.matchesCardPredicate(nonAura, new CardIsAuraPredicate(), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardAllOf(LAND, BASIC) matches only basic lands")
+        void cardAllOfBasicLandMatches() {
+            Card basicLand = createLand("Forest");
+            basicLand.setSupertypes(Set.of(CardSupertype.BASIC));
+            Card nonBasicLand = createLand("Wasteland");
+            Card nonLand = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
+
+            CardAllOfPredicate basicLandFilter = new CardAllOfPredicate(List.of(
+                    new CardSupertypePredicate(CardSupertype.BASIC),
+                    new CardTypePredicate(CardType.LAND)));
+
+            assertThat(gqs.matchesCardPredicate(basicLand, basicLandFilter, null)).isTrue();
+            assertThat(gqs.matchesCardPredicate(nonBasicLand, basicLandFilter, null)).isFalse();
+            assertThat(gqs.matchesCardPredicate(nonLand, basicLandFilter, null)).isFalse();
         }
 
         @Test

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,9 +31,9 @@ class TreasureMageTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardTypesToHandEffect.class);
-        SearchLibraryForCardTypesToHandEffect searchEffect =
-                (SearchLibraryForCardTypesToHandEffect) mayEffect.wrapped();
+        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
+        SearchLibraryForCardsToHandEffect searchEffect =
+                (SearchLibraryForCardsToHandEffect) mayEffect.wrapped();
         assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("artifact card with mana value 6 or greater");
     }
 

@@ -237,10 +237,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Library manipulation
 
-- `SearchLibraryForCardToHandEffect()` — any card to hand
-- `SearchLibraryForBasicLandToHandEffect()` — basic land to hand
+- `SearchLibraryForCardsToHandEffect(CardPredicate filter, int count, int castFromGraveyardCount)` — unified search-to-hand; `()` = any single card (Diabolic Tutor), `(filter)` = filtered single card, `null` filter = unrestricted; count switches to castFromGraveyardCount when cast from a graveyard/flashback
 - `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect()` — Cultivate
-- `SearchLibraryForCardTypesToHandEffect(CardPredicate)` — filtered to hand
 - `SearchLibraryForCardTypesToBattlefieldEffect(CardPredicate, boolean tapped)` or `(CardPredicate, boolean, int max)` — filtered to battlefield
 - `SearchLibraryForCreatureWithMVXOrLessToHandEffect()` — creature MV<=X to hand
 - `SearchLibraryForCreatureWithSubtypeToBattlefieldEffect(CardSubtype)` — creature subtype to battlefield

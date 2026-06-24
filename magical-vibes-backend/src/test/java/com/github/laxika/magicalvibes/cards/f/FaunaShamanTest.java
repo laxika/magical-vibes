@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,9 +36,9 @@ class FaunaShamanTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{G}");
         assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
         assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(SearchLibraryForCardTypesToHandEffect.class);
-        SearchLibraryForCardTypesToHandEffect searchEffect =
-                (SearchLibraryForCardTypesToHandEffect) card.getActivatedAbilities().getFirst().getEffects().get(1);
+        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
+        SearchLibraryForCardsToHandEffect searchEffect =
+                (SearchLibraryForCardsToHandEffect) card.getActivatedAbilities().getFirst().getEffects().get(1);
         assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("creature card");
     }
 

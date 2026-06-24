@@ -28,13 +28,11 @@ import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAndSearchLibraryForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsByNameToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandAndCardToGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffect;
@@ -306,45 +304,6 @@ public class LibrarySearchResolutionService {
     }
 
     /**
-     * Searches the controller's library for a basic land card and puts it into their hand.
-     * The chosen card is revealed. Library is shuffled afterward.
-     */
-    @HandlesEffect(SearchLibraryForBasicLandToHandEffect.class)
-    void resolveSearchLibraryForBasicLandToHand(GameData gameData, StackEntry entry, SearchLibraryForBasicLandToHandEffect effect) {
-        performLibrarySearch(
-                gameData,
-                entry.getControllerId(),
-                card -> card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC),
-                "basic land cards",
-                "Search your library for a basic land card to put into your hand.",
-                true,
-                true,
-                LibrarySearchDestination.HAND
-        );
-    }
-
-    /**
-     * Searches the controller's library for a card matching the filter, then reveals it
-     * and puts it into their hand. Used by cards like Sylvan Scrying, Fabricate, Trinket Mage.
-     */
-    @HandlesEffect(SearchLibraryForCardTypesToHandEffect.class)
-    void resolveSearchLibraryForCardTypesToHand(GameData gameData, StackEntry entry, SearchLibraryForCardTypesToHandEffect effect) {
-        String desc = CardPredicateUtils.describeFilter(effect.filter());
-        String descPlural = desc.replace(" card", " cards");
-
-        performLibrarySearch(
-                gameData,
-                entry.getControllerId(),
-                card -> gameQueryService.matchesCardPredicate(card, effect.filter(), null),
-                descPlural,
-                "Search your library for a " + desc + " to reveal and put into your hand.",
-                true,
-                true,
-                LibrarySearchDestination.HAND
-        );
-    }
-
-    /**
      * Searches the controller's library for a card matching the filter and puts it
      * onto the battlefield (optionally tapped). Used by cards like Rampant Growth and Primeval Titan.
      * When maxCount > 1, initiates a multi-pick search using remainingCount.
@@ -499,21 +458,61 @@ public class LibrarySearchResolutionService {
     }
 
     /**
-     * Performs an unrestricted library search — the controller may choose any card and put it
-     * into their hand. Used by cards like Diabolic Tutor.
+     * Searches the controller's library for {@code count} cards matching the effect's filter and
+     * puts them into their hand, then shuffles. If the spell was cast from a graveyard (e.g. via
+     * flashback), {@code castFromGraveyardCount} cards are searched for instead of {@code count}.
+     *
+     * <p>A {@code null} filter is an unrestricted search (any card): cards are not revealed and the
+     * search cannot fail to find. A non-null filter restricts the search: the chosen cards are
+     * revealed and the search may fail to find. Used by Diabolic Tutor, Increasing Ambition,
+     * basic-land fetchers, Fabricate, Trinket Mage, and others.
      */
-    @HandlesEffect(SearchLibraryForCardToHandEffect.class)
-    void resolveSearchLibraryForCardToHand(GameData gameData, StackEntry entry, SearchLibraryForCardToHandEffect effect) {
-        performLibrarySearch(
-                gameData,
-                entry.getControllerId(),
-                card -> true,
-                "cards",
-                "Search your library for a card to put into your hand.",
-                false,
-                false,
-                LibrarySearchDestination.HAND
-        );
+    @HandlesEffect(SearchLibraryForCardsToHandEffect.class)
+    void resolveSearchLibraryForCardsToHand(GameData gameData, StackEntry entry,
+                                            SearchLibraryForCardsToHandEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        if (isSearchPrevented(gameData, controllerId)) return;
+
+        int count = entry.isCastWithFlashback() ? effect.castFromGraveyardCount() : effect.count();
+        CardPredicate filter = effect.filter();
+        boolean restricted = filter != null;
+
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        if (deck == null || deck.isEmpty()) {
+            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        List<Card> matchingCards = restricted
+                ? deck.stream().filter(card -> gameQueryService.matchesCardPredicate(card, filter, null)).toList()
+                : new ArrayList<>(deck);
+
+        if (matchingCards.isEmpty()) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
+            String desc = CardPredicateUtils.describeFilter(filter).replace(" card", " cards");
+            String logMsg = playerName + " searches their library but finds no " + desc + ". Library is shuffled.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            return;
+        }
+
+        String desc = CardPredicateUtils.describeFilter(filter);
+        String verb = restricted ? " to reveal and put into your hand" : " to put into your hand";
+        String remainingText = count > 1 ? " (" + count + " remaining)" : "";
+        String prompt = "Search your library for a " + desc + verb + remainingText + ".";
+
+        sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
+                .remainingCount(count)
+                .reveals(restricted)
+                .canFailToFind(restricted)
+                .destination(LibrarySearchDestination.HAND)
+                .filterPredicate(restricted ? filter : null)
+                .build(), prompt, restricted);
+
+        log.info("Game {} - {} searches library for {} card(s) to hand ({} matches)",
+                gameData.id, playerName, count, matchingCards.size());
     }
 
     /**

@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -25,7 +26,7 @@ public class ThaumaticCompass extends Card {
         // {3}, {T}: Search your library for a basic land card, reveal it, put it into your hand, then shuffle.
         addActivatedAbility(new ActivatedAbility(
                 true, "{3}",
-                List.of(new SearchLibraryForBasicLandToHandEffect()),
+                List.of(new SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand())),
                 "{3}, {T}: Search your library for a basic land card, reveal it, put it into your hand, then shuffle."
         ));
 

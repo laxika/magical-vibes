@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -42,7 +42,7 @@ class ThaumaticCompassTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isTrue();
         assertThat(ability.getManaCost()).isEqualTo("{3}");
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SearchLibraryForBasicLandToHandEffect.class);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
     }
 
     @Test

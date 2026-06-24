@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -52,9 +52,9 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(SearchLibraryForCardTypesToHandEffect.class);
-        SearchLibraryForCardTypesToHandEffect search =
-                (SearchLibraryForCardTypesToHandEffect) ability.getEffects().get(1);
+        assertThat(ability.getEffects().get(1)).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
+        SearchLibraryForCardsToHandEffect search =
+                (SearchLibraryForCardsToHandEffect) ability.getEffects().get(1);
         assertThat(search.filter()).isInstanceOf(CardSubtypePredicate.class);
         assertThat(((CardSubtypePredicate) search.filter()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
     }

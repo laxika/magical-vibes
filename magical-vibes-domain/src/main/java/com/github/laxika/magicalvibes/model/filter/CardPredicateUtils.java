@@ -1,11 +1,26 @@
 package com.github.laxika.magicalvibes.model.filter;
 
+import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.CardType;
+
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public final class CardPredicateUtils {
 
     private CardPredicateUtils() {
+    }
+
+    /**
+     * A predicate matching basic land cards (a land card with the Basic supertype), composed from
+     * existing predicates so no new dispatch handling is required in {@code matchesCardPredicate}
+     * or {@link #describeFilter}. Describes as "basic land card".
+     */
+    public static CardPredicate basicLand() {
+        return new CardAllOfPredicate(List.of(
+                new CardSupertypePredicate(CardSupertype.BASIC),
+                new CardTypePredicate(CardType.LAND)));
     }
 
     public static String describeFilter(CardPredicate predicate) {
@@ -41,8 +56,12 @@ public final class CardPredicateUtils {
             return "card with mana value " + p.minManaValue() + " or greater";
         }
         if (predicate instanceof CardAllOfPredicate p) {
+            // Render supertype adjectives ("basic", "legendary", "snow") first so a composed
+            // predicate reads naturally, e.g. CardAllOf(LAND, BASIC) → "basic land card".
+            List<CardPredicate> ordered = new ArrayList<>(p.predicates());
+            ordered.sort(Comparator.comparingInt(sub -> sub instanceof CardSupertypePredicate ? 0 : 1));
             List<String> parts = new ArrayList<>();
-            for (CardPredicate sub : p.predicates()) {
+            for (CardPredicate sub : ordered) {
                 parts.add(describeFilter(sub));
             }
             // "creature card" + "card with infect" → "creature card with infect"

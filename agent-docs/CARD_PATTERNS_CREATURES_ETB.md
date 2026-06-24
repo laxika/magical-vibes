@@ -44,9 +44,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB discard (targeted) | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
 | ETB discard (raid conditional) | `d/DeadeyeTormentor.java` | RaidConditionalEffect(TargetPlayerDiscardsEffect(1)) + PlayerPredicateTargetFilter(OPPONENT). Raid = intervening-if checked at trigger and resolution time |
 | ETB discard (each opponent) | `l/LilianasSpecter.java` | EachOpponentDiscardsEffect — no targeting, all opponents discard |
-| ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForBasicLandToHandEffect) |
+| ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand())) |
 | ETB opponent search (downside) | `o/OldGrowthDryads.java` | EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect — each opponent may search for a basic land (tapped). No targeting. APNAP order |
-| ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryForCardTypesToHandEffect(ARTIFACT, 6, MAX_VALUE)) — artifact with MV 6+ |
+| ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryForCardsToHandEffect(CardAllOf(ARTIFACT, MinMV 6))) — artifact with MV 6+ |
 | ETB search (by name, multi-pick) | `s/SquadronHawk.java` | MayEffect(SearchLibraryForCardsByNameToHandEffect("Squadron Hawk", 3)) — search for up to 3 copies by name to hand |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).build()) |
 | ETB may bounce own historic | `g/GuardiansOfKoilos.java` | MayEffect(ReturnTargetPermanentToHandEffect()) + PermanentPredicateTargetFilter(AllOf(AnyOf(artifact, legendary, Saga), controlled-by-source, not-source)) — "you may return another target historic permanent you control to its owner's hand" |

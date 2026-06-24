@@ -139,10 +139,11 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
-| "search your library for a card" (any to hand) | `SearchLibraryForCardToHandEffect()` | SPELL | |
-| "search your library for a basic land card, put it into your hand" | `SearchLibraryForBasicLandToHandEffect()` | SPELL | |
+| "search your library for a card" (any to hand) | `SearchLibraryForCardsToHandEffect()` | SPELL | unified search-to-hand; no-arg = unrestricted single card (Diabolic Tutor) |
+| "search your library for a card... if cast from a graveyard, instead search for two cards" (to hand) | `SearchLibraryForCardsToHandEffect(null, 1, 2)` | SPELL | Increasing Ambition. Count switches on `StackEntry.isCastWithFlashback()` |
+| "search your library for a basic land card, put it into your hand" | `SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand())` | SPELL | basic land = `CardAllOf(CardSupertype BASIC, CardType LAND)`, composed via the `CardPredicateUtils.basicLand()` factory (no dedicated predicate class) |
 | "search your library for a basic land card, put it onto the battlefield tapped" | `SearchLibraryForCardTypesToBattlefieldEffect(CardTypePredicate(LAND, basic), true)` | SPELL | |
-| "search your library for a [type] card, reveal it, put it into your hand" | `SearchLibraryForCardTypesToHandEffect(predicate)` | SPELL | |
+| "search your library for a [type] card, reveal it, put it into your hand" | `SearchLibraryForCardsToHandEffect(predicate)` | SPELL | single-arg ctor = restricted (revealed, may fail to find) |
 | "you may search your library for a Curse card, put it onto the battlefield attached to [target] player" | `MayEffect(SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect(CardSubtype.CURSE), prompt)` | trigger | Bitterheart Witch — `canTargetPlayer()=true`, target chosen at trigger time |
 | "at the beginning of your upkeep, you may search your library for a Curse card that doesn't have the same name as a Curse attached to enchanted player, put it onto the battlefield attached to that player, then shuffle" | `MayEffect(SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect(), prompt)` | UPKEEP_TRIGGERED | Curse of Misfortunes — enchanted player derived from source aura's `attachedTo`; excludes Curses already attached to that player by name |
 | "scry N" | `ScryEffect(N)` | SPELL/trigger | |

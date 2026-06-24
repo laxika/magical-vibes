@@ -15,9 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSea
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.DistantMemoriesEffect;
 import com.github.laxika.magicalvibes.model.effect.HeadGamesEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -160,11 +159,11 @@ class LibrarySearchResolutionServiceTest {
             when(gameQueryService.matchesCardPredicate(eq(bears), eq(filter), isNull())).thenReturn(false);
             stubCardViewFactory();
 
-            SearchLibraryForCardTypesToHandEffect effect = new SearchLibraryForCardTypesToHandEffect(filter);
+            SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardTypesToHand(gd, entry, effect);
+            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
@@ -184,11 +183,11 @@ class LibrarySearchResolutionServiceTest {
             CardPredicate filter = mock(CardPredicate.class);
             when(gameQueryService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(false);
 
-            SearchLibraryForCardTypesToHandEffect effect = new SearchLibraryForCardTypesToHandEffect(filter);
+            SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardTypesToHand(gd, entry, effect);
+            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -199,11 +198,11 @@ class LibrarySearchResolutionServiceTest {
         @DisplayName("Empty library logs without crash")
         void emptyLibraryLogs() {
             CardPredicate filter = mock(CardPredicate.class);
-            SearchLibraryForCardTypesToHandEffect effect = new SearchLibraryForCardTypesToHandEffect(filter);
+            SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardTypesToHand(gd, entry, effect);
+            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -287,11 +286,11 @@ class LibrarySearchResolutionServiceTest {
             gd.playerDecks.get(player1Id).addAll(List.of(plains, forest, swamp, bears));
             stubCardViewFactory();
 
-            SearchLibraryForCardToHandEffect effect = new SearchLibraryForCardToHandEffect();
+            SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect();
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Diabolic Tutor"),
                     player1Id, "Diabolic Tutor", List.of(effect));
 
-            service.resolveSearchLibraryForCardToHand(gd, entry, effect);
+            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
@@ -301,11 +300,11 @@ class LibrarySearchResolutionServiceTest {
         @Test
         @DisplayName("Empty library logs without entering search")
         void emptyLibraryLogs() {
-            SearchLibraryForCardToHandEffect effect = new SearchLibraryForCardToHandEffect();
+            SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect();
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Diabolic Tutor"),
                     player1Id, "Diabolic Tutor", List.of(effect));
 
-            service.resolveSearchLibraryForCardToHand(gd, entry, effect);
+            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -444,11 +443,11 @@ class LibrarySearchResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(plains);
 
             CardPredicate filter = mock(CardPredicate.class);
-            SearchLibraryForCardTypesToHandEffect effect = new SearchLibraryForCardTypesToHandEffect(filter);
+            SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardTypesToHand(gd, entry, effect);
+            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -465,11 +464,11 @@ class LibrarySearchResolutionServiceTest {
             when(gameQueryService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(true);
             stubCardViewFactory();
 
-            SearchLibraryForCardTypesToHandEffect effect = new SearchLibraryForCardTypesToHandEffect(filter);
+            SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardTypesToHand(gd, entry, effect);
+            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         }
@@ -489,11 +488,11 @@ class LibrarySearchResolutionServiceTest {
 
             stubCardViewFactory();
 
-            SearchLibraryForCardToHandEffect effect = new SearchLibraryForCardToHandEffect();
+            SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect();
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Diabolic Tutor"),
                     player1Id, "Diabolic Tutor", List.of(effect));
 
-            service.resolveSearchLibraryForCardToHand(gd, entry, effect);
+            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         }

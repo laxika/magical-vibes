@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class HorizonSpellbomb extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new SacrificeSelfCost(), new SearchLibraryForBasicLandToHandEffect()),
+                List.of(new SacrificeSelfCost(), new SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand())),
                 "{2}, {T}, Sacrifice Horizon Spellbomb: Search your library for a basic land card, reveal it, put it into your hand, then shuffle."
         ));
 

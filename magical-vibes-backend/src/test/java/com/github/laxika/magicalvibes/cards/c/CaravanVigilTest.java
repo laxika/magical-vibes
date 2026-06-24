@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForBasicLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -39,7 +39,7 @@ class CaravanVigilTest extends BaseCardTest {
 
         MorbidReplacementEffect effect =
                 (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(SearchLibraryForBasicLandToHandEffect.class);
+        assertThat(effect.baseEffect()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
         assertThat(effect.morbidEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
 
         SearchLibraryForCardTypesToBattlefieldEffect morbidEffect =
