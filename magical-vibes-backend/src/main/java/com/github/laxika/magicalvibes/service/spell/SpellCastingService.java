@@ -1217,7 +1217,7 @@ public class SpellCastingService {
         }
 
         // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
-        if (!gameQueryService.canPlayersCastSpellsFromGraveyards(gameData)) {
+        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
             throw new IllegalStateException("Spells can't be cast from graveyards");
         }
 
@@ -1546,7 +1546,7 @@ public class SpellCastingService {
         }
 
         // Grafdigger's Cage etc.: players can't cast spells from libraries.
-        if (!gameQueryService.canPlayersCastSpellsFromLibraries(gameData)) {
+        if (!gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.LIBRARY)) {
             throw new IllegalStateException("Spells can't be cast from libraries");
         }
 

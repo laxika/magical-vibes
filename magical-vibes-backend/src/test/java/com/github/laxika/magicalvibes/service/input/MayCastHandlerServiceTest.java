@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -541,7 +542,7 @@ class MayCastHandlerServiceTest {
         }
 
         private void allowGraveyardCasting() {
-            when(gameQueryService.canPlayersCastSpellsFromGraveyards(gd)).thenReturn(true);
+            when(gameQueryService.canPlayersCastSpellsFromZone(gd, Zone.GRAVEYARD)).thenReturn(true);
         }
 
         @Test
@@ -563,7 +564,7 @@ class MayCastHandlerServiceTest {
             Card card = createSorcery("Divination");
             card.addEffect(EffectSlot.SPELL, new DrawCardEffect(2));
             PendingMayAbility ability = abilityFor(card);
-            when(gameQueryService.canPlayersCastSpellsFromGraveyards(gd)).thenReturn(false);
+            when(gameQueryService.canPlayersCastSpellsFromZone(gd, Zone.GRAVEYARD)).thenReturn(false);
 
             svc.handleCastFromGraveyardChoice(gd, player1, true, ability, opponentGraveyardFree());
 

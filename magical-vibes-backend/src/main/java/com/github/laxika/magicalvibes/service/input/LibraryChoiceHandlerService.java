@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -763,7 +764,7 @@ public class LibraryChoiceHandlerService {
 
         // Phase 1: Place all permanents on the battlefield simultaneously
         for (Card card : cards) {
-            if (gameQueryService.isCardBlockedFromEnteringFromGraveyardOrLibrary(gameData, card)) {
+            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.LIBRARY)) {
                 gameData.playerDecks.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(card);
                 anyBlocked = true;
                 gameBroadcastService.logAndBroadcast(gameData, card.getName()

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
@@ -267,7 +268,7 @@ public class MayCastHandlerService {
         String castLabel = castEffect.withoutPayingManaCost() ? " without paying its mana cost" : "";
 
         // Ashes of the Abhorrent etc.: players can't cast spells from graveyards
-        if (accepted && !gameQueryService.canPlayersCastSpellsFromGraveyards(gameData)) {
+        if (accepted && !gameQueryService.canPlayersCastSpellsFromZone(gameData, Zone.GRAVEYARD)) {
             String logEntry = cardToCast.getName() + " can't be cast from the graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             accepted = false;
