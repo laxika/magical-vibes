@@ -9,6 +9,7 @@ All paths relative to `cards/`.
 | Subtype lord (all) | `g/GoblinKing.java` | STATIC StaticBoostEffect with PermanentHasAnySubtypePredicate filter, ALL_CREATURES scope |
 | Subtype lord (own) + keyword | `k/KnightExemplar.java` | STATIC StaticBoostEffect(1, 1, Set.of(INDESTRUCTIBLE), OWN_CREATURES, PermanentHasAnySubtypePredicate) — +1/+1 and indestructible to other Knights you control |
 | Anthem (all own) | `g/GloriousAnthem.java` | STATIC StaticBoostEffect with OWN_CREATURES scope, no filter |
+| Multi-subtype lord + transform lock | `i/Immerwolf.java` | STATIC StaticBoostEffect(1, 1, OWN_CREATURES, PermanentHasAnySubtypePredicate({WOLF, WEREWOLF})) + STATIC PreventTransformEffect(PermanentAllOfPredicate(WEREWOLF, NOT HUMAN)) — +1/+1 to other Wolves/Werewolves you control and "Non-Human Werewolves you control can't transform" |
 | Supertype lord (own) | `a/ArvadTheCursed.java` | STATIC StaticBoostEffect(2, 2, OWN_CREATURES, PermanentHasSupertypePredicate(LEGENDARY)) — +2/+2 to other legendary creatures you control |
 | Color boost/debuff | `a/AscendantEvincar.java` | STATIC StaticBoostEffect with PermanentColorInPredicate / PermanentNotPredicate filter |
 | Own boost + opponent debuff | `e/EleshNornGrandCenobite.java` | STATIC StaticBoostEffect(2, 2, OWN_CREATURES) + StaticBoostEffect(-2, -2, OPPONENT_CREATURES) |

@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
@@ -248,6 +249,32 @@ public class GameQueryService {
         for (Permanent perm : bf) {
             if (perm.getCard().getEffects(EffectSlot.STATIC).stream().anyMatch(effectType::isInstance)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if the given permanent can't transform because its controller controls a
+     * permanent with a {@link PreventTransformEffect} whose filter matches it (e.g. Immerwolf's
+     * "Non-Human Werewolves you control can't transform"). The filter is evaluated against the
+     * permanent's current face.
+     */
+    public boolean isTransformPrevented(GameData gameData, Permanent permanent) {
+        UUID controllerId = findPermanentController(gameData, permanent.getId());
+        if (controllerId == null) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent source : battlefield) {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof PreventTransformEffect prevent
+                        && matchesPermanentPredicate(gameData, permanent, prevent.filter())) {
+                    return true;
+                }
             }
         }
         return false;

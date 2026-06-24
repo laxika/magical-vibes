@@ -291,6 +291,11 @@ public class AnimationResolutionService {
             return;
         }
 
+        if (gameQueryService.isTransformPrevented(gameData, self)) {
+            log.info("Game {} - {} can't transform (transform prevented)", gameData.id, self.getCard().getName());
+            return;
+        }
+
         Card originalCard = self.getOriginalCard();
         if (!self.isTransformed()) {
             // Transform to back face
@@ -389,6 +394,10 @@ public class AnimationResolutionService {
             if (!gameQueryService.matchesPermanentPredicate(gameData, perm, effect.filter())) {
                 return;
             }
+            if (gameQueryService.isTransformPrevented(gameData, perm)) {
+                log.info("Game {} - {} can't transform (transform prevented)", gameData.id, perm.getCard().getName());
+                return;
+            }
             Card originalCard = perm.getOriginalCard();
             if (!perm.isTransformed()) {
                 Card backFace = originalCard.getBackFaceCard();
@@ -416,6 +425,11 @@ public class AnimationResolutionService {
     private void resolveTapAndTransformSelf(GameData gameData, StackEntry entry, TapAndTransformSelfEffect effect) {
         Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (self == null) {
+            return;
+        }
+
+        if (gameQueryService.isTransformPrevented(gameData, self)) {
+            log.info("Game {} - {} can't transform (transform prevented)", gameData.id, self.getCard().getName());
             return;
         }
 

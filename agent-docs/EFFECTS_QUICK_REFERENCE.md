@@ -421,6 +421,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `AnimateSelfAsCreatureEffect()` — vehicle crew
 - `TransformSelfEffect()` — transform DFC
 - `TransformAllEffect(PermanentPredicate)` — transform all matching
+- `PreventTransformEffect(PermanentPredicate)` — STATIC: permanents you control matching the predicate can't transform (e.g. Immerwolf)
 
 ## Static restrictions / taxes
 
