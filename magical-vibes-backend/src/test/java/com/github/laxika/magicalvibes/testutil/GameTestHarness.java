@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.exile.ExileEggCounterResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileReturnResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
@@ -135,6 +136,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 
+import java.time.Duration;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
@@ -197,7 +199,12 @@ public class GameTestHarness {
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, cardViewFactory, triggerTargetCollector);
         CreatureControlService creatureControlService = new CreatureControlService(staticGameBroadcastService, staticGameQueryService);
         DamagePreventionService damagePreventionService = new DamagePreventionService(staticGameQueryService);
-        GameOutcomeService gameOutcomeService = new GameOutcomeService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticGameRegistry, draftRegistry, null, null);
+        // GameTimeoutService <-> GameOutcomeService is a circular dependency (both @Lazy in production).
+        // Timers never fire in tests, and the timeout service only touches GameOutcomeService inside those
+        // timer callbacks, so we can safely construct it with a null outcome service and wire it the other way.
+        GameTimeoutService gameTimeoutService = new GameTimeoutService(
+                staticGameRegistry, null, staticSessionManager, Duration.ofMinutes(5), Duration.ofMinutes(15));
+        GameOutcomeService gameOutcomeService = new GameOutcomeService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticGameRegistry, draftRegistry, null, gameTimeoutService);
         staticDrawService = new DrawService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, triggeredAbilityQueueService);
         staticBattlefieldEntryService = new BattlefieldEntryService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, cardViewFactory, null, null);
         CloneService cloneService = new CloneService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLegendRuleService, staticBattlefieldEntryService);
