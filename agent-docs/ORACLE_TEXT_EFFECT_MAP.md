@@ -180,7 +180,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "create a Treasure token" | `CreateTokenEffect.ofTreasureToken(1)` | SPELL/trigger | Static factory |
 | "create a N/N [color] [Subtype] creature token" | `CreateTokenEffect("name", N, N, color, subtype)` | SPELL/trigger | Custom token |
 | "create a N/N [color] [Subtype] creature token with [keyword]" | `CreateTokenEffect("name", N, N, color, subtype, keyword)` | SPELL/trigger | With keyword |
-| "create N tokens. If this spell was cast from a graveyard, create M of those tokens instead" | `CreateTokenEffect(N, ...)` + `CastFromHandConditionalEffect(Zone.GRAVEYARD, new CreateTokenEffect(M - N, ...))` | SPELL | Add the base amount first, then the conditional extra amount; add `FlashbackCast` separately when appropriate |
+| "create N tokens. If this spell was cast from a graveyard, create M of those tokens instead" | `CreateTokenEffect(N, ...)` + `CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CreateTokenEffect(M - N, ...))` | SPELL | Add the base amount first, then the conditional extra amount; add `FlashbackCast` separately when appropriate |
 
 ## Graveyard return
 
@@ -263,7 +263,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
-| "copy target instant or sorcery spell" | `CopySpellEffect()` | SPELL | |
+| "copy target instant or sorcery spell" | `CopySpellEffect()` | SPELL | Filter on the Card's SpellTarget via `target(...)`. Add `StackEntryControlledByPredicate` for "...spell you control" |
+| "copy target instant or sorcery spell. If this spell was cast from a graveyard, copy that spell twice instead" | `CopySpellEffect()` + `CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CopySpellEffect())` | SPELL | Increasing Vengeance — base copy plus a graveyard-conditional second copy; add `FlashbackCast` separately. Flashback can target a spell on the stack |
 | "whenever a player casts an instant or sorcery spell, each other player copies that spell" | `CopySpellForEachOtherPlayerEffect()` | ON_ANY_PLAYER_CASTS_SPELL | Hive Mind (mandatory) |
 | "whenever enchanted player casts an instant or sorcery spell, each other player may copy that spell" | `CopySpellForEachOtherPlayerEffect(true, new StackEntryControlledByEnchantedPlayerPredicate())` | ON_ANY_PLAYER_CASTS_SPELL | Curse of Echoes — the `StackEntryControlledByEnchantedPlayerPredicate` filter gates to casts by the enchanted player; each other player *may* copy |
 | "enters the battlefield as a copy of any creature on the battlefield" | `CopyPermanentOnEnterEffect(predicate, label)` | ON_ENTER_BATTLEFIELD | Clone |

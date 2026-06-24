@@ -50,7 +50,7 @@ Other wrappers:
 - `NthSpellCastTriggerEffect(int, List<CardEffect>)` — Nth spell trigger
 - `NoSpellsCastLastTurnConditionalEffect(CardEffect)` — werewolf front
 - `TwoOrMoreSpellsCastLastTurnConditionalEffect(CardEffect)` — werewolf back
-- `CastFromHandConditionalEffect(CardEffect)` or `(Zone, CardEffect)` — cast from source zone only; defaults to HAND
+- `CastFromZoneConditionalEffect(Zone, CardEffect)` — resolves wrapped effect only if cast from that zone (`Zone.HAND` / `Zone.GRAVEYARD`)
 - `KickedConditionalEffect(CardEffect)` — kicked adds effect
 
 See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker count, etc.)
@@ -402,7 +402,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Copy / clone
 
 - `CopyPermanentOnEnterEffect(PermanentPredicate, String)` + overloads — Clone-style
-- `CopySpellEffect()` or `(StackEntryPredicate)` — copy target spell
+- `CopySpellEffect()` or `(StackEntryPredicate)` — copy target spell; for "copy twice if cast from a graveyard" add `CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CopySpellEffect())` (Increasing Vengeance)
 - `ChangeTargetOfTargetSpellWithSingleTargetEffect()` — redirect spell
 - `ChooseNewTargetsForTargetSpellEffect()` — choose new targets
 

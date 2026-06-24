@@ -1422,6 +1422,14 @@ public class SpellCastingService {
                     entryType, card, playerId, card.getName(),
                     spellEffects, effectiveXValue, targetIds
             );
+        } else if (EffectResolution.needsSpellTarget(card)) {
+            // Flashback spell that targets a spell on the stack (e.g. Increasing Vengeance)
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
+            stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    spellEffects, effectiveXValue, targetId,
+                    null, Map.of(), Zone.STACK, List.of(), List.of()
+            );
         } else {
             // Single-target or no-target flashback spell
             boolean needsGraveyardEffectTargeting = spellEffects.stream().anyMatch(CardEffect::canTargetGraveyard);

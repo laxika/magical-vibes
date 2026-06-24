@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CastFromHandConditionalEffect;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -18,7 +19,7 @@ public class WakeningSunsAvatar extends Card {
 
     public WakeningSunsAvatar() {
         // When this creature enters, if you cast it from your hand, destroy all non-Dinosaur creatures.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CastFromHandConditionalEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new CastFromZoneConditionalEffect(Zone.HAND,
                 new DestroyAllPermanentsEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
