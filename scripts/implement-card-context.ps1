@@ -55,9 +55,65 @@ function Invoke-RepoSearch {
         Select-Object -First $MaxResults)
 }
 
+function Find-ClassFile {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string] $ClassName,
+
+        [Parameter(Mandatory = $true)]
+        [string] $RootPath
+    )
+
+    if (-not (Test-Path $RootPath)) {
+        return $null
+    }
+
+    $expectedFileName = "$ClassName.java"
+    $exactFile = Get-ChildItem -Path $RootPath -Recurse -File -Filter $expectedFileName -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+    if ($exactFile) {
+        return $exactFile.FullName.Replace((Get-Location).Path + [System.IO.Path]::DirectorySeparatorChar, "")
+    }
+
+    $hits = Invoke-RepoSearch -Pattern "class\s+$ClassName\s+" -Paths @($RootPath) -MaxResults 1
+    if ($hits.Count -eq 0) {
+        return $null
+    }
+
+    return ($hits[0] -replace ":\d+:.*$", "")
+}
+
 function ConvertTo-ClassName {
     param([string] $CardName)
     return ($CardName -replace "[^A-Za-z0-9]", "")
+}
+
+function ConvertTo-IntOrNull {
+    param([string] $Value)
+
+    $normalized = $Value.ToLowerInvariant()
+    $wordNumbers = @{
+        "one" = 1
+        "two" = 2
+        "three" = 3
+        "four" = 4
+        "five" = 5
+        "six" = 6
+        "seven" = 7
+        "eight" = 8
+        "nine" = 9
+        "ten" = 10
+    }
+    if ($wordNumbers.ContainsKey($normalized)) {
+        return $wordNumbers[$normalized]
+    }
+
+    $number = 0
+    if ([int]::TryParse($normalized, [ref] $number)) {
+        return $number
+    }
+
+    return $null
 }
 
 function Write-LinesOrNone {
@@ -149,7 +205,45 @@ function Get-OracleKeywords {
 function Get-KnownPatternMatches {
     param([string] $OracleText)
 
-    $knownPatterns = @(
+    $dynamicPatterns = New-Object System.Collections.Generic.List[hashtable]
+    if ($OracleText -match "^Target player draws (\w+) cards? and loses (\w+) life\.$") {
+        $drawAmount = ConvertTo-IntOrNull $Matches[1]
+        $lifeLoss = ConvertTo-IntOrNull $Matches[2]
+        if ($drawAmount -ne $null -and $lifeLoss -ne $null) {
+            $dynamicPatterns.Add(@{
+                Match = "^Target player draws \w+ cards? and loses \w+ life\.$"
+                Label = "Target player draws N cards and loses M life"
+                Reference = "SignInBlood"
+                Effect = "DrawCardForTargetPlayerEffect + TargetPlayerLosesLifeEffect"
+                TargetFilter = "PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY), `"Target must be a player`")"
+                Imports = @(
+                    "com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect",
+                    "com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect",
+                    "com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter",
+                    "com.github.laxika.magicalvibes.model.filter.PlayerRelation",
+                    "com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate"
+                )
+                ConstructorLines = @(
+                    "target(new PlayerPredicateTargetFilter(",
+                    "        new PlayerRelationPredicate(PlayerRelation.ANY),",
+                    "        `"Target must be a player`"",
+                    "))",
+                    "        .addEffect(EffectSlot.SPELL, new DrawCardForTargetPlayerEffect($drawAmount))",
+                    "        .addEffect(EffectSlot.SPELL, new TargetPlayerLosesLifeEffect($lifeLoss));"
+                )
+                TestNotes = @(
+                    "assert EffectResolution.needsTarget(card)",
+                    "assert target filter is PlayerPredicateTargetFilter",
+                    "assert SPELL effects are DrawCardForTargetPlayerEffect($drawAmount) then TargetPlayerLosesLifeEffect($lifeLoss)",
+                    "cast with castSorcery targeting opponent and assert hand +$drawAmount and life -$lifeLoss",
+                    "cast targeting self and assert the caster draws $drawAmount after the spell leaves hand and loses $lifeLoss life",
+                    "assert a creature target is rejected"
+                )
+            })
+        }
+    }
+
+    $staticPatterns = @(
         @{
             Match = "Put target creature on top of its owner's library"
             Reference = "Excommunicate"
@@ -216,7 +310,7 @@ function Get-KnownPatternMatches {
         return @()
     }
 
-    return @($knownPatterns | Where-Object { $OracleText -match $_.Match })
+    return @(($dynamicPatterns + $staticPatterns) | Where-Object { $OracleText -match $_.Match })
 }
 
 function Write-FastPathTemplate {
@@ -278,6 +372,24 @@ function Write-FastPathTemplate {
     return $true
 }
 
+function Test-IsBasicLand {
+    param([object] $Card)
+
+    return $Card -and $Card.type_line -match "\bBasic\b" -and $Card.type_line -match "\bLand\b"
+}
+
+function Test-IsVanillaCard {
+    param([object] $Card)
+
+    if (-not $Card) {
+        return $false
+    }
+
+    $hasNoOracleText = [string]::IsNullOrWhiteSpace($Card.oracle_text)
+    $hasNoKeywords = -not $Card.keywords -or $Card.keywords.Count -eq 0
+    return $hasNoOracleText -and $hasNoKeywords -and -not (Test-IsBasicLand -Card $Card)
+}
+
 function Get-UsagePatterns {
     param(
         [string] $OracleText,
@@ -335,16 +447,54 @@ Write-Section "Known Pattern Matches"
 if ($knownMatches.Count -gt 0) {
     foreach ($match in $knownMatches) {
         Write-Host "$($match.Reference): $($match.Effect)"
-        $referenceClassHits = Invoke-RepoSearch -Pattern "class\s+$($match.Reference)\s+" -Paths @("magical-vibes-card/src/main/java") -MaxResults 10
-        $referenceTestHits = Invoke-RepoSearch -Pattern "class\s+$($match.Reference)Test\s+" -Paths @("magical-vibes-backend/src/test/java") -MaxResults 10
-        Write-LinesOrNone -Lines $referenceClassHits -NoneText "  No card class file found for $($match.Reference)"
-        Write-LinesOrNone -Lines $referenceTestHits -NoneText "  No test class file found for $($match.Reference)Test"
+        $referenceCardFile = Find-ClassFile -ClassName $match.Reference -RootPath "magical-vibes-card/src/main/java"
+        $referenceTestFile = Find-ClassFile -ClassName "$($match.Reference)Test" -RootPath "magical-vibes-backend/src/test/java"
+        if ($referenceCardFile) {
+            Write-Host "  Reference card file: $referenceCardFile"
+        } else {
+            Write-Host "  No card class file found for $($match.Reference)"
+        }
+        if ($referenceTestFile) {
+            Write-Host "  Reference test file: $referenceTestFile"
+        } else {
+            Write-Host "  No test class file found for $($match.Reference)Test"
+        }
+        if ($match.ConstructorLines -and $match.ConstructorLines.Count -gt 0) {
+            Write-Host "  Constructor example:"
+            foreach ($line in $match.ConstructorLines) {
+                Write-Host "    $line"
+            }
+        }
     }
 } else {
     Write-Host "No known pattern match."
 }
 
 $packageLetter = $ClassName.Substring(0, 1).ToLowerInvariant()
+
+Write-Section "Implementation Guidance"
+if (Test-IsBasicLand -Card $card) {
+    Write-Host "Tests: skip (basic land)."
+} elseif (Test-IsVanillaCard -Card $card) {
+    Write-Host "Tests: skip (vanilla card with no engine behavior)."
+} else {
+    Write-Host "Tests: write focused card behavior tests."
+}
+if ($knownMatches.Count -gt 0) {
+    $primaryMatch = @($knownMatches)[0]
+    Write-Host "Closest pattern: $($primaryMatch.Reference)"
+    $primaryReferenceCardFile = Find-ClassFile -ClassName $primaryMatch.Reference -RootPath "magical-vibes-card/src/main/java"
+    $primaryReferenceTestFile = Find-ClassFile -ClassName "$($primaryMatch.Reference)Test" -RootPath "magical-vibes-backend/src/test/java"
+    if ($primaryReferenceCardFile) {
+        Write-Host "Closest card file: $primaryReferenceCardFile"
+    }
+    if ($primaryReferenceTestFile) {
+        Write-Host "Closest test file: $primaryReferenceTestFile"
+    }
+    Write-Host "Effect constructors: $($primaryMatch.Effect)"
+} else {
+    Write-Host "Closest pattern: none found; inspect Effect Doc Hits/Existing Usages below."
+}
 
 Write-Section "Fast Path Template"
 $hasFastPathTemplate = $false
