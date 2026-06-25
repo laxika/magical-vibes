@@ -69,6 +69,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class ActivatedAbilityExecutionServiceTest {
@@ -277,7 +278,7 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCreature("Marwyn, the Nurturer");
             Permanent perm = addReadyPermanent(player1Id, card);
             // Simulate +1/+1 counters (power goes from 2 → 4)
-            perm.setPlusOnePlusOneCounters(2);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
             List<CardEffect> effects = List.of(new AwardManaEqualToSourcePowerEffect(ManaColor.GREEN));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
                     "{T}: Add an amount of {G} equal to Marwyn's power.");
@@ -844,7 +845,7 @@ class ActivatedAbilityExecutionServiceTest {
         void drawCardsSnapshotsChargeCounters() {
             Card card = createCard("Culling Dais", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setChargeCounters(3);
+            perm.setCounterCount(CounterType.CHARGE, 3);
             List<CardEffect> effects = List.of(new SacrificeSelfCost(), new DrawCardsEqualToChargeCountersOnSourceEffect());
             ActivatedAbility ability = new ActivatedAbility(false, "{1}", effects, "{1}, Sacrifice: Draw cards.");
 
@@ -860,7 +861,7 @@ class ActivatedAbilityExecutionServiceTest {
         void gainLifeSnapshotsChargeCounters() {
             Card card = createCard("Golden Urn", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setChargeCounters(5);
+            perm.setCounterCount(CounterType.CHARGE, 5);
             List<CardEffect> effects = List.of(new SacrificeSelfCost(), new GainLifeEqualToChargeCountersOnSourceEffect());
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Sacrifice: Gain life.");
 
@@ -875,7 +876,7 @@ class ActivatedAbilityExecutionServiceTest {
         void millSnapshotsChargeCounters() {
             Card card = createCard("Grindclock", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setChargeCounters(4);
+            perm.setCounterCount(CounterType.CHARGE, 4);
             List<CardEffect> effects = List.of(new MillTargetPlayerByChargeCountersEffect());
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Mill X.");
 

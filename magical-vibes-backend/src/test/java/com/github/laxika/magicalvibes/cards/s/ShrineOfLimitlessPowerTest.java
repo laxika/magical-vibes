@@ -26,6 +26,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfLimitlessPowerTest extends BaseCardTest {
 
@@ -69,7 +70,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -79,11 +80,11 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        assertThat(shrine.getChargeCounters()).isEqualTo(2);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     @Test
@@ -93,7 +94,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         // No trigger should be on the stack for the Shrine
-        assertThat(shrine.getChargeCounters()).isEqualTo(0);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Black spell cast trigger =====
@@ -117,7 +118,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve charge counter trigger
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -130,7 +131,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(0);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
@@ -144,7 +145,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(0);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Activated ability =====
@@ -153,7 +154,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
     @DisplayName("Activating ability causes target player to discard cards equal to charge counters")
     void activateDiscardsEqualToChargeCounters() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(3);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears(), new Peek(), new Forest())));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -191,7 +192,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
     @DisplayName("Shrine is sacrificed as part of the cost")
     void shrineIsSacrificedAsCost() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(1);
+        shrine.setCounterCount(CounterType.CHARGE, 1);
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -229,7 +230,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
     @DisplayName("Target with empty hand results in no discard prompt")
     void targetWithEmptyHandNoPrompt() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(3);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
         harness.setHand(player2, new ArrayList<>());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -248,7 +249,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         // Get 1 counter from upkeep
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Get 1 counter from black spell
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -258,7 +259,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve charge counter trigger
         harness.passBothPriorities(); // resolve creature spell
-        assertThat(shrine.getChargeCounters()).isEqualTo(2);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
 
         // Now activate — should discard 2 cards
         shrine.untap(); // untap since it was never tapped, but just in case

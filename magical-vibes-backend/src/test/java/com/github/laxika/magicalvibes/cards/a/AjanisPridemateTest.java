@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class AjanisPridemateTest extends BaseCardTest {
 
@@ -39,7 +40,7 @@ class AjanisPridemateTest extends BaseCardTest {
         harness.addToBattlefield(player1, new AjanisPridemate());
 
         Permanent pridemate = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(pridemate.getPlusOnePlusOneCounters()).isZero();
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Cast Angel of Mercy (ETB: gain 3 life) to trigger life gain
         harness.setHand(player1, List.of(new AngelOfMercy()));
@@ -50,7 +51,7 @@ class AjanisPridemateTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve life gain triggered ability (GainLifeEffect)
         harness.passBothPriorities(); // resolve Pridemate's +1/+1 counter triggered ability
 
-        assertThat(pridemate.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, pridemate)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, pridemate)).isEqualTo(3);
     }
@@ -74,7 +75,7 @@ class AjanisPridemateTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (ETB triggers)
         harness.passBothPriorities(); // resolve life gain triggered ability
 
-        assertThat(pridemate.getPlusOnePlusOneCounters()).isZero();
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -96,7 +97,7 @@ class AjanisPridemateTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Soul Warden's GainLifeEffect
         harness.passBothPriorities(); // resolve Pridemate's +1/+1 counter
 
-        assertThat(pridemate.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(pridemate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -119,7 +120,7 @@ class AjanisPridemateTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve first Pridemate's triggered ability
         harness.passBothPriorities(); // resolve second Pridemate's triggered ability
 
-        assertThat(pridemate1.getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(pridemate2.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(pridemate1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(pridemate2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

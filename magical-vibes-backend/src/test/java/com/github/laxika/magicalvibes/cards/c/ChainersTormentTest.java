@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChainersTormentTest extends BaseCardTest {
 
@@ -82,7 +83,7 @@ class ChainersTormentTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -120,7 +121,7 @@ class ChainersTormentTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         int p1LifeBefore = gd.playerLifeTotals.get(player1.getId());
         int p2LifeBefore = gd.playerLifeTotals.get(player2.getId());
@@ -135,7 +136,7 @@ class ChainersTormentTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Saga should now have 2 lore counters
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
 
         // Chapter II ability should be on the stack
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -159,7 +160,7 @@ class ChainersTormentTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Set player1's life to 20, so X = ceil(20/2) = 10
         gd.playerLifeTotals.put(player1.getId(), 20);
@@ -171,7 +172,7 @@ class ChainersTormentTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
 
         // Resolve chapter III
         harness.passBothPriorities();
@@ -200,7 +201,7 @@ class ChainersTormentTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Set life to 15, X = ceil(15/2) = 8
         gd.playerLifeTotals.put(player1.getId(), 15);
@@ -236,7 +237,7 @@ class ChainersTormentTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         gd.playerLifeTotals.put(player1.getId(), 20);
 
@@ -277,7 +278,7 @@ class ChainersTormentTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Chainer's Torment"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -287,7 +288,7 @@ class ChainersTormentTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Saga has 3 lore counters (>= final chapter)
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
         // Chapter III is on the stack
         assertThat(gd.stack).isNotEmpty();
         // Saga should still be on the battlefield (not yet sacrificed)
@@ -314,6 +315,6 @@ class ChainersTormentTest extends BaseCardTest {
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
         // Should still have exactly 1 lore counter (not 2)
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
     }
 }

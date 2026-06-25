@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BlightMambaTest extends BaseCardTest {
 
@@ -202,7 +203,7 @@ class BlightMambaTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -231,7 +232,7 @@ class BlightMambaTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Helper methods =====

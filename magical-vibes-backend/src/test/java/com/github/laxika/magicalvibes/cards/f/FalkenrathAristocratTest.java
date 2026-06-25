@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class FalkenrathAristocratTest extends BaseCardTest {
 
@@ -85,7 +86,7 @@ class FalkenrathAristocratTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Human Soldier"));
 
         assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(aristocrat.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Sacrifice a non-Human creature: indestructible, no counter =====
@@ -104,7 +105,7 @@ class FalkenrathAristocratTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         assertThat(aristocrat.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(aristocrat.getPlusOnePlusOneCounters()).isZero();
+        assertThat(aristocrat.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     // ===== A Human cannot be fed to the no-counter ability =====

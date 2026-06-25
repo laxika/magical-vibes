@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChimericMassTest extends BaseCardTest {
 
@@ -53,7 +54,7 @@ class ChimericMassTest extends BaseCardTest {
 
         Permanent mass = findMass(player1);
         assertThat(mass).isNotNull();
-        assertThat(mass.getChargeCounters()).isEqualTo(3);
+        assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     @Test
@@ -66,7 +67,7 @@ class ChimericMassTest extends BaseCardTest {
 
         Permanent mass = findMass(player1);
         assertThat(mass).isNotNull();
-        assertThat(mass.getChargeCounters()).isEqualTo(0);
+        assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
@@ -80,7 +81,7 @@ class ChimericMassTest extends BaseCardTest {
 
         Permanent mass = findMass(player1);
         assertThat(mass).isNotNull();
-        assertThat(mass.getChargeCounters()).isEqualTo(5);
+        assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
     }
 
     // ===== Not a creature before activation =====
@@ -166,7 +167,7 @@ class ChimericMassTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(mass.isAnimatedUntilEndOfTurn()).isTrue();
-        assertThat(mass.getChargeCounters()).isEqualTo(4);
+        assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
 
         // Advance to cleanup step — animation ends
         harness.forceStep(TurnStep.END_STEP);
@@ -176,7 +177,7 @@ class ChimericMassTest extends BaseCardTest {
         assertThat(mass.isAnimatedUntilEndOfTurn()).isFalse();
         assertThat(gqs.isCreature(gd, mass)).isFalse();
         // Charge counters should still be there
-        assertThat(mass.getChargeCounters()).isEqualTo(4);
+        assertThat(mass.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
     // ===== Re-animation uses current charge counters =====
@@ -237,7 +238,7 @@ class ChimericMassTest extends BaseCardTest {
     private Permanent addMassReady(Player player, int chargeCounters) {
         Permanent perm = new Permanent(new ChimericMass());
         perm.setSummoningSick(false);
-        perm.setChargeCounters(chargeCounters);
+        perm.setCounterCount(CounterType.CHARGE, chargeCounters);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

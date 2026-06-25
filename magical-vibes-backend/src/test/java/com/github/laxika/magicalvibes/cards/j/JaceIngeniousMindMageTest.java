@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class JaceIngeniousMindMageTest extends BaseCardTest {
 
@@ -102,7 +103,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Jace, Ingenious Mind-Mage"));
         Permanent jace = bf.stream().filter(p -> p.getCard().getName().equals("Jace, Ingenious Mind-Mage")).findFirst().orElseThrow();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(5);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(jace.isSummoningSick()).isFalse();
     }
 
@@ -119,7 +120,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(6); // 5 + 1
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
@@ -157,7 +158,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(6); // 5 + 1
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
         assertThat(bears).noneMatch(Permanent::isTapped);
     }
 
@@ -184,7 +185,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
     @DisplayName("-9 ability gains control of three target creatures")
     void minusNineGainsControlOfThreeCreatures() {
         Permanent jace = addReadyJace(player1);
-        jace.setLoyaltyCounters(9);
+        jace.setCounterCount(CounterType.LOYALTY, 9);
 
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -200,7 +201,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(0); // 9 - 9
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 9 - 9
 
         // All three creatures should now be under player1's control
         for (UUID targetId : targetIds) {
@@ -216,7 +217,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
     @DisplayName("-9 ability can target fewer than three creatures")
     void minusNineCanTargetFewerThanThree() {
         Permanent jace = addReadyJace(player1);
-        jace.setLoyaltyCounters(9);
+        jace.setCounterCount(CounterType.LOYALTY, 9);
 
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -238,12 +239,12 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
     @DisplayName("-9 ability can be activated with zero targets")
     void minusNineCanActivateWithZeroTargets() {
         Permanent jace = addReadyJace(player1);
-        jace.setLoyaltyCounters(9);
+        jace.setCounterCount(CounterType.LOYALTY, 9);
 
         harness.activateAbilityWithMultiTargets(player1, 0, 2, List.of());
         harness.passBothPriorities();
 
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(0); // 9 - 9
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 9 - 9
     }
 
     @Test
@@ -288,7 +289,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
     private Permanent addReadyJace(Player player) {
         JaceIngeniousMindMage card = new JaceIngeniousMindMage();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(5);
+        perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

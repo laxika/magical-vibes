@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class DearlyDepartedTest extends BaseCardTest {
 
@@ -47,7 +48,7 @@ class DearlyDepartedTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
 
         Permanent vanguard = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(vanguard.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // Elite Vanguard is 2/1 + 1 counter = 3/2
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(2);
@@ -66,7 +67,7 @@ class DearlyDepartedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bears.getPlusOnePlusOneCounters()).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -84,7 +85,7 @@ class DearlyDepartedTest extends BaseCardTest {
         Permanent vanguard = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Elite Vanguard"))
                 .findFirst().orElseThrow();
-        assertThat(vanguard.getPlusOnePlusOneCounters()).isZero();
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -100,7 +101,7 @@ class DearlyDepartedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vanguard = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(vanguard.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         // Elite Vanguard is 2/1 + 2 counters = 4/3
         assertThat(gqs.getEffectivePower(gd, vanguard)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, vanguard)).isEqualTo(3);
@@ -124,6 +125,6 @@ class DearlyDepartedTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vanguard = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(vanguard.getPlusOnePlusOneCounters()).isZero();
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

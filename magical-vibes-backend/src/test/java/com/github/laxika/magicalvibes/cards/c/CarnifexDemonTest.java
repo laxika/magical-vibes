@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class CarnifexDemonTest extends BaseCardTest {
 
@@ -60,7 +61,7 @@ class CarnifexDemonTest extends BaseCardTest {
 
         Permanent demon = findDemon(player1);
 
-        assertThat(demon.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         assertThat(demon.getEffectivePower()).isEqualTo(4);
         assertThat(demon.getEffectiveToughness()).isEqualTo(4);
     }
@@ -85,13 +86,13 @@ class CarnifexDemonTest extends BaseCardTest {
         Permanent ownBears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(ownBears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(ownBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         // Opponent's Grizzly Bears also gets a -1/-1 counter
         Permanent oppBears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(oppBears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(oppBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -109,7 +110,7 @@ class CarnifexDemonTest extends BaseCardTest {
 
         // Demon started with 2 counters, had 1 removed as cost = 1 remaining
         // Should NOT have gotten an additional counter from its own effect
-        assertThat(demon.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -125,7 +126,7 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Started with 2 -1/-1 counters, removed 1 as cost
-        assertThat(demon.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(demon.getEffectivePower()).isEqualTo(5);
         assertThat(demon.getEffectiveToughness()).isEqualTo(5);
     }
@@ -144,14 +145,14 @@ class CarnifexDemonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(demon.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         // Second activation
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(demon.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(demon.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
         assertThat(demon.getEffectivePower()).isEqualTo(6);
         assertThat(demon.getEffectiveToughness()).isEqualTo(6);
 
@@ -168,7 +169,7 @@ class CarnifexDemonTest extends BaseCardTest {
     @DisplayName("Cannot activate ability when no counters remain")
     void cannotActivateWithoutCounters() {
         Permanent demon = addReadyDemon(player1);
-        demon.setMinusOneMinusOneCounters(0);
+        demon.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -197,7 +198,7 @@ class CarnifexDemonTest extends BaseCardTest {
         Permanent oppBears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(oppBears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(oppBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Non-creature permanents not affected =====
@@ -219,7 +220,7 @@ class CarnifexDemonTest extends BaseCardTest {
         Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Spellbook"))
                 .findFirst().orElseThrow();
-        assertThat(spellbook.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(spellbook.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
     // ===== Helpers =====
@@ -228,7 +229,7 @@ class CarnifexDemonTest extends BaseCardTest {
         CarnifexDemon card = new CarnifexDemon();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        perm.setMinusOneMinusOneCounters(2);
+        perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

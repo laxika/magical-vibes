@@ -76,6 +76,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Component
@@ -175,9 +176,9 @@ public class BattlefieldEntryService {
                 // Reset any counters that were pre-set by the original card's "enters with"
                 // replacement effects — the creature now enters as Essence, which has no such
                 // effects, so those counters should not apply.
-                entering.setPlusOnePlusOneCounters(0);
-                entering.setChargeCounters(0);
-                entering.setWishCounters(0);
+                entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+                entering.setCounterCount(CounterType.CHARGE, 0);
+                entering.setCounterCount(CounterType.WISH, 0);
                 return;
             }
         }
@@ -342,7 +343,7 @@ public class BattlefieldEntryService {
         }
 
         if (count > 0) {
-            permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() + count);
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
             log.info("Game {} - {} enters with {} +1/+1 counter(s) (per {} count)",
                     gameData.id, permanent.getCard().getName(), count, subtype);
         }
@@ -368,7 +369,7 @@ public class BattlefieldEntryService {
                 .sum();
 
         if (count > 0) {
-            permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() + count);
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
             log.info("Game {} - {} enters with {} +1/+1 counter(s) (creature deaths this turn)",
                     gameData.id, permanent.getCard().getName(), count);
         }
@@ -406,7 +407,7 @@ public class BattlefieldEntryService {
         }
 
         if (additionalCounters > 0) {
-            permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() + additionalCounters);
+            permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + additionalCounters);
             log.info("Game {} - {} enters with {} additional +1/+1 counter(s) from graveyard effect(s)",
                     gameData.id, permanent.getCard().getName(), additionalCounters);
         }

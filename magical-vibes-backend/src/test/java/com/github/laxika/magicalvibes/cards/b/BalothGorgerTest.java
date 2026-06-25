@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BalothGorgerTest extends BaseCardTest {
 
@@ -53,7 +54,7 @@ class BalothGorgerTest extends BaseCardTest {
 
         Permanent gorger = findGorger(player1);
         assertThat(gorger).isNotNull();
-        assertThat(gorger.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(gorger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Casting with kicker =====
@@ -70,7 +71,7 @@ class BalothGorgerTest extends BaseCardTest {
 
         Permanent gorger = findGorger(player1);
         assertThat(gorger).isNotNull();
-        assertThat(gorger.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(gorger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

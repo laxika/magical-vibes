@@ -104,6 +104,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
@@ -852,7 +853,7 @@ public class PlayerInteractionResolutionService {
             if (sourcePermanentId != null) {
                 Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
                 if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
-                    source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + effect.counterAmount());
+                    source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + effect.counterAmount());
                     String logEntry = sourceName + " gets " + effect.counterAmount()
                             + " +1/+1 counter" + (effect.counterAmount() != 1 ? "s" : "")
                             + " (discarded cards share a card type).";

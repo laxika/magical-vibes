@@ -132,7 +132,7 @@ class TreasureMapTest extends BaseCardTest {
         // Complete the scry (keep card on top)
         gs.handleScryCompleted(gd, player1, List.of(0), List.of());
 
-        assertThat(map.getLandmarkCounters()).isEqualTo(1);
+        assertThat(map.getCounterCount(CounterType.LANDMARK)).isEqualTo(1);
         assertThat(map.isTransformed()).isFalse();
     }
 
@@ -140,7 +140,7 @@ class TreasureMapTest extends BaseCardTest {
     @DisplayName("Second activation adds a second landmark counter")
     void secondActivationAddsSecondCounter() {
         Permanent map = addReadyTreasureMap(player1);
-        map.setLandmarkCounters(1);
+        map.setCounterCount(CounterType.LANDMARK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -149,7 +149,7 @@ class TreasureMapTest extends BaseCardTest {
         // Complete scry
         gs.handleScryCompleted(gd, player1, List.of(0), List.of());
 
-        assertThat(map.getLandmarkCounters()).isEqualTo(2);
+        assertThat(map.getCounterCount(CounterType.LANDMARK)).isEqualTo(2);
         assertThat(map.isTransformed()).isFalse();
     }
 
@@ -159,7 +159,7 @@ class TreasureMapTest extends BaseCardTest {
     @DisplayName("Third landmark counter triggers transform into Treasure Cove and creates 3 Treasure tokens")
     void transformsAtThreeCounters() {
         Permanent map = addReadyTreasureMap(player1);
-        map.setLandmarkCounters(2); // One more needed
+        map.setCounterCount(CounterType.LANDMARK, 2); // One more needed
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -171,7 +171,7 @@ class TreasureMapTest extends BaseCardTest {
         // Should have transformed
         assertThat(map.isTransformed()).isTrue();
         assertThat(map.getCard().getName()).isEqualTo("Treasure Cove");
-        assertThat(map.getLandmarkCounters()).isEqualTo(0);
+        assertThat(map.getCounterCount(CounterType.LANDMARK)).isEqualTo(0);
 
         // Should have created 3 Treasure tokens
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -185,7 +185,7 @@ class TreasureMapTest extends BaseCardTest {
     @DisplayName("Transform does not occur below threshold")
     void noTransformBelowThreshold() {
         Permanent map = addReadyTreasureMap(player1);
-        map.setLandmarkCounters(0);
+        map.setCounterCount(CounterType.LANDMARK, 0);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player1, 0, null, null);
@@ -194,7 +194,7 @@ class TreasureMapTest extends BaseCardTest {
         gs.handleScryCompleted(gd, player1, List.of(0), List.of());
 
         assertThat(map.isTransformed()).isFalse();
-        assertThat(map.getLandmarkCounters()).isEqualTo(1);
+        assertThat(map.getCounterCount(CounterType.LANDMARK)).isEqualTo(1);
     }
 
     // ===== Back face: Treasure Cove =====

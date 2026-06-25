@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class VraskaRelicSeekerTest extends BaseCardTest {
 
@@ -86,7 +87,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Vraska, Relic Seeker"));
         Permanent vraska = findVraska(player1);
-        assertThat(vraska.getLoyaltyCounters()).isEqualTo(6);
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(vraska.isSummoningSick()).isFalse();
     }
 
@@ -100,7 +101,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(vraska.getLoyaltyCounters()).isEqualTo(8); // 6 + 2
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(8); // 6 + 2
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Pirate"))
@@ -122,7 +123,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         // First activation
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(vraska.getLoyaltyCounters()).isEqualTo(8);
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(8);
 
         // Simulate new turn
         vraska.setLoyaltyActivationsThisTurn(0);
@@ -130,7 +131,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         // Second activation
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        assertThat(vraska.getLoyaltyCounters()).isEqualTo(10);
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(10);
 
         long pirateCount = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Pirate"))
@@ -153,7 +154,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(vraska.getLoyaltyCounters()).isEqualTo(3); // 6 - 3
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
 
         // Bear should be destroyed
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -184,7 +185,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, enchantment.getId());
         harness.passBothPriorities();
 
-        assertThat(vraska.getLoyaltyCounters()).isEqualTo(3); // 6 - 3
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
 
         // Enchantment should be destroyed
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -223,7 +224,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, ownBear.getId());
         harness.passBothPriorities();
 
-        assertThat(vraska.getLoyaltyCounters()).isEqualTo(3); // 6 - 3
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
 
         // Own bear should be destroyed
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -241,7 +242,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
     @DisplayName("-10 sets target opponent's life total to 1")
     void minusTenSetsOpponentLifeToOne() {
         Permanent vraska = addReadyVraska(player1);
-        vraska.setLoyaltyCounters(10); // Need at least 10 loyalty
+        vraska.setCounterCount(CounterType.LOYALTY, 10); // Need at least 10 loyalty
 
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
         assertThat(lifeBefore).isEqualTo(GameData.STARTING_LIFE_TOTAL);
@@ -249,7 +250,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(vraska.getLoyaltyCounters()).isEqualTo(0); // 10 - 10
+        assertThat(vraska.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 10 - 10
 
         int lifeAfter = gd.playerLifeTotals.get(player2.getId());
         assertThat(lifeAfter).isEqualTo(1);
@@ -263,7 +264,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
     @DisplayName("-10 can target self")
     void minusTenCanTargetSelf() {
         Permanent vraska = addReadyVraska(player1);
-        vraska.setLoyaltyCounters(10);
+        vraska.setCounterCount(CounterType.LOYALTY, 10);
 
         harness.activateAbility(player1, 0, 2, null, player1.getId());
         harness.passBothPriorities();
@@ -314,7 +315,7 @@ class VraskaRelicSeekerTest extends BaseCardTest {
     private Permanent addReadyVraska(Player player) {
         VraskaRelicSeeker card = new VraskaRelicSeeker();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(6);
+        perm.setCounterCount(CounterType.LOYALTY, 6);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

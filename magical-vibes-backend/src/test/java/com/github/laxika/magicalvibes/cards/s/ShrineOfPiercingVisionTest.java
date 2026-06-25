@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfPiercingVisionTest extends BaseCardTest {
 
@@ -69,7 +70,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.passBothPriorities(); // move to upkeep, trigger fires
         harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -82,7 +83,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(0);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Blue spell cast trigger =====
@@ -103,7 +104,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
 
         // Spell cast trigger should put charge counter on shrine
         harness.passBothPriorities(); // resolve charge counter trigger
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -121,7 +122,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         // No charge counter trigger should fire — resolve Shock
         harness.passBothPriorities();
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(0);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Activated ability: Tap + sacrifice to look at top X =====
@@ -130,7 +131,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     @DisplayName("Sacrificing with charge counters enters hand/top/bottom choice state")
     void sacrificeEntersHandTopBottomChoiceState() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(3);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities(); // resolve ability from stack
@@ -144,7 +145,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     @DisplayName("Choosing a card puts it into hand and rest on bottom")
     void choosingCardPutsInHandRestOnBottom() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(3);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top0 = deck.get(0);
@@ -168,7 +169,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     @DisplayName("Shrine is sacrificed as a cost (goes to graveyard immediately)")
     void shrineIsSacrificedAsCost() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(2);
+        shrine.setCounterCount(CounterType.CHARGE, 2);
 
         harness.activateAbility(player1, 0, null, null);
 
@@ -200,7 +201,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     @DisplayName("Sacrificing with 1 counter auto-puts that card into hand")
     void sacrificeWithOneCounterAutoChooses() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(1);
+        shrine.setCounterCount(CounterType.CHARGE, 1);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card topCard = deck.get(0);
@@ -218,7 +219,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     @DisplayName("Activated ability requires tap — tapped shrine cannot activate")
     void activatedAbilityRequiresTap() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(2);
+        shrine.setCounterCount(CounterType.CHARGE, 2);
         shrine.tap();
 
         org.assertj.core.api.Assertions.assertThatThrownBy(
@@ -230,7 +231,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     @DisplayName("Ability goes on the stack (not a mana ability)")
     void abilityGoesOnStack() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(2);
+        shrine.setCounterCount(CounterType.CHARGE, 2);
 
         int stackSizeBefore = gd.stack.size();
 
@@ -244,7 +245,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     @DisplayName("More charge counters than cards in library uses available cards")
     void moreCountersThanCardsInLibrary() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(100);
+        shrine.setCounterCount(CounterType.CHARGE, 100);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         int deckSize = deck.size();

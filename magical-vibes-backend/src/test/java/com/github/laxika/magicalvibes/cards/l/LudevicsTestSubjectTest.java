@@ -58,7 +58,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
         harness.activateAbility(player1, idx, null, null);
         harness.passBothPriorities();
 
-        assertThat(subject.getHatchlingCounters()).isEqualTo(1);
+        assertThat(subject.getCounterCount(CounterType.HATCHLING)).isEqualTo(1);
     }
 
     @Test
@@ -73,7 +73,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
             harness.passBothPriorities();
         }
 
-        assertThat(subject.getHatchlingCounters()).isEqualTo(4);
+        assertThat(subject.getCounterCount(CounterType.HATCHLING)).isEqualTo(4);
         assertThat(subject.isTransformed()).isFalse();
     }
 
@@ -94,7 +94,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
     @DisplayName("Reaching 5 hatchling counters removes all and transforms into Ludevic's Abomination")
     void transformsAtFiveCounters() {
         Permanent subject = addReadySubject();
-        subject.setHatchlingCounters(4);
+        subject.setCounterCount(CounterType.HATCHLING, 4);
 
         addAbilityMana();
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(subject);
@@ -105,14 +105,14 @@ class LudevicsTestSubjectTest extends BaseCardTest {
         assertThat(subject.isTransformed()).isTrue();
         assertThat(subject.getCard().getName()).isEqualTo("Ludevic's Abomination");
         // Hatchling counters should be removed
-        assertThat(subject.getHatchlingCounters()).isEqualTo(0);
+        assertThat(subject.getCounterCount(CounterType.HATCHLING)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Ludevic's Abomination is 13/13 with trample after transform")
     void abominationHasCorrectStats() {
         Permanent subject = addReadySubject();
-        subject.setHatchlingCounters(4);
+        subject.setCounterCount(CounterType.HATCHLING, 4);
 
         addAbilityMana();
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(subject);
@@ -128,7 +128,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
     @DisplayName("Does not transform at exactly 4 counters (needs 5)")
     void doesNotTransformAtFourCounters() {
         Permanent subject = addReadySubject();
-        subject.setHatchlingCounters(3);
+        subject.setCounterCount(CounterType.HATCHLING, 3);
 
         addAbilityMana();
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(subject);
@@ -136,14 +136,14 @@ class LudevicsTestSubjectTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(subject.isTransformed()).isFalse();
-        assertThat(subject.getHatchlingCounters()).isEqualTo(4);
+        assertThat(subject.getCounterCount(CounterType.HATCHLING)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("Transforms at more than 5 counters (e.g. 5 existing + 1 new = 6)")
     void transformsAtMoreThanFiveCounters() {
         Permanent subject = addReadySubject();
-        subject.setHatchlingCounters(5);
+        subject.setCounterCount(CounterType.HATCHLING, 5);
 
         addAbilityMana();
         int idx = gd.playerBattlefields.get(player1.getId()).indexOf(subject);
@@ -151,7 +151,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(subject.isTransformed()).isTrue();
-        assertThat(subject.getHatchlingCounters()).isEqualTo(0);
+        assertThat(subject.getCounterCount(CounterType.HATCHLING)).isEqualTo(0);
     }
 
     @Test
@@ -170,7 +170,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
         harness.activateAbility(player1, idx, null, null);
         harness.passBothPriorities();
 
-        assertThat(subject.getHatchlingCounters()).isEqualTo(2);
+        assertThat(subject.getCounterCount(CounterType.HATCHLING)).isEqualTo(2);
     }
 
     // ===== Helpers =====

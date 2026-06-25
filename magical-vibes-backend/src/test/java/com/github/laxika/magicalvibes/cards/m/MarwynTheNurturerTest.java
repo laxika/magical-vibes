@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class MarwynTheNurturerTest extends BaseCardTest {
 
@@ -68,7 +69,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new MarwynTheNurturer());
 
         Permanent marwyn = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(marwyn.getPlusOnePlusOneCounters()).isZero();
+        assertThat(marwyn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Cast Llanowar Elves (Elf Druid)
         harness.setHand(player1, List.of(new LlanowarElves()));
@@ -78,7 +79,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (triggers Marwyn)
         harness.passBothPriorities(); // resolve Marwyn's +1/+1 counter triggered ability
 
-        assertThat(marwyn.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(marwyn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, marwyn)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, marwyn)).isEqualTo(2);
     }
@@ -97,7 +98,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(marwyn.getPlusOnePlusOneCounters()).isZero();
+        assertThat(marwyn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -118,7 +119,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(marwyn.getPlusOnePlusOneCounters()).isZero();
+        assertThat(marwyn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -135,7 +136,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve Marwyn's triggered ability
 
-        assertThat(marwyn.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(marwyn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Cast second Elf
         harness.setHand(player1, List.of(new LlanowarElves()));
@@ -144,7 +145,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve Marwyn's triggered ability
 
-        assertThat(marwyn.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(marwyn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, marwyn)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, marwyn)).isEqualTo(3);
     }
@@ -173,7 +174,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         marwyn.setSummoningSick(false);
 
         // Add two +1/+1 counters (simulating two Elf ETBs)
-        marwyn.setPlusOnePlusOneCounters(2);
+        marwyn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -196,7 +197,7 @@ class MarwynTheNurturerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve Marwyn's triggered ability
 
-        assertThat(marwyn.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(marwyn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, marwyn)).isEqualTo(2);
 
         // Tap Marwyn for mana — should produce 2 green (1 base + 1 counter)

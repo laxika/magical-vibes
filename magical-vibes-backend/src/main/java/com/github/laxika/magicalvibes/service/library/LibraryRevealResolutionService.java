@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Resolves library reveal, look-at, and reorder effects during stack resolution.
@@ -1181,7 +1182,7 @@ public class LibraryRevealResolutionService {
                     ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
                     : null;
             if (source != null && !gameQueryService.cantHaveCounters(gameData, source)) {
-                source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + 1);
+                source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
                 gameBroadcastService.logAndBroadcast(gameData,
                         source.getCard().getName() + " gets a +1/+1 counter.");
             }

@@ -69,7 +69,7 @@ class KeldonWarcallerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Saga should now have 1 lore counter
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I ability should be on the stack
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -94,7 +94,7 @@ class KeldonWarcallerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Saga should now have 2 lore counters
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
 
         // Chapter II ability should be on the stack
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -119,7 +119,7 @@ class KeldonWarcallerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Saga should now have 3 lore counters
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
 
         // Chapter III ability should be on the stack
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -171,7 +171,7 @@ class KeldonWarcallerTest extends BaseCardTest {
 
     private Permanent addSagaWithLoreCounters(Player player, int loreCounters) {
         Permanent saga = new Permanent(new HistoryOfBenalia());
-        saga.setLoreCounters(loreCounters);
+        saga.setCounterCount(CounterType.LORE, loreCounters);
         gd.playerBattlefields.get(player.getId()).add(saga);
         return saga;
     }

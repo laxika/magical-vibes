@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class RiverHeraldsBoonTest extends BaseCardTest {
 
@@ -45,8 +46,8 @@ class RiverHeraldsBoonTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
         Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Kumena's Speaker")).findFirst().orElseThrow();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(merfolk.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -62,7 +63,7 @@ class RiverHeraldsBoonTest extends BaseCardTest {
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -78,7 +79,7 @@ class RiverHeraldsBoonTest extends BaseCardTest {
 
         Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Kumena's Speaker")).findFirst().orElseThrow();
-        assertThat(merfolk.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -117,8 +118,8 @@ class RiverHeraldsBoonTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
         Permanent merfolk = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Kumena's Speaker")).findFirst().orElseThrow();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(merfolk.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -141,6 +142,6 @@ class RiverHeraldsBoonTest extends BaseCardTest {
         // First target should still get its counter
         Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().orElseThrow();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

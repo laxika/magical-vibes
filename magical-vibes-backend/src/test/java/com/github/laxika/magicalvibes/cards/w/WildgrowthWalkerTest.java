@@ -54,7 +54,7 @@ class WildgrowthWalkerTest extends BaseCardTest {
         // Explore trigger resolves (no target needed)
         harness.passBothPriorities();
 
-        assertThat(walker.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(walker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 3);
     }
 
@@ -76,7 +76,7 @@ class WildgrowthWalkerTest extends BaseCardTest {
         // Resolve the trigger
         harness.passBothPriorities();
 
-        assertThat(walker.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(walker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 3);
     }
 
@@ -95,7 +95,7 @@ class WildgrowthWalkerTest extends BaseCardTest {
         // Resolve the trigger
         harness.passBothPriorities();
 
-        assertThat(walker.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(walker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 3);
     }
 
@@ -111,7 +111,7 @@ class WildgrowthWalkerTest extends BaseCardTest {
         castExplorerAndResolveExplore();
         harness.passBothPriorities();
 
-        assertThat(walker.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(walker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 3);
 
         // Second explore (land)
@@ -119,7 +119,7 @@ class WildgrowthWalkerTest extends BaseCardTest {
         castExplorerAndResolveExplore();
         harness.passBothPriorities();
 
-        assertThat(walker.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(walker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE + 6);
     }
 
@@ -134,7 +134,7 @@ class WildgrowthWalkerTest extends BaseCardTest {
 
         castExplorerAndResolveExplore();
 
-        assertThat(walker.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(walker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(STARTING_LIFE);
     }
 

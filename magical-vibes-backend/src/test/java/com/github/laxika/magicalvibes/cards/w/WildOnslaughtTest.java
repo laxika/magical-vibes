@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class WildOnslaughtTest extends BaseCardTest {
 
@@ -33,7 +34,7 @@ class WildOnslaughtTest extends BaseCardTest {
 
         assertThat(bears).hasSize(2);
         for (Permanent bear : bears) {
-            assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
     }
 
@@ -57,7 +58,7 @@ class WildOnslaughtTest extends BaseCardTest {
 
         assertThat(bears).hasSize(2);
         for (Permanent bear : bears) {
-            assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(2);
+            assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         }
     }
 
@@ -82,8 +83,8 @@ class WildOnslaughtTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(ownBear.getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(opponentBear.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(ownBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== No creatures =====

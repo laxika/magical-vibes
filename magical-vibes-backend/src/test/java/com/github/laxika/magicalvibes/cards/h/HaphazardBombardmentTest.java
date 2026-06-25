@@ -55,8 +55,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
         castHaphazardBombardment(player1);
 
         // Aim counters should be placed on both opponent creatures
-        assertThat(bears1.getAimCounters()).isEqualTo(1);
-        assertThat(bears2.getAimCounters()).isEqualTo(1);
+        assertThat(bears1.getCounterCount(CounterType.AIM)).isEqualTo(1);
+        assertThat(bears2.getCounterCount(CounterType.AIM)).isEqualTo(1);
     }
 
     @Test
@@ -69,10 +69,10 @@ class HaphazardBombardmentTest extends BaseCardTest {
 
         castHaphazardBombardment(player1);
 
-        assertThat(c1.getAimCounters()).isEqualTo(1);
-        assertThat(c2.getAimCounters()).isEqualTo(1);
-        assertThat(c3.getAimCounters()).isEqualTo(1);
-        assertThat(c4.getAimCounters()).isEqualTo(1);
+        assertThat(c1.getCounterCount(CounterType.AIM)).isEqualTo(1);
+        assertThat(c2.getCounterCount(CounterType.AIM)).isEqualTo(1);
+        assertThat(c3.getCounterCount(CounterType.AIM)).isEqualTo(1);
+        assertThat(c4.getCounterCount(CounterType.AIM)).isEqualTo(1);
     }
 
     @Test
@@ -83,8 +83,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
 
         castHaphazardBombardment(player1);
 
-        assertThat(bears.getAimCounters()).isEqualTo(1);
-        assertThat(enchantment.getAimCounters()).isEqualTo(0);
+        assertThat(bears.getCounterCount(CounterType.AIM)).isEqualTo(1);
+        assertThat(enchantment.getCounterCount(CounterType.AIM)).isEqualTo(0);
     }
 
     @Test
@@ -107,8 +107,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
 
         castHaphazardBombardment(player1);
 
-        assertThat(ownBears.getAimCounters()).isEqualTo(0);
-        assertThat(oppBears.getAimCounters()).isEqualTo(1);
+        assertThat(ownBears.getCounterCount(CounterType.AIM)).isEqualTo(0);
+        assertThat(oppBears.getCounterCount(CounterType.AIM)).isEqualTo(1);
     }
 
     @Test
@@ -118,7 +118,7 @@ class HaphazardBombardmentTest extends BaseCardTest {
 
         castHaphazardBombardment(player1);
 
-        assertThat(land.getAimCounters()).isEqualTo(1);
+        assertThat(land.getCounterCount(CounterType.AIM)).isEqualTo(1);
     }
 
     // ===== End step trigger =====
@@ -128,8 +128,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
     void endStepDestroysOneWhenTwoOrMoreHaveCounters() {
         Permanent bears1 = addCreature(player2, new GrizzlyBears());
         Permanent bears2 = addCreature(player2, new GrizzlyBears());
-        bears1.setAimCounters(1);
-        bears2.setAimCounters(1);
+        bears1.setCounterCount(CounterType.AIM, 1);
+        bears2.setCounterCount(CounterType.AIM, 1);
 
         addBombardmentToBattlefield(player1);
         advanceToEndStep(player1);
@@ -150,7 +150,7 @@ class HaphazardBombardmentTest extends BaseCardTest {
     @DisplayName("End step trigger does not fire when fewer than 2 permanents have aim counters")
     void endStepDoesNotFireWhenFewerThanTwoCounters() {
         Permanent bears = addCreature(player2, new GrizzlyBears());
-        bears.setAimCounters(1);
+        bears.setCounterCount(CounterType.AIM, 1);
 
         addBombardmentToBattlefield(player1);
         advanceToEndStep(player1);
@@ -175,8 +175,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
     void endStepFizzlesIfConditionNoLongerMet() {
         Permanent bears1 = addCreature(player2, new GrizzlyBears());
         Permanent bears2 = addCreature(player2, new GrizzlyBears());
-        bears1.setAimCounters(1);
-        bears2.setAimCounters(1);
+        bears1.setCounterCount(CounterType.AIM, 1);
+        bears2.setCounterCount(CounterType.AIM, 1);
 
         addBombardmentToBattlefield(player1);
         advanceToEndStep(player1);
@@ -198,8 +198,8 @@ class HaphazardBombardmentTest extends BaseCardTest {
     void endStepOnlyFiresOnControllersEndStep() {
         Permanent bears1 = addCreature(player2, new GrizzlyBears());
         Permanent bears2 = addCreature(player2, new GrizzlyBears());
-        bears1.setAimCounters(1);
-        bears2.setAimCounters(1);
+        bears1.setCounterCount(CounterType.AIM, 1);
+        bears2.setCounterCount(CounterType.AIM, 1);
 
         addBombardmentToBattlefield(player1);
 

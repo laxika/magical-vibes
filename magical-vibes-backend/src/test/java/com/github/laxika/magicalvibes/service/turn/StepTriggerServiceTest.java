@@ -65,6 +65,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class StepTriggerServiceTest {
@@ -1254,12 +1255,12 @@ class StepTriggerServiceTest {
         void sagaGetsLoreCounterAtPrecombatMain() {
             Card saga = createSaga("Test Saga");
             Permanent perm = new Permanent(saga);
-            perm.setLoreCounters(1); // already has 1 from ETB
+            perm.setCounterCount(CounterType.LORE, 1); // already has 1 from ETB
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.handlePrecombatMainTriggers(gd);
 
-            assertThat(perm.getLoreCounters()).isEqualTo(2);
+            assertThat(perm.getCounterCount(CounterType.LORE)).isEqualTo(2);
         }
 
         @Test
@@ -1268,7 +1269,7 @@ class StepTriggerServiceTest {
             Card saga = createSaga("Test Saga");
             saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
             Permanent perm = new Permanent(saga);
-            perm.setLoreCounters(1); // chapter II will trigger when counter goes to 2
+            perm.setCounterCount(CounterType.LORE, 1); // chapter II will trigger when counter goes to 2
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.handlePrecombatMainTriggers(gd);
@@ -1285,7 +1286,7 @@ class StepTriggerServiceTest {
             Card saga = createSaga("Test Saga");
             saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
             Permanent perm = new Permanent(saga);
-            perm.setLoreCounters(1);
+            perm.setCounterCount(CounterType.LORE, 1);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.handlePrecombatMainTriggers(gd);
@@ -1299,12 +1300,12 @@ class StepTriggerServiceTest {
             Card saga = createSaga("Opponent Saga");
             saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(3));
             Permanent perm = new Permanent(saga);
-            perm.setLoreCounters(1);
+            perm.setCounterCount(CounterType.LORE, 1);
             gd.playerBattlefields.get(player2Id).add(perm);
 
             sut.handlePrecombatMainTriggers(gd);
 
-            assertThat(perm.getLoreCounters()).isEqualTo(1); // unchanged
+            assertThat(perm.getCounterCount(CounterType.LORE)).isEqualTo(1); // unchanged
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1318,7 +1319,7 @@ class StepTriggerServiceTest {
 
             sut.handlePrecombatMainTriggers(gd);
 
-            assertThat(perm.getLoreCounters()).isZero();
+            assertThat(perm.getCounterCount(CounterType.LORE)).isZero();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1328,20 +1329,20 @@ class StepTriggerServiceTest {
             Card saga1 = createSaga("Saga A");
             saga1.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(1));
             Permanent perm1 = new Permanent(saga1);
-            perm1.setLoreCounters(1);
+            perm1.setCounterCount(CounterType.LORE, 1);
 
             Card saga2 = createSaga("Saga B");
             saga2.addEffect(EffectSlot.SAGA_CHAPTER_III, new GainLifeEffect(2));
             Permanent perm2 = new Permanent(saga2);
-            perm2.setLoreCounters(2);
+            perm2.setCounterCount(CounterType.LORE, 2);
 
             gd.playerBattlefields.get(player1Id).add(perm1);
             gd.playerBattlefields.get(player1Id).add(perm2);
 
             sut.handlePrecombatMainTriggers(gd);
 
-            assertThat(perm1.getLoreCounters()).isEqualTo(2);
-            assertThat(perm2.getLoreCounters()).isEqualTo(3);
+            assertThat(perm1.getCounterCount(CounterType.LORE)).isEqualTo(2);
+            assertThat(perm2.getCounterCount(CounterType.LORE)).isEqualTo(3);
             assertThat(gd.stack).hasSize(2); // both chapters triggered
         }
 
@@ -1352,12 +1353,12 @@ class StepTriggerServiceTest {
             saga.addEffect(EffectSlot.SAGA_CHAPTER_I, new GainLifeEffect(1));
             // no chapter II effects
             Permanent perm = new Permanent(saga);
-            perm.setLoreCounters(1); // will go to 2, but chapter II has no effects
+            perm.setCounterCount(CounterType.LORE, 1); // will go to 2, but chapter II has no effects
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.handlePrecombatMainTriggers(gd);
 
-            assertThat(perm.getLoreCounters()).isEqualTo(2); // counter still incremented
+            assertThat(perm.getCounterCount(CounterType.LORE)).isEqualTo(2); // counter still incremented
             assertThat(gd.stack).isEmpty(); // but no ability triggered
         }
 
@@ -1367,7 +1368,7 @@ class StepTriggerServiceTest {
             Card saga = createSaga("Chainer's Torment");
             saga.addEffect(EffectSlot.SAGA_CHAPTER_II, new GainLifeEffect(2));
             Permanent perm = new Permanent(saga);
-            perm.setLoreCounters(1);
+            perm.setCounterCount(CounterType.LORE, 1);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.handlePrecombatMainTriggers(gd);

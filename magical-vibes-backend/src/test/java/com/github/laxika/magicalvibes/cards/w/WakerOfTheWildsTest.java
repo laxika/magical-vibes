@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class WakerOfTheWildsTest extends BaseCardTest {
 
@@ -71,7 +72,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, land.getId());
         harness.passBothPriorities();
 
-        assertThat(land.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -175,7 +176,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
 
         // Permanent animation and counters should persist
         assertThat(land.isPermanentlyAnimated()).isTrue();
-        assertThat(land.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         GameData gd = harness.getGameData();
         assertThat(gqs.isCreature(gd, land)).isTrue();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(2);
@@ -194,7 +195,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
 
         // Land is animated as 0/0 with no counters — will die to SBA
         assertThat(land.isPermanentlyAnimated()).isTrue();
-        assertThat(land.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -207,7 +208,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, land.getId());
         harness.passBothPriorities();
 
-        assertThat(land.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Activate again with X=2
         harness.addMana(player1, ManaColor.GREEN, 4); // {2}{G}{G} → X=2
@@ -215,7 +216,7 @@ class WakerOfTheWildsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should have 1 + 2 = 3 counters total
-        assertThat(land.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(land.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         GameData gd = harness.getGameData();
         assertThat(gqs.getEffectivePower(gd, land)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, land)).isEqualTo(3);

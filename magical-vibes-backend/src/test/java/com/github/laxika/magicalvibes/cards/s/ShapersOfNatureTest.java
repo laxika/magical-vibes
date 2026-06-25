@@ -66,7 +66,7 @@ class ShapersOfNatureTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -83,7 +83,7 @@ class ShapersOfNatureTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -108,7 +108,7 @@ class ShapersOfNatureTest extends BaseCardTest {
     @DisplayName("Ability 1 auto-removes counter when only one creature has +1/+1 counters and draws a card")
     void ability1AutoRemovesCounterAndDraws() {
         Permanent shapers = addReadyShapers(player1);
-        shapers.setPlusOnePlusOneCounters(2);
+        shapers.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -120,7 +120,7 @@ class ShapersOfNatureTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(shapers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(shapers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
@@ -129,7 +129,7 @@ class ShapersOfNatureTest extends BaseCardTest {
     void ability1CanRemoveCounterFromOtherCreature() {
         Permanent shapers = addReadyShapers(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -140,16 +140,16 @@ class ShapersOfNatureTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Ability 1 prompts for choice when multiple creatures have +1/+1 counters")
     void ability1PromptsWhenMultipleCreaturesHaveCounters() {
         Permanent shapers = addReadyShapers(player1);
-        shapers.setPlusOnePlusOneCounters(1);
+        shapers.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -165,9 +165,9 @@ class ShapersOfNatureTest extends BaseCardTest {
     @DisplayName("Ability 1 resolves after choosing creature when prompted")
     void ability1ResolvesAfterChoosingCreature() {
         Permanent shapers = addReadyShapers(player1);
-        shapers.setPlusOnePlusOneCounters(1);
+        shapers.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -180,8 +180,8 @@ class ShapersOfNatureTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(0);
-        assertThat(shapers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(shapers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 
@@ -205,7 +205,7 @@ class ShapersOfNatureTest extends BaseCardTest {
     @DisplayName("Ability 1 cannot be activated without enough mana")
     void ability1RequiresMana() {
         Permanent shapers = addReadyShapers(player1);
-        shapers.setPlusOnePlusOneCounters(1);
+        shapers.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -232,7 +232,7 @@ class ShapersOfNatureTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, shapers.getId());
         harness.passBothPriorities();
 
-        assertThat(shapers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(shapers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Use ability 1 to remove the counter and draw a card
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -242,7 +242,7 @@ class ShapersOfNatureTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(shapers.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(shapers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 

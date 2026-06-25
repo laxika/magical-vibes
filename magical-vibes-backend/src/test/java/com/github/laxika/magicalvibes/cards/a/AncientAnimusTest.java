@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class AncientAnimusTest extends BaseCardTest {
 
@@ -39,7 +40,7 @@ class AncientAnimusTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Mirri, Cat Warrior");
 
         Permanent mirri = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(mirri.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(mirri.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -62,7 +63,7 @@ class AncientAnimusTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Grizzly Bears");
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPlusOnePlusOneCounters()).isZero();
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test

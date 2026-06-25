@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GeralfsMindcrusherTest extends BaseCardTest {
 
@@ -145,7 +146,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
 
         Permanent mindcrusher = mindcrusherOnBattlefield();
         assertThat(mindcrusher).isNotNull();
-        assertThat(mindcrusher.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(mindcrusher.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(mindcrusher.getEffectivePower()).isEqualTo(6);
     }
 
@@ -179,7 +180,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
     @DisplayName("Undying does not return Geralf's Mindcrusher when it died with a +1/+1 counter")
     void undyingDoesNotReturnWithCounter() {
         Permanent mindcrusher = harness.addToBattlefieldAndReturn(player1, new GeralfsMindcrusher());
-        mindcrusher.setPlusOnePlusOneCounters(1); // now 6/6
+        mindcrusher.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // now 6/6
         harness.setHand(player1, List.of(new LightningBolt(), new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 2);
 

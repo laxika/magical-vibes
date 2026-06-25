@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GrimgrinCorpseBornTest extends BaseCardTest {
 
@@ -99,7 +100,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
         assertThat(grimgrin.isTapped()).isFalse();
 
         // Grimgrin should have a +1/+1 counter
-        assertThat(grimgrin.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(grimgrin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -130,14 +131,14 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
                 .stream().filter(p -> p.getCard().getName().equals("Grizzly Bears")).findFirst().get().getId());
         harness.passBothPriorities();
 
-        assertThat(grimgrin.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(grimgrin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Tap again for second activation
         grimgrin.tap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(grimgrin.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(grimgrin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -152,7 +153,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should still get the counter even when already untapped
-        assertThat(grimgrin.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(grimgrin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Attack trigger: destroy target creature and add counter =====
@@ -192,7 +193,7 @@ class GrimgrinCorpseBornTest extends BaseCardTest {
                 .noneMatch(p -> p.getId().equals(opponentCreature.getId()));
 
         // Grimgrin should have a +1/+1 counter
-        assertThat(grimgrin.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(grimgrin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

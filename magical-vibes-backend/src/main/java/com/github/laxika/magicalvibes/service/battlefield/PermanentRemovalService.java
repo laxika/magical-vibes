@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Handles removing permanents from the battlefield and moving them to their destination zones
@@ -477,7 +478,7 @@ public class PermanentRemovalService {
      */
     private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID ownerId) {
         if (!dyingPermanent.hasKeyword(Keyword.UNDYING)) return;
-        if (dyingPermanent.getPlusOnePlusOneCounters() > 0) return;
+        if (dyingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) return;
 
         Card dyingCard = dyingPermanent.getOriginalCard();
         gameData.stack.add(new StackEntry(

@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class PhyrexianCrusaderTest extends BaseCardTest {
 
@@ -400,7 +401,7 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         Permanent survivingBlocker = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Sengir Vampire"))
                 .findFirst().orElseThrow();
-        assertThat(survivingBlocker.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(survivingBlocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     // ===== First strike - kills blocker before it deals damage =====

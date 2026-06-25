@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class PhylacteryLichTest extends BaseCardTest {
 
@@ -57,7 +58,7 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent artifact = gqs.findPermanentById(gd, artifactId);
-        assertThat(artifact.getPhylacteryCounters()).isEqualTo(1);
+        assertThat(artifact.getCounterCount(CounterType.PHYLACTERY)).isEqualTo(1);
 
         // Lich should be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -69,7 +70,7 @@ class PhylacteryLichTest extends BaseCardTest {
     void phylacteryCounterDoesNotInterfereWithChargeCounters() {
         harness.addToBattlefield(player1, new TheHive());
         Permanent artifact = gd.playerBattlefields.get(player1.getId()).getFirst();
-        artifact.setChargeCounters(3);
+        artifact.setCounterCount(CounterType.CHARGE, 3);
 
         harness.setHand(player1, List.of(new PhylacteryLich()));
         harness.addMana(player1, ManaColor.BLACK, 3);
@@ -79,8 +80,8 @@ class PhylacteryLichTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent updatedArtifact = gqs.findPermanentById(gd, artifactId);
-        assertThat(updatedArtifact.getPhylacteryCounters()).isEqualTo(1);
-        assertThat(updatedArtifact.getChargeCounters()).isEqualTo(3);
+        assertThat(updatedArtifact.getCounterCount(CounterType.PHYLACTERY)).isEqualTo(1);
+        assertThat(updatedArtifact.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== Choice restriction (does not target) =====
@@ -98,7 +99,7 @@ class PhylacteryLichTest extends BaseCardTest {
 
         // Counter should NOT be placed on opponent's artifact
         Permanent artifact = gqs.findPermanentById(gd, opponentArtifactId);
-        assertThat(artifact.getPhylacteryCounters()).isEqualTo(0);
+        assertThat(artifact.getCounterCount(CounterType.PHYLACTERY)).isEqualTo(0);
 
         // State trigger is on the stack — Lich is still alive
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
@@ -134,7 +135,7 @@ class PhylacteryLichTest extends BaseCardTest {
 
         // Counter should NOT be placed on a non-artifact
         Permanent perm = gqs.findPermanentById(gd, creatureId);
-        assertThat(perm.getPhylacteryCounters()).isEqualTo(0);
+        assertThat(perm.getCounterCount(CounterType.PHYLACTERY)).isEqualTo(0);
 
         // Lich should be in graveyard
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -201,7 +202,7 @@ class PhylacteryLichTest extends BaseCardTest {
         // Verify setup
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
-        assertThat(gqs.findPermanentById(gd, artifactId).getPhylacteryCounters()).isEqualTo(1);
+        assertThat(gqs.findPermanentById(gd, artifactId).getCounterCount(CounterType.PHYLACTERY)).isEqualTo(1);
 
         // Opponent casts Shatter to destroy the artifact
         harness.setHand(player2, List.of(new Shatter()));
@@ -236,7 +237,7 @@ class PhylacteryLichTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Phylactery Lich"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("The Hive"));
-        assertThat(gqs.findPermanentById(gd, artifactId).getPhylacteryCounters()).isEqualTo(1);
+        assertThat(gqs.findPermanentById(gd, artifactId).getCounterCount(CounterType.PHYLACTERY)).isEqualTo(1);
 
         // No state trigger should fire
         assertThat(gd.stack).isEmpty();
@@ -257,7 +258,7 @@ class PhylacteryLichTest extends BaseCardTest {
         Permanent secondPerm = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Second Artifact"))
                 .findFirst().orElseThrow();
-        secondPerm.setPhylacteryCounters(1);
+        secondPerm.setCounterCount(CounterType.PHYLACTERY, 1);
 
         // Cast Lich choosing the first artifact
         harness.setHand(player1, List.of(new PhylacteryLich()));

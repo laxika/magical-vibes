@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Component
@@ -100,10 +101,10 @@ public class DamagePreventionService {
                 .findFirst().orElse(null);
         if (damage > 0 && preventRemoveEffect != null) {
             int countersToRemove = preventRemoveEffect.removeOneOnly()
-                    ? Math.min(1, permanent.getPlusOnePlusOneCounters())
-                    : Math.min(damage, permanent.getPlusOnePlusOneCounters());
+                    ? Math.min(1, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                    : Math.min(damage, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE));
             if (countersToRemove > 0 && !gameQueryService.cantHaveCounters(gameData, permanent)) {
-                permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - countersToRemove);
+                permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - countersToRemove);
                 registerDelayedRegrowth(gameData, permanent, countersToRemove);
             }
             // Prevention only applies if damage is preventable
@@ -123,7 +124,7 @@ public class DamagePreventionService {
             if (damage > 0 && permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof PreventDamageAndAddMinusCountersEffect)) {
                 if (!gameQueryService.cantHaveCounters(gameData, permanent)) {
-                    permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() + damage);
+                    permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + damage);
                 }
                 return 0;
             }

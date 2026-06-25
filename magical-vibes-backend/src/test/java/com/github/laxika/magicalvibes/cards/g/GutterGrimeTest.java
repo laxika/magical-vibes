@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GutterGrimeTest extends BaseCardTest {
 
@@ -65,7 +66,7 @@ class GutterGrimeTest extends BaseCardTest {
                     .filter(p -> p.getCard().getName().equals("Gutter Grime"))
                     .findFirst().orElse(null);
             assertThat(grime).isNotNull();
-            assertThat(grime.getSlimeCounters()).isEqualTo(1);
+            assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(1);
 
             // One Ooze token should exist
             List<Permanent> oozes = gd.playerBattlefields.get(player1.getId()).stream()
@@ -113,7 +114,7 @@ class GutterGrimeTest extends BaseCardTest {
                     .filter(p -> p.getCard().getName().equals("Gutter Grime"))
                     .findFirst().orElse(null);
             assertThat(grime).isNotNull();
-            assertThat(grime.getSlimeCounters()).isEqualTo(2);
+            assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(2);
 
             // Two Ooze tokens should exist
             List<Permanent> oozes = gd.playerBattlefields.get(player1.getId()).stream()
@@ -165,7 +166,7 @@ class GutterGrimeTest extends BaseCardTest {
                     .filter(p -> p.getCard().getName().equals("Gutter Grime"))
                     .findFirst().orElse(null);
             assertThat(grime).isNotNull();
-            assertThat(grime.getSlimeCounters()).isEqualTo(0);
+            assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(0);
         }
 
         @Test
@@ -188,7 +189,7 @@ class GutterGrimeTest extends BaseCardTest {
                     .filter(p -> p.getCard().getName().equals("Gutter Grime"))
                     .findFirst().orElse(null);
             assertThat(grime).isNotNull();
-            assertThat(grime.getSlimeCounters()).isEqualTo(0);
+            assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(0);
         }
 
         @Test

@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TravelPreparationsTest extends BaseCardTest {
 
@@ -60,7 +61,7 @@ class TravelPreparationsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Casting normally — two targets =====
@@ -82,8 +83,8 @@ class TravelPreparationsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         bf = gd.playerBattlefields.get(player1.getId());
-        assertThat(bf.get(0).getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(bf.get(1).getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bf.get(0).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bf.get(1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Can target opponent's creatures =====
@@ -101,7 +102,7 @@ class TravelPreparationsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player2.getId()).getFirst();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Goes to graveyard after resolving =====
@@ -138,7 +139,7 @@ class TravelPreparationsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -158,8 +159,8 @@ class TravelPreparationsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         bf = gd.playerBattlefields.get(player1.getId());
-        assertThat(bf.get(0).getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(bf.get(1).getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bf.get(0).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bf.get(1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

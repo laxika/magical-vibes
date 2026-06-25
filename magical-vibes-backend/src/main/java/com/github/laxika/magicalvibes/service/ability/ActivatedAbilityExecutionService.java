@@ -211,7 +211,7 @@ public class ActivatedAbilityExecutionService {
                 || e instanceof DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect
                 || e instanceof CreateTokensEqualToChargeCountersOnSourceEffect
                 || e instanceof LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect)) {
-            effectiveXValue = permanent.getChargeCounters();
+            effectiveXValue = permanent.getCounterCount(CounterType.CHARGE);
         }
 
         // Per CR 602.2a the ability goes on the stack during announcement, then CR 601.2h
@@ -456,7 +456,7 @@ public class ActivatedAbilityExecutionService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
             } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                int count = permanent.getChargeCounters();
+                int count = permanent.getCounterCount(CounterType.CHARGE);
                 if (count > 0) {
                     gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, count);
                     String logEntry = player.getUsername() + " adds " + count + " {C} from " + permanent.getCard().getName() + ".";
@@ -569,7 +569,7 @@ public class ActivatedAbilityExecutionService {
                     total += 1;
                 }
             } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                total += permanent.getChargeCounters();
+                total += permanent.getCounterCount(CounterType.CHARGE);
             } else if (effect instanceof AwardManaEqualToSourcePowerEffect) {
                 total += gameQueryService.getEffectivePower(gameData, permanent);
             } else if (effect instanceof DoubleManaPoolEffect) {

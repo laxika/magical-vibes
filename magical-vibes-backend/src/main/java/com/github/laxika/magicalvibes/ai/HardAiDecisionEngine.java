@@ -79,6 +79,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Hard difficulty AI that uses Information Set Monte Carlo Tree Search (IS-MCTS)
@@ -2006,7 +2007,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         // For negative loyalty costs, check sufficient loyalty counters
         int loyaltyCost = ability.getLoyaltyCost();
-        if (loyaltyCost < 0 && permanent.getLoyaltyCounters() < Math.abs(loyaltyCost)) return false;
+        if (loyaltyCost < 0 && permanent.getCounterCount(CounterType.LOYALTY) < Math.abs(loyaltyCost)) return false;
 
         return true;
     }
@@ -2073,11 +2074,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 int life = gameData.getLife(aiPlayer.getId());
                 if (life <= lifeCost.amount()) return false;
             } else if (effect instanceof RemoveChargeCountersFromSourceCost counterCost) {
-                if (permanent.getChargeCounters() < counterCost.count()) return false;
+                if (permanent.getCounterCount(CounterType.CHARGE) < counterCost.count()) return false;
             } else if (effect instanceof RemoveCounterFromSourceCost counterCost) {
                 int available = switch (counterCost.counterType()) {
-                    case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
-                    case CHARGE -> permanent.getChargeCounters();
+                    case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+                    case CHARGE -> permanent.getCounterCount(CounterType.CHARGE);
                     default -> 0;
                 };
                 if (available < counterCost.count()) return false;
@@ -2099,7 +2100,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // Loyalty cost: losing counters makes the planeswalker more vulnerable
         if (ability.getLoyaltyCost() != null && ability.getLoyaltyCost() < 0) {
             int loyaltyLost = Math.abs(ability.getLoyaltyCost());
-            int loyaltyRemaining = permanent.getLoyaltyCounters() - loyaltyLost;
+            int loyaltyRemaining = permanent.getCounterCount(CounterType.LOYALTY) - loyaltyLost;
             // Base cost: each loyalty counter lost is worth ~1.5
             cost += loyaltyLost * 1.5;
             // Extra penalty if the planeswalker would be left at very low loyalty

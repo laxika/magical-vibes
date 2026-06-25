@@ -62,6 +62,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class StackResolutionServiceTest {
@@ -365,7 +366,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getPlusOnePlusOneCounters()).isEqualTo(3);
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         }
 
         @Test
@@ -379,7 +380,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getWishCounters()).isEqualTo(2);
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.WISH)).isEqualTo(2);
         }
 
         @Test
@@ -396,7 +397,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getPlusOnePlusOneCounters()).isZero();
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         }
 
         @Test
@@ -411,7 +412,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getWishCounters()).isZero();
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.WISH)).isZero();
         }
 
         @Test
@@ -546,7 +547,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getLoreCounters()).isEqualTo(1);
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.LORE)).isEqualTo(1);
         }
 
         @Test
@@ -581,7 +582,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getLoreCounters()).isZero();
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.LORE)).isZero();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -654,7 +655,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getChargeCounters()).isEqualTo(5);
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.CHARGE)).isEqualTo(5);
         }
 
         @Test
@@ -670,7 +671,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getChargeCounters()).isEqualTo(3);
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.CHARGE)).isEqualTo(3);
         }
 
         @Test
@@ -686,7 +687,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getPlusOnePlusOneCounters()).isEqualTo(4);
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         }
 
         @Test
@@ -702,7 +703,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getWishCounters()).isEqualTo(3);
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.WISH)).isEqualTo(3);
         }
 
         @Test
@@ -719,7 +720,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getChargeCounters()).isZero();
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.CHARGE)).isZero();
         }
 
         @Test
@@ -736,7 +737,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getChargeCounters()).isZero();
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.CHARGE)).isZero();
         }
 
         @Test
@@ -753,7 +754,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getPlusOnePlusOneCounters()).isZero();
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         }
 
         @Test
@@ -770,7 +771,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getWishCounters()).isZero();
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.WISH)).isZero();
         }
 
         @Test
@@ -819,7 +820,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getLoyaltyCounters()).isEqualTo(4);
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         }
 
         @Test
@@ -850,7 +851,7 @@ class StackResolutionServiceTest {
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
                     eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getLoyaltyCounters()).isZero();
+            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.LOYALTY)).isZero();
             // SBA would destroy the 0-loyalty planeswalker in production
             verify(stateBasedActionService).performStateBasedActions(gd);
         }

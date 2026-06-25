@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class LuxCannonTest extends BaseCardTest {
 
@@ -51,7 +52,7 @@ class LuxCannonTest extends BaseCardTest {
         Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Lux Cannon"))
                 .findFirst().orElseThrow();
-        assertThat(cannon.getChargeCounters()).isEqualTo(1);
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -75,7 +76,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(cannon.getChargeCounters()).isEqualTo(3);
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== Second ability: destroy target permanent =====
@@ -89,7 +90,7 @@ class LuxCannonTest extends BaseCardTest {
         Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Lux Cannon"))
                 .findFirst().orElseThrow();
-        cannon.setChargeCounters(3);
+        cannon.setCounterCount(CounterType.CHARGE, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
         int cannonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
@@ -97,7 +98,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Charge counters are removed
-        assertThat(cannon.getChargeCounters()).isEqualTo(0);
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // Target is destroyed
         harness.assertNotOnBattlefield(player2, "Lux Cannon");
@@ -113,7 +114,7 @@ class LuxCannonTest extends BaseCardTest {
         Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Lux Cannon"))
                 .findFirst().orElseThrow();
-        cannon.setChargeCounters(2);
+        cannon.setCounterCount(CounterType.CHARGE, 2);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
         int cannonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
@@ -130,14 +131,14 @@ class LuxCannonTest extends BaseCardTest {
         Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Lux Cannon"))
                 .findFirst().orElseThrow();
-        cannon.setChargeCounters(5);
+        cannon.setCounterCount(CounterType.CHARGE, 5);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
         int cannonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
         harness.activateAbility(player1, cannonIndex, 1, null, targetId);
         harness.passBothPriorities();
 
-        assertThat(cannon.getChargeCounters()).isEqualTo(2);
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     @Test
@@ -149,7 +150,7 @@ class LuxCannonTest extends BaseCardTest {
         Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Lux Cannon"))
                 .findFirst().orElseThrow();
-        cannon.setChargeCounters(3);
+        cannon.setCounterCount(CounterType.CHARGE, 3);
 
         UUID targetId = harness.getPermanentId(player2, "Lux Cannon");
         int cannonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);
@@ -161,7 +162,7 @@ class LuxCannonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Counters are still removed (cost is paid on activation)
-        assertThat(cannon.getChargeCounters()).isEqualTo(0);
+        assertThat(cannon.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // Ability fizzles
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
@@ -177,7 +178,7 @@ class LuxCannonTest extends BaseCardTest {
         Permanent cannon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Lux Cannon"))
                 .findFirst().orElseThrow();
-        cannon.setChargeCounters(3);
+        cannon.setCounterCount(CounterType.CHARGE, 3);
 
         // Use first ability (tap to add counter)
         int cannonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(cannon);

@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class JadeGuardianTest extends BaseCardTest {
 
@@ -42,7 +43,7 @@ class JadeGuardianTest extends BaseCardTest {
             Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getId().equals(merfolkId))
                     .findFirst().orElseThrow();
-            assertThat(merfolk.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test

@@ -80,7 +80,7 @@ class SettleTheScoreTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
 
         // Planeswalker gained 2 loyalty
-        assertThat(planeswalker.getLoyaltyCounters()).isEqualTo(5);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
     }
 
     @Test
@@ -112,7 +112,7 @@ class SettleTheScoreTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Opponent's planeswalker should NOT gain loyalty counters
-        assertThat(oppPlaneswalker.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(oppPlaneswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     // ===== Helpers =====
@@ -128,7 +128,7 @@ class SettleTheScoreTest extends BaseCardTest {
     private Permanent addReadyPlaneswalker(Player player, int loyalty) {
         GarrukWildspeaker card = new GarrukWildspeaker();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(loyalty);
+        perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

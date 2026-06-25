@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TorporOrbTest extends BaseCardTest {
 
@@ -118,7 +119,7 @@ class TorporOrbTest extends BaseCardTest {
 
         // Surge Node is on the battlefield with 6 charge counters
         assertThat(gd.playerBattlefields.get(player1.getId()))
-                .anyMatch(p -> p.getCard().getName().equals("Surge Node") && p.getChargeCounters() == 6);
+                .anyMatch(p -> p.getCard().getName().equals("Surge Node") && p.getCounterCount(CounterType.CHARGE) == 6);
     }
 
     // ===== Without Torpor Orb, triggers work normally =====

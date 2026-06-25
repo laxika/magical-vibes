@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class LumberknotTest extends BaseCardTest {
 
@@ -46,7 +47,7 @@ class LumberknotTest extends BaseCardTest {
         Permanent lumberknot = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Lumberknot"))
                 .findFirst().orElseThrow();
-        assertThat(lumberknot.getPlusOnePlusOneCounters()).isZero();
+        assertThat(lumberknot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill ally creature with Shock
         harness.forceActivePlayer(player2);
@@ -60,7 +61,7 @@ class LumberknotTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
         harness.passBothPriorities(); // Resolve Lumberknot's +1/+1 counter trigger
 
-        assertThat(lumberknot.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(lumberknot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, lumberknot)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, lumberknot)).isEqualTo(2);
     }
@@ -72,7 +73,7 @@ class LumberknotTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         Permanent lumberknot = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(lumberknot.getPlusOnePlusOneCounters()).isZero();
+        assertThat(lumberknot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill opponent's creature with Shock
         harness.setHand(player1, List.of(new Shock()));
@@ -83,7 +84,7 @@ class LumberknotTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
         harness.passBothPriorities(); // Resolve Lumberknot's +1/+1 counter trigger
 
-        assertThat(lumberknot.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(lumberknot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -103,7 +104,7 @@ class LumberknotTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
         harness.passBothPriorities(); // Resolve Lumberknot's trigger
 
-        assertThat(lumberknot.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(lumberknot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Add and kill second creature
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -115,7 +116,7 @@ class LumberknotTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
         harness.passBothPriorities(); // Resolve Lumberknot's trigger
 
-        assertThat(lumberknot.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(lumberknot.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, lumberknot)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, lumberknot)).isEqualTo(3);
     }

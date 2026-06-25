@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SkinrenderTest extends BaseCardTest {
 
@@ -73,7 +74,7 @@ class SkinrenderTest extends BaseCardTest {
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Air Elemental"))
                 .findFirst().orElseThrow();
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(3);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         assertThat(target.getEffectivePower()).isEqualTo(1);
         assertThat(target.getEffectiveToughness()).isEqualTo(1);
     }

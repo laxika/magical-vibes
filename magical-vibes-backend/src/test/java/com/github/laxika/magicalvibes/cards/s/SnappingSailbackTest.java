@@ -59,7 +59,7 @@ class SnappingSailbackTest extends BaseCardTest {
         Permanent sailback = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
                 .findFirst().orElseThrow();
-        assertThat(sailback.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Combat damage trigger =====
@@ -95,7 +95,7 @@ class SnappingSailbackTest extends BaseCardTest {
         Permanent sailbackAfter = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
                 .findFirst().orElseThrow();
-        assertThat(sailbackAfter.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(sailbackAfter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Fugitive Wizard should die (1/1 takes 4 damage)
         harness.assertInGraveyard(player1, "Fugitive Wizard");
@@ -120,7 +120,7 @@ class SnappingSailbackTest extends BaseCardTest {
         Permanent sailback = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
                 .findFirst().orElseThrow();
-        assertThat(sailback.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Second Shock — 2 more damage (now 5/5 with counter, takes 2 + 2 = 4 damage total, non-lethal)
         harness.setHand(player1, List.of(new Shock()));
@@ -138,7 +138,7 @@ class SnappingSailbackTest extends BaseCardTest {
         Permanent sailbackAfter = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
                 .findFirst().orElseThrow();
-        assertThat(sailbackAfter.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(sailbackAfter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== No damage, no trigger =====
@@ -157,7 +157,7 @@ class SnappingSailbackTest extends BaseCardTest {
         Permanent sailback = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Snapping Sailback"))
                 .findFirst().orElseThrow();
-        assertThat(sailback.getPlusOnePlusOneCounters()).isZero();
+        assertThat(sailback.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     // ===== Lethal damage — no counter if creature dies =====

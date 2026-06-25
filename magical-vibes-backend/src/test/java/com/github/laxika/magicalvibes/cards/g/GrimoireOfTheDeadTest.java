@@ -96,7 +96,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         // Resolve the ability
         harness.passBothPriorities();
 
-        assertThat(grimoire.getStudyCounters()).isEqualTo(1);
+        assertThat(grimoire.getCounterCount(CounterType.STUDY)).isEqualTo(1);
     }
 
     @Test
@@ -109,7 +109,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
-        assertThat(grimoire.getStudyCounters()).isEqualTo(1);
+        assertThat(grimoire.getCounterCount(CounterType.STUDY)).isEqualTo(1);
 
         // Untap for next activation
         grimoire.untap();
@@ -119,7 +119,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleCardChosen(player1, 0);
         harness.passBothPriorities();
-        assertThat(grimoire.getStudyCounters()).isEqualTo(2);
+        assertThat(grimoire.getCounterCount(CounterType.STUDY)).isEqualTo(2);
     }
 
     @Test
@@ -150,7 +150,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     @DisplayName("Ability 2 returns all creature cards from all graveyards to battlefield")
     void ability2ReturnsAllCreaturesFromAllGraveyards() {
         Permanent grimoire = addReadyGrimoire();
-        grimoire.setStudyCounters(3);
+        grimoire.setCounterCount(CounterType.STUDY, 3);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
 
@@ -175,7 +175,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     @DisplayName("Ability 2 sacrifices Grimoire as cost")
     void ability2SacrificesGrimoire() {
         Permanent grimoire = addReadyGrimoire();
-        grimoire.setStudyCounters(3);
+        grimoire.setCounterCount(CounterType.STUDY, 3);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -190,7 +190,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     @DisplayName("Returned creatures gain Zombie subtype in addition to their other types")
     void returnedCreaturesGainZombieSubtype() {
         Permanent grimoire = addReadyGrimoire();
-        grimoire.setStudyCounters(3);
+        grimoire.setCounterCount(CounterType.STUDY, 3);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -210,7 +210,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     @DisplayName("Returned creatures gain black color in addition to their other colors")
     void returnedCreaturesGainBlackColor() {
         Permanent grimoire = addReadyGrimoire();
-        grimoire.setStudyCounters(3);
+        grimoire.setCounterCount(CounterType.STUDY, 3);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         harness.activateAbility(player1, 0, 1, null, null);
@@ -230,7 +230,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     @DisplayName("Cannot activate ability 2 without three study counters")
     void ability2RequiresThreeStudyCounters() {
         Permanent grimoire = addReadyGrimoire();
-        grimoire.setStudyCounters(2);
+        grimoire.setCounterCount(CounterType.STUDY, 2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -241,7 +241,7 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
     @DisplayName("Study counters are removed as cost for ability 2")
     void ability2RemovesStudyCounters() {
         Permanent grimoire = addReadyGrimoire();
-        grimoire.setStudyCounters(3);
+        grimoire.setCounterCount(CounterType.STUDY, 3);
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         // After activation the permanent is sacrificed, so counters are gone with it

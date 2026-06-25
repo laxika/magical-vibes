@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
@@ -450,7 +451,7 @@ public class CardSpecificResolutionService {
 
         // Handle planeswalkers
         if (foundCard.hasType(CardType.PLANESWALKER) && foundCard.getLoyalty() != null) {
-            perm.setLoyaltyCounters(foundCard.getLoyalty());
+            perm.setCounterCount(CounterType.LOYALTY, foundCard.getLoyalty());
             perm.setSummoningSick(false);
         }
 
@@ -546,7 +547,7 @@ public class CardSpecificResolutionService {
 
         // Handle planeswalkers
         if (foundCard.hasType(CardType.PLANESWALKER) && foundCard.getLoyalty() != null) {
-            perm.setLoyaltyCounters(foundCard.getLoyalty());
+            perm.setCounterCount(CounterType.LOYALTY, foundCard.getLoyalty());
             perm.setSummoningSick(false);
         }
 
@@ -640,7 +641,7 @@ public class CardSpecificResolutionService {
 
             // Handle planeswalkers (e.g. artifact creatures that are also planeswalkers)
             if (creatureCard.hasType(CardType.PLANESWALKER) && creatureCard.getLoyalty() != null) {
-                perm.setLoyaltyCounters(creatureCard.getLoyalty());
+                perm.setCounterCount(CounterType.LOYALTY, creatureCard.getLoyalty());
                 perm.setSummoningSick(false);
             }
         }
@@ -749,7 +750,7 @@ public class CardSpecificResolutionService {
             }
 
             if (foundCard.hasType(CardType.PLANESWALKER) && foundCard.getLoyalty() != null) {
-                perm.setLoyaltyCounters(foundCard.getLoyalty());
+                perm.setCounterCount(CounterType.LOYALTY, foundCard.getLoyalty());
                 perm.setSummoningSick(false);
             }
         } else {

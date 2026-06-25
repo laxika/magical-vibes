@@ -20,6 +20,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HuatliWarriorPoetTest extends BaseCardTest {
 
@@ -100,7 +101,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Huatli, Warrior Poet"));
         Permanent huatli = bf.stream().filter(p -> p.getCard().getName().equals("Huatli, Warrior Poet")).findFirst().orElseThrow();
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(huatli.isSummoningSick()).isFalse();
     }
 
@@ -126,7 +127,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(5); // 3 + 2
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 3 + 2
         int lifeAfter = gd.playerLifeTotals.get(player1.getId());
         assertThat(lifeAfter).isEqualTo(lifeBefore + 4); // greatest power is 4
     }
@@ -142,7 +143,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(5); // 3 + 2
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 3 + 2
         int lifeAfter = gd.playerLifeTotals.get(player1.getId());
         assertThat(lifeAfter).isEqualTo(lifeBefore); // no creatures = no life gain
     }
@@ -179,7 +180,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(3); // 3 + 0
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 3 + 0
 
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Dinosaur"))
@@ -209,7 +210,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(1); // 3 - 2
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(1); // 3 - 2
 
         // Both bears should still be alive (1 damage to 2/2) but can't block
         assertThat(bear1.isCantBlockThisTurn()).isTrue();
@@ -232,7 +233,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(0); // 3 - 3
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 3 - 3
         // Huatli should be in graveyard too (0 loyalty)
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Huatli, Warrior Poet"));
@@ -292,7 +293,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
     private Permanent addReadyHuatli(Player player) {
         HuatliWarriorPoet card = new HuatliWarriorPoet();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

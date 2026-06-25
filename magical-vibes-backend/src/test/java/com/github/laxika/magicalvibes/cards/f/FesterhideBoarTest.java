@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class FesterhideBoarTest extends BaseCardTest {
 
@@ -60,7 +61,7 @@ class FesterhideBoarTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // No +1/+1 counters without morbid
-        assertThat(boar.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         // Stack should be empty (no ETB trigger placed since morbid not met)
         assertThat(gd.stack).isEmpty();
     }
@@ -88,7 +89,7 @@ class FesterhideBoarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Festerhide Boar"))
                 .findFirst().orElseThrow();
 
-        assertThat(boar.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(boar.getEffectivePower()).isEqualTo(5);
         assertThat(boar.getEffectiveToughness()).isEqualTo(5);
     }
@@ -125,7 +126,7 @@ class FesterhideBoarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Festerhide Boar"))
                 .findFirst().orElseThrow();
 
-        assertThat(boar.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(boar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(boar.getEffectivePower()).isEqualTo(5);
         assertThat(boar.getEffectiveToughness()).isEqualTo(5);
     }

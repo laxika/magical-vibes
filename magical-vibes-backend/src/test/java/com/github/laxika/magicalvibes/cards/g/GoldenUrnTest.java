@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GoldenUrnTest extends BaseCardTest {
 
@@ -54,7 +55,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
-        assertThat(urn.getChargeCounters()).isEqualTo(1);
+        assertThat(urn.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -69,7 +70,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(urn.getChargeCounters()).isEqualTo(0);
+        assertThat(urn.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
@@ -85,7 +86,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
-        assertThat(urn.getChargeCounters()).isEqualTo(1);
+        assertThat(urn.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Second upkeep - add counter
         harness.forceActivePlayer(player1);
@@ -95,7 +96,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
-        assertThat(urn.getChargeCounters()).isEqualTo(2);
+        assertThat(urn.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Activated ability: Tap and sacrifice to gain life =====
@@ -104,7 +105,7 @@ class GoldenUrnTest extends BaseCardTest {
     @DisplayName("Sacrificing Golden Urn gains life equal to charge counters")
     void sacrificeSelfGainsLifeEqualToChargeCounters() {
         Permanent urn = addReadyUrn(player1);
-        urn.setChargeCounters(3);
+        urn.setCounterCount(CounterType.CHARGE, 3);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
 
@@ -164,7 +165,7 @@ class GoldenUrnTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // inner resolves inline
 
-        assertThat(urn.getChargeCounters()).isEqualTo(1);
+        assertThat(urn.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Untap for activation
         urn.untap();
@@ -180,7 +181,7 @@ class GoldenUrnTest extends BaseCardTest {
     @DisplayName("Golden Urn goes to graveyard immediately on sacrifice")
     void goldenUrnGoesToGraveyardOnSacrifice() {
         Permanent urn = addReadyUrn(player1);
-        urn.setChargeCounters(2);
+        urn.setCounterCount(CounterType.CHARGE, 2);
 
         harness.activateAbility(player1, 0, null, null);
 

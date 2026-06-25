@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
@@ -128,8 +129,8 @@ public class PermanentControlResolutionService {
         }
 
         // Put a slime counter on the source
-        source.setSlimeCounters(source.getSlimeCounters() + 1);
-        int slimeCount = source.getSlimeCounters();
+        source.setCounterCount(CounterType.SLIME, source.getCounterCount(CounterType.SLIME) + 1);
+        int slimeCount = source.getCounterCount(CounterType.SLIME);
 
         String counterLog = source.getCard().getName() + " gets a slime counter (" + slimeCount + " total).";
         gameBroadcastService.logAndBroadcast(gameData, counterLog);
@@ -1234,7 +1235,7 @@ public class PermanentControlResolutionService {
 
             // Planeswalker tokens enter with loyalty counters and no summoning sickness
             if (tokenCard.getType() == CardType.PLANESWALKER) {
-                tokenPermanent.setLoyaltyCounters(tokenCard.getLoyalty() != null ? tokenCard.getLoyalty() : 0);
+                tokenPermanent.setCounterCount(CounterType.LOYALTY, tokenCard.getLoyalty() != null ? tokenCard.getLoyalty() : 0);
                 tokenPermanent.setSummoningSick(false);
             }
 

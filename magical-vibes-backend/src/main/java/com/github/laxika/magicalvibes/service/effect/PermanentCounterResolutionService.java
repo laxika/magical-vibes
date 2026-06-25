@@ -74,7 +74,7 @@ public class PermanentCounterResolutionService {
             if (gameQueryService.cantHaveCounters(gameData, p)) return;
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) return;
 
-            p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + xValue);
+            p.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + xValue);
             count[0]++;
         });
 
@@ -110,7 +110,7 @@ public class PermanentCounterResolutionService {
             if (gameQueryService.cantHaveCounters(gameData, p)) return;
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) return;
 
-            p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
+            p.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
             count[0]++;
         });
 
@@ -131,7 +131,7 @@ public class PermanentCounterResolutionService {
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;
 
-            p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
+            p.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
             count++;
         }
 
@@ -150,7 +150,7 @@ public class PermanentCounterResolutionService {
             if (gameQueryService.cantHaveCounters(gameData, p)) return;
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) return;
 
-            p.setMinusOneMinusOneCounters(p.getMinusOneMinusOneCounters() + 1);
+            p.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
             count[0]++;
         });
 
@@ -176,10 +176,10 @@ public class PermanentCounterResolutionService {
 
         String counterLabel = String.format("%+d/%+d", effect.powerModifier(), effect.toughnessModifier());
         if (effect.powerModifier() > 0) {
-            source.setPlusOnePlusOneCounters(source.getPlusOnePlusOneCounters() + effect.amount());
+            source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + effect.amount());
         } else {
             if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, source)) return;
-            source.setMinusOneMinusOneCounters(source.getMinusOneMinusOneCounters() + effect.amount());
+            source.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, source.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + effect.amount());
         }
         String logEntry = source.getCard().getName() + " gets " + effect.amount() + " " + counterLabel + " counter(s).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -200,11 +200,11 @@ public class PermanentCounterResolutionService {
             return;
         }
 
-        self.setChargeCounters(self.getChargeCounters() + 1);
+        self.setCounterCount(CounterType.CHARGE, self.getCounterCount(CounterType.CHARGE) + 1);
 
-        String logEntry = self.getCard().getName() + " gets a charge counter (" + self.getChargeCounters() + " total).";
+        String logEntry = self.getCard().getName() + " gets a charge counter (" + self.getCounterCount(CounterType.CHARGE) + " total).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gets a charge counter ({} total)", gameData.id, self.getCard().getName(), self.getChargeCounters());
+        log.info("Game {} - {} gets a charge counter ({} total)", gameData.id, self.getCard().getName(), self.getCounterCount(CounterType.CHARGE));
     }
 
     @HandlesEffect(PutCounterOnSelfEffect.class)
@@ -220,15 +220,15 @@ public class PermanentCounterResolutionService {
         }
 
         String counterName = switch (effect.counterType()) {
-            case CHARGE -> { self.setChargeCounters(self.getChargeCounters() + 1); yield "charge"; }
-            case HATCHLING -> { self.setHatchlingCounters(self.getHatchlingCounters() + 1); yield "hatchling"; }
-            case SLIME -> { self.setSlimeCounters(self.getSlimeCounters() + 1); yield "slime"; }
-            case STUDY -> { self.setStudyCounters(self.getStudyCounters() + 1); yield "study"; }
-            case WISH -> { self.setWishCounters(self.getWishCounters() + 1); yield "wish"; }
-            case PLUS_ONE_PLUS_ONE -> { self.setPlusOnePlusOneCounters(self.getPlusOnePlusOneCounters() + 1); yield "+1/+1"; }
+            case CHARGE -> { self.setCounterCount(CounterType.CHARGE, self.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
+            case HATCHLING -> { self.setCounterCount(CounterType.HATCHLING, self.getCounterCount(CounterType.HATCHLING) + 1); yield "hatchling"; }
+            case SLIME -> { self.setCounterCount(CounterType.SLIME, self.getCounterCount(CounterType.SLIME) + 1); yield "slime"; }
+            case STUDY -> { self.setCounterCount(CounterType.STUDY, self.getCounterCount(CounterType.STUDY) + 1); yield "study"; }
+            case WISH -> { self.setCounterCount(CounterType.WISH, self.getCounterCount(CounterType.WISH) + 1); yield "wish"; }
+            case PLUS_ONE_PLUS_ONE -> { self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, self.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1); yield "+1/+1"; }
             case MINUS_ONE_MINUS_ONE -> {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, self)) { yield null; }
-                self.setMinusOneMinusOneCounters(self.getMinusOneMinusOneCounters() + 1);
+                self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, self.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
                 yield "-1/-1";
             }
             default -> throw new IllegalStateException("Unsupported counter type for PutCounterOnSelfEffect: " + effect.counterType());
@@ -266,16 +266,16 @@ public class PermanentCounterResolutionService {
 
         // Put the counter
         String counterName = switch (effect.counterType()) {
-            case CHARGE -> { self.setChargeCounters(self.getChargeCounters() + 1); yield "charge"; }
-            case HATCHLING -> { self.setHatchlingCounters(self.getHatchlingCounters() + 1); yield "hatchling"; }
-            case LANDMARK -> { self.setLandmarkCounters(self.getLandmarkCounters() + 1); yield "landmark"; }
-            case SLIME -> { self.setSlimeCounters(self.getSlimeCounters() + 1); yield "slime"; }
-            case STUDY -> { self.setStudyCounters(self.getStudyCounters() + 1); yield "study"; }
-            case WISH -> { self.setWishCounters(self.getWishCounters() + 1); yield "wish"; }
-            case PLUS_ONE_PLUS_ONE -> { self.setPlusOnePlusOneCounters(self.getPlusOnePlusOneCounters() + 1); yield "+1/+1"; }
+            case CHARGE -> { self.setCounterCount(CounterType.CHARGE, self.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
+            case HATCHLING -> { self.setCounterCount(CounterType.HATCHLING, self.getCounterCount(CounterType.HATCHLING) + 1); yield "hatchling"; }
+            case LANDMARK -> { self.setCounterCount(CounterType.LANDMARK, self.getCounterCount(CounterType.LANDMARK) + 1); yield "landmark"; }
+            case SLIME -> { self.setCounterCount(CounterType.SLIME, self.getCounterCount(CounterType.SLIME) + 1); yield "slime"; }
+            case STUDY -> { self.setCounterCount(CounterType.STUDY, self.getCounterCount(CounterType.STUDY) + 1); yield "study"; }
+            case WISH -> { self.setCounterCount(CounterType.WISH, self.getCounterCount(CounterType.WISH) + 1); yield "wish"; }
+            case PLUS_ONE_PLUS_ONE -> { self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, self.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1); yield "+1/+1"; }
             case MINUS_ONE_MINUS_ONE -> {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, self)) { yield null; }
-                self.setMinusOneMinusOneCounters(self.getMinusOneMinusOneCounters() + 1);
+                self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, self.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
                 yield "-1/-1";
             }
             default -> throw new IllegalStateException("Unsupported counter type: " + effect.counterType());
@@ -288,14 +288,14 @@ public class PermanentCounterResolutionService {
 
         // Check threshold and transform if met
         int currentCount = switch (effect.counterType()) {
-            case CHARGE -> self.getChargeCounters();
-            case HATCHLING -> self.getHatchlingCounters();
-            case LANDMARK -> self.getLandmarkCounters();
-            case SLIME -> self.getSlimeCounters();
-            case STUDY -> self.getStudyCounters();
-            case WISH -> self.getWishCounters();
-            case PLUS_ONE_PLUS_ONE -> self.getPlusOnePlusOneCounters();
-            case MINUS_ONE_MINUS_ONE -> self.getMinusOneMinusOneCounters();
+            case CHARGE -> self.getCounterCount(CounterType.CHARGE);
+            case HATCHLING -> self.getCounterCount(CounterType.HATCHLING);
+            case LANDMARK -> self.getCounterCount(CounterType.LANDMARK);
+            case SLIME -> self.getCounterCount(CounterType.SLIME);
+            case STUDY -> self.getCounterCount(CounterType.STUDY);
+            case WISH -> self.getCounterCount(CounterType.WISH);
+            case PLUS_ONE_PLUS_ONE -> self.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+            case MINUS_ONE_MINUS_ONE -> self.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
             default -> 0;
         };
 
@@ -350,14 +350,14 @@ public class PermanentCounterResolutionService {
     private void removeCountersAndTransform(GameData gameData, Permanent self, CounterType counterType, String counterName) {
         // Remove all counters of that type
         switch (counterType) {
-            case CHARGE -> self.setChargeCounters(0);
-            case HATCHLING -> self.setHatchlingCounters(0);
-            case LANDMARK -> self.setLandmarkCounters(0);
-            case SLIME -> self.setSlimeCounters(0);
-            case STUDY -> self.setStudyCounters(0);
-            case WISH -> self.setWishCounters(0);
-            case PLUS_ONE_PLUS_ONE -> self.setPlusOnePlusOneCounters(0);
-            case MINUS_ONE_MINUS_ONE -> self.setMinusOneMinusOneCounters(0);
+            case CHARGE -> self.setCounterCount(CounterType.CHARGE, 0);
+            case HATCHLING -> self.setCounterCount(CounterType.HATCHLING, 0);
+            case LANDMARK -> self.setCounterCount(CounterType.LANDMARK, 0);
+            case SLIME -> self.setCounterCount(CounterType.SLIME, 0);
+            case STUDY -> self.setCounterCount(CounterType.STUDY, 0);
+            case WISH -> self.setCounterCount(CounterType.WISH, 0);
+            case PLUS_ONE_PLUS_ONE -> self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+            case MINUS_ONE_MINUS_ONE -> self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         }
 
@@ -415,7 +415,7 @@ public class PermanentCounterResolutionService {
 
     private void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga) {
         Card card = saga.getCard();
-        int loreCount = saga.getLoreCounters();
+        int loreCount = saga.getCounterCount(CounterType.LORE);
 
         EffectSlot chapterSlot = switch (loreCount) {
             case 1 -> EffectSlot.SAGA_CHAPTER_I;
@@ -461,11 +461,11 @@ public class PermanentCounterResolutionService {
             return;
         }
 
-        target.setPhylacteryCounters(target.getPhylacteryCounters() + 1);
+        target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + 1);
 
-        String logEntry = target.getCard().getName() + " gets a phylactery counter (" + target.getPhylacteryCounters() + " total).";
+        String logEntry = target.getCard().getName() + " gets a phylactery counter (" + target.getCounterCount(CounterType.PHYLACTERY) + " total).";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gets a phylactery counter ({} total)", gameData.id, target.getCard().getName(), target.getPhylacteryCounters());
+        log.info("Game {} - {} gets a phylactery counter ({} total)", gameData.id, target.getCard().getName(), target.getCounterCount(CounterType.PHYLACTERY));
     }
 
     @HandlesEffect(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class)
@@ -485,7 +485,7 @@ public class PermanentCounterResolutionService {
         }
 
         int count = effect.count();
-        target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + count);
+        target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + count);
 
         String counterText = count == 1 ? "a -1/-1 counter" : count + " -1/-1 counters";
         String logEntry = target.getCard().getName() + " gets " + counterText + ".";
@@ -513,12 +513,12 @@ public class PermanentCounterResolutionService {
             return;
         }
 
-        int toRemove = Math.min(effect.maxCount(), target.getChargeCounters());
+        int toRemove = Math.min(effect.maxCount(), target.getCounterCount(CounterType.CHARGE));
         if (toRemove > 0) {
-            target.setChargeCounters(target.getChargeCounters() - toRemove);
-            String logEntry = toRemove + " charge counter(s) removed from " + target.getCard().getName() + " (" + target.getChargeCounters() + " remaining).";
+            target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) - toRemove);
+            String logEntry = toRemove + " charge counter(s) removed from " + target.getCard().getName() + " (" + target.getCounterCount(CounterType.CHARGE) + " remaining).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} charge counter(s) removed from {} ({} remaining)", gameData.id, toRemove, target.getCard().getName(), target.getChargeCounters());
+            log.info("Game {} - {} charge counter(s) removed from {} ({} remaining)", gameData.id, toRemove, target.getCard().getName(), target.getCounterCount(CounterType.CHARGE));
         }
     }
 
@@ -536,65 +536,65 @@ public class PermanentCounterResolutionService {
         // Order: +1/+1, charge, loyalty, -1/-1, awakening
         int remaining = maxToRemove;
 
-        if (remaining > 0 && target.getPlusOnePlusOneCounters() > 0) {
-            int remove = Math.min(remaining, target.getPlusOnePlusOneCounters());
-            target.setPlusOnePlusOneCounters(target.getPlusOnePlusOneCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE));
+            target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - remove);
             totalRemoved += remove;
             remaining -= remove;
         }
 
-        if (remaining > 0 && target.getChargeCounters() > 0) {
-            int remove = Math.min(remaining, target.getChargeCounters());
-            target.setChargeCounters(target.getChargeCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.CHARGE) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.CHARGE));
+            target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) - remove);
             totalRemoved += remove;
             remaining -= remove;
         }
 
-        if (remaining > 0 && target.getLoyaltyCounters() > 0) {
-            int remove = Math.min(remaining, target.getLoyaltyCounters());
-            target.setLoyaltyCounters(target.getLoyaltyCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.LOYALTY) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.LOYALTY));
+            target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) - remove);
             totalRemoved += remove;
             remaining -= remove;
         }
 
-        if (remaining > 0 && target.getPhylacteryCounters() > 0) {
-            int remove = Math.min(remaining, target.getPhylacteryCounters());
-            target.setPhylacteryCounters(target.getPhylacteryCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.PHYLACTERY) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.PHYLACTERY));
+            target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) - remove);
             totalRemoved += remove;
             remaining -= remove;
         }
 
-        if (remaining > 0 && target.getSlimeCounters() > 0) {
-            int remove = Math.min(remaining, target.getSlimeCounters());
-            target.setSlimeCounters(target.getSlimeCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.SLIME) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.SLIME));
+            target.setCounterCount(CounterType.SLIME, target.getCounterCount(CounterType.SLIME) - remove);
             totalRemoved += remove;
             remaining -= remove;
         }
 
-        if (remaining > 0 && target.getHatchlingCounters() > 0) {
-            int remove = Math.min(remaining, target.getHatchlingCounters());
-            target.setHatchlingCounters(target.getHatchlingCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.HATCHLING) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.HATCHLING));
+            target.setCounterCount(CounterType.HATCHLING, target.getCounterCount(CounterType.HATCHLING) - remove);
             totalRemoved += remove;
             remaining -= remove;
         }
 
-        if (remaining > 0 && target.getStudyCounters() > 0) {
-            int remove = Math.min(remaining, target.getStudyCounters());
-            target.setStudyCounters(target.getStudyCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.STUDY) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.STUDY));
+            target.setCounterCount(CounterType.STUDY, target.getCounterCount(CounterType.STUDY) - remove);
             totalRemoved += remove;
             remaining -= remove;
         }
 
-        if (remaining > 0 && target.getMinusOneMinusOneCounters() > 0) {
-            int remove = Math.min(remaining, target.getMinusOneMinusOneCounters());
-            target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE));
+            target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - remove);
             totalRemoved += remove;
             remaining -= remove;
         }
 
-        if (remaining > 0 && target.getAwakeningCounters() > 0) {
-            int remove = Math.min(remaining, target.getAwakeningCounters());
-            target.setAwakeningCounters(target.getAwakeningCounters() - remove);
+        if (remaining > 0 && target.getCounterCount(CounterType.AWAKENING) > 0) {
+            int remove = Math.min(remaining, target.getCounterCount(CounterType.AWAKENING));
+            target.setCounterCount(CounterType.AWAKENING, target.getCounterCount(CounterType.AWAKENING) - remove);
             totalRemoved += remove;
         }
 
@@ -634,7 +634,7 @@ public class PermanentCounterResolutionService {
         }
 
         int count = effect.count();
-        creature.setMinusOneMinusOneCounters(creature.getMinusOneMinusOneCounters() + count);
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + count);
 
         String counterText = count == 1 ? "a -1/-1 counter" : count + " -1/-1 counters";
         String logEntry = creature.getCard().getName() + " gets " + counterText + " from " + entry.getCard().getName() + ".";
@@ -656,7 +656,7 @@ public class PermanentCounterResolutionService {
         }
 
         int count = effect.count();
-        creature.setPlusOnePlusOneCounters(creature.getPlusOnePlusOneCounters() + count);
+        creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
 
         String counterText = count == 1 ? "a +1/+1 counter" : count + " +1/+1 counters";
         String logEntry = creature.getCard().getName() + " gets " + counterText + " from " + entry.getCard().getName() + ".";
@@ -757,7 +757,7 @@ public class PermanentCounterResolutionService {
     }
 
     private void applyPlusOnePlusOneCounters(GameData gameData, StackEntry entry, Permanent target, int counters) {
-        target.setPlusOnePlusOneCounters(target.getPlusOnePlusOneCounters() + counters);
+        target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
         String logEntry = target.getCard().getName() + " gets " + counterText + ".";
@@ -810,8 +810,8 @@ public class PermanentCounterResolutionService {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !gameQueryService.cantHaveCounters(gameData, perm)) {
                 switch (counterType) {
-                    case AIM -> perm.setAimCounters(perm.getAimCounters() + 1);
-                    case CHARGE -> perm.setChargeCounters(perm.getChargeCounters() + 1);
+                    case AIM -> perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + 1);
+                    case CHARGE -> perm.setCounterCount(CounterType.CHARGE, perm.getCounterCount(CounterType.CHARGE) + 1);
                     default -> throw new IllegalArgumentException("Unsupported counter type for placement: " + counterType);
                 }
                 names.add(perm.getCard().getName());
@@ -835,12 +835,12 @@ public class PermanentCounterResolutionService {
         // Collect all permanents with counters (any player's battlefield)
         List<UUID> eligiblePermanentIds = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            if (p.getPlusOnePlusOneCounters() > 0
-                    || p.getMinusOneMinusOneCounters() > 0
-                    || p.getLoyaltyCounters() > 0
-                    || p.getSlimeCounters() > 0
-                    || p.getHatchlingCounters() > 0
-                    || p.getAimCounters() > 0) {
+            if (p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
+                    || p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
+                    || p.getCounterCount(CounterType.LOYALTY) > 0
+                    || p.getCounterCount(CounterType.SLIME) > 0
+                    || p.getCounterCount(CounterType.HATCHLING) > 0
+                    || p.getCounterCount(CounterType.AIM) > 0) {
                 eligiblePermanentIds.add(p.getId());
             }
         });
@@ -874,7 +874,7 @@ public class PermanentCounterResolutionService {
             if (!gameQueryService.isCreature(gameData, p)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
 
-            p.setPlusOnePlusOneCounters(p.getPlusOnePlusOneCounters() + countersPerCreature);
+            p.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + countersPerCreature);
             creatureCount++;
         }
 
@@ -896,7 +896,7 @@ public class PermanentCounterResolutionService {
             if (!gameQueryService.matchesPermanentPredicate(p, effect.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
 
-            p.setPlusOnePlusOneCounters(p.getPlusOnePlusOneCounters() + 1);
+            p.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
             count++;
         }
 
@@ -997,21 +997,21 @@ public class PermanentCounterResolutionService {
         if (gameQueryService.cantHaveCounters(gameData, target)) return;
 
         String counterName = switch (counterType) {
-            case CHARGE -> { for (int i = 0; i < count; i++) target.setChargeCounters(target.getChargeCounters() + 1); yield "charge"; }
-            case LORE -> { for (int i = 0; i < count; i++) target.setLoreCounters(target.getLoreCounters() + 1); yield "lore"; }
-            case LOYALTY -> { target.setLoyaltyCounters(target.getLoyaltyCounters() + count); yield "loyalty"; }
-            case PLUS_ONE_PLUS_ONE -> { target.setPlusOnePlusOneCounters(target.getPlusOnePlusOneCounters() + count); yield "+1/+1"; }
+            case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
+            case LORE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.LORE, target.getCounterCount(CounterType.LORE) + 1); yield "lore"; }
+            case LOYALTY -> { target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) + count); yield "loyalty"; }
+            case PLUS_ONE_PLUS_ONE -> { target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count); yield "+1/+1"; }
             case MINUS_ONE_MINUS_ONE -> {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
-                target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + count);
+                target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + count);
                 yield "-1/-1";
             }
-            case HATCHLING -> { target.setHatchlingCounters(target.getHatchlingCounters() + count); yield "hatchling"; }
-            case STUDY -> { target.setStudyCounters(target.getStudyCounters() + count); yield "study"; }
-            case WISH -> { target.setWishCounters(target.getWishCounters() + count); yield "wish"; }
-            case SLIME -> { target.setSlimeCounters(target.getSlimeCounters() + count); yield "slime"; }
-            case AIM -> { target.setAimCounters(target.getAimCounters() + count); yield "aim"; }
-            case EYEBALL -> { target.setEyeballCounters(target.getEyeballCounters() + count); yield "eyeball"; }
+            case HATCHLING -> { target.setCounterCount(CounterType.HATCHLING, target.getCounterCount(CounterType.HATCHLING) + count); yield "hatchling"; }
+            case STUDY -> { target.setCounterCount(CounterType.STUDY, target.getCounterCount(CounterType.STUDY) + count); yield "study"; }
+            case WISH -> { target.setCounterCount(CounterType.WISH, target.getCounterCount(CounterType.WISH) + count); yield "wish"; }
+            case SLIME -> { target.setCounterCount(CounterType.SLIME, target.getCounterCount(CounterType.SLIME) + count); yield "slime"; }
+            case AIM -> { target.setCounterCount(CounterType.AIM, target.getCounterCount(CounterType.AIM) + count); yield "aim"; }
+            case EYEBALL -> { target.setCounterCount(CounterType.EYEBALL, target.getCounterCount(CounterType.EYEBALL) + count); yield "eyeball"; }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
         if (counterName == null) return;

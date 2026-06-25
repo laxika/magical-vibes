@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TumbleMagnetTest extends BaseCardTest {
 
@@ -72,7 +73,7 @@ class TumbleMagnetTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent magnet = findMagnet(player1);
-        assertThat(magnet.getChargeCounters()).isEqualTo(3);
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== Activating ability: targeting creatures =====
@@ -125,7 +126,7 @@ class TumbleMagnetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(magnet.getChargeCounters()).isEqualTo(2);
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Activating ability: targeting artifacts =====
@@ -179,7 +180,7 @@ class TumbleMagnetTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(magnet.getChargeCounters()).isEqualTo(0);
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
         assertThat(target.isTapped()).isTrue();
     }
 
@@ -187,7 +188,7 @@ class TumbleMagnetTest extends BaseCardTest {
     @DisplayName("Cannot activate with 0 charge counters")
     void cannotActivateWithNoCounters() {
         Permanent magnet = addReadyMagnet(player1);
-        magnet.setChargeCounters(0);
+        magnet.setCounterCount(CounterType.CHARGE, 0);
         Permanent target = addReadyCreature(player2);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, target.getId()))
@@ -248,7 +249,7 @@ class TumbleMagnetTest extends BaseCardTest {
         TumbleMagnet card = new TumbleMagnet();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        perm.setChargeCounters(3);
+        perm.setCounterCount(CounterType.CHARGE, 3);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

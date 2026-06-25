@@ -48,6 +48,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
@@ -162,7 +163,7 @@ public class StackResolutionService {
         boolean hasXPlusOneCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithXPlusOnePlusOneCountersEffect);
         if (hasXPlusOneCounterEffect && !cantHaveCounters) {
-            perm.setPlusOnePlusOneCounters(entry.getXValue());
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, entry.getXValue());
         }
 
         // "If kicked, enters with N +1/+1 counters" — replacement effect (MTG Rule 614.1c)
@@ -172,7 +173,7 @@ public class StackResolutionService {
                     .map(e -> ((EnterWithPlusOnePlusOneCountersIfKickedEffect) e).count())
                     .findFirst().orElse(0);
             if (kickedCounters > 0) {
-                perm.setPlusOnePlusOneCounters(perm.getPlusOnePlusOneCounters() + kickedCounters);
+                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + kickedCounters);
             }
         }
 
@@ -183,7 +184,7 @@ public class StackResolutionService {
                     .map(e -> ((EnterWithPlusOnePlusOneCountersIfRaidEffect) e).count())
                     .findFirst().orElse(0);
             if (raidCounters > 0) {
-                perm.setPlusOnePlusOneCounters(perm.getPlusOnePlusOneCounters() + raidCounters);
+                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + raidCounters);
             }
         }
 
@@ -193,7 +194,7 @@ public class StackResolutionService {
                 .map(e -> ((EnterWithFixedWishCountersEffect) e).count())
                 .findFirst().orElse(0);
         if (fixedWishCountersCreature > 0 && !cantHaveCounters) {
-            perm.setWishCounters(fixedWishCountersCreature);
+            perm.setCounterCount(CounterType.WISH, fixedWishCountersCreature);
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
@@ -212,11 +213,11 @@ public class StackResolutionService {
                 .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersIfKickedEffect);
         boolean hasRaidCounterEffect = gameData.playersDeclaredAttackersThisTurn.contains(controllerId) && enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersIfRaidEffect);
-        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect || hasDeathCounterEffect || hasKickedCounterEffect || hasRaidCounterEffect) && perm.getPlusOnePlusOneCounters() > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getPlusOnePlusOneCounters() + " +1/+1 counters under " + playerName + "'s control.";
+        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect || hasDeathCounterEffect || hasKickedCounterEffect || hasRaidCounterEffect) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else if (perm.getWishCounters() > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getWishCounters() + " wish counters under " + playerName + "'s control.";
+        } else if (perm.getCounterCount(CounterType.WISH) > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.WISH) + " wish counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
             logEnterBattlefield(gameData, enteredCard, controllerId);
@@ -314,7 +315,7 @@ public class StackResolutionService {
 
             // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
             if (card.isSaga()) {
-                enchPerm.setLoreCounters(1);
+                enchPerm.setCounterCount(CounterType.LORE, 1);
                 String counterLog = card.getName() + " gets a lore counter (1).";
                 gameBroadcastService.logAndBroadcast(gameData, counterLog);
                 log.info("Game {} - {} enters with lore counter 1", gameData.id, card.getName());
@@ -379,14 +380,14 @@ public class StackResolutionService {
         boolean hasXChargeCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithXChargeCountersEffect);
         if (hasXChargeCounterEffect && !cantHaveCounters) {
-            perm.setChargeCounters(entry.getXValue());
+            perm.setCounterCount(CounterType.CHARGE, entry.getXValue());
         }
 
         // "Enters with X +1/+1 counters" — replacement effect (MTG Rule 614.1c)
         boolean hasXPlusOneCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
                 .anyMatch(e -> e instanceof EnterWithXPlusOnePlusOneCountersEffect);
         if (hasXPlusOneCounterEffect && !cantHaveCounters) {
-            perm.setPlusOnePlusOneCounters(entry.getXValue());
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, entry.getXValue());
         }
 
         // "Enters with N charge counters" — replacement effect for fixed count (MTG Rule 614.1c)
@@ -395,7 +396,7 @@ public class StackResolutionService {
                 .map(e -> ((EnterWithFixedChargeCountersEffect) e).count())
                 .findFirst().orElse(0);
         if (fixedChargeCounters > 0 && !cantHaveCounters) {
-            perm.setChargeCounters(fixedChargeCounters);
+            perm.setCounterCount(CounterType.CHARGE, fixedChargeCounters);
         }
 
         // "Enters with N wish counters" — replacement effect for fixed count (MTG Rule 614.1c)
@@ -404,7 +405,7 @@ public class StackResolutionService {
                 .map(e -> ((EnterWithFixedWishCountersEffect) e).count())
                 .findFirst().orElse(0);
         if (fixedWishCounters > 0 && !cantHaveCounters) {
-            perm.setWishCounters(fixedWishCounters);
+            perm.setCounterCount(CounterType.WISH, fixedWishCounters);
         }
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
@@ -415,14 +416,14 @@ public class StackResolutionService {
         Card enteredCard = perm.getCard();
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        if (perm.getChargeCounters() > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getChargeCounters() + " charge counters under " + playerName + "'s control.";
+        if (perm.getCounterCount(CounterType.CHARGE) > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.CHARGE) + " charge counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else if (perm.getPlusOnePlusOneCounters() > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getPlusOnePlusOneCounters() + " +1/+1 counters under " + playerName + "'s control.";
+        } else if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        } else if (perm.getWishCounters() > 0) {
-            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getWishCounters() + " wish counters under " + playerName + "'s control.";
+        } else if (perm.getCounterCount(CounterType.WISH) > 0) {
+            String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.WISH) + " wish counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
             String logEntry = enteredCard.getName() + " enters the battlefield under " + playerName + "'s control.";
@@ -453,12 +454,12 @@ public class StackResolutionService {
         UUID controllerId = entry.getControllerId();
 
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(card.getLoyalty() != null ? card.getLoyalty() : 0);
+        perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty() != null ? card.getLoyalty() : 0);
         perm.setSummoningSick(false);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = card.getName() + " enters the battlefield with " + perm.getLoyaltyCounters() + " loyalty under " + playerName + "'s control.";
+        String logEntry = card.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.LOYALTY) + " loyalty under " + playerName + "'s control.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} resolves, enters battlefield for {}", gameData.id, card.getName(), playerName);
@@ -578,7 +579,7 @@ public class StackResolutionService {
         if (!gameQueryService.isArtifact(gameData, target)) return;
         if (gameQueryService.cantHaveCounters(gameData, target)) return;
 
-        target.setPhylacteryCounters(target.getPhylacteryCounters() + 1);
+        target.setCounterCount(CounterType.PHYLACTERY, target.getCounterCount(CounterType.PHYLACTERY) + 1);
         String logEntry = card.getName() + " puts a phylactery counter on " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts a phylactery counter on {}", gameData.id, card.getName(), target.getCard().getName());

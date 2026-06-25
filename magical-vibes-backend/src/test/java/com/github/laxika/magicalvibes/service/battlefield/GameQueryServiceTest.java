@@ -95,6 +95,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class GameQueryServiceTest {
@@ -548,7 +549,7 @@ class GameQueryServiceTest {
         @DisplayName("returns true for permanent with awakening counters")
         void returnsTrueForAwakened() {
             Permanent perm = addPermanent(player1Id, createLand("Forest"));
-            perm.setAwakeningCounters(1);
+            perm.setCounterCount(CounterType.AWAKENING, 1);
 
             assertThat(gqs.isCreature(gd, perm)).isTrue();
         }
@@ -933,7 +934,7 @@ class GameQueryServiceTest {
         @DisplayName("includes +1/+1 counters")
         void includesPlusCounters() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setPlusOnePlusOneCounters(2);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(4);
             assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(4);
@@ -943,7 +944,7 @@ class GameQueryServiceTest {
         @DisplayName("includes -1/-1 counters")
         void includesMinusCounters() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setMinusOneMinusOneCounters(1);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
 
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(1);
             assertThat(gqs.getEffectiveToughness(gd, perm)).isEqualTo(1);
@@ -986,7 +987,7 @@ class GameQueryServiceTest {
         @DisplayName("clamps to 0 when power is negative (CR 510.1a)")
         void clampsNegativePowerToZero() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setMinusOneMinusOneCounters(5);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 5);
 
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(-3);
             assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(0);
@@ -1011,7 +1012,7 @@ class GameQueryServiceTest {
         @DisplayName("clamps to 0 when power is negative")
         void clampsNegativePowerToZero() {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            perm.setMinusOneMinusOneCounters(5);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 5);
 
             assertThat(gqs.getEffectivePower(gd, perm)).isEqualTo(-3);
             assertThat(gqs.getPowerBasedDamage(gd, perm)).isEqualTo(0);

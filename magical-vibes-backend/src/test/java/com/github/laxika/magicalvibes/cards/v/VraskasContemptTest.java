@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class VraskasContemptTest extends BaseCardTest {
 
@@ -186,7 +187,7 @@ class VraskasContemptTest extends BaseCardTest {
     private Permanent addReadyPlaneswalker(Player player, int loyalty) {
         GarrukWildspeaker card = new GarrukWildspeaker();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(loyalty);
+        perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;

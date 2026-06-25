@@ -50,6 +50,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class CombatDamageServiceTest {
@@ -126,7 +127,7 @@ class CombatDamageServiceTest {
         when(gameQueryService.getEffectiveToughness(eq(gameData), any(Permanent.class)))
                 .thenAnswer(inv -> {
                     Permanent perm = inv.getArgument(1);
-                    return perm.getCard().getToughness() - perm.getMinusOneMinusOneCounters();
+                    return perm.getCard().getToughness() - perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
                 });
         when(gameQueryService.isPreventedFromDealingDamage(eq(gameData), any(Permanent.class), anyBoolean()))
                 .thenReturn(false);
@@ -658,7 +659,7 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            assertThat(blocker.getMinusOneMinusOneCounters()).isEqualTo(1);
+            assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
             assertThat(blocker.getMarkedDamage()).isEqualTo(0);
         }
 

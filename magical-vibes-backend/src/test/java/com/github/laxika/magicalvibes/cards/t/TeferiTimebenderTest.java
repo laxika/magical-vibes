@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TeferiTimebenderTest extends BaseCardTest {
 
@@ -88,7 +89,7 @@ class TeferiTimebenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, bear.getId());
         harness.passBothPriorities();
 
-        assertThat(teferi.getLoyaltyCounters()).isEqualTo(7); // 5 + 2
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(7); // 5 + 2
         assertThat(bear.isTapped()).isFalse();
     }
 
@@ -107,7 +108,7 @@ class TeferiTimebenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, surveyor.getId());
         harness.passBothPriorities();
 
-        assertThat(teferi.getLoyaltyCounters()).isEqualTo(7); // 5 + 2
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(7); // 5 + 2
         assertThat(surveyor.isTapped()).isFalse();
     }
 
@@ -119,7 +120,7 @@ class TeferiTimebenderTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(teferi.getLoyaltyCounters()).isEqualTo(7); // 5 + 2
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(7); // 5 + 2
     }
 
     // ===== -3 ability: Gain 2 life and draw two cards =====
@@ -135,7 +136,7 @@ class TeferiTimebenderTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(teferi.getLoyaltyCounters()).isEqualTo(2); // 5 - 3
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(2); // 5 - 3
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 2);
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore + 2);
     }
@@ -146,7 +147,7 @@ class TeferiTimebenderTest extends BaseCardTest {
     @DisplayName("-9 ability grants controller an extra turn")
     void minusNineGrantsExtraTurn() {
         Permanent teferi = addReadyTeferi(player1);
-        teferi.setLoyaltyCounters(9);
+        teferi.setCounterCount(CounterType.LOYALTY, 9);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -176,7 +177,7 @@ class TeferiTimebenderTest extends BaseCardTest {
     private Permanent addReadyTeferi(Player player) {
         TeferiTimebender card = new TeferiTimebender();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(5);
+        perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

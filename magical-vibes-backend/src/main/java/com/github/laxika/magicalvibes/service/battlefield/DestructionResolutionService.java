@@ -605,8 +605,8 @@ public class DestructionResolutionService {
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
                 int counterCount = switch (counterType) {
-                    case AIM -> perm.getAimCounters();
-                    case CHARGE -> perm.getChargeCounters();
+                    case AIM -> perm.getCounterCount(CounterType.AIM);
+                    case CHARGE -> perm.getCounterCount(CounterType.CHARGE);
                     default -> 0;
                 };
                 if (counterCount > 0) {

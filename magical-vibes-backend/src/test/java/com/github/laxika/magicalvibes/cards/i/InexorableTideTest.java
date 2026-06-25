@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class InexorableTideTest extends BaseCardTest {
 
@@ -41,7 +42,7 @@ class InexorableTideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new InexorableTide());
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -62,7 +63,7 @@ class InexorableTideTest extends BaseCardTest {
         // Choose the bears for proliferate
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -71,7 +72,7 @@ class InexorableTideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new InexorableTide());
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player2);
@@ -84,7 +85,7 @@ class InexorableTideTest extends BaseCardTest {
         // Only the Spellbook spell should be on the stack, no triggered ability
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isNotEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -93,7 +94,7 @@ class InexorableTideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new InexorableTide());
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -105,7 +106,7 @@ class InexorableTideTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -114,7 +115,7 @@ class InexorableTideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new InexorableTide());
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -127,7 +128,7 @@ class InexorableTideTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         // Counter unchanged
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -147,8 +148,8 @@ class InexorableTideTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getPlusOnePlusOneCounters()).isZero();
-        assertThat(bears.getMinusOneMinusOneCounters()).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
     }
 
     @Test
@@ -157,7 +158,7 @@ class InexorableTideTest extends BaseCardTest {
         harness.addToBattlefield(player1, new InexorableTide());
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -168,7 +169,7 @@ class InexorableTideTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities(); // resolve proliferate trigger
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         harness.passBothPriorities(); // resolve Spellbook spell
 
@@ -176,6 +177,6 @@ class InexorableTideTest extends BaseCardTest {
         harness.castArtifact(player1, 0);
         harness.passBothPriorities(); // resolve proliferate trigger
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 }

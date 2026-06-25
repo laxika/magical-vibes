@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SomberwaldSpiderTest extends BaseCardTest {
 
@@ -59,7 +60,7 @@ class SomberwaldSpiderTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // No +1/+1 counters without morbid
-        assertThat(spider.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         // Stack should be empty (no ETB trigger placed since morbid not met)
         assertThat(gd.stack).isEmpty();
     }
@@ -87,7 +88,7 @@ class SomberwaldSpiderTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Somberwald Spider"))
                 .findFirst().orElseThrow();
 
-        assertThat(spider.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(spider.getEffectivePower()).isEqualTo(4);
         assertThat(spider.getEffectiveToughness()).isEqualTo(6);
     }
@@ -124,7 +125,7 @@ class SomberwaldSpiderTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Somberwald Spider"))
                 .findFirst().orElseThrow();
 
-        assertThat(spider.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(spider.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(spider.getEffectivePower()).isEqualTo(4);
         assertThat(spider.getEffectiveToughness()).isEqualTo(6);
     }

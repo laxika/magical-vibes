@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Tests for CR 603.3 compliance: triggered abilities from mana-ability sacrifices
@@ -58,7 +59,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         ShrineOfBoundlessGrowth shrineCard = new ShrineOfBoundlessGrowth();
         Permanent shrine = new Permanent(shrineCard);
         shrine.setSummoningSick(false);
-        shrine.setChargeCounters(chargeCounters);
+        shrine.setCounterCount(CounterType.CHARGE, chargeCounters);
         gd.playerBattlefields.get(player2.getId()).add(shrine);
 
         return shrine;
@@ -68,7 +69,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
         ShrineOfBoundlessGrowth card = new ShrineOfBoundlessGrowth();
         Permanent shrine = new Permanent(card);
         shrine.setSummoningSick(false);
-        shrine.setChargeCounters(chargeCounters);
+        shrine.setCounterCount(CounterType.CHARGE, chargeCounters);
         gd.playerBattlefields.get(player.getId()).add(shrine);
         return shrine;
     }
@@ -587,7 +588,7 @@ class ManaAbilityTriggerDeferralTest extends BaseCardTest {
             ShrineOfBoundlessGrowth shrineCard = new ShrineOfBoundlessGrowth();
             Permanent shrine = new Permanent(shrineCard);
             shrine.setSummoningSick(false);
-            shrine.setChargeCounters(2);
+            shrine.setCounterCount(CounterType.CHARGE, 2);
             gd.playerBattlefields.get(player2.getId()).add(shrine);
 
             harness.addMana(player2, ManaColor.GREEN, 1);

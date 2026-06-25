@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HistoryOfBenaliaTest extends BaseCardTest {
 
@@ -89,7 +90,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("History of Benalia"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -131,7 +132,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("History of Benalia"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -139,7 +140,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getDescription().contains("chapter II"));
 
@@ -163,7 +164,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("History of Benalia"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a Knight token to the battlefield to verify the boost
         harness.addToBattlefield(player1, createKnightToken());
@@ -181,7 +182,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         harness.passBothPriorities(); // precombat main → chapter III triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
 
         harness.passBothPriorities(); // resolve chapter III
 
@@ -204,7 +205,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("History of Benalia"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a non-Knight creature
         harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.g.GrizzlyBears());
@@ -241,7 +242,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("History of Benalia"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -276,7 +277,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("History of Benalia"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -285,7 +286,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
         assertThat(gd.stack).isNotEmpty();
         // Saga should still be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);

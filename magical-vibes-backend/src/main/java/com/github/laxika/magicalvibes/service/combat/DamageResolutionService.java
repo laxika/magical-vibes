@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Resolves all damage-dealing effects dispatched from the stack.
@@ -649,8 +650,8 @@ public class DamageResolutionService {
             return;
         }
 
-        int newLoyalty = Math.max(0, target.getLoyaltyCounters() - rawDamage);
-        target.setLoyaltyCounters(newLoyalty);
+        int newLoyalty = Math.max(0, target.getCounterCount(CounterType.LOYALTY) - rawDamage);
+        target.setCounterCount(CounterType.LOYALTY, newLoyalty);
         gameBroadcastService.logAndBroadcast(gameData,
                 source.getName() + " deals " + rawDamage + " damage to " + target.getCard().getName() + ".");
         gameOutcomeService.checkWinCondition(gameData);
@@ -1225,8 +1226,8 @@ public class DamageResolutionService {
 
         if (sourcePlaneswalker != null) {
             int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);
-            int newLoyalty = Math.max(0, sourcePlaneswalker.getLoyaltyCounters() - targetPower);
-            sourcePlaneswalker.setLoyaltyCounters(newLoyalty);
+            int newLoyalty = Math.max(0, sourcePlaneswalker.getCounterCount(CounterType.LOYALTY) - targetPower);
+            sourcePlaneswalker.setCounterCount(CounterType.LOYALTY, newLoyalty);
             gameBroadcastService.logAndBroadcast(gameData,
                     target.getCard().getName() + " deals " + targetPower + " damage to " + cardName
                             + ". (" + cardName + " now has " + newLoyalty + " loyalty.)");
@@ -1444,7 +1445,7 @@ public class DamageResolutionService {
         if (sourceHasInfect) {
             if (damage > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
-                target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + damage);
+                target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + damage);
                 gameBroadcastService.logAndBroadcast(gameData,
                         sourceName + " puts " + damage + " -1/-1 counters on " + target.getCard().getName() + ".");
                 log.info("Game {} - {} puts {} -1/-1 counters on {}", gameData.id, sourceName, damage, target.getCard().getName());
@@ -2289,7 +2290,7 @@ public class DamageResolutionService {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) return;
 
-        int counters = source.getPlusOnePlusOneCounters();
+        int counters = source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
         if (counters <= 0) return;
 
         if (isDamageSourcePreventedWithLog(gameData, entry)) return;

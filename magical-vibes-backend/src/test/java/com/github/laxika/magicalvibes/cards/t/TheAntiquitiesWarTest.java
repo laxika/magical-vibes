@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheAntiquitiesWarTest extends BaseCardTest {
 
@@ -92,7 +93,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Antiquities War"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -158,7 +159,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Antiquities War"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a noncreature artifact
         harness.addToBattlefield(player1, new ChromaticStar());
@@ -194,7 +195,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Antiquities War"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add an artifact creature (Ornithopter is 0/2)
         harness.addToBattlefield(player1, new Ornithopter());
@@ -232,7 +233,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Antiquities War"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a non-artifact creature
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -263,7 +264,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Antiquities War"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add an artifact to opponent's battlefield
         harness.addToBattlefield(player2, new ChromaticStar());
@@ -291,7 +292,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Antiquities War"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add an artifact creature with +1/+1 counters
         harness.addToBattlefield(player1, new BottleGnomes());
@@ -299,7 +300,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Bottle Gnomes"))
                 .findFirst().orElse(null);
         assertThat(gnomes).isNotNull();
-        gnomes.setPlusOnePlusOneCounters(2);
+        gnomes.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -328,7 +329,7 @@ class TheAntiquitiesWarTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Antiquities War"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);

@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GrindclockTest extends BaseCardTest {
 
@@ -55,7 +56,7 @@ class GrindclockTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(grindclock.getChargeCounters()).isEqualTo(1);
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -75,17 +76,17 @@ class GrindclockTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(grindclock.getChargeCounters()).isEqualTo(1);
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         grindclock.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(grindclock.getChargeCounters()).isEqualTo(2);
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
 
         grindclock.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(grindclock.getChargeCounters()).isEqualTo(3);
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     @Test
@@ -105,7 +106,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Activating ability 1 targeting player puts it on the stack")
     void ability1PutsOnStack() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(3);
+        grindclock.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
 
@@ -121,7 +122,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Mill effect mills X cards where X is charge counters")
     void millsByChargeCounters() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(3);
+        grindclock.setCounterCount(CounterType.CHARGE, 3);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
         while (deck.size() > 10) {
@@ -140,7 +141,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Mill effect mills 1 card with 1 charge counter")
     void millsOneCardWithOneCounter() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(1);
+        grindclock.setCounterCount(CounterType.CHARGE, 1);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
         while (deck.size() > 10) {
@@ -178,7 +179,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Milled cards come from the top of the library")
     void milledCardsFromTopOfLibrary() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(2);
+        grindclock.setCounterCount(CounterType.CHARGE, 2);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
         while (deck.size() > 5) {
@@ -199,7 +200,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Can target yourself with mill ability")
     void canTargetSelfWithMill() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(2);
+        grindclock.setCounterCount(CounterType.CHARGE, 2);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         while (deck.size() > 10) {
@@ -218,7 +219,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Mill is capped by library size when counters exceed deck")
     void millCappedByLibrarySize() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(10);
+        grindclock.setCounterCount(CounterType.CHARGE, 10);
 
         List<Card> deck = gd.playerDecks.get(player2.getId());
         while (deck.size() > 3) {
@@ -236,7 +237,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Mill does nothing when library is empty")
     void millNothingWhenLibraryEmpty() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(5);
+        grindclock.setCounterCount(CounterType.CHARGE, 5);
 
         gd.playerDecks.get(player2.getId()).clear();
 
@@ -251,7 +252,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Ability 1 taps Grindclock")
     void ability1TapsGrindclock() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(1);
+        grindclock.setCounterCount(CounterType.CHARGE, 1);
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
 
@@ -262,7 +263,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Cannot activate ability 1 when already tapped")
     void cannotActivateAbility1WhenTapped() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(3);
+        grindclock.setCounterCount(CounterType.CHARGE, 3);
         grindclock.tap();
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, player2.getId()))
@@ -276,7 +277,7 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Cannot use both abilities in same turn (both require tap)")
     void cannotUseBothAbilitiesInSameTurn() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(1);
+        grindclock.setCounterCount(CounterType.CHARGE, 1);
 
         // Use ability 0 first
         harness.activateAbility(player1, 0, null, null);
@@ -294,13 +295,13 @@ class GrindclockTest extends BaseCardTest {
     @DisplayName("Charge counters are preserved after using mill ability")
     void chargeCountersPreservedAfterMill() {
         Permanent grindclock = addReadyGrindclock(player1);
-        grindclock.setChargeCounters(3);
+        grindclock.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
         // Grindclock still has 3 charge counters (mill doesn't remove them)
-        assertThat(grindclock.getChargeCounters()).isEqualTo(3);
+        assertThat(grindclock.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== No summoning sickness for artifacts =====

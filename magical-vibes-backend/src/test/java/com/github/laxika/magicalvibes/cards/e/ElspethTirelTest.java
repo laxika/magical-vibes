@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ElspethTirelTest extends BaseCardTest {
 
@@ -101,7 +102,7 @@ class ElspethTirelTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Elspeth Tirel"));
         Permanent elspeth = bf.stream().filter(p -> p.getCard().getName().equals("Elspeth Tirel")).findFirst().orElseThrow();
-        assertThat(elspeth.getLoyaltyCounters()).isEqualTo(4);
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(elspeth.isSummoningSick()).isFalse();
     }
 
@@ -121,7 +122,7 @@ class ElspethTirelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(elspeth.getLoyaltyCounters()).isEqualTo(6); // 4 + 2
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 4 + 2
         int lifeAfter = gd.playerLifeTotals.get(player1.getId());
         assertThat(lifeAfter).isEqualTo(lifeBefore + 2);
     }
@@ -140,7 +141,7 @@ class ElspethTirelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(elspeth.getLoyaltyCounters()).isEqualTo(6); // 4 + 2
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 4 + 2
         int lifeAfter = gd.playerLifeTotals.get(player1.getId());
         assertThat(lifeAfter).isEqualTo(lifeBefore); // No life gained
     }
@@ -170,7 +171,7 @@ class ElspethTirelTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(elspeth.getLoyaltyCounters()).isEqualTo(2); // 4 - 2
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(2); // 4 - 2
 
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         List<Permanent> soldiers = bf.stream()
@@ -188,7 +189,7 @@ class ElspethTirelTest extends BaseCardTest {
     @DisplayName("-5 ability destroys non-land non-token permanents but keeps Elspeth")
     void minusFiveDestroysOtherPermanentsButKeepsElspeth() {
         Permanent elspeth = addReadyElspeth(player1);
-        elspeth.setLoyaltyCounters(6);
+        elspeth.setCounterCount(CounterType.LOYALTY, 6);
 
         // Add creatures to both sides
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -214,7 +215,7 @@ class ElspethTirelTest extends BaseCardTest {
     @DisplayName("-5 ability does not destroy tokens")
     void minusFiveDoesNotDestroyTokens() {
         Permanent elspeth = addReadyElspeth(player1);
-        elspeth.setLoyaltyCounters(6);
+        elspeth.setCounterCount(CounterType.LOYALTY, 6);
 
         // Create soldier tokens first using -2 ability on a different turn
         // Instead, manually add token permanents
@@ -238,7 +239,7 @@ class ElspethTirelTest extends BaseCardTest {
     @DisplayName("-5 ability preserves tokens on the battlefield")
     void minusFivePreservesTokens() {
         Permanent elspeth = addReadyElspeth(player1);
-        elspeth.setLoyaltyCounters(7); // Enough for -2 then -5
+        elspeth.setCounterCount(CounterType.LOYALTY, 7); // Enough for -2 then -5
 
         // First activate -2 to create tokens
         harness.activateAbility(player1, 0, 1, null, null);
@@ -278,7 +279,7 @@ class ElspethTirelTest extends BaseCardTest {
     @DisplayName("-5 ability does not destroy lands")
     void minusFiveDoesNotDestroyLands() {
         Permanent elspeth = addReadyElspeth(player1);
-        elspeth.setLoyaltyCounters(6);
+        elspeth.setCounterCount(CounterType.LOYALTY, 6);
 
         // Count lands before
         GameData gd = harness.getGameData();
@@ -345,7 +346,7 @@ class ElspethTirelTest extends BaseCardTest {
     @DisplayName("Cannot use -5 when loyalty is only 4")
     void cannotActivateMinusFiveWithInsufficientLoyalty() {
         Permanent elspeth = addReadyElspeth(player1);
-        assertThat(elspeth.getLoyaltyCounters()).isEqualTo(4);
+        assertThat(elspeth.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -358,7 +359,7 @@ class ElspethTirelTest extends BaseCardTest {
     @DisplayName("Planeswalker dies when loyalty reaches 0")
     void diesWhenLoyaltyReachesZero() {
         Permanent elspeth = addReadyElspeth(player1);
-        elspeth.setLoyaltyCounters(2);
+        elspeth.setCounterCount(CounterType.LOYALTY, 2);
 
         // -2 ability: 2 - 2 = 0, Elspeth dies to state-based actions
         harness.activateAbility(player1, 0, 1, null, null);
@@ -376,7 +377,7 @@ class ElspethTirelTest extends BaseCardTest {
     @DisplayName("Ability still resolves after Elspeth dies to SBA at 0 loyalty")
     void abilityResolvesAfterDeath() {
         Permanent elspeth = addReadyElspeth(player1);
-        elspeth.setLoyaltyCounters(2);
+        elspeth.setCounterCount(CounterType.LOYALTY, 2);
 
         // -2 ability: creates tokens even though Elspeth dies
         harness.activateAbility(player1, 0, 1, null, null);
@@ -396,7 +397,7 @@ class ElspethTirelTest extends BaseCardTest {
     private Permanent addReadyElspeth(Player player) {
         ElspethTirel card = new ElspethTirel();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(4);
+        perm.setCounterCount(CounterType.LOYALTY, 4);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

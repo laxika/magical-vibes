@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ArborArmamentTest extends BaseCardTest {
 
@@ -52,7 +53,7 @@ class ArborArmamentTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
     }
 
@@ -66,14 +67,14 @@ class ArborArmamentTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.hasKeyword(Keyword.REACH)).isTrue();
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(target.hasKeyword(Keyword.REACH)).isFalse();
     }
 
@@ -87,7 +88,7 @@ class ArborArmamentTest extends BaseCardTest {
         harness.castInstant(player1, 0, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(ownCreature.hasKeyword(Keyword.REACH)).isTrue();
     }
 

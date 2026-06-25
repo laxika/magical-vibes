@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class StateBasedActionServiceTest {
@@ -264,7 +265,7 @@ class StateBasedActionServiceTest {
         void planeswalkerWithZeroLoyaltyDies() {
             Card card = createPlaneswalkerCard("Jace Beleren");
             Permanent perm = new Permanent(card);
-            perm.setLoyaltyCounters(0);
+            perm.setCounterCount(CounterType.LOYALTY, 0);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
@@ -281,7 +282,7 @@ class StateBasedActionServiceTest {
         void planeswalkerWithNegativeLoyaltyDies() {
             Card card = createPlaneswalkerCard("Chandra Nalaar");
             Permanent perm = new Permanent(card);
-            perm.setLoyaltyCounters(-1);
+            perm.setCounterCount(CounterType.LOYALTY, -1);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
@@ -298,7 +299,7 @@ class StateBasedActionServiceTest {
             card.setName("Gideon Jura");
             card.setType(CardType.PLANESWALKER);
             Permanent perm = new Permanent(card);
-            perm.setLoyaltyCounters(0);
+            perm.setCounterCount(CounterType.LOYALTY, 0);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             // isCreature true (animated planeswalker), but toughness is healthy
@@ -319,7 +320,7 @@ class StateBasedActionServiceTest {
         void planeswalkerWithPositiveLoyaltySurvives() {
             Card card = createPlaneswalkerCard("Liliana Vess");
             Permanent perm = new Permanent(card);
-            perm.setLoyaltyCounters(3);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
@@ -354,7 +355,7 @@ class StateBasedActionServiceTest {
         void orphanedAurasRemovedWhenPlaneswalkerDied() {
             Card card = createPlaneswalkerCard("Jace Beleren");
             Permanent perm = new Permanent(card);
-            perm.setLoyaltyCounters(0);
+            perm.setCounterCount(CounterType.LOYALTY, 0);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
@@ -407,7 +408,7 @@ class StateBasedActionServiceTest {
         void sagaWithFinalChapterReachedIsSacrificed() {
             Card card = createSagaCard("The Eldest Reborn", 3);
             Permanent perm = new Permanent(card);
-            perm.setLoreCounters(3);
+            perm.setCounterCount(CounterType.LORE, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
@@ -422,7 +423,7 @@ class StateBasedActionServiceTest {
         void sagaWithExcessLoreCountersIsSacrificed() {
             Card card = createSagaCard("History of Benalia", 3);
             Permanent perm = new Permanent(card);
-            perm.setLoreCounters(5);
+            perm.setCounterCount(CounterType.LORE, 5);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
@@ -435,7 +436,7 @@ class StateBasedActionServiceTest {
         void sagaBelowFinalChapterSurvives() {
             Card card = createSagaCard("Phyrexian Scriptures", 3);
             Permanent perm = new Permanent(card);
-            perm.setLoreCounters(2);
+            perm.setCounterCount(CounterType.LORE, 2);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
@@ -448,7 +449,7 @@ class StateBasedActionServiceTest {
         void sagaNotSacrificedWhenChapterAbilityOnStack() {
             Card card = createSagaCard("The Flame of Keld", 3);
             Permanent perm = new Permanent(card);
-            perm.setLoreCounters(3);
+            perm.setCounterCount(CounterType.LORE, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             // Put a triggered ability from this Saga on the stack
@@ -467,7 +468,7 @@ class StateBasedActionServiceTest {
         void sagaSacrificedWhenStackHasUnrelatedAbility() {
             Card card = createSagaCard("The Mirari Conjecture", 3);
             Permanent perm = new Permanent(card);
-            perm.setLoreCounters(3);
+            perm.setCounterCount(CounterType.LORE, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             // Unrelated triggered ability on the stack (different source permanent)
@@ -487,7 +488,7 @@ class StateBasedActionServiceTest {
         void nonTriggeredAbilityFromSameSourceDoesNotBlock() {
             Card card = createSagaCard("The Antiquities War", 3);
             Permanent perm = new Permanent(card);
-            perm.setLoreCounters(3);
+            perm.setCounterCount(CounterType.LORE, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             // A sorcery spell entry with the same sourcePermanentId but different entry type
@@ -510,7 +511,7 @@ class StateBasedActionServiceTest {
             card.setSubtypes(List.of(CardSubtype.SAGA));
             // No chapter effects → getSagaFinalChapter() returns 0
             Permanent perm = new Permanent(card);
-            perm.setLoreCounters(5);
+            perm.setCounterCount(CounterType.LORE, 5);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
@@ -525,7 +526,7 @@ class StateBasedActionServiceTest {
             card.setName("Propaganda");
             card.setType(CardType.ENCHANTMENT);
             Permanent perm = new Permanent(card);
-            perm.setLoreCounters(10);
+            perm.setCounterCount(CounterType.LORE, 10);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
@@ -545,14 +546,14 @@ class StateBasedActionServiceTest {
         void countersCancelOut() {
             Card card = createCreatureCard("Cytoplast Root-Kin");
             Permanent perm = new Permanent(card);
-            perm.setPlusOnePlusOneCounters(5);
-            perm.setMinusOneMinusOneCounters(3);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
 
-            assertThat(perm.getPlusOnePlusOneCounters()).isEqualTo(2);
-            assertThat(perm.getMinusOneMinusOneCounters()).isZero();
+            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+            assertThat(perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         }
 
         @Test
@@ -560,14 +561,14 @@ class StateBasedActionServiceTest {
         void bothBecomeZeroWhenEqual() {
             Card card = createCreatureCard("Fertilid");
             Permanent perm = new Permanent(card);
-            perm.setPlusOnePlusOneCounters(4);
-            perm.setMinusOneMinusOneCounters(4);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 4);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
 
-            assertThat(perm.getPlusOnePlusOneCounters()).isZero();
-            assertThat(perm.getMinusOneMinusOneCounters()).isZero();
+            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         }
 
         @Test
@@ -575,14 +576,14 @@ class StateBasedActionServiceTest {
         void moreMinusThanPlusLeavesMinusCounters() {
             Card card = createCreatureCard("Devoted Druid");
             Permanent perm = new Permanent(card);
-            perm.setPlusOnePlusOneCounters(2);
-            perm.setMinusOneMinusOneCounters(5);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 5);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
 
-            assertThat(perm.getPlusOnePlusOneCounters()).isZero();
-            assertThat(perm.getMinusOneMinusOneCounters()).isEqualTo(3);
+            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
         }
 
         @Test
@@ -590,14 +591,14 @@ class StateBasedActionServiceTest {
         void noChangeWhenOnlyPlusCounters() {
             Card card = createCreatureCard("Slith Firewalker");
             Permanent perm = new Permanent(card);
-            perm.setPlusOnePlusOneCounters(3);
-            perm.setMinusOneMinusOneCounters(0);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
 
-            assertThat(perm.getPlusOnePlusOneCounters()).isEqualTo(3);
-            assertThat(perm.getMinusOneMinusOneCounters()).isZero();
+            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+            assertThat(perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         }
 
         @Test
@@ -605,14 +606,14 @@ class StateBasedActionServiceTest {
         void noChangeWhenOnlyMinusCounters() {
             Card card = createCreatureCard("Fading Creature");
             Permanent perm = new Permanent(card);
-            perm.setPlusOnePlusOneCounters(0);
-            perm.setMinusOneMinusOneCounters(2);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
 
-            assertThat(perm.getPlusOnePlusOneCounters()).isZero();
-            assertThat(perm.getMinusOneMinusOneCounters()).isEqualTo(2);
+            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+            assertThat(perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         }
     }
 
@@ -626,8 +627,8 @@ class StateBasedActionServiceTest {
             Card card = createCreatureCard("Protean Hydra");
             card.addEffect(EffectSlot.STATIC, new DelayedPlusOnePlusOneCounterRegrowthEffect());
             Permanent perm = new Permanent(card);
-            perm.setPlusOnePlusOneCounters(5);
-            perm.setMinusOneMinusOneCounters(3);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
@@ -641,8 +642,8 @@ class StateBasedActionServiceTest {
         void noRegrowthWithoutEffect() {
             Card card = createCreatureCard("Regular Creature");
             Permanent perm = new Permanent(card);
-            perm.setPlusOnePlusOneCounters(3);
-            perm.setMinusOneMinusOneCounters(2);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
             gd.playerBattlefields.get(player1Id).add(perm);
 
             sut.performStateBasedActions(gd);
@@ -656,8 +657,8 @@ class StateBasedActionServiceTest {
             Card card = createCreatureCard("Protean Hydra");
             card.addEffect(EffectSlot.STATIC, new DelayedPlusOnePlusOneCounterRegrowthEffect());
             Permanent perm = new Permanent(card);
-            perm.setPlusOnePlusOneCounters(4);
-            perm.setMinusOneMinusOneCounters(2);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
             gd.playerBattlefields.get(player1Id).add(perm);
             gd.pendingDelayedPlusOnePlusOneCounters.put(perm.getId(), 4);
 

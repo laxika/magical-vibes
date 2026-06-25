@@ -134,7 +134,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent archaeologist = findArchaeologist(player1);
-        assertThat(archaeologist.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -155,7 +155,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent archaeologist = findArchaeologist(player1);
-        assertThat(archaeologist.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -172,7 +172,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
 
         Permanent archaeologist = findArchaeologist(player1);
-        assertThat(archaeologist.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -209,7 +209,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve triggered ability (+1/+1 counter)
 
         Permanent archaeologist = findArchaeologist(player1);
-        assertThat(archaeologist.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== Helpers =====

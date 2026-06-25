@@ -87,6 +87,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Tag("scryfall")
 class HardAiDecisionEngineTest {
@@ -3705,7 +3706,7 @@ class HardAiDecisionEngineTest {
 
     private Permanent addPlaneswalkerToBattlefield(Player player, Card card, int loyalty) {
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(loyalty);
+        perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
@@ -3726,7 +3727,7 @@ class HardAiDecisionEngineTest {
         // Should activate +2 ability — puts ability on stack and pays loyalty
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(5); // 3 + 2
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 3 + 2
     }
 
     @Test
@@ -3745,7 +3746,7 @@ class HardAiDecisionEngineTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player2.getId());
-        assertThat(chandra.getLoyaltyCounters()).isEqualTo(6); // 5 + 1
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
     }
 
     @Test
@@ -3765,7 +3766,7 @@ class HardAiDecisionEngineTest {
         // Should activate −1 (create 3/3 token) — good value
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.ACTIVATED_ABILITY);
-        assertThat(garruk.getLoyaltyCounters()).isEqualTo(4); // 5 - 1
+        assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 5 - 1
     }
 
     @Test
@@ -3889,7 +3890,7 @@ class HardAiDecisionEngineTest {
 
         // Should activate +1 (not -X) — target opponent's face or a planeswalker
         assertThat(gd.stack).hasSize(1);
-        assertThat(chandra.getLoyaltyCounters()).isEqualTo(3); // 2 + 1
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 2 + 1
     }
 
     // ===== Spell-Targeting Activated Abilities (Counterspell-Type) =====

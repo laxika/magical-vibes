@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class OliviaVoldarenTest extends BaseCardTest {
 
@@ -86,7 +87,7 @@ class OliviaVoldarenTest extends BaseCardTest {
             assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
 
             // Olivia gets a +1/+1 counter (3/3 base -> effectively 4/4)
-            assertThat(olivia.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(olivia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
             assertThat(gqs.getEffectivePower(gd, olivia)).isEqualTo(4);
             assertThat(gqs.getEffectiveToughness(gd, olivia)).isEqualTo(4);
         }
@@ -132,7 +133,7 @@ class OliviaVoldarenTest extends BaseCardTest {
             harness.activateAbility(player1, oliviaIdx, null, target2.getId());
             harness.passBothPriorities();
 
-            assertThat(olivia.getPlusOnePlusOneCounters()).isEqualTo(2);
+            assertThat(olivia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
             assertThat(gqs.getEffectivePower(gd, olivia)).isEqualTo(5);
             assertThat(gqs.getEffectiveToughness(gd, olivia)).isEqualTo(5);
         }
@@ -160,7 +161,7 @@ class OliviaVoldarenTest extends BaseCardTest {
                     .noneMatch(p -> p.getCard().getName().equals("Llanowar Elves"));
 
             // Olivia still gets the +1/+1 counter
-            assertThat(olivia.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(olivia.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
     }
 

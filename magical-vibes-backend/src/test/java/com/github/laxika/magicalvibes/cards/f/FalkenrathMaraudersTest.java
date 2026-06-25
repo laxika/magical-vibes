@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class FalkenrathMaraudersTest extends BaseCardTest {
 
@@ -53,14 +54,14 @@ class FalkenrathMaraudersTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Marauders should have two +1/+1 counters
-        assertThat(marauders.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(marauders.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Deals increased combat damage after getting counters")
     void dealsMoreDamageWithCounters() {
         Permanent marauders = addReadyMarauders();
-        marauders.setPlusOnePlusOneCounters(2); // simulate having gotten counters previously
+        marauders.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2); // simulate having gotten counters previously
         marauders.setAttacking(true);
         harness.setLife(player2, 20);
 
@@ -74,7 +75,7 @@ class FalkenrathMaraudersTest extends BaseCardTest {
 
         // Resolve trigger — gets two more counters
         harness.passBothPriorities();
-        assertThat(marauders.getPlusOnePlusOneCounters()).isEqualTo(4);
+        assertThat(marauders.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
     @Test

@@ -73,7 +73,7 @@ class JungleDelverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(delver.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(delver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -88,7 +88,7 @@ class JungleDelverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(delver.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(delver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== No tap required — can activate while summoning sick =====
@@ -105,7 +105,7 @@ class JungleDelverTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(delver.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(delver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Helpers =====

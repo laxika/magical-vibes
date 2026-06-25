@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class NecrogenCenserTest extends BaseCardTest {
 
@@ -60,7 +61,7 @@ class NecrogenCenserTest extends BaseCardTest {
         Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
                 .findFirst().orElseThrow();
-        assertThat(censer.getChargeCounters()).isEqualTo(2);
+        assertThat(censer.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Activated ability: target player loses 2 life =====
@@ -73,14 +74,14 @@ class NecrogenCenserTest extends BaseCardTest {
         Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
                 .findFirst().orElseThrow();
-        censer.setChargeCounters(2);
+        censer.setCounterCount(CounterType.CHARGE, 2);
 
         int initialLife = gd.playerLifeTotals.get(player2.getId());
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(censer.getChargeCounters()).isEqualTo(1);
+        assertThat(censer.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(initialLife - 2);
     }
 
@@ -92,7 +93,7 @@ class NecrogenCenserTest extends BaseCardTest {
         Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
                 .findFirst().orElseThrow();
-        censer.setChargeCounters(2);
+        censer.setCounterCount(CounterType.CHARGE, 2);
 
         int initialLife = gd.playerLifeTotals.get(player2.getId());
 
@@ -105,7 +106,7 @@ class NecrogenCenserTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(censer.getChargeCounters()).isEqualTo(0);
+        assertThat(censer.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(initialLife - 4);
     }
 
@@ -117,7 +118,7 @@ class NecrogenCenserTest extends BaseCardTest {
         Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
                 .findFirst().orElseThrow();
-        censer.setChargeCounters(0);
+        censer.setCounterCount(CounterType.CHARGE, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -131,14 +132,14 @@ class NecrogenCenserTest extends BaseCardTest {
         Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
                 .findFirst().orElseThrow();
-        censer.setChargeCounters(1);
+        censer.setCounterCount(CounterType.CHARGE, 1);
 
         int initialLife = gd.playerLifeTotals.get(player1.getId());
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(censer.getChargeCounters()).isEqualTo(0);
+        assertThat(censer.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(initialLife - 2);
     }
 
@@ -150,7 +151,7 @@ class NecrogenCenserTest extends BaseCardTest {
         Permanent censer = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Necrogen Censer"))
                 .findFirst().orElseThrow();
-        censer.setChargeCounters(2);
+        censer.setCounterCount(CounterType.CHARGE, 2);
 
         // First activation taps it
         harness.activateAbility(player1, 0, null, player2.getId());

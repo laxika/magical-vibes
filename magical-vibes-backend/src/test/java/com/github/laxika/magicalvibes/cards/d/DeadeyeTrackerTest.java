@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class DeadeyeTrackerTest extends BaseCardTest {
 
@@ -104,7 +105,7 @@ class DeadeyeTrackerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // +1/+1 counter from exploring
-        assertThat(tracker.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(tracker.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // May-ability prompt for putting the card into graveyard
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }

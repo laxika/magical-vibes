@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheEldestRebornTest extends BaseCardTest {
 
@@ -101,7 +102,7 @@ class TheEldestRebornTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -202,7 +203,7 @@ class TheEldestRebornTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
 
@@ -212,7 +213,7 @@ class TheEldestRebornTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getDescription().contains("chapter II"));
 
@@ -238,7 +239,7 @@ class TheEldestRebornTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         harness.setHand(player2, new ArrayList<>());
 
@@ -263,7 +264,7 @@ class TheEldestRebornTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
@@ -293,7 +294,7 @@ class TheEldestRebornTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.setGraveyard(player1, List.of());
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
@@ -327,7 +328,7 @@ class TheEldestRebornTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
@@ -366,7 +367,7 @@ class TheEldestRebornTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Eldest Reborn"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
@@ -377,7 +378,7 @@ class TheEldestRebornTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
         assertThat(gd.stack).isNotEmpty();
         // Saga should still be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);

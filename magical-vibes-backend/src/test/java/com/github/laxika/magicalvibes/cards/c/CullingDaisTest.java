@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class CullingDaisTest extends BaseCardTest {
 
@@ -68,7 +69,7 @@ class CullingDaisTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Culling Dais should have 1 charge counter
-        assertThat(dais.getChargeCounters()).isEqualTo(1);
+        assertThat(dais.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -93,7 +94,7 @@ class CullingDaisTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dais.getChargeCounters()).isEqualTo(1);
+        assertThat(dais.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Untap Culling Dais for second activation
         dais.untap();
@@ -103,7 +104,7 @@ class CullingDaisTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(dais.getChargeCounters()).isEqualTo(2);
+        assertThat(dais.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Ability 1: Sacrifice self to draw =====
@@ -112,7 +113,7 @@ class CullingDaisTest extends BaseCardTest {
     @DisplayName("Sacrificing Culling Dais draws cards equal to charge counters")
     void sacrificeSelfDrawsCardsEqualToChargeCounters() {
         Permanent dais = addReadyDais(player1);
-        dais.setChargeCounters(3);
+        dais.setCounterCount(CounterType.CHARGE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();

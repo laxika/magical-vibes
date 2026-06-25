@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TrigonOfInfestationTest extends BaseCardTest {
 
@@ -83,7 +84,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
                 .findFirst().orElseThrow();
-        assertThat(trigon.getChargeCounters()).isEqualTo(3);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== Ability 1: Put a charge counter =====
@@ -96,14 +97,14 @@ class TrigonOfInfestationTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.GREEN, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
         harness.activateAbility(player1, trigonIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(trigon.getChargeCounters()).isEqualTo(4);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
     @Test
@@ -114,7 +115,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // Only colorless mana, should fail
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -133,7 +134,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
@@ -141,7 +142,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Charge counter removed
-        assertThat(trigon.getChargeCounters()).isEqualTo(2);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
 
         // 1/1 Phyrexian Insect token on battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -160,7 +161,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(0);
+        trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
@@ -176,7 +177,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -190,7 +191,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         harness.activateAbility(player1, trigonIndex, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(trigon.getChargeCounters()).isEqualTo(1);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Phyrexian Insect"))
@@ -206,7 +207,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Infestation"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it
         harness.addMana(player1, ManaColor.COLORLESS, 2);

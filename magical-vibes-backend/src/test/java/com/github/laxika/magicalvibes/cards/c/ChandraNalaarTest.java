@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChandraNalaarTest extends BaseCardTest {
 
@@ -99,7 +100,7 @@ class ChandraNalaarTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Chandra Nalaar"));
         Permanent chandra = bf.stream().filter(p -> p.getCard().getName().equals("Chandra Nalaar")).findFirst().orElseThrow();
-        assertThat(chandra.getLoyaltyCounters()).isEqualTo(6);
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(chandra.isSummoningSick()).isFalse();
     }
 
@@ -116,7 +117,7 @@ class ChandraNalaarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(chandra.getLoyaltyCounters()).isEqualTo(7); // 6 + 1
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(7); // 6 + 1
         int lifeAfter = gd.playerLifeTotals.get(player2.getId());
         assertThat(lifeAfter).isEqualTo(lifeBefore - 1);
     }
@@ -138,7 +139,7 @@ class ChandraNalaarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(chandra.getLoyaltyCounters()).isEqualTo(3); // 6 - 3
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
         // Bear should be dead (3 damage to a 2/2)
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
@@ -160,7 +161,7 @@ class ChandraNalaarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(chandra.getLoyaltyCounters()).isEqualTo(6); // 6 - 0
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 6 - 0
         // Bear should still be alive (0 damage)
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
@@ -188,7 +189,7 @@ class ChandraNalaarTest extends BaseCardTest {
     @DisplayName("-8 ability deals 10 damage to target player and their creatures")
     void minusEightDeals10DamageToPlayerAndCreatures() {
         Permanent chandra = addReadyChandra(player1);
-        chandra.setLoyaltyCounters(8);
+        chandra.setCounterCount(CounterType.LOYALTY, 8);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -216,7 +217,7 @@ class ChandraNalaarTest extends BaseCardTest {
     @DisplayName("-8 ability does not damage controller's own creatures")
     void minusEightDoesNotDamageOwnCreatures() {
         Permanent chandra = addReadyChandra(player1);
-        chandra.setLoyaltyCounters(8);
+        chandra.setCounterCount(CounterType.LOYALTY, 8);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
@@ -232,7 +233,7 @@ class ChandraNalaarTest extends BaseCardTest {
     @DisplayName("Cannot use -8 when loyalty is only 6")
     void cannotActivateMinusEightWithInsufficientLoyalty() {
         Permanent chandra = addReadyChandra(player1);
-        assertThat(chandra.getLoyaltyCounters()).isEqualTo(6);
+        assertThat(chandra.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -270,7 +271,7 @@ class ChandraNalaarTest extends BaseCardTest {
     private Permanent addReadyChandra(Player player) {
         ChandraNalaar card = new ChandraNalaar();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(6);
+        perm.setCounterCount(CounterType.LOYALTY, 6);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ConversionChamberTest extends BaseCardTest {
 
@@ -84,7 +85,7 @@ class ConversionChamberTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Charge counter added
-        assertThat(chamber.getChargeCounters()).isEqualTo(1);
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -109,7 +110,7 @@ class ConversionChamberTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Rod of Ruin"));
 
         // Charge counter still added to chamber
-        assertThat(chamber.getChargeCounters()).isEqualTo(1);
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -175,7 +176,7 @@ class ConversionChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No charge counter added since exile fizzled
-        assertThat(chamber.getChargeCounters()).isEqualTo(0);
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
@@ -226,7 +227,7 @@ class ConversionChamberTest extends BaseCardTest {
         harness.activateAbility(player1, chamberIndex, 0, null, rod2.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(chamber.getChargeCounters()).isEqualTo(2);
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Second ability — token creation =====
@@ -235,7 +236,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("Activating second ability with 1 charge counter creates a 3/3 Golem artifact creature token")
     void secondAbilityCreatesGolemToken() {
         Permanent chamber = addChamberReady(player1);
-        chamber.setChargeCounters(1);
+        chamber.setCounterCount(CounterType.CHARGE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         int chamberIndex = gd.playerBattlefields.get(player1.getId()).indexOf(chamber);
@@ -243,7 +244,7 @@ class ConversionChamberTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Charge counter removed
-        assertThat(chamber.getChargeCounters()).isEqualTo(0);
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // 3/3 Golem artifact creature token is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -269,7 +270,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("Cannot activate second ability without enough mana")
     void cannotActivateSecondAbilityWithoutMana() {
         Permanent chamber = addChamberReady(player1);
-        chamber.setChargeCounters(1);
+        chamber.setCounterCount(CounterType.CHARGE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         int chamberIndex = gd.playerBattlefields.get(player1.getId()).indexOf(chamber);
@@ -282,7 +283,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("Second ability taps the artifact")
     void secondAbilityTaps() {
         Permanent chamber = addChamberReady(player1);
-        chamber.setChargeCounters(1);
+        chamber.setCounterCount(CounterType.CHARGE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         int chamberIndex = gd.playerBattlefields.get(player1.getId()).indexOf(chamber);
@@ -295,14 +296,14 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("With multiple charge counters, second ability only removes 1")
     void secondAbilityRemovesExactlyOneCounter() {
         Permanent chamber = addChamberReady(player1);
-        chamber.setChargeCounters(3);
+        chamber.setCounterCount(CounterType.CHARGE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         int chamberIndex = gd.playerBattlefields.get(player1.getId()).indexOf(chamber);
         harness.activateAbility(player1, chamberIndex, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(chamber.getChargeCounters()).isEqualTo(2);
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Both abilities interaction =====
@@ -311,7 +312,7 @@ class ConversionChamberTest extends BaseCardTest {
     @DisplayName("Cannot activate either ability when tapped")
     void cannotActivateWhenTapped() {
         Permanent chamber = addChamberReady(player1);
-        chamber.setChargeCounters(1);
+        chamber.setCounterCount(CounterType.CHARGE, 1);
         chamber.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 4);
 
@@ -341,14 +342,14 @@ class ConversionChamberTest extends BaseCardTest {
         harness.activateAbility(player1, chamberIndex, 0, null, rod.getId(), Zone.GRAVEYARD);
         harness.passBothPriorities();
 
-        assertThat(chamber.getChargeCounters()).isEqualTo(1);
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Step 2: Untap and create token
         chamber.untap();
         harness.activateAbility(player1, chamberIndex, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(chamber.getChargeCounters()).isEqualTo(0);
+        assertThat(chamber.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // Golem token is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))

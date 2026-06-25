@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class StromkirkNobleTest extends BaseCardTest {
 
@@ -100,14 +101,14 @@ class StromkirkNobleTest extends BaseCardTest {
         // Resolve the triggered ability
         harness.passBothPriorities();
 
-        assertThat(noble.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(noble.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Deals increased combat damage after getting a +1/+1 counter")
     void dealsMoreDamageWithCounter() {
         Permanent noble = addReadyNoble();
-        noble.setPlusOnePlusOneCounters(1);
+        noble.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         noble.setAttacking(true);
         harness.setLife(player2, 20);
 
@@ -121,7 +122,7 @@ class StromkirkNobleTest extends BaseCardTest {
 
         // Resolve trigger — gets another counter
         harness.passBothPriorities();
-        assertThat(noble.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(noble.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

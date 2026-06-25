@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ThrummingbirdTest extends BaseCardTest {
 
@@ -51,14 +52,14 @@ class ThrummingbirdTest extends BaseCardTest {
         bird.setAttacking(true);
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         resolveCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -68,14 +69,14 @@ class ThrummingbirdTest extends BaseCardTest {
         bird.setAttacking(true);
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         resolveCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -85,14 +86,14 @@ class ThrummingbirdTest extends BaseCardTest {
         bird.setAttacking(true);
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         resolveCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -102,19 +103,19 @@ class ThrummingbirdTest extends BaseCardTest {
         bird.setAttacking(true);
 
         Permanent bears1 = new Permanent(new GrizzlyBears());
-        bears1.setPlusOnePlusOneCounters(1);
+        bears1.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears1);
 
         Permanent bears2 = new Permanent(new GrizzlyBears());
-        bears2.setMinusOneMinusOneCounters(1);
+        bears2.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears2);
 
         resolveCombat();
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
-        assertThat(bears1.getPlusOnePlusOneCounters()).isEqualTo(2);
-        assertThat(bears2.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(bears2.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -130,13 +131,13 @@ class ThrummingbirdTest extends BaseCardTest {
         blocker.addBlockingTarget(0); // Thrummingbird is at index 0
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         resolveCombat();
 
         // No proliferate trigger — bears counter unchanged
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test

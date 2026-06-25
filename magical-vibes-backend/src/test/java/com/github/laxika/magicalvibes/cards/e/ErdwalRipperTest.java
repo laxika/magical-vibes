@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ErdwalRipperTest extends BaseCardTest {
 
@@ -53,14 +54,14 @@ class ErdwalRipperTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Ripper should have a +1/+1 counter
-        assertThat(ripper.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(ripper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Deals increased combat damage after getting a +1/+1 counter")
     void dealsMoreDamageWithCounter() {
         Permanent ripper = addReadyRipper();
-        ripper.setPlusOnePlusOneCounters(1); // simulate having gotten a counter previously
+        ripper.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // simulate having gotten a counter previously
         ripper.setAttacking(true);
         harness.setLife(player2, 20);
 
@@ -74,7 +75,7 @@ class ErdwalRipperTest extends BaseCardTest {
 
         // Resolve trigger — gets another counter
         harness.passBothPriorities();
-        assertThat(ripper.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(ripper.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

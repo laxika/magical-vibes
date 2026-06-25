@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HeraldOfSecretStreamsTest extends BaseCardTest {
 
@@ -22,7 +23,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
     }
@@ -51,7 +52,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Herald of Secret Streams"))
                 .findFirst().orElseThrow();
 
-        herald.setPlusOnePlusOneCounters(1);
+        herald.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         assertThat(gqs.hasCantBeBlocked(gd, herald)).isTrue();
     }
@@ -80,7 +81,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        opponentBears.setPlusOnePlusOneCounters(1);
+        opponentBears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         assertThat(gqs.hasCantBeBlocked(gd, opponentBears)).isFalse();
     }
@@ -97,7 +98,7 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())
@@ -118,10 +119,10 @@ class HeraldOfSecretStreamsTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        bears.setPlusOnePlusOneCounters(2);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
 
-        bears.setPlusOnePlusOneCounters(0);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isFalse();
     }
 }

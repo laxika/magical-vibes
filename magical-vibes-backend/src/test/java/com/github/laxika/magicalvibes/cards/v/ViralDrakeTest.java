@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ViralDrakeTest extends BaseCardTest {
 
@@ -37,7 +38,7 @@ class ViralDrakeTest extends BaseCardTest {
     void proliferateAddsMinusCounters() {
         Permanent drake = addReadyDrake(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -50,7 +51,7 @@ class ViralDrakeTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -58,7 +59,7 @@ class ViralDrakeTest extends BaseCardTest {
     void canActivateMultipleTimesPerTurn() {
         Permanent drake = addReadyDrake(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -71,7 +72,7 @@ class ViralDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         // Second activation — re-force step to ensure priority state is clean
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -81,7 +82,7 @@ class ViralDrakeTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -89,7 +90,7 @@ class ViralDrakeTest extends BaseCardTest {
     void proliferateAddsPlusCounters() {
         Permanent drake = addReadyDrake(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -102,7 +103,7 @@ class ViralDrakeTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -110,7 +111,7 @@ class ViralDrakeTest extends BaseCardTest {
     void proliferateCanChooseNone() {
         Permanent drake = addReadyDrake(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -123,7 +124,7 @@ class ViralDrakeTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Helpers =====

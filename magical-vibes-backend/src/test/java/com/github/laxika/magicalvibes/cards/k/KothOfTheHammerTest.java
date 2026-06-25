@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class KothOfTheHammerTest extends BaseCardTest {
 
@@ -92,7 +93,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Koth of the Hammer"));
         Permanent koth = bf.stream().filter(p -> p.getCard().getName().equals("Koth of the Hammer")).findFirst().orElseThrow();
-        assertThat(koth.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     // ===== +1 ability: Untap target Mountain, make it a 4/4 =====
@@ -108,7 +109,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(koth.getLoyaltyCounters()).isEqualTo(4);
+        assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(mountain.isTapped()).isFalse();
         assertThat(mountain.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(mountain.getAnimatedPower()).isEqualTo(4);
@@ -172,7 +173,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(koth.getLoyaltyCounters()).isEqualTo(1);
+        assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(3);
     }
 
@@ -209,7 +210,7 @@ class KothOfTheHammerTest extends BaseCardTest {
     @DisplayName("-5 creates an emblem")
     void minusFiveCreatesEmblem() {
         Permanent koth = addReadyKoth(player1);
-        koth.setLoyaltyCounters(5);
+        koth.setCounterCount(CounterType.LOYALTY, 5);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -223,7 +224,7 @@ class KothOfTheHammerTest extends BaseCardTest {
     @DisplayName("Emblem contains GrantActivatedAbilityEffect for Mountains with OWN_PERMANENTS scope")
     void emblemContainsCorrectEffect() {
         Permanent koth = addReadyKoth(player1);
-        koth.setLoyaltyCounters(5);
+        koth.setCounterCount(CounterType.LOYALTY, 5);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -245,7 +246,7 @@ class KothOfTheHammerTest extends BaseCardTest {
     @DisplayName("Emblem persists after Koth dies")
     void emblemPersistsAfterKothDies() {
         Permanent koth = addReadyKoth(player1);
-        koth.setLoyaltyCounters(5);
+        koth.setCounterCount(CounterType.LOYALTY, 5);
 
         // Use -5, Koth goes to 0 and dies
         harness.activateAbility(player1, 0, 2, null, null);
@@ -284,7 +285,7 @@ class KothOfTheHammerTest extends BaseCardTest {
         // 3 - 2 = 1, Koth should survive
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Koth of the Hammer"));
-        assertThat(koth.getLoyaltyCounters()).isEqualTo(1);
+        assertThat(koth.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
     }
 
     // ===== Helpers =====
@@ -292,7 +293,7 @@ class KothOfTheHammerTest extends BaseCardTest {
     private Permanent addReadyKoth(Player player) {
         KothOfTheHammer card = new KothOfTheHammer();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

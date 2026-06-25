@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
@@ -66,7 +67,7 @@ public class StateBasedActionService {
                     && !graveyardService.tryRegenerate(gameData, p)) {
                 // CR 704.5g — creature with damage >= toughness is destroyed (regeneration can replace this)
                 toDie.add(new DeathEntry(p, DeathReason.LETHAL_DAMAGE));
-            } else if (p.getCard().hasType(CardType.PLANESWALKER) && p.getLoyaltyCounters() <= 0) {
+            } else if (p.getCard().hasType(CardType.PLANESWALKER) && p.getCounterCount(CounterType.LOYALTY) <= 0) {
                 toDie.add(new DeathEntry(p, DeathReason.ZERO_LOYALTY));
             }
         });
@@ -102,7 +103,7 @@ public class StateBasedActionService {
         gameData.forEachPermanent((playerId, p) -> {
             if (!p.getCard().isSaga()) return;
             int finalChapter = p.getCard().getSagaFinalChapter();
-            if (finalChapter <= 0 || p.getLoreCounters() < finalChapter) return;
+            if (finalChapter <= 0 || p.getCounterCount(CounterType.LORE) < finalChapter) return;
 
             boolean chapterOnStack = gameData.stack.stream()
                     .anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
@@ -123,12 +124,12 @@ public class StateBasedActionService {
     // CR 704.5q — +1/+1 and -1/-1 counters cancel each other out
     private void cancelCounters(GameData gameData) {
         gameData.forEachPermanent((pid, p) -> {
-            int plus = p.getPlusOnePlusOneCounters();
-            int minus = p.getMinusOneMinusOneCounters();
+            int plus = p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+            int minus = p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
             if (plus > 0 && minus > 0) {
                 int cancelled = Math.min(plus, minus);
-                p.setPlusOnePlusOneCounters(plus - cancelled);
-                p.setMinusOneMinusOneCounters(minus - cancelled);
+                p.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, plus - cancelled);
+                p.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, minus - cancelled);
                 // Protean Hydra ruling: "its last ability triggers whenever a +1/+1 counter is removed
                 // from it for any reason" — SBA counter annihilation triggers regrowth
                 if (p.getCard().getEffects(EffectSlot.STATIC).stream()

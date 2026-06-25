@@ -150,6 +150,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.function.BiFunction;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Read-only query service for inspecting game state. Provides methods for looking up permanents
@@ -636,7 +637,7 @@ public class GameQueryService {
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
         if (permanent.isPermanentlyAnimated()) return true;
-        if (permanent.getAwakeningCounters() > 0) return true;
+        if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (isArtifact(permanent) && hasAnimateArtifactEffect(gameData)) return true;
         return hasSelfBecomeCreatureEffect(gameData, permanent);
     }
@@ -881,7 +882,7 @@ public class GameQueryService {
                         || permanent.isAnimatedUntilEndOfTurn()
                         || permanent.isAnimatedUntilNextTurn()
                         || permanent.isPermanentlyAnimated()
-                        || permanent.getAwakeningCounters() > 0;
+                        || permanent.getCounterCount(CounterType.AWAKENING) > 0;
             }
             return isCreature(gameData, permanent);
         }
@@ -1089,26 +1090,26 @@ public class GameQueryService {
         }
         if (predicate instanceof PermanentHasCountersPredicate hasCountersPredicate) {
             return switch (hasCountersPredicate.counterType()) {
-                case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters() > 0;
-                case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters() > 0;
-                case CHARGE -> permanent.getChargeCounters() > 0;
-                case LOYALTY -> permanent.getLoyaltyCounters() > 0;
-                case HATCHLING -> permanent.getHatchlingCounters() > 0;
-                case SLIME -> permanent.getSlimeCounters() > 0;
-                case STUDY -> permanent.getStudyCounters() > 0;
-                case WISH -> permanent.getWishCounters() > 0;
-                case LORE -> permanent.getLoreCounters() > 0;
-                case AIM -> permanent.getAimCounters() > 0;
-                case ANY -> permanent.getPlusOnePlusOneCounters() > 0
-                        || permanent.getMinusOneMinusOneCounters() > 0
-                        || permanent.getChargeCounters() > 0
-                        || permanent.getLoyaltyCounters() > 0
-                        || permanent.getHatchlingCounters() > 0
-                        || permanent.getSlimeCounters() > 0
-                        || permanent.getStudyCounters() > 0
-                        || permanent.getWishCounters() > 0
-                        || permanent.getLoreCounters() > 0
-                        || permanent.getAimCounters() > 0;
+                case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;
+                case MINUS_ONE_MINUS_ONE -> permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0;
+                case CHARGE -> permanent.getCounterCount(CounterType.CHARGE) > 0;
+                case LOYALTY -> permanent.getCounterCount(CounterType.LOYALTY) > 0;
+                case HATCHLING -> permanent.getCounterCount(CounterType.HATCHLING) > 0;
+                case SLIME -> permanent.getCounterCount(CounterType.SLIME) > 0;
+                case STUDY -> permanent.getCounterCount(CounterType.STUDY) > 0;
+                case WISH -> permanent.getCounterCount(CounterType.WISH) > 0;
+                case LORE -> permanent.getCounterCount(CounterType.LORE) > 0;
+                case AIM -> permanent.getCounterCount(CounterType.AIM) > 0;
+                case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
+                        || permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
+                        || permanent.getCounterCount(CounterType.CHARGE) > 0
+                        || permanent.getCounterCount(CounterType.LOYALTY) > 0
+                        || permanent.getCounterCount(CounterType.HATCHLING) > 0
+                        || permanent.getCounterCount(CounterType.SLIME) > 0
+                        || permanent.getCounterCount(CounterType.STUDY) > 0
+                        || permanent.getCounterCount(CounterType.WISH) > 0
+                        || permanent.getCounterCount(CounterType.LORE) > 0
+                        || permanent.getCounterCount(CounterType.AIM) > 0;
                 default -> false;
             };
         }
@@ -1302,7 +1303,7 @@ public class GameQueryService {
             }
         }
 
-        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilNextTurn() || target.getAwakeningCounters() > 0 || accumulator.isSelfBecomeCreature();
+        boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
                 && !isSelfAnimated

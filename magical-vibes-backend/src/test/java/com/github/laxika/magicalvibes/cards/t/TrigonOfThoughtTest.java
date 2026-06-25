@@ -15,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TrigonOfThoughtTest extends BaseCardTest {
 
@@ -80,7 +81,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
                 .findFirst().orElseThrow();
-        assertThat(trigon.getChargeCounters()).isEqualTo(3);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== First activated ability: put a charge counter =====
@@ -93,13 +94,13 @@ class TrigonOfThoughtTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(1);
+        trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(trigon.getChargeCounters()).isEqualTo(2);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Second activated ability: draw a card =====
@@ -112,7 +113,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialHandSize = gd.playerHands.get(player1.getId()).size();
 
@@ -120,7 +121,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(trigon.getChargeCounters()).isEqualTo(2);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(initialHandSize + 1);
     }
 
@@ -132,7 +133,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         int initialHandSize = gd.playerHands.get(player1.getId()).size();
 
@@ -147,7 +148,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(trigon.getChargeCounters()).isEqualTo(1);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(initialHandSize + 2);
     }
 
@@ -159,7 +160,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(0);
+        trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
@@ -174,7 +175,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Thought"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it
         harness.addMana(player1, ManaColor.COLORLESS, 2);

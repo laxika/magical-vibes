@@ -25,6 +25,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class KarnLiberatedTest extends BaseCardTest {
 
@@ -81,7 +82,7 @@ class KarnLiberatedTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Karn Liberated"));
         Permanent karn = bf.stream().filter(p -> p.getCard().getName().equals("Karn Liberated")).findFirst().orElseThrow();
-        assertThat(karn.getLoyaltyCounters()).isEqualTo(6);
+        assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(karn.isSummoningSick()).isFalse();
     }
 
@@ -100,7 +101,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 0, null, player2.getId());
             harness.passBothPriorities();
 
-            assertThat(karn.getLoyaltyCounters()).isEqualTo(10); // 6 + 4
+            assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(10); // 6 + 4
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
             assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
         }
@@ -208,7 +209,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 1, null, bears.getId());
             harness.passBothPriorities();
 
-            assertThat(karn.getLoyaltyCounters()).isEqualTo(3); // 6 - 3
+            assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 6 - 3
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
             assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -249,7 +250,7 @@ class KarnLiberatedTest extends BaseCardTest {
         @DisplayName("Cannot activate with insufficient loyalty")
         void cannotActivateWithInsufficientLoyalty() {
             Permanent karn = addReadyKarn(player1);
-            karn.setLoyaltyCounters(2); // Less than 3
+            karn.setCounterCount(CounterType.LOYALTY, 2); // Less than 3
             harness.addToBattlefield(player2, new GrizzlyBears());
             Permanent bears = findPermanent(player2, "Grizzly Bears");
 
@@ -269,7 +270,7 @@ class KarnLiberatedTest extends BaseCardTest {
         @DisplayName("−14 restarts the game and puts exiled cards onto battlefield")
         void restartGamePutsExiledCardsOntoBattlefield() {
             Permanent karn = addReadyKarn(player1);
-            karn.setLoyaltyCounters(14);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
 
             // Exile a creature with Karn's -3 first
             harness.addToBattlefield(player2, new GrizzlyBears());
@@ -283,7 +284,7 @@ class KarnLiberatedTest extends BaseCardTest {
 
             // Reset loyalty ability flag and set loyalty to 14
             karn.setLoyaltyActivationsThisTurn(0);
-            karn.setLoyaltyCounters(14);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
 
             // Activate -14 (ultimate)
             harness.activateAbility(player1, 0, 2, null, null);
@@ -311,7 +312,7 @@ class KarnLiberatedTest extends BaseCardTest {
         @DisplayName("−14 with no exiled cards still restarts the game")
         void restartWithNoExiledCards() {
             Permanent karn = addReadyKarn(player1);
-            karn.setLoyaltyCounters(14);
+            karn.setCounterCount(CounterType.LOYALTY, 14);
 
             harness.activateAbility(player1, 0, 2, null, null);
             harness.passBothPriorities();
@@ -333,7 +334,7 @@ class KarnLiberatedTest extends BaseCardTest {
         @DisplayName("Cannot activate −14 with insufficient loyalty")
         void cannotActivateWithInsufficientLoyalty() {
             Permanent karn = addReadyKarn(player1);
-            assertThat(karn.getLoyaltyCounters()).isEqualTo(6);
+            assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
 
             assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                     .isInstanceOf(IllegalStateException.class)
@@ -375,7 +376,7 @@ class KarnLiberatedTest extends BaseCardTest {
     @DisplayName("Karn dies when loyalty reaches 0")
     void diesWhenLoyaltyReachesZero() {
         Permanent karn = addReadyKarn(player1);
-        karn.setLoyaltyCounters(3);
+        karn.setCounterCount(CounterType.LOYALTY, 3);
 
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent bears = findPermanent(player2, "Grizzly Bears");
@@ -395,7 +396,7 @@ class KarnLiberatedTest extends BaseCardTest {
     @DisplayName("−3 ability still resolves after Karn dies to SBA at 0 loyalty")
     void abilityResolvesAfterDeath() {
         Permanent karn = addReadyKarn(player1);
-        karn.setLoyaltyCounters(3);
+        karn.setCounterCount(CounterType.LOYALTY, 3);
 
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent bears = findPermanent(player2, "Grizzly Bears");
@@ -415,7 +416,7 @@ class KarnLiberatedTest extends BaseCardTest {
     private Permanent addReadyKarn(Player player) {
         KarnLiberated card = new KarnLiberated();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(6);
+        perm.setCounterCount(CounterType.LOYALTY, 6);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

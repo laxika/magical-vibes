@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TrigonOfRageTest extends BaseCardTest {
 
@@ -84,7 +85,7 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        assertThat(trigon.getChargeCounters()).isEqualTo(3);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== Ability 1: Put a charge counter =====
@@ -97,14 +98,14 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.RED, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
         harness.activateAbility(player1, trigonIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(trigon.getChargeCounters()).isEqualTo(4);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
     @Test
@@ -115,7 +116,7 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // Only colorless mana, should fail
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -135,7 +136,7 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Goblin Piker"))
@@ -150,7 +151,7 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Charge counter removed
-        assertThat(trigon.getChargeCounters()).isEqualTo(2);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
 
         // Target creature gets +3/+0
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(originalPower + 3);
@@ -166,7 +167,7 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Goblin Piker"))
@@ -197,7 +198,7 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(0);
+        trigon.setCounterCount(CounterType.CHARGE, 0);
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Goblin Piker"))
@@ -218,7 +219,7 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Goblin Piker"))
@@ -236,7 +237,7 @@ class TrigonOfRageTest extends BaseCardTest {
         harness.activateAbility(player1, trigonIndex, 1, null, target.getId());
         harness.passBothPriorities();
 
-        assertThat(trigon.getChargeCounters()).isEqualTo(1);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         // Goblin Piker is 2/1, +3/+0 twice = 8/1
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(8);
     }
@@ -250,7 +251,7 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Goblin Piker"))
@@ -278,7 +279,7 @@ class TrigonOfRageTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Rage"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Goblin Piker"))

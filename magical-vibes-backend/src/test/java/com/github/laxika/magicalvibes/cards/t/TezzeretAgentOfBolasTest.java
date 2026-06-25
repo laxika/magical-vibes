@@ -22,6 +22,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TezzeretAgentOfBolasTest extends BaseCardTest {
 
@@ -100,7 +101,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Tezzeret, Agent of Bolas"));
         Permanent tezz = bf.stream().filter(p -> p.getCard().getName().equals("Tezzeret, Agent of Bolas")).findFirst().orElseThrow();
-        assertThat(tezz.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(tezz.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     // ===== -1 ability: Animate target artifact =====
@@ -114,7 +115,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, solRing.getId());
         harness.passBothPriorities();
 
-        assertThat(tezz.getLoyaltyCounters()).isEqualTo(2);
+        assertThat(tezz.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
         assertThat(solRing.isPermanentlyAnimated()).isTrue();
         assertThat(solRing.getEffectivePower()).isEqualTo(5);
         assertThat(solRing.getEffectiveToughness()).isEqualTo(5);
@@ -198,7 +199,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @DisplayName("-4 drains target player for twice artifact count")
     void minusFourDrainsForTwiceArtifactCount() {
         Permanent tezz = addReadyTezzeret(player1);
-        tezz.setLoyaltyCounters(4);
+        tezz.setCounterCount(CounterType.LOYALTY, 4);
         addArtifact(player1);
         addArtifact(player1);
         addArtifact(player1);
@@ -210,14 +211,14 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         // 3 artifacts × 2 = 6 life drained
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(26);
-        assertThat(tezz.getLoyaltyCounters()).isEqualTo(0);
+        assertThat(tezz.getCounterCount(CounterType.LOYALTY)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("-4 drains zero with no artifacts")
     void minusFourDrainsZeroWithNoArtifacts() {
         Permanent tezz = addReadyTezzeret(player1);
-        tezz.setLoyaltyCounters(4);
+        tezz.setCounterCount(CounterType.LOYALTY, 4);
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
@@ -232,7 +233,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @DisplayName("-4 does not count opponent's artifacts")
     void minusFourDoesNotCountOpponentArtifacts() {
         Permanent tezz = addReadyTezzeret(player1);
-        tezz.setLoyaltyCounters(4);
+        tezz.setCounterCount(CounterType.LOYALTY, 4);
         addArtifact(player1);
         addArtifact(player2);
         addArtifact(player2);
@@ -250,7 +251,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @DisplayName("-4 can target self")
     void minusFourCanTargetSelf() {
         Permanent tezz = addReadyTezzeret(player1);
-        tezz.setLoyaltyCounters(4);
+        tezz.setCounterCount(CounterType.LOYALTY, 4);
         addArtifact(player1);
 
         harness.activateAbility(player1, 0, 2, null, player1.getId());
@@ -277,7 +278,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     @DisplayName("Tezzeret dies when -4 brings loyalty to 0 but ability still resolves")
     void minusFourKillsTezzeretButAbilityResolves() {
         Permanent tezz = addReadyTezzeret(player1);
-        tezz.setLoyaltyCounters(4);
+        tezz.setCounterCount(CounterType.LOYALTY, 4);
         addArtifact(player1);
         addArtifact(player1);
 
@@ -298,7 +299,7 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
     private Permanent addReadyTezzeret(Player player) {
         TezzeretAgentOfBolas card = new TezzeretAgentOfBolas();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class JaceBelerenTest extends BaseCardTest {
 
@@ -102,7 +103,7 @@ class JaceBelerenTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Jace Beleren"));
         Permanent jace = bf.stream().filter(p -> p.getCard().getName().equals("Jace Beleren")).findFirst().orElseThrow();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(jace.isSummoningSick()).isFalse();
     }
 
@@ -120,7 +121,7 @@ class JaceBelerenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(5); // 3 + 2
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 3 + 2
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore + 1);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(p2HandBefore + 1);
     }
@@ -138,7 +139,7 @@ class JaceBelerenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(2); // 3 - 1
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(2); // 3 - 1
         assertThat(gd.playerHands.get(player2.getId())).hasSize(p2HandBefore + 1);
     }
 
@@ -153,7 +154,7 @@ class JaceBelerenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(2); // 3 - 1
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(2); // 3 - 1
         assertThat(gd.playerHands.get(player1.getId())).hasSize(p1HandBefore + 1);
     }
 
@@ -163,7 +164,7 @@ class JaceBelerenTest extends BaseCardTest {
     @DisplayName("-10 ability mills twenty cards from target player's library")
     void minusTenMillsTwentyCards() {
         Permanent jace = addReadyJace(player1);
-        jace.setLoyaltyCounters(10);
+        jace.setCounterCount(CounterType.LOYALTY, 10);
 
         List<Card> deck = harness.getGameData().playerDecks.get(player2.getId());
         while (deck.size() > 25) {
@@ -176,7 +177,7 @@ class JaceBelerenTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(0); // 10 - 10
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 10 - 10
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore - 20);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(graveyardBefore + 20);
     }
@@ -185,7 +186,7 @@ class JaceBelerenTest extends BaseCardTest {
     @DisplayName("-10 ability: Jace goes to graveyard at 0 loyalty")
     void minusTenJaceGoesToGraveyardAtZeroLoyalty() {
         Permanent jace = addReadyJace(player1);
-        jace.setLoyaltyCounters(10);
+        jace.setCounterCount(CounterType.LOYALTY, 10);
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
@@ -236,7 +237,7 @@ class JaceBelerenTest extends BaseCardTest {
     private Permanent addReadyJace(Player player) {
         JaceBeleren card = new JaceBeleren();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

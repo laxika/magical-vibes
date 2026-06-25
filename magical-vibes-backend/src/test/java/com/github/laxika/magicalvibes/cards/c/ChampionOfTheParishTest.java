@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChampionOfTheParishTest extends BaseCardTest {
 
@@ -45,7 +46,7 @@ class ChampionOfTheParishTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ChampionOfTheParish());
 
         Permanent champion = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(champion.getPlusOnePlusOneCounters()).isZero();
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Cast Elite Vanguard (Human Soldier)
         harness.setHand(player1, List.of(new EliteVanguard()));
@@ -55,7 +56,7 @@ class ChampionOfTheParishTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell (triggers Champion)
         harness.passBothPriorities(); // resolve Champion's +1/+1 counter triggered ability
 
-        assertThat(champion.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
     }
@@ -74,7 +75,7 @@ class ChampionOfTheParishTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(champion.getPlusOnePlusOneCounters()).isZero();
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -95,7 +96,7 @@ class ChampionOfTheParishTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(champion.getPlusOnePlusOneCounters()).isZero();
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -112,7 +113,7 @@ class ChampionOfTheParishTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve Champion's triggered ability
 
-        assertThat(champion.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Cast second Human
         harness.setHand(player1, List.of(new EliteVanguard()));
@@ -121,7 +122,7 @@ class ChampionOfTheParishTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve Champion's triggered ability
 
-        assertThat(champion.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(3);
     }

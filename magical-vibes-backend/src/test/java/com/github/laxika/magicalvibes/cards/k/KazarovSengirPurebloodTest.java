@@ -78,7 +78,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             Permanent kazarov = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().getName().equals("Kazarov, Sengir Pureblood"))
                     .findFirst().orElseThrow();
-            assertThat(kazarov.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test
@@ -105,7 +105,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             Permanent kazarov = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().getName().equals("Kazarov, Sengir Pureblood"))
                     .findFirst().orElseThrow();
-            assertThat(kazarov.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test
@@ -127,7 +127,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             Permanent kazarov = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().getName().equals("Kazarov, Sengir Pureblood"))
                     .findFirst().orElseThrow();
-            assertThat(kazarov.getPlusOnePlusOneCounters()).isEqualTo(0);
+            assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         }
     }
 
@@ -174,7 +174,7 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
             Permanent kazarov = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().getName().equals("Kazarov, Sengir Pureblood"))
                     .findFirst().orElseThrow();
-            assertThat(kazarov.getPlusOnePlusOneCounters()).isGreaterThanOrEqualTo(1);
+            assertThat(kazarov.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isGreaterThanOrEqualTo(1);
         }
     }
 }

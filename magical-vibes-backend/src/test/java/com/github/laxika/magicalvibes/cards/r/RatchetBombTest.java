@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class RatchetBombTest extends BaseCardTest {
 
@@ -57,7 +58,7 @@ class RatchetBombTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bomb.getChargeCounters()).isEqualTo(1);
+        assertThat(bomb.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -67,17 +68,17 @@ class RatchetBombTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(bomb.getChargeCounters()).isEqualTo(1);
+        assertThat(bomb.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         bomb.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(bomb.getChargeCounters()).isEqualTo(2);
+        assertThat(bomb.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
 
         bomb.untap();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(bomb.getChargeCounters()).isEqualTo(3);
+        assertThat(bomb.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     @Test
@@ -96,7 +97,7 @@ class RatchetBombTest extends BaseCardTest {
     @DisplayName("Sacrificing with 2 counters destroys MV 2 creatures")
     void destroysManaValue2Permanents() {
         Permanent bomb = addReadyBomb(player1);
-        bomb.setChargeCounters(2);
+        bomb.setCounterCount(CounterType.CHARGE, 2);
 
         // MV 2 creature on opponent's battlefield
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -134,7 +135,7 @@ class RatchetBombTest extends BaseCardTest {
     @DisplayName("Does not destroy permanents with different mana value")
     void doesNotDestroyDifferentManaValue() {
         Permanent bomb = addReadyBomb(player1);
-        bomb.setChargeCounters(2);
+        bomb.setCounterCount(CounterType.CHARGE, 2);
 
         // MV 1 creature (Llanowar Elves = {G})
         harness.addToBattlefield(player2, new LlanowarElves());
@@ -165,7 +166,7 @@ class RatchetBombTest extends BaseCardTest {
     @DisplayName("Destroys permanents on both sides of the battlefield")
     void destroysPermanentsOnBothSides() {
         Permanent bomb = addReadyBomb(player1);
-        bomb.setChargeCounters(2);
+        bomb.setCounterCount(CounterType.CHARGE, 2);
 
         // MV 2 creatures on both sides
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -183,7 +184,7 @@ class RatchetBombTest extends BaseCardTest {
     @DisplayName("Destroys enchantments with matching mana value")
     void destroysEnchantments() {
         Permanent bomb = addReadyBomb(player1);
-        bomb.setChargeCounters(2);
+        bomb.setCounterCount(CounterType.CHARGE, 2);
 
         // Pacifism is an enchantment with MV 2 ({1}{W})
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -208,7 +209,7 @@ class RatchetBombTest extends BaseCardTest {
     @DisplayName("Does not destroy indestructible permanents")
     void doesNotDestroyIndestructible() {
         Permanent bomb = addReadyBomb(player1);
-        bomb.setChargeCounters(1);
+        bomb.setCounterCount(CounterType.CHARGE, 1);
 
         // Darksteel Axe (MV 1, indestructible)
         harness.addToBattlefield(player2, new DarksteelAxe());
@@ -224,7 +225,7 @@ class RatchetBombTest extends BaseCardTest {
     @DisplayName("Ratchet Bomb is sacrificed as a cost (goes to graveyard immediately)")
     void sacrificedAsCost() {
         Permanent bomb = addReadyBomb(player1);
-        bomb.setChargeCounters(2);
+        bomb.setCounterCount(CounterType.CHARGE, 2);
 
         harness.activateAbility(player1, 0, 1, null, null);
 
@@ -255,7 +256,7 @@ class RatchetBombTest extends BaseCardTest {
         // Turn 1: add a counter
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(bomb.getChargeCounters()).isEqualTo(1);
+        assertThat(bomb.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Simulate next turn: untap
         bomb.untap();
@@ -263,7 +264,7 @@ class RatchetBombTest extends BaseCardTest {
         // Add another counter
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(bomb.getChargeCounters()).isEqualTo(2);
+        assertThat(bomb.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
 
         // Simulate next turn: untap
         bomb.untap();

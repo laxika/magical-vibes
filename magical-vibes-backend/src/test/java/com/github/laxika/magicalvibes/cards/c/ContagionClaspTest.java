@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ContagionClaspTest extends BaseCardTest {
 
@@ -56,7 +57,7 @@ class ContagionClaspTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(1);
         assertThat(bears.getEffectiveToughness()).isEqualTo(1);
     }
@@ -66,7 +67,7 @@ class ContagionClaspTest extends BaseCardTest {
     void etbKillsOneOneCreature() {
         // Create a 1/1 by giving a 2/2 Grizzly Bears a -1/-1 counter
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
         UUID bearsId = bears.getId();
 
@@ -93,7 +94,7 @@ class ContagionClaspTest extends BaseCardTest {
     void proliferateAddsMinusCounters() {
         Permanent clasp = addReadyClasp(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -106,7 +107,7 @@ class ContagionClaspTest extends BaseCardTest {
         // Now awaiting proliferate choice
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -114,7 +115,7 @@ class ContagionClaspTest extends BaseCardTest {
     void proliferateAddsPlusCounters() {
         Permanent clasp = addReadyClasp(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -126,7 +127,7 @@ class ContagionClaspTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -134,7 +135,7 @@ class ContagionClaspTest extends BaseCardTest {
     void proliferateCanChooseNone() {
         Permanent clasp = addReadyClasp(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -148,7 +149,7 @@ class ContagionClaspTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         // Counter unchanged
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -157,11 +158,11 @@ class ContagionClaspTest extends BaseCardTest {
         Permanent clasp = addReadyClasp(player1);
 
         Permanent bears1 = new Permanent(new GrizzlyBears());
-        bears1.setMinusOneMinusOneCounters(1);
+        bears1.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears1);
 
         Permanent bears2 = new Permanent(new GrizzlyBears());
-        bears2.setMinusOneMinusOneCounters(1);
+        bears2.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears2);
 
         harness.forceActivePlayer(player1);
@@ -173,8 +174,8 @@ class ContagionClaspTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
-        assertThat(bears1.getMinusOneMinusOneCounters()).isEqualTo(2);
-        assertThat(bears2.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears1.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(bears2.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -184,7 +185,7 @@ class ContagionClaspTest extends BaseCardTest {
 
         // Grizzly Bears (2/2) with 1 -1/-1 counter = 1/1, another makes it 0/0 → dies
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -220,7 +221,7 @@ class ContagionClaspTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -240,7 +241,7 @@ class ContagionClaspTest extends BaseCardTest {
         Permanent spellbook = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Spellbook"))
                 .findFirst().orElseThrow();
-        assertThat(spellbook.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(spellbook.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
     @Test

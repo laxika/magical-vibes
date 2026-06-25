@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GlisteningOilTest extends BaseCardTest {
 
@@ -97,12 +98,12 @@ class GlisteningOilTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        int countersBefore = creature.getMinusOneMinusOneCounters();
+        int countersBefore = creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(creature.getMinusOneMinusOneCounters()).isEqualTo(countersBefore + 1);
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(countersBefore + 1);
     }
 
     @Test
@@ -116,12 +117,12 @@ class GlisteningOilTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        int countersBefore = creature.getMinusOneMinusOneCounters();
+        int countersBefore = creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(creature.getMinusOneMinusOneCounters()).isEqualTo(countersBefore);
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(countersBefore);
     }
 
     @Test
@@ -141,7 +142,7 @@ class GlisteningOilTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(creature.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     // ===== Return to hand on death =====

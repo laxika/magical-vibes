@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GrimAfflictionTest extends BaseCardTest {
 
@@ -41,7 +42,7 @@ class GrimAfflictionTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
         Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setMinusOneMinusOneCounters(1);
+        otherBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
         harness.forceActivePlayer(player1);
@@ -56,13 +57,13 @@ class GrimAfflictionTest extends BaseCardTest {
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(targetId))
                 .findFirst().orElseThrow();
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         // Proliferate choice is now awaited — choose both permanents with counters
         harness.handleMultiplePermanentsChosen(player1, List.of(target.getId(), otherBears.getId()));
 
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(2);
-        assertThat(otherBears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(otherBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -83,12 +84,12 @@ class GrimAfflictionTest extends BaseCardTest {
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(targetId))
                 .findFirst().orElseThrow();
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         // Proliferate — choose none
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -98,7 +99,7 @@ class GrimAfflictionTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
         Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setMinusOneMinusOneCounters(1);
+        otherBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
         harness.forceActivePlayer(player1);
@@ -115,7 +116,7 @@ class GrimAfflictionTest extends BaseCardTest {
 
         // Spell fizzles — no proliferate either
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        assertThat(otherBears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(otherBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Targeting =====

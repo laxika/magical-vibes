@@ -23,6 +23,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class LilianaVessTest extends BaseCardTest {
 
@@ -102,7 +103,7 @@ class LilianaVessTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Liliana Vess"));
         Permanent liliana = bf.stream().filter(p -> p.getCard().getName().equals("Liliana Vess")).findFirst().orElseThrow();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(5);
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(liliana.isSummoningSick()).isFalse();
     }
 
@@ -118,7 +119,7 @@ class LilianaVessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(6); // 5 + 1
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
         // Player is prompted to choose a card to discard
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
         assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
@@ -140,7 +141,7 @@ class LilianaVessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(6); // 5 + 1
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
 
         harness.handleCardChosen(player1, 0);
@@ -160,7 +161,7 @@ class LilianaVessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(3); // 5 - 2
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // All cards from library should be offered (unrestricted search)
         assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
@@ -214,7 +215,7 @@ class LilianaVessTest extends BaseCardTest {
     @DisplayName("-8 ability puts all creature cards from all graveyards onto battlefield under controller's control")
     void minusEightPutsAllCreaturesFromAllGraveyards() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(8);
+        liliana.setCounterCount(CounterType.LOYALTY, 8);
 
         // Put creature cards into both graveyards
         GrizzlyBears bears1 = new GrizzlyBears();
@@ -249,7 +250,7 @@ class LilianaVessTest extends BaseCardTest {
     @DisplayName("-8 ability does not put non-creature cards onto battlefield")
     void minusEightDoesNotPutNonCreatures() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(8);
+        liliana.setCounterCount(CounterType.LOYALTY, 8);
 
         // Put a non-creature card into graveyard
         gd.playerGraveyards.get(player2.getId()).add(new Plains());
@@ -274,7 +275,7 @@ class LilianaVessTest extends BaseCardTest {
     @DisplayName("Cannot use -8 when loyalty is only 5")
     void cannotActivateMinusEightWithInsufficientLoyalty() {
         Permanent liliana = addReadyLiliana(player1);
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(5);
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -313,7 +314,7 @@ class LilianaVessTest extends BaseCardTest {
     private Permanent addReadyLiliana(Player player) {
         LilianaVess card = new LilianaVess();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(5);
+        perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

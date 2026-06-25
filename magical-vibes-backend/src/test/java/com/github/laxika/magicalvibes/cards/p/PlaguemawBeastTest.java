@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class PlaguemawBeastTest extends BaseCardTest {
 
@@ -45,7 +46,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
         Permanent enemyBears = new Permanent(new GrizzlyBears());
-        enemyBears.setMinusOneMinusOneCounters(1);
+        enemyBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(enemyBears);
 
         harness.forceActivePlayer(player1);
@@ -63,7 +64,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Llanowar Elves");
 
         // Bears should have 2 -1/-1 counters
-        assertThat(enemyBears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(enemyBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -74,7 +75,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
         Permanent allyBears = new Permanent(new GrizzlyBears());
-        allyBears.setPlusOnePlusOneCounters(1);
+        allyBears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(allyBears);
 
         harness.forceActivePlayer(player1);
@@ -86,7 +87,7 @@ class PlaguemawBeastTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(allyBears.getId()));
 
-        assertThat(allyBears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(allyBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -95,7 +96,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         Permanent beast = addReadyBeast(player1);
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -107,7 +108,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         harness.assertNotOnBattlefield(player1, "Plaguemaw Beast");
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -148,7 +149,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         UUID elvesId = harness.getPermanentId(player1, "Llanowar Elves");
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -162,7 +163,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         // Counter unchanged
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -171,7 +172,7 @@ class PlaguemawBeastTest extends BaseCardTest {
         addReadyBeast(player1);
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BrazenBuccaneersTest extends BaseCardTest {
 
@@ -55,7 +56,7 @@ class BrazenBuccaneersTest extends BaseCardTest {
 
         Permanent buccaneers = findBuccaneers();
         assertThat(buccaneers).isNotNull();
-        assertThat(buccaneers.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(buccaneers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -79,7 +80,7 @@ class BrazenBuccaneersTest extends BaseCardTest {
 
         Permanent buccaneers = findBuccaneers();
         assertThat(buccaneers).isNotNull();
-        assertThat(buccaneers.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(buccaneers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -134,7 +135,7 @@ class BrazenBuccaneersTest extends BaseCardTest {
 
         Permanent buccaneers = findBuccaneers();
         assertThat(buccaneers).isNotNull();
-        assertThat(buccaneers.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(buccaneers.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
     }
 

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GravetillerWurmTest extends BaseCardTest {
 
@@ -54,7 +55,7 @@ class GravetillerWurmTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Gravetiller Wurm"))
                 .findFirst().orElseThrow();
 
-        assertThat(wurm.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -78,7 +79,7 @@ class GravetillerWurmTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Gravetiller Wurm"))
                 .findFirst().orElseThrow();
 
-        assertThat(wurm.getPlusOnePlusOneCounters()).isEqualTo(4);
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(wurm.getEffectivePower()).isEqualTo(8);
         assertThat(wurm.getEffectiveToughness()).isEqualTo(8);
     }
@@ -110,7 +111,7 @@ class GravetillerWurmTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Gravetiller Wurm"))
                 .findFirst().orElseThrow();
 
-        assertThat(wurm.getPlusOnePlusOneCounters()).isEqualTo(4);
+        assertThat(wurm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(wurm.getEffectivePower()).isEqualTo(8);
         assertThat(wurm.getEffectiveToughness()).isEqualTo(8);
     }

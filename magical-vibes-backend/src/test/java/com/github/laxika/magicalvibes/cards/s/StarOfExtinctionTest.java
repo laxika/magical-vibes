@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class StarOfExtinctionTest extends BaseCardTest {
 
@@ -132,7 +133,7 @@ class StarOfExtinctionTest extends BaseCardTest {
     void deals20DamageToPlaneswalkers() {
         harness.addToBattlefield(player1, new Forest());
         Permanent chandra = new Permanent(new ChandraNalaar());
-        chandra.setLoyaltyCounters(6);
+        chandra.setCounterCount(CounterType.LOYALTY, 6);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(chandra);
         harness.setHand(player1, List.of(new StarOfExtinction()));
         harness.addMana(player1, ManaColor.RED, 7);

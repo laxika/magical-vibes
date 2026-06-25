@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BloodcrazedNeonateTest extends BaseCardTest {
 
@@ -104,14 +105,14 @@ class BloodcrazedNeonateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Neonate should have a +1/+1 counter
-        assertThat(neonate.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(neonate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Deals increased combat damage after getting a +1/+1 counter")
     void dealsMoreDamageWithCounter() {
         Permanent neonate = addReadyNeonate();
-        neonate.setPlusOnePlusOneCounters(1); // simulate having gotten a counter previously
+        neonate.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // simulate having gotten a counter previously
         neonate.setAttacking(true);
         harness.setLife(player2, 20);
 
@@ -125,7 +126,7 @@ class BloodcrazedNeonateTest extends BaseCardTest {
 
         // Resolve trigger — gets another counter
         harness.passBothPriorities();
-        assertThat(neonate.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(neonate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

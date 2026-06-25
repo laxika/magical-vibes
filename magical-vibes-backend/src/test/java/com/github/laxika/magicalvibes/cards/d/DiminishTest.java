@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class DiminishTest extends BaseCardTest {
 
@@ -99,7 +100,7 @@ class DiminishTest extends BaseCardTest {
     void countersApplyOnTopOfNewBase() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent bear = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        bear.setPlusOnePlusOneCounters(2);
+        bear.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         assertThat(bear.getEffectivePower()).isEqualTo(4); // 2 base + 2 counters
         assertThat(bear.getEffectiveToughness()).isEqualTo(4);
 

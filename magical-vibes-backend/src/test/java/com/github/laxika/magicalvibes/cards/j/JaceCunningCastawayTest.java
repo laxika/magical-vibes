@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class JaceCunningCastawayTest extends BaseCardTest {
 
@@ -94,7 +95,7 @@ class JaceCunningCastawayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(4); // 3 + 1
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
         assertThat(gd.pendingDelayedCombatDamageLoots).hasSize(1);
         assertThat(gd.pendingDelayedCombatDamageLoots.getFirst().controllerId()).isEqualTo(player1.getId());
         assertThat(gd.pendingDelayedCombatDamageLoots.getFirst().drawAmount()).isEqualTo(1);
@@ -127,7 +128,7 @@ class JaceCunningCastawayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jace.getLoyaltyCounters()).isEqualTo(1); // 3 - 2
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(1); // 3 - 2
 
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         Permanent illusionToken = bf.stream()
@@ -167,7 +168,7 @@ class JaceCunningCastawayTest extends BaseCardTest {
     @DisplayName("Cannot activate -2 when loyalty is only 1")
     void cannotActivateMinusTwoWithInsufficientLoyalty() {
         Permanent jace = addReadyJace(player1);
-        jace.setLoyaltyCounters(1);
+        jace.setCounterCount(CounterType.LOYALTY, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -180,7 +181,7 @@ class JaceCunningCastawayTest extends BaseCardTest {
     @DisplayName("-5 ability creates two non-legendary token copies of Jace")
     void minusFiveCreatesTwoNonLegendaryCopies() {
         Permanent jace = addReadyJace(player1);
-        jace.setLoyaltyCounters(5);
+        jace.setCounterCount(CounterType.LOYALTY, 5);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -201,7 +202,7 @@ class JaceCunningCastawayTest extends BaseCardTest {
             // Tokens are NOT legendary
             assertThat(copy.getCard().getSupertypes()).doesNotContain(CardSupertype.LEGENDARY);
             // Tokens should have loyalty counters
-            assertThat(copy.getLoyaltyCounters()).isEqualTo(3); // initial loyalty of Jace
+            assertThat(copy.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // initial loyalty of Jace
             // Tokens should have the same loyalty abilities
             assertThat(copy.getCard().getActivatedAbilities()).hasSize(3);
             // Tokens are planeswalkers
@@ -250,7 +251,7 @@ class JaceCunningCastawayTest extends BaseCardTest {
     private Permanent addReadyJace(Player player) {
         JaceCunningCastaway card = new JaceCunningCastaway();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

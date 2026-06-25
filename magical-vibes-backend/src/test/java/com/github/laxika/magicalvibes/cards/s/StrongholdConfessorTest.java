@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class StrongholdConfessorTest extends BaseCardTest {
 
@@ -52,7 +53,7 @@ class StrongholdConfessorTest extends BaseCardTest {
 
         Permanent confessor = findConfessor(player1);
         assertThat(confessor).isNotNull();
-        assertThat(confessor.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(confessor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Casting with kicker =====
@@ -69,7 +70,7 @@ class StrongholdConfessorTest extends BaseCardTest {
 
         Permanent confessor = findConfessor(player1);
         assertThat(confessor).isNotNull();
-        assertThat(confessor.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(confessor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

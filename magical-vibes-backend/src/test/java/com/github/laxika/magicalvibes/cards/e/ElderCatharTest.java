@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ElderCatharTest extends BaseCardTest {
 
@@ -122,7 +123,7 @@ class ElderCatharTest extends BaseCardTest {
             Permanent bearsPerm = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getId().equals(bearId))
                     .findFirst().orElseThrow();
-            assertThat(bearsPerm.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(bearsPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
             assertThat(bearsPerm.getEffectivePower()).isEqualTo(3);
             assertThat(bearsPerm.getEffectiveToughness()).isEqualTo(3);
         }
@@ -149,7 +150,7 @@ class ElderCatharTest extends BaseCardTest {
             Permanent championPerm = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getId().equals(championId))
                     .findFirst().orElseThrow();
-            assertThat(championPerm.getPlusOnePlusOneCounters()).isEqualTo(2);
+            assertThat(championPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         }
 
         @Test
@@ -237,7 +238,7 @@ class ElderCatharTest extends BaseCardTest {
             Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getId().equals(bearId))
                     .findFirst().orElseThrow();
-            assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
             assertThat(bears.getEffectivePower()).isEqualTo(3);
             assertThat(bears.getEffectiveToughness()).isEqualTo(3);
         }

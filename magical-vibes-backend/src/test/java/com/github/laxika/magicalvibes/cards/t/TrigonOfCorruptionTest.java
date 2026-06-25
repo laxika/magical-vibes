@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TrigonOfCorruptionTest extends BaseCardTest {
 
@@ -72,7 +73,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
                 .findFirst().orElseThrow();
-        assertThat(trigon.getChargeCounters()).isEqualTo(3);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== First ability: {B}{B}, {T} to add charge counter =====
@@ -85,13 +86,13 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(trigon.getChargeCounters()).isEqualTo(4);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
     @Test
@@ -115,7 +116,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(1);
+        trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -124,13 +125,13 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Charge counter removed
-        assertThat(trigon.getChargeCounters()).isEqualTo(0);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // -1/-1 counter placed
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -142,7 +143,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(0);
+        trigon.setCounterCount(CounterType.CHARGE, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -158,14 +159,14 @@ class TrigonOfCorruptionTest extends BaseCardTest {
 
         // Create a 1/1 by giving Grizzly Bears (2/2) a -1/-1 counter
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
         UUID bearsId = bears.getId();
 
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(1);
+        trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         int trigonIndex = gd.playerBattlefields.get(player1.getId()).indexOf(trigon);
@@ -188,7 +189,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(1);
+        trigon.setCounterCount(CounterType.CHARGE, 1);
 
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -201,7 +202,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Counters are still removed (cost is paid on activation)
-        assertThat(trigon.getChargeCounters()).isEqualTo(0);
+        assertThat(trigon.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // Ability fizzles
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
@@ -218,7 +219,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         Permanent trigon = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Trigon of Corruption"))
                 .findFirst().orElseThrow();
-        trigon.setChargeCounters(3);
+        trigon.setCounterCount(CounterType.CHARGE, 3);
 
         // Use first ability (tap to add counter)
         harness.addMana(player1, ManaColor.BLACK, 2);

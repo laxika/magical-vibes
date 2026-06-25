@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class MoldAdderTest extends BaseCardTest {
 
@@ -53,7 +54,7 @@ class MoldAdderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 1);
 
         Permanent adder = getMoldAdder();
-        assertThat(adder.getPlusOnePlusOneCounters()).isZero();
+        assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.castCreature(player2, 0);
 
@@ -66,7 +67,7 @@ class MoldAdderTest extends BaseCardTest {
         // Resolve the triggered ability on the stack
         harness.passBothPriorities();
 
-        assertThat(adder.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, adder)).isEqualTo(2);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, adder)).isEqualTo(2);
     }
@@ -84,7 +85,7 @@ class MoldAdderTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         Permanent adder = getMoldAdder();
-        assertThat(adder.getPlusOnePlusOneCounters()).isZero();
+        assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.castCreature(player2, 0);
 
@@ -97,7 +98,7 @@ class MoldAdderTest extends BaseCardTest {
         // Resolve the triggered ability on the stack
         harness.passBothPriorities();
 
-        assertThat(adder.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -120,7 +121,7 @@ class MoldAdderTest extends BaseCardTest {
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(adder.getPlusOnePlusOneCounters()).isZero();
+        assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -139,7 +140,7 @@ class MoldAdderTest extends BaseCardTest {
         harness.castCreature(player2, 0);
 
         assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(adder.getPlusOnePlusOneCounters()).isZero();
+        assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -154,7 +155,7 @@ class MoldAdderTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         assertThat(gd.pendingMayAbilities).isEmpty();
-        assertThat(adder.getPlusOnePlusOneCounters()).isZero();
+        assertThat(adder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     private Permanent getMoldAdder() {

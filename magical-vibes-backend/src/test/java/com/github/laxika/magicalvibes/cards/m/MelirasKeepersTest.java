@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class MelirasKeepersTest extends BaseCardTest {
 
@@ -34,7 +35,7 @@ class MelirasKeepersTest extends BaseCardTest {
         Permanent keepers = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Melira's Keepers"))
                 .findFirst().orElseThrow();
-        assertThat(keepers.getMinusOneMinusOneCounters()).isZero();
+        assertThat(keepers.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(keepers.getEffectivePower()).isEqualTo(4);
         assertThat(keepers.getEffectiveToughness()).isEqualTo(4);
     }

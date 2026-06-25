@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class VoltChargeTest extends BaseCardTest {
 
@@ -81,7 +82,7 @@ class VoltChargeTest extends BaseCardTest {
     void deals3DamageAndProliferates() {
         harness.setLife(player2, 20);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.setHand(player1, List.of(new VoltCharge()));
@@ -95,7 +96,7 @@ class VoltChargeTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -118,7 +119,7 @@ class VoltChargeTest extends BaseCardTest {
     void proliferateChooseNoneDamageStillResolves() {
         harness.setLife(player2, 20);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new VoltCharge()));
@@ -132,7 +133,7 @@ class VoltChargeTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Cleanup =====

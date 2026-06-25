@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class NecropedeTest extends BaseCardTest {
 
@@ -136,7 +137,7 @@ class NecropedeTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(bearsId))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(1);
     }
@@ -192,7 +193,7 @@ class NecropedeTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getId().equals(bearsId))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
     // ===== Can target own creature =====
@@ -217,7 +218,7 @@ class NecropedeTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getId().equals(ownBearsId))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== No creatures on battlefield (Wrath scenario) =====

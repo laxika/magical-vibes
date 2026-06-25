@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @CardRegistration(set = "M11", collectorNumber = "110")
 public class PhylacteryLich extends Card {
@@ -25,7 +26,7 @@ public class PhylacteryLich extends Card {
                 (gameData, sourcePermanent, controllerId) -> {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
                     if (battlefield == null) return true;
-                    return battlefield.stream().noneMatch(p -> p.getPhylacteryCounters() > 0);
+                    return battlefield.stream().noneMatch(p -> p.getCounterCount(CounterType.PHYLACTERY) > 0);
                 },
                 List.of(new SacrificeSelfEffect()),
                 "Phylactery Lich's state-triggered ability"

@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SpreadTheSicknessTest extends BaseCardTest {
 
@@ -43,7 +44,7 @@ class SpreadTheSicknessTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
         Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setMinusOneMinusOneCounters(1);
+        otherBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
         harness.forceActivePlayer(player1);
@@ -63,14 +64,14 @@ class SpreadTheSicknessTest extends BaseCardTest {
         // Proliferate choice is now awaited — choose the creature with counters
         harness.handleMultiplePermanentsChosen(player1, List.of(otherBears.getId()));
 
-        assertThat(otherBears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(otherBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Destroys creature and proliferates choosing none")
     void destroysCreatureAndProliferatesNone() {
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -95,7 +96,7 @@ class SpreadTheSicknessTest extends BaseCardTest {
         UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
 
         Permanent otherBears = new Permanent(new GrizzlyBears());
-        otherBears.setMinusOneMinusOneCounters(1);
+        otherBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(otherBears);
 
         harness.forceActivePlayer(player1);
@@ -112,7 +113,7 @@ class SpreadTheSicknessTest extends BaseCardTest {
 
         // Spell fizzles — no proliferate either
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        assertThat(otherBears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(otherBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Targeting =====

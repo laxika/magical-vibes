@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.networking.model;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -21,17 +23,8 @@ public record PermanentView(
         int regenerationShield,
         boolean cantBeBlocked,
         boolean animatedCreature,
-        int loyaltyCounters,
-        int chargeCounters,
-        int hatchlingCounters,
-        int phylacteryCounters,
-        int slimeCounters,
-        int studyCounters,
-        int wishCounters,
-        int loreCounters,
-        int aimCounters,
-        int landmarkCounters,
-        int eyeballCounters,
+        /** All counters on the permanent, keyed by counter type. Only present (non-zero) counters are included. */
+        Map<CounterType, Integer> counters,
         UUID attackTargetId,
         int markedDamage,
         boolean transformed

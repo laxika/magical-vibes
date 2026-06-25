@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class NewHorizonsTest extends BaseCardTest {
 
@@ -78,7 +79,7 @@ class NewHorizonsTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("New Horizons")
                         && forest.getId().equals(p.getAttachedTo()));
         // Creature has +1/+1 counter
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

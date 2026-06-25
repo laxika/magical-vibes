@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GremlinMineTest extends BaseCardTest {
 
@@ -67,12 +68,12 @@ class GremlinMineTest extends BaseCardTest {
         // TumbleMagnet enters with 3 charge counters via EnterWithFixedChargeCountersEffect
         // but addToBattlefield doesn't trigger ETB, so set manually
         Permanent magnet = findPermanent(player2, "Tumble Magnet");
-        magnet.setChargeCounters(3);
+        magnet.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, 1, null, magnet.getId());
         harness.passBothPriorities();
 
-        assertThat(magnet.getChargeCounters()).isZero();
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isZero();
     }
 
     @Test
@@ -83,12 +84,12 @@ class GremlinMineTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         Permanent magnet = findPermanent(player2, "Tumble Magnet");
-        magnet.setChargeCounters(6);
+        magnet.setCounterCount(CounterType.CHARGE, 6);
 
         harness.activateAbility(player1, 0, 1, null, magnet.getId());
         harness.passBothPriorities();
 
-        assertThat(magnet.getChargeCounters()).isEqualTo(2);
+        assertThat(magnet.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     @Test

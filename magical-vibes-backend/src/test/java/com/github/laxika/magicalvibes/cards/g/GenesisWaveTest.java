@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GenesisWaveTest extends BaseCardTest {
 
@@ -227,7 +228,7 @@ class GenesisWaveTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Carnifex Demon"))
                 .findFirst().orElseThrow()
-                .getMinusOneMinusOneCounters()).isEqualTo(2);
+                .getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     // ===== Library smaller than X =====

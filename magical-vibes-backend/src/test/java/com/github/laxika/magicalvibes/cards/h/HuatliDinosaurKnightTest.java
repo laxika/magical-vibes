@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HuatliDinosaurKnightTest extends BaseCardTest {
 
@@ -106,7 +107,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Huatli, Dinosaur Knight"));
         Permanent huatli = bf.stream().filter(p -> p.getCard().getName().equals("Huatli, Dinosaur Knight")).findFirst().orElseThrow();
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(4);
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(huatli.isSummoningSick()).isFalse();
     }
 
@@ -125,8 +126,8 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, raptor.getId());
         harness.passBothPriorities();
 
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(6); // 4 + 2
-        assertThat(raptor.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 4 + 2
+        assertThat(raptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -137,7 +138,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(6); // 4 + 2
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 4 + 2
     }
 
     @Test
@@ -190,7 +191,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(1); // 4 - 3
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(1); // 4 - 3
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
         assertThat(gd.playerGraveyards.get(player2.getId()))
@@ -207,7 +208,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Frenzied Raptor"))
                 .findFirst().orElseThrow();
         // Give raptor 2 extra +1/+1 counters -> 6/4
-        raptor.setPlusOnePlusOneCounters(2);
+        raptor.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         // Add a 5/5 creature for opponent
         harness.addToBattlefield(player2, new FrenziedRaptor());
@@ -231,7 +232,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
     @DisplayName("-7 ability boosts all own Dinosaurs by +4/+4")
     void minusSevenBoostsDinosaurs() {
         Permanent huatli = addReadyHuatli(player1);
-        huatli.setLoyaltyCounters(7);
+        huatli.setCounterCount(CounterType.LOYALTY, 7);
         harness.addToBattlefield(player1, new FrenziedRaptor());
         harness.addToBattlefield(player1, new GrizzlyBears());
 
@@ -259,7 +260,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
     @DisplayName("-7 ability does not boost opponent's Dinosaurs")
     void minusSevenDoesNotBoostOpponentDinosaurs() {
         Permanent huatli = addReadyHuatli(player1);
-        huatli.setLoyaltyCounters(7);
+        huatli.setCounterCount(CounterType.LOYALTY, 7);
         harness.addToBattlefield(player2, new FrenziedRaptor());
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -314,7 +315,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
     @DisplayName("Cannot use -7 when loyalty is only 4")
     void cannotActivateMinusSevenWithInsufficientLoyalty() {
         Permanent huatli = addReadyHuatli(player1);
-        assertThat(huatli.getLoyaltyCounters()).isEqualTo(4);
+        assertThat(huatli.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -327,7 +328,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
     @DisplayName("Planeswalker dies when loyalty reaches 0 but ability still resolves")
     void diesWhenLoyaltyReachesZeroAbilityStillResolves() {
         Permanent huatli = addReadyHuatli(player1);
-        huatli.setLoyaltyCounters(3);
+        huatli.setCounterCount(CounterType.LOYALTY, 3);
         harness.addToBattlefield(player1, new FrenziedRaptor());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
@@ -369,7 +370,7 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
     private Permanent addReadyHuatli(Player player) {
         HuatliDinosaurKnight card = new HuatliDinosaurKnight();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(4);
+        perm.setCounterCount(CounterType.LOYALTY, 4);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

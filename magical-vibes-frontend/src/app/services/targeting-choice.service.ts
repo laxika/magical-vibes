@@ -960,7 +960,7 @@ export class TargetingChoiceService {
       // Variable loyalty cost: just need the planeswalker to exist (X can be 0)
       if (ability.variableLoyaltyCost) return true;
       // Negative loyalty cost: check sufficient loyalty
-      if (ability.loyaltyCost! < 0 && perm.loyaltyCounters < Math.abs(ability.loyaltyCost!)) return false;
+      if (ability.loyaltyCost! < 0 && (perm.counters?.['LOYALTY'] ?? 0) < Math.abs(ability.loyaltyCost!)) return false;
       return true;
     }
     if (ability.requiresTap) {
@@ -1012,7 +1012,7 @@ export class TargetingChoiceService {
       this.xValueCardIndex = permanentIndex;
       this.xValueCardName = perm.card.name;
       this.xValueInput = 0;
-      this.xValueMaximum = perm.loyaltyCounters;
+      this.xValueMaximum = perm.counters?.['LOYALTY'] ?? 0;
       this.targetingForAbility = true;
       this.targetingAbilityIndex = abilityIndex;
       return;

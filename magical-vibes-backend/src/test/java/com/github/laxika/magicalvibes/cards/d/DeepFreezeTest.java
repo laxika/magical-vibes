@@ -24,6 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class DeepFreezeTest extends BaseCardTest {
 
@@ -94,7 +95,7 @@ class DeepFreezeTest extends BaseCardTest {
     void countersApplyOnTopOfBasePT() {
         Permanent bearsPerm = new Permanent(new GrizzlyBears());
         bearsPerm.setSummoningSick(false);
-        bearsPerm.setPlusOnePlusOneCounters(2);
+        bearsPerm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         gd.playerBattlefields.get(player2.getId()).add(bearsPerm);
 
         // Attach Deep Freeze

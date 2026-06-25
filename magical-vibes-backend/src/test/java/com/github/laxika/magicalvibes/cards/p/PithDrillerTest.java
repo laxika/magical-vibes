@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class PithDrillerTest extends BaseCardTest {
 
@@ -53,7 +54,7 @@ class PithDrillerTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(1);
         assertThat(bears.getEffectiveToughness()).isEqualTo(1);
     }
@@ -78,7 +79,7 @@ class PithDrillerTest extends BaseCardTest {
         Permanent target = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Air Elemental"))
                 .findFirst().orElseThrow();
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(target.getEffectivePower()).isEqualTo(3);
         assertThat(target.getEffectiveToughness()).isEqualTo(3);
     }
@@ -118,7 +119,7 @@ class PithDrillerTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test

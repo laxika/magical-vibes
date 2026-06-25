@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheFlameOfKeldTest extends BaseCardTest {
 
@@ -138,7 +139,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         // Clear the hand
         harness.setHand(player1, List.of());
@@ -150,7 +151,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getDescription().contains("chapter II"));
 
@@ -172,7 +173,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -192,7 +193,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -220,7 +221,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a green creature
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -251,7 +252,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a red 2/2 creature
         Card redCreature = new Card();
@@ -290,7 +291,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Add a green creature (Grizzly Bears)
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -322,7 +323,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Flame of Keld"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);

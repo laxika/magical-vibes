@@ -145,7 +145,7 @@ class PrimalAmuletTest extends BaseCardTest {
         // Resolve the counter trigger (on top of stack above the spell)
         harness.passBothPriorities();
 
-        assertThat(amulet.getChargeCounters()).isEqualTo(1);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -161,7 +161,7 @@ class PrimalAmuletTest extends BaseCardTest {
         // Resolve the counter trigger
         harness.passBothPriorities();
 
-        assertThat(amulet.getChargeCounters()).isEqualTo(1);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -175,7 +175,7 @@ class PrimalAmuletTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         // No trigger should fire for creature spells
-        assertThat(amulet.getChargeCounters()).isEqualTo(0);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Transform at 4 counters (optional) =====
@@ -184,7 +184,7 @@ class PrimalAmuletTest extends BaseCardTest {
     @DisplayName("At 4+ charge counters, player may transform — accepting transforms")
     void transformsWhenAccepted() {
         Permanent amulet = addAmuletReady(player1);
-        amulet.setChargeCounters(3); // One more needed
+        amulet.setCounterCount(CounterType.CHARGE, 3); // One more needed
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -199,14 +199,14 @@ class PrimalAmuletTest extends BaseCardTest {
 
         assertThat(amulet.isTransformed()).isTrue();
         assertThat(amulet.getCard().getName()).isEqualTo("Primal Wellspring");
-        assertThat(amulet.getChargeCounters()).isEqualTo(0);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("At 4+ charge counters, player may transform — declining keeps counters")
     void doesNotTransformWhenDeclined() {
         Permanent amulet = addAmuletReady(player1);
-        amulet.setChargeCounters(3);
+        amulet.setCounterCount(CounterType.CHARGE, 3);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -220,14 +220,14 @@ class PrimalAmuletTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(amulet.isTransformed()).isFalse();
-        assertThat(amulet.getChargeCounters()).isEqualTo(4);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
     }
 
     @Test
     @DisplayName("No may prompt when below 4 charge counters")
     void noMayPromptBelowThreshold() {
         Permanent amulet = addAmuletReady(player1);
-        amulet.setChargeCounters(2); // Will be 3 after trigger, still below 4
+        amulet.setCounterCount(CounterType.CHARGE, 2); // Will be 3 after trigger, still below 4
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -236,7 +236,7 @@ class PrimalAmuletTest extends BaseCardTest {
         // Resolve the counter trigger — adds counter, no may prompt
         harness.passBothPriorities();
 
-        assertThat(amulet.getChargeCounters()).isEqualTo(3);
+        assertThat(amulet.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
         assertThat(amulet.isTransformed()).isFalse();
     }
 

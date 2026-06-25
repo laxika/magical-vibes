@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HellriderTest extends BaseCardTest {
 
@@ -87,7 +88,7 @@ class HellriderTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(planeswalker.getLoyaltyCounters()).isEqualTo(1);
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 
@@ -112,7 +113,7 @@ class HellriderTest extends BaseCardTest {
         card.setType(CardType.PLANESWALKER);
         card.setLoyalty(loyalty);
         Permanent permanent = new Permanent(card);
-        permanent.setLoyaltyCounters(loyalty);
+        permanent.setCounterCount(CounterType.LOYALTY, loyalty);
         gd.playerBattlefields.get(player.getId()).add(permanent);
         return permanent;
     }

@@ -25,6 +25,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GarrukRelentlessTest extends BaseCardTest {
 
@@ -87,7 +88,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
             // Creature had 2 power, so Garruk loses 2 loyalty: 3 - 2 = 1
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(1);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         }
 
         @Test
@@ -145,7 +146,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // Loyalty stays at 3 (0-cost ability)
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(3);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
 
             Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Wolf"))
@@ -197,7 +198,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.activateAbility(player1, garrukIdx, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(4);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
 
             Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getCard().isToken() && p.getCard().getName().equals("Wolf"))
@@ -232,7 +233,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.activateAbility(player1, garrukIdx, 1, null, null);
             harness.passBothPriorities();
 
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(2);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
             // Creature was sacrificed
             assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -263,7 +264,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.activateAbility(player1, garrukIdx, 1, null, null);
             harness.passBothPriorities();
 
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(2);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
             // Should be awaiting a permanent choice (sacrifice selection)
             assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
@@ -294,7 +295,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.activateAbility(player1, garrukIdx, 1, null, null);
             harness.passBothPriorities();
 
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(2);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
             // No further input required
             assertThat(gd.interaction.isAwaitingInput()).isFalse();
         }
@@ -325,7 +326,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             harness.activateAbility(player1, garrukIdx, 2, null, null);
             harness.passBothPriorities();
 
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(2);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
             // GrizzlyBears is 2/2 + 3/3 = 5/5
             assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(5);
@@ -386,7 +387,7 @@ class GarrukRelentlessTest extends BaseCardTest {
     private Permanent addFrontFace(Player player, int loyalty) {
         GarrukRelentless card = new GarrukRelentless();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(loyalty);
+        perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);
@@ -397,7 +398,7 @@ class GarrukRelentlessTest extends BaseCardTest {
     private Permanent addTransformedBackFace(Player player, int loyalty) {
         GarrukRelentless card = new GarrukRelentless();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(loyalty);
+        perm.setCounterCount(CounterType.LOYALTY, loyalty);
         perm.setSummoningSick(false);
         // Simulate already transformed
         perm.setTransformed(true);

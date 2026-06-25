@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class FuelForTheCauseTest extends BaseCardTest {
 
@@ -114,7 +115,7 @@ class FuelForTheCauseTest extends BaseCardTest {
     @DisplayName("After countering, proliferate adds -1/-1 counter to chosen creature")
     void proliferateAddsMinusCountersAfterCounter() {
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         GrizzlyBears targetSpell = new GrizzlyBears();
@@ -132,14 +133,14 @@ class FuelForTheCauseTest extends BaseCardTest {
         // Choose the bears with existing counter for proliferate
         harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("After countering, proliferate adds +1/+1 counter to chosen creature")
     void proliferateAddsPlusCountersAfterCounter() {
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         GrizzlyBears targetSpell = new GrizzlyBears();
@@ -156,14 +157,14 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player2, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Proliferate can choose none after countering")
     void proliferateCanChooseNoneAfterCounter() {
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         GrizzlyBears targetSpell = new GrizzlyBears();
@@ -180,7 +181,7 @@ class FuelForTheCauseTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player2, List.of());
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test

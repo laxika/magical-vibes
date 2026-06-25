@@ -53,6 +53,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class AbilityActivationServiceTest {
@@ -644,7 +645,7 @@ class AbilityActivationServiceTest {
         void cannotActivateLoyaltyOnOpponentTurn() {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setLoyaltyCounters(3);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
 
             gameData.activePlayerId = player2Id;
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
@@ -663,7 +664,7 @@ class AbilityActivationServiceTest {
         void cannotActivateLoyaltyOutsideMainPhase() {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setLoyaltyCounters(3);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
 
             gameData.activePlayerId = player1Id;
             gameData.currentStep = TurnStep.UPKEEP;
@@ -682,7 +683,7 @@ class AbilityActivationServiceTest {
         void cannotActivateLoyaltyWithStack() {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setLoyaltyCounters(3);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
 
             gameData.activePlayerId = player1Id;
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
@@ -703,7 +704,7 @@ class AbilityActivationServiceTest {
         void cannotActivateLoyaltyTwicePerTurn() {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setLoyaltyCounters(5);
+            perm.setCounterCount(CounterType.LOYALTY, 5);
             perm.setLoyaltyActivationsThisTurn(1);
 
             gameData.activePlayerId = player1Id;
@@ -723,7 +724,7 @@ class AbilityActivationServiceTest {
         void cannotActivateNegativeLoyaltyWithInsufficientCounters() {
             Card card = createPlaneswalkerWithNegativeLoyalty("Koth of the Hammer", -2);
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setLoyaltyCounters(1); // Need at least 2
+            perm.setCounterCount(CounterType.LOYALTY, 1); // Need at least 2
 
             gameData.activePlayerId = player1Id;
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
@@ -742,7 +743,7 @@ class AbilityActivationServiceTest {
         void positiveLoyaltyCostAddsCounters() {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setLoyaltyCounters(3);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
 
             gameData.activePlayerId = player1Id;
             gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
@@ -754,7 +755,7 @@ class AbilityActivationServiceTest {
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
             // +1 loyalty cost
-            assertThat(perm.getLoyaltyCounters()).isEqualTo(4);
+            assertThat(perm.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         }
     }
 
@@ -853,7 +854,7 @@ class AbilityActivationServiceTest {
         void removeChargeCountersInsufficientThrows() {
             Card card = createArtifactWithChargeCounterAbility(3);
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setChargeCounters(2);
+            perm.setCounterCount(CounterType.CHARGE, 2);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -869,7 +870,7 @@ class AbilityActivationServiceTest {
         void removeChargeCountersExactCount() {
             Card card = createArtifactWithChargeCounterAbility(3);
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setChargeCounters(5);
+            perm.setCounterCount(CounterType.CHARGE, 5);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -877,7 +878,7 @@ class AbilityActivationServiceTest {
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            assertThat(perm.getChargeCounters()).isEqualTo(2);
+            assertThat(perm.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         }
 
         @Test
@@ -901,8 +902,8 @@ class AbilityActivationServiceTest {
         void removeCounterPrefersMinusOneMinusOne() {
             Card card = createArtifactWithRemoveCounterAbility();
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setPlusOnePlusOneCounters(2);
-            perm.setMinusOneMinusOneCounters(1);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -910,8 +911,8 @@ class AbilityActivationServiceTest {
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            assertThat(perm.getMinusOneMinusOneCounters()).isEqualTo(0);
-            assertThat(perm.getPlusOnePlusOneCounters()).isEqualTo(2);
+            assertThat(perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
+            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         }
 
         @Test
@@ -919,7 +920,7 @@ class AbilityActivationServiceTest {
         void removeCounterFallsToPlusOnePlusOne() {
             Card card = createArtifactWithRemoveCounterAbility();
             Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setPlusOnePlusOneCounters(3);
+            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
             when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
             when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
@@ -927,7 +928,7 @@ class AbilityActivationServiceTest {
 
             service.activateAbility(gameData, player1, 0, null, null, null, null);
 
-            assertThat(perm.getPlusOnePlusOneCounters()).isEqualTo(2);
+            assertThat(perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         }
     }
 

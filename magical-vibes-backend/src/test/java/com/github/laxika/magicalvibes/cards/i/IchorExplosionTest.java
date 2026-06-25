@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class IchorExplosionTest extends BaseCardTest {
 
@@ -69,7 +70,7 @@ class IchorExplosionTest extends BaseCardTest {
     @DisplayName("Sacrificed creature's power includes +1/+1 counters")
     void sacrificedCreaturePowerIncludesCounters() {
         Permanent sacrifice = new Permanent(new GrizzlyBears()); // 2/2
-        sacrifice.setPlusOnePlusOneCounters(3); // becomes 5/5
+        sacrifice.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // becomes 5/5
         Permanent survivor = new Permanent(new AirElemental()); // 4/4
         gd.playerBattlefields.get(player1.getId()).add(sacrifice);
         gd.playerBattlefields.get(player2.getId()).add(survivor);

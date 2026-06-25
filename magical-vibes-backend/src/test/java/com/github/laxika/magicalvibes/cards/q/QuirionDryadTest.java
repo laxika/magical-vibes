@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class QuirionDryadTest extends BaseCardTest {
 
@@ -45,7 +46,7 @@ class QuirionDryadTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         Permanent dryad = getDryad();
-        assertThat(dryad.getPlusOnePlusOneCounters()).isZero();
+        assertThat(dryad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.castCreature(player1, 0);
 
@@ -57,7 +58,7 @@ class QuirionDryadTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve dryad trigger
 
-        assertThat(dryad.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(dryad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, dryad)).isEqualTo(2);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, dryad)).isEqualTo(2);
     }
@@ -75,7 +76,7 @@ class QuirionDryadTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(dryad.getPlusOnePlusOneCounters()).isZero();
+        assertThat(dryad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -95,7 +96,7 @@ class QuirionDryadTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(dryad.getPlusOnePlusOneCounters()).isZero();
+        assertThat(dryad.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
     
     private Permanent getDryad() {

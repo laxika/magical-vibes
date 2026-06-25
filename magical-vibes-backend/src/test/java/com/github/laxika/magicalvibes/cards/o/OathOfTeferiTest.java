@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class OathOfTeferiTest extends BaseCardTest {
 
@@ -158,19 +159,19 @@ class OathOfTeferiTest extends BaseCardTest {
 
             // Add Garruk Wildspeaker (index 1)
             Permanent garruk = addReadyPlaneswalker(player1);
-            garruk.setLoyaltyCounters(5);
+            garruk.setCounterCount(CounterType.LOYALTY, 5);
 
             // First activation: -1 (create Beast token) — permanentIndex=1 for Garruk, abilityIndex=1 for -1
             harness.activateAbility(player1, 1, 1, null, null);
             harness.passBothPriorities();
 
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(4);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
 
             // Second activation in same turn: -1 again
             harness.activateAbility(player1, 1, 1, null, null);
             harness.passBothPriorities();
 
-            assertThat(garruk.getLoyaltyCounters()).isEqualTo(3);
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
 
             // Verify two Beast tokens were created
             long tokenCount = gd.playerBattlefields.get(player1.getId()).stream()
@@ -185,7 +186,7 @@ class OathOfTeferiTest extends BaseCardTest {
             harness.addToBattlefield(player1, new OathOfTeferi());
 
             Permanent garruk = addReadyPlaneswalker(player1);
-            garruk.setLoyaltyCounters(10);
+            garruk.setCounterCount(CounterType.LOYALTY, 10);
 
             // First activation
             harness.activateAbility(player1, 1, 1, null, null);
@@ -205,7 +206,7 @@ class OathOfTeferiTest extends BaseCardTest {
         @DisplayName("Without Oath of Teferi, only one activation per turn")
         void onlyOneActivationWithoutOath() {
             Permanent garruk = addReadyPlaneswalker(player1);
-            garruk.setLoyaltyCounters(5);
+            garruk.setCounterCount(CounterType.LOYALTY, 5);
 
             // First activation
             harness.activateAbility(player1, 0, 1, null, null);
@@ -226,7 +227,7 @@ class OathOfTeferiTest extends BaseCardTest {
 
             // Garruk at index 1 (oath is at index 0)
             Permanent garruk = addReadyPlaneswalker(player1);
-            garruk.setLoyaltyCounters(10);
+            garruk.setCounterCount(CounterType.LOYALTY, 10);
 
             // First activation with Oath present
             harness.activateAbility(player1, 1, 1, null, null);
@@ -248,7 +249,7 @@ class OathOfTeferiTest extends BaseCardTest {
     private Permanent addReadyPlaneswalker(Player player) {
         GarrukWildspeaker card = new GarrukWildspeaker();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

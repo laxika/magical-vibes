@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class StormFleetAerialistTest extends BaseCardTest {
 
@@ -41,7 +42,7 @@ class StormFleetAerialistTest extends BaseCardTest {
 
         Permanent aerialist = findAerialist(player1);
         assertThat(aerialist).isNotNull();
-        assertThat(aerialist.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -71,7 +72,7 @@ class StormFleetAerialistTest extends BaseCardTest {
 
         Permanent aerialist = findAerialist(player1);
         assertThat(aerialist).isNotNull();
-        assertThat(aerialist.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -115,7 +116,7 @@ class StormFleetAerialistTest extends BaseCardTest {
 
         Permanent aerialist = findAerialist(player1);
         assertThat(aerialist).isNotNull();
-        assertThat(aerialist.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(aerialist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Helpers =====

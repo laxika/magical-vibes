@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GolemFoundryTest extends BaseCardTest {
 
@@ -77,7 +78,7 @@ class GolemFoundryTest extends BaseCardTest {
         Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Golem Foundry"))
                 .findFirst().orElseThrow();
-        assertThat(foundry.getChargeCounters()).isEqualTo(1);
+        assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -94,7 +95,7 @@ class GolemFoundryTest extends BaseCardTest {
         Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Golem Foundry"))
                 .findFirst().orElseThrow();
-        assertThat(foundry.getChargeCounters()).isEqualTo(0);
+        assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
@@ -113,7 +114,7 @@ class GolemFoundryTest extends BaseCardTest {
         Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Golem Foundry"))
                 .findFirst().orElseThrow();
-        assertThat(foundry.getChargeCounters()).isEqualTo(0);
+        assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
@@ -130,7 +131,7 @@ class GolemFoundryTest extends BaseCardTest {
         Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Golem Foundry"))
                 .findFirst().orElseThrow();
-        assertThat(foundry.getChargeCounters()).isEqualTo(0);
+        assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Activated ability — token creation =====
@@ -143,14 +144,14 @@ class GolemFoundryTest extends BaseCardTest {
         Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Golem Foundry"))
                 .findFirst().orElseThrow();
-        foundry.setChargeCounters(3);
+        foundry.setCounterCount(CounterType.CHARGE, 3);
 
         int foundryIndex = gd.playerBattlefields.get(player1.getId()).indexOf(foundry);
         harness.activateAbility(player1, foundryIndex, null, null);
         harness.passBothPriorities(); // resolve activated ability
 
         // Charge counters are removed
-        assertThat(foundry.getChargeCounters()).isEqualTo(0);
+        assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // 3/3 Golem token is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -168,7 +169,7 @@ class GolemFoundryTest extends BaseCardTest {
         Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Golem Foundry"))
                 .findFirst().orElseThrow();
-        foundry.setChargeCounters(2);
+        foundry.setCounterCount(CounterType.CHARGE, 2);
 
         int foundryIndex = gd.playerBattlefields.get(player1.getId()).indexOf(foundry);
         assertThatThrownBy(() -> harness.activateAbility(player1, foundryIndex, null, null))
@@ -183,12 +184,12 @@ class GolemFoundryTest extends BaseCardTest {
         Permanent foundry = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Golem Foundry"))
                 .findFirst().orElseThrow();
-        foundry.setChargeCounters(5);
+        foundry.setCounterCount(CounterType.CHARGE, 5);
 
         int foundryIndex = gd.playerBattlefields.get(player1.getId()).indexOf(foundry);
         harness.activateAbility(player1, foundryIndex, null, null);
         harness.passBothPriorities();
 
-        assertThat(foundry.getChargeCounters()).isEqualTo(2);
+        assertThat(foundry.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 }

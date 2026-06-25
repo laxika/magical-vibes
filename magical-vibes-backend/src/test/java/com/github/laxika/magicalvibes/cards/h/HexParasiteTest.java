@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HexParasiteTest extends BaseCardTest {
 
@@ -63,7 +64,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target should have 1 +1/+1 counter left (3 - 2)
-        assertThat(targetPerm.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // Hex Parasite gets +2/+0 (power modifier)
         assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
     }
@@ -79,7 +80,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target should have 1 charge counter left (4 - 3)
-        assertThat(targetPerm.getChargeCounters()).isEqualTo(1);
+        assertThat(targetPerm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         // Hex Parasite gets +3/+0
         assertThat(hexPerm.getPowerModifier()).isEqualTo(3);
     }
@@ -95,7 +96,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Target had only 2 +1/+1 counters, all removed
-        assertThat(targetPerm.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         // Hex Parasite only gets +2/+0 (not +5)
         assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
     }
@@ -107,8 +108,8 @@ class HexParasiteTest extends BaseCardTest {
         GrizzlyBears bear = new GrizzlyBears();
         Permanent targetPerm = new Permanent(bear);
         targetPerm.setSummoningSick(false);
-        targetPerm.setPlusOnePlusOneCounters(2);
-        targetPerm.setChargeCounters(3);
+        targetPerm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+        targetPerm.setCounterCount(CounterType.CHARGE, 3);
         harness.getGameData().playerBattlefields.get(player2.getId()).add(targetPerm);
         harness.addMana(player1, ManaColor.BLACK, 5); // X=4, {B/P}=1
 
@@ -116,8 +117,8 @@ class HexParasiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should remove 2 +1/+1 counters first, then 2 charge counters
-        assertThat(targetPerm.getPlusOnePlusOneCounters()).isEqualTo(0);
-        assertThat(targetPerm.getChargeCounters()).isEqualTo(1);
+        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(targetPerm.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
         // Hex Parasite gets +4/+0
         assertThat(hexPerm.getPowerModifier()).isEqualTo(4);
     }
@@ -150,7 +151,7 @@ class HexParasiteTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No counters removed with X=0
-        assertThat(targetPerm.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(hexPerm.getPowerModifier()).isEqualTo(0);
     }
 
@@ -168,7 +169,7 @@ class HexParasiteTest extends BaseCardTest {
         // Paid 2 life for Phyrexian mana
         assertThat(harness.getGameData().playerLifeTotals.get(player1.getId())).isEqualTo(18);
         // Counters removed and boost applied
-        assertThat(targetPerm.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
     }
 
@@ -183,14 +184,14 @@ class HexParasiteTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
         harness.passBothPriorities();
 
-        assertThat(targetPerm.getPlusOnePlusOneCounters()).isEqualTo(4);
+        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(hexPerm.getPowerModifier()).isEqualTo(1);
 
         // Second activation: X=1
         harness.activateAbility(player1, 0, 1, targetPerm.getId());
         harness.passBothPriorities();
 
-        assertThat(targetPerm.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(targetPerm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(hexPerm.getPowerModifier()).isEqualTo(2);
     }
 
@@ -229,7 +230,7 @@ class HexParasiteTest extends BaseCardTest {
         GrizzlyBears bear = new GrizzlyBears();
         Permanent perm = new Permanent(bear);
         perm.setSummoningSick(false);
-        perm.setPlusOnePlusOneCounters(counters);
+        perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, counters);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
@@ -238,7 +239,7 @@ class HexParasiteTest extends BaseCardTest {
         GrizzlyBears bear = new GrizzlyBears();
         Permanent perm = new Permanent(bear);
         perm.setSummoningSick(false);
-        perm.setChargeCounters(counters);
+        perm.setCounterCount(CounterType.CHARGE, counters);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

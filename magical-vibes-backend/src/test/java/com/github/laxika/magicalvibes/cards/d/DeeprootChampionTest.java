@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class DeeprootChampionTest extends BaseCardTest {
 
@@ -24,7 +25,7 @@ class DeeprootChampionTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         Permanent champion = getChampion();
-        assertThat(champion.getPlusOnePlusOneCounters()).isZero();
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         harness.castInstant(player1, 0, player2.getId());
 
@@ -38,7 +39,7 @@ class DeeprootChampionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Shock
         harness.passBothPriorities(); // resolve Deeproot Champion trigger
 
-        assertThat(champion.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(2);
     }
@@ -57,7 +58,7 @@ class DeeprootChampionTest extends BaseCardTest {
         // Only the creature spell should be on the stack, no triggered ability
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-        assertThat(champion.getPlusOnePlusOneCounters()).isZero();
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -79,7 +80,7 @@ class DeeprootChampionTest extends BaseCardTest {
         assertThat(gd.stack.stream()
                 .filter(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
                 .count()).isZero();
-        assertThat(champion.getPlusOnePlusOneCounters()).isZero();
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -96,14 +97,14 @@ class DeeprootChampionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Shock
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(champion.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Cast second Shock
         harness.castInstant(player1, 0, player2.getId());
         harness.passBothPriorities(); // resolve Shock
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(champion.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(champion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, champion)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, champion)).isEqualTo(3);
     }

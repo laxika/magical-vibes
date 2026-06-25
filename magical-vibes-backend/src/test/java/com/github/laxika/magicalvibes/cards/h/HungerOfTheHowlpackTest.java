@@ -16,6 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HungerOfTheHowlpackTest extends BaseCardTest {
 
@@ -47,7 +48,7 @@ class HungerOfTheHowlpackTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -61,7 +62,7 @@ class HungerOfTheHowlpackTest extends BaseCardTest {
         harness.castInstant(player1, 0, target.getId());
         harness.passBothPriorities();
 
-        assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -75,7 +76,7 @@ class HungerOfTheHowlpackTest extends BaseCardTest {
         gd.creatureDeathCountThisTurn.merge(player2.getId(), 1, Integer::sum);
         harness.passBothPriorities();
 
-        assertThat(target.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

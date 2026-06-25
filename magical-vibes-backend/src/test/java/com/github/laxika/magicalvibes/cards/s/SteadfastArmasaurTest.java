@@ -20,6 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SteadfastArmasaurTest extends BaseCardTest {
 
@@ -147,7 +148,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
     @DisplayName("Damage is based on toughness — boosted toughness deals more damage")
     void damageUsesBoostedToughness() {
         Permanent armasaur = addReadyArmasaur(player1);
-        armasaur.setPlusOnePlusOneCounters(2); // becomes 4/5
+        armasaur.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2); // becomes 4/5
 
         GrizzlyBears bears = new GrizzlyBears();
         bears.setToughness(5);

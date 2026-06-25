@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TowerOfCalamitiesTest extends BaseCardTest {
 
@@ -66,7 +67,7 @@ class TowerOfCalamitiesTest extends BaseCardTest {
         Permanent airElemental = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Air Elemental"))
                 .findFirst().orElseThrow();
-        airElemental.setPlusOnePlusOneCounters(9);
+        airElemental.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 9);
 
         harness.addMana(player1, ManaColor.COLORLESS, 8);
         UUID targetId = harness.getPermanentId(player2, "Air Elemental");

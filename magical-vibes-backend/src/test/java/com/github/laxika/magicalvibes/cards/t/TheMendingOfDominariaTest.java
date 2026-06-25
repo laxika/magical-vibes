@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheMendingOfDominariaTest extends BaseCardTest {
 
@@ -102,7 +103,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Mending of Dominaria"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -190,7 +191,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Mending of Dominaria"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Put lands in graveyard
         Forest forest1 = new Forest();
@@ -227,7 +228,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Mending of Dominaria"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Put lands and a creature in graveyard
         Forest forest = new Forest();
@@ -266,7 +267,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Mending of Dominaria"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Only non-lands in graveyard
         GrizzlyBears bear = new GrizzlyBears();
@@ -305,7 +306,7 @@ class TheMendingOfDominariaTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The Mending of Dominaria"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);

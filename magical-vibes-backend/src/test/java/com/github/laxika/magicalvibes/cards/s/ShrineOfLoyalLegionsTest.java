@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfLoyalLegionsTest extends BaseCardTest {
 
@@ -45,7 +46,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(getShrine().getChargeCounters()).isEqualTo(1);
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -59,7 +60,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve second upkeep trigger
 
-        assertThat(getShrine().getChargeCounters()).isEqualTo(2);
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     @Test
@@ -70,7 +71,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(getShrine().getChargeCounters()).isEqualTo(0);
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== White spell cast trigger =====
@@ -86,7 +87,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve charge counter trigger
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(getShrine().getChargeCounters()).isEqualTo(1);
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -99,7 +100,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(getShrine().getChargeCounters()).isEqualTo(0);
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
@@ -113,7 +114,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.castCreature(player2, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(getShrine().getChargeCounters()).isEqualTo(0);
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Activated ability: token creation =====
@@ -122,7 +123,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
     @DisplayName("Sacrificing with charge counters creates 1/1 Myr tokens")
     void sacrificeCreatesTokens() {
         harness.addToBattlefield(player1, new ShrineOfLoyalLegions());
-        getShrine().setChargeCounters(3);
+        getShrine().setCounterCount(CounterType.CHARGE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, getShrineIndex(), null, null);
@@ -146,7 +147,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
     @DisplayName("Sacrificing with 5 charge counters creates 5 tokens")
     void sacrificeWithFiveCountersCreatesFiveTokens() {
         harness.addToBattlefield(player1, new ShrineOfLoyalLegions());
-        getShrine().setChargeCounters(5);
+        getShrine().setCounterCount(CounterType.CHARGE, 5);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, getShrineIndex(), null, null);
@@ -162,7 +163,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
     @DisplayName("Sacrificing with 0 charge counters creates no tokens")
     void sacrificeWithZeroCountersCreatesNoTokens() {
         harness.addToBattlefield(player1, new ShrineOfLoyalLegions());
-        getShrine().setChargeCounters(0);
+        getShrine().setCounterCount(CounterType.CHARGE, 0);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, getShrineIndex(), null, null);
@@ -187,7 +188,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         // Upkeep: +1 counter
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve upkeep trigger
-        assertThat(getShrine().getChargeCounters()).isEqualTo(1);
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Cast white spell: +1 counter
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -197,7 +198,7 @@ class ShrineOfLoyalLegionsTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve charge counter trigger
         harness.passBothPriorities(); // resolve creature spell
-        assertThat(getShrine().getChargeCounters()).isEqualTo(2);
+        assertThat(getShrine().getCounterCount(CounterType.CHARGE)).isEqualTo(2);
 
         // Sacrifice shrine with 2 counters
         harness.addMana(player1, ManaColor.COLORLESS, 3);

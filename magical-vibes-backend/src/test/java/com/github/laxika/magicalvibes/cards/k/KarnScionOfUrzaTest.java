@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class KarnScionOfUrzaTest extends BaseCardTest {
 
@@ -79,7 +80,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Karn, Scion of Urza"));
         Permanent karn = findPermanent(player1, "Karn, Scion of Urza");
-        assertThat(karn.getLoyaltyCounters()).isEqualTo(5);
+        assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(karn.isSummoningSick()).isFalse();
     }
 
@@ -100,7 +101,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 0, null, null);
             harness.passBothPriorities();
 
-            assertThat(karn.getLoyaltyCounters()).isEqualTo(6); // 5 + 1
+            assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // 5 + 1
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
         }
 
@@ -181,7 +182,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.interaction.awaitingInputType()).isNull();
-            assertThat(karn.getLoyaltyCounters()).isEqualTo(6); // Loyalty still increased
+            assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(6); // Loyalty still increased
         }
     }
 
@@ -204,7 +205,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 1, null, null);
             harness.passBothPriorities();
 
-            assertThat(karn.getLoyaltyCounters()).isEqualTo(4); // 5 - 1
+            assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 5 - 1
             // Card should be in hand
             assertThat(gd.playerHands.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
@@ -254,7 +255,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 1, null, null);
             harness.passBothPriorities();
 
-            assertThat(karn.getLoyaltyCounters()).isEqualTo(4); // Loyalty decreased
+            assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // Loyalty decreased
             assertThat(gd.interaction.awaitingInputType()).isNull();
         }
 
@@ -296,7 +297,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 2, null, null);
             harness.passBothPriorities();
 
-            assertThat(karn.getLoyaltyCounters()).isEqualTo(3); // 5 - 2
+            assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
 
             List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
             Permanent construct = bf.stream()
@@ -384,7 +385,7 @@ class KarnScionOfUrzaTest extends BaseCardTest {
     private Permanent addReadyKarn(Player player) {
         KarnScionOfUrza card = new KarnScionOfUrza();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(5);
+        perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

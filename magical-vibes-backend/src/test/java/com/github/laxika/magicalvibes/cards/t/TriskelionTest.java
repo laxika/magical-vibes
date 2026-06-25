@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TriskelionTest extends BaseCardTest {
 
@@ -62,7 +63,7 @@ class TriskelionTest extends BaseCardTest {
 
         Permanent triskelion = findTriskelion(player1);
 
-        assertThat(triskelion.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(triskelion.getEffectivePower()).isEqualTo(4);
         assertThat(triskelion.getEffectiveToughness()).isEqualTo(4);
     }
@@ -115,7 +116,7 @@ class TriskelionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(triskelion.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(triskelion.getEffectivePower()).isEqualTo(3);
         assertThat(triskelion.getEffectiveToughness()).isEqualTo(3);
     }
@@ -138,7 +139,7 @@ class TriskelionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 17);
-        assertThat(triskelion.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(triskelion.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Cannot activate without counters =====
@@ -147,7 +148,7 @@ class TriskelionTest extends BaseCardTest {
     @DisplayName("Cannot activate ability when zero +1/+1 counters remain")
     void cannotActivateWithZeroCounters() {
         Permanent triskelion = addReadyTriskelion(player1);
-        triskelion.setPlusOnePlusOneCounters(0);
+        triskelion.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -163,7 +164,7 @@ class TriskelionTest extends BaseCardTest {
         Triskelion card = new Triskelion();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        perm.setPlusOnePlusOneCounters(3);
+        perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

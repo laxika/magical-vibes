@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class AcademyDrakeTest extends BaseCardTest {
 
@@ -53,7 +54,7 @@ class AcademyDrakeTest extends BaseCardTest {
 
         Permanent drake = findDrake(player1);
         assertThat(drake).isNotNull();
-        assertThat(drake.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(drake.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Casting with kicker =====
@@ -70,7 +71,7 @@ class AcademyDrakeTest extends BaseCardTest {
 
         Permanent drake = findDrake(player1);
         assertThat(drake).isNotNull();
-        assertThat(drake.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(drake.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

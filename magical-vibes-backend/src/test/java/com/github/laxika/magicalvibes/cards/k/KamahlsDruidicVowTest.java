@@ -27,6 +27,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class KamahlsDruidicVowTest extends BaseCardTest {
 
@@ -83,7 +84,7 @@ class KamahlsDruidicVowTest extends BaseCardTest {
     void canCastWithLegendaryPlaneswalker() {
         AjaniGoldmane ajani = new AjaniGoldmane();
         Permanent ajaniPerm = new Permanent(ajani);
-        ajaniPerm.setLoyaltyCounters(4);
+        ajaniPerm.setCounterCount(CounterType.LOYALTY, 4);
         ajaniPerm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player1.getId()).add(ajaniPerm);
 

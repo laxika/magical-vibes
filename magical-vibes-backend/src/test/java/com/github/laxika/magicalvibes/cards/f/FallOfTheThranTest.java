@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class FallOfTheThranTest extends BaseCardTest {
 
@@ -124,7 +125,7 @@ class FallOfTheThranTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         // Put 2 lands in each player's graveyard
         harness.setGraveyard(player1, new ArrayList<>(List.of(new Plains(), new Island())));
@@ -137,7 +138,7 @@ class FallOfTheThranTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getDescription().contains("chapter II"));
 
@@ -175,7 +176,7 @@ class FallOfTheThranTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         // Put 1 land in player1's graveyard, none in player2's
         harness.setGraveyard(player1, new ArrayList<>(List.of(new Plains())));
@@ -203,7 +204,7 @@ class FallOfTheThranTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         harness.setGraveyard(player1, new ArrayList<>());
         harness.setGraveyard(player2, new ArrayList<>());
@@ -234,7 +235,7 @@ class FallOfTheThranTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         // Put 3 lands in player1's graveyard (more than maxCount of 2)
         harness.setGraveyard(player1, new ArrayList<>(List.of(new Plains(), new Island(), new Forest())));
@@ -290,7 +291,7 @@ class FallOfTheThranTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         // Put a mix of lands and non-lands in graveyard
         Card creature = new com.github.laxika.magicalvibes.cards.g.GrizzlyBears();
@@ -327,7 +328,7 @@ class FallOfTheThranTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Fall of the Thran"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.setGraveyard(player1, new ArrayList<>(List.of(new Plains())));
         harness.setGraveyard(player2, new ArrayList<>());

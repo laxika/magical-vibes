@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @CardRegistration(set = "ISD", collectorNumber = "181")
 public class GarrukRelentless extends Card {
@@ -30,7 +31,7 @@ public class GarrukRelentless extends Card {
         // This is a state-triggered ability (MTG rule 603.8).
         addEffect(EffectSlot.STATE_TRIGGERED, new StateTriggerEffect(
                 (gameData, sourcePermanent, controllerId) ->
-                        sourcePermanent.getLoyaltyCounters() <= 2 && !sourcePermanent.isTransformed(),
+                        sourcePermanent.getCounterCount(CounterType.LOYALTY) <= 2 && !sourcePermanent.isTransformed(),
                 List.of(new TransformSelfEffect()),
                 "Garruk Relentless's transform trigger"
         ));

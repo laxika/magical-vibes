@@ -26,6 +26,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TeferiHeroOfDominariaTest extends BaseCardTest {
 
@@ -98,7 +99,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckBefore - 1);
         // Loyalty should increase
-        assertThat(teferi.getLoyaltyCounters()).isEqualTo(5); // 4 + 1
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
         // Delayed trigger should be registered
         assertThat(gd.pendingDelayedUntapPermanents).hasSize(1);
         assertThat(gd.pendingDelayedUntapPermanents.getFirst().count()).isEqualTo(2);
@@ -200,7 +201,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(library).hasSizeGreaterThanOrEqualTo(3);
         assertThat(library.get(2).getName()).isEqualTo("Grizzly Bears");
         // Loyalty should decrease
-        assertThat(teferi.getLoyaltyCounters()).isEqualTo(1); // 4 - 3
+        assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(1); // 4 - 3
     }
 
     @Test
@@ -258,7 +259,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
     @DisplayName("-8 creates emblem with ExileTargetOpponentPermanentOnDrawEffect")
     void minusEightCreatesEmblem() {
         Permanent teferi = addReadyTeferi(player1);
-        teferi.setLoyaltyCounters(8);
+        teferi.setCounterCount(CounterType.LOYALTY, 8);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -275,7 +276,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
     @DisplayName("-8 with 8 loyalty causes Teferi to go to graveyard and emblem persists")
     void emblemPersistsAfterTeferiDies() {
         Permanent teferi = addReadyTeferi(player1);
-        teferi.setLoyaltyCounters(8);
+        teferi.setCounterCount(CounterType.LOYALTY, 8);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -373,7 +374,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
     private Permanent addReadyTeferi(com.github.laxika.magicalvibes.model.Player player) {
         TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(4);
+        perm.setCounterCount(CounterType.LOYALTY, 4);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

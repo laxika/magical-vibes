@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class PhyrexianScripturesTest extends BaseCardTest {
 
@@ -83,7 +84,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Phyrexian Scriptures"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I requires targeting — should be awaiting input
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -123,7 +124,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElse(null);
         assertThat(bears).isNotNull();
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Bears should be permanently an artifact
         assertThat(bears.getPersistentGrantedCardTypes()).contains(CardType.ARTIFACT);
@@ -206,7 +207,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElse(null);
         assertThat(bears).isNotNull();
-        assertThat(bears.getPlusOnePlusOneCounters()).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(bears.getPersistentGrantedCardTypes()).doesNotContain(CardType.ARTIFACT);
     }
 
@@ -223,7 +224,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Phyrexian Scriptures"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -231,7 +232,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
 
         harness.passBothPriorities(); // resolve chapter II
 
@@ -256,7 +257,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Phyrexian Scriptures"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         // Make the Grizzly Bears an artifact permanently (simulating chapter I effect)
         Permanent bears = gd.playerBattlefields.get(player1.getId()).stream()
@@ -294,7 +295,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Phyrexian Scriptures"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -325,7 +326,7 @@ class PhyrexianScripturesTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Phyrexian Scriptures"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);

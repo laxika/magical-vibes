@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class InstillInfectionTest extends BaseCardTest {
 
@@ -51,7 +52,7 @@ class InstillInfectionTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(bears.getEffectivePower()).isEqualTo(1);
         assertThat(bears.getEffectiveToughness()).isEqualTo(1);
 
@@ -63,7 +64,7 @@ class InstillInfectionTest extends BaseCardTest {
     @DisplayName("Can kill a 1/1 creature with the -1/-1 counter")
     void killsOneOneCreature() {
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1); // 2/2 with -1/-1 = effectively 1/1
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1); // 2/2 with -1/-1 = effectively 1/1
         gd.playerBattlefields.get(player2.getId()).add(bears);
         UUID bearsId = bears.getId();
 

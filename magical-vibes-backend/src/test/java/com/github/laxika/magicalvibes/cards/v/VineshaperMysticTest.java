@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class VineshaperMysticTest extends BaseCardTest {
 
@@ -53,7 +54,7 @@ class VineshaperMysticTest extends BaseCardTest {
             Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getId().equals(merfolkId))
                     .findFirst().orElseThrow();
-            assertThat(merfolk.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test
@@ -84,8 +85,8 @@ class VineshaperMysticTest extends BaseCardTest {
             Permanent merfolk2 = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getId().equals(merfolk2Id))
                     .findFirst().orElseThrow();
-            assertThat(merfolk1.getPlusOnePlusOneCounters()).isEqualTo(1);
-            assertThat(merfolk2.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(merfolk1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+            assertThat(merfolk2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test
@@ -189,7 +190,7 @@ class VineshaperMysticTest extends BaseCardTest {
             Permanent merfolk = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getId().equals(merfolkId))
                     .findFirst().orElseThrow();
-            assertThat(merfolk.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(merfolk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test
@@ -221,7 +222,7 @@ class VineshaperMysticTest extends BaseCardTest {
             Permanent merfolk2 = gd.playerBattlefields.get(player1.getId()).stream()
                     .filter(p -> p.getId().equals(merfolk2Id))
                     .findFirst().orElseThrow();
-            assertThat(merfolk2.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(merfolk2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
 
         @Test

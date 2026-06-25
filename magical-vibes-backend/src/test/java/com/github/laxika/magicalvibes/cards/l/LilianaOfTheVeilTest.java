@@ -25,6 +25,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class LilianaOfTheVeilTest extends BaseCardTest {
 
@@ -106,7 +107,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Liliana of the Veil"));
         Permanent liliana = bf.stream().filter(p -> p.getCard().getName().equals("Liliana of the Veil")).findFirst().orElseThrow();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     // ===== +1 ability: Each player discards a card =====
@@ -124,7 +125,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(4); // 3 + 1
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
 
         // Active player (player1) discards first — enters discard choice
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
@@ -136,7 +137,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @DisplayName("-2 ability forces target player to sacrifice a creature")
     void minusTwoTargetPlayerSacrificesCreature() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(5);
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
 
         Permanent bears = new Permanent(new GrizzlyBears());
         harness.getGameData().playerBattlefields.get(player2.getId()).add(bears);
@@ -145,7 +146,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(3); // 5 - 2
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
         // With one creature, it's auto-sacrificed
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
@@ -157,7 +158,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @DisplayName("-2 ability with multiple creatures prompts choice")
     void minusTwoWithMultipleCreaturesPromptsChoice() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(5);
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
 
         Permanent bears = new Permanent(new GrizzlyBears());
         Permanent spider = new Permanent(new GiantSpider());
@@ -177,13 +178,13 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @DisplayName("-2 ability has no effect when target has no creatures")
     void minusTwoNoEffectWhenNoCreatures() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(5);
+        liliana.setCounterCount(CounterType.LOYALTY, 5);
 
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(3); // 5 - 2
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no creatures to sacrifice"));
     }
 
@@ -193,7 +194,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @DisplayName("-6 ability prompts controller to separate permanents into two piles")
     void minusSixPromptsPileSeparation() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(6);
+        liliana.setCounterCount(CounterType.LOYALTY, 6);
 
         Permanent bears = new Permanent(new GrizzlyBears());
         Permanent spider = new Permanent(new GiantSpider());
@@ -204,7 +205,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(liliana.getLoyaltyCounters()).isEqualTo(0); // 6 - 6
+        assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 6 - 6
         // Controller should be prompted to choose permanents for pile 1
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
         assertThat(gd.pendingPileSeparation).isTrue();
@@ -214,7 +215,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @DisplayName("-6 ability: target player sacrifices chosen pile 1")
     void minusSixTargetPlayerSacrificesPile1() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(6);
+        liliana.setCounterCount(CounterType.LOYALTY, 6);
 
         Permanent bears = new Permanent(new GrizzlyBears());
         Permanent spider = new Permanent(new GiantSpider());
@@ -247,7 +248,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @DisplayName("-6 ability: target player sacrifices chosen pile 2")
     void minusSixTargetPlayerSacrificesPile2() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(6);
+        liliana.setCounterCount(CounterType.LOYALTY, 6);
 
         Permanent bears = new Permanent(new GrizzlyBears());
         Permanent spider = new Permanent(new GiantSpider());
@@ -276,7 +277,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @DisplayName("-6 ability: all permanents in one pile, empty other pile")
     void minusSixAllInOnePile() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(6);
+        liliana.setCounterCount(CounterType.LOYALTY, 6);
 
         Permanent bears = new Permanent(new GrizzlyBears());
         Permanent spider = new Permanent(new GiantSpider());
@@ -304,7 +305,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     @DisplayName("-6 ability: no effect when target has no permanents")
     void minusSixNoEffectWhenNoPermanents() {
         Permanent liliana = addReadyLiliana(player1);
-        liliana.setLoyaltyCounters(6);
+        liliana.setCounterCount(CounterType.LOYALTY, 6);
 
         harness.activateAbility(player1, 0, 2, null, player2.getId());
         harness.passBothPriorities();
@@ -361,7 +362,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
     private Permanent addReadyLiliana(Player player) {
         LilianaOfTheVeil card = new LilianaOfTheVeil();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

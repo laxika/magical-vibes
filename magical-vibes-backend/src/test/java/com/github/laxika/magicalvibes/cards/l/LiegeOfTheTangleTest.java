@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class LiegeOfTheTangleTest extends BaseCardTest {
 
@@ -88,8 +89,8 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest1.getId(), forest2.getId()));
 
-        assertThat(forest1.getAwakeningCounters()).isEqualTo(1);
-        assertThat(forest2.getAwakeningCounters()).isEqualTo(1);
+        assertThat(forest1.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
+        assertThat(forest2.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
     }
 
     @Test
@@ -102,7 +103,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         resolveCombat();
         harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
 
-        assertThat(forest.getAwakeningCounters()).isEqualTo(1);
+        assertThat(forest.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
         assertThat(forest.getEffectivePower()).isEqualTo(8);
         assertThat(forest.getEffectiveToughness()).isEqualTo(8);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
@@ -134,7 +135,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         // Simulate end of turn reset
         forest.resetModifiers();
 
-        assertThat(forest.getAwakeningCounters()).isEqualTo(1);
+        assertThat(forest.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
         assertThat(forest.getEffectivePower()).isEqualTo(8);
         assertThat(forest.getEffectiveToughness()).isEqualTo(8);
         assertThat(gqs.isCreature(gd, forest)).isTrue();
@@ -151,7 +152,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(forest.getAwakeningCounters()).isZero();
+        assertThat(forest.getCounterCount(CounterType.AWAKENING)).isZero();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses not to put"));
     }
@@ -198,8 +199,8 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(forest1.getId()));
 
-        assertThat(forest1.getAwakeningCounters()).isEqualTo(1);
-        assertThat(forest2.getAwakeningCounters()).isZero();
+        assertThat(forest1.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
+        assertThat(forest2.getCounterCount(CounterType.AWAKENING)).isZero();
         assertThat(gqs.isCreature(gd, forest1)).isTrue();
         assertThat(gqs.isCreature(gd, forest2)).isFalse();
     }

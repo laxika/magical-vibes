@@ -19,7 +19,9 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Service
 @RequiredArgsConstructor
@@ -97,17 +99,7 @@ public class PermanentViewFactory {
                 p.getRegenerationShield(),
                 p.isCantBeBlocked(),
                 animatedCreature || p.isAnimatedUntilNextTurn() || p.isPermanentlyAnimated(),
-                p.getLoyaltyCounters(),
-                p.getChargeCounters(),
-                p.getHatchlingCounters(),
-                p.getPhylacteryCounters(),
-                p.getSlimeCounters(),
-                p.getStudyCounters(),
-                p.getWishCounters(),
-                p.getLoreCounters(),
-                p.getAimCounters(),
-                p.getLandmarkCounters(),
-                p.getEyeballCounters(),
+                Map.copyOf(p.getCounters()),
                 p.getAttackTarget(),
                 p.getMarkedDamage(),
                 p.isTransformed()
@@ -156,7 +148,7 @@ public class PermanentViewFactory {
     }
 
     private CardView applyAwakeningCounterSubtype(CardView cardView, Permanent p) {
-        if (p.getAwakeningCounters() <= 0 || p.getCard().hasType(CardType.CREATURE)) {
+        if (p.getCounterCount(CounterType.AWAKENING) <= 0 || p.getCard().hasType(CardType.CREATURE)) {
             return cardView;
         }
         List<CardSubtype> mergedSubtypes = new ArrayList<>(cardView.subtypes());

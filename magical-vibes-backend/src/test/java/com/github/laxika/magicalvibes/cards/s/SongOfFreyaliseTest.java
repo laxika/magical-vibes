@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SongOfFreyaliseTest extends BaseCardTest {
 
@@ -78,7 +79,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -98,7 +99,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(0);
+        saga.setCounterCount(CounterType.LORE, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -106,7 +107,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter I triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getDescription().contains("chapter I"));
 
@@ -134,7 +135,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(0);
+        saga.setCounterCount(CounterType.LORE, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -202,12 +203,12 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(0);
+        saga.setCounterCount(CounterType.LORE, 0);
 
         // Set second enchantment lore counters to 0 so only first one triggers
         gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise") && p != saga)
-                .findFirst().ifPresent(p -> p.setLoreCounters(0));
+                .findFirst().ifPresent(p -> p.setCounterCount(CounterType.LORE, 0));
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -240,7 +241,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -254,13 +255,13 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElse(null);
         assertThat(bears).isNotNull();
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         Permanent elves = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Llanowar Elves"))
                 .findFirst().orElse(null);
         assertThat(elves).isNotNull();
-        assertThat(elves.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(elves.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -273,7 +274,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -302,7 +303,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -328,7 +329,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
         );
 
         // +1/+1 counters should persist
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Saga lifecycle =====
@@ -341,7 +342,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -370,7 +371,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Song of Freyalise"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -379,7 +380,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
 
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
         assertThat(gd.stack).isNotEmpty();
         // Saga should still be on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);

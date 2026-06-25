@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SengirVampireTest extends BaseCardTest {
 
@@ -53,7 +54,7 @@ class SengirVampireTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .anyMatch(card -> card.getName().equals("Grizzly Bears"));
-        assertThat(sengir.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, sengir)).isEqualTo(5);
         assertThat(harness.getGameQueryService().getEffectiveToughness(gd, sengir)).isEqualTo(5);
     }
@@ -83,7 +84,7 @@ class SengirVampireTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(sengir.getPlusOnePlusOneCounters()).isZero();
+        assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
@@ -99,7 +100,7 @@ class SengirVampireTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(sengir.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(sengir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(harness.getGameQueryService().getEffectivePower(gd, sengir)).isEqualTo(5);
     }
 }

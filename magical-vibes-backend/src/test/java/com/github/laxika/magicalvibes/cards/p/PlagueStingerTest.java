@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class PlagueStingerTest extends BaseCardTest {
 
@@ -89,7 +90,7 @@ class PlagueStingerTest extends BaseCardTest {
         Permanent elemental = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Air Elemental"))
                 .findFirst().orElseThrow();
-        assertThat(elemental.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(elemental.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         // No poison counters — damage went to a creature
         assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isEqualTo(0);

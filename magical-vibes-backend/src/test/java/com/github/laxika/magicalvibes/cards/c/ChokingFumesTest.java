@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChokingFumesTest extends BaseCardTest {
 
@@ -55,8 +56,8 @@ class ChokingFumesTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
-        assertThat(bears2.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(bears2.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -81,8 +82,8 @@ class ChokingFumesTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(attacker.getMinusOneMinusOneCounters()).isEqualTo(1);
-        assertThat(nonAttacker.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(nonAttacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -135,8 +136,8 @@ class ChokingFumesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both attacking creatures get counters
-        assertThat(p2Attacker.getMinusOneMinusOneCounters()).isEqualTo(1);
-        assertThat(p1Attacker.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(p2Attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+        assertThat(p1Attacker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -158,6 +159,6 @@ class ChokingFumesTest extends BaseCardTest {
         Permanent bears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 }

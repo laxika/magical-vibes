@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class RiteOfBelzenlokTest extends BaseCardTest {
 
@@ -102,7 +103,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I ability should be on the stack
         assertThat(gd.stack).hasSize(1);
@@ -145,7 +146,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -153,7 +154,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.stack).anyMatch(e -> e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && e.getDescription().contains("chapter II"));
 
@@ -177,7 +178,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -185,7 +186,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities(); // precombat main → chapter III triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
 
         harness.passBothPriorities(); // resolve chapter III
 
@@ -249,7 +250,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -276,7 +277,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Rite of Belzenlok"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -284,7 +285,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         harness.passBothPriorities(); // precombat main → lore counter 3, chapter III triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
         assertThat(gd.stack).isNotEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga);
     }

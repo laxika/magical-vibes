@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class AjaniOutlandChaperoneTest extends BaseCardTest {
 
@@ -105,7 +106,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Ajani, Outland Chaperone"));
         Permanent ajani = bf.stream().filter(p -> p.getCard().getName().equals("Ajani, Outland Chaperone")).findFirst().orElseThrow();
-        assertThat(ajani.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
         assertThat(ajani.isSummoningSick()).isFalse();
     }
 
@@ -121,7 +122,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
-        assertThat(ajani.getLoyaltyCounters()).isEqualTo(4);
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Kithkin")
                 && p.getCard().getPower() == 1
                 && p.getCard().getToughness() == 1);
@@ -141,7 +142,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(ajani.getLoyaltyCounters()).isEqualTo(1);
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         // Grizzly Bears is 2/2, 4 damage kills it
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
@@ -220,7 +221,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
     @DisplayName("Cannot use -2 when loyalty is only 1")
     void cannotActivateNegativeCostWithInsufficientLoyalty() {
         Permanent ajani = addReadyAjani(player1);
-        ajani.setLoyaltyCounters(1);
+        ajani.setCounterCount(CounterType.LOYALTY, 1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -233,7 +234,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
     @DisplayName("Planeswalker dies when loyalty reaches 0 from ability activation")
     void diesWhenLoyaltyReachesZero() {
         Permanent ajani = addReadyAjani(player1);
-        ajani.setLoyaltyCounters(2);
+        ajani.setCounterCount(CounterType.LOYALTY, 2);
         Permanent target = new Permanent(new GrizzlyBears());
         target.tap();
         harness.getGameData().playerBattlefields.get(player2.getId()).add(target);
@@ -256,7 +257,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
     @DisplayName("Ability still resolves after planeswalker dies to SBA at 0 loyalty")
     void abilityResolvesAfterPlaneswalkerDiesToSBA() {
         Permanent ajani = addReadyAjani(player1);
-        ajani.setLoyaltyCounters(2);
+        ajani.setCounterCount(CounterType.LOYALTY, 2);
         Permanent target = new Permanent(new GrizzlyBears());
         target.tap();
         harness.getGameData().playerBattlefields.get(player2.getId()).add(target);
@@ -315,7 +316,7 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
     private Permanent addReadyAjani(Player player) {
         AjaniOutlandChaperone card = new AjaniOutlandChaperone();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

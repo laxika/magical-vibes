@@ -64,7 +64,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         Permanent jar = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Jar of Eyeballs"))
                 .findFirst().orElseThrow();
-        assertThat(jar.getEyeballCounters()).isZero();
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isZero();
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -77,7 +77,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
         harness.passBothPriorities(); // Resolve Jar's eyeball counter trigger
 
-        assertThat(jar.getEyeballCounters()).isEqualTo(2);
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(2);
     }
 
     @Test
@@ -87,7 +87,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         Permanent jar = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(jar.getEyeballCounters()).isZero();
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isZero();
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -96,7 +96,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.castInstant(player1, 0, bearsId);
         harness.passBothPriorities(); // Resolve Shock → bears die
 
-        assertThat(jar.getEyeballCounters()).isZero();
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isZero();
     }
 
     @Test
@@ -120,7 +120,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(jar.getEyeballCounters()).isEqualTo(2);
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(2);
 
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player2, List.of(new Shock()));
@@ -131,7 +131,7 @@ class JarOfEyeballsTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(jar.getEyeballCounters()).isEqualTo(4);
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isEqualTo(4);
     }
 
     // ===== Activated ability =====
@@ -140,13 +140,13 @@ class JarOfEyeballsTest extends BaseCardTest {
     @DisplayName("Activating removes all eyeball counters as a cost and enters hand/top/bottom choice")
     void activatingRemovesCountersAndEntersChoice() {
         Permanent jar = addReadyJar(player1);
-        jar.setEyeballCounters(4);
+        jar.setCounterCount(CounterType.EYEBALL, 4);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
         // Eyeball counters removed immediately as a cost
-        assertThat(jar.getEyeballCounters()).isZero();
+        assertThat(jar.getCounterCount(CounterType.EYEBALL)).isZero();
 
         harness.passBothPriorities(); // resolve ability from stack
 
@@ -160,7 +160,7 @@ class JarOfEyeballsTest extends BaseCardTest {
     @DisplayName("Choosing a card puts it into hand and rest on bottom")
     void choosingCardPutsInHandRestOnBottom() {
         Permanent jar = addReadyJar(player1);
-        jar.setEyeballCounters(3);
+        jar.setCounterCount(CounterType.EYEBALL, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
@@ -185,7 +185,7 @@ class JarOfEyeballsTest extends BaseCardTest {
     @DisplayName("Activating with one eyeball counter auto-puts that card into hand")
     void oneCounterAutoChooses() {
         Permanent jar = addReadyJar(player1);
-        jar.setEyeballCounters(1);
+        jar.setCounterCount(CounterType.EYEBALL, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
@@ -202,7 +202,7 @@ class JarOfEyeballsTest extends BaseCardTest {
     @DisplayName("Activated ability requires tap — tapped Jar cannot activate")
     void activatedAbilityRequiresTap() {
         Permanent jar = addReadyJar(player1);
-        jar.setEyeballCounters(2);
+        jar.setCounterCount(CounterType.EYEBALL, 2);
         jar.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

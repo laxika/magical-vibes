@@ -68,6 +68,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Resolves all graveyard-related effects during stack resolution. Handles returning cards from
@@ -638,7 +639,7 @@ public class GraveyardReturnResolutionService {
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         Permanent permanent = new Permanent(card);
-        permanent.setPlusOnePlusOneCounters(1);
+        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Shared mana management logic for AI: virtual mana pool calculation,
@@ -204,7 +205,7 @@ public class AiManaManager {
                     abilityByColor.merge(ManaColor.COLORLESS, aace.amount(), Integer::sum);
                 } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
                     if (permanent != null) {
-                        int count = permanent.getChargeCounters();
+                        int count = permanent.getCounterCount(CounterType.CHARGE);
                         if (count > 0) {
                             abilityByColor.merge(ManaColor.COLORLESS, count, Integer::sum);
                         }
@@ -292,7 +293,7 @@ public class AiManaManager {
         }
         for (CardEffect effect : ability.getEffects()) {
             if (effect instanceof RemoveChargeCountersFromSourceCost cost) {
-                if (permanent.getChargeCounters() < cost.count()) {
+                if (permanent.getCounterCount(CounterType.CHARGE) < cost.count()) {
                     return false;
                 }
             }

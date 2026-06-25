@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SpikeshotElderTest extends BaseCardTest {
 
@@ -55,7 +56,7 @@ class SpikeshotElderTest extends BaseCardTest {
     @DisplayName("Deals damage equal to boosted power to target player")
     void dealsBoostedDamageToPlayer() {
         Permanent elder = addReadyElder(player1);
-        elder.setPlusOnePlusOneCounters(2); // power becomes 1+2 = 3
+        elder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2); // power becomes 1+2 = 3
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -100,7 +101,7 @@ class SpikeshotElderTest extends BaseCardTest {
     @DisplayName("Deals boosted damage equal to power, killing a 2/2")
     void dealsBoostedDamageToCreature() {
         Permanent elder = addReadyElder(player1);
-        elder.setPlusOnePlusOneCounters(1); // power becomes 1+1 = 2
+        elder.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // power becomes 1+1 = 2
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addMana(player1, ManaColor.RED, 3);
 
@@ -185,7 +186,7 @@ class SpikeshotElderTest extends BaseCardTest {
     @DisplayName("Deals no damage when power is 0")
     void dealsNoDamageWhenPowerIsZero() {
         Permanent elder = addReadyElder(player1);
-        elder.setMinusOneMinusOneCounters(1); // power becomes 1-1 = 0
+        elder.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1); // power becomes 1-1 = 0
         harness.setLife(player2, 20);
         harness.addMana(player1, ManaColor.RED, 3);
 

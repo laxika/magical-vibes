@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SteelOverseerTest extends BaseCardTest {
 
@@ -46,8 +47,8 @@ class SteelOverseerTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         // Both Steel Overseer (artifact creature) and Ornithopter (artifact creature) get counters
-        assertThat(overseer.getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(ornithopter.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(overseer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(ornithopter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -59,7 +60,7 @@ class SteelOverseerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -71,7 +72,7 @@ class SteelOverseerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(opponentArtifact.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(opponentArtifact.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Tap cost =====
@@ -109,7 +110,7 @@ class SteelOverseerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ornithopter.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(ornithopter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Untap overseer for second activation
         overseer.untap();
@@ -118,7 +119,7 @@ class SteelOverseerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(ornithopter.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(ornithopter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== Stack behavior =====

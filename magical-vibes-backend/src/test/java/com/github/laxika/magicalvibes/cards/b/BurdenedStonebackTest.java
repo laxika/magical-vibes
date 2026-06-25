@@ -16,6 +16,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BurdenedStonebackTest extends BaseCardTest {
 
@@ -50,7 +51,7 @@ class BurdenedStonebackTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Burdened Stoneback"))
                 .findFirst().orElseThrow();
 
-        assertThat(stoneback.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         assertThat(stoneback.getEffectivePower()).isEqualTo(2);
         assertThat(stoneback.getEffectiveToughness()).isEqualTo(2);
     }
@@ -95,7 +96,7 @@ class BurdenedStonebackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Started with 2, now should have 1
-        assertThat(stoneback.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(stoneback.getEffectivePower()).isEqualTo(3);
         assertThat(stoneback.getEffectiveToughness()).isEqualTo(3);
     }
@@ -117,7 +118,7 @@ class BurdenedStonebackTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bearsId);
         harness.passBothPriorities();
 
-        assertThat(stoneback.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
 
         // Second activation
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -125,7 +126,7 @@ class BurdenedStonebackTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, bearsId);
         harness.passBothPriorities();
 
-        assertThat(stoneback.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
         assertThat(stoneback.getEffectivePower()).isEqualTo(4);
         assertThat(stoneback.getEffectiveToughness()).isEqualTo(4);
     }
@@ -136,7 +137,7 @@ class BurdenedStonebackTest extends BaseCardTest {
     @DisplayName("Cannot activate ability when no counters remain")
     void cannotActivateWithoutCounters() {
         Permanent stoneback = addReadyStoneback(player1);
-        stoneback.setMinusOneMinusOneCounters(0);
+        stoneback.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.getGameData().playerBattlefields.get(player2.getId()).getLast().setSummoningSick(false);
 
@@ -205,7 +206,7 @@ class BurdenedStonebackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(stoneback.getGrantedKeywords()).contains(Keyword.INDESTRUCTIBLE);
-        assertThat(stoneback.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(stoneback.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Helpers =====
@@ -214,7 +215,7 @@ class BurdenedStonebackTest extends BaseCardTest {
         BurdenedStoneback card = new BurdenedStoneback();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        perm.setMinusOneMinusOneCounters(2);
+        perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

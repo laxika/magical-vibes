@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShalaiVoiceOfPlentyTest extends BaseCardTest {
 
@@ -217,8 +218,8 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Shalai, Voice of Plenty"))
                 .findFirst().orElseThrow();
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(shalai.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(shalai.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -236,6 +237,6 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(opponentBears.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 }

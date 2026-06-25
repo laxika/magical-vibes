@@ -22,6 +22,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class VenserTheSojournerTest extends BaseCardTest {
 
@@ -87,7 +88,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Venser, the Sojourner"));
         Permanent venser = bf.stream().filter(p -> p.getCard().getName().equals("Venser, the Sojourner")).findFirst().orElseThrow();
-        assertThat(venser.getLoyaltyCounters()).isEqualTo(3);
+        assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
     }
 
     // ===== +2 ability: Exile target permanent you own, return at end step =====
@@ -104,7 +105,7 @@ class VenserTheSojournerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Loyalty should be 3 + 2 = 5
-        assertThat(venser.getLoyaltyCounters()).isEqualTo(5);
+        assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         // Bears should be exiled
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
@@ -142,7 +143,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(venser.getLoyaltyCounters()).isEqualTo(5);
+        assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
         assertThat(gd.pendingExileReturns).hasSize(1);
@@ -162,7 +163,7 @@ class VenserTheSojournerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Loyalty should be 3 - 1 = 2
-        assertThat(venser.getLoyaltyCounters()).isEqualTo(2);
+        assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
         // All creatures on all battlefields should be unblockable
         gd.forEachPermanent((playerId, perm) -> {
@@ -194,7 +195,7 @@ class VenserTheSojournerTest extends BaseCardTest {
     @DisplayName("-8 creates emblem with correct effect")
     void minusEightCreatesEmblem() {
         Permanent venser = addReadyVenser(player1);
-        venser.setLoyaltyCounters(8);
+        venser.setCounterCount(CounterType.LOYALTY, 8);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -212,7 +213,7 @@ class VenserTheSojournerTest extends BaseCardTest {
     @DisplayName("Emblem persists after Venser dies (loyalty goes to 0)")
     void emblemPersistsAfterVenserDies() {
         Permanent venser = addReadyVenser(player1);
-        venser.setLoyaltyCounters(8);
+        venser.setCounterCount(CounterType.LOYALTY, 8);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -304,7 +305,7 @@ class VenserTheSojournerTest extends BaseCardTest {
     private Permanent addReadyVenser(Player player) {
         VenserTheSojourner card = new VenserTheSojourner();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(3);
+        perm.setCounterCount(CounterType.LOYALTY, 3);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

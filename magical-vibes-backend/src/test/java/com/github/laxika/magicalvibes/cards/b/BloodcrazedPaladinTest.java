@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BloodcrazedPaladinTest extends BaseCardTest {
 
@@ -43,7 +44,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
 
         Permanent paladin = findPaladin(player1);
         assertThat(paladin).isNotNull();
-        assertThat(paladin.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -61,7 +62,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
 
         Permanent paladin = findPaladin(player1);
         assertThat(paladin).isNotNull();
-        assertThat(paladin.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -81,7 +82,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
         Permanent paladin = findPaladin(player1);
         assertThat(paladin).isNotNull();
         // Counts all deaths across all players: 1 + 3 = 4
-        assertThat(paladin.getPlusOnePlusOneCounters()).isEqualTo(4);
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
     }
 
     @Test
@@ -111,7 +112,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
 
         Permanent paladin = findPaladin(player1);
         assertThat(paladin).isNotNull();
-        assertThat(paladin.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -129,7 +130,7 @@ class BloodcrazedPaladinTest extends BaseCardTest {
 
         Permanent paladin = findPaladin(player1);
         assertThat(paladin).isNotNull();
-        assertThat(paladin.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(paladin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Helpers =====

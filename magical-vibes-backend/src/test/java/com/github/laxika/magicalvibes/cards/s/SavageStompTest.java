@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SavageStompTest extends BaseCardTest {
 
@@ -58,7 +59,7 @@ class SavageStompTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Llanowar Elves");
 
         Permanent bear = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -234,6 +235,6 @@ class SavageStompTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
 
         Permanent dino = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(dino.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(dino.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

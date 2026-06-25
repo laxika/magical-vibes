@@ -61,7 +61,7 @@ class SurgeNodeTest extends BaseCardTest {
         Permanent node = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Surge Node"))
                 .findFirst().orElseThrow();
-        assertThat(node.getChargeCounters()).isEqualTo(6);
+        assertThat(node.getCounterCount(CounterType.CHARGE)).isEqualTo(6);
     }
 
     // ===== Activated ability: put charge counter on target artifact =====
@@ -75,15 +75,15 @@ class SurgeNodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
-        surgeNode.setChargeCounters(6);
+        surgeNode.setCounterCount(CounterType.CHARGE, 6);
         Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
-        targetArtifact.setChargeCounters(0);
+        targetArtifact.setCounterCount(CounterType.CHARGE, 0);
 
         harness.activateAbility(player1, 0, null, targetArtifact.getId());
         harness.passBothPriorities();
 
-        assertThat(surgeNode.getChargeCounters()).isEqualTo(5);
-        assertThat(targetArtifact.getChargeCounters()).isEqualTo(1);
+        assertThat(surgeNode.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
+        assertThat(targetArtifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -94,15 +94,15 @@ class SurgeNodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
-        surgeNode.setChargeCounters(6);
+        surgeNode.setCounterCount(CounterType.CHARGE, 6);
         Permanent opponentArtifact = gd.playerBattlefields.get(player2.getId()).get(0);
-        opponentArtifact.setChargeCounters(0);
+        opponentArtifact.setCounterCount(CounterType.CHARGE, 0);
 
         harness.activateAbility(player1, 0, null, opponentArtifact.getId());
         harness.passBothPriorities();
 
-        assertThat(surgeNode.getChargeCounters()).isEqualTo(5);
-        assertThat(opponentArtifact.getChargeCounters()).isEqualTo(1);
+        assertThat(surgeNode.getCounterCount(CounterType.CHARGE)).isEqualTo(5);
+        assertThat(opponentArtifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -113,7 +113,7 @@ class SurgeNodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
-        surgeNode.setChargeCounters(0);
+        surgeNode.setCounterCount(CounterType.CHARGE, 0);
         Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetArtifact.getId()))
@@ -127,7 +127,7 @@ class SurgeNodeTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SurgeNode());
 
         Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
-        surgeNode.setChargeCounters(6);
+        surgeNode.setCounterCount(CounterType.CHARGE, 6);
         Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, targetArtifact.getId()))
@@ -142,7 +142,7 @@ class SurgeNodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
         Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
-        surgeNode.setChargeCounters(6);
+        surgeNode.setCounterCount(CounterType.CHARGE, 6);
         surgeNode.tap();
         Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
 
@@ -158,9 +158,9 @@ class SurgeNodeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         Permanent surgeNode = gd.playerBattlefields.get(player1.getId()).get(0);
-        surgeNode.setChargeCounters(6);
+        surgeNode.setCounterCount(CounterType.CHARGE, 6);
         Permanent targetArtifact = gd.playerBattlefields.get(player1.getId()).get(1);
-        targetArtifact.setChargeCounters(0);
+        targetArtifact.setCounterCount(CounterType.CHARGE, 0);
 
         // First activation
         harness.activateAbility(player1, 0, null, targetArtifact.getId());
@@ -171,7 +171,7 @@ class SurgeNodeTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, targetArtifact.getId());
         harness.passBothPriorities();
 
-        assertThat(surgeNode.getChargeCounters()).isEqualTo(4);
-        assertThat(targetArtifact.getChargeCounters()).isEqualTo(2);
+        assertThat(surgeNode.getCounterCount(CounterType.CHARGE)).isEqualTo(4);
+        assertThat(targetArtifact.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 }

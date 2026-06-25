@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class RowdyCrewTest extends BaseCardTest {
 
@@ -92,7 +93,7 @@ class RowdyCrewTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // Should have 2 +1/+1 counters → 5/5
-        assertThat(rowdyCrew.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(rowdyCrew.getEffectivePower()).isEqualTo(5);
         assertThat(rowdyCrew.getEffectiveToughness()).isEqualTo(5);
     }
@@ -122,7 +123,7 @@ class RowdyCrewTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // No counters — creature and land don't share a card type
-        assertThat(rowdyCrew.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(rowdyCrew.getEffectivePower()).isEqualTo(3);
         assertThat(rowdyCrew.getEffectiveToughness()).isEqualTo(3);
     }
@@ -151,7 +152,7 @@ class RowdyCrewTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // Only 1 discarded — condition "two cards that share a card type" not met
-        assertThat(rowdyCrew.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
@@ -178,7 +179,7 @@ class RowdyCrewTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Rowdy Crew"))
                 .findFirst().orElseThrow();
 
-        assertThat(rowdyCrew.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         // No random discard logs
         long randomDiscardLogs = gd.gameLog.stream()
@@ -211,7 +212,7 @@ class RowdyCrewTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Rowdy Crew"))
                 .findFirst().orElseThrow();
 
-        assertThat(rowdyCrew.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(rowdyCrew.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== Opponent not affected =====

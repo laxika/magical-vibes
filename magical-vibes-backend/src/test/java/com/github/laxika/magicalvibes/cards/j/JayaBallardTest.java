@@ -24,6 +24,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class JayaBallardTest extends BaseCardTest {
 
@@ -91,7 +92,7 @@ class JayaBallardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(jaya.getLoyaltyCounters()).isEqualTo(6);
+        assertThat(jaya.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
         assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(3);
     }
 
@@ -132,7 +133,7 @@ class JayaBallardTest extends BaseCardTest {
         // Graveyard should have 2 discarded cards
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         // Loyalty should be 5 + 1 = 6
-        assertThat(jaya.getLoyaltyCounters()).isEqualTo(6);
+        assertThat(jaya.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
     }
 
     @Test
@@ -176,7 +177,7 @@ class JayaBallardTest extends BaseCardTest {
     @DisplayName("-8 creates emblem with EmblemGrantsFlashbackEffect")
     void minusEightCreatesEmblem() {
         Permanent jaya = addReadyJaya(player1);
-        jaya.setLoyaltyCounters(8);
+        jaya.setCounterCount(CounterType.LOYALTY, 8);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -207,7 +208,7 @@ class JayaBallardTest extends BaseCardTest {
     private Permanent addReadyJaya(Player player) {
         JayaBallard card = new JayaBallard();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(5);
+        perm.setCounterCount(CounterType.LOYALTY, 5);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

@@ -65,6 +65,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Resolves combat damage: first strike / double strike phases, damage distribution (trample,
@@ -532,7 +533,7 @@ public class CombatDamageService {
         if (redirectTarget != null && state.infectDamageRedirectedToGuard > 0) {
             state.infectDamageRedirectedToGuard = damagePreventionService.applyCreaturePreventionShield(gameData, redirectTarget, state.infectDamageRedirectedToGuard, true);
             if (state.infectDamageRedirectedToGuard > 0 && !gameQueryService.cantHaveCounters(gameData, redirectTarget)) {
-                redirectTarget.setMinusOneMinusOneCounters(redirectTarget.getMinusOneMinusOneCounters() + state.infectDamageRedirectedToGuard);
+                redirectTarget.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, redirectTarget.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + state.infectDamageRedirectedToGuard);
                 String redirectLog = redirectTarget.getCard().getName() + " gets " + state.infectDamageRedirectedToGuard + " -1/-1 counters from redirected infect damage.";
                 gameBroadcastService.logAndBroadcast(gameData, redirectLog);
             }
@@ -1132,9 +1133,9 @@ public class CombatDamageService {
             Permanent pw = gameQueryService.findPermanentById(gameData, pwId);
             if (pw == null) continue; // planeswalker may have left battlefield
             // CR 306.8: Damage dealt to a planeswalker removes that many loyalty counters from it
-            pw.setLoyaltyCounters(pw.getLoyaltyCounters() - damage);
+            pw.setCounterCount(CounterType.LOYALTY, pw.getCounterCount(CounterType.LOYALTY) - damage);
             String logEntry = pw.getCard().getName() + " takes " + damage + " combat damage ("
-                    + pw.getLoyaltyCounters() + " loyalty remaining).";
+                    + pw.getCounterCount(CounterType.LOYALTY) + " loyalty remaining).";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         }
     }
@@ -1323,7 +1324,7 @@ public class CombatDamageService {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, true);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)
                     && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) {
-                target.setMinusOneMinusOneCounters(target.getMinusOneMinusOneCounters() + afterShield);
+                target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + afterShield);
             }
         } else {
             damageTakenMap.merge(targetIdx, damage, Integer::sum);

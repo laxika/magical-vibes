@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ContagionEngineTest extends BaseCardTest {
 
@@ -58,7 +59,7 @@ class ContagionEngineTest extends BaseCardTest {
         List<Permanent> opponentBattlefield = gd.playerBattlefields.get(player2.getId());
         for (Permanent p : opponentBattlefield) {
             if (p.getCard().getName().equals("Grizzly Bears")) {
-                assertThat(p.getMinusOneMinusOneCounters()).isEqualTo(1);
+                assertThat(p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
                 assertThat(p.getEffectivePower()).isEqualTo(1);
                 assertThat(p.getEffectiveToughness()).isEqualTo(1);
             }
@@ -84,13 +85,13 @@ class ContagionEngineTest extends BaseCardTest {
         Permanent ownBears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(ownBears.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(ownBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
 
         // Opponent's bears should have a counter
         Permanent oppBears = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(oppBears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(oppBears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -111,14 +112,14 @@ class ContagionEngineTest extends BaseCardTest {
         Permanent spellbook = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Spellbook"))
                 .findFirst().orElseThrow();
-        assertThat(spellbook.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(spellbook.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("ETB kills 1/1 creatures with -1/-1 counter")
     void etbKillsOneOneCreatures() {
         Permanent weakBears = new Permanent(new GrizzlyBears());
-        weakBears.setMinusOneMinusOneCounters(1); // 2/2 with one -1/-1 = 1/1
+        weakBears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1); // 2/2 with one -1/-1 = 1/1
         gd.playerBattlefields.get(player2.getId()).add(weakBears);
 
         harness.forceActivePlayer(player1);
@@ -144,7 +145,7 @@ class ContagionEngineTest extends BaseCardTest {
     void proliferateTwiceAddsDoubleCounters() {
         Permanent engine = addReadyEngine(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -160,7 +161,7 @@ class ContagionEngineTest extends BaseCardTest {
         // Second proliferate choice
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(3);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -169,11 +170,11 @@ class ContagionEngineTest extends BaseCardTest {
         Permanent engine = addReadyEngine(player1);
 
         Permanent bears1 = new Permanent(new GrizzlyBears());
-        bears1.setMinusOneMinusOneCounters(1);
+        bears1.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears1);
 
         Permanent bears2 = new Permanent(new GrizzlyBears());
-        bears2.setMinusOneMinusOneCounters(1);
+        bears2.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears2);
 
         harness.forceActivePlayer(player1);
@@ -189,8 +190,8 @@ class ContagionEngineTest extends BaseCardTest {
         // Second proliferate: choose bears2 only
         harness.handleMultiplePermanentsChosen(player1, List.of(bears2.getId()));
 
-        assertThat(bears1.getMinusOneMinusOneCounters()).isEqualTo(2);
-        assertThat(bears2.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears1.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
+        assertThat(bears2.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -198,7 +199,7 @@ class ContagionEngineTest extends BaseCardTest {
     void proliferateTwiceCanChooseNone() {
         Permanent engine = addReadyEngine(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -212,7 +213,7 @@ class ContagionEngineTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -236,7 +237,7 @@ class ContagionEngineTest extends BaseCardTest {
 
         // Grizzly Bears (2/2) with 1 -1/-1 counter = 1/1
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);

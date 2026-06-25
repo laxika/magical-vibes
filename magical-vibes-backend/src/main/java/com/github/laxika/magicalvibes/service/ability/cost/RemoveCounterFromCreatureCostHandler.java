@@ -77,24 +77,24 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
 
     private int getCounterCount(Permanent permanent) {
         return switch (cost.counterType()) {
-            case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
-            case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();
-            case CHARGE -> permanent.getChargeCounters();
-            case ANY -> permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
+            case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+            case MINUS_ONE_MINUS_ONE -> permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+            case CHARGE -> permanent.getCounterCount(CounterType.CHARGE);
+            case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
             default -> 0;
         };
     }
 
     private void removeCounters(Permanent permanent, int count) {
         switch (cost.counterType()) {
-            case PLUS_ONE_PLUS_ONE -> permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - count);
-            case MINUS_ONE_MINUS_ONE -> permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - count);
-            case CHARGE -> permanent.setChargeCounters(permanent.getChargeCounters() - count);
+            case PLUS_ONE_PLUS_ONE -> permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - count);
+            case MINUS_ONE_MINUS_ONE -> permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - count);
+            case CHARGE -> permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - count);
             case ANY -> {
-                if (permanent.getMinusOneMinusOneCounters() >= count) {
-                    permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - count);
+                if (permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) >= count) {
+                    permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - count);
                 } else {
-                    permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - count);
+                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - count);
                 }
             }
             default -> { }

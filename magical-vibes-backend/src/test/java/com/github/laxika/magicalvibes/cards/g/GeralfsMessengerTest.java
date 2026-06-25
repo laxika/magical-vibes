@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GeralfsMessengerTest extends BaseCardTest {
 
@@ -124,7 +125,7 @@ class GeralfsMessengerTest extends BaseCardTest {
 
         Permanent messenger = messengerOnBattlefield();
         assertThat(messenger).isNotNull();
-        assertThat(messenger.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(messenger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(messenger.getEffectivePower()).isEqualTo(4);
     }
 
@@ -150,7 +151,7 @@ class GeralfsMessengerTest extends BaseCardTest {
     @DisplayName("Undying does not return Geralf's Messenger when it died with a +1/+1 counter")
     void undyingDoesNotReturnWithCounter() {
         Permanent messenger = harness.addToBattlefieldAndReturn(player1, new GeralfsMessenger());
-        messenger.setPlusOnePlusOneCounters(1); // now 4/3 — Lightning Bolt's 3 damage is lethal
+        messenger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // now 4/3 — Lightning Bolt's 3 damage is lethal
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 

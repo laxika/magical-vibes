@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class UnbreathingHordeTest extends BaseCardTest {
 
@@ -77,7 +78,7 @@ class UnbreathingHordeTest extends BaseCardTest {
 
         Permanent horde = findHorde(player1);
         assertThat(horde).isNotNull();
-        assertThat(horde.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(horde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -97,7 +98,7 @@ class UnbreathingHordeTest extends BaseCardTest {
 
         Permanent horde = findHorde(player1);
         assertThat(horde).isNotNull();
-        assertThat(horde.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(horde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -117,7 +118,7 @@ class UnbreathingHordeTest extends BaseCardTest {
 
         Permanent horde = findHorde(player1);
         assertThat(horde).isNotNull();
-        assertThat(horde.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(horde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -164,7 +165,7 @@ class UnbreathingHordeTest extends BaseCardTest {
     void damagePreventedRemovesOneCounter() {
         harness.addToBattlefield(player2, new UnbreathingHorde());
         Permanent horde = findHorde(player2);
-        horde.setPlusOnePlusOneCounters(3); // 3/3
+        horde.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // 3/3
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -176,7 +177,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         // Shock deals 2 damage, but only 1 counter is removed (removeOneOnly=true)
         harness.assertOnBattlefield(player2, "Unbreathing Horde");
         Permanent survivingHorde = findHorde(player2);
-        assertThat(survivingHorde.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(survivingHorde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -184,7 +185,7 @@ class UnbreathingHordeTest extends BaseCardTest {
     void multipleDamageEventsRemoveOneCounterEach() {
         harness.addToBattlefield(player2, new UnbreathingHorde());
         Permanent horde = findHorde(player2);
-        horde.setPlusOnePlusOneCounters(3); // 3/3
+        horde.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // 3/3
 
         // First Shock
         harness.setHand(player1, List.of(new Shock()));
@@ -192,7 +193,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         harness.castInstant(player1, 0, horde.getId());
         harness.passBothPriorities();
 
-        assertThat(findHorde(player2).getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(findHorde(player2).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
 
         // Second Shock
         harness.setHand(player1, List.of(new Shock()));
@@ -200,7 +201,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         harness.castInstant(player1, 0, horde.getId());
         harness.passBothPriorities();
 
-        assertThat(findHorde(player2).getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(findHorde(player2).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -208,7 +209,7 @@ class UnbreathingHordeTest extends BaseCardTest {
     void diesWhenLastCounterRemoved() {
         harness.addToBattlefield(player2, new UnbreathingHorde());
         Permanent horde = findHorde(player2);
-        horde.setPlusOnePlusOneCounters(1); // 1/1
+        horde.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // 1/1
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -226,7 +227,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         UnbreathingHorde hordeCard = new UnbreathingHorde();
         Permanent blocker = new Permanent(hordeCard);
         blocker.setSummoningSick(false);
-        blocker.setPlusOnePlusOneCounters(3); // 3/3
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3); // 3/3
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
@@ -245,7 +246,7 @@ class UnbreathingHordeTest extends BaseCardTest {
         // Bears deal 2 combat damage, but only 1 counter is removed
         Permanent survivingHorde = findHorde(player2);
         assertThat(survivingHorde).isNotNull();
-        assertThat(survivingHorde.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(survivingHorde.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== Helpers =====

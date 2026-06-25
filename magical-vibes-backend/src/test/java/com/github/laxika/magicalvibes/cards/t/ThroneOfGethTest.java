@@ -19,6 +19,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ThroneOfGethTest extends BaseCardTest {
 
@@ -103,7 +104,7 @@ class ThroneOfGethTest extends BaseCardTest {
     void proliferateAddsCountersAfterSacrifice() {
         Permanent throne = addReadyThrone(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -115,7 +116,7 @@ class ThroneOfGethTest extends BaseCardTest {
         // Choose to proliferate the bears
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -124,7 +125,7 @@ class ThroneOfGethTest extends BaseCardTest {
         Permanent throne = addReadyThrone(player1);
         harness.addToBattlefield(player1, new Spellbook()); // extra artifact so throne isn't sacrificed
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -137,7 +138,7 @@ class ThroneOfGethTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -145,7 +146,7 @@ class ThroneOfGethTest extends BaseCardTest {
     void proliferateCanChooseNone() {
         Permanent throne = addReadyThrone(player1);
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.forceActivePlayer(player1);
@@ -156,7 +157,7 @@ class ThroneOfGethTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Activation restrictions =====

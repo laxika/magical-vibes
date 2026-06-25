@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class PrimalCocoonTest extends BaseCardTest {
 
@@ -53,12 +54,12 @@ class PrimalCocoonTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        int countersBefore = creature.getPlusOnePlusOneCounters();
+        int countersBefore = creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
 
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(creature.getPlusOnePlusOneCounters()).isEqualTo(countersBefore + 1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(countersBefore + 1);
     }
 
     @Test
@@ -72,12 +73,12 @@ class PrimalCocoonTest extends BaseCardTest {
         harness.castEnchantment(player1, 0, creature.getId());
         harness.passBothPriorities();
 
-        int countersBefore = creature.getPlusOnePlusOneCounters();
+        int countersBefore = creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
 
-        assertThat(creature.getPlusOnePlusOneCounters()).isEqualTo(countersBefore);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(countersBefore);
     }
 
     @Test
@@ -97,7 +98,7 @@ class PrimalCocoonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(creature.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== Sacrifice on attack =====
@@ -146,7 +147,7 @@ class PrimalCocoonTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.passBothPriorities();
 
-        assertThat(creature.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Attack to trigger sacrifice
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
@@ -157,7 +158,7 @@ class PrimalCocoonTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sacrifice trigger
 
         // Creature should still have the +1/+1 counter
-        assertThat(creature.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // Cocoon should be gone
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Primal Cocoon"));

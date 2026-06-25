@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TimeOfIceTest extends BaseCardTest {
 
@@ -81,7 +82,7 @@ class TimeOfIceTest extends BaseCardTest {
         // Saga should be on battlefield with 1 lore counter
         Permanent saga = findSaga(player1);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I requires targeting — should be awaiting input
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -229,7 +230,7 @@ class TimeOfIceTest extends BaseCardTest {
 
         Permanent saga = findSaga(player1);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         // Advance to precombat main to trigger chapter II
         harness.forceActivePlayer(player1);
@@ -237,7 +238,7 @@ class TimeOfIceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         // Choose the first untapped opponent creature
@@ -268,7 +269,7 @@ class TimeOfIceTest extends BaseCardTest {
 
         Permanent saga = findSaga(player1);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Advance to precombat main to trigger chapter III
         harness.forceActivePlayer(player1);
@@ -302,7 +303,7 @@ class TimeOfIceTest extends BaseCardTest {
 
         Permanent saga = findSaga(player1);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -325,7 +326,7 @@ class TimeOfIceTest extends BaseCardTest {
 
         Permanent saga = findSaga(player1);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -367,7 +368,7 @@ class TimeOfIceTest extends BaseCardTest {
 
     private Permanent addSagaWithLoreCounter(Player player, int loreCounters) {
         Permanent saga = new Permanent(new TimeOfIce());
-        saga.setLoreCounters(loreCounters);
+        saga.setCounterCount(CounterType.LORE, loreCounters);
         gd.playerBattlefields.get(player.getId()).add(saga);
         return saga;
     }

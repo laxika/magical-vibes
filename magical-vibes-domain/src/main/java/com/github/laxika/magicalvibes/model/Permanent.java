@@ -67,20 +67,10 @@ public class Permanent {
     @Setter private boolean permanentlyAnimated;
     @Setter private int permanentAnimatedPower;
     @Setter private int permanentAnimatedToughness;
-    @Setter private int loyaltyCounters;
-    @Setter private int plusOnePlusOneCounters;
-    @Setter private int minusOneMinusOneCounters;
-    @Setter private int chargeCounters;
-    @Setter private int phylacteryCounters;
-    @Setter private int awakeningCounters;
-    @Setter private int slimeCounters;
-    @Setter private int hatchlingCounters;
-    @Setter private int studyCounters;
-    @Setter private int wishCounters;
-    @Setter private int loreCounters;
-    @Setter private int aimCounters;
-    @Setter private int landmarkCounters;
-    @Setter private int eyeballCounters;
+    /** All counters on this permanent, keyed by {@link CounterType}. Absent keys mean zero counters.
+     *  New counter kinds require only a new {@link CounterType} value — never a new field here.
+     *  Read/write via {@link #getCounterCount(CounterType)} / {@link #setCounterCount(CounterType, int)}. */
+    private final Map<CounterType, Integer> counters = new EnumMap<>(CounterType.class);
     @Setter private int loyaltyActivationsThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
@@ -244,19 +234,7 @@ public class Permanent {
         this.permanentlyAnimated = source.permanentlyAnimated;
         this.permanentAnimatedPower = source.permanentAnimatedPower;
         this.permanentAnimatedToughness = source.permanentAnimatedToughness;
-        this.loyaltyCounters = source.loyaltyCounters;
-        this.plusOnePlusOneCounters = source.plusOnePlusOneCounters;
-        this.minusOneMinusOneCounters = source.minusOneMinusOneCounters;
-        this.chargeCounters = source.chargeCounters;
-        this.phylacteryCounters = source.phylacteryCounters;
-        this.awakeningCounters = source.awakeningCounters;
-        this.slimeCounters = source.slimeCounters;
-        this.hatchlingCounters = source.hatchlingCounters;
-        this.studyCounters = source.studyCounters;
-        this.wishCounters = source.wishCounters;
-        this.loreCounters = source.loreCounters;
-        this.aimCounters = source.aimCounters;
-        this.eyeballCounters = source.eyeballCounters;
+        this.counters.putAll(source.counters);
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.grantedKeywords.addAll(source.grantedKeywords);
@@ -353,49 +331,32 @@ public class Permanent {
     }
 
     /**
-     * Returns the number of counters of the given type on this permanent. Supports the
-     * named/keyword counter types that are tracked as dedicated fields on a permanent.
-     * {@code ANY} and {@code SILVER} are not single-field counters and are rejected.
+     * Returns the number of counters of the given concrete type on this permanent.
+     * {@code ANY} and {@code SILVER} are category/wildcard types, not concrete counters
+     * stored on a permanent, and are rejected.
      */
     public int getCounterCount(CounterType counterType) {
-        return switch (counterType) {
-            case AIM -> aimCounters;
-            case CHARGE -> chargeCounters;
-            case EYEBALL -> eyeballCounters;
-            case HATCHLING -> hatchlingCounters;
-            case LANDMARK -> landmarkCounters;
-            case LORE -> loreCounters;
-            case LOYALTY -> loyaltyCounters;
-            case MINUS_ONE_MINUS_ONE -> minusOneMinusOneCounters;
-            case PLUS_ONE_PLUS_ONE -> plusOnePlusOneCounters;
-            case SLIME -> slimeCounters;
-            case STUDY -> studyCounters;
-            case WISH -> wishCounters;
-            case ANY, SILVER -> throw new IllegalArgumentException(
-                    "Counter type " + counterType + " is not tracked as a permanent field");
-        };
+        if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+            throw new IllegalArgumentException(
+                    "Counter type " + counterType + " is not a concrete permanent counter");
+        }
+        return counters.getOrDefault(counterType, 0);
     }
 
     /**
-     * Sets the number of counters of the given type on this permanent. See
-     * {@link #getCounterCount(CounterType)} for the supported types.
+     * Sets the number of counters of the given concrete type on this permanent. A count of
+     * zero (or less) removes the entry so the backing map only holds present counters.
+     * See {@link #getCounterCount(CounterType)} for the supported types.
      */
     public void setCounterCount(CounterType counterType, int count) {
-        switch (counterType) {
-            case AIM -> aimCounters = count;
-            case CHARGE -> chargeCounters = count;
-            case EYEBALL -> eyeballCounters = count;
-            case HATCHLING -> hatchlingCounters = count;
-            case LANDMARK -> landmarkCounters = count;
-            case LORE -> loreCounters = count;
-            case LOYALTY -> loyaltyCounters = count;
-            case MINUS_ONE_MINUS_ONE -> minusOneMinusOneCounters = count;
-            case PLUS_ONE_PLUS_ONE -> plusOnePlusOneCounters = count;
-            case SLIME -> slimeCounters = count;
-            case STUDY -> studyCounters = count;
-            case WISH -> wishCounters = count;
-            case ANY, SILVER -> throw new IllegalArgumentException(
-                    "Counter type " + counterType + " is not tracked as a permanent field");
+        if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
+            throw new IllegalArgumentException(
+                    "Counter type " + counterType + " is not a concrete permanent counter");
+        }
+        if (count <= 0) {
+            counters.remove(counterType);
+        } else {
+            counters.put(counterType, count);
         }
     }
 
@@ -405,7 +366,7 @@ public class Permanent {
      * that replace the base but preserve modifiers on top.
      */
     public int getPowerModifiers() {
-        return powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        return powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     /**
@@ -414,7 +375,7 @@ public class Permanent {
      * that replace the base but preserve modifiers on top.
      */
     public int getToughnessModifiers() {
-        return toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     public int getEffectivePower() {
@@ -445,12 +406,12 @@ public class Permanent {
             basePower = untilNextTurnAnimatedPower;
         } else if (permanentlyAnimated) {
             basePower = permanentAnimatedPower;
-        } else if (awakeningCounters > 0 && !card.hasType(CardType.CREATURE)) {
+        } else if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
             basePower = 8;
         } else {
             basePower = card.getPower() != null ? card.getPower() : 0;
         }
-        return basePower + powerModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        return basePower + powerModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     private int getRawToughness() {
@@ -467,12 +428,12 @@ public class Permanent {
             baseToughness = untilNextTurnAnimatedToughness;
         } else if (permanentlyAnimated) {
             baseToughness = permanentAnimatedToughness;
-        } else if (awakeningCounters > 0 && !card.hasType(CardType.CREATURE)) {
+        } else if (getCounterCount(CounterType.AWAKENING) > 0 && !card.hasType(CardType.CREATURE)) {
             baseToughness = 8;
         } else {
             baseToughness = card.getToughness() != null ? card.getToughness() : 0;
         }
-        return baseToughness + toughnessModifier + plusOnePlusOneCounters - minusOneMinusOneCounters;
+        return baseToughness + toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
     public CardColor getEffectiveColor() {
@@ -482,7 +443,7 @@ public class Permanent {
         if (animatedUntilEndOfTurn && animatedColor != null) {
             return animatedColor;
         }
-        if (awakeningCounters > 0) {
+        if (getCounterCount(CounterType.AWAKENING) > 0) {
             return CardColor.GREEN;
         }
         return card.getColor();

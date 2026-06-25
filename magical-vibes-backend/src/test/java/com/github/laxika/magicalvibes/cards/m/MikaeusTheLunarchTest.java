@@ -72,7 +72,7 @@ class MikaeusTheLunarchTest extends BaseCardTest {
 
         Permanent mikaeus = findMikaeus(player1);
         assertThat(mikaeus).isNotNull();
-        assertThat(mikaeus.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(mikaeus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -94,19 +94,19 @@ class MikaeusTheLunarchTest extends BaseCardTest {
     @DisplayName("First ability puts a +1/+1 counter on Mikaeus")
     void firstAbilityPutsCounterOnSelf() {
         Permanent mikaeus = addReadyMikaeus(player1);
-        mikaeus.setPlusOnePlusOneCounters(2);
+        mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(mikaeus.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(mikaeus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
     @DisplayName("First ability taps Mikaeus")
     void firstAbilityTapsMikaeus() {
         Permanent mikaeus = addReadyMikaeus(player1);
-        mikaeus.setPlusOnePlusOneCounters(1);
+        mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.activateAbility(player1, 0, 0, null, null);
 
@@ -119,7 +119,7 @@ class MikaeusTheLunarchTest extends BaseCardTest {
     @DisplayName("Second ability puts +1/+1 counter on each other creature you control")
     void secondAbilityDistributesCounters() {
         Permanent mikaeus = addReadyMikaeus(player1);
-        mikaeus.setPlusOnePlusOneCounters(2);
+        mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent bear1 = addReadyCreature(player1);
         Permanent bear2 = addReadyCreature(player1);
 
@@ -127,44 +127,44 @@ class MikaeusTheLunarchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Mikaeus had 2 counters, removed 1 as cost, so 1 remaining
-        assertThat(mikaeus.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(mikaeus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         // Both bears get a counter
-        assertThat(bear1.getPlusOnePlusOneCounters()).isEqualTo(1);
-        assertThat(bear2.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        assertThat(bear2.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Second ability does NOT put counter on Mikaeus itself")
     void secondAbilityDoesNotCounterSelf() {
         Permanent mikaeus = addReadyMikaeus(player1);
-        mikaeus.setPlusOnePlusOneCounters(3);
+        mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         addReadyCreature(player1);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
         // 3 - 1 cost = 2, should NOT gain a counter from the effect
-        assertThat(mikaeus.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(mikaeus.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
     @DisplayName("Second ability does not affect opponent's creatures")
     void secondAbilityDoesNotAffectOpponent() {
         Permanent mikaeus = addReadyMikaeus(player1);
-        mikaeus.setPlusOnePlusOneCounters(2);
+        mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent opponentBear = addReadyCreature(player2);
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(opponentBear.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
     @DisplayName("Cannot activate second ability without +1/+1 counters")
     void cannotActivateSecondAbilityWithoutCounters() {
         Permanent mikaeus = addReadyMikaeus(player1);
-        mikaeus.setPlusOnePlusOneCounters(0);
+        mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -177,7 +177,7 @@ class MikaeusTheLunarchTest extends BaseCardTest {
     void cannotActivateWhileSummoningSick() {
         Permanent mikaeus = new Permanent(new MikaeusTheLunarch());
         mikaeus.setSummoningSick(true);
-        mikaeus.setPlusOnePlusOneCounters(2);
+        mikaeus.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         gd.playerBattlefields.get(player1.getId()).add(mikaeus);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 0, null, null))

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ProteanHydraTest extends BaseCardTest {
 
@@ -60,7 +61,7 @@ class ProteanHydraTest extends BaseCardTest {
 
         Permanent hydra = findHydra(player1);
         assertThat(hydra).isNotNull();
-        assertThat(hydra.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(hydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -84,7 +85,7 @@ class ProteanHydraTest extends BaseCardTest {
     void shockDamageRemovesCounters() {
         harness.addToBattlefield(player2, new ProteanHydra());
         Permanent hydra = findHydra(player2);
-        hydra.setPlusOnePlusOneCounters(5); // 5/5
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -96,7 +97,7 @@ class ProteanHydraTest extends BaseCardTest {
         // Hydra survives with 3 +1/+1 counters (5 - 2 from Shock damage)
         harness.assertOnBattlefield(player2, "Protean Hydra");
         Permanent survivingHydra = findHydra(player2);
-        assertThat(survivingHydra.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(survivingHydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -105,7 +106,7 @@ class ProteanHydraTest extends BaseCardTest {
         ProteanHydra hydraCard = new ProteanHydra();
         Permanent blocker = new Permanent(hydraCard);
         blocker.setSummoningSick(false);
-        blocker.setPlusOnePlusOneCounters(5); // 5/5
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         gd.playerBattlefields.get(player2.getId()).add(blocker);
@@ -124,7 +125,7 @@ class ProteanHydraTest extends BaseCardTest {
         // Hydra survives with 3 +1/+1 counters (5 - 2 from Bears' power)
         Permanent survivingHydra = findHydra(player2);
         assertThat(survivingHydra).isNotNull();
-        assertThat(survivingHydra.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(survivingHydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     // ===== Damage beyond counter count =====
@@ -134,7 +135,7 @@ class ProteanHydraTest extends BaseCardTest {
     void damageExceedingCountersOnlyRemovesAvailable() {
         harness.addToBattlefield(player2, new ProteanHydra());
         Permanent hydra = findHydra(player2);
-        hydra.setPlusOnePlusOneCounters(1); // 1/1
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // 1/1
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -157,7 +158,7 @@ class ProteanHydraTest extends BaseCardTest {
     void delayedRegrowthAtEndStep() {
         harness.addToBattlefield(player1, new ProteanHydra());
         Permanent hydra = findHydra(player1);
-        hydra.setPlusOnePlusOneCounters(5); // 5/5
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);
@@ -166,7 +167,7 @@ class ProteanHydraTest extends BaseCardTest {
         harness.castInstant(player2, 0, hydraId);
         harness.passBothPriorities(); // Resolve Shock: 2 damage, remove 2 counters, 3 remaining
 
-        assertThat(findHydra(player1).getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(findHydra(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
         // Advance to end step naturally (POSTCOMBAT_MAIN -> END_STEP triggers handler)
         advanceToEndStep(player1);
@@ -174,7 +175,7 @@ class ProteanHydraTest extends BaseCardTest {
         resolveAllDelayedTriggers();
 
         // 2 counters removed → 2 triggers × 2 counters = 4 added, total = 3 + 4 = 7
-        assertThat(findHydra(player1).getPlusOnePlusOneCounters()).isEqualTo(7);
+        assertThat(findHydra(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
     }
 
     @Test
@@ -182,7 +183,7 @@ class ProteanHydraTest extends BaseCardTest {
     void noTriggerWhenNoCountersToRemove() {
         harness.addToBattlefield(player1, new ProteanHydra());
         Permanent hydra = findHydra(player1);
-        hydra.setPlusOnePlusOneCounters(0); // 0/0 but keep alive manually
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0); // 0/0 but keep alive manually
 
         // Verify no pending delayed counters
         assertThat(gd.pendingDelayedPlusOnePlusOneCounters).isEmpty();
@@ -194,7 +195,7 @@ class ProteanHydraTest extends BaseCardTest {
         ProteanHydra hydraCard = new ProteanHydra();
         Permanent blocker = new Permanent(hydraCard);
         blocker.setSummoningSick(false);
-        blocker.setPlusOnePlusOneCounters(5); // 5/5
+        blocker.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
         gd.playerBattlefields.get(player1.getId()).add(blocker);
@@ -213,14 +214,14 @@ class ProteanHydraTest extends BaseCardTest {
         // Hydra has 3 counters after combat damage prevention
         Permanent survivingHydra = findHydra(player1);
         assertThat(survivingHydra).isNotNull();
-        assertThat(survivingHydra.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(survivingHydra.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
 
         // Advance to end step naturally — delayed trigger fires
         advanceToEndStep(player2);
         resolveAllDelayedTriggers();
 
         // 2 counters removed → 4 counters added, total = 3 + 4 = 7
-        assertThat(findHydra(player1).getPlusOnePlusOneCounters()).isEqualTo(7);
+        assertThat(findHydra(player1).getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
     }
 
     // ===== SBA counter annihilation triggers regrowth (ruling #3, #5) =====
@@ -230,7 +231,7 @@ class ProteanHydraTest extends BaseCardTest {
     void minusOneCounterAnnihilationTriggersRegrowth() {
         harness.addToBattlefield(player1, new ProteanHydra());
         Permanent hydra = findHydra(player1);
-        hydra.setPlusOnePlusOneCounters(5); // 5/5
+        hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // 5/5
 
         // Add a card to player2's library so InstillInfection's draw doesn't lose the game
         gd.playerDecks.get(player2.getId()).add(new GrizzlyBears());
@@ -247,8 +248,8 @@ class ProteanHydraTest extends BaseCardTest {
         // After SBA: 4 +1/+1 counters, 0 -1/-1 counters (1 pair annihilated)
         Permanent afterSba = findHydra(player1);
         assertThat(afterSba).isNotNull();
-        assertThat(afterSba.getMinusOneMinusOneCounters()).isEqualTo(0);
-        assertThat(afterSba.getPlusOnePlusOneCounters()).isEqualTo(4);
+        assertThat(afterSba.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
+        assertThat(afterSba.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
 
         // Advance to end step — delayed regrowth trigger fires
         advanceToEndStep(player1);
@@ -256,7 +257,7 @@ class ProteanHydraTest extends BaseCardTest {
 
         // 1 counter removed via SBA → 1 trigger × 2 counters = 2 added, total = 4 + 2 = 6
         Permanent result = findHydra(player1);
-        assertThat(result.getPlusOnePlusOneCounters()).isEqualTo(6);
+        assertThat(result.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
     }
 
     // ===== Helpers =====

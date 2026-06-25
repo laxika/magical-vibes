@@ -13,6 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class UntamedKavuTest extends BaseCardTest {
 
@@ -53,7 +54,7 @@ class UntamedKavuTest extends BaseCardTest {
 
         Permanent kavu = findKavu(player1);
         assertThat(kavu).isNotNull();
-        assertThat(kavu.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(kavu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Casting with kicker =====
@@ -70,7 +71,7 @@ class UntamedKavuTest extends BaseCardTest {
 
         Permanent kavu = findKavu(player1);
         assertThat(kavu).isNotNull();
-        assertThat(kavu.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(kavu.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

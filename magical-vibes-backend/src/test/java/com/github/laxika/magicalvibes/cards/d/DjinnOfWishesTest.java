@@ -17,6 +17,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class DjinnOfWishesTest extends BaseCardTest {
 
@@ -27,7 +28,7 @@ class DjinnOfWishesTest extends BaseCardTest {
 
     private void addDjinnToBattlefield() {
         harness.addToBattlefield(player1, new DjinnOfWishes());
-        gd.playerBattlefields.get(player1.getId()).getLast().setWishCounters(3);
+        gd.playerBattlefields.get(player1.getId()).getLast().setCounterCount(CounterType.WISH, 3);
     }
 
     // ===== Enters with wish counters =====
@@ -46,7 +47,7 @@ class DjinnOfWishesTest extends BaseCardTest {
 
         var permanents = gd.playerBattlefields.get(player1.getId());
         assertThat(permanents).hasSize(1);
-        assertThat(permanents.getFirst().getWishCounters()).isEqualTo(3);
+        assertThat(permanents.getFirst().getCounterCount(CounterType.WISH)).isEqualTo(3);
     }
 
     // ===== Activate ability — non-targeted spell =====
@@ -81,7 +82,7 @@ class DjinnOfWishesTest extends BaseCardTest {
 
         // Wish counter was removed
         var djinn = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(djinn.getWishCounters()).isEqualTo(2);
+        assertThat(djinn.getCounterCount(CounterType.WISH)).isEqualTo(2);
     }
 
     // ===== Activate ability — targeted instant =====
@@ -222,7 +223,7 @@ class DjinnOfWishesTest extends BaseCardTest {
     void cannotActivateWithoutWishCounters() {
         addDjinnToBattlefield();
         // Remove all wish counters
-        gd.playerBattlefields.get(player1.getId()).getFirst().setWishCounters(0);
+        gd.playerBattlefields.get(player1.getId()).getFirst().setCounterCount(CounterType.WISH, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

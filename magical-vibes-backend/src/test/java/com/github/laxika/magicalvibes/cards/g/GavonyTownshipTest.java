@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GavonyTownshipTest extends BaseCardTest {
 
@@ -85,7 +86,7 @@ class GavonyTownshipTest extends BaseCardTest {
 
         assertThat(bears).hasSize(2);
         for (Permanent bear : bears) {
-            assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         }
     }
 
@@ -105,7 +106,7 @@ class GavonyTownshipTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(opponentBear.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -139,7 +140,7 @@ class GavonyTownshipTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(bear.getEffectivePower()).isEqualTo(4);   // 2 base + 2 counters
         assertThat(bear.getEffectiveToughness()).isEqualTo(4); // 2 base + 2 counters
     }

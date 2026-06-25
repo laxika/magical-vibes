@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShriekhornTest extends BaseCardTest {
 
@@ -59,7 +60,7 @@ class ShriekhornTest extends BaseCardTest {
         Permanent shriekhorn = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Shriekhorn"))
                 .findFirst().orElseThrow();
-        assertThat(shriekhorn.getChargeCounters()).isEqualTo(3);
+        assertThat(shriekhorn.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
     }
 
     // ===== Activated ability: target player mills two cards =====
@@ -72,14 +73,14 @@ class ShriekhornTest extends BaseCardTest {
         Permanent shriekhorn = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Shriekhorn"))
                 .findFirst().orElseThrow();
-        shriekhorn.setChargeCounters(3);
+        shriekhorn.setCounterCount(CounterType.CHARGE, 3);
 
         int initialLibrarySize = gd.playerDecks.get(player2.getId()).size();
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(shriekhorn.getChargeCounters()).isEqualTo(2);
+        assertThat(shriekhorn.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(initialLibrarySize - 2);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
@@ -92,7 +93,7 @@ class ShriekhornTest extends BaseCardTest {
         Permanent shriekhorn = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Shriekhorn"))
                 .findFirst().orElseThrow();
-        shriekhorn.setChargeCounters(3);
+        shriekhorn.setCounterCount(CounterType.CHARGE, 3);
 
         int initialLibrarySize = gd.playerDecks.get(player2.getId()).size();
 
@@ -110,7 +111,7 @@ class ShriekhornTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(shriekhorn.getChargeCounters()).isEqualTo(0);
+        assertThat(shriekhorn.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
         assertThat(gd.playerDecks.get(player2.getId()).size()).isEqualTo(initialLibrarySize - 6);
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(6);
     }
@@ -123,7 +124,7 @@ class ShriekhornTest extends BaseCardTest {
         Permanent shriekhorn = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Shriekhorn"))
                 .findFirst().orElseThrow();
-        shriekhorn.setChargeCounters(0);
+        shriekhorn.setCounterCount(CounterType.CHARGE, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -137,14 +138,14 @@ class ShriekhornTest extends BaseCardTest {
         Permanent shriekhorn = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Shriekhorn"))
                 .findFirst().orElseThrow();
-        shriekhorn.setChargeCounters(1);
+        shriekhorn.setCounterCount(CounterType.CHARGE, 1);
 
         int initialLibrarySize = gd.playerDecks.get(player1.getId()).size();
 
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(shriekhorn.getChargeCounters()).isEqualTo(0);
+        assertThat(shriekhorn.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
         assertThat(gd.playerDecks.get(player1.getId()).size()).isEqualTo(initialLibrarySize - 2);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
     }
@@ -157,7 +158,7 @@ class ShriekhornTest extends BaseCardTest {
         Permanent shriekhorn = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Shriekhorn"))
                 .findFirst().orElseThrow();
-        shriekhorn.setChargeCounters(3);
+        shriekhorn.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it
         harness.activateAbility(player1, 0, null, player2.getId());

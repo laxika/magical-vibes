@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BellowingAegisaurTest extends BaseCardTest {
 
@@ -58,14 +59,14 @@ class BellowingAegisaurTest extends BaseCardTest {
 
         // Aegisaur itself should NOT have a +1/+1 counter (says "each other")
         Permanent aegisaur = findPermanent(player2, "Bellowing Aegisaur");
-        assertThat(aegisaur.getPlusOnePlusOneCounters()).isZero();
+        assertThat(aegisaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Other creatures should each have 1 +1/+1 counter
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         Permanent wizard = findPermanent(player2, "Fugitive Wizard");
-        assertThat(wizard.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -83,7 +84,7 @@ class BellowingAegisaurTest extends BaseCardTest {
 
         // Opponent's creature should NOT get a counter
         Permanent opponentBears = findPermanent(player1, "Grizzly Bears");
-        assertThat(opponentBears.getPlusOnePlusOneCounters()).isZero();
+        assertThat(opponentBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     // ===== Combat damage trigger =====
@@ -118,11 +119,11 @@ class BellowingAegisaurTest extends BaseCardTest {
 
         // Grizzly Bears should have a +1/+1 counter
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Aegisaur should NOT have a +1/+1 counter
         Permanent aegisaurAfter = findPermanent(player2, "Bellowing Aegisaur");
-        assertThat(aegisaurAfter.getPlusOnePlusOneCounters()).isZero();
+        assertThat(aegisaurAfter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -140,6 +141,6 @@ class BellowingAegisaurTest extends BaseCardTest {
         // Aegisaur survives with no counter on itself
         harness.assertOnBattlefield(player2, "Bellowing Aegisaur");
         Permanent aegisaur = findPermanent(player2, "Bellowing Aegisaur");
-        assertThat(aegisaur.getPlusOnePlusOneCounters()).isZero();
+        assertThat(aegisaur.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 }

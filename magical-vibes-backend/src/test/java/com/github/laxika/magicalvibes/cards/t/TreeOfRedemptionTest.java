@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TreeOfRedemptionTest extends BaseCardTest {
 
@@ -116,7 +117,7 @@ class TreeOfRedemptionTest extends BaseCardTest {
     @DisplayName("+1/+1 counters apply on top of exchanged toughness")
     void countersApplyOnTopOfExchangedToughness() {
         Permanent tree = addReadyTree(player1);
-        tree.setPlusOnePlusOneCounters(2);
+        tree.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         // Effective toughness = 13 + 2 = 15
 
         harness.activateAbility(player1, 0, null, null);

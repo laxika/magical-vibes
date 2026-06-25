@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TitanForgeTest extends BaseCardTest {
 
@@ -64,7 +65,7 @@ class TitanForgeTest extends BaseCardTest {
         harness.activateAbility(player1, forgeIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(forge.getChargeCounters()).isEqualTo(1);
+        assertThat(forge.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -118,7 +119,7 @@ class TitanForgeTest extends BaseCardTest {
         harness.activateAbility(player1, forgeIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(forge.getChargeCounters()).isEqualTo(2);
+        assertThat(forge.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Second ability — token creation =====
@@ -131,14 +132,14 @@ class TitanForgeTest extends BaseCardTest {
         Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Titan Forge"))
                 .findFirst().orElseThrow();
-        forge.setChargeCounters(3);
+        forge.setCounterCount(CounterType.CHARGE, 3);
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         harness.activateAbility(player1, forgeIndex, 1, null, null);
         harness.passBothPriorities();
 
         // Charge counters are removed
-        assertThat(forge.getChargeCounters()).isEqualTo(0);
+        assertThat(forge.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
 
         // 9/9 Golem artifact creature token is on the battlefield
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -156,7 +157,7 @@ class TitanForgeTest extends BaseCardTest {
         Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Titan Forge"))
                 .findFirst().orElseThrow();
-        forge.setChargeCounters(2);
+        forge.setCounterCount(CounterType.CHARGE, 2);
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, forgeIndex, 1, null, null))
@@ -171,13 +172,13 @@ class TitanForgeTest extends BaseCardTest {
         Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Titan Forge"))
                 .findFirst().orElseThrow();
-        forge.setChargeCounters(5);
+        forge.setCounterCount(CounterType.CHARGE, 5);
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         harness.activateAbility(player1, forgeIndex, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(forge.getChargeCounters()).isEqualTo(2);
+        assertThat(forge.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     @Test
@@ -188,7 +189,7 @@ class TitanForgeTest extends BaseCardTest {
         Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Titan Forge"))
                 .findFirst().orElseThrow();
-        forge.setChargeCounters(3);
+        forge.setCounterCount(CounterType.CHARGE, 3);
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 
         harness.activateAbility(player1, forgeIndex, 1, null, null);
@@ -205,7 +206,7 @@ class TitanForgeTest extends BaseCardTest {
         Permanent forge = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Titan Forge"))
                 .findFirst().orElseThrow();
-        forge.setChargeCounters(3);
+        forge.setCounterCount(CounterType.CHARGE, 3);
         forge.tap();
         int forgeIndex = gd.playerBattlefields.get(player1.getId()).indexOf(forge);
 

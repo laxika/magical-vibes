@@ -50,7 +50,7 @@ class VedalkenInfuserTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
         harness.handlePermanentChosen(player1, artifact.getId());
 
-        assertThat(artifact.getChargeCounters()).isEqualTo(1);
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -63,7 +63,7 @@ class VedalkenInfuserTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(artifact.getChargeCounters()).isEqualTo(0);
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     @Test
@@ -77,7 +77,7 @@ class VedalkenInfuserTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
         harness.handlePermanentChosen(player1, opponentArtifact.getId());
 
-        assertThat(opponentArtifact.getChargeCounters()).isEqualTo(1);
+        assertThat(opponentArtifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -92,7 +92,7 @@ class VedalkenInfuserTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
         harness.handlePermanentChosen(player1, artifact.getId());
 
-        assertThat(artifact.getChargeCounters()).isEqualTo(1);
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Second upkeep
         triggerUpkeep(player1);
@@ -100,7 +100,7 @@ class VedalkenInfuserTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
         harness.handlePermanentChosen(player1, artifact.getId());
 
-        assertThat(artifact.getChargeCounters()).isEqualTo(2);
+        assertThat(artifact.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     @Test

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class CoreProwlerTest extends BaseCardTest {
 
@@ -97,7 +98,7 @@ class CoreProwlerTest extends BaseCardTest {
 
         // Add a creature with an existing -1/-1 counter
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         setupCombatWhereCoreProwlerDies();
@@ -109,7 +110,7 @@ class CoreProwlerTest extends BaseCardTest {
         // Choose the bears with -1/-1 counter for proliferate
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -126,7 +127,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Core Prowler dies, blocker gets 2 -1/-1 counters
 
         // Blocker should have 2 -1/-1 counters from infect combat damage
-        assertThat(blocker.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         // Resolve the triggered ability
         harness.passBothPriorities();
@@ -135,7 +136,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(blocker.getId()));
 
         // Blocker should now have 3 -1/-1 counters (2 from infect + 1 from proliferate)
-        assertThat(blocker.getMinusOneMinusOneCounters()).isEqualTo(3);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -144,7 +145,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CoreProwler());
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         setupCombatWhereCoreProwlerDies();
@@ -153,7 +154,7 @@ class CoreProwlerTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== Proliferate choices =====
@@ -164,7 +165,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CoreProwler());
 
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         setupCombatWhereCoreProwlerDies();
@@ -174,7 +175,7 @@ class CoreProwlerTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
         // Counter unchanged
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -183,11 +184,11 @@ class CoreProwlerTest extends BaseCardTest {
         harness.addToBattlefield(player1, new CoreProwler());
 
         Permanent bears1 = new Permanent(new GrizzlyBears());
-        bears1.setPlusOnePlusOneCounters(1);
+        bears1.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears1);
 
         Permanent bears2 = new Permanent(new GrizzlyBears());
-        bears2.setMinusOneMinusOneCounters(1);
+        bears2.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears2);
 
         setupCombatWhereCoreProwlerDies();
@@ -196,8 +197,8 @@ class CoreProwlerTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears1.getId(), bears2.getId()));
 
-        assertThat(bears1.getPlusOnePlusOneCounters()).isEqualTo(2);
-        assertThat(bears2.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears1.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(bears2.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     // ===== No eligible permanents =====
@@ -239,7 +240,7 @@ class CoreProwlerTest extends BaseCardTest {
         // Use a Grizzly Bears with +1/+1 counter that is NOT on the battlefield (won't be killed)
         // Actually, let's add a non-creature permanent or a creature that already has counters
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(2);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         harness.setHand(player1, List.of(new WrathOfGod()));

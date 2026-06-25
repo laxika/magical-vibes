@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class StromkirkPatrolTest extends BaseCardTest {
 
@@ -53,14 +54,14 @@ class StromkirkPatrolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Patrol should have a +1/+1 counter
-        assertThat(patrol.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(patrol.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Deals increased combat damage after getting a +1/+1 counter")
     void dealsMoreDamageWithCounter() {
         Permanent patrol = addReadyPatrol();
-        patrol.setPlusOnePlusOneCounters(1); // simulate having gotten a counter previously
+        patrol.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // simulate having gotten a counter previously
         patrol.setAttacking(true);
         harness.setLife(player2, 20);
 
@@ -74,7 +75,7 @@ class StromkirkPatrolTest extends BaseCardTest {
 
         // Resolve trigger — gets another counter
         harness.passBothPriorities();
-        assertThat(patrol.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(patrol.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

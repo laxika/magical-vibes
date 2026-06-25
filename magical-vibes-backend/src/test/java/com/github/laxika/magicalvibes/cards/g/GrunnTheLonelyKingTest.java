@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class GrunnTheLonelyKingTest extends BaseCardTest {
 
@@ -71,7 +72,7 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
 
         Permanent grunn = findGrunn(player1);
         assertThat(grunn).isNotNull();
-        assertThat(grunn.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(grunn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Casting with kicker =====
@@ -88,7 +89,7 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
 
         Permanent grunn = findGrunn(player1);
         assertThat(grunn).isNotNull();
-        assertThat(grunn.getPlusOnePlusOneCounters()).isEqualTo(5);
+        assertThat(grunn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
     }
 
     // ===== Attacks alone — trigger fires =====
@@ -123,7 +124,7 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
     @DisplayName("Attacking alone — kicked 10/10 becomes 20/20 until end of turn")
     void attackingAloneKickedDoubles() {
         Permanent grunn = addCreatureReady(player1, new GrunnTheLonelyKing());
-        grunn.setPlusOnePlusOneCounters(5); // simulate kicked ETB
+        grunn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5); // simulate kicked ETB
 
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities(); // resolve trigger

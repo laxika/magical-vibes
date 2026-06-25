@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheFirstEruptionTest extends BaseCardTest {
 
@@ -88,7 +89,7 @@ class TheFirstEruptionTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The First Eruption"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -168,7 +169,7 @@ class TheFirstEruptionTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The First Eruption"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         int redBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.RED);
 
@@ -177,7 +178,7 @@ class TheFirstEruptionTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
 
         // Resolve chapter II
         harness.passBothPriorities();
@@ -196,7 +197,7 @@ class TheFirstEruptionTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The First Eruption"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.addToBattlefield(player1, new Mountain());
         Permanent mountain = gd.playerBattlefields.get(player1.getId()).stream()
@@ -228,7 +229,7 @@ class TheFirstEruptionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
 
         // Resolve chapter III — should prompt for Mountain sacrifice
         harness.passBothPriorities();
@@ -263,7 +264,7 @@ class TheFirstEruptionTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The First Eruption"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // No Mountains — just a creature
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -296,7 +297,7 @@ class TheFirstEruptionTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("The First Eruption"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         // Need a Mountain for chapter III to sacrifice
         harness.addToBattlefield(player1, new Mountain());

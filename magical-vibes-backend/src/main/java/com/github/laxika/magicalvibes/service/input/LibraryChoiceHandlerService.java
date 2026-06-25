@@ -53,6 +53,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
@@ -378,7 +379,7 @@ public class LibraryChoiceHandlerService {
                         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, chosenCard, null, false);
                     }
                     if (chosenCard.hasType(CardType.PLANESWALKER) && chosenCard.getLoyalty() != null) {
-                        perm.setLoyaltyCounters(chosenCard.getLoyalty());
+                        perm.setCounterCount(CounterType.LOYALTY, chosenCard.getLoyalty());
                         perm.setSummoningSick(false);
                     }
                     if (!gameData.interaction.isAwaitingInput()) {
@@ -798,7 +799,7 @@ public class LibraryChoiceHandlerService {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, ownerId, card, null, false);
             }
             if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
-                perm.setLoyaltyCounters(card.getLoyalty());
+                perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
                 perm.setSummoningSick(false);
             }
         }
@@ -1011,7 +1012,7 @@ public class LibraryChoiceHandlerService {
                 battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
             }
             if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
-                perm.setLoyaltyCounters(card.getLoyalty());
+                perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
                 perm.setSummoningSick(false);
             }
             if (!gameData.interaction.isAwaitingInput()) {

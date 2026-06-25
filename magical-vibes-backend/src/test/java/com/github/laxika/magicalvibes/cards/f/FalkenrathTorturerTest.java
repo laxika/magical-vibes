@@ -20,6 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class FalkenrathTorturerTest extends BaseCardTest {
 
@@ -84,7 +85,7 @@ class FalkenrathTorturerTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Human Soldier"));
 
         assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
-        assertThat(torturer.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Sacrifice a non-Human creature: flying, no counter =====
@@ -103,7 +104,7 @@ class FalkenrathTorturerTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         assertThat(torturer.getGrantedKeywords()).contains(Keyword.FLYING);
-        assertThat(torturer.getPlusOnePlusOneCounters()).isZero();
+        assertThat(torturer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     // ===== A Human cannot be fed to the no-counter ability =====

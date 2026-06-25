@@ -174,8 +174,13 @@ export class CardDisplayComponent implements OnInit, OnChanges, AfterViewChecked
     return this.permanent ? this.permanent.effectiveToughness : this.card.toughness;
   }
 
+  /** Number of counters of the given type on this permanent (0 if none or no permanent). */
+  counter(counterType: string): number {
+    return this.permanent?.counters?.[counterType] ?? 0;
+  }
+
   get displayLoyalty(): number | null {
-    if (this.permanent && this.permanent.loyaltyCounters > 0) return this.permanent.loyaltyCounters;
+    if (this.permanent && this.counter('LOYALTY') > 0) return this.counter('LOYALTY');
     return this.card.loyalty ?? null;
   }
 

@@ -47,6 +47,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @ExtendWith(MockitoExtension.class)
 class AiManaManagerTest {
@@ -186,7 +187,7 @@ class AiManaManagerTest {
         Card card = createChargeCounterManaArtifact(name);
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        perm.setChargeCounters(chargeCounters);
+        perm.setCounterCount(CounterType.CHARGE, chargeCounters);
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);
@@ -210,7 +211,7 @@ class AiManaManagerTest {
         Card card = createChargeCounterColorlessManaArtifact(name);
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        perm.setChargeCounters(chargeCounters);
+        perm.setCounterCount(CounterType.CHARGE, chargeCounters);
         gd.playerBattlefields.get(player1Id).add(perm);
         lenient().when(gameQueryService.isCreature(gd, perm)).thenReturn(false);
         lenient().when(gameQueryService.canActivateManaAbility(gd, perm)).thenReturn(true);

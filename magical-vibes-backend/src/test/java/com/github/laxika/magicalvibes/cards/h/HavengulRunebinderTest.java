@@ -19,6 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HavengulRunebinderTest extends BaseCardTest {
 
@@ -145,7 +146,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Zombie"))
                 .findFirst().orElseThrow();
-        assertThat(token.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(token.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, token)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, token)).isEqualTo(3);
     }
@@ -165,7 +166,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gravedigger.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(gravedigger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -183,8 +184,8 @@ class HavengulRunebinderTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(0);
-        assertThat(runebinder.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
+        assertThat(runebinder.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -202,7 +203,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(opponentZombie.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(opponentZombie.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Validation =====

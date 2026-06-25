@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
@@ -195,7 +196,7 @@ public class AnimationResolutionService {
             return;
         }
 
-        int counters = self.getChargeCounters();
+        int counters = self.getCounterCount(CounterType.CHARGE);
         self.setAnimatedUntilEndOfTurn(true);
         self.setAnimatedPower(counters);
         self.setAnimatedToughness(counters);

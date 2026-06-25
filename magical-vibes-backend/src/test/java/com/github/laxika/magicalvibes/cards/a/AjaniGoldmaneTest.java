@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class AjaniGoldmaneTest extends BaseCardTest {
 
@@ -102,7 +103,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         List<Permanent> bf = gd.playerBattlefields.get(player1.getId());
         assertThat(bf).anyMatch(p -> p.getCard().getName().equals("Ajani Goldmane"));
         Permanent ajani = bf.stream().filter(p -> p.getCard().getName().equals("Ajani Goldmane")).findFirst().orElseThrow();
-        assertThat(ajani.getLoyaltyCounters()).isEqualTo(4);
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
         assertThat(ajani.isSummoningSick()).isFalse();
     }
 
@@ -119,7 +120,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(ajani.getLoyaltyCounters()).isEqualTo(5); // 4 + 1
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
         int lifeAfter = gd.playerLifeTotals.get(player1.getId());
         assertThat(lifeAfter).isEqualTo(lifeBefore + 2);
     }
@@ -137,7 +138,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(ajani.getLoyaltyCounters()).isEqualTo(3); // 4 - 1
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 4 - 1
 
         List<Permanent> bears = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
@@ -145,7 +146,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
 
         // Each creature should have a +1/+1 counter
         for (Permanent bear : bears) {
-            assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+            assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
             assertThat(bear.getGrantedKeywords()).contains(Keyword.VIGILANCE);
         }
     }
@@ -163,7 +164,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
 
-        assertThat(opponentBear.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(opponentBear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(opponentBear.getGrantedKeywords()).doesNotContain(Keyword.VIGILANCE);
     }
 
@@ -181,7 +182,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
                 .findFirst().orElseThrow();
 
         // +1/+1 counter is permanent
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Effective P/T: base 2/2 + 1 counter = 3/3
         assertThat(bear.getEffectivePower()).isEqualTo(3);
@@ -194,7 +195,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
     @DisplayName("-6 ability creates Avatar token with P/T equal to life total")
     void minusSixCreatesAvatarToken() {
         Permanent ajani = addReadyAjani(player1);
-        ajani.setLoyaltyCounters(6);
+        ajani.setCounterCount(CounterType.LOYALTY, 6);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -218,7 +219,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
     @DisplayName("Avatar token P/T changes when life total changes")
     void avatarTokenPTChangesWithLifeTotal() {
         Permanent ajani = addReadyAjani(player1);
-        ajani.setLoyaltyCounters(6);
+        ajani.setCounterCount(CounterType.LOYALTY, 6);
 
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
@@ -280,7 +281,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
     @DisplayName("Cannot use -6 when loyalty is only 4")
     void cannotActivateMinusSixWithInsufficientLoyalty() {
         Permanent ajani = addReadyAjani(player1);
-        assertThat(ajani.getLoyaltyCounters()).isEqualTo(4);
+        assertThat(ajani.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 2, null, null))
                 .isInstanceOf(IllegalStateException.class)
@@ -293,7 +294,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
     @DisplayName("Planeswalker dies when loyalty reaches 0 but ability still resolves")
     void diesWhenLoyaltyReachesZeroAbilityStillResolves() {
         Permanent ajani = addReadyAjani(player1);
-        ajani.setLoyaltyCounters(1);
+        ajani.setCounterCount(CounterType.LOYALTY, 1);
         harness.addToBattlefield(player1, new GrizzlyBears());
 
         // -1 ability: 1 - 1 = 0, Ajani dies to state-based actions
@@ -319,7 +320,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         Permanent bear = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElseThrow();
-        assertThat(bear.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Helpers =====
@@ -327,7 +328,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
     private Permanent addReadyAjani(Player player) {
         AjaniGoldmane card = new AjaniGoldmane();
         Permanent perm = new Permanent(card);
-        perm.setLoyaltyCounters(4);
+        perm.setCounterCount(CounterType.LOYALTY, 4);
         perm.setSummoningSick(false);
         harness.getGameData().playerBattlefields.get(player.getId()).add(perm);
         harness.forceActivePlayer(player);

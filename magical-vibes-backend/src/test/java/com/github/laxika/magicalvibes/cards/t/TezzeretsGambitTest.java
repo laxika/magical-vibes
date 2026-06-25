@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TezzeretsGambitTest extends BaseCardTest {
 
@@ -55,7 +56,7 @@ class TezzeretsGambitTest extends BaseCardTest {
     @DisplayName("Resolving draws two cards and proliferates when permanents have counters")
     void drawsTwoAndProliferates() {
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setPlusOnePlusOneCounters(1);
+        bears.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         gd.playerBattlefields.get(player1.getId()).add(bears);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -69,7 +70,7 @@ class TezzeretsGambitTest extends BaseCardTest {
         // Proliferate choice
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
     }
@@ -94,7 +95,7 @@ class TezzeretsGambitTest extends BaseCardTest {
     @DisplayName("Proliferate can choose none and still draws two cards")
     void proliferateChooseNoneStillDrawsTwo() {
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -108,7 +109,7 @@ class TezzeretsGambitTest extends BaseCardTest {
         // Choose no permanents to proliferate
         harness.handleMultiplePermanentsChosen(player1, List.of());
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
     }
@@ -132,7 +133,7 @@ class TezzeretsGambitTest extends BaseCardTest {
     @DisplayName("Proliferate adds -1/-1 counter to opponent's creature and draws two cards")
     void proliferateMinusCountersAndDrawsTwo() {
         Permanent bears = new Permanent(new GrizzlyBears());
-        bears.setMinusOneMinusOneCounters(1);
+        bears.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
         gd.playerBattlefields.get(player2.getId()).add(bears);
 
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -145,7 +146,7 @@ class TezzeretsGambitTest extends BaseCardTest {
 
         harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
-        assertThat(bears.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bears.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 2);
     }

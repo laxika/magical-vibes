@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class PhyrexianHydraTest extends BaseCardTest {
 
@@ -51,7 +52,7 @@ class PhyrexianHydraTest extends BaseCardTest {
         Permanent hydra = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Phyrexian Hydra"))
                 .findFirst().orElseThrow();
-        assertThat(hydra.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(hydra.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     // ===== Combat damage is replaced with -1/-1 counters =====
@@ -85,7 +86,7 @@ class PhyrexianHydraTest extends BaseCardTest {
         Permanent hydra = gd.playerBattlefields.get(player2.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Phyrexian Hydra"))
                 .findFirst().orElseThrow();
-        assertThat(hydra.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(hydra.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         // Bears dies from Hydra's 7 power (infect → -1/-1 counters, toughness 0)
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -180,12 +181,12 @@ class PhyrexianHydraTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .findFirst().orElse(null);
         assertThat(survivingBlocker).isNotNull();
-        assertThat(survivingBlocker.getMinusOneMinusOneCounters()).isEqualTo(7);
+        assertThat(survivingBlocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(7);
 
         // Hydra gets 3 -1/-1 counters from blocking creature's 3 power
         Permanent hydra = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Phyrexian Hydra"))
                 .findFirst().orElseThrow();
-        assertThat(hydra.getMinusOneMinusOneCounters()).isEqualTo(3);
+        assertThat(hydra.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 }

@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
@@ -206,7 +207,7 @@ public class MulliganService {
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
 
                 if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
-                    perm.setLoyaltyCounters(card.getLoyalty());
+                    perm.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
                 }
 
                 boolean isCreature = card.hasType(CardType.CREATURE);

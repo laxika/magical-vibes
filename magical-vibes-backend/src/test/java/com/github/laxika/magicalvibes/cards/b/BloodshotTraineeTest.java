@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BloodshotTraineeTest extends BaseCardTest {
 
@@ -150,7 +151,7 @@ class BloodshotTraineeTest extends BaseCardTest {
         trainee.setSummoningSick(false);
         int countersNeeded = desiredPower - 2;
         if (countersNeeded > 0) {
-            trainee.setPlusOnePlusOneCounters(countersNeeded);
+            trainee.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, countersNeeded);
         }
     }
 }

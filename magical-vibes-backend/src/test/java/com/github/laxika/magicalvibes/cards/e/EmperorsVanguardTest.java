@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class EmperorsVanguardTest extends BaseCardTest {
 
@@ -61,7 +62,7 @@ class EmperorsVanguardTest extends BaseCardTest {
 
         resolveCombatAndExploreTrigger();
 
-        assertThat(vanguard.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Explore on combat damage to player — non-land on top =====
@@ -77,7 +78,7 @@ class EmperorsVanguardTest extends BaseCardTest {
 
         resolveCombatAndExploreTrigger();
 
-        assertThat(vanguard.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(vanguard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test

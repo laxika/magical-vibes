@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfBoundlessGrowthTest extends BaseCardTest {
 
@@ -69,7 +70,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         harness.passBothPriorities(); // move to upkeep, trigger fires
         harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -84,7 +85,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Second upkeep
         harness.forceActivePlayer(player1);
@@ -93,7 +94,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(2);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     @Test
@@ -106,7 +107,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(0);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Green spell cast trigger =====
@@ -131,7 +132,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
 
         // Spell cast trigger should put charge counter on shrine
         harness.passBothPriorities(); // resolve charge counter trigger
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Resolve the Giant Growth itself
         harness.passBothPriorities();
@@ -153,7 +154,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
         // No charge counter trigger should fire — resolve Shock
         harness.passBothPriorities();
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(0);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Activated ability: Tap + sacrifice for mana =====
@@ -162,7 +163,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
     @DisplayName("Sacrificing with charge counters adds colorless mana")
     void sacrificeAddsColorlessManaPerChargeCounter() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(4);
+        shrine.setCounterCount(CounterType.CHARGE, 4);
 
         int colorlessBefore = gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS);
 
@@ -212,7 +213,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
     @DisplayName("Mana ability resolves immediately without using the stack")
     void manaAbilityResolvesImmediately() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(3);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
 
         int stackSizeBefore = gd.stack.size();
 
@@ -231,7 +232,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
     @DisplayName("CR 605.3b: Activating Shrine mana ability does not clear priority")
     void manaAbilityDoesNotClearPriority() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(2);
+        shrine.setCounterCount(CounterType.CHARGE, 2);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -251,7 +252,7 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
     @DisplayName("CR 605.3b: Non-active player can cast after Shrine mana ability")
     void nonActivePlayerCanCastAfterShrineManaAbility() {
         Permanent shrine = addReadyShrine(player2);
-        shrine.setChargeCounters(4);
+        shrine.setCounterCount(CounterType.CHARGE, 4);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -280,9 +281,9 @@ class ShrineOfBoundlessGrowthTest extends BaseCardTest {
     void multipleManaAbilitiesPreservePriority() {
         // Add two shrines
         Permanent shrine1 = addReadyShrine(player1);
-        shrine1.setChargeCounters(2);
+        shrine1.setCounterCount(CounterType.CHARGE, 2);
         Permanent shrine2 = addReadyShrine(player1);
-        shrine2.setChargeCounters(3);
+        shrine2.setCounterCount(CounterType.CHARGE, 3);
 
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

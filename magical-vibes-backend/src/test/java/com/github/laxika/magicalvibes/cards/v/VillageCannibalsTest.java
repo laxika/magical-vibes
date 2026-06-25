@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class VillageCannibalsTest extends BaseCardTest {
 
@@ -52,7 +53,7 @@ class VillageCannibalsTest extends BaseCardTest {
         Permanent cannibals = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Village Cannibals"))
                 .findFirst().orElseThrow();
-        assertThat(cannibals.getPlusOnePlusOneCounters()).isZero();
+        assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill ally Human creature with Shock
         harness.forceActivePlayer(player2);
@@ -66,7 +67,7 @@ class VillageCannibalsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock -> Unruly Mob dies -> death triggers
         harness.passBothPriorities(); // Resolve Village Cannibals' +1/+1 counter trigger
 
-        assertThat(cannibals.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, cannibals)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, cannibals)).isEqualTo(3);
     }
@@ -78,7 +79,7 @@ class VillageCannibalsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new UnrulyMob()); // Opponent's Human creature
 
         Permanent cannibals = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(cannibals.getPlusOnePlusOneCounters()).isZero();
+        assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill opponent's Human creature with Shock
         harness.setHand(player1, List.of(new Shock()));
@@ -89,7 +90,7 @@ class VillageCannibalsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock -> Unruly Mob dies -> death trigger
         harness.passBothPriorities(); // Resolve Village Cannibals' +1/+1 counter trigger
 
-        assertThat(cannibals.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -101,7 +102,7 @@ class VillageCannibalsTest extends BaseCardTest {
         Permanent cannibals = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Village Cannibals"))
                 .findFirst().orElseThrow();
-        assertThat(cannibals.getPlusOnePlusOneCounters()).isZero();
+        assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill non-Human creature with Shock
         harness.forceActivePlayer(player2);
@@ -115,7 +116,7 @@ class VillageCannibalsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock -> bears die
 
         // No trigger should have been added for Village Cannibals
-        assertThat(cannibals.getPlusOnePlusOneCounters()).isZero();
+        assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -135,7 +136,7 @@ class VillageCannibalsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock -> Unruly Mob dies -> death trigger
         harness.passBothPriorities(); // Resolve Village Cannibals' trigger
 
-        assertThat(cannibals.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Add and kill second Human creature
         harness.addToBattlefield(player2, new UnrulyMob());
@@ -147,7 +148,7 @@ class VillageCannibalsTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock -> Unruly Mob dies -> death trigger
         harness.passBothPriorities(); // Resolve Village Cannibals' trigger
 
-        assertThat(cannibals.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(cannibals.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, cannibals)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, cannibals)).isEqualTo(4);
     }

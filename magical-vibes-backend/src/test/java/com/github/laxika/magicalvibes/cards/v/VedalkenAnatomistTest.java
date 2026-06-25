@@ -21,6 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class VedalkenAnatomistTest extends BaseCardTest {
 
@@ -89,7 +90,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // -1/-1 counter should be placed
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, target)).isEqualTo(1);
 
@@ -152,7 +153,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Counter should still be placed
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         // Creature should remain untapped
         assertThat(target.isTapped()).isFalse();
     }
@@ -169,7 +170,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(target.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(target.isTapped()).isTrue();
     }
 
@@ -205,7 +206,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, ownCreature.getId());
         harness.passBothPriorities();
 
-        assertThat(ownCreature.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(ownCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
     }
 
     // ===== Invalid targets =====

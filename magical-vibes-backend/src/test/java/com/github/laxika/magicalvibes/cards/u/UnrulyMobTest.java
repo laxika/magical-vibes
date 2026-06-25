@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class UnrulyMobTest extends BaseCardTest {
 
@@ -46,7 +47,7 @@ class UnrulyMobTest extends BaseCardTest {
         Permanent unrulyMob = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Unruly Mob"))
                 .findFirst().orElseThrow();
-        assertThat(unrulyMob.getPlusOnePlusOneCounters()).isZero();
+        assertThat(unrulyMob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill ally creature with Shock
         harness.forceActivePlayer(player2);
@@ -60,7 +61,7 @@ class UnrulyMobTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
         harness.passBothPriorities(); // Resolve Unruly Mob's +1/+1 counter trigger
 
-        assertThat(unrulyMob.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(unrulyMob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, unrulyMob)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, unrulyMob)).isEqualTo(2);
     }
@@ -72,7 +73,7 @@ class UnrulyMobTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
 
         Permanent unrulyMob = gd.playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(unrulyMob.getPlusOnePlusOneCounters()).isZero();
+        assertThat(unrulyMob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
 
         // Kill opponent's creature with Shock
         harness.setHand(player1, List.of(new Shock()));
@@ -83,7 +84,7 @@ class UnrulyMobTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die
 
         // No trigger should have been added for Unruly Mob
-        assertThat(unrulyMob.getPlusOnePlusOneCounters()).isZero();
+        assertThat(unrulyMob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -108,7 +109,7 @@ class UnrulyMobTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
         harness.passBothPriorities(); // Resolve Unruly Mob's trigger
 
-        assertThat(unrulyMob.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(unrulyMob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Add and kill second ally creature
         harness.addToBattlefield(player1, new GrizzlyBears());
@@ -120,7 +121,7 @@ class UnrulyMobTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
         harness.passBothPriorities(); // Resolve Unruly Mob's trigger
 
-        assertThat(unrulyMob.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(unrulyMob.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, unrulyMob)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, unrulyMob)).isEqualTo(3);
     }

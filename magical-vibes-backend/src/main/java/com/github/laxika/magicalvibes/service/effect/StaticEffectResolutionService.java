@@ -114,6 +114,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 @Service
 @RequiredArgsConstructor
@@ -659,7 +660,7 @@ public class StaticEffectResolutionService {
         if (permanent.getCard().hasType(CardType.CREATURE)) return true;
         if (permanent.isAnimatedUntilEndOfTurn()) return true;
         if (permanent.isAnimatedUntilNextTurn()) return true;
-        if (permanent.getAwakeningCounters() > 0) return true;
+        if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
         if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
         if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
         return false;
@@ -902,7 +903,7 @@ public class StaticEffectResolutionService {
     private void resolveBoostSelfBySlimeCountersOnLinkedPermanent(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostSelfBySlimeCountersOnLinkedPermanentEffect) effect;
         Permanent linked = gameQueryService.findPermanentById(context.gameData(), boost.linkedPermanentId());
-        int slimeCount = (linked != null) ? linked.getSlimeCounters() : 0;
+        int slimeCount = (linked != null) ? linked.getCounterCount(CounterType.SLIME) : 0;
         accumulator.addPower(slimeCount);
         accumulator.addToughness(slimeCount);
     }
@@ -1447,7 +1448,7 @@ public class StaticEffectResolutionService {
             return target.getCard().hasType(CardType.CREATURE)
                     || target.isAnimatedUntilEndOfTurn()
                     || target.isAnimatedUntilNextTurn()
-                    || target.getAwakeningCounters() > 0;
+                    || target.getCounterCount(CounterType.AWAKENING) > 0;
         if (filter instanceof PermanentIsArtifactPredicate)
             return gameQueryService.isArtifact(target);
         if (filter instanceof PermanentIsLandPredicate)
@@ -1480,26 +1481,26 @@ public class StaticEffectResolutionService {
             return target.getEffectivePower() >= p.minPower();
         if (filter instanceof PermanentHasCountersPredicate p)
             return switch (p.counterType()) {
-                case PLUS_ONE_PLUS_ONE -> target.getPlusOnePlusOneCounters() > 0;
-                case MINUS_ONE_MINUS_ONE -> target.getMinusOneMinusOneCounters() > 0;
-                case CHARGE -> target.getChargeCounters() > 0;
-                case LOYALTY -> target.getLoyaltyCounters() > 0;
-                case HATCHLING -> target.getHatchlingCounters() > 0;
-                case SLIME -> target.getSlimeCounters() > 0;
-                case STUDY -> target.getStudyCounters() > 0;
-                case WISH -> target.getWishCounters() > 0;
-                case LORE -> target.getLoreCounters() > 0;
-                case AIM -> target.getAimCounters() > 0;
-                case ANY -> target.getPlusOnePlusOneCounters() > 0
-                        || target.getMinusOneMinusOneCounters() > 0
-                        || target.getChargeCounters() > 0
-                        || target.getLoyaltyCounters() > 0
-                        || target.getHatchlingCounters() > 0
-                        || target.getSlimeCounters() > 0
-                        || target.getStudyCounters() > 0
-                        || target.getWishCounters() > 0
-                        || target.getLoreCounters() > 0
-                        || target.getAimCounters() > 0;
+                case PLUS_ONE_PLUS_ONE -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;
+                case MINUS_ONE_MINUS_ONE -> target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0;
+                case CHARGE -> target.getCounterCount(CounterType.CHARGE) > 0;
+                case LOYALTY -> target.getCounterCount(CounterType.LOYALTY) > 0;
+                case HATCHLING -> target.getCounterCount(CounterType.HATCHLING) > 0;
+                case SLIME -> target.getCounterCount(CounterType.SLIME) > 0;
+                case STUDY -> target.getCounterCount(CounterType.STUDY) > 0;
+                case WISH -> target.getCounterCount(CounterType.WISH) > 0;
+                case LORE -> target.getCounterCount(CounterType.LORE) > 0;
+                case AIM -> target.getCounterCount(CounterType.AIM) > 0;
+                case ANY -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
+                        || target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
+                        || target.getCounterCount(CounterType.CHARGE) > 0
+                        || target.getCounterCount(CounterType.LOYALTY) > 0
+                        || target.getCounterCount(CounterType.HATCHLING) > 0
+                        || target.getCounterCount(CounterType.SLIME) > 0
+                        || target.getCounterCount(CounterType.STUDY) > 0
+                        || target.getCounterCount(CounterType.WISH) > 0
+                        || target.getCounterCount(CounterType.LORE) > 0
+                        || target.getCounterCount(CounterType.AIM) > 0;
                 default -> false;
             };
         throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());

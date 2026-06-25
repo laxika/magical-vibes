@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class TriumphOfGerrardTest extends BaseCardTest {
 
@@ -95,7 +96,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Triumph of Gerrard"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        assertThat(saga.getLoreCounters()).isEqualTo(1);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(1);
 
         // Chapter I requires targeting — should be awaiting input
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
@@ -159,7 +160,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Hill Giant"))
                 .findFirst().orElse(null);
         assertThat(hillGiant).isNotNull();
-        assertThat(hillGiant.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(hillGiant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -247,7 +248,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Triumph of Gerrard"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(1);
+        saga.setCounterCount(CounterType.LORE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -255,7 +256,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter II triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(2);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(2);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         Permanent hillGiant = gd.playerBattlefields.get(player1.getId()).stream()
@@ -274,7 +275,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Hill Giant"))
                 .findFirst().orElse(null);
         assertThat(hillGiant).isNotNull();
-        assertThat(hillGiant.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(hillGiant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Chapter III: grant keywords =====
@@ -290,7 +291,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Triumph of Gerrard"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);
@@ -298,7 +299,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to precombat main → chapter III triggers
 
         GameData gd = harness.getGameData();
-        assertThat(saga.getLoreCounters()).isEqualTo(3);
+        assertThat(saga.getCounterCount(CounterType.LORE)).isEqualTo(3);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         Permanent hillGiant = gd.playerBattlefields.get(player1.getId()).stream()
@@ -330,7 +331,7 @@ class TriumphOfGerrardTest extends BaseCardTest {
                 .filter(p -> p.getCard().getName().equals("Triumph of Gerrard"))
                 .findFirst().orElse(null);
         assertThat(saga).isNotNull();
-        saga.setLoreCounters(2);
+        saga.setCounterCount(CounterType.LORE, 2);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DRAW);

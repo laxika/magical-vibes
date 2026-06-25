@@ -70,7 +70,7 @@ class ShadowedCaravelTest extends BaseCardTest {
         // Explore trigger resolves automatically (no target needed for PutCounterOnSelfEffect)
         harness.passBothPriorities();
 
-        assertThat(caravel.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Explore triggers — non-land on top =====
@@ -91,7 +91,7 @@ class ShadowedCaravelTest extends BaseCardTest {
         // Resolve the counter trigger
         harness.passBothPriorities();
 
-        assertThat(caravel.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -109,7 +109,7 @@ class ShadowedCaravelTest extends BaseCardTest {
         // Resolve the counter trigger
         harness.passBothPriorities();
 
-        assertThat(caravel.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     // ===== Multiple explores =====
@@ -124,14 +124,14 @@ class ShadowedCaravelTest extends BaseCardTest {
         castExplorerAndResolveExplore();
         harness.passBothPriorities(); // resolve counter trigger
 
-        assertThat(caravel.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Second explore (land)
         gd.playerDecks.get(player1.getId()).addFirst(new Forest());
         castExplorerAndResolveExplore();
         harness.passBothPriorities(); // resolve counter trigger
 
-        assertThat(caravel.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     // ===== Explore with empty library — no trigger =====
@@ -145,7 +145,7 @@ class ShadowedCaravelTest extends BaseCardTest {
 
         castExplorerAndResolveExplore();
 
-        assertThat(caravel.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Crew mechanic =====
@@ -183,7 +183,7 @@ class ShadowedCaravelTest extends BaseCardTest {
         castExplorerAndResolveExplore();
         harness.passBothPriorities(); // resolve counter trigger
 
-        assertThat(caravel.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
 
         // Crew the Caravel
         Permanent crew = addCreatureReady(player1, new GrizzlyBears());

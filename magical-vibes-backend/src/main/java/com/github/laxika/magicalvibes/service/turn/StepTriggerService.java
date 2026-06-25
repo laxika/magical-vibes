@@ -63,6 +63,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
  * Collects and processes triggered abilities that fire at the beginning of
@@ -858,8 +859,8 @@ public class StepTriggerService {
 
         for (Permanent saga : sagas) {
             Card card = saga.getCard();
-            int newLoreCount = saga.getLoreCounters() + 1;
-            saga.setLoreCounters(newLoreCount);
+            int newLoreCount = saga.getCounterCount(CounterType.LORE) + 1;
+            saga.setCounterCount(CounterType.LORE, newLoreCount);
 
             String counterLog = card.getName() + " gets a lore counter (" + newLoreCount + ").";
             gameBroadcastService.logAndBroadcast(gameData, counterLog);
@@ -1207,8 +1208,8 @@ public class StepTriggerService {
                             if (opponentBf == null) continue;
                             for (Permanent p : opponentBf) {
                                 int counterCount = switch (destroyRandom.counterType()) {
-                                    case AIM -> p.getAimCounters();
-                                    case CHARGE -> p.getChargeCounters();
+                                    case AIM -> p.getCounterCount(CounterType.AIM);
+                                    case CHARGE -> p.getCounterCount(CounterType.CHARGE);
                                     default -> 0;
                                 };
                                 if (counterCount > 0) count++;

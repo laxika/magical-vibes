@@ -209,17 +209,8 @@ export interface Permanent {
   attachedTo: string | null;
   cantBeBlocked: boolean;
   animatedCreature: boolean;
-  loyaltyCounters: number;
-  chargeCounters: number;
-  hatchlingCounters: number;
-  phylacteryCounters: number;
-  slimeCounters: number;
-  studyCounters: number;
-  wishCounters: number;
-  loreCounters: number;
-  aimCounters: number;
-  landmarkCounters: number;
-  eyeballCounters: number;
+  /** All counters on this permanent, keyed by CounterType name (e.g. "LOYALTY", "CHARGE"). Only present counters are included. */
+  counters: { [counterType: string]: number };
   attackTargetId: string | null;
   markedDamage: number;
   transformed: boolean;

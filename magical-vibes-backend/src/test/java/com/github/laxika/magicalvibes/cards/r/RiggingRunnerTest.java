@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class RiggingRunnerTest extends BaseCardTest {
 
@@ -41,7 +42,7 @@ class RiggingRunnerTest extends BaseCardTest {
 
         Permanent runner = findRunner(player1);
         assertThat(runner).isNotNull();
-        assertThat(runner.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(runner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -71,7 +72,7 @@ class RiggingRunnerTest extends BaseCardTest {
 
         Permanent runner = findRunner(player1);
         assertThat(runner).isNotNull();
-        assertThat(runner.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(runner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -117,7 +118,7 @@ class RiggingRunnerTest extends BaseCardTest {
 
         Permanent runner = findRunner(player1);
         assertThat(runner).isNotNull();
-        assertThat(runner.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(runner.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
     }
 
     // ===== Helpers =====

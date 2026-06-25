@@ -368,7 +368,7 @@ public class MultiPermanentChoiceHandlerService {
             for (UUID permId : permanentIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
-                    perm.setAwakeningCounters(perm.getAwakeningCounters() + 1);
+                    perm.setCounterCount(CounterType.AWAKENING, perm.getCounterCount(CounterType.AWAKENING) + 1);
                     awakenedNames.add(perm.getCard().getName());
                 }
             }
@@ -451,24 +451,24 @@ public class MultiPermanentChoiceHandlerService {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     if (!gameQueryService.cantHaveCounters(gameData, perm)) {
-                        if (perm.getPlusOnePlusOneCounters() > 0) {
-                            perm.setPlusOnePlusOneCounters(perm.getPlusOnePlusOneCounters() + 1);
+                        if (perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+                            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
                         }
-                        if (perm.getMinusOneMinusOneCounters() > 0
+                        if (perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
                                 && !gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, perm)) {
-                            perm.setMinusOneMinusOneCounters(perm.getMinusOneMinusOneCounters() + 1);
+                            perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, perm.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + 1);
                         }
-                        if (perm.getLoyaltyCounters() > 0) {
-                            perm.setLoyaltyCounters(perm.getLoyaltyCounters() + 1);
+                        if (perm.getCounterCount(CounterType.LOYALTY) > 0) {
+                            perm.setCounterCount(CounterType.LOYALTY, perm.getCounterCount(CounterType.LOYALTY) + 1);
                         }
-                        if (perm.getSlimeCounters() > 0) {
-                            perm.setSlimeCounters(perm.getSlimeCounters() + 1);
+                        if (perm.getCounterCount(CounterType.SLIME) > 0) {
+                            perm.setCounterCount(CounterType.SLIME, perm.getCounterCount(CounterType.SLIME) + 1);
                         }
-                        if (perm.getAwakeningCounters() > 0) {
-                            perm.setAwakeningCounters(perm.getAwakeningCounters() + 1);
+                        if (perm.getCounterCount(CounterType.AWAKENING) > 0) {
+                            perm.setCounterCount(CounterType.AWAKENING, perm.getCounterCount(CounterType.AWAKENING) + 1);
                         }
-                        if (perm.getAimCounters() > 0) {
-                            perm.setAimCounters(perm.getAimCounters() + 1);
+                        if (perm.getCounterCount(CounterType.AIM) > 0) {
+                            perm.setCounterCount(CounterType.AIM, perm.getCounterCount(CounterType.AIM) + 1);
                         }
                     }
                     proliferatedNames.add(perm.getCard().getName());
@@ -488,12 +488,12 @@ public class MultiPermanentChoiceHandlerService {
         if (gameData.pendingProliferateCount > 0) {
             List<UUID> eligiblePermanentIds = new ArrayList<>();
             gameData.forEachPermanent((pid, p) -> {
-                if (p.getPlusOnePlusOneCounters() > 0
-                        || p.getMinusOneMinusOneCounters() > 0
-                        || p.getLoyaltyCounters() > 0
-                        || p.getSlimeCounters() > 0
-                        || p.getAwakeningCounters() > 0
-                        || p.getAimCounters() > 0) {
+                if (p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
+                        || p.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
+                        || p.getCounterCount(CounterType.LOYALTY) > 0
+                        || p.getCounterCount(CounterType.SLIME) > 0
+                        || p.getCounterCount(CounterType.AWAKENING) > 0
+                        || p.getCounterCount(CounterType.AIM) > 0) {
                     eligiblePermanentIds.add(p.getId());
                 }
             });

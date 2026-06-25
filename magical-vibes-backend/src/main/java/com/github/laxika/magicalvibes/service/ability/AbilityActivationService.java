@@ -784,20 +784,9 @@ public class AbilityActivationService {
             int required = removeCounterCost.get().count();
             CounterType ct = removeCounterCost.get().counterType();
             int available = switch (ct) {
-                case AIM -> permanent.getAimCounters();
-                case CHARGE -> permanent.getChargeCounters();
-                case EYEBALL -> permanent.getEyeballCounters();
-                case HATCHLING -> permanent.getHatchlingCounters();
-                case LANDMARK -> permanent.getLandmarkCounters();
-                case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();
-                case PLUS_ONE_PLUS_ONE -> permanent.getPlusOnePlusOneCounters();
-                case SLIME -> permanent.getSlimeCounters();
-                case STUDY -> permanent.getStudyCounters();
-                case WISH -> permanent.getWishCounters();
-                case LORE -> permanent.getLoreCounters();
-                case LOYALTY -> permanent.getLoyaltyCounters();
                 case SILVER -> 0; // Silver counters are on exiled cards, not permanents
-                case ANY -> permanent.getPlusOnePlusOneCounters() + permanent.getMinusOneMinusOneCounters();
+                case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+                default -> permanent.getCounterCount(ct);
             };
             if (available < required) {
                 throw new IllegalStateException("Not enough counters to remove (need " + required + ", have " + available + ")");
@@ -824,8 +813,8 @@ public class AbilityActivationService {
                 .findFirst();
         if (removeChargeCost.isPresent()) {
             int required = removeChargeCost.get().count();
-            if (permanent.getChargeCounters() < required) {
-                throw new IllegalStateException("Not enough charge counters (need " + required + ", have " + permanent.getChargeCounters() + ")");
+            if (permanent.getCounterCount(CounterType.CHARGE) < required) {
+                throw new IllegalStateException("Not enough charge counters (need " + required + ", have " + permanent.getCounterCount(CounterType.CHARGE) + ")");
             }
         }
 
@@ -882,35 +871,35 @@ public class AbilityActivationService {
             int removedPlus = 0;
             switch (ct) {
                 case CHARGE -> {
-                    permanent.setChargeCounters(permanent.getChargeCounters() - count);
+                    permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - count);
                 }
                 case HATCHLING -> {
-                    permanent.setHatchlingCounters(permanent.getHatchlingCounters() - count);
+                    permanent.setCounterCount(CounterType.HATCHLING, permanent.getCounterCount(CounterType.HATCHLING) - count);
                 }
                 case MINUS_ONE_MINUS_ONE -> {
                     removedMinus = count;
-                    permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - count);
+                    permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - count);
                 }
                 case PLUS_ONE_PLUS_ONE -> {
                     removedPlus = count;
-                    permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - count);
+                    permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - count);
                 }
                 case SLIME -> {
-                    permanent.setSlimeCounters(permanent.getSlimeCounters() - count);
+                    permanent.setCounterCount(CounterType.SLIME, permanent.getCounterCount(CounterType.SLIME) - count);
                 }
                 case STUDY -> {
-                    permanent.setStudyCounters(permanent.getStudyCounters() - count);
+                    permanent.setCounterCount(CounterType.STUDY, permanent.getCounterCount(CounterType.STUDY) - count);
                 }
                 case WISH -> {
-                    permanent.setWishCounters(permanent.getWishCounters() - count);
+                    permanent.setCounterCount(CounterType.WISH, permanent.getCounterCount(CounterType.WISH) - count);
                 }
                 case ANY -> {
-                    removedMinus = Math.min(count, permanent.getMinusOneMinusOneCounters());
-                    permanent.setMinusOneMinusOneCounters(permanent.getMinusOneMinusOneCounters() - removedMinus);
+                    removedMinus = Math.min(count, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE));
+                    permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - removedMinus);
                     int remaining = count - removedMinus;
                     if (remaining > 0) {
                         removedPlus = remaining;
-                        permanent.setPlusOnePlusOneCounters(permanent.getPlusOnePlusOneCounters() - remaining);
+                        permanent.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - remaining);
                     }
                 }
             }
@@ -938,9 +927,9 @@ public class AbilityActivationService {
         // Pay remove-charge-counter cost
         if (removeChargeCost.isPresent()) {
             int required = removeChargeCost.get().count();
-            permanent.setChargeCounters(permanent.getChargeCounters() - required);
+            permanent.setCounterCount(CounterType.CHARGE, permanent.getCounterCount(CounterType.CHARGE) - required);
             String counterLog = player.getUsername() + " removes " + required + " charge counter(s) from " + permanent.getCard().getName()
-                    + " (" + permanent.getChargeCounters() + " remaining).";
+                    + " (" + permanent.getCounterCount(CounterType.CHARGE) + " remaining).";
             gameBroadcastService.logAndBroadcast(gameData, counterLog);
         }
 
@@ -1268,20 +1257,20 @@ public class AbilityActivationService {
             if (effectiveXValue < 0) {
                 throw new IllegalStateException("X value cannot be negative");
             }
-            if (effectiveXValue > permanent.getLoyaltyCounters()) {
+            if (effectiveXValue > permanent.getCounterCount(CounterType.LOYALTY)) {
                 throw new IllegalStateException("Not enough loyalty counters");
             }
             loyaltyCost = -effectiveXValue;
         } else {
             loyaltyCost = ability.getLoyaltyCost();
             // For negative loyalty costs, check sufficient loyalty
-            if (loyaltyCost < 0 && permanent.getLoyaltyCounters() < Math.abs(loyaltyCost)) {
+            if (loyaltyCost < 0 && permanent.getCounterCount(CounterType.LOYALTY) < Math.abs(loyaltyCost)) {
                 throw new IllegalStateException("Not enough loyalty counters");
             }
         }
 
         // Pay loyalty cost
-        permanent.setLoyaltyCounters(permanent.getLoyaltyCounters() + loyaltyCost);
+        permanent.setCounterCount(CounterType.LOYALTY, permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
         permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
     }
 

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfBurningRageTest extends BaseCardTest {
 
@@ -67,7 +68,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         harness.passBothPriorities(); // upkeep trigger goes on stack
         harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -82,7 +83,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
 
         // Second upkeep
         harness.forceActivePlayer(player1);
@@ -91,7 +92,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(2);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
     }
 
     // ===== Red spell cast trigger =====
@@ -107,7 +108,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve charge counter trigger
         harness.passBothPriorities(); // resolve Shock
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(1);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }
 
     @Test
@@ -120,7 +121,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities(); // resolve creature spell
 
-        assertThat(shrine.getChargeCounters()).isEqualTo(0);
+        assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
     }
 
     // ===== Activated ability: deal damage to player =====
@@ -129,7 +130,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
     @DisplayName("Sacrificing Shrine deals damage equal to charge counters to target player")
     void sacrificeDealsDamageToPlayer() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(5);
+        shrine.setCounterCount(CounterType.CHARGE, 5);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -159,7 +160,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
     @DisplayName("Sacrificing Shrine deals damage to target creature")
     void sacrificeDealsDamageToCreature() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(3);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -180,7 +181,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
     @DisplayName("Charge counters are snapshotted before sacrifice so damage is correct")
     void chargeCountersSnapshotBeforeSacrifice() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(7);
+        shrine.setCounterCount(CounterType.CHARGE, 7);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         harness.activateAbility(player1, 0, null, player2.getId());
@@ -200,7 +201,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
     @DisplayName("Activated ability requires tap — cannot activate when tapped")
     void activatedAbilityRequiresTap() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setChargeCounters(3);
+        shrine.setCounterCount(CounterType.CHARGE, 3);
         shrine.tap();
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 

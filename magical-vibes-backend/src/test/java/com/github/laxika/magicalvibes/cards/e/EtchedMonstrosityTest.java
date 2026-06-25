@@ -17,6 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class EtchedMonstrosityTest extends BaseCardTest {
 
@@ -62,7 +63,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
 
         Permanent monstrosity = findMonstrosity(player1);
 
-        assertThat(monstrosity.getMinusOneMinusOneCounters()).isEqualTo(5);
+        assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(5);
         assertThat(monstrosity.getEffectivePower()).isEqualTo(5);
         assertThat(monstrosity.getEffectiveToughness()).isEqualTo(5);
     }
@@ -115,7 +116,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, player1.getId());
         harness.passBothPriorities();
 
-        assertThat(monstrosity.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(monstrosity.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
         assertThat(monstrosity.getEffectivePower()).isEqualTo(10);
         assertThat(monstrosity.getEffectiveToughness()).isEqualTo(10);
     }
@@ -126,7 +127,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
     @DisplayName("Cannot activate ability when fewer than five counters remain")
     void cannotActivateWithoutEnoughCounters() {
         Permanent monstrosity = addReadyMonstrosity(player1);
-        monstrosity.setMinusOneMinusOneCounters(4);
+        monstrosity.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 4);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -141,7 +142,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
     @DisplayName("Cannot activate ability when zero counters remain")
     void cannotActivateWithZeroCounters() {
         Permanent monstrosity = addReadyMonstrosity(player1);
-        monstrosity.setMinusOneMinusOneCounters(0);
+        monstrosity.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -156,8 +157,8 @@ class EtchedMonstrosityTest extends BaseCardTest {
     @DisplayName("Cannot activate ability with +1/+1 counters instead of -1/-1 counters")
     void cannotActivateWithPlusCounters() {
         Permanent monstrosity = addReadyMonstrosity(player1);
-        monstrosity.setMinusOneMinusOneCounters(0);
-        monstrosity.setPlusOnePlusOneCounters(5);
+        monstrosity.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
+        monstrosity.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 5);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -174,7 +175,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
         EtchedMonstrosity card = new EtchedMonstrosity();
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
-        perm.setMinusOneMinusOneCounters(5);
+        perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 5);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }

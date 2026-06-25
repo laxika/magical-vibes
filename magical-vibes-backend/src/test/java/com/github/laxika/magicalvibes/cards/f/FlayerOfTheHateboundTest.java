@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class FlayerOfTheHateboundTest extends BaseCardTest {
 
@@ -67,7 +68,7 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
 
         Permanent flayer = flayerOnBattlefield(gd);
         assertThat(flayer).isNotNull();
-        assertThat(flayer.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(flayer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(flayer.getEffectivePower()).isEqualTo(5);
     }
 
@@ -75,7 +76,7 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
     @DisplayName("Undying does not return Flayer when it died with a +1/+1 counter")
     void undyingDoesNotReturnWithCounter() {
         Permanent flayer = harness.addToBattlefieldAndReturn(player1, new FlayerOfTheHatebound());
-        flayer.setPlusOnePlusOneCounters(1); // now 5/3
+        flayer.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1); // now 5/3
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
 

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class BlackSunsZenithTest extends BaseCardTest {
 
@@ -87,7 +88,7 @@ class BlackSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Bear is now 1/1 (2/2 with one -1/-1 counter)
-        assertThat(bear.getMinusOneMinusOneCounters()).isEqualTo(1);
+        assertThat(bear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
         assertThat(harness.getGameData().playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
@@ -111,7 +112,7 @@ class BlackSunsZenithTest extends BaseCardTest {
         // 4/5 gets 3 -1/-1 counters → 1/2 → survives
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Big Creature"));
-        assertThat(bigCreature.getMinusOneMinusOneCounters()).isEqualTo(3);
+        assertThat(bigCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -125,7 +126,7 @@ class BlackSunsZenithTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
 
-        assertThat(bear.getMinusOneMinusOneCounters()).isEqualTo(0);
+        assertThat(bear.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(0);
     }
 
     @Test
@@ -139,11 +140,11 @@ class BlackSunsZenithTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
         harness.passBothPriorities();
 
-        assertThat(bigCreature.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bigCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         // Counters still there after moving to next turn
         harness.forceStep(null);
-        assertThat(bigCreature.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(bigCreature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
     }
 
     // ===== Shuffle into library =====

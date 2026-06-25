@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class EvraHalcyonWitnessTest extends BaseCardTest {
 
@@ -119,7 +120,7 @@ class EvraHalcyonWitnessTest extends BaseCardTest {
     @DisplayName("+1/+1 counters apply on top of exchanged power")
     void countersApplyOnTopOfExchangedPower() {
         Permanent evra = addReadyEvra(player1);
-        evra.setPlusOnePlusOneCounters(2);
+        evra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         // Effective power = 4 + 2 = 6
 

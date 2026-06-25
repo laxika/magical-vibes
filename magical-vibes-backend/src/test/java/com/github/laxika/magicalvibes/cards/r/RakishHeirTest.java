@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class RakishHeirTest extends BaseCardTest {
 
@@ -81,7 +82,7 @@ class RakishHeirTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Vampire should have 2 +1/+1 counters (1 from own ability + 1 from Rakish Heir)
-        assertThat(vampire.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -102,7 +103,7 @@ class RakishHeirTest extends BaseCardTest {
 
         // No triggered abilities to resolve — bears have no combat damage trigger, and Rakish Heir
         // doesn't trigger for non-Vampires
-        assertThat(bears.getPlusOnePlusOneCounters()).isZero();
+        assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
     @Test
@@ -124,7 +125,7 @@ class RakishHeirTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Rakish Heir is a Vampire, so it should get a counter from its own trigger
-        assertThat(heir.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(heir.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     @Test
@@ -147,7 +148,7 @@ class RakishHeirTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Vampire should have 3 +1/+1 counters (1 from own ability + 2 from Rakish Heirs)
-        assertThat(vampire.getPlusOnePlusOneCounters()).isEqualTo(3);
+        assertThat(vampire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test

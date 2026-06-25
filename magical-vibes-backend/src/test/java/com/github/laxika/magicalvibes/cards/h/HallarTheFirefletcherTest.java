@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class HallarTheFirefletcherTest extends BaseCardTest {
 
@@ -39,7 +40,7 @@ class HallarTheFirefletcherTest extends BaseCardTest {
         // Resolve Hallar's triggered ability (counter + damage)
         harness.passBothPriorities();
 
-        assertThat(hallar.getPlusOnePlusOneCounters()).isEqualTo(1);
+        assertThat(hallar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 1);
     }
 
@@ -48,7 +49,7 @@ class HallarTheFirefletcherTest extends BaseCardTest {
     void secondKickedSpellDealsCumulativeDamage() {
         Permanent hallar = addReadyHallar(player1);
         // Pre-load 1 counter from a prior kicked spell
-        hallar.setPlusOnePlusOneCounters(1);
+        hallar.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -61,7 +62,7 @@ class HallarTheFirefletcherTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Had 1 counter, got another = 2 counters, deals 2 damage
-        assertThat(hallar.getPlusOnePlusOneCounters()).isEqualTo(2);
+        assertThat(hallar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE - 2);
     }
 
@@ -83,7 +84,7 @@ class HallarTheFirefletcherTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(hallar.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(hallar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
     }
 
@@ -101,7 +102,7 @@ class HallarTheFirefletcherTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(hallar.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(hallar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
     }
 
@@ -122,7 +123,7 @@ class HallarTheFirefletcherTest extends BaseCardTest {
         harness.castKickedCreature(player2, 0);
         harness.passBothPriorities();
 
-        assertThat(hallar.getPlusOnePlusOneCounters()).isEqualTo(0);
+        assertThat(hallar.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(STARTING_LIFE);
     }
 

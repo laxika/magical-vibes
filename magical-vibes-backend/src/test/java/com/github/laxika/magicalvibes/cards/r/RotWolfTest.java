@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class RotWolfTest extends BaseCardTest {
 
@@ -161,7 +162,7 @@ class RotWolfTest extends BaseCardTest {
         // Blocker should still be alive with -1/-1 counters
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(blocker.getMinusOneMinusOneCounters()).isEqualTo(2);
+        assertThat(blocker.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(2);
 
         // Now kill the blocker with a Cruel Edict later in the turn
         harness.forceActivePlayer(player1);

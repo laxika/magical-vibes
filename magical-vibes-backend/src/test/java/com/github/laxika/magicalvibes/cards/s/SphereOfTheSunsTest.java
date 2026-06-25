@@ -18,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 class SphereOfTheSunsTest extends BaseCardTest {
 
@@ -72,7 +73,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
         Permanent sphere = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Sphere of the Suns"))
                 .findFirst().orElseThrow();
-        assertThat(sphere.getChargeCounters()).isEqualTo(3);
+        assertThat(sphere.getCounterCount(CounterType.CHARGE)).isEqualTo(3);
         assertThat(sphere.isTapped()).isTrue();
     }
 
@@ -84,11 +85,11 @@ class SphereOfTheSunsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SphereOfTheSuns());
 
         Permanent sphere = gd.playerBattlefields.get(player1.getId()).getFirst();
-        sphere.setChargeCounters(3);
+        sphere.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(sphere.getChargeCounters()).isEqualTo(2);
+        assertThat(sphere.getCounterCount(CounterType.CHARGE)).isEqualTo(2);
         assertThat(sphere.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty(); // mana ability does not use the stack
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
@@ -106,7 +107,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
             harness.addToBattlefield(player1, new SphereOfTheSuns());
             GameData gd = harness.getGameData();
             Permanent sphere = gd.playerBattlefields.get(player1.getId()).getFirst();
-            sphere.setChargeCounters(3);
+            sphere.setCounterCount(CounterType.CHARGE, 3);
             ManaColor manaColor = ManaColor.valueOf(color);
 
             harness.activateAbility(player1, 0, null, null);
@@ -125,7 +126,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SphereOfTheSuns());
 
         Permanent sphere = gd.playerBattlefields.get(player1.getId()).getFirst();
-        sphere.setChargeCounters(3);
+        sphere.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation
         harness.activateAbility(player1, 0, null, null);
@@ -141,7 +142,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "GREEN");
 
-        assertThat(sphere.getChargeCounters()).isEqualTo(0);
+        assertThat(sphere.getCounterCount(CounterType.CHARGE)).isEqualTo(0);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(1);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
@@ -153,7 +154,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SphereOfTheSuns());
 
         Permanent sphere = gd.playerBattlefields.get(player1.getId()).getFirst();
-        sphere.setChargeCounters(0);
+        sphere.setCounterCount(CounterType.CHARGE, 0);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
@@ -165,7 +166,7 @@ class SphereOfTheSunsTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SphereOfTheSuns());
 
         Permanent sphere = gd.playerBattlefields.get(player1.getId()).getFirst();
-        sphere.setChargeCounters(3);
+        sphere.setCounterCount(CounterType.CHARGE, 3);
 
         // First activation taps it
         harness.activateAbility(player1, 0, null, null);
