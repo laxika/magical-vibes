@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutImprintedCreatureOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnSourceTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
@@ -1861,6 +1862,34 @@ public class GraveyardReturnResolutionService {
         gameData.pendingDelayedGraveyardToHandReturns.add(new GameData.DelayedGraveyardToHandReturn(cardId, ownerId));
         log.info("Game {} - Delayed graveyard-to-hand return registered for card {} (owner {})",
                 gameData.id, cardId, ownerId);
+    }
+
+    /**
+     * Registers a delayed trigger that will return the source card from its owner's graveyard
+     * to the battlefield transformed at the beginning of the next end step.
+     */
+    @HandlesEffect(RegisterDelayedReturnSourceTransformedEffect.class)
+    private void resolveRegisterDelayedReturnSourceTransformed(GameData gameData, StackEntry entry,
+                                                               RegisterDelayedReturnSourceTransformedEffect effect) {
+        Card card = entry.getCard();
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        if (ownerId == null) {
+            String logEntry = card.getName() + "'s delayed return fizzles - it is no longer in a graveyard.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - Delayed transformed return for {} not registered (no longer in graveyard)",
+                    gameData.id, card.getName());
+            return;
+        }
+
+        UUID controllerId = entry.getControllerId();
+        gameData.pendingDelayedGraveyardToBattlefieldTransformedReturns.add(
+                new GameData.DelayedGraveyardToBattlefieldTransformedReturn(card.getId(), ownerId, controllerId));
+        String playerName = gameData.playerIdToName.get(controllerId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                card.getName() + " will return to the battlefield transformed under " + playerName
+                        + "'s control at the beginning of the next end step.");
+        log.info("Game {} - Delayed transformed return registered for {} (owner {}, controller {})",
+                gameData.id, card.getName(), ownerId, controllerId);
     }
 
     // ===== Card pile separation (Boneyard Parley) =====

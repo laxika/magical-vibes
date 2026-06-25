@@ -250,6 +250,12 @@ public class GameData {
     public final List<DelayedGraveyardToHandReturn> pendingDelayedGraveyardToHandReturns = Collections.synchronizedList(new ArrayList<>());
 
     public record DelayedGraveyardToHandReturn(UUID cardId, UUID ownerId) {}
+
+    /** Delayed trigger: card UUID to owner/controller UUIDs, return from graveyard transformed at the beginning
+     *  of the next end step. Used by Loyal Cathar. */
+    public final List<DelayedGraveyardToBattlefieldTransformedReturn> pendingDelayedGraveyardToBattlefieldTransformedReturns = Collections.synchronizedList(new ArrayList<>());
+
+    public record DelayedGraveyardToBattlefieldTransformedReturn(UUID cardId, UUID ownerId, UUID controllerId) {}
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
 
@@ -890,6 +896,9 @@ public class GameData {
 
         // --- Delayed graveyard-to-hand returns (records are immutable) ---
         copy.pendingDelayedGraveyardToHandReturns.addAll(this.pendingDelayedGraveyardToHandReturns);
+
+        // --- Delayed graveyard-to-battlefield transformed returns (records are immutable) ---
+        copy.pendingDelayedGraveyardToBattlefieldTransformedReturns.addAll(this.pendingDelayedGraveyardToBattlefieldTransformedReturns);
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);

@@ -5,6 +5,8 @@ For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 
 **How to use:** Search this file for keywords from the card text (e.g. "graveyard", "life", "shuffle", "destroy"). Once you find a candidate effect, grep EFFECTS_INDEX.md for its name to get full details.
 
+- `RegisterDelayedReturnSourceTransformedEffect()` — ON_DEATH effect that registers a delayed end-step return from the source card's owner's graveyard to the battlefield transformed. Used by Loyal Cathar-style "When this dies, return it transformed at the beginning of the next end step."
+
 ## Targeting rules (summary)
 
 - Effects in SPELL slot with `canTargetPlayer()=true` force player targeting at cast time.

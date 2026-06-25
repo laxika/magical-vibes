@@ -343,6 +343,10 @@ public class Permanent {
         return counters.getOrDefault(counterType, 0);
     }
 
+    public int getPlusOnePlusOneCounters() {
+        return getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+    }
+
     /**
      * Sets the number of counters of the given concrete type on this permanent. A count of
      * zero (or less) removes the entry so the backing map only holds present counters.

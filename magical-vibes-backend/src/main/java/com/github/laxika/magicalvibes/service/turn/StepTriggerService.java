@@ -1076,6 +1076,55 @@ public class StepTriggerService {
             }
         }
 
+        // Process delayed graveyard-to-battlefield transformed returns (e.g. Loyal Cathar)
+        if (!gameData.pendingDelayedGraveyardToBattlefieldTransformedReturns.isEmpty()) {
+            List<GameData.DelayedGraveyardToBattlefieldTransformedReturn> pendingReturns =
+                    new ArrayList<>(gameData.pendingDelayedGraveyardToBattlefieldTransformedReturns);
+            gameData.pendingDelayedGraveyardToBattlefieldTransformedReturns.clear();
+            for (GameData.DelayedGraveyardToBattlefieldTransformedReturn pending : pendingReturns) {
+                List<Card> graveyard = gameData.playerGraveyards.get(pending.ownerId());
+                if (graveyard == null) continue;
+                Card cardToReturn = null;
+                for (Card card : graveyard) {
+                    if (card.getId().equals(pending.cardId())) {
+                        cardToReturn = card;
+                        break;
+                    }
+                }
+                if (cardToReturn == null) {
+                    log.info("Game {} - Delayed transformed return for card {} skipped (no longer in graveyard)",
+                            gameData.id, pending.cardId());
+                    continue;
+                }
+                Card backFace = cardToReturn.getBackFaceCard();
+                if (backFace == null) {
+                    log.warn("Game {} - Delayed transformed return skipped for {} (no back face)",
+                            gameData.id, cardToReturn.getName());
+                    continue;
+                }
+                if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            cardToReturn.getName() + " can't return from the graveyard; it stays in the graveyard.");
+                    continue;
+                }
+
+                graveyard.remove(cardToReturn);
+                Permanent permanent = new Permanent(cardToReturn);
+                permanent.setCard(backFace);
+                permanent.setTransformed(true);
+                permanent.setEnteredFromGraveyardOwnerId(pending.ownerId());
+                battlefieldEntryService.putPermanentOntoBattlefield(gameData, pending.controllerId(), permanent);
+
+                String playerName = gameData.playerIdToName.get(pending.controllerId());
+                String logEntry = cardToReturn.getName() + " returns to the battlefield transformed as "
+                        + backFace.getName() + " under " + playerName + "'s control.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} returns transformed as {} for {}",
+                        gameData.id, cardToReturn.getName(), backFace.getName(), playerName);
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, pending.controllerId(), backFace, null, false);
+            }
+        }
+
         UUID activePlayerId = gameData.activePlayerId;
         List<UUID> triggerOrder = new ArrayList<>();
         triggerOrder.add(activePlayerId);
