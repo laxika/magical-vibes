@@ -48,6 +48,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -262,6 +263,10 @@ class CombatDamageServiceTest {
         perm.setSummoningSick(false);
         perm.setBlocking(true);
         perm.addBlockingTarget(attackerIndex);
+        List<Permanent> attackers = gameData.playerBattlefields.get(player1Id);
+        if (attackerIndex >= 0 && attackerIndex < attackers.size()) {
+            perm.addBlockingTargetId(attackers.get(attackerIndex).getId());
+        }
         gameData.playerBattlefields.get(player2Id).add(perm);
         return perm;
     }
@@ -426,6 +431,7 @@ class CombatDamageServiceTest {
             Permanent blocker = addBlocker("Spider", 2, 4, 0);
 
             combatDamageService.resolveCombatDamage(gameData);
+            combatDamageService.resolveCombatDamage(gameData);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, attacker);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(gameData, blocker);
@@ -459,6 +465,7 @@ class CombatDamageServiceTest {
 
             addAttacker("Knight", 2, 2, Keyword.DOUBLE_STRIKE);
 
+            combatDamageService.resolveCombatDamage(gameData);
             combatDamageService.resolveCombatDamage(gameData);
 
             assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(16);
@@ -529,9 +536,10 @@ class CombatDamageServiceTest {
             addAttacker("Bear", 2, 2, Keyword.LIFELINK, Keyword.DOUBLE_STRIKE);
 
             combatDamageService.resolveCombatDamage(gameData);
+            combatDamageService.resolveCombatDamage(gameData);
 
             assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(16);
-            verify(lifeResolutionService).applyGainLife(eq(gameData), eq(player1Id), eq(4),
+            verify(lifeResolutionService, times(2)).applyGainLife(eq(gameData), eq(player1Id), eq(2),
                     eq("lifelink"));
         }
 

@@ -381,6 +381,7 @@ public class GameData {
     // Combat damage assignment state
     public final Map<Integer, Map<UUID, Integer>> combatDamagePlayerAssignments = new HashMap<>();
     public final List<Integer> combatDamagePendingIndices = new ArrayList<>();
+    public boolean combatDamageFirstStrikeStepComplete = false;
     public boolean combatDamagePhase1Complete = false;
     public CombatDamagePhase1State combatDamagePhase1State;
 
@@ -673,6 +674,7 @@ public class GameData {
         copy.draftId = this.draftId;
         copy.cleanupDiscardPending = this.cleanupDiscardPending;
         copy.simulation = true;
+        copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
         copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
         copy.pendingForcedSacrificeCount = this.pendingForcedSacrificeCount;

@@ -57,6 +57,10 @@ Only slots that are actually routed through a targeting pipeline are listed. Eve
 `gameData.stack.add(new StackEntry(...))` and **does not support a user target choice today**. Wiring a
 new slot into a pipeline is an engine change.
 
+Combat-damage slots are checked separately for each combat damage step. If first strike or double strike
+creates a first-strike combat damage step, those triggers go on the stack and resolve before the regular
+combat damage step is processed.
+
 | Slot | Collector service | Pipeline |
 |---|---|---|
 | `ON_DEATH` | `DeathTriggerCollectorService.handleDeathDefault` + `handleDeathMayEffect` + `handleLosesLifeEqualToPower` | Death |

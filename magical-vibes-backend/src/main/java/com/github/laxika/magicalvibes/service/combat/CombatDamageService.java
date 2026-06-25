@@ -119,17 +119,7 @@ public class CombatDamageService {
 
         List<Integer> attackingIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
 
-        // Build blocker map: attackerIndex -> list of blockerIndices
-        Map<Integer, List<Integer>> blockerMap = new LinkedHashMap<>();
-        for (int atkIdx : attackingIndices) {
-            List<Integer> blockers = new ArrayList<>();
-            for (int i = 0; i < defBf.size(); i++) {
-                if (defBf.get(i).isBlocking() && defBf.get(i).getBlockingTargets().contains(atkIdx)) {
-                    blockers.add(i);
-                }
-            }
-            blockerMap.put(atkIdx, blockers);
-        }
+        Map<Integer, List<Integer>> blockerMap = buildBlockerMap(atkBf, defBf, attackingIndices);
 
         // Check if any combat creature has first strike or double strike
         boolean anyFirstStrike = attackingIndices.stream()
@@ -139,15 +129,21 @@ public class CombatDamageService {
 
         CombatDamageState state = new CombatDamageState();
 
-        // Restore phase 1 state if re-entering after damage assignment
+        // Restore regular-step state if re-entering after damage assignment
         if (gameData.combatDamagePhase1Complete) {
             restorePhase1State(gameData, state);
         }
 
-        // Phase 1: First strike damage (skip on re-entry)
-        if (!gameData.combatDamagePhase1Complete && anyFirstStrike) {
+        // First-strike combat damage step. Its triggers resolve before regular combat damage.
+        if (!gameData.combatDamageFirstStrikeStepComplete
+                && !gameData.combatDamagePhase1Complete
+                && anyFirstStrike) {
             resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf,
                     attackingIndices, activeId, defenderId, redirectTarget, true);
+            CombatResult result = finishCombatDamageStep(gameData, state, atkBf, defBf,
+                    activeId, defenderId, redirectTarget);
+            gameData.combatDamageFirstStrikeStepComplete = true;
+            return result == CombatResult.ADVANCE_AND_AUTO_PASS ? CombatResult.AUTO_PASS_ONLY : result;
         }
 
         // Check if any phase 2 attackers need manual damage assignment
@@ -180,6 +176,14 @@ public class CombatDamageService {
         resolveDamagePhase(gameData, state, blockerMap, atkBf, defBf,
                 attackingIndices, activeId, defenderId, redirectTarget, false);
 
+        gameData.combatDamageFirstStrikeStepComplete = false;
+        return finishCombatDamageStep(gameData, state, atkBf, defBf, activeId, defenderId, redirectTarget);
+    }
+
+    private CombatResult finishCombatDamageStep(GameData gameData, CombatDamageState state,
+                                                 List<Permanent> atkBf, List<Permanent> defBf,
+                                                 UUID activeId, UUID defenderId,
+                                                 Permanent redirectTarget) {
         resolveRedirectedDamage(gameData, state, redirectTarget);
 
         // CR 510.1 — Snapshot Phyrexian Unlife infect conversion before lifelink changes life totals.
@@ -324,7 +328,7 @@ public class CombatDamageService {
             int totalLethalNeeded = 0;
             for (int blkIdx : livingBlockers) {
                 Permanent blk = defBf.get(blkIdx);
-                int alreadyTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
+                int alreadyTaken = blk.getMarkedDamage() + p1.defDamageTaken.getOrDefault(blkIdx, 0);
                 int lethal = atkHasDeathtouchForValidation
                         ? Math.max(0, 1 - alreadyTaken)
                         : Math.max(0, gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken);
@@ -335,7 +339,7 @@ public class CombatDamageService {
                 // Enough damage to deal lethal to all blockers: enforce per-blocker minimums
                 for (int blkIdx : livingBlockers) {
                     Permanent blk = defBf.get(blkIdx);
-                    int alreadyTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
+                    int alreadyTaken = blk.getMarkedDamage() + p1.defDamageTaken.getOrDefault(blkIdx, 0);
                     int lethal = atkHasDeathtouchForValidation
                             ? Math.max(0, 1 - alreadyTaken)
                             : Math.max(0, gameQueryService.getEffectiveToughness(gameData, blk) - alreadyTaken);
@@ -382,6 +386,25 @@ public class CombatDamageService {
         }
         log.info("Game {} - Combat damage assigned for [{}]: {} -> {}", gameData.id, attackerIndex,
                 atk.getCard().getName(), String.join(", ", parts));
+    }
+
+    private Map<Integer, List<Integer>> buildBlockerMap(List<Permanent> atkBf, List<Permanent> defBf,
+                                                         List<Integer> attackingIndices) {
+        Map<Integer, List<Integer>> blockerMap = new LinkedHashMap<>();
+        for (int atkIdx : attackingIndices) {
+            Permanent attacker = atkBf.get(atkIdx);
+            List<Integer> blockers = new ArrayList<>();
+            for (int i = 0; i < defBf.size(); i++) {
+                Permanent blocker = defBf.get(i);
+                if (blocker.isBlocking()
+                        && (blocker.getBlockingTargetIds().contains(attacker.getId())
+                                || blocker.getBlockingTargets().contains(atkIdx))) {
+                    blockers.add(i);
+                }
+            }
+            blockerMap.put(atkIdx, blockers);
+        }
+        return blockerMap;
     }
 
     // ===== Damage phase resolution =====
@@ -446,7 +469,7 @@ public class CombatDamageService {
                             int blkRemaining = blockerRemainingDamage.getOrDefault(blkIdx, 0);
                             boolean blkHasDeathtouch = gameQueryService.hasKeyword(gameData, blk, Keyword.DEATHTOUCH);
                             int atkToughness = gameQueryService.getEffectiveToughness(gameData, atk);
-                            int atkDamageSoFar = state.atkDamageTaken.getOrDefault(atkIdx, 0);
+                            int atkDamageSoFar = atk.getMarkedDamage() + state.atkDamageTaken.getOrDefault(atkIdx, 0);
                             int lethalNeeded = blkHasDeathtouch
                                     ? Math.max(0, 1 - atkDamageSoFar)
                                     : Math.max(0, atkToughness - atkDamageSoFar);
@@ -478,9 +501,10 @@ public class CombatDamageService {
         for (int blkIdx : blkIndices) {
             if (skipDeadBlockers && state.deadDefenderIndices.contains(blkIdx)) continue;
             Permanent blk = defBf.get(blkIdx);
+            int blockerDamageSoFar = blk.getMarkedDamage() + state.defDamageTaken.getOrDefault(blkIdx, 0);
             int lethalNeeded = atkHasDeathtouch
-                    ? Math.max(0, 1 - state.defDamageTaken.getOrDefault(blkIdx, 0))
-                    : gameQueryService.getEffectiveToughness(gameData, blk) - state.defDamageTaken.getOrDefault(blkIdx, 0);
+                    ? Math.max(0, 1 - blockerDamageSoFar)
+                    : gameQueryService.getEffectiveToughness(gameData, blk) - blockerDamageSoFar;
             int dmg = Math.min(remaining, Math.max(0, lethalNeeded));
             if (!(gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, blk, atk))) {
                 int actualDmg = gameQueryService.applyCombatDamageMultiplier(gameData, dmg, atk, blk);

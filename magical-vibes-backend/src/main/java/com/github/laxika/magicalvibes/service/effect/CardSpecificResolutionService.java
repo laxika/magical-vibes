@@ -995,6 +995,7 @@ public class CardSpecificResolutionService {
         gameData.mindControllerPlayerId = null;
         gameData.pendingSearchContext = null;
         gameData.pendingETBDamageAssignments = Map.of();
+        gameData.combatDamageFirstStrikeStepComplete = false;
         gameData.combatDamagePhase1Complete = false;
         gameData.combatDamagePhase1State = null;
 
