@@ -1740,6 +1740,26 @@ public class BattlefieldEntryService {
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                     log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName(), damageEffect.damage());
+                } else if (!effect.canTargetPlayer()
+                        && !effect.canTargetPermanent()
+                        && !effect.canTargetSpell()
+                        && !effect.canTargetGraveyard()
+                        && !effect.canTargetAnyGraveyard()) {
+                    for (int t = 0; t < 1 + extraTriggers; t++) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                perm.getCard().getName() + "'s ability",
+                                new ArrayList<>(List.of(effect)),
+                                null,
+                                perm.getId()
+                        ));
+                    }
+                    String triggerLog = perm.getCard().getName() + " triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for {} entering",
+                            gameData.id, perm.getCard().getName(), enteringCreature.getName());
                 }
             }
         });
