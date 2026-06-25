@@ -136,6 +136,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
      *  permanent's card reference is switched back to the original front face. */
     ON_TRANSFORM_TO_FRONT_FACE,
+    /** Triggers once per attacking creature whenever a creature attacks the controller of this
+     *  permanent or a planeswalker they control. Fires on the defending player's permanents.
+     *  The attacking creature's permanent ID is set as the (non-targeting) targetId on the stack
+     *  entry so the resolved effect can act on it. Checked in
+     *  {@code CombatAttackService.declareAttackers}. Used by Lost in the Woods. */
+    ON_CREATURE_ATTACKS_YOU,
     /** Triggers whenever a player loses the game. Fired from {@code GameOutcomeService}
      *  at the moment a player is determined to lose (life/poison loss in
      *  {@code checkWinCondition}, or a direct loss via {@code declareWinner}).

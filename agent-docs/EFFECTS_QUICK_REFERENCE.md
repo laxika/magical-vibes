@@ -249,6 +249,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `SearchLibraryForCreatureToTopOfLibraryEffect()` — creature to top
 - `SearchTargetLibraryForCardsToGraveyardEffect(int, Set<CardType>)` — target library to graveyard
 - `RevealTopCardOfLibraryEffect()` or overloads — reveal top card
+- `RevealTopCardRemoveTargetFromCombatIfMatchEffect(CardPredicate)` — reveal top; if match, remove the engine-set attacking creature (targetId) from combat; then bottom the card (Lost in the Woods, ON_CREATURE_ATTACKS_YOU)
 - `RevealTopCardsAndSeparateEffect(int)` — reveal + separate into piles
 - `ScryEffect(int)` — scry N
 - `SurveilEffect(int)` — surveil N

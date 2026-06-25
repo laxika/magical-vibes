@@ -500,6 +500,41 @@ public class CombatAttackService {
             }
         }
 
+        // Check for "whenever a creature attacks you or a planeswalker you control" triggers
+        // (ON_CREATURE_ATTACKS_YOU). These fire once per attacking creature, on the permanents of
+        // the player being attacked (directly or via one of their planeswalkers). The attacking
+        // creature is stored as a non-targeting targetId so the effect can act on it.
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            UUID attackedTargetId = resolvedTargets.get(idx);
+            UUID attackedPlayerId = gameData.playerIds.contains(attackedTargetId)
+                    ? attackedTargetId
+                    : gameQueryService.findPermanentController(gameData, attackedTargetId);
+            if (attackedPlayerId == null) continue;
+            List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
+            if (defenderBattlefield == null) continue;
+            for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
+                List<CardEffect> attackedTriggerEffects = perm.getCard().getEffects(EffectSlot.ON_CREATURE_ATTACKS_YOU);
+                if (attackedTriggerEffects.isEmpty()) continue;
+
+                StackEntry attackedTrigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        attackedPlayerId,
+                        perm.getCard().getName() + "'s trigger",
+                        new ArrayList<>(attackedTriggerEffects),
+                        attacker.getId(),
+                        perm.getId()
+                );
+                attackedTrigger.setNonTargeting(true);
+                gameData.stack.add(attackedTrigger);
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameData.gameLog.add(triggerLog);
+                log.info("Game {} - {} ON_CREATURE_ATTACKS_YOU trigger for {} attacking",
+                        gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+            }
+        }
+
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeAttackTriggers, playerId);
 

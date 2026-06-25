@@ -8,6 +8,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 |---|---|---|---|
 | "deals N damage to any target" | `DealDamageToAnyTargetEffect(N, false)` | SPELL | Targeting auto-derived |
 | "deals N damage to the player or planeswalker it's attacking" | `DealDamageToAttackedTargetEffect(N)` | `ON_ALLY_CREATURE_ATTACKS`/attack trigger | Uses the attacking creature's `attackedTargetId` context captured by `CombatAttackService`; not a targeted ability |
+| "Whenever a creature attacks you or a planeswalker you control, reveal the top card... if it's a [type], remove that creature from combat. Then put... on the bottom" | `RevealTopCardRemoveTargetFromCombatIfMatchEffect(CardPredicate)` | `ON_CREATURE_ATTACKS_YOU` | Fires once per attacking creature on the defending player's side; the attacking creature is set as the non-targeting `targetId`. Used by Lost in the Woods (`CardSubtypePredicate(FOREST)`) |
 | "deals N damage to target creature" | `DealDamageToTargetCreatureEffect(N)` | SPELL | Creature-only targeting |
 | "deals N damage to target creature or planeswalker" | `DealDamageToTargetCreatureOrPlaneswalkerEffect(N)` | SPELL | |
 | "deals N damage to target opponent or planeswalker" | `DealDamageToTargetOpponentOrPlaneswalkerEffect(N)` | SPELL | |

@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndLoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardRemoveTargetFromCombatIfMatchEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsOpponentPaysLifeOrToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsTypeToHandRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
@@ -101,6 +102,47 @@ public class LibraryRevealResolutionService {
         }
 
         log.info("Game {} - {} reveals top card of library", gameData.id, playerName);
+    }
+
+    /**
+     * Reveals the top card of the controller's library. If it matches the effect's predicate, the
+     * permanent referenced by the stack entry's targetId (the attacking creature) is removed from
+     * combat. The revealed card is then put on the bottom of the controller's library regardless.
+     * Used by Lost in the Woods.
+     */
+    @HandlesEffect(RevealTopCardRemoveTargetFromCombatIfMatchEffect.class)
+    void resolveRevealTopCardRemoveTargetFromCombatIfMatch(
+            GameData gameData, StackEntry entry, RevealTopCardRemoveTargetFromCombatIfMatchEffect effect) {
+        UUID controllerId = entry.getControllerId();
+        List<Card> deck = gameData.playerDecks.get(controllerId);
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = entry.getCard().getName();
+
+        if (deck == null || deck.isEmpty()) {
+            String logEntry = playerName + "'s library is empty (" + sourceName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        Card topCard = deck.removeFirst();
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ").");
+
+        if (gameQueryService.matchesCardPredicate(topCard, effect.matchPredicate(), null, gameData, controllerId)) {
+            Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (attacker != null && attacker.isAttacking()) {
+                attacker.setAttacking(false);
+                attacker.setAttackTarget(null);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        sourceName + " removes " + attacker.getCard().getName() + " from combat.");
+                log.info("Game {} - {} removes {} from combat", gameData.id, sourceName, attacker.getCard().getName());
+            }
+        }
+
+        deck.add(topCard);
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " puts " + topCard.getName() + " on the bottom of their library.");
+        log.info("Game {} - {} bottoms {} ({})", gameData.id, playerName, topCard.getName(), sourceName);
     }
 
     /**
