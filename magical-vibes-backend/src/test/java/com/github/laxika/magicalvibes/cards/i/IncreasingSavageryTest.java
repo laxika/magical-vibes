@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CastFromHandConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,9 +36,9 @@ class IncreasingSavageryTest extends BaseCardTest {
                 (PutPlusOnePlusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(baseEffect.count()).isEqualTo(5);
 
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CastFromHandConditionalEffect.class);
-        CastFromHandConditionalEffect conditional =
-                (CastFromHandConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CastFromZoneConditionalEffect.class);
+        CastFromZoneConditionalEffect conditional =
+                (CastFromZoneConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(conditional.sourceZone()).isEqualTo(Zone.GRAVEYARD);
         assertThat(conditional.wrapped()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
         PutPlusOnePlusOneCounterOnTargetCreatureEffect flashbackExtra =

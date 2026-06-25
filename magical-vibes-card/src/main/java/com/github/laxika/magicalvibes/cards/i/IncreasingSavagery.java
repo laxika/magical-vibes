@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CastFromHandConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -19,7 +19,7 @@ public class IncreasingSavagery extends Card {
                 "Target must be a creature"
         ), 1, 1)
                 .addEffect(EffectSlot.SPELL, new PutPlusOnePlusOneCounterOnTargetCreatureEffect(5));
-        addEffect(EffectSlot.SPELL, new CastFromHandConditionalEffect(Zone.GRAVEYARD,
+        addEffect(EffectSlot.SPELL, new CastFromZoneConditionalEffect(Zone.GRAVEYARD,
                 new PutPlusOnePlusOneCounterOnTargetCreatureEffect(5)));
         addCastingOption(new FlashbackCast("{5}{G}{G}"));
     }
