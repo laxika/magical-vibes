@@ -1,4 +1,4 @@
 READ CLAUDE.md FIRST!!!
 
-- Whenever you need to commit anything, always add the model name as a Co-Author.
+- Whenever you need to commit anything, always add the model name as a Co-Author and use noreply@openai.com as the e-mail address.
 - For card implementation context, use `powershell -ExecutionPolicy Bypass -File scripts/implement-card-context.ps1 <SET_CODE> <COLLECTOR_NUMBER> [ClassName]` before inspecting broad docs. It prints compact Scryfall data, reprint checks, likely patterns, effect doc hits, existing usages, suggested files, and the targeted test command.
