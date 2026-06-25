@@ -461,6 +461,7 @@ public class SpellCastingService {
                 && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget
                 && card.getMaxTargets() == 0
                 && !EffectResolution.needsDamageDistribution(card)
+                && !(kicked && findKickedDividedDamageEffect(filteredSpellEffects) != null)
                 && !needsExileTargeting && !needsSingleGraveyardTargeting && !needsGraveyardEffectTargeting) {
             throw new IllegalStateException("Spell requires a target");
         }
