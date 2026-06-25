@@ -138,6 +138,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect()` — sacrifice + life = toughness
 - `SacrificeCreatureToCreateTokensEqualToToughnessEffect(CreateTokenEffect template, PermanentPredicate filter)` — controller sacrifices a matching creature, then creates X copies of `template` where X = sacrificed creature's toughness (template `amount` ignored). Wrap in `MayEffect` for "you may sacrifice" (e.g. Feed the Pack)
 - `ControllerSacrificesCreatureEffect()` — controller sacrifices (non-targeting)
+- `ForcedCostOrElseEffect(CostEffect, List<CardEffect>)` — mandatory cost-like instruction; if it cannot be performed, resolve fallback effects
 - `SacrificeAttackingCreaturesEffect(int base, int metalcraft)` — sacrifice attackers
 - `EachOpponentSacrificesCreatureEffect()` — each opponent sacrifices
 - `EachOpponentSacrificesPermanentsEffect(int, PermanentPredicate)` — opponents sacrifice permanents

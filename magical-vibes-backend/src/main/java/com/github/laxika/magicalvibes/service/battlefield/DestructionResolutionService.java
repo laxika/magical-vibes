@@ -55,8 +55,12 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureAndControlle
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -1332,6 +1336,90 @@ public class DestructionResolutionService {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife(controllerId, cardName));
         playerInputService.beginPermanentChoice(gameData, controllerId, otherCreatureIds,
                 "Choose a creature other than " + cardName + " to sacrifice.");
+    }
+
+    /**
+     * Resolves a {@link ForcedCostOrElseEffect}. This handles mandatory cost-like instructions
+     * from triggered abilities, such as "sacrifice a Human; if you can't, ...".
+     */
+    @HandlesEffect(ForcedCostOrElseEffect.class)
+    void resolveForcedCostOrElse(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
+        if (!(effect.forcedCost() instanceof SacrificeSubtypeCreatureCost sacrificeSubtype)) {
+            log.warn("Game {} - Unsupported forced cost: {}", gameData.id, effect.forcedCost().getClass().getSimpleName());
+            resolveForcedCostElseEffects(gameData, entry, effect);
+            return;
+        }
+
+        UUID controllerId = entry.getControllerId();
+
+        List<UUID> subtypeCreatureIds = collectCreatureIds(gameData, controllerId,
+                p -> p.getCard().getSubtypes().contains(sacrificeSubtype.subtype()));
+
+        if (subtypeCreatureIds.isEmpty()) {
+            resolveForcedCostElseEffects(gameData, entry, effect);
+            return;
+        }
+
+        if (subtypeCreatureIds.size() == 1) {
+            Permanent creature = gameQueryService.findPermanentById(gameData, subtypeCreatureIds.getFirst());
+            if (creature != null) {
+                sacrificeAndLog(gameData, creature, controllerId);
+            } else {
+                resolveForcedCostElseEffects(gameData, entry, effect);
+            }
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.ForcedCostOrElse(
+                        controllerId, entry.getSourcePermanentId(), entry.getCard(), effect));
+        playerInputService.beginPermanentChoice(gameData, controllerId, subtypeCreatureIds,
+                "Choose a " + sacrificeSubtype.subtype().getDisplayName() + " to sacrifice.");
+    }
+
+    public void completeForcedCostOrElse(GameData gameData, UUID permanentId,
+                                         PermanentChoiceContext.ForcedCostOrElse context) {
+        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        if (target == null) {
+            StackEntry syntheticEntry = new StackEntry(
+                    com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                    context.sourceCard(),
+                    context.controllerId(),
+                    context.sourceCard().getName() + "'s ability",
+                    List.of(context.effect()),
+                    null,
+                    context.sourcePermanentId());
+            resolveForcedCostElseEffects(gameData, syntheticEntry, context.effect());
+            return;
+        }
+
+        sacrificeAndLog(gameData, target, context.controllerId());
+    }
+
+    private void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
+        for (var elseEffect : effect.elseEffects()) {
+            if (elseEffect instanceof TapSelfEffect) {
+                tapSourcePermanent(gameData, entry);
+            } else if (elseEffect instanceof DealDamageToControllerEffect damage) {
+                dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage.damage(),
+                        entry.getCard().getName(), entry.getCard().getColor());
+                gameOutcomeService.checkWinCondition(gameData);
+            } else {
+                log.warn("Game {} - Unsupported ForcedCostOrElse fallback effect: {}",
+                        gameData.id, elseEffect.getClass().getSimpleName());
+            }
+        }
+    }
+
+    private void tapSourcePermanent(GameData gameData, StackEntry entry) {
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (sourcePermanent != null) {
+            sourcePermanent.tap();
+            String tapLog = sourcePermanent.getCard().getName() + " is tapped.";
+            gameBroadcastService.logAndBroadcast(gameData, tapLog);
+            log.info("Game {} - {} is tapped (no matching creature to sacrifice)",
+                    gameData.id, sourcePermanent.getCard().getName());
+        }
     }
 
     /**

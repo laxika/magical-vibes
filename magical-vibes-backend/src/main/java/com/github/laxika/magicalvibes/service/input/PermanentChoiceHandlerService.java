@@ -57,6 +57,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleLegendRule(gameData, playerId, permanentId, legendRule);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife sacrificeOpp) {
             battlefieldHandler.handleSacrificeCreatureOpponentsLoseLife(gameData, permanentId, sacrificeOpp);
+        } else if (context instanceof PermanentChoiceContext.ForcedCostOrElse forcedCostOrElse) {
+            battlefieldHandler.handleForcedCostOrElse(gameData, permanentId, forcedCostOrElse);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness sacrificeGainLife) {
             battlefieldHandler.handleSacrificeCreatureControllerGainsLifeEqualToToughness(gameData, permanentId, sacrificeGainLife);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureThenSearchLibrary sacrificeSearch) {

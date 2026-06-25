@@ -28,6 +28,9 @@ public sealed interface PermanentChoiceContext {
 
     record SacrificeCreatureOpponentsLoseLife(UUID sacrificingPlayerId, String sourceCardName) implements PermanentChoiceContext {}
 
+    record ForcedCostOrElse(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
+                            com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect effect) implements PermanentChoiceContext {}
+
     record SacrificeCreatureControllerGainsLifeEqualToToughness(UUID sacrificingPlayerId, UUID controllerId, String sourceCardName) implements PermanentChoiceContext {}
 
     record ActivatedAbilityCostChoice(UUID activatingPlayerId,

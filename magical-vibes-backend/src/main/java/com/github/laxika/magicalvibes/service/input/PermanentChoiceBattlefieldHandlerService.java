@@ -218,6 +218,20 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleForcedCostOrElse(GameData gameData, UUID permanentId,
+                                       PermanentChoiceContext.ForcedCostOrElse context) {
+        destructionResolutionService.completeForcedCostOrElse(gameData, permanentId, context);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleSacrificeCreatureControllerGainsLifeEqualToToughness(GameData gameData, UUID permanentId,
                                                                             PermanentChoiceContext.SacrificeCreatureControllerGainsLifeEqualToToughness context) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
