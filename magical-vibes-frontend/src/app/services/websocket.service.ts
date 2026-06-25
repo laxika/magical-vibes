@@ -219,6 +219,7 @@ export interface Permanent {
   loreCounters: number;
   aimCounters: number;
   landmarkCounters: number;
+  eyeballCounters: number;
   attackTargetId: string | null;
   markedDamage: number;
   transformed: boolean;

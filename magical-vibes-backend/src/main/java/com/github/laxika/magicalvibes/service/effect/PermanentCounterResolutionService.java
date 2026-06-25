@@ -1011,6 +1011,7 @@ public class PermanentCounterResolutionService {
             case WISH -> { target.setWishCounters(target.getWishCounters() + count); yield "wish"; }
             case SLIME -> { target.setSlimeCounters(target.getSlimeCounters() + count); yield "slime"; }
             case AIM -> { target.setAimCounters(target.getAimCounters() + count); yield "aim"; }
+            case EYEBALL -> { target.setEyeballCounters(target.getEyeballCounters() + count); yield "eyeball"; }
             default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
         };
         if (counterName == null) return;

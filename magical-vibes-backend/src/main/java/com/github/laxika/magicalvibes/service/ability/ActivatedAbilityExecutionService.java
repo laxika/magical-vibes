@@ -50,6 +50,8 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -70,6 +72,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -187,8 +190,20 @@ public class ActivatedAbilityExecutionService {
             gameData.stack.subList(stackBefore, gameData.stack.size()).clear();
         }
 
+        // "Remove all {type} counters from this permanent" is an additional cost — snapshot the
+        // number removed into xValue before clearing them so a companion effect scales correctly.
+        Optional<RemoveAllCountersAsCostEffect> removeAllCounters = abilityEffects.stream()
+                .filter(RemoveAllCountersAsCostEffect.class::isInstance)
+                .map(RemoveAllCountersAsCostEffect.class::cast)
+                .findFirst();
+        if (removeAllCounters.isPresent()) {
+            CounterType counterType = removeAllCounters.get().counterType();
+            effectiveXValue = permanent.getCounterCount(counterType);
+            permanent.setCounterCount(counterType, 0);
+        }
+
         // Snapshot charge counters before sacrifice so the value survives in the stack entry's xValue
-        if (abilityEffects.stream().anyMatch(e -> e instanceof DrawCardsEqualToChargeCountersOnSourceEffect
+        else if (abilityEffects.stream().anyMatch(e -> e instanceof DrawCardsEqualToChargeCountersOnSourceEffect
                 || e instanceof GainLifeEqualToChargeCountersOnSourceEffect
                 || e instanceof MillTargetPlayerByChargeCountersEffect
                 || e instanceof TargetPlayerDiscardsByChargeCountersEffect

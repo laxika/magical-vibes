@@ -80,6 +80,7 @@ public class Permanent {
     @Setter private int loreCounters;
     @Setter private int aimCounters;
     @Setter private int landmarkCounters;
+    @Setter private int eyeballCounters;
     @Setter private int loyaltyActivationsThisTurn;
     private final Set<Keyword> grantedKeywords = new HashSet<>();
     /** Keywords temporarily removed by one-shot effects (e.g. activated abilities).
@@ -255,6 +256,7 @@ public class Permanent {
         this.wishCounters = source.wishCounters;
         this.loreCounters = source.loreCounters;
         this.aimCounters = source.aimCounters;
+        this.eyeballCounters = source.eyeballCounters;
         this.loyaltyActivationsThisTurn = source.loyaltyActivationsThisTurn;
         this.enteredFromGraveyardOwnerId = source.enteredFromGraveyardOwnerId;
         this.grantedKeywords.addAll(source.grantedKeywords);
@@ -348,6 +350,53 @@ public class Permanent {
 
     public void setAttackedThisTurn(boolean attackedThisTurn) {
         this.attackedThisTurn = attackedThisTurn;
+    }
+
+    /**
+     * Returns the number of counters of the given type on this permanent. Supports the
+     * named/keyword counter types that are tracked as dedicated fields on a permanent.
+     * {@code ANY} and {@code SILVER} are not single-field counters and are rejected.
+     */
+    public int getCounterCount(CounterType counterType) {
+        return switch (counterType) {
+            case AIM -> aimCounters;
+            case CHARGE -> chargeCounters;
+            case EYEBALL -> eyeballCounters;
+            case HATCHLING -> hatchlingCounters;
+            case LANDMARK -> landmarkCounters;
+            case LORE -> loreCounters;
+            case LOYALTY -> loyaltyCounters;
+            case MINUS_ONE_MINUS_ONE -> minusOneMinusOneCounters;
+            case PLUS_ONE_PLUS_ONE -> plusOnePlusOneCounters;
+            case SLIME -> slimeCounters;
+            case STUDY -> studyCounters;
+            case WISH -> wishCounters;
+            case ANY, SILVER -> throw new IllegalArgumentException(
+                    "Counter type " + counterType + " is not tracked as a permanent field");
+        };
+    }
+
+    /**
+     * Sets the number of counters of the given type on this permanent. See
+     * {@link #getCounterCount(CounterType)} for the supported types.
+     */
+    public void setCounterCount(CounterType counterType, int count) {
+        switch (counterType) {
+            case AIM -> aimCounters = count;
+            case CHARGE -> chargeCounters = count;
+            case EYEBALL -> eyeballCounters = count;
+            case HATCHLING -> hatchlingCounters = count;
+            case LANDMARK -> landmarkCounters = count;
+            case LORE -> loreCounters = count;
+            case LOYALTY -> loyaltyCounters = count;
+            case MINUS_ONE_MINUS_ONE -> minusOneMinusOneCounters = count;
+            case PLUS_ONE_PLUS_ONE -> plusOnePlusOneCounters = count;
+            case SLIME -> slimeCounters = count;
+            case STUDY -> studyCounters = count;
+            case WISH -> wishCounters = count;
+            case ANY, SILVER -> throw new IllegalArgumentException(
+                    "Counter type " + counterType + " is not tracked as a permanent field");
+        }
     }
 
     /**

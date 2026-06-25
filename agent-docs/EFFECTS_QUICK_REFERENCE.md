@@ -155,6 +155,7 @@ See EFFECTS_INDEX.md "Destruction" section for 10+ additional niche destruction/
 
 - `ExileSelfCost()` — exile self as cost
 - `SacrificeSelfCost()` — sacrifice self as cost
+- `RemoveAllCountersAsCostEffect(CounterType)` — remove all counters of a type as cost; count snapshotted into xValue (Jar of Eyeballs: `EYEBALL`)
 - `SacrificeCreatureCost()` or `(boolean trackMV)` or `(boolean trackMV, boolean trackPower)` or `(boolean, boolean, boolean trackToughness)` or `(boolean, boolean, boolean, boolean excludeSelf)` — sacrifice creature
 - `SacrificeSubtypeCreatureCost(CardSubtype)` — sacrifice subtype creature
 - `SacrificeArtifactCost()` — sacrifice artifact

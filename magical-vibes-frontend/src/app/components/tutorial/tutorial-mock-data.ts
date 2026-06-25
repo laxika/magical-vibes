@@ -70,6 +70,7 @@ function makePermanent(id: string, card: Card, overrides?: Partial<Permanent>): 
     loreCounters: 0,
     aimCounters: 0,
     landmarkCounters: 0,
+    eyeballCounters: 0,
     attackTargetId: null,
     markedDamage: 0,
     transformed: false,

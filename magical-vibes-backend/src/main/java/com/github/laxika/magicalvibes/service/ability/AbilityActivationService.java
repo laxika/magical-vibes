@@ -786,6 +786,7 @@ public class AbilityActivationService {
             int available = switch (ct) {
                 case AIM -> permanent.getAimCounters();
                 case CHARGE -> permanent.getChargeCounters();
+                case EYEBALL -> permanent.getEyeballCounters();
                 case HATCHLING -> permanent.getHatchlingCounters();
                 case LANDMARK -> permanent.getLandmarkCounters();
                 case MINUS_ONE_MINUS_ONE -> permanent.getMinusOneMinusOneCounters();

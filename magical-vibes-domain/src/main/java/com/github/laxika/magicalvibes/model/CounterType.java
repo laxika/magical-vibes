@@ -4,6 +4,7 @@ public enum CounterType {
     AIM,
     ANY,
     CHARGE,
+    EYEBALL,
     HATCHLING,
     LANDMARK,
     LOYALTY,

@@ -201,6 +201,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "put a +1/+1 counter on each creature you control" | `PutPlusOnePlusOneCounterOnEachOwnCreatureEffect()` | SPELL/trigger | |
 | "put a -1/-1 counter on target creature" | `PutMinusOneMinusOneCounterOnTargetCreatureEffect(1)` | SPELL/trigger | |
 | "proliferate" | `ProliferateEffect()` | SPELL/trigger | |
+| "put N <named> counters on CARDNAME" | `PutCountersOnSelfEffect(CounterType.X, N)` | trigger/ability | for a non-P/T named counter type on the source (e.g. Jar of Eyeballs: `CounterType.EYEBALL, 2`) |
+| "Remove all <named> counters from CARDNAME: Look at the top X cards…" | `RemoveAllCountersAsCostEffect(CounterType.X)` + `LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect()` | ability | X = counters removed, snapshotted into xValue (Jar of Eyeballs: `CounterType.EYEBALL`). The look effect reads xValue, so it works for any counter-removal cost that snapshots X |
 
 ## Tap / untap
 
