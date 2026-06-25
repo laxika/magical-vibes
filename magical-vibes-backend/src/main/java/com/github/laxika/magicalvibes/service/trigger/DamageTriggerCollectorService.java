@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsCo
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -84,6 +85,32 @@ public class DamageTriggerCollectorService {
         log.info("Game {} - {} triggers, {} gains control of {}",
                 gameData.id, match.permanent().getCard().getName(),
                 gameData.playerIdToName.get(sourceControllerId), match.permanent().getCard().getName());
+        return true;
+    }
+
+    // ── ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ──────────────────────────
+
+    @CollectsTrigger(value = DestroyDamageSourcePermanentEffect.class, slot = EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)
+    private boolean handleDestroyDamageSourceOnDamage(TriggerMatchContext match,
+            DestroyDamageSourcePermanentEffect destroyEffect, TriggerContext ctx) {
+        TriggerContext.DamageToController dc = (TriggerContext.DamageToController) ctx;
+        GameData gameData = match.gameData();
+
+        Permanent currentSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
+        if (currentSource == null) return false;
+        if (destroyEffect.filter() != null
+                && !gameQueryService.matchesPermanentPredicate(gameData, currentSource, destroyEffect.filter())) {
+            return false;
+        }
+
+        boolean destroyed = permanentRemovalService.tryDestroyPermanent(gameData, currentSource);
+        if (destroyed) {
+            String logEntry = match.permanent().getCard().getName() + " triggers - "
+                    + currentSource.getCard().getName() + " is destroyed.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+        log.info("Game {} - {} triggers, destroying damage source {}",
+                gameData.id, match.permanent().getCard().getName(), currentSource.getCard().getName());
         return true;
     }
 

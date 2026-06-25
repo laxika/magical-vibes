@@ -96,6 +96,7 @@ public class PermanentRemovalService {
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         boolean wasArtifact = gameQueryService.isArtifact(target);
+        boolean hadUndying = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.UNDYING);
         Optional<RemovedPermanentInfo> removed = removeFromBattlefield(gameData, target);
         if (removed.isEmpty()) {
             return false;
@@ -105,7 +106,7 @@ public class PermanentRemovalService {
 
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, controllerId);
-        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, controllerId, ownerId);
+        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, hadUndying, controllerId, ownerId);
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
         return true;
@@ -133,11 +134,12 @@ public class PermanentRemovalService {
 
         boolean wasCreature = gameQueryService.isCreature(gameData, target);
         boolean wasArtifact = gameQueryService.isArtifact(target);
+        boolean hadUndying = wasCreature && gameQueryService.hasKeyword(gameData, target, Keyword.UNDYING);
         RemovedPermanentInfo info = processRemovalCleanup(gameData, target, controllerId);
 
         triggerCollectionService.checkEnchantedPermanentLTBTriggers(gameData, target);
         triggerCollectionService.checkSelfLeavesTriggered(gameData, target, info.controllerId());
-        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, info.controllerId(), info.ownerId());
+        processGraveyardAndTriggers(gameData, target, wasCreature, wasArtifact, hadUndying, info.controllerId(), info.ownerId());
         handleSacrificeOnUnattach(gameData, target, sacrificeOnUnattachCreatureId);
         handleExileReturnOnLeave(gameData, target);
     }
@@ -444,6 +446,7 @@ public class PermanentRemovalService {
      */
     private void processGraveyardAndTriggers(GameData gameData, Permanent target,
                                               boolean wasCreature, boolean wasArtifact,
+                                              boolean hadUndying,
                                               UUID controllerId, UUID ownerId) {
         boolean wentToGraveyard = graveyardService.addCardToGraveyard(gameData, ownerId, target.getOriginalCard(), Zone.BATTLEFIELD);
         if (wentToGraveyard) {
@@ -457,7 +460,7 @@ public class PermanentRemovalService {
                 triggerCollectionService.checkOpponentCreatureDeathTriggers(gameData, controllerId);
                 triggerCollectionService.checkEquippedCreatureDeathTriggers(gameData, target.getId(), controllerId, target.getCard());
                 triggerCollectionService.triggerDelayedPoisonOnDeath(gameData, target.getCard().getId(), controllerId);
-                collectUndyingTrigger(gameData, target, ownerId);
+                collectUndyingTrigger(gameData, target, ownerId, hadUndying);
             }
             if (wasArtifact) {
                 triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
@@ -476,8 +479,8 @@ public class PermanentRemovalService {
      * "if it had no +1/+1 counters" intervening-if uses the counter count at the moment it died (the
      * permanent has already left the battlefield, so this is last-known information).
      */
-    private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID ownerId) {
-        if (!dyingPermanent.hasKeyword(Keyword.UNDYING)) return;
+    private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID ownerId, boolean hadUndying) {
+        if (!hadUndying) return;
         if (dyingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) return;
 
         Card dyingCard = dyingPermanent.getOriginalCard();
