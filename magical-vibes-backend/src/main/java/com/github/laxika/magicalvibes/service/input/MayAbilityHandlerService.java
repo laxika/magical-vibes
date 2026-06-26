@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGra
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
@@ -639,6 +640,11 @@ public class MayAbilityHandlerService {
                 anyGraveyard = effect.canTargetAnyGraveyard();
                 break;
             }
+            if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
+                filter = exileCopy.filter();
+                anyGraveyard = effect.canTargetAnyGraveyard();
+                break;
+            }
             if (effect.canTargetGraveyard()) {
                 anyGraveyard = effect.canTargetAnyGraveyard();
                 break;
@@ -794,6 +800,11 @@ public class MayAbilityHandlerService {
         for (CardEffect effect : ability.effects()) {
             if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint) {
                 filter = imprint.filter();
+                anyGraveyard = effect.canTargetAnyGraveyard();
+                break;
+            }
+            if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy) {
+                filter = exileCopy.filter();
                 anyGraveyard = effect.canTargetAnyGraveyard();
                 break;
             }

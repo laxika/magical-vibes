@@ -298,6 +298,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CreateTokenEffect.ofTreasureToken(int)` — treasure tokens
 - `CreateTokenForEachControlledPermanentEffect(PermanentPredicate, ...)` — token per permanent
 - `CreateTokenForEachOpponentCreatureEffect(...)` — token per opponent creature
+- `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(CardPredicate, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep)` — exile graveyard target, create token copy with optional extra subtypes/haste/end-step exile
 
 ## Life
 

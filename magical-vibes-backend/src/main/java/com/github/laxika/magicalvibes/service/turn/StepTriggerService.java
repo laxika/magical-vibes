@@ -348,15 +348,19 @@ public class StepTriggerService {
                     if (!anyPlayerCastTwo) continue;
                 }
 
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        playerId,
-                        perm.getCard().getName() + "'s upkeep ability",
-                        new ArrayList<>(List.of(effect)),
-                        activePlayerId,
-                        perm.getId()
-                ));
+                if (effect instanceof MayEffect may) {
+                    gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
+                } else {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            playerId,
+                            perm.getCard().getName() + "'s upkeep ability",
+                            new ArrayList<>(List.of(effect)),
+                            activePlayerId,
+                            perm.getId()
+                    ));
+                }
 
                 String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);

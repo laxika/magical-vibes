@@ -9,7 +9,10 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -30,6 +33,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEff
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
@@ -959,6 +963,118 @@ public class GraveyardReturnResolutionService {
         String playerName = gameData.playerIdToName.get(entry.getControllerId());
         gameBroadcastService.logAndBroadcast(gameData,
                 playerName + " exiles " + targetCard.getName() + " from a graveyard.");
+    }
+
+    /**
+     * Exiles a targeted graveyard card, then creates a token copy of that card with optional
+     * additional subtypes, haste, and end-step exile scheduling.
+     */
+    @HandlesEffect(ExileTargetCardFromGraveyardAndCreateTokenCopyEffect.class)
+    void resolveExileTargetCardFromGraveyardAndCreateTokenCopy(GameData gameData, StackEntry entry,
+                                                               ExileTargetCardFromGraveyardAndCreateTokenCopyEffect effect) {
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        if (targetCard == null) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (target no longer in a graveyard).");
+            return;
+        }
+
+        if (effect.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, effect.filter(), null)) {
+            String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (target is no longer a valid " + filterLabel + ").");
+            return;
+        }
+
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, targetCard.getId());
+        if (effect.ownGraveyardOnly() && graveyardOwnerId != null
+                && !graveyardOwnerId.equals(entry.getControllerId())) {
+            gameBroadcastService.logAndBroadcast(gameData,
+                    entry.getDescription() + " fizzles (target is not in your graveyard).");
+            return;
+        }
+
+        permanentRemovalService.removeCardFromGraveyardById(gameData, targetCard.getId());
+        if (graveyardOwnerId != null) {
+            exileService.exileCard(gameData, graveyardOwnerId, targetCard);
+        }
+
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        gameBroadcastService.logAndBroadcast(gameData,
+                playerName + " exiles " + targetCard.getName() + " from a graveyard.");
+
+        createTokenCopyFromCard(gameData, entry, targetCard, effect.additionalSubtypes(),
+                effect.grantHaste(), effect.exileAtEndStep());
+    }
+
+    private void createTokenCopyFromCard(GameData gameData, StackEntry entry, Card sourceCard,
+                                         List<CardSubtype> additionalSubtypes, boolean grantHaste,
+                                         boolean exileAtEndStep) {
+        UUID controllerId = entry.getControllerId();
+        int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
+        for (int copy = 0; copy < tokenMultiplier; copy++) {
+            Card tokenCard = new Card();
+            tokenCard.setName(sourceCard.getName());
+            tokenCard.setType(sourceCard.getType());
+            tokenCard.setAdditionalTypes(sourceCard.getAdditionalTypes());
+            tokenCard.setManaCost(sourceCard.getManaCost() != null ? sourceCard.getManaCost() : "");
+            tokenCard.setToken(true);
+            tokenCard.setColor(sourceCard.getColor());
+            tokenCard.setSupertypes(sourceCard.getSupertypes());
+            tokenCard.setPower(sourceCard.getPower());
+            tokenCard.setToughness(sourceCard.getToughness());
+            tokenCard.setCardText(sourceCard.getCardText());
+            tokenCard.setSetCode(sourceCard.getSetCode());
+            tokenCard.setCollectorNumber(sourceCard.getCollectorNumber());
+
+            List<CardSubtype> subtypes = new ArrayList<>();
+            if (sourceCard.getSubtypes() != null) {
+                subtypes.addAll(sourceCard.getSubtypes());
+            }
+            if (additionalSubtypes != null) {
+                for (CardSubtype subtype : additionalSubtypes) {
+                    if (!subtypes.contains(subtype)) {
+                        subtypes.add(subtype);
+                    }
+                }
+            }
+            tokenCard.setSubtypes(subtypes);
+
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            if (sourceCard.getKeywords() != null) {
+                keywords.addAll(sourceCard.getKeywords());
+            }
+            if (grantHaste) {
+                keywords.add(Keyword.HASTE);
+            }
+            tokenCard.setKeywords(keywords);
+
+            for (EffectSlot slot : EffectSlot.values()) {
+                for (EffectRegistration reg : sourceCard.getEffectRegistrations(slot)) {
+                    tokenCard.addEffect(slot, reg.effect(), reg.triggerMode());
+                }
+            }
+            for (ActivatedAbility ability : sourceCard.getActivatedAbilities()) {
+                tokenCard.addActivatedAbility(ability);
+            }
+            tokenCard.copyTargetingFrom(sourceCard);
+
+            Permanent tokenPermanent = new Permanent(tokenCard);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
+
+            if (exileAtEndStep) {
+                gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+            }
+
+            String logMsg = grantHaste
+                    ? "A token copy of " + sourceCard.getName() + " is created with haste."
+                    : "A token copy of " + sourceCard.getName() + " is created.";
+            gameBroadcastService.logAndBroadcast(gameData, logMsg);
+            log.info("Game {} - Token copy of {} created via {}", gameData.id, sourceCard.getName(),
+                    entry.getCard().getName());
+
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, tokenCard, null, false);
+        }
     }
 
     /**
