@@ -34,7 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresh
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NoOtherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnCo
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -171,12 +170,11 @@ public class StepTriggerService {
                     // so this always triggers as long as it's on the battlefield.
                     gameData.pendingCapriciousEfreetTargets.add(new PermanentChoiceContext.CapriciousEfreetOwnTarget(
                             perm.getCard(), activePlayerId, perm.getId()));
-                } else if (effect instanceof NoOtherSubtypeConditionalEffect noOtherSubtype) {
-                    // Intervening-if: only trigger if controller has no other permanents with the subtype
+                } else if (effect instanceof NoOtherPermanentConditionalEffect noOtherPermanent) {
+                    // Intervening-if: only trigger if controller has no other matching permanents
                     boolean hasOtherWithSubtype = battlefield.stream()
                             .anyMatch(p -> !p.getId().equals(perm.getId())
-                                    && gameQueryService.matchesPermanentPredicate(gameData, p,
-                                    new PermanentHasSubtypePredicate(noOtherSubtype.subtype())));
+                                    && gameQueryService.matchesPermanentPredicate(gameData, p, noOtherPermanent.filter()));
                     if (!hasOtherWithSubtype) {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
@@ -190,8 +188,8 @@ public class StepTriggerService {
 
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: no other {}s)",
-                                gameData.id, perm.getCard().getName(), noOtherSubtype.subtype().getDisplayName());
+                        log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: no other matching permanents)",
+                                gameData.id, perm.getCard().getName());
                     }
                 } else if (effect instanceof ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck) {
                     // Intervening-if: only trigger if controller's life total <= threshold

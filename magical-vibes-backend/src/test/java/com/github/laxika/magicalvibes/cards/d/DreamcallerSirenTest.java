@@ -11,8 +11,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,11 +47,12 @@ class DreamcallerSirenTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ControlsAnotherSubtypeConditionalEffect.class);
+                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
 
-        ControlsAnotherSubtypeConditionalEffect conditional =
-                (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.subtypes()).isEqualTo(Set.of(CardSubtype.PIRATE));
+        ControlsAnotherPermanentConditionalEffect conditional =
+                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        assertThat(conditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) conditional.filter()).subtype()).isEqualTo(CardSubtype.PIRATE);
         assertThat(conditional.wrapped()).isInstanceOf(TapTargetPermanentEffect.class);
     }
 

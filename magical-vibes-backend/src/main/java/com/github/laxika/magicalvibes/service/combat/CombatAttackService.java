@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -284,15 +284,14 @@ public class CombatAttackService {
                     return false;
                 });
 
-                // Filter out ControlsAnotherSubtypeConditionalEffect when condition not met (intervening-if, CR 603.4)
+                // Filter out ControlsAnotherPermanentConditionalEffect when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> {
-                    if (e instanceof ControlsAnotherSubtypeConditionalEffect cas) {
+                    if (e instanceof ControlsAnotherPermanentConditionalEffect capc) {
                         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
                         if (bf == null) return true;
                         return bf.stream().noneMatch(
                                 p -> !p.getId().equals(attacker.getId())
-                                        && (!cas.nontokenOnly() || !p.getCard().isToken())
-                                        && !Collections.disjoint(p.getCard().getSubtypes(), cas.subtypes()));
+                                        && gameQueryService.matchesPermanentPredicate(gameData, p, capc.filter()));
                     }
                     return false;
                 });

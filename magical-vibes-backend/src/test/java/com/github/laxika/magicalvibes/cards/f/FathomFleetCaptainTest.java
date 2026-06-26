@@ -11,15 +11,18 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,18 +31,26 @@ class FathomFleetCaptainTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has ControlsAnotherSubtypeConditionalEffect(PIRATE, nontokenOnly=true) wrapping MayPayManaEffect wrapping CreateTokenEffect on ON_ATTACK")
+    @DisplayName("Has ControlsAnotherPermanentConditionalEffect(PIRATE and nontoken) wrapping MayPayManaEffect")
     void hasCorrectStructure() {
         FathomFleetCaptain card = new FathomFleetCaptain();
 
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ControlsAnotherSubtypeConditionalEffect.class);
+                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
 
-        ControlsAnotherSubtypeConditionalEffect conditional =
-                (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.subtypes()).isEqualTo(Set.of(CardSubtype.PIRATE));
-        assertThat(conditional.nontokenOnly()).isTrue();
+        ControlsAnotherPermanentConditionalEffect conditional =
+                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
+        assertThat(conditional.filter()).isInstanceOf(PermanentAllOfPredicate.class);
+        PermanentAllOfPredicate filter = (PermanentAllOfPredicate) conditional.filter();
+        assertThat(filter.predicates()).anySatisfy(predicate -> {
+            assertThat(predicate).isInstanceOf(PermanentHasSubtypePredicate.class);
+            assertThat(((PermanentHasSubtypePredicate) predicate).subtype()).isEqualTo(CardSubtype.PIRATE);
+        });
+        assertThat(filter.predicates()).anySatisfy(predicate -> {
+            assertThat(predicate).isInstanceOf(PermanentNotPredicate.class);
+            assertThat(((PermanentNotPredicate) predicate).predicate()).isInstanceOf(PermanentIsTokenPredicate.class);
+        });
         assertThat(conditional.wrapped()).isInstanceOf(MayPayManaEffect.class);
 
         MayPayManaEffect mayPay = (MayPayManaEffect) conditional.wrapped();

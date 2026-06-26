@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NoOtherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -355,11 +355,13 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("NoOtherSubtypeConditionalEffect triggers when no other permanents share the subtype")
+        @DisplayName("NoOtherPermanentConditionalEffect triggers when no other permanents match")
         void noOtherSubtypeTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Tribal Card");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new NoOtherSubtypeConditionalEffect(CardSubtype.HUMAN, new GainLifeEffect(1)));
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new NoOtherPermanentConditionalEffect(
+                    new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                    new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             // Only one permanent — no other permanents to match, so condition is met
@@ -371,11 +373,13 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("NoOtherSubtypeConditionalEffect does not trigger when other permanents share the subtype")
+        @DisplayName("NoOtherPermanentConditionalEffect does not trigger when another permanent matches")
         void noOtherSubtypeDoesNotTriggerWhenOtherExists() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Tribal Card");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new NoOtherSubtypeConditionalEffect(CardSubtype.HUMAN, new GainLifeEffect(1)));
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new NoOtherPermanentConditionalEffect(
+                    new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                    new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 

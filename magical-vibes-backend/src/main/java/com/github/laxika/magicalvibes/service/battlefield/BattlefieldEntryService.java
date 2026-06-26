@@ -45,7 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
@@ -547,8 +547,8 @@ public class BattlefieldEntryService {
                         if (e instanceof MorbidConditionalEffect) {
                             return gameQueryService.isMorbidMet(gameData);
                         }
-                        if (e instanceof ControlsAnotherSubtypeConditionalEffect cas) {
-                            return gameQueryService.controlsAnotherSubtype(gameData, controllerId, card, cas.subtypes());
+                        if (e instanceof ControlsAnotherPermanentConditionalEffect capc) {
+                            return gameQueryService.controlsAnotherPermanent(gameData, controllerId, card, capc.filter());
                         }
                         if (e instanceof RaidConditionalEffect) {
                             return gameData.playersDeclaredAttackersThisTurn.contains(controllerId);

@@ -31,7 +31,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `RaidConditionalEffect(CardEffect)` — attacked this turn
 - `TriggeringCardConditionalEffect(CardPredicate, CardEffect)` — triggering card matches predicate
 - `TriggeringPermanentConditionalEffect(PermanentPredicate, CardEffect)` — triggering permanent matches predicate
-- `ControlsAnotherSubtypeConditionalEffect(CardSubtype, CardEffect)` — controls another subtype
+- `ControlsAnotherPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls another matching permanent
 - `ControllerLifeThresholdConditionalEffect(int, CardEffect)` — life >= N
 - `ControllerTurnConditionalEffect(CardEffect)` — during your turn
 - `ControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls matching
@@ -46,7 +46,7 @@ Replacement wrappers (pick between base/upgraded at resolution):
 - `MorbidReplacementEffect(CardEffect base, CardEffect morbid)`
 - `RaidReplacementEffect(CardEffect base, CardEffect raid)`
 - `KickerReplacementEffect(CardEffect base, CardEffect kicked)`
-- `ControlsSubtypeReplacementEffect(CardSubtype, CardEffect base, CardEffect upgraded)`
+- `ControlsPermanentReplacementEffect(PermanentPredicate, CardEffect base, CardEffect upgraded)`
 
 Other wrappers:
 - `ChooseOneEffect(List<ChooseOneOption>)` — modal spell

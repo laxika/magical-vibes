@@ -258,6 +258,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "if this spell was kicked, [additional effect]" | `KickedConditionalEffect(innerEffect)` | Kicker adds |
 | "if you control a [subtype], [effect]" | `ControlsPermanentConditionalEffect(new PermanentHasSubtypePredicate(subtype), innerEffect)` | Permanent predicate check |
 | "if you control a [matching permanent], [effect]" | `ControlsPermanentConditionalEffect(predicate, innerEffect)` | Permanent check |
+| "if you control a [subtype], [upgraded effect] instead" | `ControlsPermanentReplacementEffect(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Resolution-time replacement |
 | "choose one —" | `ChooseOneEffect(List<ChooseOneOption>)` | Modal |
 
 ## Turn / phase

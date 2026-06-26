@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NoOtherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -18,8 +19,8 @@ import java.util.Set;
 public class ThopterAssembly extends Card {
 
     public ThopterAssembly() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new NoOtherSubtypeConditionalEffect(
-                CardSubtype.THOPTER,
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new NoOtherPermanentConditionalEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.THOPTER),
                 new ReturnSelfToHandAndCreateTokensEffect(
                         new CreateTokenEffect(5, "Thopter", 1, 1,
                                 null, List.of(CardSubtype.THOPTER),

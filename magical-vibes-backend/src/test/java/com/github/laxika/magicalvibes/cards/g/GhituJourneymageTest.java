@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,11 +27,12 @@ class GhituJourneymageTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ControlsAnotherSubtypeConditionalEffect.class);
+                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
 
-        ControlsAnotherSubtypeConditionalEffect conditional =
-                (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.subtypes()).isEqualTo(Set.of(CardSubtype.WIZARD));
+        ControlsAnotherPermanentConditionalEffect conditional =
+                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        assertThat(conditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) conditional.filter()).subtype()).isEqualTo(CardSubtype.WIZARD);
         assertThat(conditional.wrapped()).isInstanceOf(DealDamageToEachOpponentEffect.class);
 
         DealDamageToEachOpponentEffect damage = (DealDamageToEachOpponentEffect) conditional.wrapped();
@@ -134,7 +135,7 @@ class GhituJourneymageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("controls another Wizard ability does nothing"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("controls another matching permanent ability does nothing"));
     }
 
     // ===== Creature enters battlefield regardless =====

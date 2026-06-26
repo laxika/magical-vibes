@@ -6,9 +6,13 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +22,11 @@ public class FathomFleetCaptain extends Card {
 
     public FathomFleetCaptain() {
         addEffect(EffectSlot.ON_ATTACK,
-                new ControlsAnotherSubtypeConditionalEffect(CardSubtype.PIRATE, true,
+                new ControlsAnotherPermanentConditionalEffect(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
+                                new PermanentNotPredicate(new PermanentIsTokenPredicate())
+                        )),
                         new MayPayManaEffect("{2}",
                                 new CreateTokenEffect("Pirate", 2, 2,
                                         CardColor.BLACK,

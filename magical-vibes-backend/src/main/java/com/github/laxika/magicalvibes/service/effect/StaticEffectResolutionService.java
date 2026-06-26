@@ -64,7 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresh
 import com.github.laxika.magicalvibes.model.effect.ControllerTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
@@ -106,7 +106,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -1285,14 +1284,13 @@ public class StaticEffectResolutionService {
         }
     }
 
-    @HandlesStaticEffect(value = ControlsAnotherSubtypeConditionalEffect.class, selfOnly = true)
-    private void resolveControlsAnotherSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var conditional = (ControlsAnotherSubtypeConditionalEffect) effect;
-        int subtypeCount = countControlledPermanents(context, p ->
+    @HandlesStaticEffect(value = ControlsAnotherPermanentConditionalEffect.class, selfOnly = true)
+    private void resolveControlsAnotherPermanentConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControlsAnotherPermanentConditionalEffect) effect;
+        int matchCount = countControlledPermanents(context, p ->
                 !p.getId().equals(context.source().getId())
-                        && (!conditional.nontokenOnly() || !p.getCard().isToken())
-                        && !Collections.disjoint(p.getCard().getSubtypes(), conditional.subtypes()));
-        if (subtypeCount > 0) {
+                        && matchesStaticFilter(p, conditional.filter()));
+        if (matchCount > 0) {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {

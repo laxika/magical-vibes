@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,7 +24,7 @@ class ThrashOfRaptorsTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has two STATIC effects: ControlsAnotherSubtypeConditionalEffect(DINOSAUR) wrapping StaticBoostEffect and GrantKeywordEffect")
+    @DisplayName("Has two STATIC effects: ControlsAnotherPermanentConditionalEffect(DINOSAUR) wrapping StaticBoostEffect and GrantKeywordEffect")
     void hasCorrectStaticEffects() {
         ThrashOfRaptors card = new ThrashOfRaptors();
 
@@ -32,10 +32,11 @@ class ThrashOfRaptorsTest extends BaseCardTest {
 
         // First effect: conditional +2/+0
         assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(ControlsAnotherSubtypeConditionalEffect.class);
-        ControlsAnotherSubtypeConditionalEffect boostConditional =
-                (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(boostConditional.subtypes()).isEqualTo(Set.of(CardSubtype.DINOSAUR));
+                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
+        ControlsAnotherPermanentConditionalEffect boostConditional =
+                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
+        assertThat(boostConditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) boostConditional.filter()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
         assertThat(boostConditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
         StaticBoostEffect boost = (StaticBoostEffect) boostConditional.wrapped();
         assertThat(boost.powerBoost()).isEqualTo(2);
@@ -44,10 +45,11 @@ class ThrashOfRaptorsTest extends BaseCardTest {
 
         // Second effect: conditional trample
         assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(ControlsAnotherSubtypeConditionalEffect.class);
-        ControlsAnotherSubtypeConditionalEffect keywordConditional =
-                (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordConditional.subtypes()).isEqualTo(Set.of(CardSubtype.DINOSAUR));
+                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
+        ControlsAnotherPermanentConditionalEffect keywordConditional =
+                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
+        assertThat(keywordConditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) keywordConditional.filter()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
         assertThat(keywordConditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) keywordConditional.wrapped();
         assertThat(grant.keywords()).containsExactly(Keyword.TRAMPLE);

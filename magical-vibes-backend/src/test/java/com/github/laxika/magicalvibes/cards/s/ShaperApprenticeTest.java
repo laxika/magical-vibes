@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,17 +23,18 @@ class ShaperApprenticeTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC ControlsAnotherSubtypeConditionalEffect(MERFOLK) wrapping GrantKeywordEffect(FLYING, SELF)")
+    @DisplayName("Has STATIC ControlsAnotherPermanentConditionalEffect(MERFOLK) wrapping GrantKeywordEffect(FLYING, SELF)")
     void hasCorrectStaticEffect() {
         ShaperApprentice card = new ShaperApprentice();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlsAnotherSubtypeConditionalEffect.class);
+                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
 
-        ControlsAnotherSubtypeConditionalEffect conditional =
-                (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.subtypes()).containsExactly(CardSubtype.MERFOLK);
+        ControlsAnotherPermanentConditionalEffect conditional =
+                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(conditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) conditional.filter()).subtype()).isEqualTo(CardSubtype.MERFOLK);
         assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();

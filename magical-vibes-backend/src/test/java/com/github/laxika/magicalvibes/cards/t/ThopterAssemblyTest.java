@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.NoOtherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.NoOtherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,11 +38,12 @@ class ThopterAssemblyTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoOtherSubtypeConditionalEffect.class);
+                .isInstanceOf(NoOtherPermanentConditionalEffect.class);
 
-        NoOtherSubtypeConditionalEffect conditional =
-                (NoOtherSubtypeConditionalEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.THOPTER);
+        NoOtherPermanentConditionalEffect conditional =
+                (NoOtherPermanentConditionalEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
+        assertThat(conditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) conditional.filter()).subtype()).isEqualTo(CardSubtype.THOPTER);
         assertThat(conditional.wrapped()).isInstanceOf(ReturnSelfToHandAndCreateTokensEffect.class);
     }
 

@@ -10,16 +10,16 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,18 +29,19 @@ class HeadstrongBruteTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC CantBlockEffect and ControlsAnotherSubtypeConditionalEffect(PIRATE) wrapping GrantKeywordEffect(MENACE, SELF)")
+    @DisplayName("Has STATIC CantBlockEffect and ControlsAnotherPermanentConditionalEffect(PIRATE) wrapping GrantKeywordEffect(MENACE, SELF)")
     void hasCorrectStaticEffects() {
         HeadstrongBrute card = new HeadstrongBrute();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(CantBlockEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(ControlsAnotherSubtypeConditionalEffect.class);
+                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
 
-        ControlsAnotherSubtypeConditionalEffect conditional =
-                (ControlsAnotherSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(conditional.subtypes()).isEqualTo(Set.of(CardSubtype.PIRATE));
+        ControlsAnotherPermanentConditionalEffect conditional =
+                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
+        assertThat(conditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) conditional.filter()).subtype()).isEqualTo(CardSubtype.PIRATE);
         assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
