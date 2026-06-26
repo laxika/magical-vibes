@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThis
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
@@ -470,6 +471,43 @@ public class PlayerInteractionResolutionService {
                 + " card" + (discarded.size() != 1 ? "s" : "") + ") (" + cardName + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discarded.size(), cardName);
+    }
+
+    @HandlesEffect(DiscardOwnHandThenDrawThatManyEffect.class)
+    void resolveDiscardOwnHandThenDrawThatMany(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String cardName = entry.getCard().getName();
+        List<Card> hand = gameData.playerHands.get(controllerId);
+
+        if (hand == null || hand.isEmpty()) {
+            String logEntry = playerName + " has no cards to discard (" + cardName + ").";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
+            return;
+        }
+
+        List<Card> discarded = new ArrayList<>(hand);
+        int discardCount = discarded.size();
+        hand.clear();
+        gameData.discardCausedByOpponent = false;
+
+        for (Card card : discarded) {
+            graveyardService.addCardToGraveyard(gameData, controllerId, card);
+            triggerCollectionService.checkDiscardTriggers(gameData, controllerId, card);
+        }
+
+        String discardLog = playerName + " discards their hand (" + discardCount
+                + " card" + (discardCount != 1 ? "s" : "") + ") (" + cardName + ").";
+        gameBroadcastService.logAndBroadcast(gameData, discardLog);
+        log.info("Game {} - {} discards hand of {} cards for {}", gameData.id, playerName, discardCount, cardName);
+
+        for (int i = 0; i < discardCount; i++) {
+            drawService.resolveDrawCard(gameData, controllerId);
+        }
+        String drawLog = playerName + " draws " + discardCount + " card" + (discardCount != 1 ? "s" : "") + ".";
+        gameBroadcastService.logAndBroadcast(gameData, drawLog);
+        log.info("Game {} - {} draws {} cards for {}", gameData.id, playerName, discardCount, cardName);
     }
 
     @HandlesEffect(DrawDiscardTransformIfCreatureDiscardedEffect.class)

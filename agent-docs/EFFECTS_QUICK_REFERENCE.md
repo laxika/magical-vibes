@@ -233,6 +233,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DiscardAndDrawCardEffect(int discard, int draw)` — rummage
 - `DiscardCardEffect(int)` — discard N
 - `DiscardOwnHandEffect()` — discard entire hand
+- `DiscardOwnHandThenDrawThatManyEffect()` — discard entire hand, then draw that many
 - `EachPlayerDiscardsEffect(int)` — each player discards
 - `EachOpponentDiscardsEffect(int)` — each opponent discards
 - `TargetPlayerDiscardsEffect(int)` — target discards

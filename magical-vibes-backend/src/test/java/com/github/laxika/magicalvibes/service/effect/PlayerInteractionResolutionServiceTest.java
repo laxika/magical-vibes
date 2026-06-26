@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardAndUntapSelfEffect
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardUnlessAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -629,6 +630,48 @@ class PlayerInteractionResolutionServiceTest {
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("discards their hand") && msg.contains("3 cards")));
+        }
+    }
+
+    // =========================================================================
+    // DiscardOwnHandThenDrawThatManyEffect
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveDiscardOwnHandThenDrawThatMany")
+    class ResolveDiscardOwnHandThenDrawThatMany {
+
+        @Test
+        @DisplayName("Discards all cards from hand then draws that many")
+        void discardsAllThenDraws() {
+            Card card = createCard("Shattered Perception");
+            Card handCard1 = createCard("Mountain");
+            Card handCard2 = createCard("Forest");
+            gd.playerHands.get(player1Id).addAll(List.of(handCard1, handCard2));
+            StackEntry entry = createEntry(card, player1Id, List.of(new DiscardOwnHandThenDrawThatManyEffect()));
+
+            service.resolveDiscardOwnHandThenDrawThatMany(gd, entry);
+
+            assertThat(gd.playerHands.get(player1Id)).isEmpty();
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, handCard1);
+            verify(graveyardService).addCardToGraveyard(gd, player1Id, handCard2);
+            verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("draws 2 cards")));
+        }
+
+        @Test
+        @DisplayName("Does nothing with empty hand")
+        void doesNothingWithEmptyHand() {
+            Card card = createCard("Shattered Perception");
+            StackEntry entry = createEntry(card, player1Id, List.of(new DiscardOwnHandThenDrawThatManyEffect()));
+
+            service.resolveDiscardOwnHandThenDrawThatMany(gd, entry);
+
+            verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
+            verify(drawService, never()).resolveDrawCard(any(), any());
+            verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
+                    msg.contains("no cards to discard")));
         }
     }
 

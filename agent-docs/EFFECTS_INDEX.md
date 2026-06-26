@@ -475,6 +475,7 @@ Pass `null` as filter to allow any card.
 | `DrawCardsEqualToLifeGainedEffect` | `()` | triggered: draw cards equal to life gained. Slot: `ON_CONTROLLER_GAINS_LIFE`. Amount from trigger context |
 | `DiscardCardEffect` | `(int amount)` | discard N cards |
 | `DiscardOwnHandEffect` | `()` | discard controller's entire hand. All cards go directly to graveyard without player choice. Fires discard triggers for each card. Used by The Flame of Keld (Chapter I) |
+| `DiscardOwnHandThenDrawThatManyEffect` | `()` | discard controller's entire hand, then draw that many cards. All discards are automatic (no player choice). Fires discard triggers for each card. Used by Shattered Perception |
 | `DiscardUpToThenDrawThatManyEffect` | `(int maxDiscard)` | discard up to N cards, then draw that many cards (rummage with "up to" choice). Uses X value choice for count selection, then sequential discard interaction, then draws. Used by Jaya Ballard. |
 | `EachPlayerDiscardsEffect` | `(int amount)` | each player discards N cards in APNAP order (active player first). Uses queued sequential discard interaction. Controller's discard has `discardCausedByOpponent=false`; others have `true`. |
 | `EachOpponentDiscardsEffect` | `(int amount)` | each opponent discards N cards in APNAP order (skips controller). Uses same queued sequential discard interaction as EachPlayerDiscardsEffect. All discards have `discardCausedByOpponent=true`. Convenience ctor: `()` defaults to amount=1. |

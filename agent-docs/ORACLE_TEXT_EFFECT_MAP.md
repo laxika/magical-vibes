@@ -112,6 +112,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "each player draws N cards" | `EachPlayerDrawsCardEffect(N)` | SPELL | |
 | "draw N cards, then discard M cards" | `DrawAndDiscardCardEffect(N, M)` | SPELL | Loot |
 | "discard N cards, then draw M cards" | `DiscardAndDrawCardEffect(N, M)` | SPELL | Rummage |
+| "discard all the cards in your hand, then draw that many cards" | `DiscardOwnHandThenDrawThatManyEffect()` | SPELL | Shattered Perception |
 | "discard a card" / "discard N cards" | `DiscardCardEffect(N)` | SPELL/trigger | Controller discards |
 | "target player discards N cards" | `TargetPlayerDiscardsEffect(N)` | SPELL | |
 | "each player discards N cards" | `EachPlayerDiscardsEffect(N)` | SPELL | |
