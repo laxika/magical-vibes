@@ -7,17 +7,19 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "249")
 @CardRegistration(set = "DOM", collectorNumber = "248")
 public class WoodlandCemetery extends Card {
 
     public WoodlandCemetery() {
-        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlLandSubtypeEffect(
-                List.of(CardSubtype.SWAMP, CardSubtype.FOREST)
+        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SWAMP, CardSubtype.FOREST))
         ));
 
         // {T}: Add {B}.

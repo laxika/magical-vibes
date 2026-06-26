@@ -12,7 +12,7 @@ All paths relative to `cards/`.
 | Creature land (artifact) | `i/InkmothNexus.java` | manland that becomes artifact creature (uses 6-arg AnimateLandEffect with grantedCardTypes) |
 | Creature land + sub-ability | `s/SpawningPool.java` | manland + regenerate with `ONLY_WHILE_CREATURE` restriction |
 | X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutXPlusOnePlusOneCountersOnTargetPermanentEffect + AnimateTargetPermanentEffect(0, 0, ELEMENTAL, HASTE) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
-| Check land | `d/DragonskullSummit.java` | STATIC EntersTappedUnlessControlLandSubtypeEffect(subtypes) + 2 mana abilities |
+| Check land | `d/DragonskullSummit.java` | STATIC EntersTappedUnlessControlsPermanentEffect(PermanentHasAnySubtypePredicate) + 2 mana abilities |
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC EntersTappedUnlessFewLandsEffect(2) + 2 mana abilities |
 | Utility land | `q/Quicksand.java` | mana ability + sacrifice-to-debuff ability |
 | Utility land (exile-return) | `m/MystifyingMaze.java` | colorless mana ability + {4},{T}: exile target attacking creature, return tapped at end step (ExileTargetPermanentAndReturnAtEndStepEffect(true) + PermanentIsAttackingPredicate) |

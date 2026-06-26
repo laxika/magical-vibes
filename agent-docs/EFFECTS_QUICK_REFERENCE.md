@@ -364,6 +364,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Keywords / abilities
 
 - `GrantKeywordEffect(Keyword, GrantScope)` or `(Keyword, GrantScope, PermanentPredicate)` or `(Set<Keyword>, GrantScope)` — grant keywords
+- `GrantKeywordToTargetIfPermanentEffect(Keyword, PermanentPredicate)` — grant keyword to target only if it matches predicate
 - `GrantFlashToCardTypeEffect(CardPredicate)` — flash to card types (static)
 - `GrantActivatedAbilityEffect(ActivatedAbility, GrantScope)` or `(ActivatedAbility, GrantScope, PermanentPredicate)` — grant ability
 - `GrantAdditionalBlockEffect(int)` — block N additional
@@ -434,8 +435,10 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Static restrictions / taxes
 
 - `EntersTappedEffect()` — enters tapped
+- `EntersTappedUnlessControlsPermanentEffect(PermanentPredicate)` — enters tapped unless you control a matching permanent (check lands)
 - `NoMaximumHandSizeEffect()` — no max hand size (static)
 - `IncreaseOpponentCastCostEffect(Set<CardType>, int)` — opponents' spells cost more
+- `IncreaseOpponentCostForTargetingControlledPermanentEffect(PermanentPredicate, int)` — opponent spells/abilities targeting your matching permanent cost more
 - `ReduceOwnCastCostForCardTypeEffect(Set<CardType>, int)` — own spells cost less
 - `ReduceOwnCastCostIfControlsPermanentEffect(PermanentPredicate, int)` — this spell costs less if you control a matching permanent
 - `ReduceOwnCastCostIfTargetingControlledPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target is your matching permanent

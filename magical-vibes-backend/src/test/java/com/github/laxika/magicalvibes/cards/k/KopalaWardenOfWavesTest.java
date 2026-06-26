@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JungleDelver;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,6 +21,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KopalaWardenOfWavesTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Has targeting tax static effect for Merfolk")
+    void hasTargetingTaxEffect() {
+        KopalaWardenOfWaves card = new KopalaWardenOfWaves();
+
+        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
+                .isEqualTo(new IncreaseOpponentCostForTargetingControlledPermanentEffect(
+                        new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), 2));
+    }
 
     @Nested
     @DisplayName("Spell targeting tax")

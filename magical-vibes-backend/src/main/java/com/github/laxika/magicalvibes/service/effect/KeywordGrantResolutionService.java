@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilities
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
@@ -147,15 +147,15 @@ public class KeywordGrantResolutionService {
         log.info("Game {} - {} gains {} (legendary conditional)", gameData.id, target.getCard().getName(), effect.keyword());
     }
 
-    @HandlesEffect(GrantKeywordToTargetIfSubtypeEffect.class)
-    private void resolveGrantKeywordToTargetIfSubtype(GameData gameData, StackEntry entry,
-                                                      GrantKeywordToTargetIfSubtypeEffect effect) {
+    @HandlesEffect(GrantKeywordToTargetIfPermanentEffect.class)
+    private void resolveGrantKeywordToTargetIfPermanent(GameData gameData, StackEntry entry,
+                                                        GrantKeywordToTargetIfPermanentEffect effect) {
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             return;
         }
 
-        if (!target.getCard().getSubtypes().contains(effect.subtype())) {
+        if (!gameQueryService.matchesPermanentPredicate(gameData, target, effect.predicate())) {
             return;
         }
 
@@ -163,7 +163,7 @@ public class KeywordGrantResolutionService {
         String keywordName = effect.keyword().name().charAt(0) + effect.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String logEntry = target.getCard().getName() + " gains " + keywordName + " until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gains {} (subtype conditional)", gameData.id, target.getCard().getName(), effect.keyword());
+        log.info("Game {} - {} gains {} (predicate conditional)", gameData.id, target.getCard().getName(), effect.keyword());
     }
 
     @HandlesEffect(GrantChosenKeywordToTargetEffect.class)

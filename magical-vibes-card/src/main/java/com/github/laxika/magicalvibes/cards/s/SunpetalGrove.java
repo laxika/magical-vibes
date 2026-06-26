@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "228")
 @CardRegistration(set = "M11", collectorNumber = "228")
@@ -17,8 +19,8 @@ import java.util.List;
 public class SunpetalGrove extends Card {
 
     public SunpetalGrove() {
-        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlLandSubtypeEffect(
-                List.of(CardSubtype.FOREST, CardSubtype.PLAINS)
+        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FOREST, CardSubtype.PLAINS))
         ));
 
         // {T}: Add {G}.

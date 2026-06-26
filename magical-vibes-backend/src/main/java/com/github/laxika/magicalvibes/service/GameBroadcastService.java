@@ -35,7 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
@@ -1415,13 +1415,14 @@ public class GameBroadcastService {
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (effect instanceof IncreaseOpponentCostForTargetingControlledSubtypeEffect taxEffect) {
+                    if (effect instanceof IncreaseOpponentCostForTargetingControlledPermanentEffect taxEffect) {
                         for (UUID tid : allTargetIds) {
                             Permanent targetPerm = gameQueryService.findPermanentById(gameData, tid);
                             if (targetPerm != null) {
                                 UUID targetController = gameQueryService.findPermanentController(gameData, tid);
                                 if (controllerId.equals(targetController)
-                                        && gameQueryService.permanentHasSubtype(targetPerm, taxEffect.subtype())) {
+                                        && gameQueryService.matchesPermanentPredicate(
+                                                gameData, targetPerm, taxEffect.predicate())) {
                                     tax += taxEffect.amount();
                                     break;
                                 }

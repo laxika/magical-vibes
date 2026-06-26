@@ -7,17 +7,19 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "242")
 @CardRegistration(set = "DOM", collectorNumber = "241")
 public class IsolatedChapel extends Card {
 
     public IsolatedChapel() {
-        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlLandSubtypeEffect(
-                List.of(CardSubtype.PLAINS, CardSubtype.SWAMP)
+        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLAINS, CardSubtype.SWAMP))
         ));
 
         // {T}: Add {W}.

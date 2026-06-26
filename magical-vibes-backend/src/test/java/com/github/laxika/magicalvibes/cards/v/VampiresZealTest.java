@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,9 @@ class VampiresZealTest extends BaseCardTest {
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordToTargetIfSubtypeEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
+                .isEqualTo(new GrantKeywordToTargetIfPermanentEffect(
+                        Keyword.FIRST_STRIKE, new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.VAMPIRE)));
 
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
         assertThat(boost.powerBoost()).isEqualTo(2);

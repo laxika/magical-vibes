@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "227")
 @CardRegistration(set = "M11", collectorNumber = "227")
@@ -17,8 +19,8 @@ import java.util.List;
 public class RootboundCrag extends Card {
 
     public RootboundCrag() {
-        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlLandSubtypeEffect(
-                List.of(CardSubtype.MOUNTAIN, CardSubtype.FOREST)
+        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MOUNTAIN, CardSubtype.FOREST))
         ));
 
         // {T}: Add {R}.

@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "223")
 @CardRegistration(set = "M11", collectorNumber = "223")
@@ -17,8 +19,8 @@ import java.util.List;
 public class DragonskullSummit extends Card {
 
     public DragonskullSummit() {
-        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlLandSubtypeEffect(
-                List.of(CardSubtype.SWAMP, CardSubtype.MOUNTAIN)
+        addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SWAMP, CardSubtype.MOUNTAIN))
         ));
 
         // {T}: Add {B}.

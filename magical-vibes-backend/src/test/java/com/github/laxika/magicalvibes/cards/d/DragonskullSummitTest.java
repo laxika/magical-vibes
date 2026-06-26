@@ -10,12 +10,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,14 +30,9 @@ class DragonskullSummitTest extends BaseCardTest {
     void hasConditionalEntersTappedEffect() {
         DragonskullSummit card = new DragonskullSummit();
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof EntersTappedUnlessControlLandSubtypeEffect)
-                .hasSize(1);
-        EntersTappedUnlessControlLandSubtypeEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EntersTappedUnlessControlLandSubtypeEffect)
-                .map(e -> (EntersTappedUnlessControlLandSubtypeEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.requiredSubtypes()).containsExactlyInAnyOrder(CardSubtype.SWAMP, CardSubtype.MOUNTAIN);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
+                .isEqualTo(new EntersTappedUnlessControlsPermanentEffect(
+                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SWAMP, CardSubtype.MOUNTAIN))));
     }
 
     @Test

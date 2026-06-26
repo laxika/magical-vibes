@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
@@ -618,6 +619,82 @@ class GameBroadcastServiceTest {
             List<Integer> playable = svc.getPlayableCardIndices(gd, player1Id, 0);
 
             assertThat(playable).contains(0);
+        }
+    }
+
+    @Nested
+    @DisplayName("getTargetingSubtypeTax")
+    class TargetingSubtypeTax {
+
+        @Test
+        @DisplayName("Applies tax when opponent targets a matching controlled permanent")
+        void appliesTaxForMatchingTarget() {
+            var predicate = new PermanentHasSubtypePredicate(CardSubtype.MERFOLK);
+
+            Card kopala = new Card();
+            kopala.setName("Kopala, Warden of Waves");
+            kopala.setType(CardType.CREATURE);
+            kopala.addEffect(EffectSlot.STATIC,
+                    new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(kopala));
+
+            Card merfolk = new Card();
+            merfolk.setName("Merfolk");
+            merfolk.setType(CardType.CREATURE);
+            Permanent merfolkPermanent = new Permanent(merfolk);
+            gd.playerBattlefields.get(player1Id).add(merfolkPermanent);
+
+            when(gameQueryService.findPermanentById(gd, merfolkPermanent.getId())).thenReturn(merfolkPermanent);
+            when(gameQueryService.findPermanentController(gd, merfolkPermanent.getId())).thenReturn(player1Id);
+            when(gameQueryService.matchesPermanentPredicate(gd, merfolkPermanent, predicate)).thenReturn(true);
+
+            assertThat(svc.getTargetingSubtypeTax(gd, player2Id, merfolkPermanent.getId(), null)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("No tax when target does not match predicate")
+        void noTaxWhenTargetDoesNotMatch() {
+            var predicate = new PermanentHasSubtypePredicate(CardSubtype.MERFOLK);
+
+            Card kopala = new Card();
+            kopala.setName("Kopala, Warden of Waves");
+            kopala.setType(CardType.CREATURE);
+            kopala.addEffect(EffectSlot.STATIC,
+                    new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(kopala));
+
+            Card bear = new Card();
+            bear.setName("Grizzly Bears");
+            bear.setType(CardType.CREATURE);
+            Permanent bearPermanent = new Permanent(bear);
+            gd.playerBattlefields.get(player1Id).add(bearPermanent);
+
+            when(gameQueryService.findPermanentById(gd, bearPermanent.getId())).thenReturn(bearPermanent);
+            when(gameQueryService.findPermanentController(gd, bearPermanent.getId())).thenReturn(player1Id);
+            when(gameQueryService.matchesPermanentPredicate(gd, bearPermanent, predicate)).thenReturn(false);
+
+            assertThat(svc.getTargetingSubtypeTax(gd, player2Id, bearPermanent.getId(), null)).isZero();
+        }
+
+        @Test
+        @DisplayName("No tax when caster controls the taxing permanent")
+        void noTaxWhenCasterControlsTaxSource() {
+            var predicate = new PermanentHasSubtypePredicate(CardSubtype.MERFOLK);
+
+            Card kopala = new Card();
+            kopala.setName("Kopala, Warden of Waves");
+            kopala.setType(CardType.CREATURE);
+            kopala.addEffect(EffectSlot.STATIC,
+                    new IncreaseOpponentCostForTargetingControlledPermanentEffect(predicate, 2));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(kopala));
+
+            Card merfolk = new Card();
+            merfolk.setName("Merfolk");
+            merfolk.setType(CardType.CREATURE);
+            Permanent merfolkPermanent = new Permanent(merfolk);
+            gd.playerBattlefields.get(player1Id).add(merfolkPermanent);
+
+            assertThat(svc.getTargetingSubtypeTax(gd, player1Id, merfolkPermanent.getId(), null)).isZero();
         }
     }
 }
