@@ -38,7 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderContro
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.HexproofFromColorsEffect;
@@ -1819,8 +1819,8 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the given permanent has an aura or equipment attached to it
      * that carries a static effect of the given type. Also unwraps
-     * {@link EnchantedCreatureSubtypeConditionalEffect} wrappers: if the currently active
-     * inner effect (based on the creature's subtype) matches, returns {@code true}.
+     * {@link EnchantedPermanentConditionalEffect} wrappers: if the currently active
+     * inner effect (based on the enchanted permanent predicate) matches, returns {@code true}.
      */
     public boolean hasAuraWithEffect(GameData gameData, Permanent creature, Class<? extends CardEffect> effectClass) {
         return gameData.anyPermanentMatches(p ->
@@ -1831,9 +1831,10 @@ public class GameQueryService {
 
     private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect, Class<? extends CardEffect> effectClass) {
         if (effectClass.isInstance(effect)) return true;
-        if (effect instanceof EnchantedCreatureSubtypeConditionalEffect cond) {
-            boolean hasSubtype = permanentHasSubtype(creature, cond.subtype());
-            CardEffect activeEffect = hasSubtype ? cond.ifMatch() : cond.ifNotMatch();
+        if (effect instanceof EnchantedPermanentConditionalEffect cond) {
+            CardEffect activeEffect = matchesPermanentPredicate(gameData, creature, cond.filter())
+                    ? cond.ifMatch()
+                    : cond.ifNotMatch();
             return effectClass.isInstance(activeEffect);
         }
         return false;

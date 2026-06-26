@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HonorGuard;
@@ -35,8 +36,9 @@ class BondsOfFaithTest extends BaseCardTest {
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        var effect = (EnchantedCreatureSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.HUMAN);
+        var effect = (EnchantedPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) effect.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
         assertThat(effect.ifMatch()).isInstanceOf(StaticBoostEffect.class);
         assertThat(effect.ifNotMatch()).isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
     }

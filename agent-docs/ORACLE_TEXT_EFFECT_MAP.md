@@ -259,6 +259,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "if you control a [subtype], [effect]" | `ControlsPermanentConditionalEffect(new PermanentHasSubtypePredicate(subtype), innerEffect)` | Permanent predicate check |
 | "if you control a [matching permanent], [effect]" | `ControlsPermanentConditionalEffect(predicate, innerEffect)` | Permanent check |
 | "if you control a [subtype], [upgraded effect] instead" | `ControlsPermanentReplacementEffect(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Resolution-time replacement |
+| "if that/target creature is a [subtype], [upgraded effect] instead" | `TargetPermanentReplacementEffect(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Target permanent checked at resolution; falls back to base if missing or nonmatching |
 | "choose one —" | `ChooseOneEffect(List<ChooseOneOption>)` | Modal |
 
 ## Turn / phase

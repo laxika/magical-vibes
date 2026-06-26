@@ -40,7 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnCondition
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceSubtypeReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSubtypeReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPermanentReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -290,9 +290,9 @@ public class EffectResolutionService {
                     gameQueryService.isMorbidMet(gameData);
             case RaidReplacementEffect ignored ->
                     gameData.playersDeclaredAttackersThisTurn.contains(entry.getControllerId());
-            case TargetSubtypeReplacementEffect tsre -> {
+            case TargetPermanentReplacementEffect tpre -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-                yield target != null && target.getCard().getSubtypes().contains(tsre.subtype());
+                yield target != null && gameQueryService.matchesPermanentPredicate(gameData, target, tpre.filter());
             }
             case SourceSubtypeReplacementEffect ssre -> {
                 // Check if the source permanent has the required subtype.

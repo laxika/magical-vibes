@@ -470,6 +470,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `EquippedConditionalEffect` | yes | yes | - |
 | `ControlsAnotherPermanentConditionalEffect` | yes | yes | - |
 | `ControlsPermanentConditionalEffect` | yes | yes | yes (attack) |
+| `EnchantedPermanentConditionalEffect` | yes | - | - |
 | `ControlsPermanentCountConditionalEffect` | - | yes | yes (upkeep, end step) |
 | `NoOtherPermanentConditionalEffect` | - | yes | yes (upkeep) |
 | `NoSpellsCastLastTurnConditionalEffect` | - | yes | yes (each upkeep) |

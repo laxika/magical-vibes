@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -67,12 +66,6 @@ public class CreatureModTargetValidators {
 
     @ValidatesTarget(StaticBoostEffect.class)
     public void validateStaticBoost(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-    }
-
-    @ValidatesTarget(EnchantedCreatureSubtypeConditionalEffect.class)
-    public void validateEnchantedCreatureSubtypeConditional(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
     }

@@ -35,6 +35,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `ControllerLifeThresholdConditionalEffect(int, CardEffect)` — life >= N
 - `ControllerTurnConditionalEffect(CardEffect)` — during your turn
 - `ControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls matching
+- `EnchantedPermanentConditionalEffect(PermanentPredicate, CardEffect ifMatch, CardEffect ifNotMatch)` — aura active branch based on enchanted permanent predicate
 - `OpponentControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — opponent controls matching
 - `HasAttackerConditionalEffect(PermanentPredicate, CardEffect)` — one or more matching attackers
 - `ControllerGraveyardCardThresholdConditionalEffect(int, CardPredicate, CardEffect)` — graveyard threshold
@@ -47,6 +48,7 @@ Replacement wrappers (pick between base/upgraded at resolution):
 - `RaidReplacementEffect(CardEffect base, CardEffect raid)`
 - `KickerReplacementEffect(CardEffect base, CardEffect kicked)`
 - `ControlsPermanentReplacementEffect(PermanentPredicate, CardEffect base, CardEffect upgraded)`
+- `TargetPermanentReplacementEffect(PermanentPredicate, CardEffect base, CardEffect upgraded)` — target permanent predicate
 
 Other wrappers:
 - `ChooseOneEffect(List<ChooseOneOption>)` — modal spell

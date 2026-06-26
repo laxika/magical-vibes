@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPermanentReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -95,6 +96,10 @@ class EffectResolutionServiceTest {
 
     private StackEntry createEntry(Card card, UUID controllerId, List<CardEffect> effects) {
         return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), effects);
+    }
+
+    private StackEntry createTargetedEntry(Card card, UUID controllerId, List<CardEffect> effects, UUID targetId) {
+        return new StackEntry(StackEntryType.SORCERY_SPELL, card, controllerId, card.getName(), effects, 0, targetId, null);
     }
 
     private StackEntry createTriggeredEntry(Card card, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
@@ -736,6 +741,69 @@ class EffectResolutionServiceTest {
             effectResolutionService.resolveEffects(gd, entry);
 
             verify(handler).resolve(gd, entry, base);
+        }
+    }
+
+    // =========================================================================
+    // TargetPermanentReplacementEffect
+    // (ElderCathar: TargetPermanentReplacementEffect(PermanentHasSubtypePredicate(HUMAN), PutPlusOnePlusOneCounterOnTargetCreatureEffect(1), PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)))
+    // =========================================================================
+
+    @Nested
+    @DisplayName("resolveTargetPermanentReplacementEffect")
+    class ResolveTargetPermanentReplacementEffect {
+
+        @Test
+        @DisplayName("Resolves base effect when target permanent does not match")
+        void resolvesBaseEffectWhenTargetDoesNotMatch() {
+            CardEffect base = new BoostTargetCreatureEffect(1, 0);
+            CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
+            UUID targetId = UUID.randomUUID();
+            CardEffect replacement = new TargetPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUMAN), base, upgraded);
+            StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
+            Permanent target = new Permanent(createCard("Grizzly Bears"));
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(target);
+            when(gameQueryService.matchesPermanentPredicate(gd, target, new PermanentHasSubtypePredicate(CardSubtype.HUMAN))).thenReturn(false);
+            EffectHandler handler = stubHandler(base);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, base);
+        }
+
+        @Test
+        @DisplayName("Resolves upgraded effect when target permanent matches")
+        void resolvesUpgradedEffectWhenTargetMatches() {
+            CardEffect base = new BoostTargetCreatureEffect(1, 0);
+            CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
+            UUID targetId = UUID.randomUUID();
+            CardEffect replacement = new TargetPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUMAN), base, upgraded);
+            StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
+            Permanent target = new Permanent(createCard("Champion of the Parish"));
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(target);
+            when(gameQueryService.matchesPermanentPredicate(gd, target, new PermanentHasSubtypePredicate(CardSubtype.HUMAN))).thenReturn(true);
+            EffectHandler handler = stubHandler(upgraded);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, upgraded);
+        }
+
+        @Test
+        @DisplayName("Resolves base effect when target permanent is missing")
+        void resolvesBaseEffectWhenTargetMissing() {
+            CardEffect base = new BoostTargetCreatureEffect(1, 0);
+            CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
+            UUID targetId = UUID.randomUUID();
+            CardEffect replacement = new TargetPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUMAN), base, upgraded);
+            StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
+            when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
+            EffectHandler handler = stubHandler(base);
+
+            effectResolutionService.resolveEffects(gd, entry);
+
+            verify(handler).resolve(gd, entry, base);
+            verify(gameQueryService, never()).matchesPermanentPredicate(eq(gd), any(), any());
         }
     }
 }

@@ -20,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDamageEffect;
@@ -1818,6 +1820,36 @@ class GameQueryServiceTest {
             aura.setAttachedTo(creature.getId());
 
             assertThat(gqs.hasAuraWithEffect(gd, creature, CantBeBlockedEffect.class)).isFalse();
+        }
+
+        @Test
+        @DisplayName("unwraps EnchantedPermanentConditionalEffect when predicate matches")
+        void unwrapsEnchantedPermanentConditionalWhenPredicateMatches() {
+            Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Honor Guard", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN)));
+            Permanent aura = addPermanent(player1Id, createAura("Bonds of Faith",
+                    new EnchantedPermanentConditionalEffect(
+                            new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                            new PreventAllDamageToAndByEnchantedCreatureEffect(),
+                            new EnchantedCreatureCantAttackOrBlockEffect())));
+            aura.setAttachedTo(creature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)).isTrue();
+            assertThat(gqs.hasAuraWithEffect(gd, creature, EnchantedCreatureCantAttackOrBlockEffect.class)).isFalse();
+        }
+
+        @Test
+        @DisplayName("unwraps EnchantedPermanentConditionalEffect when predicate does not match")
+        void unwrapsEnchantedPermanentConditionalWhenPredicateDoesNotMatch() {
+            Permanent creature = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent aura = addPermanent(player1Id, createAura("Bonds of Faith",
+                    new EnchantedPermanentConditionalEffect(
+                            new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
+                            new PreventAllDamageToAndByEnchantedCreatureEffect(),
+                            new EnchantedCreatureCantAttackOrBlockEffect())));
+            aura.setAttachedTo(creature.getId());
+
+            assertThat(gqs.hasAuraWithEffect(gd, creature, PreventAllDamageToAndByEnchantedCreatureEffect.class)).isFalse();
+            assertThat(gqs.hasAuraWithEffect(gd, creature, EnchantedCreatureCantAttackOrBlockEffect.class)).isTrue();
         }
     }
 
