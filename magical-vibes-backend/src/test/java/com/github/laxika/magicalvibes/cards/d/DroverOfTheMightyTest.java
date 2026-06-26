@@ -10,9 +10,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.DisplayName;
@@ -27,17 +28,17 @@ class DroverOfTheMightyTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC ControlsSubtypeConditionalEffect(DINOSAUR) wrapping StaticBoostEffect(2, 2, SELF)")
+    @DisplayName("Has STATIC ControlsPermanentConditionalEffect(DINOSAUR) wrapping StaticBoostEffect(2, 2, SELF)")
     void hasCorrectStaticEffect() {
         DroverOfTheMighty card = new DroverOfTheMighty();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlsSubtypeConditionalEffect.class);
+                .isInstanceOf(ControlsPermanentConditionalEffect.class);
 
-        ControlsSubtypeConditionalEffect conditional =
-                (ControlsSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.DINOSAUR);
+        ControlsPermanentConditionalEffect conditional =
+                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
         assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
 
         StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();

@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,16 +41,16 @@ class CaptainLanneryStormTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has SacrificedPermanentSubtypeConditionalEffect(TREASURE, BoostSelfEffect(1,0)) on ON_ALLY_PERMANENT_SACRIFICED")
+    @DisplayName("Has TriggeringPermanentConditionalEffect(TREASURE, BoostSelfEffect(1,0)) on ON_ALLY_PERMANENT_SACRIFICED")
     void hasSacrificeTrigger() {
         CaptainLanneryStorm card = new CaptainLanneryStorm();
 
         assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst())
-                .isInstanceOf(SacrificedPermanentSubtypeConditionalEffect.class);
-        SacrificedPermanentSubtypeConditionalEffect conditional =
-                (SacrificedPermanentSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst();
-        assertThat(conditional.requiredSubtype()).isEqualTo(CardSubtype.TREASURE);
+                .isInstanceOf(TriggeringPermanentConditionalEffect.class);
+        TriggeringPermanentConditionalEffect conditional =
+                (TriggeringPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst();
+        assertThat(conditional.predicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.TREASURE));
         assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
         assertThat(boost.powerBoost()).isEqualTo(1);

@@ -468,9 +468,8 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `NotKickedConditionalEffect` | - | yes | yes (end step) |
 | `RaidConditionalEffect` | - | yes | yes (end step) |
 | `EquippedConditionalEffect` | yes | yes | - |
-| `ControlsSubtypeConditionalEffect` | yes | yes | - |
 | `ControlsAnotherSubtypeConditionalEffect` | yes | yes | - |
-| `ControlsPermanentConditionalEffect` | - | yes | - |
+| `ControlsPermanentConditionalEffect` | yes | yes | yes (attack) |
 | `ControlsPermanentCountConditionalEffect` | - | yes | yes (upkeep, end step) |
 | `NoOtherSubtypeConditionalEffect` | - | yes | yes (upkeep) |
 | `NoSpellsCastLastTurnConditionalEffect` | - | yes | yes (each upkeep) |
@@ -479,13 +478,13 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `DidntAttackConditionalEffect` | - | yes | yes (end step) |
 | `AttacksAloneConditionalEffect` | - | yes | yes (attack) |
 | `MinimumAttackersConditionalEffect` | - | yes | yes (attack) |
-| `HasNontokenSubtypeAttackerConditionalEffect` | - | yes | yes (attack) |
+| `HasAttackerConditionalEffect` | - | yes | yes (attack) |
 | `ControllerGraveyardCardThresholdConditionalEffect` | yes | yes | - |
 | `DefendingPlayerPoisonedConditionalEffect` | - | yes | - |
 | `PermanentEnteredThisTurnConditionalEffect` | - | yes | - |
 | `ControllerTurnConditionalEffect` | yes | - | - |
-| `OpponentControlsSubtypeConditionalEffect` | yes | - | - |
-| `AnyPlayerControlsColorConditionalEffect` | yes | - | - |
+| `OpponentControlsPermanentConditionalEffect` | yes | yes | - |
+| `AnyPlayerControlsPermanentConditionalEffect` | yes | - | - |
 | `SelfHasKeywordConditionalEffect` | yes | - | - |
 | `TopCardOfLibraryColorConditionalEffect` | yes | - | - |
 | `BlockedByMinCreaturesConditionalEffect` | yes | - | - |

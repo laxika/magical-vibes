@@ -256,7 +256,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "if you attacked this turn, [effect]" | `RaidConditionalEffect(innerEffect)` | Raid |
 | "if [base], [effect]. If kicked, [upgraded effect] instead" | `KickerReplacementEffect(base, kicked)` | Kicker replaces |
 | "if this spell was kicked, [additional effect]" | `KickedConditionalEffect(innerEffect)` | Kicker adds |
-| "if you control a [subtype], [effect]" | `ControlsSubtypeConditionalEffect(subtype, innerEffect)` | Subtype check |
+| "if you control a [subtype], [effect]" | `ControlsPermanentConditionalEffect(new PermanentHasSubtypePredicate(subtype), innerEffect)` | Permanent predicate check |
 | "if you control a [matching permanent], [effect]" | `ControlsPermanentConditionalEffect(predicate, innerEffect)` | Permanent check |
 | "choose one —" | `ChooseOneEffect(List<ChooseOneOption>)` | Modal |
 

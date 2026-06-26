@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 
@@ -16,8 +17,8 @@ import java.util.List;
 public class DroverOfTheMighty extends Card {
 
     public DroverOfTheMighty() {
-        addEffect(EffectSlot.STATIC, new ControlsSubtypeConditionalEffect(
-                CardSubtype.DINOSAUR,
+        addEffect(EffectSlot.STATIC, new ControlsPermanentConditionalEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR),
                 new StaticBoostEffect(2, 2, GrantScope.SELF)
         ));
 

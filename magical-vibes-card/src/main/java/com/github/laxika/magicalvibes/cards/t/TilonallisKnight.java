@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "169")
 public class TilonallisKnight extends Card {
@@ -14,7 +15,7 @@ public class TilonallisKnight extends Card {
         // Whenever this creature attacks, if you control a Dinosaur,
         // this creature gets +1/+1 until end of turn.
         addEffect(EffectSlot.ON_ATTACK,
-                new ControlsSubtypeConditionalEffect(CardSubtype.DINOSAUR,
+                new ControlsPermanentConditionalEffect(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR),
                         new BoostSelfEffect(1, 1)));
     }
 }

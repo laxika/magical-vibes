@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,17 +22,17 @@ class TeferisSentinelTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC ControlsSubtypeConditionalEffect(TEFERI) wrapping StaticBoostEffect(4, 0, SELF)")
+    @DisplayName("Has STATIC ControlsPermanentConditionalEffect(TEFERI) wrapping StaticBoostEffect(4, 0, SELF)")
     void hasCorrectStructure() {
         TeferisSentinel card = new TeferisSentinel();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlsSubtypeConditionalEffect.class);
+                .isInstanceOf(ControlsPermanentConditionalEffect.class);
 
-        ControlsSubtypeConditionalEffect conditional =
-                (ControlsSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.TEFERI);
+        ControlsPermanentConditionalEffect conditional =
+                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.TEFERI));
         assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
 
         StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();

@@ -18,12 +18,12 @@ import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificedPermanentSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -110,12 +110,13 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = SacrificedPermanentSubtypeConditionalEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
-    private boolean handleSacrificeSubtypeConditional(TriggerMatchContext match,
-            SacrificedPermanentSubtypeConditionalEffect conditional, TriggerContext ctx) {
+    @CollectsTrigger(value = TriggeringPermanentConditionalEffect.class, slot = EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)
+    private boolean handleSacrificePermanentConditional(TriggerMatchContext match,
+            TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         if (as.sacrificedCard() == null
-                || !as.sacrificedCard().getSubtypes().contains(conditional.requiredSubtype())) {
+                || !gameQueryService.matchesPermanentPredicate(match.gameData(),
+                        new Permanent(as.sacrificedCard()), conditional.predicate())) {
             return false;
         }
         String cardName = match.permanent().getCard().getName();
@@ -130,8 +131,7 @@ public class MiscTriggerCollectorService {
         ));
         String triggerLog = cardName + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(match.gameData(), triggerLog);
-        log.info("Game {} - {} triggers on {} sacrifice", match.gameData().id, cardName,
-                conditional.requiredSubtype().getDisplayName());
+        log.info("Game {} - {} triggers on matching permanent sacrifice", match.gameData().id, cardName);
         return true;
     }
 

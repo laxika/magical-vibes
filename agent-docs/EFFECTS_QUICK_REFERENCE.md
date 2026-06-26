@@ -30,11 +30,13 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `MorbidConditionalEffect(CardEffect)` — creature died this turn
 - `RaidConditionalEffect(CardEffect)` — attacked this turn
 - `TriggeringCardConditionalEffect(CardPredicate, CardEffect)` — triggering card matches predicate
-- `ControlsSubtypeConditionalEffect(CardSubtype, CardEffect)` — controls subtype
+- `TriggeringPermanentConditionalEffect(PermanentPredicate, CardEffect)` — triggering permanent matches predicate
 - `ControlsAnotherSubtypeConditionalEffect(CardSubtype, CardEffect)` — controls another subtype
 - `ControllerLifeThresholdConditionalEffect(int, CardEffect)` — life >= N
 - `ControllerTurnConditionalEffect(CardEffect)` — during your turn
 - `ControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls matching
+- `OpponentControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — opponent controls matching
+- `HasAttackerConditionalEffect(PermanentPredicate, CardEffect)` — one or more matching attackers
 - `ControllerGraveyardCardThresholdConditionalEffect(int, CardPredicate, CardEffect)` — graveyard threshold
 - `EnteringCreatureMinPowerConditionalEffect(int, CardEffect)` — entering power >= N
 - `EnteringCreatureMaxPowerConditionalEffect(int, CardEffect)` — entering power <= N

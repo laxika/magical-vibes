@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsColorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureSubtypeConditionalEffect;
@@ -66,7 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerTurnConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
@@ -87,7 +86,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPerm
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -823,22 +822,61 @@ public class StaticEffectResolutionService {
         var conditional = (AnyPlayerControlsPermanentConditionalEffect) effect;
         final boolean[] found = {false};
         context.gameData().forEachPermanent((playerId, permanent) -> {
-            if (!found[0] && gameQueryService.matchesPermanentPredicate(context.gameData(), permanent, conditional.filter())) {
+            if (!found[0] && matchesStaticFilter(permanent, conditional.filter())) {
                 found[0] = true;
             }
         });
         if (found[0]) {
-            CardEffect wrapped = conditional.wrapped();
-            if (wrapped instanceof StaticBoostEffect boost) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
-                accumulator.addKeywords(boost.grantedKeywords());
-            } else if (wrapped instanceof GrantKeywordEffect grant) {
-                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeywords(grant.keywords());
-                }
-            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
-                accumulator.addProtectionColors(protection.colors());
+            applySelfOnlyConditionalStaticEffect(context, conditional.wrapped(), accumulator);
+        }
+    }
+
+    @HandlesStaticEffect(value = ControlsPermanentConditionalEffect.class, selfOnly = true)
+    private void resolveControlsPermanentConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (ControlsPermanentConditionalEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
+        if (battlefield == null) return;
+        boolean found = battlefield.stream()
+                .anyMatch(p -> matchesStaticFilter(p, conditional.filter()));
+        if (found) {
+            applySelfOnlyConditionalStaticEffect(context, conditional.wrapped(), accumulator);
+        }
+    }
+
+    @HandlesStaticEffect(value = OpponentControlsPermanentConditionalEffect.class, selfOnly = true)
+    private void resolveOpponentControlsPermanentConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var conditional = (OpponentControlsPermanentConditionalEffect) effect;
+        UUID controllerId = findControllerId(context.gameData(), context.source());
+        if (controllerId == null) return;
+        final boolean[] found = {false};
+        context.gameData().forEachPermanent((playerId, permanent) -> {
+            if (!found[0]
+                    && !playerId.equals(controllerId)
+                    && matchesStaticFilter(permanent, conditional.filter())) {
+                found[0] = true;
+            }
+        });
+        if (found[0]) {
+            applySelfOnlyConditionalStaticEffect(context, conditional.wrapped(), accumulator);
+        }
+    }
+
+    private void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
+        if (wrapped instanceof StaticBoostEffect boost) {
+            accumulator.addPower(boost.powerBoost());
+            accumulator.addToughness(boost.toughnessBoost());
+            accumulator.addKeywords(boost.grantedKeywords());
+        } else if (wrapped instanceof GrantKeywordEffect grant) {
+            if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                accumulator.addKeywords(grant.keywords());
+            }
+        } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
+            accumulator.addProtectionColors(protection.colors());
+        } else if (wrapped instanceof GrantEffectEffect grant) {
+            if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+                accumulator.addGrantedEffect(grant.effect());
             }
         }
     }
@@ -1247,30 +1285,6 @@ public class StaticEffectResolutionService {
         }
     }
 
-    @HandlesStaticEffect(value = ControlsSubtypeConditionalEffect.class, selfOnly = true)
-    private void resolveControlsSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var conditional = (ControlsSubtypeConditionalEffect) effect;
-        int subtypeCount = countControlledPermanents(context, p -> p.getCard().getSubtypes().contains(conditional.subtype()));
-        if (subtypeCount > 0) {
-            CardEffect wrapped = conditional.wrapped();
-            if (wrapped instanceof GrantKeywordEffect grant) {
-                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeywords(grant.keywords());
-                }
-            } else if (wrapped instanceof StaticBoostEffect boost) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
-                accumulator.addKeywords(boost.grantedKeywords());
-            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
-                accumulator.addProtectionColors(protection.colors());
-            } else if (wrapped instanceof GrantEffectEffect grant) {
-                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addGrantedEffect(grant.effect());
-                }
-            }
-        }
-    }
-
     @HandlesStaticEffect(value = ControlsAnotherSubtypeConditionalEffect.class, selfOnly = true)
     private void resolveControlsAnotherSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var conditional = (ControlsAnotherSubtypeConditionalEffect) effect;
@@ -1279,74 +1293,6 @@ public class StaticEffectResolutionService {
                         && (!conditional.nontokenOnly() || !p.getCard().isToken())
                         && !Collections.disjoint(p.getCard().getSubtypes(), conditional.subtypes()));
         if (subtypeCount > 0) {
-            CardEffect wrapped = conditional.wrapped();
-            if (wrapped instanceof GrantKeywordEffect grant) {
-                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeywords(grant.keywords());
-                }
-            } else if (wrapped instanceof StaticBoostEffect boost) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
-                accumulator.addKeywords(boost.grantedKeywords());
-            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
-                accumulator.addProtectionColors(protection.colors());
-            }
-        }
-    }
-
-    @HandlesStaticEffect(value = OpponentControlsSubtypeConditionalEffect.class, selfOnly = true)
-    private void resolveOpponentControlsSubtypeConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var conditional = (OpponentControlsSubtypeConditionalEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return;
-        boolean opponentHasSubtype = false;
-        for (UUID playerId : context.gameData().orderedPlayerIds) {
-            if (!playerId.equals(controllerId)) {
-                List<Permanent> battlefield = context.gameData().playerBattlefields.get(playerId);
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (p.getCard().getSubtypes().contains(conditional.subtype())) {
-                            opponentHasSubtype = true;
-                            break;
-                        }
-                    }
-                }
-                if (opponentHasSubtype) break;
-            }
-        }
-        if (opponentHasSubtype) {
-            CardEffect wrapped = conditional.wrapped();
-            if (wrapped instanceof GrantKeywordEffect grant) {
-                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeywords(grant.keywords());
-                }
-            } else if (wrapped instanceof StaticBoostEffect boost) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
-                accumulator.addKeywords(boost.grantedKeywords());
-            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
-                accumulator.addProtectionColors(protection.colors());
-            }
-        }
-    }
-
-    @HandlesStaticEffect(value = AnyPlayerControlsColorConditionalEffect.class, selfOnly = true)
-    private void resolveAnyPlayerControlsColorConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var conditional = (AnyPlayerControlsColorConditionalEffect) effect;
-        boolean anyPlayerHasColor = false;
-        for (UUID playerId : context.gameData().orderedPlayerIds) {
-            List<Permanent> battlefield = context.gameData().playerBattlefields.get(playerId);
-            if (battlefield != null) {
-                for (Permanent p : battlefield) {
-                    if (p.getCard().getColor() == conditional.color()) {
-                        anyPlayerHasColor = true;
-                        break;
-                    }
-                }
-            }
-            if (anyPlayerHasColor) break;
-        }
-        if (anyPlayerHasColor) {
             CardEffect wrapped = conditional.wrapped();
             if (wrapped instanceof GrantKeywordEffect grant) {
                 if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {

@@ -11,9 +11,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,15 +35,15 @@ class AngelicOverseerTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
 
-        var effect0 = (ControlsSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect0.subtype()).isEqualTo(CardSubtype.HUMAN);
+        var effect0 = (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
+        assertThat(effect0.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
         assertThat(effect0.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect hexproof = (GrantKeywordEffect) effect0.wrapped();
         assertThat(hexproof.keywords()).containsExactly(Keyword.HEXPROOF);
         assertThat(hexproof.scope()).isEqualTo(GrantScope.SELF);
 
-        var effect1 = (ControlsSubtypeConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(effect1.subtype()).isEqualTo(CardSubtype.HUMAN);
+        var effect1 = (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
+        assertThat(effect1.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
         assertThat(effect1.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect indestructible = (GrantKeywordEffect) effect1.wrapped();
         assertThat(indestructible.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);

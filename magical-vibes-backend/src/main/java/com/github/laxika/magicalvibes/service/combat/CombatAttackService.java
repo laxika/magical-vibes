@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.HasNontokenSubtypeAttackerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
@@ -274,12 +274,12 @@ public class CombatAttackService {
                     allEffects.removeIf(e -> e instanceof AttacksAloneConditionalEffect);
                 }
 
-                // Filter out ControlsSubtypeConditionalEffect when condition not met (intervening-if, CR 603.4)
+                // Filter out ControlsPermanentConditionalEffect when condition not met (intervening-if, CR 603.4)
                 allEffects.removeIf(e -> {
-                    if (e instanceof ControlsSubtypeConditionalEffect csc) {
+                    if (e instanceof ControlsPermanentConditionalEffect cpc) {
                         List<Permanent> bf = gameData.playerBattlefields.get(playerId);
                         return bf == null || bf.stream().noneMatch(
-                                p -> p.getCard().getSubtypes().contains(csc.subtype()));
+                                p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpc.filter()));
                     }
                     return false;
                 });
@@ -377,19 +377,17 @@ public class CombatAttackService {
             List<CardEffect> allyAttackEffects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK);
             if (allyAttackEffects.isEmpty()) continue;
 
-            // Pre-filter HasNontokenSubtypeAttackerConditionalEffect — skip if no
-            // nontoken creature of the required subtype is among the attackers.
+            // Pre-filter attacker-group conditional effects — skip if no matching attacker exists.
             List<CardEffect> filteredEffects = new ArrayList<>();
             for (CardEffect effect : allyAttackEffects) {
-                if (effect instanceof HasNontokenSubtypeAttackerConditionalEffect hnsac) {
+                if (effect instanceof HasAttackerConditionalEffect hasAttacker) {
                     boolean hasMatch = battlefield.stream()
                             .filter(Permanent::isAttacking)
-                            .filter(p -> !p.getCard().isToken())
-                            .anyMatch(p -> GameQueryService.permanentHasSubtype(p, hnsac.requiredSubtype()));
+                            .anyMatch(p -> gameQueryService.matchesPermanentPredicate(
+                                    gameData, p, hasAttacker.predicate()));
                     if (!hasMatch) {
-                        log.info("Game {} - {} attack trigger skipped (no nontoken {} among attackers)",
-                                gameData.id, perm.getCard().getName(),
-                                hnsac.requiredSubtype().name().toLowerCase());
+                        log.info("Game {} - {} attack trigger skipped (no matching attacker)",
+                                gameData.id, perm.getCard().getName());
                         continue;
                     }
                 }

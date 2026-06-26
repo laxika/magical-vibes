@@ -1,22 +1,23 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Conditional wrapper: "as long as an opponent controls a [subtype]".
- * The wrapped effect only applies while any opponent has at least one permanent
- * with the specified subtype on the battlefield.
+ * Conditional wrapper: "as long as an opponent controls a permanent matching [filter]".
  */
-public record OpponentControlsSubtypeConditionalEffect(CardSubtype subtype, CardEffect wrapped) implements ConditionalEffect {
+public record OpponentControlsPermanentConditionalEffect(
+        PermanentPredicate filter,
+        CardEffect wrapped
+) implements ConditionalEffect {
 
     @Override
     public String conditionName() {
-        return "opponent controls a " + subtype.getDisplayName();
+        return "opponent controls a matching permanent";
     }
 
     @Override
     public String conditionNotMetReason() {
-        return "no opponent controls a " + subtype.getDisplayName();
+        return "no opponent controls a matching permanent";
     }
 
     @Override

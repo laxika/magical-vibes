@@ -10,8 +10,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,16 +26,16 @@ class KarplusanHoundTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has ON_ATTACK trigger with ControlsSubtypeConditionalEffect(CHANDRA) wrapping DealDamageToAnyTargetEffect(2)")
+    @DisplayName("Has ON_ATTACK trigger with ControlsPermanentConditionalEffect(CHANDRA) wrapping DealDamageToAnyTargetEffect(2)")
     void hasCorrectStructure() {
         KarplusanHound card = new KarplusanHound();
 
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ControlsSubtypeConditionalEffect.class);
-        ControlsSubtypeConditionalEffect conditional =
-                (ControlsSubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.CHANDRA);
+                .isInstanceOf(ControlsPermanentConditionalEffect.class);
+        ControlsPermanentConditionalEffect conditional =
+                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
+        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.CHANDRA));
         assertThat(conditional.wrapped()).isInstanceOf(DealDamageToAnyTargetEffect.class);
         DealDamageToAnyTargetEffect damage = (DealDamageToAnyTargetEffect) conditional.wrapped();
         assertThat(damage.damage()).isEqualTo(2);

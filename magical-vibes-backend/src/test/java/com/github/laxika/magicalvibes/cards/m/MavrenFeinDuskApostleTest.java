@@ -11,7 +11,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.HasNontokenSubtypeAttackerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,17 +29,20 @@ class MavrenFeinDuskApostleTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has ON_ALLY_CREATURES_ATTACK with HasNontokenSubtypeAttackerConditionalEffect wrapping CreateTokenEffect")
+    @DisplayName("Has ON_ALLY_CREATURES_ATTACK with HasAttackerConditionalEffect wrapping CreateTokenEffect")
     void hasCorrectAttackTrigger() {
         MavrenFeinDuskApostle card = new MavrenFeinDuskApostle();
 
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(HasNontokenSubtypeAttackerConditionalEffect.class);
+                .isInstanceOf(HasAttackerConditionalEffect.class);
 
-        HasNontokenSubtypeAttackerConditionalEffect conditional =
-                (HasNontokenSubtypeAttackerConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(conditional.requiredSubtype()).isEqualTo(CardSubtype.VAMPIRE);
+        HasAttackerConditionalEffect conditional =
+                (HasAttackerConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst();
+        assertThat(conditional.predicate()).isEqualTo(new PermanentAllOfPredicate(List.of(
+                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
+                new PermanentNotPredicate(new PermanentIsTokenPredicate())
+        )));
         assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
 
         CreateTokenEffect token = (CreateTokenEffect) conditional.wrapped();

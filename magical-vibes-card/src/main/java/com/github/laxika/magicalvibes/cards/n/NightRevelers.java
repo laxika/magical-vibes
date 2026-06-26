@@ -7,14 +7,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OpponentControlsSubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "153")
 public class NightRevelers extends Card {
 
     public NightRevelers() {
-        addEffect(EffectSlot.STATIC, new OpponentControlsSubtypeConditionalEffect(
-                CardSubtype.HUMAN,
+        addEffect(EffectSlot.STATIC, new OpponentControlsPermanentConditionalEffect(
+                new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)
         ));
     }

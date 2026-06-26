@@ -18,11 +18,10 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdCondit
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.HasNontokenSubtypeAttackerConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
@@ -32,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidReplacementEffect;
@@ -219,10 +219,10 @@ public class EffectResolutionService {
                     isDefendingPlayerPoisoned(gameData, entry.getControllerId());
             case ControlsAnotherSubtypeConditionalEffect cas ->
                     isControlsAnotherSubtypeConditionMet(gameData, entry, cas);
-            case ControlsSubtypeConditionalEffect csc ->
-                    isControlsSubtypeConditionMet(gameData, entry, csc);
             case ControlsPermanentConditionalEffect cpc ->
                     isControlsPermanentConditionMet(gameData, entry, cpc);
+            case OpponentControlsPermanentConditionalEffect opc ->
+                    isOpponentControlsPermanentConditionMet(gameData, entry, opc);
             case ControlsPermanentCountConditionalEffect cpcc ->
                     isControlsPermanentCountConditionMet(gameData, entry, cpcc);
             case NoOtherSubtypeConditionalEffect noOther ->
@@ -247,8 +247,8 @@ public class EffectResolutionService {
                     isAttackingAlone(gameData, entry);
             case MinimumAttackersConditionalEffect mac ->
                     entry.getXValue() >= mac.minimumAttackers();
-            case HasNontokenSubtypeAttackerConditionalEffect hnsac ->
-                    hasNontokenSubtypeAttacker(gameData, entry, hnsac);
+            case HasAttackerConditionalEffect hasAttacker ->
+                    hasMatchingAttacker(gameData, entry, hasAttacker);
             case RaidConditionalEffect ignored ->
                     gameData.playersDeclaredAttackersThisTurn.contains(entry.getControllerId());
             case ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck -> {
@@ -357,16 +357,6 @@ public class EffectResolutionService {
                         && !Collections.disjoint(p.getCard().getSubtypes(), cas.subtypes()));
     }
 
-    private boolean isControlsSubtypeConditionMet(GameData gameData, StackEntry entry,
-                                                      ControlsSubtypeConditionalEffect csc) {
-        UUID controllerId = entry.getControllerId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return false;
-        PermanentHasSubtypePredicate predicate = new PermanentHasSubtypePredicate(csc.subtype());
-        return battlefield.stream()
-                .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, predicate));
-    }
-
     private boolean isControlsPermanentConditionMet(GameData gameData, StackEntry entry,
                                                     ControlsPermanentConditionalEffect cpc) {
         UUID controllerId = entry.getControllerId();
@@ -374,6 +364,21 @@ public class EffectResolutionService {
         if (battlefield == null) return false;
         return battlefield.stream()
                 .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpc.filter()));
+    }
+
+    private boolean isOpponentControlsPermanentConditionMet(GameData gameData, StackEntry entry,
+                                                            OpponentControlsPermanentConditionalEffect opc) {
+        UUID controllerId = entry.getControllerId();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (playerId.equals(controllerId)) continue;
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            if (battlefield.stream().anyMatch(p ->
+                    gameQueryService.matchesPermanentPredicate(gameData, p, opc.filter()))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isControlsPermanentCountConditionMet(GameData gameData, StackEntry entry,
@@ -444,14 +449,13 @@ public class EffectResolutionService {
         return attackingCount == 1;
     }
 
-    private boolean hasNontokenSubtypeAttacker(GameData gameData, StackEntry entry,
-                                               HasNontokenSubtypeAttackerConditionalEffect effect) {
+    private boolean hasMatchingAttacker(GameData gameData, StackEntry entry,
+                                        HasAttackerConditionalEffect effect) {
         UUID controllerId = entry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream()
                 .filter(Permanent::isAttacking)
-                .filter(p -> !p.getCard().isToken())
-                .anyMatch(p -> GameQueryService.permanentHasSubtype(p, effect.requiredSubtype()));
+                .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, effect.predicate()));
     }
 }
