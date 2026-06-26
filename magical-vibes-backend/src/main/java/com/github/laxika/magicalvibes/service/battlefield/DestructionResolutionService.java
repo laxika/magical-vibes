@@ -57,7 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOpponen
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureOrDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
@@ -525,6 +525,19 @@ public class DestructionResolutionService {
         if (battlefield != null) {
             for (Permanent p : battlefield) {
                 if (gameQueryService.isCreature(gameData, p) && additionalFilter.test(p)) {
+                    ids.add(p.getId());
+                }
+            }
+        }
+        return ids;
+    }
+
+    private List<UUID> collectPermanentIds(GameData gameData, UUID playerId, Predicate<Permanent> filter) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        List<UUID> ids = new ArrayList<>();
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (filter.test(p)) {
                     ids.add(p.getId());
                 }
             }
@@ -1344,7 +1357,7 @@ public class DestructionResolutionService {
      */
     @HandlesEffect(ForcedCostOrElseEffect.class)
     void resolveForcedCostOrElse(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
-        if (!(effect.forcedCost() instanceof SacrificeSubtypeCreatureCost sacrificeSubtype)) {
+        if (!(effect.forcedCost() instanceof SacrificePermanentCost sacrificePermanent)) {
             log.warn("Game {} - Unsupported forced cost: {}", gameData.id, effect.forcedCost().getClass().getSimpleName());
             resolveForcedCostElseEffects(gameData, entry, effect);
             return;
@@ -1352,18 +1365,18 @@ public class DestructionResolutionService {
 
         UUID controllerId = entry.getControllerId();
 
-        List<UUID> subtypeCreatureIds = collectCreatureIds(gameData, controllerId,
-                p -> p.getCard().getSubtypes().contains(sacrificeSubtype.subtype()));
+        List<UUID> matchingPermanentIds = collectPermanentIds(gameData, controllerId,
+                p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacrificePermanent.filter()));
 
-        if (subtypeCreatureIds.isEmpty()) {
+        if (matchingPermanentIds.isEmpty()) {
             resolveForcedCostElseEffects(gameData, entry, effect);
             return;
         }
 
-        if (subtypeCreatureIds.size() == 1) {
-            Permanent creature = gameQueryService.findPermanentById(gameData, subtypeCreatureIds.getFirst());
-            if (creature != null) {
-                sacrificeAndLog(gameData, creature, controllerId);
+        if (matchingPermanentIds.size() == 1) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, matchingPermanentIds.getFirst());
+            if (permanent != null) {
+                sacrificeAndLog(gameData, permanent, controllerId);
             } else {
                 resolveForcedCostElseEffects(gameData, entry, effect);
             }
@@ -1373,8 +1386,8 @@ public class DestructionResolutionService {
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.ForcedCostOrElse(
                         controllerId, entry.getSourcePermanentId(), entry.getCard(), effect));
-        playerInputService.beginPermanentChoice(gameData, controllerId, subtypeCreatureIds,
-                "Choose a " + sacrificeSubtype.subtype().getDisplayName() + " to sacrifice.");
+        playerInputService.beginPermanentChoice(gameData, controllerId, matchingPermanentIds,
+                "Choose a permanent to sacrifice (" + sacrificePermanent.description() + ").");
     }
 
     public void completeForcedCostOrElse(GameData gameData, UUID permanentId,

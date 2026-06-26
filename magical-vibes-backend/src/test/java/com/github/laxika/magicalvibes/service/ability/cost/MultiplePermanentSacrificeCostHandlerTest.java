@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -69,6 +70,34 @@ class MultiplePermanentSacrificeCostHandlerTest {
     @DisplayName("getPromptMessage includes remaining count")
     void getPromptMessageIncludesRemaining() {
         assertThat(handler.getPromptMessage(2)).isEqualTo("Choose a permanent to sacrifice (2 remaining).");
+    }
+
+    @Test
+    @DisplayName("single permanent cost uses description and requires one choice")
+    void singlePermanentCostUsesDescription() {
+        SacrificePermanentCost singleCost = new SacrificePermanentCost(filter, "Sacrifice a Goblin");
+        MultiplePermanentSacrificeCostHandler singleHandler = new MultiplePermanentSacrificeCostHandler(
+                singleCost, gameQueryService, sacrificeAction, null);
+
+        assertThat(singleHandler.costEffect()).isSameAs(singleCost);
+        assertThat(singleHandler.requiredCount()).isEqualTo(1);
+        assertThat(singleHandler.getPromptMessage(1))
+                .isEqualTo("Choose a permanent to sacrifice (Sacrifice a Goblin).");
+    }
+
+    @Test
+    @DisplayName("single permanent cost can allow sacrificing source")
+    void singlePermanentCostCanAllowSource() {
+        SacrificePermanentCost singleCost = new SacrificePermanentCost(filter, "Sacrifice a Goblin", false);
+        Permanent source = createPermanent("Source Goblin");
+        UUID sourceId = source.getId();
+        MultiplePermanentSacrificeCostHandler singleHandler = new MultiplePermanentSacrificeCostHandler(
+                singleCost, gameQueryService, sacrificeAction, sourceId);
+        gameData.playerBattlefields.get(playerId).add(source);
+
+        when(gameQueryService.matchesPermanentPredicate(gameData, source, filter)).thenReturn(true);
+
+        assertThat(singleHandler.getValidChoiceIds(gameData, playerId)).containsExactly(sourceId);
     }
 
     // =========================================================================

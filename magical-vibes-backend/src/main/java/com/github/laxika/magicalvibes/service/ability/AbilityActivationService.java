@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.ability.cost.MultiplePermanentTapC
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentBounceAction;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentChoiceCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.PermanentSacrificeAction;
-import com.github.laxika.magicalvibes.service.ability.cost.SubtypeSacrificeCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapCreatureCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.TapXPermanentsCostHandler;
 import com.github.laxika.magicalvibes.service.ability.cost.CrewCostHandler;
@@ -67,7 +66,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHan
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
@@ -967,7 +965,6 @@ public class AbilityActivationService {
         PermanentSacrificeAction sacAction = this::sacrificePermanentAsCost;
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
-        if (effect instanceof SacrificeSubtypeCreatureCost c) return new SubtypeSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
         if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction);

@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetFightsSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnFirstTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +31,8 @@ class SavageStompTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class);
+                .isEqualTo(new ReduceOwnCastCostIfTargetingControlledPermanentEffect(
+                        new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.DINOSAUR), 2));
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))

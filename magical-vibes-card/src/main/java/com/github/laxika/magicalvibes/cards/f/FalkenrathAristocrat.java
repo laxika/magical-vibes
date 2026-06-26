@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +32,14 @@ public class FalkenrathAristocrat extends Card {
                 false,
                 null,
                 List.of(
-                        new SacrificeSubtypeCreatureCost(CardSubtype.HUMAN),
+                        new SacrificePermanentCost(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
+                                )),
+                                "Sacrifice a Human",
+                                false
+                        ),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
                         new PutCountersOnSourceEffect(1, 1, 1)
                 ),

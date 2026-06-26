@@ -7,7 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -20,7 +23,14 @@ public class ThallidOmnivore extends Card {
                 false,
                 "{1}",
                 List.of(
-                        new SacrificeSubtypeCreatureCost(CardSubtype.SAPROLING),
+                        new SacrificePermanentCost(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
+                                )),
+                                "Sacrifice a Saproling",
+                                false
+                        ),
                         new BoostSelfEffect(2, 2),
                         new GainLifeEffect(2)
                 ),

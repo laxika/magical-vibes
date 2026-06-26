@@ -12,7 +12,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,12 +45,16 @@ class FalkenrathAristocratTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isNull();
         assertThat(ability.getEffects()).hasSize(3);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSubtypeCreatureCost.class);
+        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
+                )),
+                "Sacrifice a Human",
+                false
+        ));
         assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
         assertThat(ability.getEffects().get(2)).isInstanceOf(PutCountersOnSourceEffect.class);
-
-        SacrificeSubtypeCreatureCost sacCost = (SacrificeSubtypeCreatureCost) ability.getEffects().get(0);
-        assertThat(sacCost.subtype()).isEqualTo(CardSubtype.HUMAN);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
         assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);

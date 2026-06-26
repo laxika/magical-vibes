@@ -11,7 +11,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,11 +40,15 @@ class DerangedOutcastTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isEqualTo("{1}{G}");
         assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSubtypeCreatureCost.class);
+        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
+                )),
+                "Sacrifice a Human",
+                false
+        ));
         assertThat(ability.getEffects().get(1)).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-
-        SacrificeSubtypeCreatureCost sacCost = (SacrificeSubtypeCreatureCost) ability.getEffects().get(0);
-        assertThat(sacCost.subtype()).isEqualTo(CardSubtype.HUMAN);
 
         PutPlusOnePlusOneCounterOnTargetCreatureEffect counterEffect =
                 (PutPlusOnePlusOneCounterOnTargetCreatureEffect) ability.getEffects().get(1);

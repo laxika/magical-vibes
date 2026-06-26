@@ -13,8 +13,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,7 +56,14 @@ class FiendOfTheShadowsTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isNull();
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSubtypeCreatureCost.class);
+        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
+                )),
+                "Sacrifice a Human",
+                false
+        ));
         assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateEffect.class);
     }
 

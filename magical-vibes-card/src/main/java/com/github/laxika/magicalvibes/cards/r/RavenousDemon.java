@@ -6,8 +6,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -23,7 +26,14 @@ public class RavenousDemon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSubtypeCreatureCost(CardSubtype.HUMAN), new TransformSelfEffect()),
+                List.of(new SacrificePermanentCost(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
+                        )),
+                        "Sacrifice a Human",
+                        false
+                ), new TransformSelfEffect()),
                 "Sacrifice a Human: Transform Ravenous Demon. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

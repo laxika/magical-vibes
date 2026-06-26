@@ -5,8 +5,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -18,7 +21,14 @@ public class ArchdemonOfGreed extends Card {
     public ArchdemonOfGreed() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED,
                 new ForcedCostOrElseEffect(
-                        new SacrificeSubtypeCreatureCost(CardSubtype.HUMAN),
+                        new SacrificePermanentCost(
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
+                                )),
+                                "Sacrifice a Human",
+                                false
+                        ),
                         List.of(new TapSelfEffect(), new DealDamageToControllerEffect(9))));
     }
 }

@@ -13,7 +13,10 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,12 +45,16 @@ class ThallidOmnivoreTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isFalse();
         assertThat(ability.getManaCost()).isEqualTo("{1}");
         assertThat(ability.getEffects()).hasSize(3);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSubtypeCreatureCost.class);
+        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)
+                )),
+                "Sacrifice a Saproling",
+                false
+        ));
         assertThat(ability.getEffects().get(1)).isInstanceOf(BoostSelfEffect.class);
         assertThat(ability.getEffects().get(2)).isInstanceOf(GainLifeEffect.class);
-
-        SacrificeSubtypeCreatureCost sacCost = (SacrificeSubtypeCreatureCost) ability.getEffects().get(0);
-        assertThat(sacCost.subtype()).isEqualTo(CardSubtype.SAPROLING);
 
         GainLifeEffect lifeGain = (GainLifeEffect) ability.getEffects().get(2);
         assertThat(lifeGain.amount()).isEqualTo(2);

@@ -53,8 +53,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureCardInGraveyardEffect;
@@ -433,11 +433,11 @@ public class GameBroadcastService {
                         }
                         // Check if castable with target-subtype cost reduction (e.g. Savage Stomp)
                         if (!added) {
-                            ReduceOwnCastCostIfTargetingControlledSubtypeEffect targetReduce = null;
+                            ReduceOwnCastCostIfTargetingControlledPermanentEffect targetReduce = null;
                             for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
-                                if (e instanceof ReduceOwnCastCostIfTargetingControlledSubtypeEffect r) { targetReduce = r; break; }
+                                if (e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect r) { targetReduce = r; break; }
                             }
-                            if (targetReduce != null && controlsSubtype(gameData, playerId, targetReduce.subtype())) {
+                            if (targetReduce != null && controlsPermanent(gameData, playerId, targetReduce.predicate())) {
                                 if (cost.canPay(pool, additionalCost - targetReduce.amount())) {
                                     playable.add(i);
                                     added = true;
@@ -1298,9 +1298,9 @@ public class GameBroadcastService {
                 int creatureCards = countCreatureCardsInGraveyard(gameData, playerId);
                 reduction += graveyardReduce.amountPerCreature() * creatureCards;
             }
-            if (effect instanceof ReduceOwnCastCostIfControlsSubtypeEffect subtypeReduce) {
-                if (controlsSubtype(gameData, playerId, subtypeReduce.subtype())) {
-                    reduction += subtypeReduce.amount();
+            if (effect instanceof ReduceOwnCastCostIfControlsPermanentEffect permanentReduce) {
+                if (controlsPermanent(gameData, playerId, permanentReduce.predicate())) {
+                    reduction += permanentReduce.amount();
                 }
             }
         }
@@ -1491,9 +1491,9 @@ public class GameBroadcastService {
                 int creatureCards = countCreatureCardsInGraveyard(gameData, playerId);
                 reduction += graveyardReduce.amountPerCreature() * creatureCards;
             }
-            if (effect instanceof ReduceOwnCastCostIfControlsSubtypeEffect subtypeReduce) {
-                if (controlsSubtype(gameData, playerId, subtypeReduce.subtype())) {
-                    reduction += subtypeReduce.amount();
+            if (effect instanceof ReduceOwnCastCostIfControlsPermanentEffect permanentReduce) {
+                if (controlsPermanent(gameData, playerId, permanentReduce.predicate())) {
+                    reduction += permanentReduce.amount();
                 }
             }
         }
@@ -1551,14 +1551,11 @@ public class GameBroadcastService {
         return reduction;
     }
 
-    public boolean controlsSubtype(GameData gameData, UUID playerId, CardSubtype subtype) {
+    public boolean controlsPermanent(GameData gameData, UUID playerId, com.github.laxika.magicalvibes.model.filter.PermanentPredicate predicate) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent p : battlefield) {
-            if (p.getCard().getSubtypes().contains(subtype)
-                    || p.getTransientSubtypes().contains(subtype)
-                    || p.getGrantedSubtypes().contains(subtype)
-                    || p.hasKeyword(Keyword.CHANGELING)) {
+            if (gameQueryService.matchesPermanentPredicate(gameData, p, predicate)) {
                 return true;
             }
         }

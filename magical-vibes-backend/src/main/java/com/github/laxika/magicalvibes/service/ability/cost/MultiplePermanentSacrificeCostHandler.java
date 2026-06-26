@@ -40,7 +40,8 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
      */
     public MultiplePermanentSacrificeCostHandler(SacrificePermanentCost cost, GameQueryService gameQueryService,
                                                   PermanentSacrificeAction sacrificeAction, UUID sourcePermanentId) {
-        this(cost, cost.filter(), 1, cost.description(), gameQueryService, sacrificeAction, sourcePermanentId);
+        this(cost, cost.filter(), 1, cost.description(), gameQueryService, sacrificeAction,
+                cost.excludeSource() ? sourcePermanentId : null);
     }
 
     private MultiplePermanentSacrificeCostHandler(CardEffect cost, PermanentPredicate filter, int count, String description,

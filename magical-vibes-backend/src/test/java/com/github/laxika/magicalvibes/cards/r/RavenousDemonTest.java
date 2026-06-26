@@ -13,9 +13,12 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,8 +39,15 @@ class RavenousDemonTest extends BaseCardTest {
         var ability = card.getActivatedAbilities().getFirst();
         assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
         assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSubtypeCreatureCost.class);
-        assertThat(((SacrificeSubtypeCreatureCost) ability.getEffects().get(0)).subtype()).isEqualTo(CardSubtype.HUMAN);
+        SacrificePermanentCost sacrificeHuman = new SacrificePermanentCost(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
+                )),
+                "Sacrifice a Human",
+                false
+        );
+        assertThat(ability.getEffects().get(0)).isEqualTo(sacrificeHuman);
         assertThat(ability.getEffects().get(1)).isInstanceOf(TransformSelfEffect.class);
 
         assertThat(card.getBackFaceCard()).isNotNull();
@@ -45,8 +55,7 @@ class RavenousDemonTest extends BaseCardTest {
         ForcedCostOrElseEffect back =
                 (ForcedCostOrElseEffect) card.getBackFaceCard()
                         .getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(back.forcedCost()).isInstanceOf(SacrificeSubtypeCreatureCost.class);
-        assertThat(((SacrificeSubtypeCreatureCost) back.forcedCost()).subtype()).isEqualTo(CardSubtype.HUMAN);
+        assertThat(back.forcedCost()).isEqualTo(sacrificeHuman);
         assertThat(back.elseEffects()).containsExactly(new TapSelfEffect(), new DealDamageToControllerEffect(9));
     }
 

@@ -18,7 +18,9 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
@@ -439,6 +441,31 @@ class GameBroadcastServiceTest {
             assertThat(svc.getCastCostModifier(gd, player1Id, creature, snapshot)).isEqualTo(-2);
             // Enchantment is unaffected
             assertThat(svc.getCastCostModifier(gd, player1Id, enchantment, snapshot)).isZero();
+        }
+
+        @Test
+        @DisplayName("Applies own controlled-permanent predicate reduction")
+        void appliesOwnControlledPermanentPredicateReduction() {
+            when(gameQueryService.getOpponentId(any(), eq(player1Id))).thenReturn(player2Id);
+
+            Card wizard = new Card();
+            wizard.setName("Aether Adept");
+            wizard.setType(CardType.CREATURE);
+            Permanent wizardPermanent = new Permanent(wizard);
+            gd.playerBattlefields.get(player1Id).add(wizardPermanent);
+
+            Card retort = new Card();
+            retort.setName("Wizard's Retort");
+            retort.setType(CardType.INSTANT);
+            retort.setManaCost("{1}{U}{U}");
+            var predicate = new PermanentHasSubtypePredicate(CardSubtype.WIZARD);
+            retort.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfControlsPermanentEffect(predicate, 1));
+
+            when(gameQueryService.matchesPermanentPredicate(gd, wizardPermanent, predicate)).thenReturn(true);
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+
+            assertThat(svc.getCastCostModifier(gd, player1Id, retort, snapshot)).isEqualTo(-1);
         }
 
         @Test

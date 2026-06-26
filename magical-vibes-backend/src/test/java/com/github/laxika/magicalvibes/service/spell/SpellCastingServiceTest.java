@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.spell;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -17,6 +18,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -406,6 +409,33 @@ class SpellCastingServiceTest {
 
             // validateSpellTargeting is called with needsTarget=true (spell-level targeting)
             verify(targetLegalityService).validateSpellTargeting(eq(gd), eq(sorcery), eq(player2Id), any(), eq(player1Id), eq(true), anyInt());
+        }
+
+        @Test
+        @DisplayName("Target-based predicate cost reduction applies to chosen controlled first target")
+        void targetPredicateCostReductionAppliesToChosenControlledFirstTarget() {
+            Card sorcery = createSorcery("Test Stomp", "{2}{G}");
+            sorcery.target(2, 2);
+            var predicate = new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR);
+            sorcery.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingControlledPermanentEffect(predicate, 2));
+            setHand(player1Id, List.of(sorcery));
+            addMana(player1Id, ManaColor.GREEN, 1);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            Permanent dinosaur = new Permanent(createCreature("Dinosaur", "{1}{G}"));
+            Permanent opponentCreature = new Permanent(createCreature("Bear", "{1}{G}"));
+            gd.playerBattlefields.get(player1Id).add(dinosaur);
+            gd.playerBattlefields.get(player2Id).add(opponentCreature);
+
+            when(gameQueryService.findPermanentById(gd, dinosaur.getId())).thenReturn(dinosaur);
+            when(gameQueryService.findPermanentController(gd, dinosaur.getId())).thenReturn(player1Id);
+            when(gameQueryService.matchesPermanentPredicate(gd, dinosaur, predicate)).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, null, null, null,
+                    List.of(dinosaur.getId(), opponentCreature.getId()), null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
         }
 
         @Test

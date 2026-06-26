@@ -53,7 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
@@ -677,10 +677,10 @@ public class SpellCastingService {
             // Validate mana when target-based cost reduction doesn't apply but playability
             // check passed optimistically (e.g. Savage Stomp targeting a non-Dinosaur)
             if (targetSubtypeCostReduction == 0 && !usingAlternateCost) {
-                ReduceOwnCastCostIfTargetingControlledSubtypeEffect targetReduceEffect =
+                ReduceOwnCastCostIfTargetingControlledPermanentEffect targetReduceEffect =
                         card.getEffects(EffectSlot.STATIC).stream()
-                                .filter(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::isInstance)
-                                .map(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::cast)
+                                .filter(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::isInstance)
+                                .map(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::cast)
                                 .findFirst().orElse(null);
                 if (targetReduceEffect != null) {
                     ManaCost validationCost = new ManaCost(card.getManaCost());
@@ -1047,13 +1047,13 @@ public class SpellCastingService {
 
     /**
      * Computes the actual cost reduction for spells that cost less when targeting a
-     * controlled permanent with a specific subtype (e.g. Savage Stomp targeting a Dinosaur).
+     * controlled permanent matching a predicate (e.g. Savage Stomp targeting a Dinosaur).
      * Returns the reduction amount if the first target matches, 0 otherwise.
      */
     private int computeTargetSubtypeCostReduction(Card card, GameData gameData, UUID playerId, List<UUID> targetIds) {
-        ReduceOwnCastCostIfTargetingControlledSubtypeEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::isInstance)
-                .map(ReduceOwnCastCostIfTargetingControlledSubtypeEffect.class::cast)
+        ReduceOwnCastCostIfTargetingControlledPermanentEffect effect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::isInstance)
+                .map(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::cast)
                 .findFirst().orElse(null);
         if (effect == null || targetIds.isEmpty()) {
             return 0;
@@ -1067,7 +1067,7 @@ public class SpellCastingService {
 
         UUID targetController = gameQueryService.findPermanentController(gameData, firstTargetId);
         if (playerId.equals(targetController)
-                && GameQueryService.permanentHasSubtype(firstTarget, effect.subtype())) {
+                && gameQueryService.matchesPermanentPredicate(gameData, firstTarget, effect.predicate())) {
             return effect.amount();
         }
         return 0;

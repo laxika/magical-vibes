@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSubtypeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +29,14 @@ public class SiegeGangCommander extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",
-                List.of(new SacrificeSubtypeCreatureCost(CardSubtype.GOBLIN), new DealDamageToAnyTargetEffect(2)),
+                List.of(new SacrificePermanentCost(
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
+                        )),
+                        "Sacrifice a Goblin",
+                        false
+                ), new DealDamageToAnyTargetEffect(2)),
                 "{1}{R}, Sacrifice a Goblin: Siege-Gang Commander deals 2 damage to any target."
         ));
     }

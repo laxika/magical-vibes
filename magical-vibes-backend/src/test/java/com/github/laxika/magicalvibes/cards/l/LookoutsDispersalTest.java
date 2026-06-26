@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,7 +36,9 @@ class LookoutsDispersalTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterUnlessPaysEffect.class);
         assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).getFirst()).amount()).isEqualTo(4);
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ReduceOwnCastCostIfControlsSubtypeEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
+                .isEqualTo(new ReduceOwnCastCostIfControlsPermanentEffect(
+                        new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.PIRATE), 1));
     }
 
     // ===== Counter-unless-pays: opponent cannot pay =====

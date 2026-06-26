@@ -77,8 +77,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "destroy all creatures" | `DestroyAllPermanentsEffect(PermanentIsCreaturePredicate())` | SPELL | |
 | "destroy all [type]" | `DestroyAllPermanentsEffect(predicate)` | SPELL | Filtered wipe |
 | "sacrifice a creature" | `SacrificeCreatureEffect()` | SPELL | Target player sacrifices |
-| "sacrifice a [subtype]: [effect]" | `SacrificeSubtypeCreatureCost(subtype)` then effect | activated ability | Ravenous Demon front face uses `TransformSelfEffect()` with `SORCERY_SPEED` |
-| "sacrifice a [subtype]. If you can't, [effects]" | `ForcedCostOrElseEffect(SacrificeSubtypeCreatureCost(subtype), elseEffects)` | trigger | Archdemon of Greed uses `TapSelfEffect()` + `DealDamageToControllerEffect(9)` |
+| "sacrifice a [subtype]: [effect]" | `SacrificePermanentCost(PermanentAllOfPredicate(creature + PermanentHasSubtypePredicate(subtype)), "Sacrifice a [subtype]", false)` then effect | activated ability | Ravenous Demon front face uses `TransformSelfEffect()` with `SORCERY_SPEED` |
+| "sacrifice a [subtype]. If you can't, [effects]" | `ForcedCostOrElseEffect(SacrificePermanentCost(PermanentAllOfPredicate(creature + subtype), description, false), elseEffects)` | trigger | Archdemon of Greed uses `TapSelfEffect()` + `DealDamageToControllerEffect(9)` |
 | "you may sacrifice a nontoken creature. If you do, create X 2/2 Wolf tokens, where X is its toughness" | `MayEffect(SacrificeCreatureToCreateTokensEqualToToughnessEffect(template, PermanentNotPredicate(PermanentIsTokenPredicate)))` | trigger | Feed the Pack; X = sacrificed creature's toughness |
 | "each opponent sacrifices a creature" | `EachOpponentSacrificesCreatureEffect()` | SPELL/trigger | |
 | "sacrifice CARDNAME" | `SacrificeSelfEffect()` | trigger/ability | |

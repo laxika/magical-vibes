@@ -164,9 +164,8 @@ See EFFECTS_INDEX.md "Destruction" section for 10+ additional niche destruction/
 - `SacrificeSelfCost()` — sacrifice self as cost
 - `RemoveAllCountersAsCostEffect(CounterType)` — remove all counters of a type as cost; count snapshotted into xValue (Jar of Eyeballs: `EYEBALL`)
 - `SacrificeCreatureCost()` or `(boolean trackMV)` or `(boolean trackMV, boolean trackPower)` or `(boolean, boolean, boolean trackToughness)` or `(boolean, boolean, boolean, boolean excludeSelf)` — sacrifice creature
-- `SacrificeSubtypeCreatureCost(CardSubtype)` — sacrifice subtype creature
 - `SacrificeArtifactCost()` — sacrifice artifact
-- `SacrificePermanentCost(PermanentPredicate, String)` — sacrifice matching permanent
+- `SacrificePermanentCost(PermanentPredicate, String[, excludeSource])` — sacrifice matching permanent; use creature+subtype predicates with `excludeSource=false` for source-eligible "sacrifice a [subtype]"
 - `DiscardCardTypeCost(CardPredicate, String)` — discard matching card
 - `RemoveCounterFromSourceCost(int, CounterType)` — remove counters from self
 - `CrewCost(int)` — crew
@@ -437,6 +436,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `NoMaximumHandSizeEffect()` — no max hand size (static)
 - `IncreaseOpponentCastCostEffect(Set<CardType>, int)` — opponents' spells cost more
 - `ReduceOwnCastCostForCardTypeEffect(Set<CardType>, int)` — own spells cost less
+- `ReduceOwnCastCostIfControlsPermanentEffect(PermanentPredicate, int)` — this spell costs less if you control a matching permanent
+- `ReduceOwnCastCostIfTargetingControlledPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target is your matching permanent
 - `ReduceOwnCastCostPerCreatureCardInGraveyardEffect(int)` — this spell costs N less per creature card in your graveyard (Ghoultree)
 - `LimitSpellsPerTurnEffect(int)` — max spells per turn (all players)
 - `LimitSpellsForEnchantedPlayerEffect(int)` — max spells per turn for the enchanted player (Curse Aura)
