@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -37,11 +38,11 @@ class RiverSneakTest extends BaseCardTest {
         // Trigger: Merfolk ETB gives +1/+1 until end of turn
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(SubtypeConditionalEffect.class);
+                .isInstanceOf(TriggeringCardConditionalEffect.class);
 
-        SubtypeConditionalEffect conditional =
-                (SubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.MERFOLK);
+        TriggeringCardConditionalEffect conditional =
+                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
+        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.MERFOLK));
         assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
 
         BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();

@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -21,9 +22,13 @@ public class Slimefoot extends Card {
         // Whenever a Saproling you control dies, Slimefoot, the Stowaway deals 1 damage to each
         // opponent and you gain 1 life.
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new SubtypeConditionalEffect(CardSubtype.SAPROLING, new DealDamageToEachOpponentEffect(1)));
+                new TriggeringCardConditionalEffect(
+                        new CardSubtypePredicate(CardSubtype.SAPROLING),
+                        new DealDamageToEachOpponentEffect(1)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new SubtypeConditionalEffect(CardSubtype.SAPROLING, new GainLifeEffect(1)));
+                new TriggeringCardConditionalEffect(
+                        new CardSubtypePredicate(CardSubtype.SAPROLING),
+                        new GainLifeEffect(1)));
 
         // {4}: Create a 1/1 green Saproling creature token.
         addActivatedAbility(new ActivatedAbility(false, "{4}",

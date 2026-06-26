@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,16 +37,16 @@ class SanctumSeekerTest extends BaseCardTest {
         assertThat(effects).hasSize(2);
 
         // First effect: opponent life loss
-        assertThat(effects.get(0)).isInstanceOf(SubtypeConditionalEffect.class);
-        SubtypeConditionalEffect lossConditional = (SubtypeConditionalEffect) effects.get(0);
-        assertThat(lossConditional.subtype()).isEqualTo(CardSubtype.VAMPIRE);
+        assertThat(effects.get(0)).isInstanceOf(TriggeringCardConditionalEffect.class);
+        TriggeringCardConditionalEffect lossConditional = (TriggeringCardConditionalEffect) effects.get(0);
+        assertThat(lossConditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.VAMPIRE));
         assertThat(lossConditional.wrapped()).isInstanceOf(EachOpponentLosesLifeEffect.class);
         assertThat(((EachOpponentLosesLifeEffect) lossConditional.wrapped()).amount()).isEqualTo(1);
 
         // Second effect: controller life gain
-        assertThat(effects.get(1)).isInstanceOf(SubtypeConditionalEffect.class);
-        SubtypeConditionalEffect gainConditional = (SubtypeConditionalEffect) effects.get(1);
-        assertThat(gainConditional.subtype()).isEqualTo(CardSubtype.VAMPIRE);
+        assertThat(effects.get(1)).isInstanceOf(TriggeringCardConditionalEffect.class);
+        TriggeringCardConditionalEffect gainConditional = (TriggeringCardConditionalEffect) effects.get(1);
+        assertThat(gainConditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.VAMPIRE));
         assertThat(gainConditional.wrapped()).isInstanceOf(GainLifeEffect.class);
         assertThat(((GainLifeEffect) gainConditional.wrapped()).amount()).isEqualTo(1);
     }

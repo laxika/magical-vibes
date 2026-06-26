@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "145")
 public class AvacynsCollar extends Card {
@@ -21,8 +22,8 @@ public class AvacynsCollar extends Card {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature dies, if it was a Human, create a 1/1 white Spirit creature token with flying
-        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new SubtypeConditionalEffect(
-                CardSubtype.HUMAN,
+        addEffect(EffectSlot.ON_EQUIPPED_CREATURE_DIES, new TriggeringCardConditionalEffect(
+                new CardSubtypePredicate(CardSubtype.HUMAN),
                 CreateTokenEffect.whiteSpirit(1)
         ));
 

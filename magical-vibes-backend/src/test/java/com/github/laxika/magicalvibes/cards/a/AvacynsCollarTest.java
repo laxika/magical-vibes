@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,16 +48,16 @@ class AvacynsCollarTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has SubtypeConditionalEffect(HUMAN) death trigger wrapping CreateTokenEffect")
+    @DisplayName("Has Human triggering-card conditional death trigger wrapping CreateTokenEffect")
     void hasDeathTrigger() {
         AvacynsCollar card = new AvacynsCollar();
 
         assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst())
-                .isInstanceOf(SubtypeConditionalEffect.class);
-        SubtypeConditionalEffect conditional = (SubtypeConditionalEffect)
+                .isInstanceOf(TriggeringCardConditionalEffect.class);
+        TriggeringCardConditionalEffect conditional = (TriggeringCardConditionalEffect)
                 card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.HUMAN);
+        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.HUMAN));
         assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
     }
 

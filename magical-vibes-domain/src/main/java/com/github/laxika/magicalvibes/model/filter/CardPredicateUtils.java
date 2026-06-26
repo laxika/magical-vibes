@@ -55,6 +55,13 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";
         }
+        if (predicate instanceof CardNotPredicate p) {
+            String inner = describeFilter(p.predicate());
+            if (inner.endsWith(" card")) {
+                return "non-" + inner;
+            }
+            return "not " + inner;
+        }
         if (predicate instanceof CardAllOfPredicate p) {
             // Render supertype adjectives ("basic", "legendary", "snow") first so a composed
             // predicate reads naturally, e.g. CardAllOf(LAND, BASIC) → "basic land card".

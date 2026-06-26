@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -30,6 +31,8 @@ public class DiregrafCaptain extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
-                new SubtypeConditionalEffect(CardSubtype.ZOMBIE, new TargetPlayerLosesLifeEffect(1)));
+                new TriggeringCardConditionalEffect(
+                        new CardSubtypePredicate(CardSubtype.ZOMBIE),
+                        new TargetPlayerLosesLifeEffect(1)));
     }
 }

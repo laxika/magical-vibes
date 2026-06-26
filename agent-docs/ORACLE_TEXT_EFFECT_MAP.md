@@ -180,6 +180,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "create N 1/1 white Spirit creature tokens with flying" | `CreateTokenEffect.whiteSpirit(N)` | SPELL/trigger | Static factory |
+| "Whenever another non-[Subtype] creature you control dies, create ..." | `EffectSlot.ON_ALLY_CREATURE_DIES` + `TriggeringCardConditionalEffect(new CardNotPredicate(new CardSubtypePredicate(subtype)), CreateTokenEffect...)` | trigger | Requiem Angel-style; use ally creature death, not nontoken, because token non-Spirits count |
 | "create N 2/2 black Zombie creature tokens" | `CreateTokenEffect.blackZombie(N)` | SPELL/trigger | Static factory |
 | "create N 1/1 white Soldier creature tokens" | `CreateTokenEffect.whiteSoldier(N)` | SPELL/trigger | Static factory |
 | "create a Treasure token" | `CreateTokenEffect.ofTreasureToken(1)` | SPELL/trigger | Static factory |

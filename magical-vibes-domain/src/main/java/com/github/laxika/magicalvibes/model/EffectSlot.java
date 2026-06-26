@@ -119,7 +119,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ALLY_CREATURE_EXPLORES,
     /** Triggers once per attacking creature the controller controls. Unlike ON_ALLY_CREATURES_ATTACK
      *  (which fires once per combat), this fires separately for each creature declared as an attacker.
-     *  Supports SubtypeConditionalEffect to filter by the attacking creature's subtype (e.g. Vampires).
+     *  Supports TriggeringCardConditionalEffect to filter by the attacking creature (e.g. Vampires).
      *  Checked in {@code CombatAttackService.declareAttackers}. Used by Sanctum Seeker. */
     ON_ALLY_CREATURE_ATTACKS,
     /** Triggers whenever a creature controlled by the same player becomes the target of a spell

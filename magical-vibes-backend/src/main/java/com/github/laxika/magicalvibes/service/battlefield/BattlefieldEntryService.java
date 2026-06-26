@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
@@ -1414,8 +1414,9 @@ public class BattlefieldEntryService {
                                 gameData.id, perm.getCard().getName(), enteringCreature.getName(),
                                 enteringCreature.getPower(), conditional.maxPower());
                     }
-                } else if (effect instanceof SubtypeConditionalEffect conditional) {
-                    if (!enteringCreature.getSubtypes().contains(conditional.subtype())) {
+                } else if (effect instanceof TriggeringCardConditionalEffect conditional) {
+                    if (!gameQueryService.matchesCardPredicate(enteringCreature, conditional.predicate(), null,
+                            gameData, controllerId)) {
                         continue;
                     }
                     CardEffect innerEffect = conditional.wrapped();
@@ -1430,9 +1431,9 @@ public class BattlefieldEntryService {
                     ));
                     String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (subtype {})",
+                    log.info("Game {} - {} triggers for {} entering (card predicate {})",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                            conditional.subtype());
+                            conditional.predicate());
                 } else if (effect instanceof GainLifeEqualToToughnessEffect) {
                     int toughness = enteringCreature.getToughness();
                     gameData.stack.add(new StackEntry(

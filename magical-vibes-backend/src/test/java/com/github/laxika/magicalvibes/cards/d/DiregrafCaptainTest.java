@@ -11,8 +11,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -44,10 +45,10 @@ class DiregrafCaptainTest extends BaseCardTest {
         // Whenever another Zombie you control dies, target opponent loses 1 life.
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(SubtypeConditionalEffect.class);
-        SubtypeConditionalEffect conditional =
-                (SubtypeConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        assertThat(conditional.subtype()).isEqualTo(CardSubtype.ZOMBIE);
+                .isInstanceOf(TriggeringCardConditionalEffect.class);
+        TriggeringCardConditionalEffect conditional =
+                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
+        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.ZOMBIE));
         assertThat(conditional.wrapped()).isInstanceOf(TargetPlayerLosesLifeEffect.class);
         assertThat(((TargetPlayerLosesLifeEffect) conditional.wrapped()).amount()).isEqualTo(1);
 

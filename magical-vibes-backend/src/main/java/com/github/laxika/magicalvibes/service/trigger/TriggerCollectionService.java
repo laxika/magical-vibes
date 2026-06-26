@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
@@ -861,7 +861,7 @@ public class TriggerCollectionService {
             List<CardEffect> stackEffects = new ArrayList<>();
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = unwrapSubtypeConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
                 if (resolvedEffect == null) continue;
 
                 if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
@@ -917,7 +917,7 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) continue;
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = unwrapSubtypeConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
                 if (resolvedEffect == null) continue;
                 var match = new TriggerMatchContext(gameData, perm, dyingCreatureControllerId, resolvedEffect);
                 registry.dispatch(match, EffectSlot.ON_EQUIPPED_CREATURE_DIES, resolvedEffect, ctx);
@@ -988,7 +988,7 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = unwrapSubtypeConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
                 if (resolvedEffect == null) continue;
                 var match = new TriggerMatchContext(gameData, perm, playerId, resolvedEffect);
                 registry.dispatch(match, EffectSlot.ON_ANY_CREATURE_DIES, resolvedEffect, ctx);
@@ -1087,18 +1087,19 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Unwraps {@link SubtypeConditionalEffect} if present.
-     * Returns the inner effect if the dying card has the required subtype,
+     * Unwraps triggering-card conditionals if present.
+     * Returns the inner effect if the triggering card matches the predicate,
      * {@code null} if the condition is not met (caller should skip),
      * or the original effect unchanged if it wasn't wrapped.
      */
-    CardEffect unwrapSubtypeConditional(CardEffect effect, Card dyingCard,
-                                        GameData gameData, UUID controllerId) {
-        if (effect instanceof SubtypeConditionalEffect filtered) {
-            if (!gameQueryService.cardHasSubtype(dyingCard, filtered.subtype(), gameData, controllerId)) {
+    CardEffect unwrapTriggeringCardConditional(CardEffect effect, Card triggeringCard,
+                                               GameData gameData, UUID controllerId) {
+        if (effect instanceof TriggeringCardConditionalEffect conditional) {
+            if (!gameQueryService.matchesCardPredicate(triggeringCard, conditional.predicate(), null,
+                    gameData, controllerId)) {
                 return null;
             }
-            return filtered.wrapped();
+            return conditional.wrapped();
         }
         return effect;
     }

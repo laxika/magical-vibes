@@ -29,7 +29,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `MetalcraftConditionalEffect(CardEffect)` — 3+ artifacts
 - `MorbidConditionalEffect(CardEffect)` — creature died this turn
 - `RaidConditionalEffect(CardEffect)` — attacked this turn
-- `SubtypeConditionalEffect(CardSubtype, CardEffect)` — triggering creature has subtype
+- `TriggeringCardConditionalEffect(CardPredicate, CardEffect)` — triggering card matches predicate
 - `ControlsSubtypeConditionalEffect(CardSubtype, CardEffect)` — controls subtype
 - `ControlsAnotherSubtypeConditionalEffect(CardSubtype, CardEffect)` — controls another subtype
 - `ControllerLifeThresholdConditionalEffect(int, CardEffect)` — life >= N

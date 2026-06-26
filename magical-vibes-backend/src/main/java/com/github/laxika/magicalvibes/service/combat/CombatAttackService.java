@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.HasNontokenSubtypeAttackerCon
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsAnotherSubtypeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlsSubtypeConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SubtypeConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
@@ -419,7 +419,7 @@ public class CombatAttackService {
 
         // Check for "whenever a creature you control attacks" triggers (ON_ALLY_CREATURE_ATTACKS)
         // These fire once per attacking creature (not once per combat like ON_ALLY_CREATURES_ATTACK).
-        // Supports SubtypeConditionalEffect to filter by the attacking creature's subtype.
+        // Supports TriggeringCardConditionalEffect to filter by the attacking creature.
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Permanent perm : battlefield) {
@@ -428,8 +428,9 @@ public class CombatAttackService {
 
                 List<CardEffect> matchingEffects = new ArrayList<>();
                 for (CardEffect effect : perCreatureAttackEffects) {
-                    if (effect instanceof SubtypeConditionalEffect conditional) {
-                        if (!GameQueryService.permanentHasSubtype(attacker, conditional.subtype())) {
+                    if (effect instanceof TriggeringCardConditionalEffect conditional) {
+                        if (!gameQueryService.matchesCardPredicate(attacker.getCard(), conditional.predicate(), null,
+                                gameData, playerId)) {
                             continue;
                         }
                         matchingEffects.add(conditional.wrapped());
