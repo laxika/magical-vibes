@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -92,7 +92,7 @@ public class DestructionResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final LifeResolutionService lifeResolutionService;
+    private final LifeSupport lifeSupport;
 
     /**
      * Resolves a {@link DestroyAllPermanentsEffect}, destroying all permanents matching the
@@ -167,7 +167,7 @@ public class DestructionResolutionService {
         // Gain life for each destroyed permanent
         if (destroyedCount > 0) {
             int totalLife = destroyedCount * effect.lifePerDestroyed();
-            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), totalLife, sourceName);
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), totalLife, sourceName);
         }
     }
 
@@ -923,7 +923,7 @@ public class DestructionResolutionService {
             if (creature != null) {
                 int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
                 sacrificeAndLog(gameData, creature, targetPlayerId);
-                lifeResolutionService.applyGainLife(gameData, controllerId, toughness, cardName);
+                lifeSupport.applyGainLife(gameData, controllerId, toughness, cardName);
             }
             return;
         }
@@ -1329,7 +1329,7 @@ public class DestructionResolutionService {
                 gameBroadcastService.logAndBroadcast(gameData, tapLog);
                 log.info("Game {} - {} is tapped (no creature to sacrifice)", gameData.id, cardName);
             }
-            lifeResolutionService.applyLifeLoss(gameData, controllerId, effect.lifeLoss(), cardName);
+            lifeSupport.applyLifeLoss(gameData, controllerId, effect.lifeLoss(), cardName);
             gameOutcomeService.checkWinCondition(gameData);
             return;
         }
@@ -1442,7 +1442,7 @@ public class DestructionResolutionService {
         if (amount <= 0) return;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
-            lifeResolutionService.applyLifeLoss(gameData, playerId, amount, sourceName);
+            lifeSupport.applyLifeLoss(gameData, playerId, amount, sourceName);
         }
         gameOutcomeService.checkWinCondition(gameData);
     }
@@ -1545,7 +1545,7 @@ public class DestructionResolutionService {
 
         // Gain life equal to mana value regardless of destruction result
         if (manaValue > 0) {
-            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), manaValue,
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), manaValue,
                     "equal to " + target.getCard().getName() + "'s mana value");
         }
     }
@@ -1574,7 +1574,7 @@ public class DestructionResolutionService {
 
         // Gain life equal to toughness regardless of destruction result
         if (gainsLife) {
-            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), toughness,
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), toughness,
                     "equal to " + target.getCard().getName() + "'s toughness");
         }
     }

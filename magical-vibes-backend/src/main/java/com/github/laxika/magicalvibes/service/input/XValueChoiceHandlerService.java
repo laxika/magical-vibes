@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
  * Generic handler for X value choice interactions.
  * Validates the choice, stores it on GameData, and resumes effect resolution.
  * The actual game logic (what to do with the chosen X) lives in the effect handler
- * that initiated the interaction (e.g. LifeResolutionService).
+ * that initiated the interaction (e.g. PayXManaGainXLifeEffectHandler).
  */
 @Slf4j
 @Service

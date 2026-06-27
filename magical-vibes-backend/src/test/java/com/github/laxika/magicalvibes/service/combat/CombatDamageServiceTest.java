@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -65,7 +65,7 @@ class CombatDamageServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private SessionManager sessionManager;
     @Mock private TriggerCollectionService triggerCollectionService;
-    @Mock private LifeResolutionService lifeResolutionService;
+    @Mock private LifeSupport lifeSupport;
     @Mock private CombatAttackService combatAttackService;
     @Mock private CombatTriggerService combatTriggerService;
 
@@ -506,7 +506,7 @@ class CombatDamageServiceTest {
             combatDamageService.resolveCombatDamage(gameData);
 
             assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(18);
-            verify(lifeResolutionService).applyGainLife(eq(gameData), eq(player1Id), eq(2),
+            verify(lifeSupport).applyGainLife(eq(gameData), eq(player1Id), eq(2),
                     eq("lifelink"));
         }
 
@@ -522,7 +522,7 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(lifeResolutionService).applyGainLife(eq(gameData), eq(player1Id), eq(2),
+            verify(lifeSupport).applyGainLife(eq(gameData), eq(player1Id), eq(2),
                     eq("lifelink"));
         }
 
@@ -539,7 +539,7 @@ class CombatDamageServiceTest {
             combatDamageService.resolveCombatDamage(gameData);
 
             assertThat(gameData.playerLifeTotals.get(player2Id)).isEqualTo(16);
-            verify(lifeResolutionService, times(2)).applyGainLife(eq(gameData), eq(player1Id), eq(2),
+            verify(lifeSupport, times(2)).applyGainLife(eq(gameData), eq(player1Id), eq(2),
                     eq("lifelink"));
         }
 
@@ -555,7 +555,7 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            verify(lifeResolutionService).applyGainLife(eq(gameData), eq(player2Id), eq(2),
+            verify(lifeSupport).applyGainLife(eq(gameData), eq(player2Id), eq(2),
                     eq("lifelink"));
         }
     }

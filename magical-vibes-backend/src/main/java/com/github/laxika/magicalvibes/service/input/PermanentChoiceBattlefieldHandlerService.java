@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
 
 import lombok.RequiredArgsConstructor;
@@ -68,7 +68,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final DamageResolutionService damageResolutionService;
     private final DestructionResolutionService destructionResolutionService;
-    private final LifeResolutionService lifeResolutionService;
+    private final LifeSupport lifeSupport;
     private final LibrarySearchResolutionService librarySearchResolutionService;
 
     public void handleCloneCopy(GameData gameData, UUID permanentId) {
@@ -252,7 +252,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
         // Controller gains life equal to the sacrificed creature's toughness
-        lifeResolutionService.applyGainLife(gameData, context.controllerId(), toughness, context.sourceCardName());
+        lifeSupport.applyGainLife(gameData, context.controllerId(), toughness, context.sourceCardName());
 
         stateBasedActionService.performStateBasedActions(gameData);
 

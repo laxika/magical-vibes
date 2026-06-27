@@ -31,7 +31,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -77,7 +77,7 @@ class DamageResolutionServiceTest {
     private TriggerCollectionService triggerCollectionService;
 
     @Mock
-    private LifeResolutionService lifeResolutionService;
+    private LifeSupport lifeSupport;
 
     @InjectMocks
     private DamageResolutionService drs;
@@ -834,7 +834,7 @@ class DamageResolutionServiceTest {
             drs.resolveDealDamageToAnyTargetAndGainLife(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
-            verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
+            verify(lifeSupport).applyGainLife(gd, player1Id, 3);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
             verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
             verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);
@@ -862,7 +862,7 @@ class DamageResolutionServiceTest {
             drs.resolveDealDamageToAnyTargetAndGainLife(gd, entry, effect);
 
             assertThat(gd.pendingLethalDamageDestructions).contains(bears);
-            verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
+            verify(lifeSupport).applyGainLife(gd, player1Id, 3);
             verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
         }
     }
@@ -891,7 +891,7 @@ class DamageResolutionServiceTest {
             drs.resolveDealXDamageToAnyTargetAndGainXLife(gd, entry);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
-            verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
+            verify(lifeSupport).applyGainLife(gd, player1Id, 3);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
             verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
             verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(gd, player2Id);

@@ -32,7 +32,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -77,7 +77,7 @@ class GraveyardReturnResolutionServiceTest {
     private PlayerInputService playerInputService;
 
     @Mock
-    private LifeResolutionService lifeResolutionService;
+    private LifeSupport lifeSupport;
 
     @Mock
     private ExileService exileService;
@@ -511,7 +511,7 @@ class GraveyardReturnResolutionServiceTest {
             service.resolveExileCardsFromGraveyard(gd, entry, effect);
 
             verify(exileService).exileCard(gd, player1Id, creature);
-            verify(lifeResolutionService).applyGainLife(gd, player1Id, 3);
+            verify(lifeSupport).applyGainLife(gd, player1Id, 3);
         }
 
         @Test
@@ -585,7 +585,7 @@ class GraveyardReturnResolutionServiceTest {
             service.resolveReturnCardFromGraveyard(gd, entry, effect);
 
             verify(permanentRemovalService).removeCardFromGraveyardById(gd, creature.getId());
-            verify(lifeResolutionService).applyGainLife(gd, player1Id, 2);
+            verify(lifeSupport).applyGainLife(gd, player1Id, 2);
         }
 
         @Test

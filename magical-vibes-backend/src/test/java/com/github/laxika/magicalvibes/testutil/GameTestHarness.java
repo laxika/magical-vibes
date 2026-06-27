@@ -102,7 +102,9 @@ import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionServi
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -170,7 +172,7 @@ public class GameTestHarness {
     private static SpellCastingService staticSpellCastingService;
     private static CombatAttackService staticCombatAttackService;
     private static StateBasedActionService staticStateBasedActionService;
-    private static LifeResolutionService staticLifeResolutionService;
+    private static LifeSupport staticLifeSupport;
 
     private static synchronized void initServices() {
         if (staticGameRegistry != null) {
@@ -237,11 +239,11 @@ public class GameTestHarness {
         StateTriggerService stateTriggerService = new StateTriggerService(staticGameBroadcastService);
         staticStateBasedActionService = new StateBasedActionService(
                 gameOutcomeService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, graveyardService, stateTriggerService);
-        staticLifeResolutionService = new LifeResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticTriggerCollectionService);
+        staticLifeSupport = new LifeSupport(staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(staticGameBroadcastService);
         staticCombatAttackService = new CombatAttackService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticTriggerCollectionService, combatTriggerService);
         CombatBlockService combatBlockService = new CombatBlockService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticCombatAttackService, combatTriggerService);
-        CombatDamageService combatDamageService = new CombatDamageService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, staticPermanentRemovalService, staticPlayerInputService, staticSessionManager, staticTriggerCollectionService, staticLifeResolutionService, staticCombatAttackService, combatTriggerService);
+        CombatDamageService combatDamageService = new CombatDamageService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, staticPermanentRemovalService, staticPlayerInputService, staticSessionManager, staticTriggerCollectionService, staticLifeSupport, staticCombatAttackService, combatTriggerService);
         CombatService combatService = new CombatService(
                 staticCombatAttackService, combatBlockService, combatDamageService, staticGameBroadcastService, staticPermanentRemovalService, staticBattlefieldEntryService);
         TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();
@@ -263,15 +265,15 @@ public class GameTestHarness {
         staticTargetLegalityService = new TargetLegalityService(staticGameQueryService, staticTargetValidationService);
         staticBattlefieldEntryService.setTargetLegalityService(staticTargetLegalityService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
-        DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticTriggerCollectionService, staticLifeResolutionService);
+        DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticTriggerCollectionService, staticLifeSupport);
         ExileResolutionService exileResolutionService = new ExileResolutionService(staticDrawService, graveyardService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticPlayerInputService, cardViewFactory, staticTriggerCollectionService, staticBattlefieldEntryService, exileService);
         PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(staticDrawService, graveyardService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticSessionManager, cardViewFactory, staticPermanentRemovalService, staticBattlefieldEntryService, staticTriggerCollectionService, effectHandlerRegistry);
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
-        DestructionResolutionService destructionResolutionService = new DestructionResolutionService(staticBattlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, staticPermanentRemovalService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeResolutionService);
+        DestructionResolutionService destructionResolutionService = new DestructionResolutionService(staticBattlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, staticPermanentRemovalService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeSupport);
         PermanentControlResolutionService permanentControlResolutionService = new PermanentControlResolutionService(staticBattlefieldEntryService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService, staticTriggerCollectionService, creatureControlService);
         miscTriggerCollectorService.setPermanentControlResolutionService(permanentControlResolutionService);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(staticDrawService, staticGameBroadcastService, staticSessionManager, cardViewFactory, staticGameQueryService, staticPermanentRemovalService, staticPlayerInputService);
-        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(staticBattlefieldEntryService, staticPermanentRemovalService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeResolutionService, exileService, cardViewFactory);
+        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(staticBattlefieldEntryService, staticPermanentRemovalService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeSupport, exileService, cardViewFactory);
         PermanentCounterResolutionService permanentCounterResolutionService = new PermanentCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService);
         AnimationResolutionService animationResolutionService = new AnimationResolutionService(
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
@@ -291,7 +293,6 @@ public class GameTestHarness {
                 new ExileReturnResolutionService(staticGameQueryService, staticGameBroadcastService),
                 new ExileEggCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticBattlefieldEntryService),
                 new BounceResolutionService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, staticPlayerInputService, staticPermanentRemovalService, effectHandlerRegistry),
-                staticLifeResolutionService,
                 animationResolutionService,
                 new BoostResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new KeywordGrantResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
@@ -308,6 +309,9 @@ public class GameTestHarness {
         for (Object service : effectServices) {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
+        List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
+                staticLifeSupport, staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService, staticPlayerInputService);
+        NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
         EffectResolutionService effectResolutionService = new EffectResolutionService(staticGameQueryService, effectHandlerRegistry, staticGameBroadcastService, staticPermanentRemovalService);
         staticStackResolutionService = new StackResolutionService(
                 staticBattlefieldEntryService, cloneService, graveyardService, staticLegendRuleService, staticStateBasedActionService, staticGameQueryService, staticTargetLegalityService,
@@ -318,7 +322,7 @@ public class GameTestHarness {
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, staticGameBroadcastService, staticPlayerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
-                damagePreventionService, staticPermanentRemovalService, staticTriggerCollectionService, staticStateBasedActionService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticSessionManager, staticLifeResolutionService);
+                damagePreventionService, staticPermanentRemovalService, staticTriggerCollectionService, staticStateBasedActionService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticSessionManager, staticLifeSupport);
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 graveyardService, staticGameQueryService, staticGameBroadcastService, staticTargetLegalityService, activatedAbilityExecutionService,
                 staticPlayerInputService, staticSessionManager, staticPermanentRemovalService, staticTriggerCollectionService, exileService);
@@ -338,13 +342,13 @@ public class GameTestHarness {
                 staticGameQueryService, graveyardService, staticGameBroadcastService, staticTriggerCollectionService, staticPlayerInputService, turnProgressionService);
         PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
                 inputCompletionService, staticGameQueryService, staticBattlefieldEntryService, cloneService, warpWorldService, staticGameBroadcastService, abilityActivationService,
-                staticPermanentRemovalService, staticPlayerInputService, staticStateBasedActionService, staticTriggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService, destructionResolutionService, staticLifeResolutionService, librarySearchResolutionService);
+                staticPermanentRemovalService, staticPlayerInputService, staticStateBasedActionService, staticTriggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService, destructionResolutionService, staticLifeSupport, librarySearchResolutionService);
         MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
                 inputCompletionService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticPlayerInputService, staticStateBasedActionService, staticTriggerCollectionService, turnProgressionService, effectResolutionService, destructionResolutionService, permanentCounterResolutionService, animationResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
-                staticGameQueryService, staticBattlefieldEntryService, staticLegendRuleService, staticGameBroadcastService, turnProgressionService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService, staticLifeResolutionService, exileService, graveyardReturnResolutionService, inputCompletionService, effectResolutionService);
+                staticGameQueryService, staticBattlefieldEntryService, staticLegendRuleService, staticGameBroadcastService, turnProgressionService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService, staticLifeSupport, exileService, graveyardReturnResolutionService, inputCompletionService, effectResolutionService);
         MayCastHandlerService mayCastHandlerService = new MayCastHandlerService(
                 inputCompletionService, staticGameQueryService, graveyardService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService, staticTriggerCollectionService, staticBattlefieldEntryService, exileService);
         MayCopyHandlerService mayCopyHandlerService = new MayCopyHandlerService(
@@ -411,7 +415,7 @@ public class GameTestHarness {
     private final SpellCastingService spellCastingService;
     private final CombatAttackService combatAttackService;
     private final StateBasedActionService stateBasedActionService;
-    private final LifeResolutionService lifeResolutionService;
+    private final LifeSupport lifeSupport;
 
     public GameTestHarness() {
         initServices();
@@ -440,7 +444,7 @@ public class GameTestHarness {
         spellCastingService = staticSpellCastingService;
         combatAttackService = staticCombatAttackService;
         stateBasedActionService = staticStateBasedActionService;
-        lifeResolutionService = staticLifeResolutionService;
+        lifeSupport = staticLifeSupport;
 
         // Create per-test state
         player1 = new Player(UUID.randomUUID(), "Alice");
@@ -1103,8 +1107,8 @@ public class GameTestHarness {
         return drawService;
     }
 
-    public LifeResolutionService getLifeResolutionService() {
-        return lifeResolutionService;
+    public LifeSupport getLifeSupport() {
+        return lifeSupport;
     }
 
     public PlayerInputService getPlayerInputService() {

@@ -76,7 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -109,7 +109,7 @@ public class DamageResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
-    private final LifeResolutionService lifeResolutionService;
+    private final LifeSupport lifeSupport;
 
     /**
      * Resolves {@link DealXDamageToTargetCreatureEffect} — deals X damage to the targeted creature.
@@ -188,7 +188,7 @@ public class DamageResolutionService {
         resolveCreatureTargetDamage(gameData, entry, gameQueryService.applyDamageMultiplier(gameData, count, entry));
 
         if (effect.gainLife() && count > 0) {
-            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), count);
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), count);
         }
     }
 
@@ -213,7 +213,7 @@ public class DamageResolutionService {
 
         // Gain life equal to the damage amount (subtype count) if enabled
         if (effect.gainLife() && count > 0) {
-            lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), count);
+            lifeSupport.applyGainLife(gameData, entry.getControllerId(), count);
         }
 
         gameOutcomeService.checkWinCondition(gameData);
@@ -483,7 +483,7 @@ public class DamageResolutionService {
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
-        lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), xValue);
+        lifeSupport.applyGainLife(gameData, entry.getControllerId(), xValue);
 
         gameOutcomeService.checkWinCondition(gameData);
     }
@@ -1379,7 +1379,7 @@ public class DamageResolutionService {
         resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
 
         // Life gain is independent of damage prevention — always happens if the spell resolves
-        lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), effect.lifeGain());
+        lifeSupport.applyGainLife(gameData, entry.getControllerId(), effect.lifeGain());
 
         gameOutcomeService.checkWinCondition(gameData);
     }
@@ -1534,7 +1534,7 @@ public class DamageResolutionService {
     private void checkSpellLifelink(GameData gameData, StackEntry entry, int effectiveDamage) {
         if (effectiveDamage <= 0) return;
         if (!gameQueryService.shouldControllerSpellHaveLifelink(gameData, entry)) return;
-        lifeResolutionService.applyGainLife(gameData, entry.getControllerId(), effectiveDamage,
+        lifeSupport.applyGainLife(gameData, entry.getControllerId(), effectiveDamage,
                 "spell lifelink", entry.getCard(), entry.getEntryType());
     }
 

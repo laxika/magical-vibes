@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,7 +52,7 @@ public class GraveyardChoiceHandlerService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
-    private final LifeResolutionService lifeResolutionService;
+    private final LifeSupport lifeSupport;
     private final ExileService exileService;
     private final GraveyardReturnResolutionService graveyardReturnResolutionService;
     private final InputCompletionService inputCompletionService;
@@ -145,7 +145,7 @@ public class GraveyardChoiceHandlerService {
                     if (gainLifeEqualToManaValue) {
                         int manaValue = card.getManaValue();
                         if (manaValue > 0) {
-                            lifeResolutionService.applyGainLife(gameData, playerId, manaValue);
+                            lifeSupport.applyGainLife(gameData, playerId, manaValue);
                         }
                     }
                 }
@@ -208,7 +208,7 @@ public class GraveyardChoiceHandlerService {
                     // Conditional life gain (e.g. Graveyard Shovel: "If it's a creature card, you gain 2 life.")
                     if (gainLifeIfCreatureAmount > 0 && gainLifeIfCreaturePlayerId != null
                             && card.hasType(CardType.CREATURE)) {
-                        lifeResolutionService.applyGainLife(gameData, gainLifeIfCreaturePlayerId, gainLifeIfCreatureAmount);
+                        lifeSupport.applyGainLife(gameData, gainLifeIfCreaturePlayerId, gainLifeIfCreatureAmount);
                     }
 
                     // Check if more exiles are needed

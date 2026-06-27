@@ -84,7 +84,7 @@ class LichsMasteryTest extends BaseCardTest {
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         // Directly call the service to gain life
-        var lifeService = harness.getLifeResolutionService();
+        var lifeService = harness.getLifeSupport();
         lifeService.applyGainLife(gd, player1.getId(), 3);
 
         // Should have drawn 3 cards

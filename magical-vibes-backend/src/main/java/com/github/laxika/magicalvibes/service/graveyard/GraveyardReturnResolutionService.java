@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -95,7 +95,7 @@ public class GraveyardReturnResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final LifeResolutionService lifeResolutionService;
+    private final LifeSupport lifeSupport;
     private final ExileService exileService;
     private final CardViewFactory cardViewFactory;
 
@@ -794,7 +794,7 @@ public class GraveyardReturnResolutionService {
     private void applyLifeGainEqualToManaValue(GameData gameData, UUID controllerId, Card card) {
         int manaValue = card.getManaValue();
         if (manaValue > 0) {
-            lifeResolutionService.applyGainLife(gameData, controllerId, manaValue);
+            lifeSupport.applyGainLife(gameData, controllerId, manaValue);
         }
     }
 
@@ -941,7 +941,7 @@ public class GraveyardReturnResolutionService {
 
         // Gain life after exile
         if (effect.lifeGain() > 0) {
-            lifeResolutionService.applyGainLife(gameData, controllerId, effect.lifeGain());
+            lifeSupport.applyGainLife(gameData, controllerId, effect.lifeGain());
         }
     }
 
@@ -1178,7 +1178,7 @@ public class GraveyardReturnResolutionService {
         boolean isCreatureCard = targetCard.hasType(CardType.CREATURE);
         if (isCreatureCard) {
             // Creature card exiled: gain life
-            lifeResolutionService.applyGainLife(gameData, controllerId, effect.creatureLifeGain(),
+            lifeSupport.applyGainLife(gameData, controllerId, effect.creatureLifeGain(),
                     entry.getCard().getName(), entry.getCard(), entry.getEntryType());
         } else {
             // Noncreature card exiled: boost source permanent
@@ -1827,7 +1827,7 @@ public class GraveyardReturnResolutionService {
             log.info("Game {} - {} exiles {} from graveyard", gameData.id, targetName, card.getName());
 
             if (effect.lifeGainIfCreature() > 0 && card.hasType(CardType.CREATURE)) {
-                lifeResolutionService.applyGainLife(gameData, controllerId, effect.lifeGainIfCreature());
+                lifeSupport.applyGainLife(gameData, controllerId, effect.lifeGainIfCreature());
             }
             return;
         }

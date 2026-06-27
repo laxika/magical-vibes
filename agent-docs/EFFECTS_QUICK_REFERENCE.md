@@ -472,7 +472,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 | Library/search/mill | `LibraryResolutionService` |
 | Graveyard/exile | `GraveyardReturnResolutionService` |
 | Draw/discard | `effect/PlayerInteractionResolutionService` |
-| Life | `effect/LifeResolutionService` |
+| Life | `effect/normalfx/*EffectHandler` (one class per effect; shared helpers in `effect/normalfx/LifeSupport`) |
 | Creature mods | `effect/CreatureModResolutionService` |
 | Permanent control/tokens | `effect/PermanentControlResolutionService` |
 | Static effects | `effect/staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) |

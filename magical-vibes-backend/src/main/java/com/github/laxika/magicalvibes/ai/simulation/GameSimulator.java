@@ -107,7 +107,9 @@ import com.github.laxika.magicalvibes.service.effect.TapUntapResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -274,11 +276,11 @@ public class GameSimulator {
         StateTriggerService stateTriggerService = new StateTriggerService(gameBroadcastService);
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
                 gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
-        LifeResolutionService lifeResolutionService = new LifeResolutionService(gameQueryService, gameBroadcastService, playerInputService, triggerCollectionService);
+        LifeSupport lifeSupport = new LifeSupport(gameQueryService, gameBroadcastService, triggerCollectionService);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
         this.combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, noOpSession, triggerCollectionService, combatTriggerService);
         CombatBlockService combatBlockService = new CombatBlockService(gameQueryService, gameBroadcastService, noOpSession, combatAttackService, combatTriggerService);
-        CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, permanentRemovalService, playerInputService, noOpSession, triggerCollectionService, lifeResolutionService, combatAttackService, combatTriggerService);
+        CombatDamageService combatDamageService = new CombatDamageService(gameQueryService, gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, permanentRemovalService, playerInputService, noOpSession, triggerCollectionService, lifeSupport, combatAttackService, combatTriggerService);
         CombatService combatService = new CombatService(
                 combatAttackService, combatBlockService, combatDamageService, gameBroadcastService, permanentRemovalService, battlefieldEntryService);
         TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();
@@ -299,15 +301,15 @@ public class GameSimulator {
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
 
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
-        DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeResolutionService);
+        DamageResolutionService damageResolutionService = new DamageResolutionService(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeSupport);
         ExileResolutionService exileResolutionService = new ExileResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService, battlefieldEntryService, exileService);
         PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, battlefieldEntryService, triggerCollectionService, effectHandlerRegistry);
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
-        DestructionResolutionService destructionResolutionService = new DestructionResolutionService(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService);
+        DestructionResolutionService destructionResolutionService = new DestructionResolutionService(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport);
         PermanentControlResolutionService permanentControlResolutionService = new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService);
         miscTriggerCollectorService.setPermanentControlResolutionService(permanentControlResolutionService);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory, gameQueryService, permanentRemovalService, playerInputService);
-        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService, exileService, cardViewFactory);
+        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport, exileService, cardViewFactory);
         PermanentCounterResolutionService permanentCounterResolutionService = new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService);
         AnimationResolutionService animationResolutionService = new AnimationResolutionService(
                 gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
@@ -325,7 +327,6 @@ public class GameSimulator {
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 graveyardReturnResolutionService,
                 new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService, effectHandlerRegistry),
-                lifeResolutionService,
                 animationResolutionService,
                 new BoostResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new KeywordGrantResolutionService(gameQueryService, gameBroadcastService, playerInputService),
@@ -342,6 +343,9 @@ public class GameSimulator {
         for (Object service : effectServices) {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
+        List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
+                lifeSupport, gameQueryService, gameBroadcastService, triggerCollectionService, playerInputService);
+        NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
 
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
         StackResolutionService stackResolutionService = new StackResolutionService(
@@ -353,7 +357,7 @@ public class GameSimulator {
         TurnProgressionService turnProgressionService = new TurnProgressionService(
                 combatService, gameBroadcastService, playerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
         ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
-                damagePreventionService, permanentRemovalService, triggerCollectionService, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, lifeResolutionService);
+                damagePreventionService, permanentRemovalService, triggerCollectionService, stateBasedActionService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, lifeSupport);
         AbilityActivationService abilityActivationService = new AbilityActivationService(
                 graveyardService, gameQueryService, gameBroadcastService, targetLegalityService, activatedAbilityExecutionService,
                 playerInputService, noOpSession, permanentRemovalService, triggerCollectionService, exileService);
@@ -373,13 +377,13 @@ public class GameSimulator {
                 gameQueryService, graveyardService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
         PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
                 inputCompletionService, gameQueryService, battlefieldEntryService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
-                permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService, destructionResolutionService, lifeResolutionService, librarySearchResolutionService);
+                permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService, destructionResolutionService, lifeSupport, librarySearchResolutionService);
         MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
                 inputCompletionService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService, destructionResolutionService, permanentCounterResolutionService, animationResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
-                gameQueryService, battlefieldEntryService, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService, playerInputService, lifeResolutionService, exileService, graveyardReturnResolutionService, inputCompletionService, effectResolutionService);
+                gameQueryService, battlefieldEntryService, legendRuleService, gameBroadcastService, turnProgressionService, permanentRemovalService, triggerCollectionService, playerInputService, lifeSupport, exileService, graveyardReturnResolutionService, inputCompletionService, effectResolutionService);
         MayCastHandlerService mayCastHandlerService = new MayCastHandlerService(
                 inputCompletionService, gameQueryService, graveyardService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, battlefieldEntryService, exileService);
         MayCopyHandlerService mayCopyHandlerService = new MayCopyHandlerService(

@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -64,7 +64,7 @@ class DestructionResolutionServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private LifeResolutionService lifeResolutionService;
+    @Mock private LifeSupport lifeSupport;
 
     @InjectMocks private DestructionResolutionService service;
 
@@ -850,7 +850,7 @@ class DestructionResolutionServiceTest {
             service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
-            verify(lifeResolutionService).applyGainLife(gd, player1Id, 1,
+            verify(lifeSupport).applyGainLife(gd, player1Id, 1,
                     "equal to Leonin Scimitar's mana value");
         }
 
@@ -868,7 +868,7 @@ class DestructionResolutionServiceTest {
 
             service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
 
-            verify(lifeResolutionService, never()).applyGainLife(any(), any(), any(int.class), anyString());
+            verify(lifeSupport, never()).applyGainLife(any(), any(), any(int.class), anyString());
         }
 
         @Test
@@ -884,11 +884,11 @@ class DestructionResolutionServiceTest {
             service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
 
             verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
-            verify(lifeResolutionService, never()).applyGainLife(any(), any(), any(int.class), anyString());
-        }
+            verify(lifeSupport, never()).applyGainLife(any(), any(), any(int.class), anyString());
+            }
 
-        @Test
-        @DisplayName("Life gain is logged via lifeResolutionService")
+            @Test
+            @DisplayName("Life gain is logged via lifeSupport")
         void lifeGainIsDelegated() {
             Card scimitarCard = createArtifactCard("Leonin Scimitar", "{1}");
             Permanent scimitar = addPermanent(player2Id, scimitarCard);
@@ -901,7 +901,7 @@ class DestructionResolutionServiceTest {
 
             service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
 
-            verify(lifeResolutionService).applyGainLife(gd, player1Id, 1,
+            verify(lifeSupport).applyGainLife(gd, player1Id, 1,
                     "equal to Leonin Scimitar's mana value");
         }
     }

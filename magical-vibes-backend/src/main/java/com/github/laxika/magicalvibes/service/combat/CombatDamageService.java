@@ -51,7 +51,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -88,7 +88,7 @@ public class CombatDamageService {
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
     private final TriggerCollectionService triggerCollectionService;
-    private final LifeResolutionService lifeResolutionService;
+    private final LifeSupport lifeSupport;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
 
@@ -596,7 +596,7 @@ public class CombatDamageService {
             if (!gameQueryService.hasKeyword(gameData, creature, Keyword.LIFELINK)) continue;
             UUID controllerId = CombatHelper.findControllerOf(gameData, creature);
             if (controllerId == null) continue;
-            lifeResolutionService.applyGainLife(gameData, controllerId, damageDealt, "lifelink");
+            lifeSupport.applyGainLife(gameData, controllerId, damageDealt, "lifelink");
         }
     }
 
@@ -609,7 +609,7 @@ public class CombatDamageService {
                 if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof GainLifeEqualToDamageDealtEffect) {
-                            lifeResolutionService.applyGainLife(gameData, playerId, damageDealt, perm.getCard().getName());
+                            lifeSupport.applyGainLife(gameData, playerId, damageDealt, perm.getCard().getName());
                         }
                     }
                 }

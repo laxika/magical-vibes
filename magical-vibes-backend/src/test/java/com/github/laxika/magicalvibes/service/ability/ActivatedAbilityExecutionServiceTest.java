@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -82,7 +82,7 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
     @Mock private SessionManager sessionManager;
-    @Mock private LifeResolutionService lifeResolutionService;
+    @Mock private LifeSupport lifeSupport;
 
     @InjectMocks
     private ActivatedAbilityExecutionService service;
@@ -258,8 +258,8 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("GainLifeEffect in mana ability delegates to lifeResolutionService")
-        void gainLifeEffectDelegatesToLifeResolutionService() {
+        @DisplayName("GainLifeEffect in mana ability delegates to lifeSupport")
+        void gainLifeEffectDelegatesToLifeSupport() {
             Card card = createCard("Test Mana Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
             List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new GainLifeEffect(1));
@@ -269,7 +269,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(lifeResolutionService).applyGainLife(gameData, player1Id, 1);
+            verify(lifeSupport).applyGainLife(gameData, player1Id, 1);
         }
 
         @Test

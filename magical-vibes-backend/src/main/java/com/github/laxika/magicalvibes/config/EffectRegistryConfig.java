@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,13 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
      */
     @Autowired(required = false)
     private List<StaticEffectHandlerBean> staticEffectHandlerBeans = List.of();
+
+    /**
+     * Migrated per-effect "normal" (stack-resolution) handlers, collected by Spring. Field-injected
+     * for the same bootstrap-cycle reasons as {@link #staticEffectHandlerBeans}.
+     */
+    @Autowired(required = false)
+    private List<NormalEffectHandlerBean> normalEffectHandlerBeans = List.of();
 
     public EffectRegistryConfig(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -87,9 +96,10 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
         }
 
         StaticEffectHandlerBeanFactory.registerAll(staticEffectHandlerBeans, staticEffectHandlerRegistry);
+        NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
 
-        log.info("Effect auto-registration complete: {} runtime handlers, {} static handlers, {} target validators",
-                effectCount, staticEffectHandlerBeans.size(), validatorCount);
+        log.info("Effect auto-registration complete: {} runtime handlers, {} normal handlers, {} static handlers, {} target validators",
+                effectCount, normalEffectHandlerBeans.size(), staticEffectHandlerBeans.size(), validatorCount);
     }
 
     @SuppressWarnings("unchecked")

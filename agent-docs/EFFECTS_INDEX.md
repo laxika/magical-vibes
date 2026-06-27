@@ -1017,7 +1017,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `AwardManaEffect` | `(ManaColor color, int amount)` or `(ManaColor color)` (defaults amount to 1) | add N mana of specified color. Also stack-resolvable via `@HandlesEffect` in LifeResolutionService |
+| `AwardManaEffect` | `(ManaColor color, int amount)` or `(ManaColor color)` (defaults amount to 1) | add N mana of specified color. Also stack-resolvable via `AwardManaEffectHandler` in `effect/normalfx` |
 | `AwardAnyColorManaEffect` | `(int amount)` or `()` (defaults amount to 1) | add N mana of any one color (player chooses) |
 | `AwardAnyColorManaWithInstantSorceryCopyEffect` | `(int amount)` or `()` (defaults amount to 1) | add N mana of any color and register a delayed one-shot trigger that copies the next instant or sorcery the controller casts. Cleared when mana pools drain. Used by Primal Wellspring |
 | `AddManaOnEnchantedLandTapEffect` | `(ManaColor color, int amount)` | when enchanted land is tapped, add N mana of color |
@@ -1212,7 +1212,7 @@ Pass `null` as filter to allow any card.
 | Library/search/mill | `LibraryResolutionService` |
 | Graveyard return/exile | `GraveyardReturnResolutionService` |
 | Player interaction (draw/discard/choices) | `effect/PlayerInteractionResolutionService` |
-| Life | `effect/LifeResolutionService` |
+| Life | `effect/normalfx/*EffectHandler` (one class per effect; shared helpers in `effect/normalfx/LifeSupport`) |
 | Creature mods (tap/pump/keyword) | `effect/CreatureModResolutionService` |
 | Permanent control/tokens/regeneration | `effect/PermanentControlResolutionService` |
 | Static continuous effects | `effect/staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) |

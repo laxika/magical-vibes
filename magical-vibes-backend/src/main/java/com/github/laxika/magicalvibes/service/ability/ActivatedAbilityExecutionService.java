@@ -63,7 +63,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -89,7 +89,7 @@ public class ActivatedAbilityExecutionService {
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
-    private final LifeResolutionService lifeResolutionService;
+    private final LifeSupport lifeSupport;
 
     /**
      * Completes an activated ability activation after all additional costs (mana, sacrifice creature,
@@ -475,7 +475,7 @@ public class ActivatedAbilityExecutionService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
             } else if (effect instanceof GainLifeEffect gain) {
-                lifeResolutionService.applyGainLife(gameData, playerId, gain.amount());
+                lifeSupport.applyGainLife(gameData, playerId, gain.amount());
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();
