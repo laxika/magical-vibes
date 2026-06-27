@@ -29,7 +29,7 @@ import java.util.List;
  *
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
- * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, and <b>Graveyard Return</b> domain handlers.
+ * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>, and <b>Library Reveal</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -42,6 +42,7 @@ public final class NormalEffectHandlerBeanFactory {
                                                           DamageSupport damageSupport,
                                                           DestructionSupport destructionSupport,
                                                           GraveyardReturnSupport graveyardReturnSupport,
+                                                          LibraryRevealSupport libraryRevealSupport,
                                                           PermanentControlSupport permanentControlSupport,
                                                           PermanentCounterSupport permanentCounterSupport,
                                                           BattlefieldEntryService battlefieldEntryService,
@@ -457,7 +458,32 @@ public final class NormalEffectHandlerBeanFactory {
                 new ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler(gameQueryService, gameBroadcastService, graveyardReturnSupport),
                 new RegisterDelayedReturnCardFromGraveyardToHandEffectHandler(gameBroadcastService),
                 new RegisterDelayedReturnSourceTransformedEffectHandler(gameQueryService, gameBroadcastService),
-                new ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory)
+                new ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory),
+                new RevealTopCardOfLibraryEffectHandler(gameBroadcastService),
+                new RevealTopCardRemoveTargetFromCombatIfMatchEffectHandler(gameQueryService, gameBroadcastService),
+                new LookAtTopCardMayRevealTypeTransformEffectHandler(gameBroadcastService),
+                new SurveilEffectHandler(gameBroadcastService),
+                new CastTopOfLibraryWithoutPayingManaCostEffectHandler(gameBroadcastService),
+                new RevealTopCardMayPlayFreeOrExileEffectHandler(gameBroadcastService, exileService),
+                new ReorderTopCardsOfLibraryEffectHandler(gameBroadcastService, sessionManager, cardViewFactory),
+                new ScryEffectHandler(gameBroadcastService, sessionManager, cardViewFactory),
+                new AjaniUltimateEffectHandler(gameBroadcastService, sessionManager, cardViewFactory),
+                new LookAtTopCardsHandTopBottomEffectHandler(gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport),
+                new LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler(gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport),
+                new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler(gameBroadcastService, sessionManager, cardViewFactory),
+                new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler(gameQueryService, sessionManager, cardViewFactory, libraryRevealSupport),
+                new LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler(sessionManager, cardViewFactory, libraryRevealSupport),
+                new ImprintFromTopCardsEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, exileService, libraryRevealSupport),
+                new LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler(gameBroadcastService, sessionManager, cardViewFactory),
+                new RevealTopCardPutIntoHandAndLoseLifeEffectHandler(gameQueryService, gameBroadcastService),
+                new EachPlayerNameCardRevealTopEffectHandler(sessionManager, libraryRevealSupport),
+                new RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler(gameBroadcastService, battlefieldEntryService),
+                new RevealTopCardsTypeToHandRestToGraveyardEffectHandler(gameBroadcastService, libraryRevealSupport),
+                new RevealTopCardsOpponentPaysLifeOrToHandEffectHandler(gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport),
+                new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory),
+                new ExploreEffectHandler(gameQueryService, gameBroadcastService, triggerCollectionService),
+                new SunbirdsInvocationRevealAndCastEffectHandler(gameBroadcastService, sessionManager, cardViewFactory),
+                new LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHandler(gameQueryService, sessionManager, cardViewFactory, libraryRevealSupport)
         );
     }
 

@@ -34,12 +34,30 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AjaniUltimateEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CastTopOfLibraryWithoutPayingManaCostEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerNameCardRevealTopEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ImprintFromTopCardsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardMayRevealTypeTransformEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsHandTopBottomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReorderTopCardsOfLibraryEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RevealTopCardMayPlayFreeOrExileEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RevealTopCardOfLibraryEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.RevealTopCardPutIntoHandAndLoseLifeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ScryEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -76,8 +94,25 @@ class LibraryRevealResolutionServiceTest {
     @Mock
     private ExileService exileService;
 
-    @InjectMocks
-    private LibraryRevealResolutionService service;
+    private LibraryRevealSupport libraryRevealSupport;
+    private RevealTopCardOfLibraryEffectHandler revealTopCardOfLibraryEffectHandler;
+    private LookAtTopCardMayRevealTypeTransformEffectHandler lookAtTopCardMayRevealTypeTransformEffectHandler;
+    private CastTopOfLibraryWithoutPayingManaCostEffectHandler castTopOfLibraryWithoutPayingManaCostEffectHandler;
+    private RevealTopCardMayPlayFreeOrExileEffectHandler revealTopCardMayPlayFreeOrExileEffectHandler;
+    private ReorderTopCardsOfLibraryEffectHandler reorderTopCardsOfLibraryEffectHandler;
+    private ScryEffectHandler scryEffectHandler;
+    private AjaniUltimateEffectHandler ajaniUltimateEffectHandler;
+    private LookAtTopCardsHandTopBottomEffectHandler lookAtTopCardsHandTopBottomEffectHandler;
+    private LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler lookAtTopCardsChooseNToHandRestToGraveyardEffectHandler;
+    private LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler;
+    private LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler;
+    private LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler;
+    private ImprintFromTopCardsEffectHandler imprintFromTopCardsEffectHandler;
+    private LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler;
+    private RevealTopCardPutIntoHandAndLoseLifeEffectHandler revealTopCardPutIntoHandAndLoseLifeEffectHandler;
+    private EachPlayerNameCardRevealTopEffectHandler eachPlayerNameCardRevealTopEffectHandler;
+    private RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler;
+    private LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -103,6 +138,26 @@ class LibraryRevealResolutionServiceTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
+
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
+        revealTopCardOfLibraryEffectHandler = new RevealTopCardOfLibraryEffectHandler(gameBroadcastService);
+        lookAtTopCardMayRevealTypeTransformEffectHandler = new LookAtTopCardMayRevealTypeTransformEffectHandler(gameBroadcastService);
+        castTopOfLibraryWithoutPayingManaCostEffectHandler = new CastTopOfLibraryWithoutPayingManaCostEffectHandler(gameBroadcastService);
+        revealTopCardMayPlayFreeOrExileEffectHandler = new RevealTopCardMayPlayFreeOrExileEffectHandler(gameBroadcastService, exileService);
+        reorderTopCardsOfLibraryEffectHandler = new ReorderTopCardsOfLibraryEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        scryEffectHandler = new ScryEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        ajaniUltimateEffectHandler = new AjaniUltimateEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        lookAtTopCardsHandTopBottomEffectHandler = new LookAtTopCardsHandTopBottomEffectHandler(gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport);
+        lookAtTopCardsChooseNToHandRestToGraveyardEffectHandler = new LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler(gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport);
+        lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler = new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler = new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler(gameQueryService, sessionManager, cardViewFactory, libraryRevealSupport);
+        lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler = new LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler(sessionManager, cardViewFactory, libraryRevealSupport);
+        imprintFromTopCardsEffectHandler = new ImprintFromTopCardsEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, exileService, libraryRevealSupport);
+        lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler = new LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        revealTopCardPutIntoHandAndLoseLifeEffectHandler = new RevealTopCardPutIntoHandAndLoseLifeEffectHandler(gameQueryService, gameBroadcastService);
+        eachPlayerNameCardRevealTopEffectHandler = new EachPlayerNameCardRevealTopEffectHandler(sessionManager, libraryRevealSupport);
+        revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler = new RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandler(gameBroadcastService, battlefieldEntryService);
+        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory);
     }
 
     // =========================================================================
@@ -150,7 +205,7 @@ class LibraryRevealResolutionServiceTest {
                     player1Id, "Aven Windreader", List.of(effect), 0,
                     player2Id, null);
 
-            service.resolveRevealTopCardOfLibrary(gd, entry);
+            revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("reveals") && msg.contains("Grizzly Bears")));
@@ -164,7 +219,7 @@ class LibraryRevealResolutionServiceTest {
                     player1Id, "Aven Windreader", List.of(effect), 0,
                     player2Id, null);
 
-            service.resolveRevealTopCardOfLibrary(gd, entry);
+            revealTopCardOfLibraryEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -187,7 +242,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Delver of Secrets"),
                     player1Id, "Delver of Secrets", List.of(effect));
 
-            service.resolveLookAtTopCardMayRevealTypeTransform(gd, entry, effect);
+            lookAtTopCardMayRevealTypeTransformEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -204,7 +259,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Delver of Secrets"),
                     player1Id, "Delver of Secrets", List.of(effect));
 
-            service.resolveLookAtTopCardMayRevealTypeTransform(gd, entry, effect);
+            lookAtTopCardMayRevealTypeTransformEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.pendingMayAbilities).hasSize(1);
             assertThat(gd.pendingMayAbilities.getFirst().description()).contains("Reveal").contains("Lightning Bolt");
@@ -227,7 +282,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Galvanoth"),
                     player1Id, "Galvanoth", List.of(effect));
 
-            service.resolveCastTopOfLibraryWithoutPaying(gd, entry, effect);
+            castTopOfLibraryWithoutPayingManaCostEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -244,7 +299,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Galvanoth"),
                     player1Id, "Galvanoth", List.of(effect));
 
-            service.resolveCastTopOfLibraryWithoutPaying(gd, entry, effect);
+            castTopOfLibraryWithoutPayingManaCostEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("not a castable type")));
@@ -261,7 +316,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Galvanoth"),
                     player1Id, "Galvanoth", List.of(effect));
 
-            service.resolveCastTopOfLibraryWithoutPaying(gd, entry, effect);
+            castTopOfLibraryWithoutPayingManaCostEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.pendingMayAbilities).hasSize(1);
             assertThat(gd.pendingMayAbilities.getFirst().description()).contains("Cast").contains("Lightning Bolt");
@@ -283,7 +338,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Djinn of Wishes"),
                     player1Id, "Djinn of Wishes", List.of(effect));
 
-            service.resolveRevealTopCardMayPlayFreeOrExile(gd, entry, effect);
+            revealTopCardMayPlayFreeOrExileEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -301,7 +356,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Djinn of Wishes"),
                     player1Id, "Djinn of Wishes", List.of(effect));
 
-            service.resolveRevealTopCardMayPlayFreeOrExile(gd, entry, effect);
+            revealTopCardMayPlayFreeOrExileEffectHandler.resolve(gd, entry, effect);
 
             verify(exileService).exileCard(gd, player1Id, land);
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
@@ -320,7 +375,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Djinn of Wishes"),
                     player1Id, "Djinn of Wishes", List.of(effect));
 
-            service.resolveRevealTopCardMayPlayFreeOrExile(gd, entry, effect);
+            revealTopCardMayPlayFreeOrExileEffectHandler.resolve(gd, entry, effect);
 
             verify(exileService).exileCard(gd, player1Id, land);
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -335,7 +390,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Djinn of Wishes"),
                     player1Id, "Djinn of Wishes", List.of(effect));
 
-            service.resolveRevealTopCardMayPlayFreeOrExile(gd, entry, effect);
+            revealTopCardMayPlayFreeOrExileEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.pendingMayAbilities).hasSize(1);
             assertThat(gd.pendingMayAbilities.getFirst().description()).contains("Play").contains("Lightning Bolt");
@@ -357,7 +412,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Sage Owl"),
                     player1Id, "Sage Owl", List.of(effect));
 
-            service.resolveReorderTopCardsOfLibrary(gd, entry, effect);
+            reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -373,7 +428,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Sage Owl"),
                     player1Id, "Sage Owl", List.of(effect));
 
-            service.resolveReorderTopCardsOfLibrary(gd, entry, effect);
+            reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("looks at the top card")));
@@ -391,7 +446,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Sage Owl"),
                     player1Id, "Sage Owl", List.of(effect));
 
-            service.resolveReorderTopCardsOfLibrary(gd, entry, effect);
+            reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
             assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player1Id);
@@ -414,7 +469,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
                     player1Id, "Some Card", List.of(effect));
 
-            service.resolveScry(gd, entry, effect);
+            scryEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
         }
@@ -426,7 +481,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
                     player1Id, "Some Card", List.of(effect));
 
-            service.resolveScry(gd, entry, effect);
+            scryEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("scries") && msg.contains("library is empty")));
@@ -442,7 +497,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
                     player1Id, "Some Card", List.of(effect));
 
-            service.resolveScry(gd, entry, effect);
+            scryEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -462,7 +517,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
                     player1Id, "Some Card", List.of(effect));
 
-            service.resolveScry(gd, entry, effect);
+            scryEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -486,7 +541,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Ajani Goldmane"),
                     player1Id, "Ajani Goldmane", List.of(effect));
 
-            service.resolveAjaniUltimate(gd, entry);
+            ajaniUltimateEffectHandler.resolve(gd, entry, new AjaniUltimateEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty") || msg.contains("no cards")));
@@ -502,7 +557,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Ajani Goldmane"),
                     player1Id, "Ajani Goldmane", List.of(effect));
 
-            service.resolveAjaniUltimate(gd, entry);
+            ajaniUltimateEffectHandler.resolve(gd, entry, new AjaniUltimateEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no eligible cards")));
@@ -521,7 +576,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Ajani Goldmane"),
                     player1Id, "Ajani Goldmane", List.of(effect));
 
-            service.resolveAjaniUltimate(gd, entry);
+            ajaniUltimateEffectHandler.resolve(gd, entry, new AjaniUltimateEffect());
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -543,7 +598,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Telling Time"),
                     player1Id, "Telling Time", List.of(effect));
 
-            service.resolveLookAtTopCardsHandTopBottom(gd, entry, effect);
+            lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNull();
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
@@ -561,7 +616,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Telling Time"),
                     player1Id, "Telling Time", List.of(effect));
 
-            service.resolveLookAtTopCardsHandTopBottom(gd, entry, effect);
+            lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNull();
             assertThat(gd.playerHands.get(player1Id)).contains(singleCard);
@@ -580,7 +635,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Telling Time"),
                     player1Id, "Telling Time", List.of(effect));
 
-            service.resolveLookAtTopCardsHandTopBottom(gd, entry, effect);
+            lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
             assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isEqualTo(player1Id);
@@ -605,7 +660,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Forbidden Alchemy"),
                     player1Id, "Forbidden Alchemy", List.of(effect));
 
-            service.resolveLookAtTopCardsChooseNToHandRestToGraveyard(gd, entry, effect);
+            lookAtTopCardsChooseNToHandRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -622,7 +677,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Forbidden Alchemy"),
                     player1Id, "Forbidden Alchemy", List.of(effect));
 
-            service.resolveLookAtTopCardsChooseNToHandRestToGraveyard(gd, entry, effect);
+            lookAtTopCardsChooseNToHandRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerHands.get(player1Id)).contains(singleCard);
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
@@ -642,7 +697,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Forbidden Alchemy"),
                     player1Id, "Forbidden Alchemy", List.of(effect));
 
-            service.resolveLookAtTopCardsChooseNToHandRestToGraveyard(gd, entry, effect);
+            lookAtTopCardsChooseNToHandRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -665,7 +720,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Shrine of Piercing Vision"),
                     player1Id, "Shrine of Piercing Vision", List.of(effect), 0);
 
-            service.resolveLookAtTopCardsPerChargeCounter(gd, entry);
+            lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler.resolve(gd, entry, new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no charge counters")));
@@ -679,7 +734,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Shrine of Piercing Vision"),
                     player1Id, "Shrine of Piercing Vision", List.of(effect), 3);
 
-            service.resolveLookAtTopCardsPerChargeCounter(gd, entry);
+            lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler.resolve(gd, entry, new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -696,7 +751,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Shrine of Piercing Vision"),
                     player1Id, "Shrine of Piercing Vision", List.of(effect), 3);
 
-            service.resolveLookAtTopCardsPerChargeCounter(gd, entry);
+            lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler.resolve(gd, entry, new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect());
 
             assertThat(gd.playerHands.get(player1Id)).contains(singleCard);
         }
@@ -713,7 +768,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Shrine of Piercing Vision"),
                     player1Id, "Shrine of Piercing Vision", List.of(effect), 3);
 
-            service.resolveLookAtTopCardsPerChargeCounter(gd, entry);
+            lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler.resolve(gd, entry, new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect());
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -736,7 +791,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mul Daya Channelers"),
                     player1Id, "Mul Daya Channelers", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
+            lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -754,7 +809,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mul Daya Channelers"),
                     player1Id, "Mul Daya Channelers", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
+            lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
             // With 2 cards and no creatures, should begin library reorder (to bottom)
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
@@ -770,7 +825,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mul Daya Channelers"),
                     player1Id, "Mul Daya Channelers", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
+            lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
             // Single card goes back to deck without reorder prompt
             assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
@@ -793,7 +848,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mul Daya Channelers"),
                     player1Id, "Mul Daya Channelers", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
+            lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -815,7 +870,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lead the Stampede"),
                     player1Id, "Lead the Stampede", List.of(effect));
 
-            service.resolveLookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottom(gd, entry, effect);
+            lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -838,7 +893,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lurking Predators"),
                     player1Id, "Lurking Predators", List.of(effect));
 
-            service.resolveLookAtTopCardsPutMatchingPermanentNameOnBattlefield(gd, entry, effect);
+            lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -857,7 +912,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
                     player1Id, "Some Card", List.of(effect));
 
-            service.resolveLookAtTopCardsPutMatchingPermanentNameOnBattlefield(gd, entry, effect);
+            lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler.resolve(gd, entry, effect);
 
             // No matching permanent names → reorder remaining to bottom
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
@@ -881,7 +936,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
                     player1Id, "Some Card", List.of(effect));
 
-            service.resolveLookAtTopCardsPutMatchingPermanentNameOnBattlefield(gd, entry, effect);
+            lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -903,7 +958,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Clone Shell"),
                     player1Id, "Clone Shell", List.of(effect));
 
-            service.resolveImprintFromTopCards(gd, entry, effect);
+            imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNull();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -920,7 +975,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Clone Shell"),
                     player1Id, "Clone Shell", List.of(effect));
 
-            service.resolveImprintFromTopCards(gd, entry, effect);
+            imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNull();
             verify(exileService).exileCard(gd, player1Id, singleCard);
@@ -940,7 +995,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Clone Shell"),
                     player1Id, "Clone Shell", List.of(effect), null, sourcePermanentId);
 
-            service.resolveImprintFromTopCards(gd, entry, effect);
+            imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
             verify(gameQueryService).setImprintedCardOnPermanent(gd, sourcePermanentId, singleCard);
         }
@@ -958,7 +1013,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Clone Shell"),
                     player1Id, "Clone Shell", List.of(effect));
 
-            service.resolveImprintFromTopCards(gd, entry, effect);
+            imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
@@ -983,7 +1038,7 @@ class LibraryRevealResolutionServiceTest {
                     player1Id, "Psychic Surgery", List.of(effect), 0,
                     player2Id, null);
 
-            service.resolveLookAtTopCardsOfTargetLibraryMayExileOne(gd, entry, effect);
+            lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -1002,7 +1057,7 @@ class LibraryRevealResolutionServiceTest {
                     player1Id, "Psychic Surgery", List.of(effect), 0,
                     player2Id, null);
 
-            service.resolveLookAtTopCardsOfTargetLibraryMayExileOne(gd, entry, effect);
+            lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -1026,7 +1081,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dark Tutelage"),
                     player1Id, "Dark Tutelage", List.of(effect));
 
-            service.resolveRevealTopCardPutIntoHandAndLoseLife(gd, entry);
+            revealTopCardPutIntoHandAndLoseLifeEffectHandler.resolve(gd, entry, new RevealTopCardPutIntoHandAndLoseLifeEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -1043,7 +1098,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dark Tutelage"),
                     player1Id, "Dark Tutelage", List.of(effect));
 
-            service.resolveRevealTopCardPutIntoHandAndLoseLife(gd, entry);
+            revealTopCardPutIntoHandAndLoseLifeEffectHandler.resolve(gd, entry, new RevealTopCardPutIntoHandAndLoseLifeEffect());
 
             assertThat(gd.playerHands.get(player1Id)).contains(topCard);
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
@@ -1061,7 +1116,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dark Tutelage"),
                     player1Id, "Dark Tutelage", List.of(effect));
 
-            service.resolveRevealTopCardPutIntoHandAndLoseLife(gd, entry);
+            revealTopCardPutIntoHandAndLoseLifeEffectHandler.resolve(gd, entry, new RevealTopCardPutIntoHandAndLoseLifeEffect());
 
             assertThat(gd.playerHands.get(player1Id)).contains(topCard);
             assertThat(gd.playerLifeTotals).doesNotContainKey(player1Id); // unchanged from default
@@ -1078,7 +1133,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dark Tutelage"),
                     player1Id, "Dark Tutelage", List.of(effect));
 
-            service.resolveRevealTopCardPutIntoHandAndLoseLife(gd, entry);
+            revealTopCardPutIntoHandAndLoseLifeEffectHandler.resolve(gd, entry, new RevealTopCardPutIntoHandAndLoseLifeEffect());
 
             assertThat(gd.playerHands.get(player1Id)).contains(topCard);
             assertThat(gd.playerLifeTotals).doesNotContainKey(player1Id); // life didn't change
@@ -1105,7 +1160,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Conundrum Sphinx"),
                     player1Id, "Conundrum Sphinx", List.of(effect));
 
-            service.resolveEachPlayerNameCardRevealTop(gd, entry);
+            eachPlayerNameCardRevealTopEffectHandler.resolve(gd, entry, new EachPlayerNameCardRevealTopEffect());
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
             verify(sessionManager).sendToPlayer(eq(player1Id), any());
@@ -1128,7 +1183,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lurking Predators"),
                     player1Id, "Lurking Predators", List.of(effect));
 
-            service.resolveRevealTopCardCreatureToBattlefieldOrMayBottom(gd, entry);
+            revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler.resolve(gd, entry, new RevealTopCardCreatureToBattlefieldOrMayBottomEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -1145,7 +1200,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lurking Predators"),
                     player1Id, "Lurking Predators", List.of(effect));
 
-            service.resolveRevealTopCardCreatureToBattlefieldOrMayBottom(gd, entry);
+            revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler.resolve(gd, entry, new RevealTopCardCreatureToBattlefieldOrMayBottomEffect());
 
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
@@ -1166,7 +1221,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lurking Predators"),
                     player1Id, "Lurking Predators", List.of(effect));
 
-            service.resolveRevealTopCardCreatureToBattlefieldOrMayBottom(gd, entry);
+            revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler.resolve(gd, entry, new RevealTopCardCreatureToBattlefieldOrMayBottomEffect());
 
             assertThat(gd.pendingMayAbilities).hasSize(1);
             assertThat(gd.pendingMayAbilities.getFirst().description())
@@ -1194,7 +1249,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
                     player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
 
-            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+            lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNull();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("library is empty")));
@@ -1209,7 +1264,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
                     player1Id, "Gishath's triggered ability", List.of(effect), 0, null, null);
 
-            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+            lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNull();
             assertThat(gd.playerDecks.get(player1Id)).hasSize(1); // untouched
@@ -1229,7 +1284,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
                     player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
 
-            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+            lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNull();
             // Cards should be back on the bottom of the library
@@ -1256,7 +1311,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
                     player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
 
-            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+            lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
             assertThat(gd.interaction.libraryRevealChoiceContext()).isNotNull();
@@ -1278,7 +1333,7 @@ class LibraryRevealResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
                     player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
 
-            service.resolveLookAtTopXCardsPermanentsToBattlefieldRestToGraveyard(gd, entry, effect);
+            lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
             // Only 1 card was in library, so only 1 revealed

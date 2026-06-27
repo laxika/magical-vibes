@@ -117,7 +117,7 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
     GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
     /** Triggers whenever a creature controlled by the same player explores.
-     *  Fired from {@code LibraryRevealResolutionService} (land branch) and
+     *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */
     ON_ALLY_CREATURE_EXPLORES,
     /** Triggers once per attacking creature the controller controls. Unlike ON_ALLY_CREATURES_ATTACK

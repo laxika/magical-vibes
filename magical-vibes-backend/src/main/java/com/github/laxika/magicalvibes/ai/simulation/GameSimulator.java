@@ -72,7 +72,7 @@ import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.library.LibraryRevealResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleResolutionService;
 import com.github.laxika.magicalvibes.service.library.MillResolutionService;
@@ -309,6 +309,7 @@ public class GameSimulator {
         miscTriggerCollectorService.setPermanentControlSupport(permanentControlSupport);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory, gameQueryService, permanentRemovalService, playerInputService);
         GraveyardReturnSupport graveyardReturnSupport = new GraveyardReturnSupport(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport, exileService, cardViewFactory);
+        LibraryRevealSupport libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, noOpSession, cardViewFactory);
         PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(gameQueryService, gameBroadcastService, playerInputService);
         AnimationSupport animationSupport = new AnimationSupport(
                 gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
@@ -316,7 +317,6 @@ public class GameSimulator {
                 new MillResolutionService(graveyardService, gameBroadcastService, gameQueryService, permanentControlSupport),
                 new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
                 librarySearchResolutionService,
-                new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, battlefieldEntryService, exileService, triggerCollectionService),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService, permanentControlSupport),
                 exileResolutionService,
@@ -333,7 +333,7 @@ public class GameSimulator {
         }
         CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, permanentControlSupport, permanentCounterSupport,
+                lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, permanentControlSupport, permanentCounterSupport,
                 battlefieldEntryService, legendRuleService, creatureControlService,
                 gameQueryService, gameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, permanentRemovalService, triggerCollectionService, playerInputService,

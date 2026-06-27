@@ -45,8 +45,8 @@ import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.exile.ExileEggCounterResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileReturnResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.library.LibraryRevealResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleResolutionService;
 import com.github.laxika.magicalvibes.service.library.MillResolutionService;
@@ -273,6 +273,7 @@ public class GameTestHarness {
         miscTriggerCollectorService.setPermanentControlSupport(permanentControlSupport);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(staticDrawService, staticGameBroadcastService, staticSessionManager, cardViewFactory, staticGameQueryService, staticPermanentRemovalService, staticPlayerInputService);
         GraveyardReturnSupport graveyardReturnSupport = new GraveyardReturnSupport(staticBattlefieldEntryService, staticPermanentRemovalService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeSupport, exileService, cardViewFactory);
+        LibraryRevealSupport libraryRevealSupport = new LibraryRevealSupport(staticGameBroadcastService, staticSessionManager, cardViewFactory);
         PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService);
         AnimationSupport animationSupport = new AnimationSupport(
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
@@ -280,7 +281,6 @@ public class GameTestHarness {
                 new MillResolutionService(graveyardService, staticGameBroadcastService, staticGameQueryService, permanentControlSupport),
                 new LibraryShuffleResolutionService(staticGameBroadcastService, staticGameQueryService, staticPermanentRemovalService),
                 librarySearchResolutionService,
-                new LibraryRevealResolutionService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, cardViewFactory, staticBattlefieldEntryService, exileService, staticTriggerCollectionService),
                 new PreventionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new CounterResolutionService(graveyardService, exileService, staticGameBroadcastService, staticGameQueryService, stateTriggerService, permanentControlSupport),
                 exileResolutionService,
@@ -299,7 +299,7 @@ public class GameTestHarness {
         }
         CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, permanentControlSupport, permanentCounterSupport,
+                staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, permanentControlSupport, permanentCounterSupport,
                 staticBattlefieldEntryService, staticLegendRuleService, creatureControlService,
                 staticGameQueryService, staticGameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,
