@@ -99,7 +99,6 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
 import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
-import com.github.laxika.magicalvibes.service.effect.BoostResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.KeywordGrantResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PermanentCounterResolutionService;
@@ -328,7 +327,6 @@ public class GameSimulator {
                 graveyardReturnResolutionService,
                 new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService, effectHandlerRegistry),
                 animationResolutionService,
-                new BoostResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new KeywordGrantResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),
                 new TapUntapResolutionService(gameQueryService, gameBroadcastService, triggerCollectionService),

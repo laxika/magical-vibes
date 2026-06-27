@@ -93,7 +93,6 @@ import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerServic
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceSpellHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceTriggerHandlerService;
 import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
-import com.github.laxika.magicalvibes.service.effect.BoostResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.KeywordGrantResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PermanentCounterResolutionService;
@@ -294,7 +293,6 @@ public class GameTestHarness {
                 new ExileEggCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticBattlefieldEntryService),
                 new BounceResolutionService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, staticPlayerInputService, staticPermanentRemovalService, effectHandlerRegistry),
                 animationResolutionService,
-                new BoostResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new KeywordGrantResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new CombatRestrictionResolutionService(staticGameQueryService, staticGameBroadcastService),
                 new TapUntapResolutionService(staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService),

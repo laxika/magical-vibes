@@ -16,8 +16,8 @@ import java.util.List;
  * {@link #createAll} to build the same set manually and {@link #registerAll} to register them. As
  * more domains migrate, only this factory needs updating — non-Spring sites never change again.
  *
- * <p>Currently holds only the <b>Life</b> domain handlers; later prompts append their domain's
- * handlers here.
+ * <p>Currently holds the <b>Life</b> and <b>Boost</b> domain handlers; later prompts append their
+ * domain's handlers here.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -73,7 +73,25 @@ public final class NormalEffectHandlerBeanFactory {
                 new GiveControllerPoisonCountersOnTargetDeathThisTurnEffectHandler(gameQueryService),
                 new AwardRestrictedManaEffectHandler(gameBroadcastService),
                 new AwardManaEffectHandler(gameBroadcastService),
-                new AddManaPerControlledPermanentEffectHandler(gameQueryService, gameBroadcastService)
+                new AddManaPerControlledPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostSelfEffectHandler(gameQueryService, gameBroadcastService),
+                new DoubleSelfPowerToughnessEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostSelfPerBlockingCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostSelfPerOtherAttackingSubtypeEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostSelfPerControlledPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostTargetCreaturePerControlledPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostTargetCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostTargetCreatureXEffectHandler(gameQueryService, gameBroadcastService),
+                new SwitchPowerToughnessEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostFirstTargetCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostSecondTargetCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostAllOwnCreaturesEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostAllOwnCreaturesByGreatestPowerEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostAllCreaturesEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostAllCreaturesXEffectHandler(gameQueryService, gameBroadcastService),
+                new TapSubtypeBoostSelfAndDamageDefenderEffectHandler(gameQueryService, gameBroadcastService, playerInputService),
+                new SetBasePowerToughnessUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new BoostAllOwnCreaturesByCreatureCardsInGraveyardEffectHandler(gameQueryService, gameBroadcastService)
         );
     }
 
