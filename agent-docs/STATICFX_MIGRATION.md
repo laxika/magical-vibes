@@ -150,14 +150,14 @@ have two methods → two beans.
 - [x] `BoostByOtherCreaturesWithSameNameEffect`
 
 ### Batch F — power/toughness equal to X
-- [ ] `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`
-- [ ] `PowerToughnessEqualToCardsInAllGraveyardsEffect`
-- [ ] `PowerToughnessEqualToCardsInControllerGraveyardEffect`
-- [ ] `PowerToughnessEqualToControlledLandCountEffect`
-- [ ] `PowerToughnessEqualToControlledPermanentCountEffect`
-- [ ] `PowerToughnessEqualToControlledCreatureCountEffect`
-- [ ] `PowerToughnessEqualToCardsInHandEffect`
-- [ ] `PowerToughnessEqualToControllerLifeTotalEffect`
+- [x] `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`
+- [x] `PowerToughnessEqualToCardsInAllGraveyardsEffect`
+- [x] `PowerToughnessEqualToCardsInControllerGraveyardEffect`
+- [x] `PowerToughnessEqualToControlledLandCountEffect`
+- [x] `PowerToughnessEqualToControlledPermanentCountEffect`
+- [x] `PowerToughnessEqualToControlledCreatureCountEffect`
+- [x] `PowerToughnessEqualToCardsInHandEffect`
+- [x] `PowerToughnessEqualToControllerLifeTotalEffect`
 
 ### Batch G — gained abilities & control conditionals
 - [ ] `GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect`

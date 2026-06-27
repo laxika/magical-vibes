@@ -62,7 +62,15 @@ public final class StaticEffectHandlerBeanFactory {
                 new BoostSelfByImprintedCreaturePTSelfEffectHandler(),
                 new BoostSelfPerOpponentPoisonCounterSelfEffectHandler(support),
                 new BoostSelfBySlimeCountersOnLinkedPermanentSelfEffectHandler(gameQueryService),
-                new BoostSelfPerOtherControlledSubtypeSelfEffectHandler(support)
+                new BoostSelfPerOtherControlledSubtypeSelfEffectHandler(support),
+                new PowerToughnessEqualToCreatureCardsInAllGraveyardsSelfEffectHandler(support),
+                new PowerToughnessEqualToCardsInAllGraveyardsSelfEffectHandler(support),
+                new PowerToughnessEqualToCardsInControllerGraveyardSelfEffectHandler(support, gameQueryService),
+                new PowerToughnessEqualToControlledLandCountSelfEffectHandler(support),
+                new PowerToughnessEqualToControlledPermanentCountSelfEffectHandler(support, gameQueryService),
+                new PowerToughnessEqualToControlledCreatureCountSelfEffectHandler(support),
+                new PowerToughnessEqualToCardsInHandSelfEffectHandler(support),
+                new PowerToughnessEqualToControllerLifeTotalSelfEffectHandler(support)
         );
     }
 

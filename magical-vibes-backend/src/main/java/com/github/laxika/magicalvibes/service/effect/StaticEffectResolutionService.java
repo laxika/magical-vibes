@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -52,16 +51,8 @@ import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentCond
 import com.github.laxika.magicalvibes.model.effect.OpponentPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInHandEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControllerLifeTotalEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInAllGraveyardsEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInControllerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import lombok.RequiredArgsConstructor;
@@ -80,40 +71,6 @@ public class StaticEffectResolutionService {
 
     private final GameQueryService gameQueryService;
     private final StaticEffectSupport support;
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToCreatureCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        int count = countCardsInAllGraveyards(context.gameData(), new CardTypePredicate(CardType.CREATURE));
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
-    }
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToCardsInAllGraveyardsEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var ptEffect = (PowerToughnessEqualToCardsInAllGraveyardsEffect) effect;
-        int count = countCardsInAllGraveyards(context.gameData(), ptEffect.filter());
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
-    }
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToCardsInControllerGraveyardEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToCardsInControllerGraveyard(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var ptEffect = (PowerToughnessEqualToCardsInControllerGraveyardEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return;
-        List<Card> graveyard = context.gameData().playerGraveyards.get(controllerId);
-        int count = 0;
-        if (graveyard != null) {
-            for (Card card : graveyard) {
-                if (card.isToken()) continue;
-                if (gameQueryService.matchesCardPredicate(card, ptEffect.filter(), null)) {
-                    count++;
-                }
-            }
-        }
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
-    }
 
     @HandlesStaticEffect(value = GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)
     private void resolveGainActivatedAbilitiesOfCreatureCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
@@ -284,50 +241,6 @@ public class StaticEffectResolutionService {
                 accumulator.addProtectionColors(protection.colors());
             }
         }
-    }
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToControlledLandCountEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToControlledLandCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        int count = countControlledPermanents(context,
-                p -> p.getCard().hasType(CardType.LAND));
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
-    }
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToControlledPermanentCountEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToControlledPermanentCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var pt = (PowerToughnessEqualToControlledPermanentCountEffect) effect;
-        int count = countControlledPermanents(context,
-                p -> gameQueryService.matchesPermanentPredicate(context.gameData(), p, pt.filter()));
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
-    }
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToControlledCreatureCountEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToControlledCreatureCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-        int count = countControlledPermanents(context, p -> isEffectivelyCreature(p, hasAnimateArtifacts));
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
-    }
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToCardsInHandEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToCardsInHand(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return;
-        List<Card> hand = context.gameData().playerHands.get(controllerId);
-        int count = hand != null ? hand.size() : 0;
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
-    }
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToControllerLifeTotalEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToControllerLifeTotal(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return;
-        int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 0);
-        accumulator.addPower(lifeTotal);
-        accumulator.addToughness(lifeTotal);
     }
 
     @HandlesStaticEffect(value = ControllerLifeThresholdConditionalEffect.class, selfOnly = true)

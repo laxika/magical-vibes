@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControll
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -44,11 +46,13 @@ class StaticEffectResolutionServiceTest {
 
     @BeforeEach
     void setUp() throws Throwable {
-        StaticEffectResolutionService service = new StaticEffectResolutionService(
-                gameQueryService,
-                new com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport(gameQueryService));
+        StaticEffectSupport support = new StaticEffectSupport(gameQueryService);
+        StaticEffectResolutionService service = new StaticEffectResolutionService(gameQueryService, support);
         registry = new StaticEffectHandlerRegistry();
         registerStaticEffectHandlers(service, registry);
+        StaticEffectHandlerBeanFactory.registerAll(
+                StaticEffectHandlerBeanFactory.createAll(support, gameQueryService, registry),
+                registry);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
