@@ -26,6 +26,13 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DistantMemoriesEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.HeadGamesEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardsToHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SearchLibraryForCardTypesToBattlefieldEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -73,7 +80,14 @@ class LibrarySearchResolutionServiceTest {
     private PlayerInputService playerInputService;
 
     @InjectMocks
-    private LibrarySearchResolutionService service;
+    private LibrarySearchSupport support;
+
+    private SearchLibraryForCardsToHandEffectHandler searchLibraryForCardsToHandHandler;
+    private SearchLibraryForCardTypesToBattlefieldEffectHandler searchLibraryForCardTypesToBattlefieldHandler;
+    private DistantMemoriesEffectHandler distantMemoriesHandler;
+    private HeadGamesEffectHandler headGamesHandler;
+    private DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler destroyTargetAndEachPlayerSearchesBasicLandHandler;
+    private EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandler eachOpponentMaySearchBasicLandHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -99,6 +113,12 @@ class LibrarySearchResolutionServiceTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
+        searchLibraryForCardsToHandHandler = new SearchLibraryForCardsToHandEffectHandler(gameQueryService, gameBroadcastService, support);
+        searchLibraryForCardTypesToBattlefieldHandler = new SearchLibraryForCardTypesToBattlefieldEffectHandler(gameQueryService, gameBroadcastService, support);
+        distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameBroadcastService, support);
+        headGamesHandler = new HeadGamesEffectHandler(gameBroadcastService, support);
+        destroyTargetAndEachPlayerSearchesBasicLandHandler = new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService, support);
+        eachOpponentMaySearchBasicLandHandler = new EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandler(support);
     }
 
     // =========================================================================
@@ -163,7 +183,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
+            searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
@@ -187,7 +207,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
+            searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -202,7 +222,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
+            searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -235,7 +255,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Rampant Growth"),
                     player1Id, "Rampant Growth", List.of(effect));
 
-            service.resolveSearchLibraryForCardTypesToBattlefield(gd, entry, effect);
+            searchLibraryForCardTypesToBattlefieldHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().cards())
@@ -260,7 +280,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Rampant Growth"),
                     player1Id, "Rampant Growth", List.of(effect));
 
-            service.resolveSearchLibraryForCardTypesToBattlefield(gd, entry, effect);
+            searchLibraryForCardTypesToBattlefieldHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -290,7 +310,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Diabolic Tutor"),
                     player1Id, "Diabolic Tutor", List.of(effect));
 
-            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
+            searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
@@ -304,7 +324,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Diabolic Tutor"),
                     player1Id, "Diabolic Tutor", List.of(effect));
 
-            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
+            searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -334,7 +354,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Distant Memories"),
                     player1Id, "Distant Memories", List.of(effect));
 
-            service.resolveDistantMemories(gd, entry);
+            distantMemoriesHandler.resolve(gd, entry, new DistantMemoriesEffect());
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
@@ -348,7 +368,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Distant Memories"),
                     player1Id, "Distant Memories", List.of(effect));
 
-            service.resolveDistantMemories(gd, entry);
+            distantMemoriesHandler.resolve(gd, entry, new DistantMemoriesEffect());
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -373,7 +393,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Head Games"),
                     player1Id, "Head Games", List.of(effect), 0, player2Id, null);
 
-            service.resolveHeadGames(gd, entry, effect);
+            headGamesHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -394,7 +414,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Head Games"),
                     player1Id, "Head Games", List.of(effect), 0, player2Id, null);
 
-            service.resolveHeadGames(gd, entry, effect);
+            headGamesHandler.resolve(gd, entry, effect);
 
             // Player2's hand should be empty (put on library)
             assertThat(gd.playerHands.get(player2Id)).isEmpty();
@@ -418,7 +438,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Head Games"),
                     player1Id, "Head Games", List.of(effect), 0, player2Id, null);
 
-            service.resolveHeadGames(gd, entry, effect);
+            headGamesHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -447,7 +467,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
+            searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -468,7 +488,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                     player1Id, "Sylvan Scrying", List.of(effect));
 
-            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
+            searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         }
@@ -492,7 +512,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Diabolic Tutor"),
                     player1Id, "Diabolic Tutor", List.of(effect));
 
-            service.resolveSearchLibraryForCardsToHand(gd, entry, effect);
+            searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         }
@@ -513,7 +533,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Rampant Growth"),
                     player1Id, "Rampant Growth", List.of(effect));
 
-            service.resolveSearchLibraryForCardTypesToBattlefield(gd, entry, effect);
+            searchLibraryForCardTypesToBattlefieldHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -533,7 +553,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Distant Memories"),
                     player1Id, "Distant Memories", List.of(effect));
 
-            service.resolveDistantMemories(gd, entry);
+            distantMemoriesHandler.resolve(gd, entry, new DistantMemoriesEffect());
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -554,7 +574,7 @@ class LibrarySearchResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Head Games"),
                     player1Id, "Head Games", List.of(effect), 0, player2Id, null);
 
-            service.resolveHeadGames(gd, entry, effect);
+            headGamesHandler.resolve(gd, entry, effect);
 
             // Hand was moved to library even though search was prevented
             assertThat(gd.playerHands.get(player2Id)).isEmpty();
@@ -594,7 +614,7 @@ class LibrarySearchResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), anyBoolean());
             assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
@@ -610,7 +630,7 @@ class LibrarySearchResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(permanentRemovalService.tryDestroyPermanent(gd, target, false)).thenReturn(true);
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, target, false);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Ghost Quarter is destroyed."));
@@ -631,7 +651,7 @@ class LibrarySearchResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createBasicLand("Plains"));
             gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             // Active player (player1) should be prompted first
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -658,7 +678,7 @@ class LibrarySearchResolutionServiceTest {
                     createCard("Ghost Quarter", CardType.LAND) // nonbasic land
             ));
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
             assertThat(gd.interaction.librarySearch().cards())
@@ -678,7 +698,7 @@ class LibrarySearchResolutionServiceTest {
 
             gd.playerDecks.get(player1Id).add(createBasicLand("Plains"));
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.librarySearch().destination())
                     .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
@@ -699,7 +719,7 @@ class LibrarySearchResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
             gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             // Player1 was skipped, player2 is prompted
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -721,7 +741,7 @@ class LibrarySearchResolutionServiceTest {
             // player1 has empty library, player2 has basic lands
             gd.playerDecks.get(player2Id).add(createBasicLand("Mountain"));
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             // Player1 was skipped, player2 is prompted
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -742,7 +762,7 @@ class LibrarySearchResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
             gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
@@ -771,7 +791,7 @@ class LibrarySearchResolutionServiceTest {
                     .computeIfAbsent(player2Id, k -> new HashSet<>())
                     .add(arbiter.getId());
 
-            service.resolveDestroyTargetAndEachPlayerSearchesBasicLandToBattlefield(gd, entry, effect);
+            destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
             // Player1's search was prevented (no tax paid), player2 gets to search (tax paid)
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -790,7 +810,7 @@ class LibrarySearchResolutionServiceTest {
         @Test
         @DisplayName("Returns false when queue is empty")
         void returnsFalseWhenQueueEmpty() {
-            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+            boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
             assertThat(result).isFalse();
         }
@@ -802,7 +822,7 @@ class LibrarySearchResolutionServiceTest {
             gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
             gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
-            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+            boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
             assertThat(result).isTrue();
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -819,7 +839,7 @@ class LibrarySearchResolutionServiceTest {
             gd.pendingEachPlayerBasicLandSearchQueue.add(player1Id);
             gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
-            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+            boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
             assertThat(result).isTrue();
             assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
@@ -834,7 +854,7 @@ class LibrarySearchResolutionServiceTest {
             gd.pendingEachPlayerBasicLandSearchQueue.add(player1Id);
             gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
-            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+            boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
             assertThat(result).isFalse();
             assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
@@ -848,7 +868,7 @@ class LibrarySearchResolutionServiceTest {
             gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
             gd.pendingEachPlayerBasicLandSearchTapped = true;
 
-            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+            boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
             assertThat(result).isTrue();
             assertThat(gd.interaction.librarySearch().destination())
@@ -863,7 +883,7 @@ class LibrarySearchResolutionServiceTest {
             gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
             gd.pendingEachPlayerBasicLandSearchTapped = false;
 
-            boolean result = service.startNextEachPlayerBasicLandSearch(gd);
+            boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
             assertThat(result).isTrue();
             assertThat(gd.interaction.librarySearch().destination())
@@ -898,7 +918,7 @@ class LibrarySearchResolutionServiceTest {
             gd.playerDecks.get(player1Id).add(createBasicLand("Plains"));
             gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
 
-            service.resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped(gd, entry(), effect);
+            eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
             // Only opponent (player2) should be prompted, not the controller (player1)
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
@@ -912,7 +932,7 @@ class LibrarySearchResolutionServiceTest {
             stubCardViewFactory();
             gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
 
-            service.resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped(gd, entry(), effect);
+            eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
             assertThat(gd.pendingEachPlayerBasicLandSearchTapped).isTrue();
             assertThat(gd.interaction.librarySearch().destination())
@@ -924,7 +944,7 @@ class LibrarySearchResolutionServiceTest {
         void noSearchWhenNoBasicLands() {
             gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
 
-            service.resolveEachOpponentMaySearchLibraryForBasicLandToBattlefieldTapped(gd, entry(), effect);
+            eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
             assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
             assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();

@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +69,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final DamageSupport damageSupport;
     private final DestructionSupport destructionSupport;
     private final LifeSupport lifeSupport;
-    private final LibrarySearchResolutionService librarySearchResolutionService;
+    private final LibrarySearchSupport librarySearchSupport;
 
     public void handleCloneCopy(GameData gameData, UUID permanentId) {
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -178,7 +178,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
         // "If you do" — sacrifice happened, now search library for a creature card
-        librarySearchResolutionService.searchLibraryForCreatureToHand(gameData, sacrificingPlayerId);
+        librarySearchSupport.searchLibraryForCreatureToHand(gameData, sacrificingPlayerId);
 
         if (!gameData.interaction.isAwaitingInput()) {
             stateBasedActionService.performStateBasedActions(gameData);

@@ -29,7 +29,7 @@ import java.util.List;
  *
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
- * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>, and <b>Library Reveal</b> domain handlers.
+ * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>, <b>Library Reveal</b>, and <b>Library Search</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -43,6 +43,7 @@ public final class NormalEffectHandlerBeanFactory {
                                                           DestructionSupport destructionSupport,
                                                           GraveyardReturnSupport graveyardReturnSupport,
                                                           LibraryRevealSupport libraryRevealSupport,
+                                                          LibrarySearchSupport librarySearchSupport,
                                                           PermanentControlSupport permanentControlSupport,
                                                           PermanentCounterSupport permanentCounterSupport,
                                                           BattlefieldEntryService battlefieldEntryService,
@@ -483,7 +484,33 @@ public final class NormalEffectHandlerBeanFactory {
                 new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory),
                 new ExploreEffectHandler(gameQueryService, gameBroadcastService, triggerCollectionService),
                 new SunbirdsInvocationRevealAndCastEffectHandler(gameBroadcastService, sessionManager, cardViewFactory),
-                new LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHandler(gameQueryService, sessionManager, cardViewFactory, libraryRevealSupport)
+                new LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHandler(gameQueryService, sessionManager, cardViewFactory, libraryRevealSupport),
+                new DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService, librarySearchSupport),
+                new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService, librarySearchSupport),
+                new EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandler(librarySearchSupport),
+                new ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffectHandler(permanentRemovalService, gameBroadcastService, librarySearchSupport),
+                new SearchLibraryForCardTypesToBattlefieldEffectHandler(gameQueryService, gameBroadcastService, librarySearchSupport),
+                new SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler(gameBroadcastService, librarySearchSupport),
+                new SearchLibraryForCardTypeToExileAndImprintEffectHandler(librarySearchSupport),
+                new SearchLibraryForCardsToHandEffectHandler(gameQueryService, gameBroadcastService, librarySearchSupport),
+                new SearchLibraryForCardToHandAndCardToGraveyardEffectHandler(gameBroadcastService, librarySearchSupport),
+                new SearchLibraryForCardsByNameToHandEffectHandler(gameBroadcastService, librarySearchSupport),
+                new SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler(gameBroadcastService, librarySearchSupport),
+                new SearchTargetLibraryForCardsToGraveyardEffectHandler(gameBroadcastService, librarySearchSupport),
+                new SearchTargetLibraryForCardToExileWithPlayPermissionEffectHandler(gameBroadcastService, librarySearchSupport),
+                new SphinxAmbassadorEffectHandler(gameBroadcastService, librarySearchSupport),
+                new DistantMemoriesEffectHandler(drawService, gameBroadcastService, librarySearchSupport),
+                new SearchLibraryForCreatureWithMVXOrLessToHandEffectHandler(librarySearchSupport),
+                new SearchLibraryForCreatureToTopOfLibraryEffectHandler(librarySearchSupport),
+                new SearchLibraryForCardToTopOfLibraryEffectHandler(librarySearchSupport),
+                new SearchLibraryForCreatureWithColorAndMVXOrLessToBattlefieldEffectHandler(librarySearchSupport),
+                new SearchLibraryForCreatureWithSubtypeToBattlefieldEffectHandler(gameQueryService, librarySearchSupport),
+                new SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffectHandler(gameQueryService, gameBroadcastService, librarySearchSupport),
+                new SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffectHandler(gameQueryService, gameBroadcastService, librarySearchSupport),
+                new SearchLibraryForCreatureWithExactMVToBattlefieldEffectHandler(librarySearchSupport),
+                new PayManaAndSearchLibraryForCardNamedToBattlefieldEffectHandler(gameBroadcastService, librarySearchSupport),
+                new HeadGamesEffectHandler(gameBroadcastService, librarySearchSupport),
+                new SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, librarySearchSupport)
         );
     }
 

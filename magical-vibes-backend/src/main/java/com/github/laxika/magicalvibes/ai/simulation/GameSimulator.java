@@ -73,7 +73,7 @@ import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleResolutionService;
 import com.github.laxika.magicalvibes.service.library.MillResolutionService;
 import com.github.laxika.magicalvibes.service.MulliganService;
@@ -307,7 +307,7 @@ public class GameSimulator {
         DestructionSupport destructionSupport = new DestructionSupport(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport);
         PermanentControlSupport permanentControlSupport = new PermanentControlSupport(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService);
         miscTriggerCollectorService.setPermanentControlSupport(permanentControlSupport);
-        LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory, gameQueryService, permanentRemovalService, playerInputService);
+        LibrarySearchSupport librarySearchSupport = new LibrarySearchSupport(gameBroadcastService, noOpSession, cardViewFactory);
         GraveyardReturnSupport graveyardReturnSupport = new GraveyardReturnSupport(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport, exileService, cardViewFactory);
         LibraryRevealSupport libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, noOpSession, cardViewFactory);
         PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(gameQueryService, gameBroadcastService, playerInputService);
@@ -316,7 +316,6 @@ public class GameSimulator {
         List<Object> effectServices = List.of(
                 new MillResolutionService(graveyardService, gameBroadcastService, gameQueryService, permanentControlSupport),
                 new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
-                librarySearchResolutionService,
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService, permanentControlSupport),
                 exileResolutionService,
@@ -333,7 +332,7 @@ public class GameSimulator {
         }
         CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, permanentControlSupport, permanentCounterSupport,
+                lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, permanentControlSupport, permanentCounterSupport,
                 battlefieldEntryService, legendRuleService, creatureControlService,
                 gameQueryService, gameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, permanentRemovalService, triggerCollectionService, playerInputService,
@@ -370,7 +369,7 @@ public class GameSimulator {
                 gameQueryService, graveyardService, gameBroadcastService, triggerCollectionService, playerInputService, turnProgressionService);
         PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
                 inputCompletionService, gameQueryService, battlefieldEntryService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
-                permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageSupport, destructionSupport, lifeSupport, librarySearchResolutionService);
+                permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageSupport, destructionSupport, lifeSupport, librarySearchSupport);
         MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
                 inputCompletionService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService, destructionSupport, permanentCounterSupport, animationSupport);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
