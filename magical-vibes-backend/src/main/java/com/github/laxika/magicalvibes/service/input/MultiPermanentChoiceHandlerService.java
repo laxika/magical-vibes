@@ -21,12 +21,12 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.effect.PermanentCounterResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -60,7 +60,7 @@ public class MultiPermanentChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final DestructionSupport destructionSupport;
-    private final PermanentCounterResolutionService permanentCounterResolutionService;
+    private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationResolutionService animationResolutionService;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
@@ -417,7 +417,7 @@ public class MultiPermanentChoiceHandlerService {
         gameData.pendingAimCounterPlacement = false;
 
         if (gameData.pendingEffectResolutionEntry != null) {
-            permanentCounterResolutionService.placeCountersOnPermanents(gameData,
+            permanentCounterSupport.placeCountersOnPermanents(gameData,
                     gameData.pendingEffectResolutionEntry, permanentIds, CounterType.AIM);
         }
 
@@ -442,7 +442,7 @@ public class MultiPermanentChoiceHandlerService {
         if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             if (target != null) {
-                permanentCounterResolutionService.placeCounterOnPermanent(gameData,
+                permanentCounterSupport.placeCounterOnPermanent(gameData,
                         gameData.pendingEffectResolutionEntry, target, counterType, count);
             }
         }

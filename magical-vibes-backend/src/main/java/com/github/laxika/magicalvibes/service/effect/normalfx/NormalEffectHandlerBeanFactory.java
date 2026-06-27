@@ -22,8 +22,8 @@ import java.util.List;
  * {@link #createAll} to build the same set manually and {@link #registerAll} to register them. As
  * more domains migrate, only this factory needs updating — non-Spring sites never change again.
  *
- * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>, and
- * <b>Permanent Control</b> domain handlers.
+ * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
+ * <b>Permanent Control</b>, and <b>Permanent Counter</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -34,6 +34,7 @@ public final class NormalEffectHandlerBeanFactory {
                                                           DamageSupport damageSupport,
                                                           DestructionSupport destructionSupport,
                                                           PermanentControlSupport permanentControlSupport,
+                                                          PermanentCounterSupport permanentCounterSupport,
                                                           BattlefieldEntryService battlefieldEntryService,
                                                           LegendRuleService legendRuleService,
                                                           CreatureControlService creatureControlService,
@@ -47,6 +48,8 @@ public final class NormalEffectHandlerBeanFactory {
         CreateTokenCopyOfImprintedCardEffectHandler createTokenCopyOfImprintedCardEffectHandler =
                 new CreateTokenCopyOfImprintedCardEffectHandler(
                         battlefieldEntryService, gameQueryService, gameBroadcastService);
+        PutCounterOnTargetPermanentEffectHandler putCounterOnTargetPermanentEffectHandler =
+                new PutCounterOnTargetPermanentEffectHandler(gameQueryService, permanentCounterSupport);
         return List.of(
                 new GainLifeEffectHandler(lifeSupport),
                 new PayXManaGainXLifeEffectHandler(lifeSupport, gameBroadcastService, playerInputService),
@@ -244,7 +247,34 @@ public final class NormalEffectHandlerBeanFactory {
                 new SacrificeEnchantedCreatureAndCreateTokenEffectHandler(permanentControlSupport, gameQueryService, gameBroadcastService, permanentRemovalService),
                 new SacrificeEnchantedCreatureEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
                 new SacrificeSelfEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService),
-                new TargetPlayerGainsControlOfSourceCreatureEffectHandler(gameBroadcastService, creatureControlService)
+                new TargetPlayerGainsControlOfSourceCreatureEffectHandler(gameBroadcastService, creatureControlService),
+                new PutXMinusOneMinusOneCountersOnEachCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new PutXPlusOnePlusOneCountersOnTargetPermanentEffectHandler(gameQueryService, permanentCounterSupport),
+                new PutMinusOneMinusOneCounterOnEachOtherCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffectHandler(gameQueryService, gameBroadcastService),
+                new PutMinusOneMinusOneCounterOnEachAttackingCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new PutCountersOnSourceEffectHandler(gameQueryService, gameBroadcastService),
+                new PutChargeCounterOnSelfEffectHandler(gameQueryService, gameBroadcastService),
+                new PutCounterOnSelfEffectHandler(gameQueryService, gameBroadcastService),
+                new PutCountersOnSelfEffectHandler(gameQueryService, permanentCounterSupport),
+                new PutCounterOnSelfThenTransformIfThresholdEffectHandler(gameQueryService, gameBroadcastService, permanentCounterSupport),
+                new RemoveCountersAndTransformSelfEffectHandler(gameQueryService, permanentCounterSupport),
+                putCounterOnTargetPermanentEffectHandler,
+                new PutChargeCounterOnTargetPermanentEffectHandler(putCounterOnTargetPermanentEffectHandler),
+                new PutPhylacteryCounterOnTargetPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new PutMinusOneMinusOneCounterOnTargetCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new RemoveChargeCountersFromTargetPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new RemoveCountersFromTargetAndBoostSelfEffectHandler(gameQueryService, gameBroadcastService),
+                new PutMinusOneMinusOneCounterOnEnchantedCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new PutPlusOnePlusOneCounterOnEnchantedCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new PutPlusOnePlusOneCounterOnTargetCreatureEffectHandler(gameQueryService, permanentCounterSupport),
+                new PutPlusOnePlusOneCounterOnFirstTargetEffectHandler(gameQueryService, permanentCounterSupport),
+                new PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffectHandler(gameQueryService, permanentCounterSupport),
+                new ChooseOpponentPermanentsAndPutCountersEffectHandler(gameQueryService, gameBroadcastService, playerInputService, permanentCounterSupport),
+                new ProliferateEffectHandler(gameBroadcastService, playerInputService),
+                new PutPlusOnePlusOneCounterOnEachOwnCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new PutPlusOnePlusOneCounterOnEachControlledPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new UnattachEquipmentFromTargetPermanentsEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService)
         );
     }
 
