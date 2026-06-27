@@ -23,7 +23,15 @@ public final class StaticEffectHandlerBeanFactory {
                                                           StaticEffectHandlerRegistry registry) {
         return List.of(
                 new MetalcraftConditionalSelfEffectHandler(support, gameQueryService),
-                new MetalcraftConditionalEffectHandler(support, gameQueryService)
+                new MetalcraftConditionalEffectHandler(support, gameQueryService),
+                new GrantKeywordEffectHandler(support),
+                new RemoveKeywordEffectHandler(support),
+                new GrantColorEffectHandler(support),
+                new GrantSubtypeEffectHandler(support),
+                new GrantCardTypeEffectHandler(support),
+                new GrantSupertypeToEnchantedPermanentEffectHandler(),
+                new LosesAllAbilitiesEffectHandler(support),
+                new SetBasePowerToughnessStaticEffectHandler(support)
         );
     }
 

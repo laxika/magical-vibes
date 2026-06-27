@@ -103,14 +103,14 @@ have two methods → two beans.
 - [x] **Pilot:** Metalcraft (`MetalcraftConditionalEffect`, self + non-self)
 
 ### Batch A — keyword/type/color grants
-- [ ] `GrantKeywordEffect`
-- [ ] `RemoveKeywordEffect`
-- [ ] `GrantColorEffect`
-- [ ] `GrantSubtypeEffect`
-- [ ] `GrantCardTypeEffect`
-- [ ] `GrantSupertypeToEnchantedPermanentEffect`
-- [ ] `LosesAllAbilitiesEffect`
-- [ ] `SetBasePowerToughnessStaticEffect`
+- [x] `GrantKeywordEffect`
+- [x] `RemoveKeywordEffect`
+- [x] `GrantColorEffect`
+- [x] `GrantSubtypeEffect`
+- [x] `GrantCardTypeEffect`
+- [x] `GrantSupertypeToEnchantedPermanentEffect`
+- [x] `LosesAllAbilitiesEffect`
+- [x] `SetBasePowerToughnessStaticEffect`
 
 ### Batch B — boosts/grants (self + non-self) and abilities
 - [ ] `StaticBoostEffect` (self + non-self)

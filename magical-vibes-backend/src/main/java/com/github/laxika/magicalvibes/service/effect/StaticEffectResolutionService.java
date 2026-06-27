@@ -71,24 +71,17 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChos
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentPoisonedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControllerLifeTotalEffect;
@@ -293,68 +286,6 @@ public class StaticEffectResolutionService {
         }
     }
 
-    @HandlesStaticEffect(GrantKeywordEffect.class)
-    private void resolveGrantKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantKeywordEffect) effect;
-        boolean scopeMatch = switch (grant.scope()) {
-            case OWN_PERMANENTS -> context.targetOnSameBattlefield()
-                    && matchesStaticFilter(context.target(), grant.filter());
-            default -> matchesCreatureScope(context, grant.scope(), grant.filter());
-        };
-        if (scopeMatch) {
-            accumulator.addKeywords(grant.keywords());
-        }
-    }
-
-    @HandlesStaticEffect(RemoveKeywordEffect.class)
-    private void resolveRemoveKeyword(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var remove = (RemoveKeywordEffect) effect;
-        if (matchesCreatureScope(context, remove.scope(), remove.filter())) {
-            accumulator.removeKeyword(remove.keyword());
-        }
-    }
-
-    @HandlesStaticEffect(SetBasePowerToughnessStaticEffect.class)
-    private void resolveSetBasePowerToughnessStatic(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var setPT = (SetBasePowerToughnessStaticEffect) effect;
-        if (matchesCreatureScope(context, setPT.scope(), null)) {
-            accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
-        }
-    }
-
-    @HandlesStaticEffect(LosesAllAbilitiesEffect.class)
-    private void resolveLosesAllAbilities(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var loses = (LosesAllAbilitiesEffect) effect;
-        if (matchesCreatureScope(context, loses.scope(), null)) {
-            accumulator.setLosesAllAbilities(true);
-        }
-    }
-
-    @HandlesStaticEffect(GrantColorEffect.class)
-    private void resolveGrantColor(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantColorEffect) effect;
-        if (matchesCreatureScope(context, grant.scope(), null)) {
-            accumulator.addGrantedColor(grant.color());
-            if (grant.overriding()) {
-                accumulator.setColorOverriding(true);
-            }
-        }
-    }
-
-    @HandlesStaticEffect(GrantSubtypeEffect.class)
-    private void resolveGrantSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantSubtypeEffect) effect;
-        boolean matches = grant.scope() == GrantScope.ALL_PERMANENTS
-                ? matchesStaticFilter(context.target(), grant.filter())
-                : matchesCreatureScope(context, grant.scope(), null);
-        if (matches) {
-            accumulator.addGrantedSubtype(grant.subtype());
-            if (grant.overriding()) {
-                accumulator.setSubtypeOverriding(true);
-            }
-        }
-    }
-
     @HandlesStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.class)
     private void resolveGrantChosenSubtypeToOwnCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
@@ -386,23 +317,6 @@ public class StaticEffectResolutionService {
             accumulator.addGrantedSubtype(chosenSubtype);
             accumulator.setSubtypeOverriding(true);
             accumulator.setLandSubtypeOverriding(true);
-        }
-    }
-
-    @HandlesStaticEffect(GrantCardTypeEffect.class)
-    private void resolveGrantCardType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantCardTypeEffect) effect;
-        if (matchesCreatureScope(context, grant.scope(), null)) {
-            accumulator.addGrantedCardType(grant.cardType());
-        }
-    }
-
-    @HandlesStaticEffect(GrantSupertypeToEnchantedPermanentEffect.class)
-    private void resolveGrantSupertypeToEnchantedPermanent(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantSupertypeToEnchantedPermanentEffect) effect;
-        if (context.source().isAttached()
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addGrantedSupertype(grant.supertype());
         }
     }
 
