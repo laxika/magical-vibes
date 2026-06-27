@@ -173,10 +173,10 @@ have two methods → two beans.
 - [x] `SelfHasKeywordConditionalEffect`
 
 ### Batch H — life / graveyard / top-card thresholds
-- [ ] `ControllerLifeThresholdConditionalEffect`
-- [ ] `ControllerLifeAtOrBelowThresholdConditionalEffect` (self + non-self)
-- [ ] `ControllerGraveyardCardThresholdConditionalEffect`
-- [ ] `TopCardOfLibraryColorConditionalEffect` (self + non-self)
+- [x] `ControllerLifeThresholdConditionalEffect`
+- [x] `ControllerLifeAtOrBelowThresholdConditionalEffect` (self + non-self)
+- [x] `ControllerGraveyardCardThresholdConditionalEffect`
+- [x] `TopCardOfLibraryColorConditionalEffect` (self + non-self)
 
 ## Verification commands
 

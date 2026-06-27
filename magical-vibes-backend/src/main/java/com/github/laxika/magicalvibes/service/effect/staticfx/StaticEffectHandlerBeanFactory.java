@@ -81,7 +81,13 @@ public final class StaticEffectHandlerBeanFactory {
                 new ControllerTurnConditionalEffectHandler(support),
                 new OpponentPoisonedConditionalSelfEffectHandler(support),
                 new ControlsAnotherPermanentConditionalSelfEffectHandler(support),
-                new SelfHasKeywordConditionalSelfEffectHandler()
+                new SelfHasKeywordConditionalSelfEffectHandler(),
+                new ControllerLifeThresholdConditionalSelfEffectHandler(support),
+                new ControllerLifeAtOrBelowThresholdConditionalSelfEffectHandler(support),
+                new ControllerLifeAtOrBelowThresholdConditionalEffectHandler(support),
+                new ControllerGraveyardCardThresholdConditionalSelfEffectHandler(support, gameQueryService),
+                new TopCardOfLibraryColorConditionalSelfEffectHandler(support),
+                new TopCardOfLibraryColorConditionalEffectHandler(support)
         );
     }
 
