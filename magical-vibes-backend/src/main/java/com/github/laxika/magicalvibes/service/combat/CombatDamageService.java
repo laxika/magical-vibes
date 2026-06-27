@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBa
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
@@ -670,7 +671,8 @@ public class CombatDamageService {
                 }
 
                 if (effect instanceof MayEffect may) {
-                    if (may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect) {
+                    if (may.wrapped() instanceof SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffect
+                            || may.wrapped() instanceof TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect) {
                         List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
                         boolean hasCreatureTargets = defenderBf != null && defenderBf.stream()
                                 .anyMatch(p -> gameQueryService.isCreature(gameData, p));

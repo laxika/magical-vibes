@@ -271,6 +271,8 @@ public class GameTestHarness {
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(staticDrawService, staticGameBroadcastService, staticSessionManager, cardViewFactory, staticGameQueryService, staticPermanentRemovalService, staticPlayerInputService);
         GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(staticBattlefieldEntryService, staticPermanentRemovalService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeResolutionService, exileService, cardViewFactory);
         PermanentCounterResolutionService permanentCounterResolutionService = new PermanentCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService);
+        AnimationResolutionService animationResolutionService = new AnimationResolutionService(
+                staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 destructionResolutionService,
@@ -288,7 +290,7 @@ public class GameTestHarness {
                 new ExileEggCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticBattlefieldEntryService),
                 new BounceResolutionService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, staticPlayerInputService, staticPermanentRemovalService, effectHandlerRegistry),
                 staticLifeResolutionService,
-                new AnimationResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
+                animationResolutionService,
                 new BoostResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new KeywordGrantResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new CombatRestrictionResolutionService(staticGameQueryService, staticGameBroadcastService),
@@ -336,7 +338,7 @@ public class GameTestHarness {
                 inputCompletionService, staticGameQueryService, staticBattlefieldEntryService, cloneService, warpWorldService, staticGameBroadcastService, abilityActivationService,
                 staticPermanentRemovalService, staticPlayerInputService, staticStateBasedActionService, staticTriggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService, destructionResolutionService, staticLifeResolutionService, librarySearchResolutionService);
         MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
-                inputCompletionService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticPlayerInputService, staticStateBasedActionService, staticTriggerCollectionService, turnProgressionService, effectResolutionService, destructionResolutionService, permanentCounterResolutionService);
+                inputCompletionService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticPlayerInputService, staticStateBasedActionService, staticTriggerCollectionService, turnProgressionService, effectResolutionService, destructionResolutionService, permanentCounterResolutionService, animationResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(

@@ -114,6 +114,7 @@ public class GameData {
     public PendingSphinxAmbassadorChoice pendingSphinxAmbassadorChoice;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID pendingSacrificeSelfToDestroySourceId;
+    public UUID pendingTransformAndAttachSourceId;
     public boolean pendingExileDamagedPlayerControlsPermanent;
     public int pendingProliferateCount;
     /** Creatures that took lethal damage during effect resolution — destroyed after all effects resolve. */
@@ -656,6 +657,7 @@ public class GameData {
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
         copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
         copy.pendingSacrificeSelfToDestroySourceId = this.pendingSacrificeSelfToDestroySourceId;
+        copy.pendingTransformAndAttachSourceId = this.pendingTransformAndAttachSourceId;
         copy.pendingExileDamagedPlayerControlsPermanent = this.pendingExileDamagedPlayerControlsPermanent;
         copy.pendingProliferateCount = this.pendingProliferateCount;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null

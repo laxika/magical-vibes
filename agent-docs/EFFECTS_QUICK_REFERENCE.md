@@ -430,6 +430,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `AnimateLandEffect(int, int, List<CardSubtype>, Set<Keyword>, CardColor)` + overloads — animate land
 - `AnimateSelfAsCreatureEffect()` — vehicle crew
 - `TransformSelfEffect()` — transform DFC
+- `TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect()` — combat-damage "you may transform; if you do, attach to target creature that player controls" (wrap in `MayEffect`)
 - `TransformAllEffect(PermanentPredicate)` — transform all matching
 - `PreventTransformEffect(PermanentPredicate)` — STATIC: permanents you control matching the predicate can't transform (e.g. Immerwolf)
 

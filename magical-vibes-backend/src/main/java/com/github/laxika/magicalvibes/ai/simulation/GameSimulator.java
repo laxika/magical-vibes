@@ -307,6 +307,8 @@ public class GameSimulator {
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory, gameQueryService, permanentRemovalService, playerInputService);
         GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeResolutionService, exileService, cardViewFactory);
         PermanentCounterResolutionService permanentCounterResolutionService = new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService);
+        AnimationResolutionService animationResolutionService = new AnimationResolutionService(
+                gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
         List<Object> effectServices = List.of(
                 damageResolutionService,
                 destructionResolutionService,
@@ -322,7 +324,7 @@ public class GameSimulator {
                 graveyardReturnResolutionService,
                 new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService, effectHandlerRegistry),
                 lifeResolutionService,
-                new AnimationResolutionService(gameQueryService, gameBroadcastService, playerInputService),
+                animationResolutionService,
                 new BoostResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new KeywordGrantResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),
@@ -371,7 +373,7 @@ public class GameSimulator {
                 inputCompletionService, gameQueryService, battlefieldEntryService, cloneService, warpWorldService, gameBroadcastService, abilityActivationService,
                 permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageResolutionService, destructionResolutionService, lifeResolutionService, librarySearchResolutionService);
         MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
-                inputCompletionService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService, destructionResolutionService, permanentCounterResolutionService);
+                inputCompletionService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, stateBasedActionService, triggerCollectionService, turnProgressionService, effectResolutionService, destructionResolutionService, permanentCounterResolutionService, animationResolutionService);
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(

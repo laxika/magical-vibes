@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionS
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PermanentCounterResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,7 @@ public class MultiPermanentChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final DestructionResolutionService destructionResolutionService;
     private final PermanentCounterResolutionService permanentCounterResolutionService;
+    private final AnimationResolutionService animationResolutionService;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_PERMANENT_CHOICE)) {
@@ -100,6 +102,8 @@ public class MultiPermanentChoiceHandlerService {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
         } else if (gameData.pendingSacrificeSelfToDestroySourceId != null) {
             handleSacrificeSelfToDestroy(gameData, playerId, permanentIds);
+        } else if (gameData.pendingTransformAndAttachSourceId != null) {
+            handleTransformAndAttach(gameData, playerId, permanentIds);
         } else if (gameData.pendingSacrificeAttackingCreature) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
         } else if (gameData.pendingDestroyRestMode && gameData.pendingForcedSacrificeCount > 0) {
@@ -159,6 +163,21 @@ public class MultiPermanentChoiceHandlerService {
                 String logEntry = "Source creature no longer exists — sacrifice trigger fizzles.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             }
+        }
+
+        inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
+    }
+
+    private void handleTransformAndAttach(GameData gameData, UUID playerId, List<UUID> permanentIds) {
+        UUID sourcePermId = gameData.pendingTransformAndAttachSourceId;
+        gameData.pendingTransformAndAttachSourceId = null;
+
+        if (permanentIds.isEmpty()) {
+            String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to attach.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            animationResolutionService.completeTransformAndAttach(
+                    gameData, playerId, sourcePermId, permanentIds.getFirst());
         }
 
         inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);

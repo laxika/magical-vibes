@@ -25,15 +25,19 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndTransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformAllEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -46,6 +50,7 @@ public class AnimationResolutionService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
+    private final CreatureControlService creatureControlService;
 
     @HandlesEffect(AnimateLandEffect.class)
     private void resolveAnimateLand(GameData gameData, StackEntry entry, AnimateLandEffect effect) {
@@ -297,45 +302,128 @@ public class AnimationResolutionService {
             return;
         }
 
-        Card originalCard = self.getOriginalCard();
         if (!self.isTransformed()) {
-            // Transform to back face
-            Card backFace = originalCard.getBackFaceCard();
-            if (backFace == null) {
-                log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
-                return;
-            }
-            String frontName = self.getCard().getName();
-
-            // CR 301.5c / 701.x: an attached Equipment that transforms into a permanent that
-            // is no longer an Equipment (e.g. Elbrus, the Binding Blade -> Withengar Unbound)
-            // becomes unattached. This mirrors Elbrus's "unattach Elbrus, then transform it".
-            if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
-                self.setAttachedTo(null);
-                String unattachLog = frontName + " becomes unattached.";
-                gameBroadcastService.logAndBroadcast(gameData, unattachLog);
-                log.info("Game {} - {} unattached (transformed into non-Equipment)", gameData.id, frontName);
-            }
-
-            self.setCard(backFace);
-            self.setTransformed(true);
-            String logEntry = frontName + " transforms into " + backFace.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
-
-            // Fire ON_TRANSFORM_TO_BACK_FACE triggers from the back face card
-            fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
+            transformToBackFace(gameData, self);
         } else {
-            // Transform back to front face
-            String backName = self.getCard().getName();
-            self.setCard(originalCard);
-            self.setTransformed(false);
-            String logEntry = backName + " transforms into " + originalCard.getName() + ".";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
-
-            fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
+            transformToFrontFace(gameData, self);
         }
+    }
+
+    @HandlesEffect(TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect.class)
+    private void resolveTransformAndAttachToCreatureDamagedPlayerControls(
+            GameData gameData, StackEntry entry, TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect effect) {
+        UUID defenderId = entry.getTargetId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        UUID controllerId = entry.getControllerId();
+
+        if (defenderId == null || sourcePermanentId == null) {
+            return;
+        }
+
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (source == null) {
+            String logEntry = entry.getCard().getName() + "'s ability fizzles — source no longer on the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
+        List<UUID> validCreatureIds = new ArrayList<>();
+        if (defenderBattlefield != null) {
+            for (Permanent perm : defenderBattlefield) {
+                if (gameQueryService.isCreature(gameData, perm)) {
+                    validCreatureIds.add(perm.getId());
+                }
+            }
+        }
+
+        if (validCreatureIds.isEmpty()) {
+            String logEntry = entry.getCard().getName() + "'s ability resolves, but "
+                    + gameData.playerIdToName.get(defenderId) + " has no creatures.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        gameData.pendingTransformAndAttachSourceId = sourcePermanentId;
+        playerInputService.beginMultiPermanentChoice(gameData, controllerId, validCreatureIds, 1,
+                entry.getCard().getName() + "'s ability — Choose a creature "
+                        + gameData.playerIdToName.get(defenderId) + " controls to attach to.");
+    }
+
+    /**
+     * Completes Soul Seizer-style transform-and-attach after the controller chooses a target creature.
+     */
+    public void completeTransformAndAttach(GameData gameData, UUID controllerId, UUID sourcePermId, UUID targetPermId) {
+        Permanent source = gameQueryService.findPermanentById(gameData, sourcePermId);
+        Permanent target = gameQueryService.findPermanentById(gameData, targetPermId);
+        if (source == null) {
+            String logEntry = "Transform-and-attach fizzles — source no longer on the battlefield.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+        if (target == null || !gameQueryService.isCreature(gameData, target)) {
+            String logEntry = source.getCard().getName() + "'s ability fizzles — target creature no longer exists.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            return;
+        }
+
+        if (!transformToBackFace(gameData, source)) {
+            return;
+        }
+
+        source.setAttachedTo(target.getId());
+        String attachLog = source.getCard().getName() + " is attached to " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, attachLog);
+        log.info("Game {} - {} attached to {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+
+        boolean hasControlEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof ControlEnchantedCreatureEffect);
+        if (hasControlEffect) {
+            creatureControlService.stealPermanent(gameData, controllerId, target);
+        }
+    }
+
+    private boolean transformToBackFace(GameData gameData, Permanent self) {
+        Card originalCard = self.getOriginalCard();
+        Card backFace = originalCard.getBackFaceCard();
+        if (backFace == null) {
+            log.warn("Game {} - {} has no back face to transform to", gameData.id, self.getCard().getName());
+            return false;
+        }
+
+        if (gameQueryService.isTransformPrevented(gameData, self)) {
+            log.info("Game {} - {} can't transform (transform prevented)", gameData.id, self.getCard().getName());
+            return false;
+        }
+
+        String frontName = self.getCard().getName();
+        if (self.isAttached() && !backFace.getSubtypes().contains(CardSubtype.EQUIPMENT)) {
+            self.setAttachedTo(null);
+            String unattachLog = frontName + " becomes unattached.";
+            gameBroadcastService.logAndBroadcast(gameData, unattachLog);
+            log.info("Game {} - {} unattached (transformed into non-Equipment)", gameData.id, frontName);
+        }
+
+        self.setCard(backFace);
+        self.setTransformed(true);
+        String logEntry = frontName + " transforms into " + backFace.getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
+
+        fireTransformTriggers(gameData, self, backFace, EffectSlot.ON_TRANSFORM_TO_BACK_FACE);
+        return true;
+    }
+
+    private void transformToFrontFace(GameData gameData, Permanent self) {
+        Card originalCard = self.getOriginalCard();
+        String backName = self.getCard().getName();
+        self.setCard(originalCard);
+        self.setTransformed(false);
+        String logEntry = backName + " transforms into " + originalCard.getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
+
+        fireTransformTriggers(gameData, self, originalCard, EffectSlot.ON_TRANSFORM_TO_FRONT_FACE);
     }
 
     /**

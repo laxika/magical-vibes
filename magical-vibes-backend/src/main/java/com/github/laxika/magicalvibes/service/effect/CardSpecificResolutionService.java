@@ -970,6 +970,7 @@ public class CardSpecificResolutionService {
         gameData.pendingOpponentExileChoice = null;
         gameData.pendingCombatDamageBounceTargetPlayerId = null;
         gameData.pendingSacrificeSelfToDestroySourceId = null;
+        gameData.pendingTransformAndAttachSourceId = null;
         gameData.pendingProliferateCount = 0;
         gameData.pendingReturnToHandOnDiscardType = null;
         gameData.pendingTransformOnCreatureDiscard = null;
