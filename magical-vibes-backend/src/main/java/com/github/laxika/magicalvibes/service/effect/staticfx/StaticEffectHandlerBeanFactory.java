@@ -31,7 +31,13 @@ public final class StaticEffectHandlerBeanFactory {
                 new GrantCardTypeEffectHandler(support),
                 new GrantSupertypeToEnchantedPermanentEffectHandler(),
                 new LosesAllAbilitiesEffectHandler(support),
-                new SetBasePowerToughnessStaticEffectHandler(support)
+                new SetBasePowerToughnessStaticEffectHandler(support),
+                new StaticBoostSelfEffectHandler(support),
+                new StaticBoostEffectHandler(support),
+                new GrantEffectSelfEffectHandler(support),
+                new GrantEffectEffectHandler(support),
+                new GrantActivatedAbilityEffectHandler(support),
+                new ProtectionFromColorsEffectHandler()
         );
     }
 

@@ -69,9 +69,7 @@ import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
@@ -277,15 +275,6 @@ public class StaticEffectResolutionService {
         accumulator.addToughness(count * boost.toughnessPerMatch());
     }
 
-    @HandlesStaticEffect(ProtectionFromColorsEffect.class)
-    private void resolveProtectionFromColors(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var protection = (ProtectionFromColorsEffect) effect;
-        if (context.source().isAttached()
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addProtectionColors(protection.colors());
-        }
-    }
-
     @HandlesStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.class)
     private void resolveGrantChosenSubtypeToOwnCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
@@ -317,23 +306,6 @@ public class StaticEffectResolutionService {
             accumulator.addGrantedSubtype(chosenSubtype);
             accumulator.setSubtypeOverriding(true);
             accumulator.setLandSubtypeOverriding(true);
-        }
-    }
-
-    @HandlesStaticEffect(GrantEffectEffect.class)
-    private void resolveGrantEffectEffect(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantEffectEffect) effect;
-        if (matchesCreatureScope(context, grant.scope(), grant.filter())) {
-            accumulator.addGrantedEffect(grant.effect());
-        }
-    }
-
-    @HandlesStaticEffect(value = GrantEffectEffect.class, selfOnly = true)
-    private void resolveGrantEffectEffectSelf(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantEffectEffect) effect;
-        if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.ALL_OWN_CREATURES)
-                && matchesStaticFilter(context.target(), grant.filter())) {
-            accumulator.addGrantedEffect(grant.effect());
         }
     }
 
@@ -369,40 +341,6 @@ public class StaticEffectResolutionService {
         if (matchesStaticFilter(target, new PermanentHasSubtypePredicate(chosenSubtype))) {
             accumulator.addPower(boost.powerBoost());
             accumulator.addToughness(boost.toughnessBoost());
-        }
-    }
-
-    @HandlesStaticEffect(StaticBoostEffect.class)
-    private void resolveStaticBoost(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (StaticBoostEffect) effect;
-        if (matchesCreatureScope(context, boost.scope(), boost.filter())) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-            accumulator.addKeywords(boost.grantedKeywords());
-        }
-    }
-
-    @HandlesStaticEffect(value = StaticBoostEffect.class, selfOnly = true)
-    private void resolveStaticBoostSelf(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (StaticBoostEffect) effect;
-        if ((boost.scope() == GrantScope.SELF || boost.scope() == GrantScope.ALL_OWN_CREATURES)
-                && matchesStaticFilter(context.target(), boost.filter())) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-            accumulator.addKeywords(boost.grantedKeywords());
-        }
-    }
-
-    @HandlesStaticEffect(GrantActivatedAbilityEffect.class)
-    private void resolveGrantActivatedAbility(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantActivatedAbilityEffect) effect;
-        boolean scopeMatch = switch (grant.scope()) {
-            case OWN_PERMANENTS -> context.targetOnSameBattlefield()
-                    && matchesStaticFilter(context.target(), grant.filter());
-            default -> matchesCreatureScope(context, grant.scope(), grant.filter());
-        };
-        if (scopeMatch) {
-            accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
         }
     }
 

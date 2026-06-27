@@ -113,10 +113,10 @@ have two methods → two beans.
 - [x] `SetBasePowerToughnessStaticEffect`
 
 ### Batch B — boosts/grants (self + non-self) and abilities
-- [ ] `StaticBoostEffect` (self + non-self)
-- [ ] `GrantEffectEffect` (self + non-self)
-- [ ] `GrantActivatedAbilityEffect`
-- [ ] `ProtectionFromColorsEffect`
+- [x] `StaticBoostEffect` (self + non-self)
+- [x] `GrantEffectEffect` (self + non-self)
+- [x] `GrantActivatedAbilityEffect`
+- [x] `ProtectionFromColorsEffect`
 
 ### Batch C — enchanted/chosen/animate
 - [ ] `EnchantedPermanentConditionalEffect`
