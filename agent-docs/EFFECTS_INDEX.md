@@ -7,7 +7,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 1. Parse card text into primitive actions (damage, draw, bounce, etc.).
 2. Find each primitive below in the categorized sections and reuse existing effects.
 3. Only add new effect records when no existing effect can express the behavior.
-4. If you add a new effect record, add an `@HandlesEffect`-annotated resolver method in the matching `*ResolutionService` (see provider map at bottom). No manual registration needed — the annotation auto-registers the handler at startup.
+4. If you add a new effect record, create a `<EffectName>EffectHandler` `@Component` implementing `NormalEffectHandlerBean` in `service/effect/normalfx/` and add it to `NormalEffectHandlerBeanFactory.createAll(...)`. Spring auto-discovers `@Component` handlers; non-Spring sites (`GameTestHarness`, `GameSimulator`) use the factory. See provider map at bottom.
 5. If your new effect targets something, override the appropriate `canTarget*()` method(s) on `CardEffect` to return `true` (see targeting section below).
 6. If your new effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see target validator map at bottom).
 
@@ -1201,35 +1201,43 @@ Pass `null` as filter to allow any card.
 
 ---
 
-## Provider map (where to add `@HandlesEffect` resolver methods)
+## Provider map (where to add normal effect handlers)
 
-| Category | Resolution service |
-|----------|--------------------|
-| Damage | `combat.DamageResolutionService` |
-| Destruction/sacrifice | `DestructionResolutionService` |
-| Bounce | `battlefield.BounceResolutionService` |
-| Counter | `CounterResolutionService` |
-| Library/search/mill | `LibraryResolutionService` |
-| Graveyard return/exile | `GraveyardReturnResolutionService` |
-| Player interaction (draw/discard/choices) | `effect/PlayerInteractionResolutionService` |
-| Life | `effect/normalfx/*EffectHandler` (one class per effect; shared helpers in `effect/normalfx/LifeSupport`) |
-| Creature mods (tap/pump/keyword) | `effect/CreatureModResolutionService` |
-| Permanent control/tokens/regeneration | `effect/PermanentControlResolutionService` |
-| Static continuous effects | `effect/staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) |
-| Prevention | `PreventionResolutionService` |
-| Turn effects | `TurnResolutionService` |
-| Copy/retarget | `CopyResolutionService`, `TargetRedirectionResolutionService` |
-| Exile permanent | `ExileResolutionService` |
-| Return from exile to hand | `ExileReturnResolutionService` |
-| Card-specific one-offs | `effect/CardSpecificResolutionService` |
-| Land-tap triggers | `GameHelper` (`checkLandTapTriggers`) |
-| Win conditions | `effect/WinConditionResolutionService` |
+All stack-resolution ("normal") effects use one `@Component` handler class per effect in `service/effect/normalfx/`, implementing `NormalEffectHandlerBean`. Shared logic lives in domain `*Support` classes in the same package (e.g. `DamageSupport`, `LibraryRevealSupport`). Register every new handler in `NormalEffectHandlerBeanFactory.createAll(...)`.
 
-All resolution services are in `magical-vibes-backend/src/main/java/com/github/laxika/magicalvibes/service/`.
+| Category | Handler location | Shared helpers |
+|----------|------------------|----------------|
+| Damage | `normalfx/*EffectHandler` | `DamageSupport` |
+| Destruction/sacrifice | `normalfx/*EffectHandler` | `DestructionSupport` |
+| Bounce | `normalfx/*EffectHandler` | `BounceSupport` |
+| Counter | `normalfx/*EffectHandler` | `CounterSupport` |
+| Library reveal/search/mill/shuffle | `normalfx/*EffectHandler` | `LibraryRevealSupport`, `LibrarySearchSupport`, `LibraryShuffleSupport` |
+| Graveyard return/exile | `normalfx/*EffectHandler` | `GraveyardReturnSupport` |
+| Player interaction (draw/discard/choices) | `normalfx/*EffectHandler` | `PlayerInteractionSupport` |
+| Life | `normalfx/*EffectHandler` | `LifeSupport` |
+| Boost/pump | `normalfx/*EffectHandler` | (handler-local or `GameQueryService`) |
+| Tap/untap | `normalfx/*EffectHandler` | `TapUntapSupport` |
+| Keyword grant | `normalfx/*EffectHandler` | — |
+| Animation/transform | `normalfx/*EffectHandler` | `AnimationSupport` |
+| Permanent control/tokens/regeneration | `normalfx/*EffectHandler` | `PermanentControlSupport` |
+| Permanent counters | `normalfx/*EffectHandler` | `PermanentCounterSupport` |
+| Static continuous effects | `staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) | `StaticEffectSupport` |
+| Prevention | `normalfx/*EffectHandler` | `PreventionSupport` |
+| Turn effects | `normalfx/*EffectHandler` | `TurnSupport` |
+| Copy/retarget | `normalfx/*EffectHandler` | `CopySupport`, `TargetRedirectionSupport` |
+| Exile permanent | `normalfx/*EffectHandler` | `ExileSupport` |
+| Return from exile / egg counters | `normalfx/*EffectHandler` | `ExileSupport` |
+| Combat restrictions | `normalfx/*EffectHandler` | — |
+| Equip | `normalfx/*EffectHandler` | — |
+| Card-specific one-offs | `normalfx/*EffectHandler` | `CardSpecificSupport` |
+| Win conditions | `normalfx/*EffectHandler` | — |
+| Land-tap triggers | `GameHelper` (`checkLandTapTriggers`) | — |
+
+Orchestration (conditionals, `MayEffect`, stack dispatch) remains in `EffectResolutionService`.
 
 ## Target validator map (where to add `@ValidatesTarget` methods)
 
-Target validation is auto-registered via `@ValidatesTarget` annotations, mirroring `@HandlesEffect`. Validator classes live in `service/validate/`.
+Target validation is auto-registered via `@ValidatesTarget` annotations. Validator classes live in `service/validate/`.
 
 | Category | Validator class | Dependencies |
 |----------|----------------|--------------|

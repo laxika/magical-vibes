@@ -11,7 +11,7 @@ Purpose: a minimal workflow for adding cards with fewer repeated lookups and low
 5. Add card class + `@CardRegistration`.
 6. Use `target(filter).addEffect(slot, effect)` for targeting spells.
 7. Write focused tests extending `BaseCardTest` (provides `harness`, `player1`, `player2`, `gs`, `gqs`, `gd`). Do NOT test Scryfall metadata.
-8. Only if needed: add new effect record + annotated resolver method (see below).
+8. Only if needed: add new effect record + `NormalEffectHandlerBean` handler (see below).
 
 ## Card class template
 
@@ -38,7 +38,7 @@ public class ExampleCard extends Card {
   - `GameQueryService` exposes three related but distinct queries. Pick the right one:
     - `getEffectivePower(gameData, creature)` — **raw signed stat.** Use for predicates, crew, X-cost, AI evaluation, display, and P/T math. Can be negative.
     - `getEffectiveCombatDamage(gameData, creature)` — **combat only.** Clamped to ≥ 0 and honors Belligerent-Brontodon / Bark-of-Doran "assign combat damage equal to toughness" static effects. Used by `CombatDamageService`.
-    - `getPowerBasedDamage(gameData, creature)` — **non-combat "deals damage equal to its power" effects.** Clamped to ≥ 0 but ignores toughness-assign effects (they are combat-only). Used by `DamageResolutionService`.
+    - `getPowerBasedDamage(gameData, creature)` — **non-combat "deals damage equal to its power" effects.** Clamped to ≥ 0 but ignores toughness-assign effects (they are combat-only). Used by `DamageSupport` / damage handlers in `normalfx`.
   - When implementing a new "deals damage equal to its power" effect, call `getPowerBasedDamage` and pass the result directly to `dealDamageAndDestroyIfLethal` / `dealDamageToPlayer` — do **not** add a manual `if (power > 0)` guard; the helper already clamps, and the damage primitives gate triggers on `damage > 0`.
   - Rationale: a single `getEffectivePower` call with a manual guard is the historical source of "stuck game" bugs (attacker with negative effective power sent a negative damage total to the engine). The three-way split makes "signed stat" vs. "damage amount" a compile-time-visible distinction.
 
@@ -181,7 +181,7 @@ public class ExampleCard extends Card {
 ### Flow for `UPKEEP_TRIGGERED` with `MayEffect`
 
 1. **Trigger time**: `StepTriggerService` sees `MayEffect` in the upkeep effects → calls `gameData.queueMayAbility(card, controllerId, may, null, perm.getId())` which pushes a `StackEntry` with the `MayEffect` and `sourcePermanentId = perm.getId()`.
-2. **Stack resolution**: `EffectResolutionService` encounters the `MayEffect` → dispatches to `PlayerInteractionResolutionService.resolveMayEffect()` → sets `resolvingMayEffectFromStack = true` and adds a `PendingMayAbility`.
+2. **Stack resolution**: `EffectResolutionService` encounters the `MayEffect` → dispatches to the `MayEffectHandler` in `normalfx` → sets `resolvingMayEffectFromStack = true` and adds a `PendingMayAbility`.
 3. **Player prompt**: The system pauses, awaiting `MAY_ABILITY_CHOICE` input from the controller.
 4. **Player responds**: `MayAbilityHandlerService.handleResolutionTimeMayChoice()` sets `resolvedMayAccepted = true/false`.
 5. **Re-entry**: `EffectResolutionService` re-runs the same effect index. Now `resolvedMayAccepted != null`:
@@ -220,15 +220,27 @@ Create a new `CardEffect` record only if both are true:
 Then do all of:
 - Add effect record in `magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/`
   - Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` to return `true` as appropriate. This drives `EffectResolution.needsTarget()`/`needsSpellTarget()` computation and the `targetsPlayer` flag in `CardViewFactory`.
-- Add an annotated resolver method in the correct resolution service (see `EFFECTS_INDEX.md` provider map):
+- Add a handler in `magical-vibes-backend/.../service/effect/normalfx/`:
   ```java
-  @HandlesEffect(YourNewEffect.class)
-  void resolveYourNewEffect(GameData gameData, StackEntry entry) { ... }
-  // or with typed effect access:
-  @HandlesEffect(YourNewEffect.class)
-  void resolveYourNewEffect(GameData gameData, StackEntry entry, YourNewEffect effect) { ... }
+  @Component
+  @RequiredArgsConstructor
+  public class YourNewEffectHandler implements NormalEffectHandlerBean {
+      private final YourDomainSupport support; // inject *Support or services as needed
+
+      @Override
+      public Class<? extends CardEffect> handledEffect() {
+          return YourNewEffect.class;
+      }
+
+      @Override
+      public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+          var e = (YourNewEffect) effect;
+          // handler body
+      }
+  }
   ```
-  The `@HandlesEffect` annotation auto-registers the handler at startup — no manual `registry.register()` call needed. For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/` and add it to `StaticEffectHandlerBeanFactory.createAll(...)`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
+  Add the handler to `NormalEffectHandlerBeanFactory.createAll(...)`. Spring auto-discovers `@Component` handlers via `EffectRegistryConfig`; `GameTestHarness` and `GameSimulator` use the factory.
+- For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/` and add it to `StaticEffectHandlerBeanFactory.createAll(...)`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
 - If the effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see `EFFECTS_INDEX.md` target validator map):
   ```java
   @ValidatesTarget(YourNewEffect.class)
@@ -277,97 +289,106 @@ Records (effect classes, predicates, filters) use Java record accessors: `effect
 
 ## Resolution handler templates
 
+Normal stack-resolution handlers live in `service/effect/normalfx/` as `@Component` classes implementing `NormalEffectHandlerBean`. Inject `GameQueryService`, `GameBroadcastService`, and the relevant `*Support` class for the domain.
+
 When adding a new effect that operates on the enchanted creature (for aura abilities):
 
 ```java
-@HandlesEffect(YourEnchantedCreatureEffect.class)
-private void resolveYourEffect(GameData gameData, StackEntry entry) {
-    // 1. Find the aura permanent via sourcePermanentId
-    Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-    if (auraPerm == null) {
-        log.info("Game {} - Aura no longer on battlefield", gameData.id);
-        return;
+@Component
+@RequiredArgsConstructor
+public class YourEnchantedCreatureEffectHandler implements NormalEffectHandlerBean {
+    private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return YourEnchantedCreatureEffect.class;
     }
 
-    // 2. Find the enchanted creature via attachedTo
-    UUID enchantedId = auraPerm.getAttachedTo();
-    if (enchantedId == null) {
-        log.info("Game {} - Not attached to anything", gameData.id);
-        return;
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // 1. Find the aura permanent via sourcePermanentId
+        Permanent auraPerm = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (auraPerm == null) {
+            return;
+        }
+
+        // 2. Find the enchanted creature via attachedTo
+        UUID enchantedId = auraPerm.getAttachedTo();
+        if (enchantedId == null) {
+            return;
+        }
+
+        Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedId);
+        if (enchantedCreature == null) {
+            return;
+        }
+
+        // 3. Apply effect to enchantedCreature
+
+        String logMsg = entry.getCard().getName() + " affects " + enchantedCreature.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
     }
-
-    Permanent enchantedCreature = gameQueryService.findPermanentById(gameData, enchantedId);
-    if (enchantedCreature == null) {
-        log.info("Game {} - Enchanted creature no longer on battlefield", gameData.id);
-        return;
-    }
-
-    // 3. Apply effect to enchantedCreature
-    // e.g. enchantedCreature.tap(), deal damage, add counter, etc.
-
-    String logMsg = entry.getCard().getName() + " affects " + enchantedCreature.getCard().getName() + ".";
-    gameBroadcastService.logAndBroadcast(gameData, logMsg);
 }
 ```
 
 When adding a simple targeted effect:
 
 ```java
-@HandlesEffect(YourTargetEffect.class)
-private void resolveYourEffect(GameData gameData, StackEntry entry) {
-    Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-    if (target == null) {
-        return;
+@Component
+@RequiredArgsConstructor
+public class YourTargetEffectHandler implements NormalEffectHandlerBean {
+    private final GameQueryService gameQueryService;
+    private final GameBroadcastService gameBroadcastService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return YourTargetEffect.class;
     }
 
-    // Apply effect to target
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (target == null) {
+            return;
+        }
 
-    String logMsg = entry.getCard().getName() + " affects " + target.getCard().getName() + ".";
-    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        // Apply effect to target
+
+        String logMsg = entry.getCard().getName() + " affects " + target.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+    }
 }
 ```
 
 ## Writing a new "look at top N cards" effect
 
-All "look at top N" effects live in `LibraryRevealResolutionService` and follow a common pattern. Use this template when creating a new variant:
+"Look at top N" effects use handlers in `normalfx/` with shared helpers in `LibraryRevealSupport`. Use this template when creating a new variant:
 
 ```java
-@HandlesEffect(YourLookAtTopEffect.class)
-void resolveYourLookAtTopEffect(GameData gameData, StackEntry entry, YourLookAtTopEffect effect) {
-    // 1. Take cards from top of library (broadcastLook=true logs "looks at the top N cards")
-    TopCardsResult result = takeTopCardsFromLibrary(gameData, entry, effect.count(), true);
-    if (result == null) return;  // empty library — already logged
-    UUID controllerId = result.controllerId();
-    List<Card> topCards = result.topCards();
+@Component
+@RequiredArgsConstructor
+public class YourLookAtTopEffectHandler implements NormalEffectHandlerBean {
+    private final LibraryRevealSupport libraryRevealSupport;
+  // inject SessionManager, CardViewFactory, etc. as needed
 
-    // 2. Filter for eligible cards
-    List<Card> matchingCards = topCards.stream()
-            .filter(card -> /* your eligibility criteria */)
-            .toList();
-
-    // 3. No matches → reorder all to bottom
-    if (matchingCards.isEmpty()) {
-        reorderRemainingToBottom(gameData, controllerId, topCards);
-        return;
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return YourLookAtTopEffect.class;
     }
 
-    // 4. Present choice to controller via LibrarySearchParams
-    gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, matchingCards)
-            .canFailToFind(true)           // "you may" — player can decline
-            .sourceCards(topCards)          // all looked-at cards (for reordering remainder)
-            .reorderRemainingToBottom(true) // rest go to bottom in any order
-            .shuffleAfterSelection(false)
-            .prompt("Your prompt here.")
-            .destination(LibrarySearchDestination.BATTLEFIELD)  // or HAND, etc.
-            .build());
-
-    List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-    sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-            cardViews, "Your prompt here.", true));
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (YourLookAtTopEffect) effect;
+        // 1. Take cards from top of library (broadcastLook=true logs "looks at the top N cards")
+        TopCardsResult result = libraryRevealSupport.takeTopCardsFromLibrary(gameData, entry, e.count(), true);
+        if (result == null) return;  // empty library — already logged
+        // ... filter, present LibrarySearchParams choice, reorder remainder via libraryRevealSupport
+    }
 }
 ```
 
-**Key helpers** (all private in `LibraryRevealResolutionService`):
+**Key helpers** (public on `LibraryRevealSupport`):
 - `takeTopCardsFromLibrary(gameData, entry, count, broadcastLook)` → removes cards from top, returns `TopCardsResult(controllerId, topCards, playerName)` or `null` if empty.
 - `reorderRemainingToBottom(gameData, controllerId, cards)` → if 1 card, puts directly on bottom; if >1, begins `LIBRARY_REORDER` interaction.
 

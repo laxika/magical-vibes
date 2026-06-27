@@ -463,21 +463,23 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Provider map
 
-| Category | Service |
-|----------|---------|
-| Damage | `combat.DamageResolutionService` |
-| Destruction | `DestructionResolutionService` |
-| Bounce | `battlefield.BounceResolutionService` |
-| Counter | `CounterResolutionService` |
-| Library/search/mill | `LibraryResolutionService` |
-| Graveyard/exile | `GraveyardReturnResolutionService` |
-| Draw/discard | `effect/PlayerInteractionResolutionService` |
-| Life | `effect/normalfx/*EffectHandler` (one class per effect; shared helpers in `effect/normalfx/LifeSupport`) |
-| Creature mods | `effect/CreatureModResolutionService` |
-| Permanent control/tokens | `effect/PermanentControlResolutionService` |
-| Static effects | `effect/staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) |
-| Prevention | `PreventionResolutionService` |
-| Turn | `TurnResolutionService` |
-| Copy/retarget | `CopyResolutionService`, `TargetRedirectionResolutionService` |
-| Exile | `ExileResolutionService` |
-| Win conditions | `effect/WinConditionResolutionService` |
+All normal (stack-resolution) effects: one `NormalEffectHandlerBean` `@Component` per effect in `service/effect/normalfx/`, registered via `NormalEffectHandlerBeanFactory.createAll(...)`. Shared logic in `*Support` classes in the same package.
+
+| Category | Handler package | Shared helpers |
+|----------|-----------------|----------------|
+| Damage | `normalfx/*EffectHandler` | `DamageSupport` |
+| Destruction | `normalfx/*EffectHandler` | `DestructionSupport` |
+| Bounce | `normalfx/*EffectHandler` | `BounceSupport` |
+| Counter | `normalfx/*EffectHandler` | `CounterSupport` |
+| Library/search/mill/shuffle | `normalfx/*EffectHandler` | `LibraryRevealSupport`, `LibrarySearchSupport`, `LibraryShuffleSupport` |
+| Graveyard/exile | `normalfx/*EffectHandler` | `GraveyardReturnSupport` |
+| Draw/discard/choices | `normalfx/*EffectHandler` | `PlayerInteractionSupport` |
+| Life | `normalfx/*EffectHandler` | `LifeSupport` |
+| Boost/tap/keyword/animation | `normalfx/*EffectHandler` | `TapUntapSupport`, `AnimationSupport` |
+| Permanent control/tokens/counters | `normalfx/*EffectHandler` | `PermanentControlSupport`, `PermanentCounterSupport` |
+| Static effects | `staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) | `StaticEffectSupport` |
+| Prevention | `normalfx/*EffectHandler` | `PreventionSupport` |
+| Turn | `normalfx/*EffectHandler` | `TurnSupport` |
+| Copy/retarget | `normalfx/*EffectHandler` | `CopySupport`, `TargetRedirectionSupport` |
+| Exile / return from exile | `normalfx/*EffectHandler` | `ExileSupport` |
+| Combat restriction / equip / win | `normalfx/*EffectHandler` | `CardSpecificSupport` (card-specific) |
