@@ -107,12 +107,10 @@ import com.github.laxika.magicalvibes.service.effect.TapUntapResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
-import com.github.laxika.magicalvibes.service.effect.HandlesStaticEffect;
 import com.github.laxika.magicalvibes.service.effect.LifeResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.StaticEffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -225,8 +223,6 @@ public class GameSimulator {
 
         StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         StaticEffectSupport staticEffectSupport = new StaticEffectSupport(sharedQueryService);
-        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(sharedQueryService, staticEffectSupport);
-        scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
         StaticEffectHandlerBeanFactory.registerAll(
                 StaticEffectHandlerBeanFactory.createAll(staticEffectSupport, sharedQueryService, staticEffectHandlerRegistry),
                 staticEffectHandlerRegistry);
@@ -1349,32 +1345,6 @@ public class GameSimulator {
                         && params[0] == TargetValidationContext.class) {
                     registry.register(annotation.value(), (ctx, effect) -> {
                         try { handle.invoke(ctx); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    private static void scanStaticEffectHandlers(Object bean, StaticEffectHandlerRegistry registry) {
-        for (Method method : bean.getClass().getDeclaredMethods()) {
-            HandlesStaticEffect annotation = method.getAnnotation(HandlesStaticEffect.class);
-            if (annotation == null) continue;
-            method.setAccessible(true);
-            try {
-                MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-                if (annotation.selfOnly()) {
-                    registry.registerSelfHandler(annotation.value(), (context, effect, accumulator) -> {
-                        try { handle.invoke(context, effect, accumulator); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                } else {
-                    registry.register(annotation.value(), (context, effect, accumulator) -> {
-                        try { handle.invoke(context, effect, accumulator); }
                         catch (RuntimeException re) { throw re; }
                         catch (Throwable t) { throw new RuntimeException(t); }
                     });

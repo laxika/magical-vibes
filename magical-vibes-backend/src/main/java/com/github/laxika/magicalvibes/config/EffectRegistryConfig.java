@@ -5,9 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
-import com.github.laxika.magicalvibes.service.effect.HandlesStaticEffect;
-import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
-import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
@@ -68,7 +65,6 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
     @Override
     public void afterSingletonsInstantiated() {
         int effectCount = 0;
-        int staticCount = 0;
         int validatorCount = 0;
 
         for (String beanName : applicationContext.getBeanDefinitionNames()) {
@@ -82,12 +78,6 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
                     effectCount++;
                 }
 
-                HandlesStaticEffect handlesStatic = method.getAnnotation(HandlesStaticEffect.class);
-                if (handlesStatic != null) {
-                    registerStaticEffectHandler(bean, method, handlesStatic.value(), handlesStatic.selfOnly());
-                    staticCount++;
-                }
-
                 ValidatesTarget validatesTarget = method.getAnnotation(ValidatesTarget.class);
                 if (validatesTarget != null) {
                     registerTargetValidator(bean, method, validatesTarget.value());
@@ -96,12 +86,10 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
             }
         }
 
-        // Register migrated per-effect bean handlers. These coexist with the legacy @HandlesStaticEffect
-        // scan above: each handles a disjoint effect type, so registration order is irrelevant.
         StaticEffectHandlerBeanFactory.registerAll(staticEffectHandlerBeans, staticEffectHandlerRegistry);
 
-        log.info("Effect auto-registration complete: {} runtime handlers, {} static handlers, {} bean handlers, {} target validators",
-                effectCount, staticCount, staticEffectHandlerBeans.size(), validatorCount);
+        log.info("Effect auto-registration complete: {} runtime handlers, {} static handlers, {} target validators",
+                effectCount, staticEffectHandlerBeans.size(), validatorCount);
     }
 
     @SuppressWarnings("unchecked")
@@ -153,44 +141,6 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
             }
         } catch (IllegalAccessException e) {
             throw new IllegalStateException("Cannot access @HandlesEffect method " + method.getName(), e);
-        }
-    }
-
-    private void registerStaticEffectHandler(Object bean, Method method, Class<? extends CardEffect> effectClass, boolean selfOnly) {
-        method.setAccessible(true);
-        Class<?>[] params = method.getParameterTypes();
-
-        if (params.length != 3
-                || params[0] != StaticEffectContext.class
-                || params[1] != CardEffect.class
-                || params[2] != StaticBonusAccumulator.class) {
-            throw new IllegalStateException(
-                    "@HandlesStaticEffect method " + method.getDeclaringClass().getSimpleName() + "." + method.getName()
-                            + " must have signature (StaticEffectContext, CardEffect, StaticBonusAccumulator)");
-        }
-
-        try {
-            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-
-            if (selfOnly) {
-                staticEffectHandlerRegistry.registerSelfHandler(effectClass, (context, effect, accumulator) -> {
-                    try {
-                        handle.invoke(context, effect, accumulator);
-                    } catch (Throwable t) {
-                        throw wrapException(t, method);
-                    }
-                });
-            } else {
-                staticEffectHandlerRegistry.register(effectClass, (context, effect, accumulator) -> {
-                    try {
-                        handle.invoke(context, effect, accumulator);
-                    } catch (Throwable t) {
-                        throw wrapException(t, method);
-                    }
-                });
-            }
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException("Cannot access @HandlesStaticEffect method " + method.getName(), e);
         }
     }
 

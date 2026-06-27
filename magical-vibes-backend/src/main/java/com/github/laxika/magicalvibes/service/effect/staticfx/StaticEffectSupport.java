@@ -53,9 +53,8 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 /**
- * Shared helpers used by every static effect handler. Extracted verbatim from the legacy
- * {@code StaticEffectResolutionService} monolith so that per-effect {@link StaticEffectHandlerBean}
- * handlers can reuse them. Behavior is identical to the original private helpers.
+ * Shared helpers used by every static effect handler. Per-effect {@link StaticEffectHandlerBean}
+ * handlers reuse these helpers; behavior is identical to the original monolith privates.
  */
 @Component
 @RequiredArgsConstructor

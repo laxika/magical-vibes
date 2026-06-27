@@ -475,7 +475,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 | Life | `effect/LifeResolutionService` |
 | Creature mods | `effect/CreatureModResolutionService` |
 | Permanent control/tokens | `effect/PermanentControlResolutionService` |
-| Static effects | `effect/StaticEffectResolutionService` |
+| Static effects | `effect/staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) |
 | Prevention | `PreventionResolutionService` |
 | Turn | `TurnResolutionService` |
 | Copy/retarget | `CopyResolutionService`, `TargetRedirectionResolutionService` |

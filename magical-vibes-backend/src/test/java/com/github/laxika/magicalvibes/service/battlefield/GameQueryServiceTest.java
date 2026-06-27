@@ -1131,7 +1131,7 @@ class GameQueryServiceTest {
                     new ProtectionFromColorsEffect(EnumSet.of(CardColor.RED, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE);
             Card swordCard = createArtifact("Sword of War and Peace");
             swordCard.addEffect(EffectSlot.STATIC, protEffect);
-            // Stub the static handler to mimic real StaticEffectResolutionService behavior
+            // Stub the static handler to mimic real static effect handler behavior
             when(staticEffectRegistry.getHandler(protEffect)).thenReturn((ctx, eff, acc) -> {
                 var prot = (ProtectionFromColorsEffect) eff;
                 if (ctx.source().isAttached()

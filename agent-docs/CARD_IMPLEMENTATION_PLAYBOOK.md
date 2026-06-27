@@ -228,7 +228,7 @@ Then do all of:
   @HandlesEffect(YourNewEffect.class)
   void resolveYourNewEffect(GameData gameData, StackEntry entry, YourNewEffect effect) { ... }
   ```
-  The `@HandlesEffect` annotation auto-registers the handler at startup — no manual `registry.register()` call needed. For static/continuous effects, use `@HandlesStaticEffect(YourEffect.class)` (or `@HandlesStaticEffect(value = YourEffect.class, selfOnly = true)` for self-only bonuses) in `StaticEffectResolutionService`.
+  The `@HandlesEffect` annotation auto-registers the handler at startup — no manual `registry.register()` call needed. For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/` and add it to `StaticEffectHandlerBeanFactory.createAll(...)`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
 - If the effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see `EFFECTS_INDEX.md` target validator map):
   ```java
   @ValidatesTarget(YourNewEffect.class)
@@ -384,7 +384,7 @@ harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 
 
 ## "Shares a creature type" pattern
 
-When comparing creature types between two objects (permanents, cards, or a mix), use this Changeling-aware pattern from `StaticEffectResolutionService` (Coat of Arms):
+When comparing creature types between two objects (permanents, cards, or a mix), use this Changeling-aware pattern from `BoostBySharedCreatureTypeEffectHandler` (Coat of Arms):
 
 ```java
 // For permanents on the battlefield:
@@ -491,7 +491,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `BlockedByMinCreaturesConditionalEffect` | yes | - | - |
 | `OpponentPoisonedConditionalEffect` | yes | - | - |
 
-**Key:** "yes" = supported; "-" = not supported. If you need a conditional in a context marked "-", you must add a handler in the corresponding service (`StaticEffectResolutionService`, `EffectResolutionService.evaluateCondition()`, or `StepTriggerService`).
+**Key:** "yes" = supported; "-" = not supported. If you need a conditional in a context marked "-", you must add a handler in the corresponding service (`staticfx` `StaticEffectHandlerBean`, `EffectResolutionService.evaluateCondition()`, or `StepTriggerService`).
 
 ## Quick anti-patterns
 

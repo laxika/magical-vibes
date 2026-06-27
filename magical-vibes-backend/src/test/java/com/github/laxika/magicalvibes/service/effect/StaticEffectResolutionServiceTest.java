@@ -19,9 +19,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,11 +42,9 @@ class StaticEffectResolutionServiceTest {
     private UUID player2Id;
 
     @BeforeEach
-    void setUp() throws Throwable {
+    void setUp() {
         StaticEffectSupport support = new StaticEffectSupport(gameQueryService);
-        StaticEffectResolutionService service = new StaticEffectResolutionService(gameQueryService, support);
         registry = new StaticEffectHandlerRegistry();
-        registerStaticEffectHandlers(service, registry);
         StaticEffectHandlerBeanFactory.registerAll(
                 StaticEffectHandlerBeanFactory.createAll(support, gameQueryService, registry),
                 registry);
@@ -139,39 +134,5 @@ class StaticEffectResolutionServiceTest {
         card.setType(type);
         card.setSubtypes(subtypes);
         return new Permanent(card);
-    }
-
-    private static void registerStaticEffectHandlers(Object bean, StaticEffectHandlerRegistry registry) throws Throwable {
-        for (Method method : bean.getClass().getDeclaredMethods()) {
-            HandlesStaticEffect annotation = method.getAnnotation(HandlesStaticEffect.class);
-            if (annotation == null) {
-                continue;
-            }
-
-            method.setAccessible(true);
-            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-
-            if (annotation.selfOnly()) {
-                registry.registerSelfHandler(annotation.value(), (context, effect, accumulator) -> {
-                    try {
-                        handle.invoke(context, effect, accumulator);
-                    } catch (RuntimeException re) {
-                        throw re;
-                    } catch (Throwable t) {
-                        throw new RuntimeException(t);
-                    }
-                });
-            } else {
-                registry.register(annotation.value(), (context, effect, accumulator) -> {
-                    try {
-                        handle.invoke(context, effect, accumulator);
-                    } catch (RuntimeException re) {
-                        throw re;
-                    } catch (Throwable t) {
-                        throw new RuntimeException(t);
-                    }
-                });
-            }
-        }
     }
 }
