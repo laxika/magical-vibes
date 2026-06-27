@@ -8,12 +8,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToTargetIfPermanentEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,9 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,18 +38,17 @@ class KeywordGrantResolutionServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
-    @Mock private PlayerInputService playerInputService;
 
-    private KeywordGrantResolutionService service;
+    private GrantKeywordToTargetIfPermanentEffectHandler handler;
     private EffectHandlerRegistry registry;
     private GameData gd;
     private UUID player1Id;
 
     @BeforeEach
-    void setUp() throws Throwable {
-        service = new KeywordGrantResolutionService(gameQueryService, gameBroadcastService, playerInputService);
+    void setUp() {
+        handler = new GrantKeywordToTargetIfPermanentEffectHandler(gameQueryService, gameBroadcastService);
         registry = new EffectHandlerRegistry();
-        registerEffectHandlers(service, registry);
+        registry.register(handler.handledEffect(), handler);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -112,35 +107,5 @@ class KeywordGrantResolutionServiceTest {
 
         assertThat(target.hasKeyword(Keyword.FIRST_STRIKE)).isFalse();
         verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void registerEffectHandlers(Object bean, EffectHandlerRegistry registry) throws Throwable {
-        for (Method method : bean.getClass().getDeclaredMethods()) {
-            HandlesEffect annotation = method.getAnnotation(HandlesEffect.class);
-            if (annotation == null) {
-                continue;
-            }
-
-            method.setAccessible(true);
-            Class<?>[] params = method.getParameterTypes();
-            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-
-            if (params.length == 3
-                    && params[0] == GameData.class
-                    && params[1] == StackEntry.class
-                    && CardEffect.class.isAssignableFrom(params[2])) {
-                Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[2];
-                registry.register(annotation.value(), (gd, entry, effect) -> {
-                    try {
-                        handle.invoke(gd, entry, effectParam.cast(effect));
-                    } catch (RuntimeException re) {
-                        throw re;
-                    } catch (Throwable t) {
-                        throw new RuntimeException(t);
-                    }
-                });
-            }
-        }
     }
 }

@@ -26,8 +26,8 @@ import java.util.List;
  * more domains migrate, only this factory needs updating â€” non-Spring sites never change again.
  *
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
- * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>, and
- * <b>Tap/Untap</b> domain handlers.
+ * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
+ * <b>Tap/Untap</b>, and <b>Keyword Grant</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -372,7 +372,26 @@ public final class NormalEffectHandlerBeanFactory {
                 new SkipNextUntapPermanentsOfTargetPlayerEffectHandler(gameQueryService, gameBroadcastService),
                 new UntapAllControlledPermanentsEffectHandler(gameQueryService, gameBroadcastService),
                 new RegisterDelayedUntapPermanentsEffectHandler(),
-                new UntapUpToControlledPermanentsEffectHandler(gameQueryService, gameBroadcastService)
+                new UntapUpToControlledPermanentsEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantKeywordEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantKeywordToTargetIfSupertypeEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantKeywordToTargetIfPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantChosenKeywordToTargetEffectHandler(gameQueryService, playerInputService),
+                new GrantColorUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantProtectionChoiceUntilEndOfTurnEffectHandler(gameQueryService, playerInputService),
+                new GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffectHandler(playerInputService),
+                new GrantProtectionFromCardTypeUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new RemoveKeywordEffectHandler(gameQueryService, gameBroadcastService),
+                new LosesAllAbilitiesEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantFlashbackToGraveyardCardsEffectHandler(gameBroadcastService),
+                new GrantFlashbackToTargetGraveyardCardEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantSourceActivatedAbilitiesUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantEffectToTargetUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantActivatedAbilityEffectHandler(gameQueryService, gameBroadcastService)
         );
     }
 
