@@ -160,17 +160,17 @@ have two methods → two beans.
 - [x] `PowerToughnessEqualToControllerLifeTotalEffect`
 
 ### Batch G — gained abilities & control conditionals
-- [ ] `GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect`
-- [ ] `GainActivatedAbilitiesOfExiledCardsEffect`
-- [ ] `AnyPlayerControlsPermanentConditionalEffect`
-- [ ] `ControlsPermanentConditionalEffect`
-- [ ] `OpponentControlsPermanentConditionalEffect`
-- [ ] `EquippedConditionalEffect`
-- [ ] `BlockedByMinCreaturesConditionalEffect`
-- [ ] `ControllerTurnConditionalEffect`
-- [ ] `OpponentPoisonedConditionalEffect`
-- [ ] `ControlsAnotherPermanentConditionalEffect`
-- [ ] `SelfHasKeywordConditionalEffect`
+- [x] `GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect`
+- [x] `GainActivatedAbilitiesOfExiledCardsEffect`
+- [x] `AnyPlayerControlsPermanentConditionalEffect`
+- [x] `ControlsPermanentConditionalEffect`
+- [x] `OpponentControlsPermanentConditionalEffect`
+- [x] `EquippedConditionalEffect`
+- [x] `BlockedByMinCreaturesConditionalEffect`
+- [x] `ControllerTurnConditionalEffect`
+- [x] `OpponentPoisonedConditionalEffect`
+- [x] `ControlsAnotherPermanentConditionalEffect`
+- [x] `SelfHasKeywordConditionalEffect`
 
 ### Batch H — life / graveyard / top-card thresholds
 - [ ] `ControllerLifeThresholdConditionalEffect`

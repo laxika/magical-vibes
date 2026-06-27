@@ -70,7 +70,18 @@ public final class StaticEffectHandlerBeanFactory {
                 new PowerToughnessEqualToControlledPermanentCountSelfEffectHandler(support, gameQueryService),
                 new PowerToughnessEqualToControlledCreatureCountSelfEffectHandler(support),
                 new PowerToughnessEqualToCardsInHandSelfEffectHandler(support),
-                new PowerToughnessEqualToControllerLifeTotalSelfEffectHandler(support)
+                new PowerToughnessEqualToControllerLifeTotalSelfEffectHandler(support),
+                new GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsSelfEffectHandler(),
+                new GainActivatedAbilitiesOfExiledCardsSelfEffectHandler(),
+                new AnyPlayerControlsPermanentConditionalSelfEffectHandler(support),
+                new ControlsPermanentConditionalSelfEffectHandler(support),
+                new OpponentControlsPermanentConditionalSelfEffectHandler(support),
+                new EquippedConditionalSelfEffectHandler(support),
+                new BlockedByMinCreaturesConditionalSelfEffectHandler(),
+                new ControllerTurnConditionalEffectHandler(support),
+                new OpponentPoisonedConditionalSelfEffectHandler(support),
+                new ControlsAnotherPermanentConditionalSelfEffectHandler(support),
+                new SelfHasKeywordConditionalSelfEffectHandler()
         );
     }
 
