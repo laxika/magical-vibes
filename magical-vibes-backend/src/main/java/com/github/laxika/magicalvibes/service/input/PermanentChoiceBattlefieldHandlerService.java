@@ -26,7 +26,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.combat.DamageResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
@@ -66,7 +66,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final CreatureControlService creatureControlService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
-    private final DamageResolutionService damageResolutionService;
+    private final DamageSupport damageSupport;
     private final DestructionResolutionService destructionResolutionService;
     private final LifeSupport lifeSupport;
     private final LibrarySearchResolutionService librarySearchResolutionService;
@@ -398,7 +398,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} sacrifices {} for divided damage", gameData.id, playerName, artifactToSacrifice.getCard().getName());
 
-        damageResolutionService.dealDividedDamageToAnyTargets(
+        damageSupport.dealDividedDamageToAnyTargets(
                 gameData, sadd.sourceCard(), sadd.controllerId(), sadd.damageAssignments());
 
         gameData.pendingETBDamageAssignments = Map.of();

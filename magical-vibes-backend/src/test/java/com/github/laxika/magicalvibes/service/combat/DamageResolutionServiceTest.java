@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerI
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealOrderedDamageToAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
@@ -31,7 +33,23 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BoostColorSourceDamageThisTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageIfFewCardsInHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToAnyTargetAndGainLifeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToAnyTargetEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToControllerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToTargetControllerIfTargetHasKeywordEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToTargetCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToTargetPlayerByHandSizeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToTargetPlayerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealOrderedDamageToAnyTargetsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealXDamageToAnyTargetAndGainXLifeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DealXDamageToAnyTargetEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.FirstTargetDealsPowerDamageToSecondTargetEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MassDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -80,7 +98,23 @@ class DamageResolutionServiceTest {
     private LifeSupport lifeSupport;
 
     @InjectMocks
-    private DamageResolutionService drs;
+    private DamageSupport damageSupport;
+
+    private DealDamageToAnyTargetEffectHandler dealDamageToAnyTargetHandler;
+    private DealDamageToTargetCreatureEffectHandler dealDamageToTargetCreatureHandler;
+    private DealDamageToTargetControllerIfTargetHasKeywordEffectHandler dealDamageToTargetControllerIfTargetHasKeywordHandler;
+    private DealDamageToTargetPlayerEffectHandler dealDamageToTargetPlayerHandler;
+    private DealDamageToControllerEffectHandler dealDamageToControllerHandler;
+    private MassDamageEffectHandler massDamageHandler;
+    private DealXDamageToAnyTargetEffectHandler dealXDamageToAnyTargetHandler;
+    private DealDamageToAnyTargetAndGainLifeEffectHandler dealDamageToAnyTargetAndGainLifeHandler;
+    private DealXDamageToAnyTargetAndGainXLifeEffectHandler dealXDamageToAnyTargetAndGainXLifeHandler;
+    private DealDamageToTargetPlayerByHandSizeEffectHandler dealDamageToTargetPlayerByHandSizeHandler;
+    private DealDamageIfFewCardsInHandEffectHandler dealDamageIfFewCardsInHandHandler;
+    private DealDamageToTargetCreatureEqualToControlledSubtypeCountEffectHandler dealDamageToTargetCreatureEqualToControlledSubtypeCountHandler;
+    private DealOrderedDamageToAnyTargetsEffectHandler dealOrderedDamageToAnyTargetsHandler;
+    private FirstTargetDealsPowerDamageToSecondTargetEffectHandler firstTargetDealsPowerDamageToSecondTargetHandler;
+    private BoostColorSourceDamageThisTurnEffectHandler boostColorSourceDamageThisTurnHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -107,6 +141,22 @@ class DamageResolutionServiceTest {
         gd.playerLifeTotals.put(player2Id, 20);
 
         lenient().when(gameQueryService.getEnchantedPlayerDamageMultiplier(eq(gd), any(UUID.class))).thenReturn(1);
+
+        dealDamageToAnyTargetHandler = new DealDamageToAnyTargetEffectHandler(damageSupport, gameQueryService, gameOutcomeService);
+        dealDamageToTargetCreatureHandler = new DealDamageToTargetCreatureEffectHandler(damageSupport, gameQueryService);
+        dealDamageToTargetControllerIfTargetHasKeywordHandler = new DealDamageToTargetControllerIfTargetHasKeywordEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService);
+        dealDamageToTargetPlayerHandler = new DealDamageToTargetPlayerEffectHandler(damageSupport, gameQueryService, gameOutcomeService);
+        dealDamageToControllerHandler = new DealDamageToControllerEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService);
+        massDamageHandler = new MassDamageEffectHandler(damageSupport, gameQueryService, gameOutcomeService);
+        dealXDamageToAnyTargetHandler = new DealXDamageToAnyTargetEffectHandler(damageSupport, gameQueryService, gameOutcomeService);
+        dealDamageToAnyTargetAndGainLifeHandler = new DealDamageToAnyTargetAndGainLifeEffectHandler(damageSupport, gameQueryService, gameOutcomeService, lifeSupport);
+        dealXDamageToAnyTargetAndGainXLifeHandler = new DealXDamageToAnyTargetAndGainXLifeEffectHandler(damageSupport, gameQueryService, gameOutcomeService, lifeSupport);
+        dealDamageToTargetPlayerByHandSizeHandler = new DealDamageToTargetPlayerByHandSizeEffectHandler(damageSupport, gameQueryService, gameOutcomeService);
+        dealDamageIfFewCardsInHandHandler = new DealDamageIfFewCardsInHandEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService);
+        dealDamageToTargetCreatureEqualToControlledSubtypeCountHandler = new DealDamageToTargetCreatureEqualToControlledSubtypeCountEffectHandler(damageSupport, gameQueryService, lifeSupport);
+        dealOrderedDamageToAnyTargetsHandler = new DealOrderedDamageToAnyTargetsEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService);
+        firstTargetDealsPowerDamageToSecondTargetHandler = new FirstTargetDealsPowerDamageToSecondTargetEffectHandler(damageSupport, gameQueryService, gameBroadcastService);
+        boostColorSourceDamageThisTurnHandler = new BoostColorSourceDamageThisTurnEffectHandler(gameBroadcastService);
     }
 
     // ===== Helper methods =====
@@ -272,7 +322,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
+            dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(gd.pendingLethalDamageDestructions).contains(bears);
@@ -295,7 +345,7 @@ class DamageResolutionServiceTest {
             stubLethalDamage(false);
             when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
 
-            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
+            dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
             assertThat(angel.getMarkedDamage()).isEqualTo(2);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -315,7 +365,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
+            dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 2);
@@ -330,7 +380,7 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(shockCard, player1Id, null);
             DealDamageToAnyTargetEffect effect = new DealDamageToAnyTargetEffect(2, false);
 
-            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
+            dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
             verify(gameQueryService, never()).applyDamageMultiplier(any(), anyInt(), any());
             verifyNoInteractions(triggerCollectionService);
@@ -354,7 +404,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            drs.resolveDealDamageToAnyTarget(gd, entry, effect);
+            dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService, atLeastOnce()).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("Shock") && msg.contains("2 damage") && msg.contains("Grizzly Bears")));
@@ -387,7 +437,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+            dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(3);
             verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 3, player1Id);
@@ -409,7 +459,7 @@ class DamageResolutionServiceTest {
             stubLethalDamage(false);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+            dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
 
             assertThat(gd.permanentsDealtDamageThisTurn).contains(bears.getId());
         }
@@ -432,7 +482,7 @@ class DamageResolutionServiceTest {
             stubNoKeywordsOnSource(entry);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+            dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
 
             assertThat(gd.permanentsDealtDamageThisTurn).doesNotContain(bears.getId());
         }
@@ -457,7 +507,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, bear2.getId())).thenReturn(bear2);
             when(gameQueryService.hasProtectionFromSource(eq(gd), any(Permanent.class), any(Card.class))).thenReturn(false);
 
-            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+            dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
 
             assertThat(bear1.getMarkedDamage()).isEqualTo(1);
             assertThat(bear2.getMarkedDamage()).isEqualTo(1);
@@ -484,7 +534,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, bear2.getId())).thenReturn(bear2);
             when(gameQueryService.hasProtectionFromSource(eq(gd), any(Permanent.class), any(Card.class))).thenReturn(false);
 
-            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+            dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
 
             assertThat(bear2.getMarkedDamage()).isEqualTo(1);
         }
@@ -509,7 +559,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            drs.resolveDealDamageToTargetCreature(gd, entry, effect);
+            dealDamageToTargetCreatureHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(4);
         }
@@ -540,7 +590,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, creature, Keyword.INFECT)).thenReturn(true);
             when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
 
-            drs.resolveDealDamageToTargetControllerIfTargetHasKeyword(gd, entry, effect);
+            dealDamageToTargetControllerIfTargetHasKeywordHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
@@ -560,7 +610,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INFECT)).thenReturn(false);
 
-            drs.resolveDealDamageToTargetControllerIfTargetHasKeyword(gd, entry, effect);
+            dealDamageToTargetControllerIfTargetHasKeywordHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
             verifyNoInteractions(triggerCollectionService);
@@ -588,7 +638,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealDamageToTargetPlayer(gd, entry, effect);
+            dealDamageToTargetPlayerHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
@@ -604,7 +654,7 @@ class DamageResolutionServiceTest {
             StackEntry entry = createEntry(lavaAxeCard, player1Id, fakeId);
             DealDamageToTargetPlayerEffect effect = new DealDamageToTargetPlayerEffect(5);
 
-            drs.resolveDealDamageToTargetPlayer(gd, entry, effect);
+            dealDamageToTargetPlayerHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
             verifyNoInteractions(triggerCollectionService);
@@ -631,7 +681,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player1Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealDamageToController(gd, entry, effect);
+            dealDamageToControllerHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(17);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player1Id, 3);
@@ -673,7 +723,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
             when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
 
-            drs.resolveMassDamage(gd, entry, effect);
+            massDamageHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(elves.getMarkedDamage()).isEqualTo(2);
@@ -702,7 +752,7 @@ class DamageResolutionServiceTest {
             stubNoKeywordsOnSource(entry);
             when(gameQueryService.isLethalDamage(2, 4, false)).thenReturn(false);
 
-            drs.resolveMassDamage(gd, entry, effect);
+            massDamageHandler.resolve(gd, entry, effect);
 
             assertThat(angel.getMarkedDamage()).isEqualTo(2);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -738,7 +788,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player1Id);
             stubPlayerDamageCore(player2Id);
 
-            drs.resolveMassDamage(gd, entry, effect);
+            massDamageHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(16);
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
@@ -780,7 +830,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            drs.resolveDealXDamageToAnyTarget(gd, entry, effect);
+            dealXDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(3);
             assertThat(gd.pendingLethalDamageDestructions).contains(bears);
@@ -800,7 +850,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealXDamageToAnyTarget(gd, entry, effect);
+            dealXDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
@@ -831,7 +881,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealDamageToAnyTargetAndGainLife(gd, entry, effect);
+            dealDamageToAnyTargetAndGainLifeHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             verify(lifeSupport).applyGainLife(gd, player1Id, 3);
@@ -859,7 +909,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            drs.resolveDealDamageToAnyTargetAndGainLife(gd, entry, effect);
+            dealDamageToAnyTargetAndGainLifeHandler.resolve(gd, entry, effect);
 
             assertThat(gd.pendingLethalDamageDestructions).contains(bears);
             verify(lifeSupport).applyGainLife(gd, player1Id, 3);
@@ -888,7 +938,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealXDamageToAnyTargetAndGainXLife(gd, entry);
+            dealXDamageToAnyTargetAndGainXLifeHandler.resolve(gd, entry, new DealXDamageToAnyTargetAndGainXLifeEffect());
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             verify(lifeSupport).applyGainLife(gd, player1Id, 3);
@@ -923,7 +973,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealDamageToTargetPlayerByHandSize(gd, entry);
+            dealDamageToTargetPlayerByHandSizeHandler.resolve(gd, entry, new DealDamageToTargetPlayerByHandSizeEffect());
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
@@ -944,7 +994,7 @@ class DamageResolutionServiceTest {
             when(damagePreventionService.isSourceDamagePreventedForPlayer(eq(gd), eq(player2Id), any())).thenReturn(false);
             when(damagePreventionService.applySourceRedirectShields(eq(gd), eq(player2Id), any(), anyInt())).thenAnswer(inv -> inv.getArgument(3));
 
-            drs.resolveDealDamageToTargetPlayerByHandSize(gd, entry);
+            dealDamageToTargetPlayerByHandSizeHandler.resolve(gd, entry, new DealDamageToTargetPlayerByHandSizeEffect());
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
             verifyNoInteractions(triggerCollectionService);
@@ -976,7 +1026,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealDamageIfFewCardsInHand(gd, entry, effect);
+            dealDamageIfFewCardsInHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
@@ -997,7 +1047,7 @@ class DamageResolutionServiceTest {
             stubPlayerDamageCore(player2Id);
             stubNoInfectOnSource(entry);
 
-            drs.resolveDealDamageIfFewCardsInHand(gd, entry, effect);
+            dealDamageIfFewCardsInHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
@@ -1017,7 +1067,7 @@ class DamageResolutionServiceTest {
             gd.playerHands.get(player2Id).add(createCreature("Bear2", 2, 2));
             gd.playerHands.get(player2Id).add(createCreature("Bear3", 2, 2));
 
-            drs.resolveDealDamageIfFewCardsInHand(gd, entry, effect);
+            dealDamageIfFewCardsInHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -1052,7 +1102,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, angel.getId())).thenReturn(angel);
             when(gameQueryService.isLethalDamage(3, 4, false)).thenReturn(false);
 
-            drs.resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(gd, entry, effect);
+            dealDamageToTargetCreatureEqualToControlledSubtypeCountHandler.resolve(gd, entry, effect);
 
             assertThat(angel.getMarkedDamage()).isEqualTo(3);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -1079,7 +1129,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
 
-            drs.resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(gd, entry, effect);
+            dealDamageToTargetCreatureEqualToControlledSubtypeCountHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, bears, 2, player1Id);
@@ -1103,7 +1153,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
             when(gameQueryService.isLethalDamage(0, 2, false)).thenReturn(false);
 
-            drs.resolveDealDamageToTargetCreatureEqualToControlledSubtypeCount(gd, entry, effect);
+            dealDamageToTargetCreatureEqualToControlledSubtypeCountHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(0);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -1140,7 +1190,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(eq(gd), any(Permanent.class), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
             when(graveyardService.tryRegenerate(eq(gd), any(Permanent.class))).thenReturn(false);
 
-            drs.resolveDealOrderedDamageToAnyTargets(gd, entry, effect);
+            dealOrderedDamageToAnyTargetsHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(elves.getMarkedDamage()).isEqualTo(1);
@@ -1169,7 +1219,7 @@ class DamageResolutionServiceTest {
             when(graveyardService.tryRegenerate(gd, bears)).thenReturn(false);
             stubPlayerDamageCore(player2Id);
 
-            drs.resolveDealOrderedDamageToAnyTargets(gd, entry, effect);
+            dealOrderedDamageToAnyTargetsHandler.resolve(gd, entry, effect);
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
@@ -1211,7 +1261,7 @@ class DamageResolutionServiceTest {
             stubNoKeywordsOnSourceWithDamageSource(entry, bears);
             when(gameQueryService.isLethalDamage(2, 4, false)).thenReturn(false);
 
-            drs.resolveBite(gd, entry);
+            firstTargetDealsPowerDamageToSecondTargetHandler.resolve(gd, entry, new FirstTargetDealsPowerDamageToSecondTargetEffect());
 
             assertThat(angel.getMarkedDamage()).isEqualTo(2);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -1243,7 +1293,7 @@ class DamageResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, theirAngel, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, theirAngel)).thenReturn(false);
 
-            drs.resolveBite(gd, entry);
+            firstTargetDealsPowerDamageToSecondTargetHandler.resolve(gd, entry, new FirstTargetDealsPowerDamageToSecondTargetEffect());
 
             assertThat(theirAngel.getMarkedDamage()).isEqualTo(4);
             verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(gd, theirAngel, 4, player1Id);
@@ -1264,7 +1314,7 @@ class DamageResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
                     "The Flame of Keld chapter III", new ArrayList<>(List.of(effect)), null);
 
-            drs.resolveBoostColorSourceDamageThisTurn(gd, entry, effect);
+            boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
             assertThat(gd.colorSourceDamageBonusThisTurn.get(player1Id).get(CardColor.RED)).isEqualTo(2);
         }
@@ -1281,7 +1331,7 @@ class DamageResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
                     "Second Flame", new ArrayList<>(List.of(effect)), null);
 
-            drs.resolveBoostColorSourceDamageThisTurn(gd, entry, effect);
+            boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
             assertThat(gd.colorSourceDamageBonusThisTurn.get(player1Id).get(CardColor.RED)).isEqualTo(5);
         }
@@ -1294,7 +1344,7 @@ class DamageResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
                     "The Flame of Keld chapter III", new ArrayList<>(List.of(effect)), null);
 
-            drs.resolveBoostColorSourceDamageThisTurn(gd, entry, effect);
+            boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
 
             assertThat(gd.colorSourceDamageBonusThisTurn.getOrDefault(player2Id, java.util.Map.of()))
                     .doesNotContainKey(CardColor.RED);
