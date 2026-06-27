@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSuppo
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.ReconnectionService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
@@ -309,7 +308,6 @@ public class GameSimulator {
         AnimationSupport animationSupport = new AnimationSupport(
                 gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
         List<Object> effectServices = List.of(
-                new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),

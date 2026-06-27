@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.DeckService;
 import com.github.laxika.magicalvibes.service.LobbyService;
-import com.github.laxika.magicalvibes.service.PreventionResolutionService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.ability.ActivatedAbilityExecutionService;
 import com.github.laxika.magicalvibes.service.MulliganService;
@@ -273,7 +272,6 @@ public class GameTestHarness {
         AnimationSupport animationSupport = new AnimationSupport(
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
         List<Object> effectServices = List.of(
-                new PreventionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new TargetRedirectionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticTargetLegalityService),
                 new ExileReturnResolutionService(staticGameQueryService, staticGameBroadcastService),
                 new ExileEggCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticBattlefieldEntryService),

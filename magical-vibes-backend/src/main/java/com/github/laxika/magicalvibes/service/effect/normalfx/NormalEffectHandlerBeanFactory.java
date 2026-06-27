@@ -34,7 +34,7 @@ import java.util.List;
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
  * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>,
  * <b>Library Reveal</b>, <b>Library Search</b>, <b>Library Mill</b>, <b>Library Shuffle</b>, <b>Exile</b>,
- * <b>Bounce</b>, <b>Copy</b>, and <b>Counter</b> domain handlers.
+ * <b>Bounce</b>, <b>Copy</b>, <b>Counter</b>, and <b>Prevention</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -76,6 +76,7 @@ public final class NormalEffectHandlerBeanFactory {
         CopySupport copySupport = new CopySupport();
         CounterSupport counterSupport = new CounterSupport(
                 graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService);
+        PreventionSupport preventionSupport = new PreventionSupport(gameBroadcastService);
         PlayerInteractionSupport playerInteractionSupport = new PlayerInteractionSupport(
                 drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService,
                 sessionManager, cardViewFactory, permanentRemovalService, battlefieldEntryService,
@@ -583,7 +584,24 @@ public final class NormalEffectHandlerBeanFactory {
                 new CounterSpellIfControllerPoisonedEffectHandler(counterSupport),
                 new CounterUnlessPaysEffectHandler(counterSupport),
                 new CounterSpellAndCreateTreasureTokensEffectHandler(counterSupport, gameQueryService, permanentControlSupport),
-                new CounterlashEffectHandler(counterSupport, gameQueryService)
+                new CounterlashEffectHandler(counterSupport, gameQueryService),
+                new PreventDamageToTargetEffectHandler(gameQueryService, gameBroadcastService),
+                new PreventNextDamageEffectHandler(gameBroadcastService),
+                new PreventAllCombatDamageEffectHandler(gameBroadcastService),
+                new PreventAllDamageToAllCreaturesEffectHandler(gameBroadcastService),
+                new PreventCombatDamageExceptBySubtypesEffectHandler(gameBroadcastService),
+                new PreventAllDamageToControllerAndCreaturesEffectHandler(gameBroadcastService),
+                new PreventDamageFromColorsEffectHandler(gameBroadcastService),
+                new PreventNextColorDamageToControllerEffectHandler(),
+                new PreventAllDamageByTargetCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new PermanentsEnterTappedThisTurnEffectHandler(gameBroadcastService),
+                new GrantControllerSpellsCantBeCounteredByColorsEffectHandler(gameBroadcastService),
+                new GrantControllerCreaturesCantBeTargetedByColorsEffectHandler(gameBroadcastService),
+                new OpponentsCantCastSpellsThisTurnEffectHandler(gameBroadcastService),
+                new PreventXDamageToControllerAndRedirectToTargetPlayerEffectHandler(gameBroadcastService),
+                new PreventDamageFromChosenSourceAndRedirectToAnyTargetEffectHandler(preventionSupport, playerInputService),
+                new PreventAllDamageFromChosenSourceEffectHandler(preventionSupport, playerInputService),
+                new PreventDamageToTargetFromChosenSourceEffectHandler(preventionSupport, playerInputService)
         );
     }
 
