@@ -1,41 +1,37 @@
-package com.github.laxika.magicalvibes.service.exile;
+package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
-
-/**
- * Resolves the upkeep trigger for exiled cards with egg counters
- * (e.g. Darigaaz Reincarnated).
- *
- * <p>"Remove an egg counter from it. Then if this card has no egg counters on it,
- * return it to the battlefield."</p>
- */
 @Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class ExileEggCounterResolutionService {
+public class RemoveEggCounterFromExileAndReturnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final BattlefieldEntryService battlefieldEntryService;
 
-    @HandlesEffect(RemoveEggCounterFromExileAndReturnEffect.class)
-    void resolveRemoveEggCounterAndReturn(GameData gameData, StackEntry entry,
-                                           RemoveEggCounterFromExileAndReturnEffect effect) {
-        UUID cardId = effect.cardId();
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return RemoveEggCounterFromExileAndReturnEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (RemoveEggCounterFromExileAndReturnEffect) effect;
+        UUID cardId = e.cardId();
         UUID controllerId = entry.getControllerId();
 
         // Intervening-if re-check at resolution: card must still be exiled with an egg counter

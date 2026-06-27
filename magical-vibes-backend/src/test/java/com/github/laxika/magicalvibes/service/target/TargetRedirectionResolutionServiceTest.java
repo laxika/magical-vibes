@@ -16,6 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWith
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChangeTargetOfTargetSpellToSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ChangeTargetOfTargetSpellWithSingleTargetEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -53,7 +56,10 @@ class TargetRedirectionResolutionServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private TargetLegalityService targetLegalityService;
 
-    @InjectMocks private TargetRedirectionResolutionService service;
+    @InjectMocks private TargetRedirectionSupport targetRedirectionSupport;
+
+    private ChangeTargetOfTargetSpellWithSingleTargetEffectHandler changeTargetWithSingleTargetHandler;
+    private ChangeTargetOfTargetSpellToSourceEffectHandler changeTargetToSourceHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -82,6 +88,11 @@ class TargetRedirectionResolutionServiceTest {
                 .thenReturn(Optional.empty());
         lenient().when(targetLegalityService.checkSpellTargetOnStack(any(), any(), any(), any()))
                 .thenReturn(Optional.empty());
+
+        changeTargetWithSingleTargetHandler = new ChangeTargetOfTargetSpellWithSingleTargetEffectHandler(
+                gameQueryService, gameBroadcastService, playerInputService, targetRedirectionSupport);
+        changeTargetToSourceHandler = new ChangeTargetOfTargetSpellToSourceEffectHandler(
+                gameQueryService, gameBroadcastService, targetRedirectionSupport);
     }
 
     // ===== Helper methods =====
@@ -154,7 +165,7 @@ class TargetRedirectionResolutionServiceTest {
             UUID missingCardId = UUID.randomUUID();
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, missingCardId);
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
             verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
@@ -171,7 +182,7 @@ class TargetRedirectionResolutionServiceTest {
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             assertThat(captureLogMessage()).contains("no longer has a single target");
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
@@ -188,7 +199,7 @@ class TargetRedirectionResolutionServiceTest {
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, targetSpellCard.getId());
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             assertThat(captureLogMessage()).contains("no longer has a single target");
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
@@ -211,7 +222,7 @@ class TargetRedirectionResolutionServiceTest {
             when(targetLegalityService.checkSpellTargeting(any(), any(), any(), isNull(), any()))
                     .thenReturn(Optional.of("illegal target"));
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             assertThat(captureLogMessage()).contains("No legal new target");
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
@@ -238,7 +249,7 @@ class TargetRedirectionResolutionServiceTest {
             lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
                     .thenReturn(Optional.of("illegal"));
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             assertThat(gd.interaction.permanentChoiceContext())
                     .isInstanceOf(PermanentChoiceContext.SpellRetarget.class);
@@ -272,7 +283,7 @@ class TargetRedirectionResolutionServiceTest {
             when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
                     .thenReturn(Optional.of("illegal"));
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             assertThat(captureLogMessage()).contains("No legal new target");
         }
@@ -294,7 +305,7 @@ class TargetRedirectionResolutionServiceTest {
             lenient().when(targetLegalityService.checkSpellTargeting(eq(gd), eq(targetSpellCard), eq(player2Id), isNull(), eq(player2Id)))
                     .thenReturn(Optional.of("illegal"));
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
@@ -338,7 +349,7 @@ class TargetRedirectionResolutionServiceTest {
             when(targetLegalityService.checkSpellTargetOnStack(eq(gd), eq(invalidSpell.getId()), any(), eq(player2Id)))
                     .thenReturn(Optional.of("not a valid spell target"));
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
@@ -377,7 +388,7 @@ class TargetRedirectionResolutionServiceTest {
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, counterspellCard.getId());
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
@@ -416,7 +427,7 @@ class TargetRedirectionResolutionServiceTest {
 
             StackEntry entry = redirectWithSingleTargetEntry(redirectCard, player1Id, graveyardSpellCard.getId());
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
@@ -465,7 +476,7 @@ class TargetRedirectionResolutionServiceTest {
                             eq(gd), eq(graveyardSpellCard), eq(cardInOpponentGraveyard.getId()), eq(player2Id)))
                     .thenReturn(Optional.of("not in controller's graveyard"));
 
-            service.resolveChangeTargetOfTargetSpellWithSingleTarget(gd, entry);
+            changeTargetWithSingleTargetHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellWithSingleTargetEffect());
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
@@ -495,7 +506,7 @@ class TargetRedirectionResolutionServiceTest {
             UUID sourcePermanentId = UUID.randomUUID();
             StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, missingCardId, sourcePermanentId);
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
         }
@@ -512,7 +523,7 @@ class TargetRedirectionResolutionServiceTest {
             UUID sourcePermanentId = UUID.randomUUID();
             StackEntry entry = redirectToSourceEntry(redirectCard, player1Id, targetSpellCard.getId(), sourcePermanentId);
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             assertThat(captureLogMessage()).contains("has no targets");
         }
@@ -533,7 +544,7 @@ class TargetRedirectionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourcePermanentId)).thenReturn(null);
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             assertThat(captureLogMessage()).contains("source permanent no longer on the battlefield");
         }
@@ -555,7 +566,7 @@ class TargetRedirectionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourcePermanent.getId())).thenReturn(sourcePermanent);
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             assertThat(targetSpell.getTargetId()).isEqualTo(sourcePermanent.getId());
             assertThat(captureLogMessage()).contains("target is changed to");
@@ -577,7 +588,7 @@ class TargetRedirectionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourcePermanent.getId())).thenReturn(sourcePermanent);
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             assertThat(targetSpell.getTargetId()).isEqualTo(sourcePermanent.getId());
             assertThat(captureLogMessage()).contains("already targets");
@@ -603,7 +614,7 @@ class TargetRedirectionResolutionServiceTest {
                             eq(gd), eq(targetSpellCard), eq(sourcePermanent.getId()), isNull(), eq(player2Id)))
                     .thenReturn(Optional.of("illegal target"));
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             // Target should remain unchanged
             assertThat(targetSpell.getTargetId()).isEqualTo(originalTarget.getId());
@@ -628,7 +639,7 @@ class TargetRedirectionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourcePermanent.getId())).thenReturn(sourcePermanent);
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             assertThat(captureLogMessage()).contains("does not have a single target");
         }
@@ -662,7 +673,7 @@ class TargetRedirectionResolutionServiceTest {
             when(targetLegalityService.checkSpellTargetOnStack(eq(gd), eq(sourcePermanent.getId()), any(), eq(player2Id)))
                     .thenReturn(Optional.of("not a spell"));
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             // Target should remain unchanged
             assertThat(counterspellEntry.getTargetId()).isEqualTo(spellOnStack.getId());
@@ -701,7 +712,7 @@ class TargetRedirectionResolutionServiceTest {
             when(targetLegalityService.checkGraveyardRetargetCandidate(eq(gd), eq(graveyardSpellCard), eq(sourcePermanent.getId()), eq(player2Id)))
                     .thenReturn(Optional.of("not in graveyard"));
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             // Target should remain unchanged
             assertThat(graveyardSpell.getTargetId()).isEqualTo(graveyardTarget.getId());
@@ -724,7 +735,7 @@ class TargetRedirectionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourcePermanent.getId())).thenReturn(sourcePermanent);
 
-            service.resolveChangeTargetOfTargetSpellToSource(gd, entry);
+            changeTargetToSourceHandler.resolve(gd, entry, new ChangeTargetOfTargetSpellToSourceEffect());
 
             assertThat(captureLogMessage()).contains("does not have a single target");
         }

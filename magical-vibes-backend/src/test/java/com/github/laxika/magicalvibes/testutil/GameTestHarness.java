@@ -39,8 +39,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
-import com.github.laxika.magicalvibes.service.exile.ExileEggCounterResolutionService;
-import com.github.laxika.magicalvibes.service.exile.ExileReturnResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
@@ -64,12 +62,10 @@ import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.turn.TurnResolutionService;
 import com.github.laxika.magicalvibes.service.turn.AutoPassService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
-import com.github.laxika.magicalvibes.service.target.TargetRedirectionResolutionService;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
@@ -268,15 +264,6 @@ public class GameTestHarness {
         PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService);
         AnimationSupport animationSupport = new AnimationSupport(
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
-        List<Object> effectServices = List.of(
-                new TargetRedirectionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticTargetLegalityService),
-                new ExileReturnResolutionService(staticGameQueryService, staticGameBroadcastService),
-                new ExileEggCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticBattlefieldEntryService),
-                new TurnResolutionService(combatService, staticGameBroadcastService, auraAttachmentService, turnCleanupService, exileService)
-        );
-        for (Object service : effectServices) {
-            scanEffectHandlers(service, effectHandlerRegistry);
-        }
         CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
                 staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, exileSupport, permanentControlSupport, permanentCounterSupport,
@@ -284,7 +271,8 @@ public class GameTestHarness {
                 staticGameQueryService, staticGameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,
                 staticDrawService, staticSessionManager, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry,
-                stateTriggerService, validTargetService, cloneService);
+                stateTriggerService, validTargetService, cloneService,
+                combatService, auraAttachmentService, turnCleanupService, staticTargetLegalityService);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
         EffectResolutionService effectResolutionService = new EffectResolutionService(staticGameQueryService, effectHandlerRegistry, staticGameBroadcastService, staticPermanentRemovalService);
         staticStackResolutionService = new StackResolutionService(

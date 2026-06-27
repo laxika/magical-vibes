@@ -1,34 +1,33 @@
-package com.github.laxika.magicalvibes.service.exile;
+package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-/**
- * Resolves effects that return targeted exiled cards to their owner's hand.
- */
-@Slf4j
-@Service
+@Component
 @RequiredArgsConstructor
-public class ExileReturnResolutionService {
+public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
 
-    @HandlesEffect(ReturnTargetCardFromExileToHandEffect.class)
-    void resolveReturnTargetCardFromExileToHand(GameData gameData, StackEntry entry, ReturnTargetCardFromExileToHandEffect effect) {
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return ReturnTargetCardFromExileToHandEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (ReturnTargetCardFromExileToHandEffect) effect;
         if (entry.getTargetZone() != Zone.EXILE || entry.getTargetId() == null) {
             String fizzleLog = entry.getDescription() + " fizzles (no valid exile target).";
             gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
@@ -36,7 +35,7 @@ public class ExileReturnResolutionService {
         }
 
         Card targetCard = gameQueryService.findCardInExileById(gameData, entry.getTargetId());
-        String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
+        String filterLabel = CardPredicateUtils.describeFilter(e.filter());
 
         if (targetCard == null) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in exile).";
@@ -44,7 +43,7 @@ public class ExileReturnResolutionService {
             return;
         }
 
-        if (effect.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, effect.filter(), null)) {
+        if (e.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, e.filter(), null)) {
             String fizzleLog = entry.getDescription() + " fizzles (target is not a " + filterLabel + ").";
             gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             return;

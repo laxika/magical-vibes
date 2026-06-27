@@ -13,7 +13,11 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
+import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -35,7 +39,8 @@ import java.util.List;
  * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>,
  * <b>Library Reveal</b>, <b>Library Search</b>, <b>Library Mill</b>, <b>Library Shuffle</b>, <b>Exile</b>,
  * <b>Bounce</b>, <b>Copy</b>, <b>Counter</b>, <b>Prevention</b>, <b>Combat Restriction</b>,
- * <b>Win Condition</b>, and <b>Equip</b> domain handlers.
+ * <b>Win Condition</b>, <b>Equip</b>, <b>Turn</b>, <b>Target Redirection</b>, <b>Exile Return</b>,
+ * and <b>Exile Egg Counter</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -72,13 +77,19 @@ public final class NormalEffectHandlerBeanFactory {
                                                           EffectHandlerRegistry effectHandlerRegistry,
                                                           StateTriggerService stateTriggerService,
                                                           ValidTargetService validTargetService,
-                                                          CloneService cloneService) {
+                                                          CloneService cloneService,
+                                                          CombatService combatService,
+                                                          AuraAttachmentService auraAttachmentService,
+                                                          TurnCleanupService turnCleanupService,
+                                                          TargetLegalityService targetLegalityService) {
         BounceSupport bounceSupport = new BounceSupport(gameQueryService, gameBroadcastService, permanentRemovalService);
         CopySupport copySupport = new CopySupport();
         CounterSupport counterSupport = new CounterSupport(
                 graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService);
         PreventionSupport preventionSupport = new PreventionSupport(gameBroadcastService);
         EquipSupport equipSupport = new EquipSupport(gameQueryService, gameBroadcastService, permanentRemovalService);
+        TurnSupport turnSupport = new TurnSupport(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService);
+        TargetRedirectionSupport targetRedirectionSupport = new TargetRedirectionSupport(gameQueryService, targetLegalityService);
         PlayerInteractionSupport playerInteractionSupport = new PlayerInteractionSupport(
                 drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService,
                 sessionManager, cardViewFactory, permanentRemovalService, battlefieldEntryService,
@@ -618,7 +629,16 @@ public final class NormalEffectHandlerBeanFactory {
                 new TargetPlayerLosesGameEffectHandler(gameOutcomeService, gameBroadcastService, gameQueryService),
                 new EquipEffectHandler(gameQueryService, gameBroadcastService, equipSupport),
                 new AttachSourceEquipmentToTargetCreatureEffectHandler(gameQueryService, gameBroadcastService, equipSupport),
-                new AttachTargetEquipmentToTargetCreatureEffectHandler(gameQueryService, gameBroadcastService, equipSupport)
+                new AttachTargetEquipmentToTargetCreatureEffectHandler(gameQueryService, gameBroadcastService, equipSupport),
+                new ControllerExtraTurnEffectHandler(gameBroadcastService),
+                new ExtraTurnEffectHandler(turnSupport, gameBroadcastService),
+                new EndTurnEffectHandler(turnSupport, gameBroadcastService),
+                new ControlTargetPlayerNextTurnEffectHandler(turnSupport, gameBroadcastService),
+                new AdditionalCombatMainPhaseEffectHandler(gameBroadcastService),
+                new ChangeTargetOfTargetSpellWithSingleTargetEffectHandler(gameQueryService, gameBroadcastService, playerInputService, targetRedirectionSupport),
+                new ChangeTargetOfTargetSpellToSourceEffectHandler(gameQueryService, gameBroadcastService, targetRedirectionSupport),
+                new ReturnTargetCardFromExileToHandEffectHandler(gameQueryService, gameBroadcastService),
+                new RemoveEggCounterFromExileAndReturnEffectHandler(gameQueryService, gameBroadcastService, battlefieldEntryService)
         );
     }
 

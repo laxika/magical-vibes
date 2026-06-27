@@ -10,6 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffe
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EndTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AdditionalCombatMainPhaseEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ControlTargetPlayerNextTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EndTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExtraTurnEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TurnSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -44,7 +49,12 @@ class TurnResolutionServiceTest {
     @Mock private ExileService exileService;
 
     @InjectMocks
-    private TurnResolutionService turnResolutionService;
+    private TurnSupport turnSupport;
+
+    private ExtraTurnEffectHandler extraTurnEffectHandler;
+    private EndTurnEffectHandler endTurnEffectHandler;
+    private ControlTargetPlayerNextTurnEffectHandler controlTargetPlayerNextTurnEffectHandler;
+    private AdditionalCombatMainPhaseEffectHandler additionalCombatMainPhaseEffectHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -69,6 +79,11 @@ class TurnResolutionServiceTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        extraTurnEffectHandler = new ExtraTurnEffectHandler(turnSupport, gameBroadcastService);
+        endTurnEffectHandler = new EndTurnEffectHandler(turnSupport, gameBroadcastService);
+        controlTargetPlayerNextTurnEffectHandler = new ControlTargetPlayerNextTurnEffectHandler(turnSupport, gameBroadcastService);
+        additionalCombatMainPhaseEffectHandler = new AdditionalCombatMainPhaseEffectHandler(gameBroadcastService);
     }
 
     // ===== Helper methods =====
@@ -109,7 +124,7 @@ class TurnResolutionServiceTest {
             ExtraTurnEffect effect = new ExtraTurnEffect(1);
             StackEntry entry = createTargetedEntry(card, player1Id, player1Id, List.of(effect));
 
-            turnResolutionService.resolveExtraTurn(gd, entry, effect);
+            extraTurnEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.extraTurns).containsExactly(player1Id);
         }
@@ -121,7 +136,7 @@ class TurnResolutionServiceTest {
             ExtraTurnEffect effect = new ExtraTurnEffect(2);
             StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
 
-            turnResolutionService.resolveExtraTurn(gd, entry, effect);
+            extraTurnEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.extraTurns).hasSize(2);
             assertThat(gd.extraTurns).containsOnly(player2Id);
@@ -136,7 +151,7 @@ class TurnResolutionServiceTest {
             ExtraTurnEffect effect = new ExtraTurnEffect(1);
             StackEntry entry = createTargetedEntry(card, player1Id, player1Id, List.of(effect));
 
-            turnResolutionService.resolveExtraTurn(gd, entry, effect);
+            extraTurnEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.extraTurns).containsExactly(player1Id, player2Id);
         }
@@ -148,7 +163,7 @@ class TurnResolutionServiceTest {
             ExtraTurnEffect effect = new ExtraTurnEffect(1);
             StackEntry entry = createTargetedEntry(card, player1Id, null, List.of(effect));
 
-            turnResolutionService.resolveExtraTurn(gd, entry, effect);
+            extraTurnEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.extraTurns).isEmpty();
             verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), org.mockito.ArgumentMatchers.anyString());
@@ -162,7 +177,7 @@ class TurnResolutionServiceTest {
             ExtraTurnEffect effect = new ExtraTurnEffect(1);
             StackEntry entry = createTargetedEntry(card, player1Id, unknownPlayerId, List.of(effect));
 
-            turnResolutionService.resolveExtraTurn(gd, entry, effect);
+            extraTurnEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.extraTurns).isEmpty();
         }
@@ -174,7 +189,7 @@ class TurnResolutionServiceTest {
             ExtraTurnEffect effect = new ExtraTurnEffect(1);
             StackEntry entry = createTargetedEntry(card, player1Id, player1Id, List.of(effect));
 
-            turnResolutionService.resolveExtraTurn(gd, entry, effect);
+            extraTurnEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Player1 takes 1 extra turn after this one."));
         }
@@ -186,7 +201,7 @@ class TurnResolutionServiceTest {
             ExtraTurnEffect effect = new ExtraTurnEffect(2);
             StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
 
-            turnResolutionService.resolveExtraTurn(gd, entry, effect);
+            extraTurnEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Player2 takes 2 extra turns after this one."));
         }
@@ -210,7 +225,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             assertThat(gd.pendingMayAbilities).isEmpty();
         }
@@ -231,7 +246,7 @@ class TurnResolutionServiceTest {
             Card timeStop = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(timeStop, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             assertThat(gd.stack).isEmpty();
             verify(exileService).exileCard(gd, player1Id, creatureCard);
@@ -251,7 +266,7 @@ class TurnResolutionServiceTest {
             Card timeStop = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(timeStop, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             assertThat(gd.stack).isEmpty();
             verify(exileService, never()).exileCard(eq(gd), eq(player1Id), eq(triggerSource));
@@ -263,7 +278,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             verify(combatService).clearCombatState(gd);
         }
@@ -277,7 +292,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
             assertThat(gd.pendingTokenExilesAtEndOfCombat).isEmpty();
@@ -291,7 +306,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         }
@@ -302,7 +317,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             verify(turnCleanupService).resetEndOfTurnModifiers(gd);
         }
@@ -313,7 +328,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             verify(auraAttachmentService).returnStolenCreatures(gd, true);
         }
@@ -327,7 +342,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             assertThat(gd.priorityPassedBy).isEmpty();
         }
@@ -340,7 +355,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             assertThat(gd.endTurnRequested).isTrue();
         }
@@ -351,7 +366,7 @@ class TurnResolutionServiceTest {
             Card card = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("The turn ends."));
         }
@@ -379,7 +394,7 @@ class TurnResolutionServiceTest {
             Card timeStop = createCard("Time Stop", CardType.INSTANT);
             StackEntry entry = createUntargetedEntry(timeStop, player1Id, List.of(new EndTurnEffect()));
 
-            turnResolutionService.resolveEndTurn(gd);
+            endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
             assertThat(gd.stack).isEmpty();
             verify(exileService).exileCard(gd, player1Id, instant);
@@ -403,7 +418,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
+            controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
             assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
         }
@@ -415,7 +430,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
+            controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Player1 will control Player2 during their next turn."));
@@ -428,7 +443,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, null, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
+            controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
             assertThat(gd.pendingTurnControl).isEmpty();
             verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), org.mockito.ArgumentMatchers.anyString());
@@ -442,7 +457,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, unknownId, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
+            controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
             assertThat(gd.pendingTurnControl).isEmpty();
         }
@@ -456,7 +471,7 @@ class TurnResolutionServiceTest {
             ControlTargetPlayerNextTurnEffect effect = new ControlTargetPlayerNextTurnEffect();
             StackEntry entry = createTargetedEntry(card, player1Id, player2Id, List.of(effect));
 
-            turnResolutionService.resolveControlTargetPlayerNextTurn(gd, entry);
+            controlTargetPlayerNextTurnEffectHandler.resolve(gd, entry, new ControlTargetPlayerNextTurnEffect());
 
             assertThat(gd.pendingTurnControl).containsEntry(player2Id, player1Id);
         }
@@ -477,7 +492,7 @@ class TurnResolutionServiceTest {
             AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(1);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
 
-            turnResolutionService.resolveAdditionalCombatMainPhase(gd, entry, effect);
+            additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(1);
         }
@@ -489,7 +504,7 @@ class TurnResolutionServiceTest {
             AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(2);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
 
-            turnResolutionService.resolveAdditionalCombatMainPhase(gd, entry, effect);
+            additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(2);
         }
@@ -503,7 +518,7 @@ class TurnResolutionServiceTest {
             AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(1);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
 
-            turnResolutionService.resolveAdditionalCombatMainPhase(gd, entry, effect);
+            additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(2);
         }
@@ -515,7 +530,7 @@ class TurnResolutionServiceTest {
             AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(0);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
 
-            turnResolutionService.resolveAdditionalCombatMainPhase(gd, entry, effect);
+            additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(0);
             verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), org.mockito.ArgumentMatchers.anyString());
@@ -528,7 +543,7 @@ class TurnResolutionServiceTest {
             AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(-1);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
 
-            turnResolutionService.resolveAdditionalCombatMainPhase(gd, entry, effect);
+            additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.additionalCombatMainPhasePairs).isEqualTo(0);
         }
@@ -540,7 +555,7 @@ class TurnResolutionServiceTest {
             AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(1);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
 
-            turnResolutionService.resolveAdditionalCombatMainPhase(gd, entry, effect);
+            additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("After this main phase, there is an additional combat phase followed by an additional main phase."));
@@ -553,7 +568,7 @@ class TurnResolutionServiceTest {
             AdditionalCombatMainPhaseEffect effect = new AdditionalCombatMainPhaseEffect(3);
             StackEntry entry = createUntargetedEntry(card, player1Id, List.of(effect));
 
-            turnResolutionService.resolveAdditionalCombatMainPhase(gd, entry, effect);
+            additionalCombatMainPhaseEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("After this main phase, there are 3 additional combat phases followed by additional main phases."));

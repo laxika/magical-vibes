@@ -80,11 +80,9 @@ import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.target.TargetRedirectionResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.turn.TurnResolutionService;
 import com.github.laxika.magicalvibes.service.turn.AutoPassService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
@@ -304,13 +302,6 @@ public class GameSimulator {
         PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(gameQueryService, gameBroadcastService, playerInputService);
         AnimationSupport animationSupport = new AnimationSupport(
                 gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
-        List<Object> effectServices = List.of(
-                new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
-                new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService)
-        );
-        for (Object service : effectServices) {
-            scanEffectHandlers(service, effectHandlerRegistry);
-        }
         CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
                 lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, exileSupport, permanentControlSupport, permanentCounterSupport,
@@ -318,7 +309,8 @@ public class GameSimulator {
                 gameQueryService, gameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, permanentRemovalService, triggerCollectionService, playerInputService,
                 drawService, noOpSession, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry,
-                stateTriggerService, validTargetService, cloneService);
+                stateTriggerService, validTargetService, cloneService,
+                combatService, auraAttachmentService, turnCleanupService, targetLegalityService);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
 
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
