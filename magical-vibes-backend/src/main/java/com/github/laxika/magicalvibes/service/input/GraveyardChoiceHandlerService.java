@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.RequiredArgsConstructor;
@@ -54,7 +54,7 @@ public class GraveyardChoiceHandlerService {
     private final PlayerInputService playerInputService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
-    private final GraveyardReturnResolutionService graveyardReturnResolutionService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
 
@@ -266,7 +266,7 @@ public class GraveyardChoiceHandlerService {
 
         // Check if there are more "each player returns" graveyard choices queued
         if (!gameData.pendingGraveyardReturnQueue.isEmpty()) {
-            graveyardReturnResolutionService.beginNextGraveyardReturnFromQueue(gameData);
+            graveyardReturnSupport.beginNextGraveyardReturnFromQueue(gameData);
             return;
         }
 
@@ -317,7 +317,7 @@ public class GraveyardChoiceHandlerService {
         if (gameData.pendingPileSeparation && !gameData.pendingPileSeparationCards.isEmpty()) {
             gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearMultiGraveyardChoice();
-            graveyardReturnResolutionService.completeCardPileSeparationStep1(gameData, cardIds);
+            graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);
             return;
         }
 

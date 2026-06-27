@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -28,7 +29,7 @@ import java.util.List;
  *
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
- * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, and <b>Card-specific</b> domain handlers.
+ * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, and <b>Graveyard Return</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -40,6 +41,7 @@ public final class NormalEffectHandlerBeanFactory {
                                                           AnimationSupport animationSupport,
                                                           DamageSupport damageSupport,
                                                           DestructionSupport destructionSupport,
+                                                          GraveyardReturnSupport graveyardReturnSupport,
                                                           PermanentControlSupport permanentControlSupport,
                                                           PermanentCounterSupport permanentCounterSupport,
                                                           BattlefieldEntryService battlefieldEntryService,
@@ -49,6 +51,7 @@ public final class NormalEffectHandlerBeanFactory {
                                                           GameBroadcastService gameBroadcastService,
                                                           GameOutcomeService gameOutcomeService,
                                                           GraveyardService graveyardService,
+                                                          ExileService exileService,
                                                           PermanentRemovalService permanentRemovalService,
                                                           TriggerCollectionService triggerCollectionService,
                                                           PlayerInputService playerInputService,
@@ -423,7 +426,38 @@ public final class NormalEffectHandlerBeanFactory {
                 new ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffectHandler(gameQueryService, permanentRemovalService, gameBroadcastService, battlefieldEntryService, graveyardService, legendRuleService),
                 new KarnRestartGameEffectHandler(gameBroadcastService),
                 new KarnScionRevealTwoOpponentChoosesEffectHandler(gameBroadcastService),
-                new KarnScionReturnSilverCounterCardEffectHandler(gameBroadcastService)
+                new KarnScionReturnSilverCounterCardEffectHandler(gameBroadcastService),
+                new ReturnCardFromGraveyardEffectHandler(playerInputService, graveyardReturnSupport),
+                new PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandler(graveyardReturnSupport),
+                new ReturnTargetCardsFromGraveyardToHandEffectHandler(graveyardReturnSupport),
+                new DestroyUpToTargetsThenReturnFromGraveyardEffectHandler(battlefieldEntryService, permanentRemovalService, gameQueryService, gameBroadcastService, graveyardReturnSupport),
+                new UndyingReturnEffectHandler(battlefieldEntryService, permanentRemovalService, gameQueryService, gameBroadcastService, graveyardReturnSupport),
+                new PutCardFromOpponentGraveyardOntoBattlefieldEffectHandler(battlefieldEntryService, gameBroadcastService, graveyardReturnSupport),
+                new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandler(battlefieldEntryService, gameBroadcastService, graveyardReturnSupport),
+                new ExileCardsFromGraveyardEffectHandler(gameQueryService, gameBroadcastService, lifeSupport, graveyardReturnSupport),
+                new ExileTargetCardFromGraveyardAndImprintOnSourceEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService, exileService),
+                new ExileTargetCardFromGraveyardEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService, exileService),
+                new ExileTargetCardFromGraveyardAndCreateTokenCopyEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService, exileService, graveyardReturnSupport),
+                new ExileGraveyardCardWithConditionalBonusEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService, lifeSupport, exileService),
+                new ExileTargetCardsFromOpponentGraveyardEffectHandler(gameQueryService, gameBroadcastService, graveyardReturnSupport),
+                new ExileCreaturesFromGraveyardAndCreateTokensEffectHandler(battlefieldEntryService, gameQueryService, gameBroadcastService, graveyardReturnSupport),
+                new ExileTargetPlayerGraveyardEffectHandler(gameBroadcastService),
+                new ExileAllOpponentsGraveyardsEffectHandler(gameBroadcastService),
+                new ExileNonBasicLandGraveyardAndSameNameFromLibraryEffectHandler(gameBroadcastService),
+                new PutImprintedCreatureOntoBattlefieldEffectHandler(battlefieldEntryService, gameBroadcastService, graveyardReturnSupport),
+                new PutImprintedCardIntoOwnersHandEffectHandler(gameBroadcastService),
+                new ReturnDyingCreatureToBattlefieldAndAttachSourceEffectHandler(battlefieldEntryService, permanentRemovalService, gameQueryService, gameBroadcastService, graveyardReturnSupport),
+                new CastTargetInstantOrSorceryFromGraveyardEffectHandler(gameQueryService, gameBroadcastService),
+                new ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler(battlefieldEntryService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService),
+                new ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService),
+                new ReturnSourceCardFromGraveyardToOwnerHandEffectHandler(permanentRemovalService, gameQueryService, gameBroadcastService),
+                new ExileCardsFromOwnGraveyardEffectHandler(gameBroadcastService, exileService, graveyardReturnSupport),
+                new TargetPlayerExilesCardFromGraveyardEffectHandler(gameBroadcastService, playerInputService, lifeSupport, exileService),
+                new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler(gameQueryService, gameBroadcastService, graveyardReturnSupport),
+                new ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler(gameQueryService, gameBroadcastService, graveyardReturnSupport),
+                new RegisterDelayedReturnCardFromGraveyardToHandEffectHandler(gameBroadcastService),
+                new RegisterDelayedReturnSourceTransformedEffectHandler(gameQueryService, gameBroadcastService),
+                new ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory)
         );
     }
 

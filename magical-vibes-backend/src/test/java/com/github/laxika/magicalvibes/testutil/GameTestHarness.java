@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import com.github.laxika.magicalvibes.service.exile.ExileEggCounterResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileReturnResolutionService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.library.LibraryRevealResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchResolutionService;
@@ -272,7 +272,7 @@ public class GameTestHarness {
         PermanentControlSupport permanentControlSupport = new PermanentControlSupport(staticBattlefieldEntryService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService);
         miscTriggerCollectorService.setPermanentControlSupport(permanentControlSupport);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(staticDrawService, staticGameBroadcastService, staticSessionManager, cardViewFactory, staticGameQueryService, staticPermanentRemovalService, staticPlayerInputService);
-        GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(staticBattlefieldEntryService, staticPermanentRemovalService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeSupport, exileService, cardViewFactory);
+        GraveyardReturnSupport graveyardReturnSupport = new GraveyardReturnSupport(staticBattlefieldEntryService, staticPermanentRemovalService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeSupport, exileService, cardViewFactory);
         PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService);
         AnimationSupport animationSupport = new AnimationSupport(
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
@@ -286,7 +286,6 @@ public class GameTestHarness {
                 exileResolutionService,
                 new CopyResolutionService(staticGameBroadcastService, validTargetService, staticGameQueryService, cloneService),
                 new TargetRedirectionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticTargetLegalityService),
-                graveyardReturnResolutionService,
                 new ExileReturnResolutionService(staticGameQueryService, staticGameBroadcastService),
                 new ExileEggCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticBattlefieldEntryService),
                 new BounceResolutionService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, staticPlayerInputService, staticPermanentRemovalService, effectHandlerRegistry),
@@ -300,10 +299,10 @@ public class GameTestHarness {
         }
         CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, permanentControlSupport, permanentCounterSupport,
+                staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, permanentControlSupport, permanentCounterSupport,
                 staticBattlefieldEntryService, staticLegendRuleService, creatureControlService,
                 staticGameQueryService, staticGameBroadcastService, gameOutcomeService,
-                graveyardService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,
+                graveyardService, exileService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,
                 staticDrawService, staticSessionManager, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
         EffectResolutionService effectResolutionService = new EffectResolutionService(staticGameQueryService, effectHandlerRegistry, staticGameBroadcastService, staticPermanentRemovalService);
@@ -342,7 +341,7 @@ public class GameTestHarness {
         PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
                 permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
         GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
-                staticGameQueryService, staticBattlefieldEntryService, staticLegendRuleService, staticGameBroadcastService, turnProgressionService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService, staticLifeSupport, exileService, graveyardReturnResolutionService, inputCompletionService, effectResolutionService);
+                staticGameQueryService, staticBattlefieldEntryService, staticLegendRuleService, staticGameBroadcastService, turnProgressionService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService, staticLifeSupport, exileService, graveyardReturnSupport, inputCompletionService, effectResolutionService);
         MayCastHandlerService mayCastHandlerService = new MayCastHandlerService(
                 inputCompletionService, staticGameQueryService, graveyardService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService, staticTriggerCollectionService, staticBattlefieldEntryService, exileService);
         MayCopyHandlerService mayCopyHandlerService = new MayCopyHandlerService(
@@ -356,7 +355,7 @@ public class GameTestHarness {
         mayMiscHandlerService.setTriggerCollectionService(staticTriggerCollectionService);
         MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
                 inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
-                staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, turnProgressionService, effectResolutionService, destructionSupport, graveyardReturnResolutionService);
+                staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, turnProgressionService, effectResolutionService, destructionSupport, graveyardReturnSupport);
         XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
                 staticGameBroadcastService, staticStateBasedActionService,
                 staticPlayerInputService, turnProgressionService, effectResolutionService);

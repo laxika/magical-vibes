@@ -32,7 +32,14 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCardsFromGraveyardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPlayerGraveyardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetCardsFromGraveyardToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -83,7 +90,14 @@ class GraveyardReturnResolutionServiceTest {
     private ExileService exileService;
 
     @InjectMocks
-    private GraveyardReturnResolutionService service;
+    private GraveyardReturnSupport support;
+
+    private ReturnTargetCardsFromGraveyardToHandEffectHandler returnTargetCardsToHandHandler;
+    private PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandler putCardsOnTopOfLibraryHandler;
+    private PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandler putCreatureFromOpponentGraveyardHandler;
+    private ExileTargetPlayerGraveyardEffectHandler exileTargetPlayerGraveyardHandler;
+    private ExileCardsFromGraveyardEffectHandler exileCardsFromGraveyardHandler;
+    private ReturnCardFromGraveyardEffectHandler returnCardFromGraveyardHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -108,6 +122,15 @@ class GraveyardReturnResolutionServiceTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        returnTargetCardsToHandHandler = new ReturnTargetCardsFromGraveyardToHandEffectHandler(support);
+        putCardsOnTopOfLibraryHandler = new PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandler(support);
+        putCreatureFromOpponentGraveyardHandler = new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandler(
+                battlefieldEntryService, gameBroadcastService, support);
+        exileTargetPlayerGraveyardHandler = new ExileTargetPlayerGraveyardEffectHandler(gameBroadcastService);
+        exileCardsFromGraveyardHandler = new ExileCardsFromGraveyardEffectHandler(
+                gameQueryService, gameBroadcastService, lifeSupport, support);
+        returnCardFromGraveyardHandler = new ReturnCardFromGraveyardEffectHandler(playerInputService, support);
     }
 
     // =========================================================================
@@ -234,7 +257,7 @@ class GraveyardReturnResolutionServiceTest {
             when(gameQueryService.findCardInGraveyardById(gd, creature1.getId())).thenReturn(creature1);
             when(gameQueryService.findCardInGraveyardById(gd, creature2.getId())).thenReturn(creature2);
 
-            service.resolveReturnTargetCardsFromGraveyardToHand(gd, entry, effect);
+            returnTargetCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
             assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
@@ -253,7 +276,7 @@ class GraveyardReturnResolutionServiceTest {
                     player1Id, "Morbid Plunder", List.of(effect),
                     List.of());
 
-            service.resolveReturnTargetCardsFromGraveyardToHand(gd, entry, effect);
+            returnTargetCardsToHandHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
         }
@@ -275,7 +298,7 @@ class GraveyardReturnResolutionServiceTest {
             when(gameQueryService.findCardInGraveyardById(gd, creature1.getId())).thenReturn(creature1);
             when(gameQueryService.findCardInGraveyardById(gd, creature2.getId())).thenReturn(null);
 
-            service.resolveReturnTargetCardsFromGraveyardToHand(gd, entry, effect);
+            returnTargetCardsToHandHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
                     .containsExactly("Grizzly Bears");
@@ -307,7 +330,7 @@ class GraveyardReturnResolutionServiceTest {
             when(gameQueryService.findCardInGraveyardById(gd, artifact1.getId())).thenReturn(artifact1);
             when(gameQueryService.findCardInGraveyardById(gd, artifact2.getId())).thenReturn(artifact2);
 
-            service.resolvePutTargetCardsFromGraveyardOnTopOfLibrary(gd, entry, effect);
+            putCardsOnTopOfLibraryHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();
             assertThat(gd.playerDecks.get(player1Id)).extracting(Card::getName)
@@ -330,7 +353,7 @@ class GraveyardReturnResolutionServiceTest {
 
             when(gameQueryService.findCardInGraveyardById(gd, artifact.getId())).thenReturn(null);
 
-            service.resolvePutTargetCardsFromGraveyardOnTopOfLibrary(gd, entry, effect);
+            putCardsOnTopOfLibraryHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
             verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
@@ -361,7 +384,7 @@ class GraveyardReturnResolutionServiceTest {
             when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
             lenient().when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
 
-            service.resolvePutCreatureFromOpponentGraveyardWithExile(gd, entry);
+            putCreatureFromOpponentGraveyardHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removeCardFromGraveyardById(gd, target.getId());
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id),
@@ -386,7 +409,7 @@ class GraveyardReturnResolutionServiceTest {
 
             when(gameQueryService.findCardInGraveyardById(gd, targetId)).thenReturn(null);
 
-            service.resolvePutCreatureFromOpponentGraveyardWithExile(gd, entry);
+            putCreatureFromOpponentGraveyardHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg -> msg.contains("fizzles")));
             verify(battlefieldEntryService, never()).putPermanentOntoBattlefield(
@@ -407,7 +430,7 @@ class GraveyardReturnResolutionServiceTest {
             when(gameQueryService.findCardInGraveyardById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findGraveyardOwnerById(gd, target.getId())).thenReturn(player1Id);
 
-            service.resolvePutCreatureFromOpponentGraveyardWithExile(gd, entry);
+            putCreatureFromOpponentGraveyardHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     argThat(msg -> msg.contains("fizzles") && msg.contains("not in opponent's graveyard")));
@@ -436,7 +459,7 @@ class GraveyardReturnResolutionServiceTest {
                     player1Id, "Nihil Spellbomb", List.of(effect), 0,
                     player2Id, null);
 
-            service.resolveExileTargetPlayerGraveyard(gd, entry);
+            exileTargetPlayerGraveyardHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerGraveyards.get(player2Id)).isEmpty();
             assertThat(gd.getPlayerExiledCards(player2Id))
@@ -454,7 +477,7 @@ class GraveyardReturnResolutionServiceTest {
                     player1Id, "Nihil Spellbomb", List.of(effect), 0,
                     player2Id, null);
 
-            service.resolveExileTargetPlayerGraveyard(gd, entry);
+            exileTargetPlayerGraveyardHandler.resolve(gd, entry, effect);
 
             assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -486,7 +509,7 @@ class GraveyardReturnResolutionServiceTest {
             when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
             when(gameQueryService.findCardInGraveyardById(gd, artifact.getId())).thenReturn(artifact);
 
-            service.resolveExileCardsFromGraveyard(gd, entry, effect);
+            exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
             verify(exileService).exileCard(gd, player1Id, creature);
             verify(exileService).exileCard(gd, player2Id, artifact);
@@ -508,7 +531,7 @@ class GraveyardReturnResolutionServiceTest {
 
             when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
 
-            service.resolveExileCardsFromGraveyard(gd, entry, effect);
+            exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
             verify(exileService).exileCard(gd, player1Id, creature);
             verify(lifeSupport).applyGainLife(gd, player1Id, 3);
@@ -526,7 +549,7 @@ class GraveyardReturnResolutionServiceTest {
 
             when(gameQueryService.findCardInGraveyardById(gd, goneCardId)).thenReturn(null);
 
-            service.resolveExileCardsFromGraveyard(gd, entry, effect);
+            exileCardsFromGraveyardHandler.resolve(gd, entry, effect);
 
             verify(exileService, never()).exileCard(any(), any(), any());
             verify(gameBroadcastService, never()).logAndBroadcast(any(), any());
@@ -556,7 +579,7 @@ class GraveyardReturnResolutionServiceTest {
 
             when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
 
-            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+            returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removeCardFromGraveyardById(gd, creature.getId());
             assertThat(gd.playerHands.get(player1Id)).extracting(Card::getName)
@@ -582,7 +605,7 @@ class GraveyardReturnResolutionServiceTest {
 
             when(gameQueryService.findCardInGraveyardById(gd, creature.getId())).thenReturn(creature);
 
-            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+            returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removeCardFromGraveyardById(gd, creature.getId());
             verify(lifeSupport).applyGainLife(gd, player1Id, 2);
@@ -603,7 +626,7 @@ class GraveyardReturnResolutionServiceTest {
 
             when(gameQueryService.findCardInGraveyardById(gd, targetId)).thenReturn(null);
 
-            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+            returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -642,7 +665,7 @@ class GraveyardReturnResolutionServiceTest {
             when(gameQueryService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(true);
             when(gameQueryService.matchesCardPredicate(eq(artifact), eq(filter), any())).thenReturn(true);
 
-            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+            returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
             verify(playerInputService).beginGraveyardChoice(eq(gd), eq(player1Id), any(), any());
         }
@@ -663,7 +686,7 @@ class GraveyardReturnResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
                     player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect, shuffleEffect)));
 
-            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+            returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no ") && msg.contains("in any graveyard")));
@@ -688,7 +711,7 @@ class GraveyardReturnResolutionServiceTest {
 
             when(gameQueryService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(false);
 
-            service.resolveReturnCardFromGraveyard(gd, entry, effect);
+            returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
             verify(playerInputService, never()).beginGraveyardChoice(any(), any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->

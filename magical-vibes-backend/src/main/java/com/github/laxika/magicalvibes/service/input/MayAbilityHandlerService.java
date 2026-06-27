@@ -60,7 +60,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -89,7 +89,7 @@ public class MayAbilityHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final DestructionSupport destructionSupport;
-    private final GraveyardReturnResolutionService graveyardReturnResolutionService;
+    private final GraveyardReturnSupport graveyardReturnSupport;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
@@ -107,7 +107,7 @@ public class MayAbilityHandlerService {
         // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley)
         if (gameData.pendingPileSeparation) {
             if (!gameData.pendingPileSeparationCards.isEmpty()) {
-                graveyardReturnResolutionService.completeCardPileSeparationStep2(gameData, accepted);
+                graveyardReturnSupport.completeCardPileSeparationStep2(gameData, accepted);
             } else {
                 destructionSupport.completePileSeparationStep2(gameData, accepted);
             }
