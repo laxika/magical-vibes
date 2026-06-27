@@ -97,7 +97,7 @@ import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
-import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
@@ -327,18 +327,18 @@ public class GameSimulator {
                 new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
-                new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, permanentRemovalService, legendRuleService, exileService),
                 new WinConditionResolutionService(gameOutcomeService, gameBroadcastService, gameQueryService)
         );
         for (Object service : effectServices) {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
+        CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
                 lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport, permanentControlSupport, permanentCounterSupport,
                 battlefieldEntryService, legendRuleService, creatureControlService,
                 gameQueryService, gameBroadcastService, gameOutcomeService,
                 graveyardService, permanentRemovalService, triggerCollectionService, playerInputService,
-                drawService, noOpSession, cardViewFactory, effectHandlerRegistry);
+                drawService, noOpSession, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
 
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);

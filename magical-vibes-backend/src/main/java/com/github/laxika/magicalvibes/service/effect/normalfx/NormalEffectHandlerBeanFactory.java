@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -27,7 +28,7 @@ import java.util.List;
  *
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
- * <b>Tap/Untap</b>, <b>Keyword Grant</b>, and <b>Animation</b> domain handlers.
+ * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, and <b>Card-specific</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -54,6 +55,8 @@ public final class NormalEffectHandlerBeanFactory {
                                                           DrawService drawService,
                                                           SessionManager sessionManager,
                                                           CardViewFactory cardViewFactory,
+                                                          CardSpecificSupport cardSpecificSupport,
+                                                          WarpWorldService warpWorldService,
                                                           EffectHandlerRegistry effectHandlerRegistry) {
         PlayerInteractionSupport playerInteractionSupport = new PlayerInteractionSupport(
                 drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService,
@@ -406,7 +409,21 @@ public final class NormalEffectHandlerBeanFactory {
                 new TransformAllEffectHandler(gameQueryService, gameBroadcastService),
                 new TapAndTransformSelfEffectHandler(gameQueryService, gameBroadcastService),
                 new GrantBasicLandTypeToTargetEffectHandler(gameQueryService, playerInputService),
-                new AnimateTargetLandWhileSourceOnBattlefieldEffectHandler(gameQueryService, gameBroadcastService)
+                new AnimateTargetLandWhileSourceOnBattlefieldEffectHandler(gameQueryService, gameBroadcastService),
+                new WarpWorldEffectHandler(warpWorldService, battlefieldEntryService, gameQueryService),
+                new GenesisWaveEffectHandler(graveyardService, gameBroadcastService, sessionManager, cardViewFactory),
+                new KothEmblemEffectHandler(gameBroadcastService),
+                new VenserEmblemEffectHandler(gameBroadcastService),
+                new JayaBallardEmblemEffectHandler(gameBroadcastService),
+                new TeferiHeroEmblemEffectHandler(gameBroadcastService),
+                new SorinLordOfInnistradEmblemEffectHandler(gameBroadcastService),
+                new SacrificeTargetThenRevealUntilTypeToBattlefieldEffectHandler(gameQueryService, permanentRemovalService, gameBroadcastService, battlefieldEntryService, legendRuleService, cardSpecificSupport),
+                new DestroyTargetThenRevealUntilTypeToBattlefieldEffectHandler(gameQueryService, permanentRemovalService, gameBroadcastService, battlefieldEntryService, legendRuleService, cardSpecificSupport),
+                new ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffectHandler(permanentRemovalService, gameBroadcastService, battlefieldEntryService, legendRuleService, cardSpecificSupport),
+                new ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffectHandler(gameQueryService, permanentRemovalService, gameBroadcastService, battlefieldEntryService, graveyardService, legendRuleService),
+                new KarnRestartGameEffectHandler(gameBroadcastService),
+                new KarnScionRevealTwoOpponentChoosesEffectHandler(gameBroadcastService),
+                new KarnScionReturnSilverCounterCardEffectHandler(gameBroadcastService)
         );
     }
 

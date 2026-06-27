@@ -95,7 +95,7 @@ import com.github.laxika.magicalvibes.service.input.PermanentChoiceTriggerHandle
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
@@ -293,18 +293,18 @@ public class GameTestHarness {
                 new CombatRestrictionResolutionService(staticGameQueryService, staticGameBroadcastService),
                 new TurnResolutionService(combatService, staticGameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService),
-                new CardSpecificResolutionService(graveyardService, warpWorldService, staticBattlefieldEntryService, staticGameQueryService, staticGameBroadcastService, staticSessionManager, cardViewFactory, staticPermanentRemovalService, staticLegendRuleService, exileService),
                 new WinConditionResolutionService(gameOutcomeService, staticGameBroadcastService, staticGameQueryService)
         );
         for (Object service : effectServices) {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
+        CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
                 staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, permanentControlSupport, permanentCounterSupport,
                 staticBattlefieldEntryService, staticLegendRuleService, creatureControlService,
                 staticGameQueryService, staticGameBroadcastService, gameOutcomeService,
                 graveyardService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,
-                staticDrawService, staticSessionManager, cardViewFactory, effectHandlerRegistry);
+                staticDrawService, staticSessionManager, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
         EffectResolutionService effectResolutionService = new EffectResolutionService(staticGameQueryService, effectHandlerRegistry, staticGameBroadcastService, staticPermanentRemovalService);
         staticStackResolutionService = new StackResolutionService(
