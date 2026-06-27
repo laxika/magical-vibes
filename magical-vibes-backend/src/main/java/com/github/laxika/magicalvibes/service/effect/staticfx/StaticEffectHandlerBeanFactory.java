@@ -45,7 +45,13 @@ public final class StaticEffectHandlerBeanFactory {
                 new EnchantedPermanentBecomesTypeEffectHandler(),
                 new EnchantedPermanentBecomesChosenTypeEffectHandler(),
                 new BoostCreaturesOfChosenColorEffectHandler(),
-                new BoostCreaturesOfChosenSubtypeEffectHandler(support, gameQueryService)
+                new BoostCreaturesOfChosenSubtypeEffectHandler(support, gameQueryService),
+                new BoostCreaturePerCardsInAllGraveyardsEffectHandler(support),
+                new BoostCreaturePerCardsInControllerGraveyardEffectHandler(support, gameQueryService),
+                new BoostCreaturePerMatchingLandNameEffectHandler(support),
+                new BoostCreaturePerControlledSubtypeEffectHandler(support),
+                new BoostCreaturePerControlledCardTypeEffectHandler(support),
+                new BoostBySharedCreatureTypeEffectHandler(support)
         );
     }
 

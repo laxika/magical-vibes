@@ -129,12 +129,12 @@ have two methods → two beans.
 - [x] `GrantEquipByManaValueEffect`
 
 ### Batch D — boost creature per X
-- [ ] `BoostCreaturePerCardsInAllGraveyardsEffect`
-- [ ] `BoostCreaturePerCardsInControllerGraveyardEffect`
-- [ ] `BoostCreaturePerMatchingLandNameEffect`
-- [ ] `BoostCreaturePerControlledSubtypeEffect`
-- [ ] `BoostCreaturePerControlledCardTypeEffect`
-- [ ] `BoostBySharedCreatureTypeEffect`
+- [x] `BoostCreaturePerCardsInAllGraveyardsEffect`
+- [x] `BoostCreaturePerCardsInControllerGraveyardEffect`
+- [x] `BoostCreaturePerMatchingLandNameEffect`
+- [x] `BoostCreaturePerControlledSubtypeEffect`
+- [x] `BoostCreaturePerControlledCardTypeEffect`
+- [x] `BoostBySharedCreatureTypeEffect`
 
 ### Batch E — boost self per X
 - [ ] `BoostSelfPerEnchantmentOnBattlefieldEffect`

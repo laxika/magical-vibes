@@ -35,11 +35,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockedByMinCreaturesConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGraveyardsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInControllerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerMatchingLandNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerAttachmentEffect;
@@ -61,7 +56,6 @@ import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentCondi
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -99,143 +93,6 @@ public class StaticEffectResolutionService {
 
     private final GameQueryService gameQueryService;
     private final StaticEffectSupport support;
-
-    @HandlesStaticEffect(BoostCreaturePerCardsInAllGraveyardsEffect.class)
-    private void resolveBoostCreaturePerCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostCreaturePerCardsInAllGraveyardsEffect) effect;
-        if (!matchesCreatureScope(context, boost.scope(), null)) {
-            return;
-        }
-
-        int count = countCardsInAllGraveyards(context.gameData(), boost.filter());
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
-    }
-
-    @HandlesStaticEffect(BoostCreaturePerCardsInControllerGraveyardEffect.class)
-    private void resolveBoostCreaturePerCardsInControllerGraveyard(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostCreaturePerCardsInControllerGraveyardEffect) effect;
-        if (!matchesCreatureScope(context, boost.scope(), null)) {
-            return;
-        }
-
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return;
-        List<Card> graveyard = context.gameData().playerGraveyards.get(controllerId);
-        int count = 0;
-        if (graveyard != null) {
-            for (Card card : graveyard) {
-                if (card.isToken()) continue;
-                if (gameQueryService.matchesCardPredicate(card, boost.filter(), null)) {
-                    count++;
-                }
-            }
-        }
-        accumulator.addPower(count * boost.powerPerCard());
-        accumulator.addToughness(count * boost.toughnessPerCard());
-    }
-
-    @HandlesStaticEffect(BoostCreaturePerMatchingLandNameEffect.class)
-    private void resolveBoostCreaturePerMatchingLandName(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostCreaturePerMatchingLandNameEffect) effect;
-        if (!matchesCreatureScope(context, boost.scope(), null)) {
-            return;
-        }
-
-        Card imprintedCard = context.source().getCard().getImprintedCard();
-        if (imprintedCard == null) {
-            return;
-        }
-
-        String imprintedName = imprintedCard.getName();
-        final int[] count = {0};
-        context.gameData().forEachPermanent((playerId, permanent) -> {
-            if (permanent.getCard().hasType(CardType.LAND)) {
-                if (imprintedName.equals(permanent.getCard().getName())) {
-                    count[0]++;
-                }
-            }
-        });
-
-        accumulator.addPower(count[0] * boost.powerPerMatch());
-        accumulator.addToughness(count[0] * boost.toughnessPerMatch());
-    }
-
-    @HandlesStaticEffect(BoostCreaturePerControlledSubtypeEffect.class)
-    private void resolveBoostCreaturePerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostCreaturePerControlledSubtypeEffect) effect;
-        if (!matchesCreatureScope(context, boost.scope(), null)) {
-            return;
-        }
-
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) {
-            return;
-        }
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getSubtypes().contains(boost.subtype())) {
-                count++;
-            }
-        }
-
-        accumulator.addPower(count * boost.powerPerSubtype());
-        accumulator.addToughness(count * boost.toughnessPerSubtype());
-    }
-
-    @HandlesStaticEffect(BoostCreaturePerControlledCardTypeEffect.class)
-    private void resolveBoostCreaturePerControlledCardType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostCreaturePerControlledCardTypeEffect) effect;
-        if (!matchesCreatureScope(context, boost.scope(), null)) {
-            return;
-        }
-
-        int count = countControlledPermanents(context, p -> p.getCard().hasType(boost.cardType()));
-
-        accumulator.addPower(count * boost.powerPerMatch());
-        accumulator.addToughness(count * boost.toughnessPerMatch());
-    }
-
-    @HandlesStaticEffect(BoostBySharedCreatureTypeEffect.class)
-    private void resolveBoostBySharedCreatureType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        Permanent target = context.target();
-        GameData gameData = context.gameData();
-
-        List<CardSubtype> targetTypes = new ArrayList<>(target.getCard().getSubtypes());
-        targetTypes.addAll(target.getTransientSubtypes());
-        boolean targetIsChangeling = target.hasKeyword(Keyword.CHANGELING);
-
-        if (targetTypes.isEmpty() && !targetIsChangeling) return;
-
-        boolean hasAnimateArtifacts = hasAnimateArtifactEffect(gameData);
-        final int[] count = {0};
-
-        gameData.forEachPermanent((playerId, other) -> {
-            if (other == target) return;
-            if (!isEffectivelyCreature(other, hasAnimateArtifacts)) return;
-
-            List<CardSubtype> otherTypes = new ArrayList<>(other.getCard().getSubtypes());
-            otherTypes.addAll(other.getTransientSubtypes());
-            boolean otherIsChangeling = other.hasKeyword(Keyword.CHANGELING);
-
-            if (otherTypes.isEmpty() && !otherIsChangeling) return;
-
-            boolean sharesType = (targetIsChangeling && (otherIsChangeling || !otherTypes.isEmpty()))
-                    || (otherIsChangeling && !targetTypes.isEmpty())
-                    || targetTypes.stream().anyMatch(otherTypes::contains);
-
-            if (sharesType) count[0]++;
-        });
-
-        accumulator.addPower(count[0]);
-        accumulator.addToughness(count[0]);
-    }
 
     @HandlesStaticEffect(value = PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToCreatureCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
