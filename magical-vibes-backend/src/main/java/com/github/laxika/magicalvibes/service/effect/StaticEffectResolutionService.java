@@ -101,6 +101,7 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInA
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -118,6 +119,7 @@ public class StaticEffectResolutionService {
 
     private final GameQueryService gameQueryService;
     private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
+    private final StaticEffectSupport support;
 
     @HandlesStaticEffect(AnimateNoncreatureArtifactsEffect.class)
     private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
@@ -525,132 +527,6 @@ public class StaticEffectResolutionService {
         accumulator.addToughness(count[0]);
     }
 
-    @HandlesStaticEffect(value = MetalcraftConditionalEffect.class, selfOnly = true)
-    private void resolveMetalcraftConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var metalcraft = (MetalcraftConditionalEffect) effect;
-        int artifactCount = countControlledPermanents(context, gameQueryService::isArtifact);
-        if (artifactCount >= 3) {
-            CardEffect wrapped = metalcraft.wrapped();
-            if (wrapped instanceof GrantKeywordEffect grant) {
-                // For SELF scope, always apply; for broader scopes, only apply if self matches filter
-                if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                    accumulator.addKeywords(grant.keywords());
-                }
-            } else if (wrapped instanceof StaticBoostEffect boost) {
-                accumulator.addPower(boost.powerBoost());
-                accumulator.addToughness(boost.toughnessBoost());
-                accumulator.addKeywords(boost.grantedKeywords());
-            } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
-                accumulator.addProtectionColors(protection.colors());
-            } else if (wrapped instanceof AnimateSelfWithStatsEffect animate) {
-                accumulator.setSelfBecomeCreature(true);
-                accumulator.addPower(animate.power());
-                accumulator.addToughness(animate.toughness());
-                for (CardSubtype subtype : animate.grantedSubtypes()) {
-                    accumulator.addGrantedSubtype(subtype);
-                }
-                accumulator.addKeywords(animate.grantedKeywords());
-            }
-        }
-    }
-
-    @HandlesStaticEffect(value = MetalcraftConditionalEffect.class)
-    private void resolveMetalcraftConditionalOthers(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var metalcraft = (MetalcraftConditionalEffect) effect;
-        CardEffect wrapped = metalcraft.wrapped();
-        // Only handle broader-scoped effects in the non-self handler
-        if (wrapped instanceof GrantKeywordEffect grant && grant.scope() != GrantScope.SELF) {
-            int artifactCount = countControlledPermanents(context, gameQueryService::isArtifact);
-            if (artifactCount >= 3) {
-                boolean scopeMatch = switch (grant.scope()) {
-                    case OWN_PERMANENTS -> context.targetOnSameBattlefield()
-                            && matchesStaticFilter(context.target(), grant.filter());
-                    default -> matchesCreatureScope(context, grant.scope(), grant.filter());
-                };
-                if (scopeMatch) {
-                    accumulator.addKeywords(grant.keywords());
-                }
-            }
-        } else if (wrapped instanceof StaticBoostEffect boost && boost.scope() != GrantScope.SELF) {
-            int artifactCount = countControlledPermanents(context, gameQueryService::isArtifact);
-            if (artifactCount >= 3) {
-                boolean scopeMatch = switch (boost.scope()) {
-                    case OWN_CREATURES, ALL_OWN_CREATURES -> context.targetOnSameBattlefield();
-                    case OPPONENT_CREATURES -> !context.targetOnSameBattlefield();
-                    case ALL_CREATURES -> true;
-                    default -> false;
-                };
-                if (scopeMatch && matchesStaticFilter(context.target(), boost.filter())) {
-                    accumulator.addPower(boost.powerBoost());
-                    accumulator.addToughness(boost.toughnessBoost());
-                    accumulator.addKeywords(boost.grantedKeywords());
-                }
-            }
-        } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {
-            int artifactCount = countControlledPermanents(context, gameQueryService::isArtifact);
-            if (artifactCount >= 3) {
-                boolean scopeMatch = switch (grant.scope()) {
-                    case OWN_PERMANENTS -> context.targetOnSameBattlefield()
-                            && matchesStaticFilter(context.target(), grant.filter());
-                    default -> matchesCreatureScope(context, grant.scope(), grant.filter());
-                };
-                if (scopeMatch) {
-                    accumulator.addActivatedAbility(grant.ability().withGrantSource(context.source().getId()));
-                }
-            }
-        }
-    }
-
-    /**
-     * Returns true if the target matches the given creature-centric scope.
-     * Handles ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE, OWN_TAPPED_CREATURES, OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES.
-     */
-    private boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.ENCHANTED_PERMANENT || scope == GrantScope.EQUIPPED_CREATURE) {
-            return context.source().isAttached()
-                    && context.source().getAttachedTo().equals(context.target().getId())
-                    && matchesStaticFilter(context.target(), filter);
-        }
-        if (scope == GrantScope.ENCHANTED_PLAYER_CREATURES) {
-            if (!context.source().isAttached()) return false;
-            UUID attachedPlayerId = context.source().getAttachedTo();
-            List<Permanent> attachedPlayerBf = context.gameData().playerBattlefields.get(attachedPlayerId);
-            if (attachedPlayerBf == null || !attachedPlayerBf.contains(context.target())) return false;
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context.target(), filter);
-        }
-        if (scope == GrantScope.OWN_TAPPED_CREATURES) {
-            return context.targetOnSameBattlefield() && context.target().isTapped();
-        }
-        if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
-                || scope == GrantScope.OPPONENT_CREATURES || scope == GrantScope.ALL_CREATURES) {
-            boolean ownCheck = scope == GrantScope.ALL_CREATURES
-                    || (scope == GrantScope.OWN_CREATURES && context.targetOnSameBattlefield())
-                    || (scope == GrantScope.ALL_OWN_CREATURES && context.targetOnSameBattlefield())
-                    || (scope == GrantScope.OPPONENT_CREATURES && !context.targetOnSameBattlefield());
-            if (!ownCheck) return false;
-            boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
-            return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context.target(), filter);
-        }
-        return false;
-    }
-
-    private boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {
-        return isEffectivelyCreature(null, permanent, hasAnimateArtifacts);
-    }
-
-    private boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
-        if (permanent.getCard().hasType(CardType.CREATURE)) return true;
-        if (permanent.isAnimatedUntilEndOfTurn()) return true;
-        if (permanent.isAnimatedUntilNextTurn()) return true;
-        if (permanent.getCounterCount(CounterType.AWAKENING) > 0) return true;
-        if (hasAnimateArtifacts && gameQueryService.isArtifact(permanent)) return true;
-        if (gameData != null) return gameQueryService.hasSelfBecomeCreatureEffect(gameData, permanent);
-        return false;
-    }
-
     @HandlesStaticEffect(value = PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class, selfOnly = true)
     private void resolvePowerToughnessEqualToCreatureCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         int count = countCardsInAllGraveyards(context.gameData(), new CardTypePredicate(CardType.CREATURE));
@@ -850,21 +726,7 @@ public class StaticEffectResolutionService {
     }
 
     private void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
-        if (wrapped instanceof StaticBoostEffect boost) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-            accumulator.addKeywords(boost.grantedKeywords());
-        } else if (wrapped instanceof GrantKeywordEffect grant) {
-            if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                accumulator.addKeywords(grant.keywords());
-            }
-        } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
-            accumulator.addProtectionColors(protection.colors());
-        } else if (wrapped instanceof GrantEffectEffect grant) {
-            if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
-                accumulator.addGrantedEffect(grant.effect());
-            }
-        }
+        support.applySelfOnlyConditionalStaticEffect(context, wrapped, accumulator);
     }
 
     @HandlesStaticEffect(value = BoostSelfPerEquipmentAttachedEffect.class, selfOnly = true)
@@ -1021,18 +883,7 @@ public class StaticEffectResolutionService {
     }
 
     private boolean isEquipped(StaticEffectContext context) {
-        for (UUID playerId : context.gameData().orderedPlayerIds) {
-            List<Permanent> bf = context.gameData().playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent permanent : bf) {
-                if (permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                        && permanent.isAttached()
-                        && permanent.getAttachedTo().equals(context.target().getId())) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return support.isEquipped(context);
     }
 
     @HandlesStaticEffect(value = OpponentPoisonedConditionalEffect.class, selfOnly = true)
@@ -1163,10 +1014,7 @@ public class StaticEffectResolutionService {
     }
 
     private boolean isControllerLifeAtOrBelow(StaticEffectContext context, int threshold) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return false;
-        int lifeTotal = context.gameData().playerLifeTotals.getOrDefault(controllerId, 20);
-        return lifeTotal <= threshold;
+        return support.isControllerLifeAtOrBelow(context, threshold);
     }
 
     @HandlesStaticEffect(value = ControllerGraveyardCardThresholdConditionalEffect.class, selfOnly = true)
@@ -1277,164 +1125,39 @@ public class StaticEffectResolutionService {
     }
 
     private boolean isTopCardOfLibraryColor(StaticEffectContext context, CardColor color) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return false;
-        List<Card> deck = context.gameData().playerDecks.get(controllerId);
-        if (deck == null || deck.isEmpty()) return false;
-        return deck.getFirst().getColors().contains(color);
+        return support.isTopCardOfLibraryColor(context, color);
     }
 
     private int countControlledPermanents(StaticEffectContext context, Predicate<Permanent> filter) {
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return 0;
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) return 0;
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (filter.test(permanent)) count++;
-        }
-        return count;
+        return support.countControlledPermanents(context, filter);
     }
 
     private UUID findControllerId(GameData gameData, Permanent permanent) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield != null && battlefield.contains(permanent)) {
-                return playerId;
-            }
-        }
-        return null;
+        return support.findControllerId(gameData, permanent);
     }
 
-    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
-            CardSubtype.FOREST,
-            CardSubtype.MOUNTAIN,
-            CardSubtype.ISLAND,
-            CardSubtype.PLAINS,
-            CardSubtype.SWAMP,
-            CardSubtype.AURA,
-            CardSubtype.EQUIPMENT,
-            CardSubtype.AJANI,
-            CardSubtype.KOTH
-    );
+    private boolean matchesCreatureScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
+        return support.matchesCreatureScope(context, scope, filter);
+    }
+
+    private boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {
+        return support.isEffectivelyCreature(permanent, hasAnimateArtifacts);
+    }
+
+    private boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts) {
+        return support.isEffectivelyCreature(gameData, permanent, hasAnimateArtifacts);
+    }
 
     private boolean matchesStaticFilter(Permanent target, PermanentPredicate filter) {
-        if (filter == null) return true;
-        if (filter instanceof PermanentColorInPredicate p) {
-            if (target.isColorOverridden()) {
-                return target.getTransientColors().stream().anyMatch(p.colors()::contains);
-            }
-            CardColor effectiveColor = target.getEffectiveColor();
-            return (effectiveColor != null && p.colors().contains(effectiveColor))
-                    || target.getTransientColors().stream().anyMatch(p.colors()::contains);
-        }
-        if (filter instanceof PermanentHasSubtypePredicate p)
-            return target.getCard().getSubtypes().contains(p.subtype())
-                    || target.getTransientSubtypes().contains(p.subtype())
-                    || target.getGrantedSubtypes().contains(p.subtype())
-                    || (isCreatureSubtype(p.subtype()) && target.hasKeyword(Keyword.CHANGELING));
-        if (filter instanceof PermanentHasAnySubtypePredicate p)
-            return target.getCard().getSubtypes().stream().anyMatch(p.subtypes()::contains)
-                    || target.getTransientSubtypes().stream().anyMatch(p.subtypes()::contains)
-                    || target.getGrantedSubtypes().stream().anyMatch(p.subtypes()::contains)
-                    || (p.subtypes().stream().anyMatch(StaticEffectResolutionService::isCreatureSubtype)
-                    && target.hasKeyword(Keyword.CHANGELING));
-        if (filter instanceof PermanentHasKeywordPredicate p)
-            return target.hasKeyword(p.keyword());
-        if (filter instanceof PermanentIsCreaturePredicate)
-            return target.getCard().hasType(CardType.CREATURE)
-                    || target.isAnimatedUntilEndOfTurn()
-                    || target.isAnimatedUntilNextTurn()
-                    || target.getCounterCount(CounterType.AWAKENING) > 0;
-        if (filter instanceof PermanentIsArtifactPredicate)
-            return gameQueryService.isArtifact(target);
-        if (filter instanceof PermanentIsLandPredicate)
-            return target.getCard().hasType(CardType.LAND);
-        if (filter instanceof PermanentIsPlaneswalkerPredicate)
-            return target.getCard().hasType(CardType.PLANESWALKER);
-        if (filter instanceof PermanentIsTokenPredicate)
-            return target.getCard().isToken();
-        if (filter instanceof PermanentIsHistoricPredicate)
-            return gameQueryService.isArtifact(target)
-                    || target.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
-                    || target.getCard().getSubtypes().contains(CardSubtype.SAGA)
-                    || target.getTransientSubtypes().contains(CardSubtype.SAGA);
-        if (filter instanceof PermanentNotPredicate p)
-            return !matchesStaticFilter(target, p.predicate());
-        if (filter instanceof PermanentAllOfPredicate p)
-            return p.predicates().stream().allMatch(inner -> matchesStaticFilter(target, inner));
-        if (filter instanceof PermanentAnyOfPredicate p)
-            return p.predicates().stream().anyMatch(inner -> matchesStaticFilter(target, inner));
-        if (filter instanceof PermanentHasSupertypePredicate p)
-            return target.getCard().getSupertypes().contains(p.supertype());
-        if (filter instanceof PermanentIsAttackingPredicate)
-            return target.isAttacking();
-        if (filter instanceof PermanentTruePredicate) return true;
-        if (filter instanceof PermanentPowerAtMostPredicate p)
-            return target.getEffectivePower() <= p.maxPower();
-        if (filter instanceof PermanentToughnessAtMostPredicate p)
-            return target.getEffectiveToughness() <= p.maxToughness();
-        if (filter instanceof PermanentPowerAtLeastPredicate p)
-            return target.getEffectivePower() >= p.minPower();
-        if (filter instanceof PermanentHasCountersPredicate p)
-            return switch (p.counterType()) {
-                case PLUS_ONE_PLUS_ONE -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;
-                case MINUS_ONE_MINUS_ONE -> target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0;
-                case CHARGE -> target.getCounterCount(CounterType.CHARGE) > 0;
-                case LOYALTY -> target.getCounterCount(CounterType.LOYALTY) > 0;
-                case HATCHLING -> target.getCounterCount(CounterType.HATCHLING) > 0;
-                case SLIME -> target.getCounterCount(CounterType.SLIME) > 0;
-                case STUDY -> target.getCounterCount(CounterType.STUDY) > 0;
-                case WISH -> target.getCounterCount(CounterType.WISH) > 0;
-                case LORE -> target.getCounterCount(CounterType.LORE) > 0;
-                case AIM -> target.getCounterCount(CounterType.AIM) > 0;
-                case ANY -> target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
-                        || target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                        || target.getCounterCount(CounterType.CHARGE) > 0
-                        || target.getCounterCount(CounterType.LOYALTY) > 0
-                        || target.getCounterCount(CounterType.HATCHLING) > 0
-                        || target.getCounterCount(CounterType.SLIME) > 0
-                        || target.getCounterCount(CounterType.STUDY) > 0
-                        || target.getCounterCount(CounterType.WISH) > 0
-                        || target.getCounterCount(CounterType.LORE) > 0
-                        || target.getCounterCount(CounterType.AIM) > 0;
-                default -> false;
-            };
-        throw new IllegalArgumentException("Unsupported static filter predicate: " + filter.getClass().getSimpleName());
-    }
-
-    private static boolean isCreatureSubtype(CardSubtype subtype) {
-        return !NON_CREATURE_SUBTYPES.contains(subtype);
+        return support.matchesStaticFilter(target, filter);
     }
 
     private int countCardsInAllGraveyards(GameData gameData, CardPredicate filter) {
-        int count = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card card : graveyard) {
-                if (card.isToken()) continue;
-                if (gameQueryService.matchesCardPredicate(card, filter, null)) {
-                    count++;
-                }
-            }
-        }
-        return count;
+        return support.countCardsInAllGraveyards(gameData, filter);
     }
 
     private boolean hasAnimateArtifactEffect(GameData gameData) {
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-            if (bf == null) continue;
-            for (Permanent source : bf) {
-                for (CardEffect e : source.getCard().getEffects(EffectSlot.STATIC)) {
-                    if (e instanceof AnimateNoncreatureArtifactsEffect) return true;
-                }
-            }
-        }
-        return false;
+        return support.hasAnimateArtifactEffect(gameData);
     }
 }
 

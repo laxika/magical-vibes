@@ -110,6 +110,8 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry
 import com.github.laxika.magicalvibes.service.effect.StaticEffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
@@ -186,8 +188,12 @@ public class GameTestHarness {
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
         StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         staticGameQueryService = new GameQueryService(staticEffectHandlerRegistry);
-        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(staticGameQueryService, staticEffectHandlerRegistry);
+        StaticEffectSupport staticEffectSupport = new StaticEffectSupport(staticGameQueryService);
+        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(staticGameQueryService, staticEffectHandlerRegistry, staticEffectSupport);
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
+        StaticEffectHandlerBeanFactory.registerAll(
+                StaticEffectHandlerBeanFactory.createAll(staticEffectSupport, staticGameQueryService, staticEffectHandlerRegistry),
+                staticEffectHandlerRegistry);
         staticPlayerInputService = new PlayerInputService(staticSessionManager, cardViewFactory);
         ValidTargetService validTargetService = new ValidTargetService(staticGameQueryService);
         staticGameBroadcastService = new GameBroadcastService(

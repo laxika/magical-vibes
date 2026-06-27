@@ -12,8 +12,11 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBean;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +24,7 @@ import org.springframework.context.annotation.Configuration;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
+import java.util.List;
 
 @Slf4j
 @Configuration
@@ -30,6 +34,14 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
     private final TargetValidatorRegistry targetValidatorRegistry;
+
+    /**
+     * Migrated per-effect handlers, collected by Spring. Field-injected (not constructor-injected)
+     * to avoid a bootstrap cycle: these beans depend on {@code GameQueryService}, which depends on
+     * the {@code staticEffectHandlerRegistry} {@code @Bean} defined in this configuration.
+     */
+    @Autowired(required = false)
+    private List<StaticEffectHandlerBean> staticEffectHandlerBeans = List.of();
 
     public EffectRegistryConfig(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -84,8 +96,12 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
             }
         }
 
-        log.info("Effect auto-registration complete: {} runtime handlers, {} static handlers, {} target validators",
-                effectCount, staticCount, validatorCount);
+        // Register migrated per-effect bean handlers. These coexist with the legacy @HandlesStaticEffect
+        // scan above: each handles a disjoint effect type, so registration order is irrelevant.
+        StaticEffectHandlerBeanFactory.registerAll(staticEffectHandlerBeans, staticEffectHandlerRegistry);
+
+        log.info("Effect auto-registration complete: {} runtime handlers, {} static handlers, {} bean handlers, {} target validators",
+                effectCount, staticCount, staticEffectHandlerBeans.size(), validatorCount);
     }
 
     @SuppressWarnings("unchecked")

@@ -113,6 +113,8 @@ import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionS
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
@@ -222,8 +224,12 @@ public class GameSimulator {
         StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
 
         StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
-        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(sharedQueryService, staticEffectHandlerRegistry);
+        StaticEffectSupport staticEffectSupport = new StaticEffectSupport(sharedQueryService);
+        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(sharedQueryService, staticEffectHandlerRegistry, staticEffectSupport);
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
+        StaticEffectHandlerBeanFactory.registerAll(
+                StaticEffectHandlerBeanFactory.createAll(staticEffectSupport, sharedQueryService, staticEffectHandlerRegistry),
+                staticEffectHandlerRegistry);
 
         this.gameQueryService = sharedQueryService;
         this.manaManager = new AiManaManager(sharedQueryService);
