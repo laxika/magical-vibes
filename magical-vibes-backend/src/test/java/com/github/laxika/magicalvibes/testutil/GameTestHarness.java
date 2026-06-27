@@ -48,8 +48,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleResolutionService;
-import com.github.laxika.magicalvibes.service.library.MillResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.DeckService;
@@ -278,8 +276,6 @@ public class GameTestHarness {
         AnimationSupport animationSupport = new AnimationSupport(
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
         List<Object> effectServices = List.of(
-                new MillResolutionService(graveyardService, staticGameBroadcastService, staticGameQueryService, permanentControlSupport),
-                new LibraryShuffleResolutionService(staticGameBroadcastService, staticGameQueryService, staticPermanentRemovalService),
                 new PreventionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new CounterResolutionService(graveyardService, exileService, staticGameBroadcastService, staticGameQueryService, stateTriggerService, permanentControlSupport),
                 exileResolutionService,

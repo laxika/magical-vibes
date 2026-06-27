@@ -17,6 +17,14 @@ import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentMillsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTopCardsRepeatOnDuplicateEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MillBottomOfTargetLibraryConditionalTokenEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MillByHandSizeEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MillControllerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MillHalfLibraryEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MillTargetPlayerByChargeCountersEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MillTargetPlayerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +32,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -54,8 +61,14 @@ class MillResolutionServiceTest {
     @Mock
     private PermanentControlSupport permanentControlSupport;
 
-    @InjectMocks
-    private MillResolutionService service;
+    private MillByHandSizeEffectHandler millByHandSizeEffectHandler;
+    private MillTargetPlayerByChargeCountersEffectHandler millTargetPlayerByChargeCountersEffectHandler;
+    private MillHalfLibraryEffectHandler millHalfLibraryEffectHandler;
+    private MillControllerEffectHandler millControllerEffectHandler;
+    private MillTargetPlayerEffectHandler millTargetPlayerEffectHandler;
+    private EachOpponentMillsEffectHandler eachOpponentMillsEffectHandler;
+    private ExileTopCardsRepeatOnDuplicateEffectHandler exileTopCardsRepeatOnDuplicateEffectHandler;
+    private MillBottomOfTargetLibraryConditionalTokenEffectHandler millBottomOfTargetLibraryConditionalTokenEffectHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -63,6 +76,19 @@ class MillResolutionServiceTest {
 
     @BeforeEach
     void setUp() {
+        millByHandSizeEffectHandler = new MillByHandSizeEffectHandler(graveyardService, gameBroadcastService);
+        millTargetPlayerByChargeCountersEffectHandler =
+                new MillTargetPlayerByChargeCountersEffectHandler(graveyardService, gameBroadcastService);
+        millHalfLibraryEffectHandler = new MillHalfLibraryEffectHandler(graveyardService, gameBroadcastService);
+        millControllerEffectHandler = new MillControllerEffectHandler(graveyardService);
+        millTargetPlayerEffectHandler = new MillTargetPlayerEffectHandler(graveyardService);
+        eachOpponentMillsEffectHandler = new EachOpponentMillsEffectHandler(graveyardService);
+        exileTopCardsRepeatOnDuplicateEffectHandler =
+                new ExileTopCardsRepeatOnDuplicateEffectHandler(gameBroadcastService);
+        millBottomOfTargetLibraryConditionalTokenEffectHandler =
+                new MillBottomOfTargetLibraryConditionalTokenEffectHandler(
+                        graveyardService, gameBroadcastService, permanentControlSupport);
+
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -111,7 +137,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dreamborn Muse"),
                     player1Id, "Dreamborn Muse", List.of(effect), 0, player1Id, null);
 
-            service.resolveMillByHandSize(gd, entry);
+            millByHandSizeEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player1Id, 3);
         }
@@ -123,7 +149,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dreamborn Muse"),
                     player1Id, "Dreamborn Muse", List.of(effect), 0, player1Id, null);
 
-            service.resolveMillByHandSize(gd, entry);
+            millByHandSizeEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("mills nothing")));
@@ -142,7 +168,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dreamborn Muse"),
                     player1Id, "Dreamborn Muse", List.of(effect), 0, player1Id, null);
 
-            service.resolveMillByHandSize(gd, entry);
+            millByHandSizeEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player1Id, 5);
         }
@@ -163,7 +189,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Grindclock"),
                     player1Id, "Grindclock", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillTargetPlayerByChargeCounters(gd, entry);
+            millTargetPlayerByChargeCountersEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("mills 0 cards")));
@@ -177,7 +203,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, createCard("Grindclock"),
                     player1Id, "Grindclock", List.of(effect), 10, player2Id, null);
 
-            service.resolveMillTargetPlayerByChargeCounters(gd, entry);
+            millTargetPlayerByChargeCountersEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 10);
         }
@@ -202,7 +228,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Traumatize"),
                     player1Id, "Traumatize", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillHalfLibrary(gd, entry, effect);
+            millHalfLibraryEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 5);
         }
@@ -214,7 +240,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Traumatize"),
                     player1Id, "Traumatize", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillHalfLibrary(gd, entry, effect);
+            millHalfLibraryEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("mills nothing")));
@@ -237,7 +263,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Armored Skaab"),
                     player1Id, "Armored Skaab", List.of(effect));
 
-            service.resolveMillController(gd, entry, effect);
+            millControllerEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player1Id, 4);
         }
@@ -258,7 +284,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, createCard("Thought Scour"),
                     player1Id, "Thought Scour", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillTargetPlayer(gd, entry, effect);
+            millTargetPlayerEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 3);
         }
@@ -279,7 +305,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Undead Alchemist"),
                     player1Id, "Undead Alchemist", List.of(effect));
 
-            service.resolveEachOpponentMills(gd, entry, effect);
+            eachOpponentMillsEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).resolveMillPlayer(gd, player2Id, 2);
             verify(graveyardService, never()).resolveMillPlayer(eq(gd), eq(player1Id), any(int.class));
@@ -304,7 +330,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Muse"),
                     player1Id, "Muse", List.of(effect), 0, player2Id, null);
 
-            service.resolveExileTopCardsRepeatOnDuplicate(gd, entry, effect);
+            exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.getPlayerExiledCards(player2Id)).hasSize(2);
             assertThat(gd.playerDecks.get(player2Id)).hasSize(1);
@@ -321,7 +347,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Muse"),
                     player1Id, "Muse", List.of(effect), 0, player2Id, null);
 
-            service.resolveExileTopCardsRepeatOnDuplicate(gd, entry, effect);
+            exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);
 
             // First round exiles "Same", "Same" (duplicate → repeat)
             // Second round exiles "Unique1", "Unique2" (no duplicate → stop)
@@ -338,7 +364,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Muse"),
                     player1Id, "Muse", List.of(effect), 0, player2Id, null);
 
-            service.resolveExileTopCardsRepeatOnDuplicate(gd, entry, effect);
+            exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -368,7 +394,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source,
                     player1Id, "Cellar Door", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillBottomOfTargetLibraryConditionalToken(gd, entry, effect);
+            millBottomOfTargetLibraryConditionalTokenEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
@@ -389,7 +415,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source,
                     player1Id, "Cellar Door", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillBottomOfTargetLibraryConditionalToken(gd, entry, effect);
+            millBottomOfTargetLibraryConditionalTokenEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).addCardToGraveyard(gd, player2Id, creature);
             verify(permanentControlSupport).applyCreateToken(
@@ -409,7 +435,7 @@ class MillResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source,
                     player1Id, "Cellar Door", List.of(effect), 0, player2Id, null);
 
-            service.resolveMillBottomOfTargetLibraryConditionalToken(gd, entry, effect);
+            millBottomOfTargetLibraryConditionalTokenEffectHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).addCardToGraveyard(gd, player2Id, land);
             verifyNoInteractions(permanentControlSupport);

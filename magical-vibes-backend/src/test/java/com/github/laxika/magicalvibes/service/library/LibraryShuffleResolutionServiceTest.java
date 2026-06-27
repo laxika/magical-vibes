@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ShuffleGraveyardIntoLibraryEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ShuffleIntoLibraryEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -40,8 +41,8 @@ class LibraryShuffleResolutionServiceTest {
     @Mock
     private PermanentRemovalService permanentRemovalService;
 
-    @InjectMocks
-    private LibraryShuffleResolutionService service;
+    private ShuffleIntoLibraryEffectHandler shuffleIntoLibraryEffectHandler;
+    private ShuffleGraveyardIntoLibraryEffectHandler shuffleGraveyardIntoLibraryEffectHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -49,6 +50,10 @@ class LibraryShuffleResolutionServiceTest {
 
     @BeforeEach
     void setUp() {
+        shuffleIntoLibraryEffectHandler = new ShuffleIntoLibraryEffectHandler(gameBroadcastService);
+        shuffleGraveyardIntoLibraryEffectHandler =
+                new ShuffleGraveyardIntoLibraryEffectHandler(gameBroadcastService);
+
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -95,7 +100,7 @@ class LibraryShuffleResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, zenith,
                     player1Id, "Red Sun's Zenith", List.of(effect));
 
-            service.resolveShuffleIntoLibrary(gd, entry);
+            shuffleIntoLibraryEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerGraveyards.get(player1Id))
                     .noneMatch(c -> c.getName().equals("Red Sun's Zenith"));
@@ -111,7 +116,7 @@ class LibraryShuffleResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, zenith,
                     player1Id, "Red Sun's Zenith", List.of(effect));
 
-            service.resolveShuffleIntoLibrary(gd, entry);
+            shuffleIntoLibraryEffectHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("shuffled into its owner's library")));
@@ -138,7 +143,7 @@ class LibraryShuffleResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Reminisce"),
                     player1Id, "Reminisce", List.of(effect), 0, player1Id, null);
 
-            service.resolveShuffleGraveyardIntoLibrary(gd, entry);
+            shuffleGraveyardIntoLibraryEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore + 2);
             assertThat(gd.playerGraveyards.get(player1Id))
@@ -156,7 +161,7 @@ class LibraryShuffleResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Reminisce"),
                     player1Id, "Reminisce", List.of(effect), 0, player1Id, null);
 
-            service.resolveShuffleGraveyardIntoLibrary(gd, entry);
+            shuffleGraveyardIntoLibraryEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -176,7 +181,7 @@ class LibraryShuffleResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("The Mending of Dominaria"),
                     player1Id, "The Mending of Dominaria's chapter III ability", List.of(effect));
 
-            service.resolveShuffleGraveyardIntoLibrary(gd, entry);
+            shuffleGraveyardIntoLibraryEffectHandler.resolve(gd, entry, effect);
 
             assertThat(gd.playerDecks.get(player1Id)).hasSize(deckSizeBefore + 2);
             assertThat(gd.playerGraveyards.get(player1Id)).isEmpty();

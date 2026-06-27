@@ -74,8 +74,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleResolutionService;
-import com.github.laxika.magicalvibes.service.library.MillResolutionService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -314,8 +312,6 @@ public class GameSimulator {
         AnimationSupport animationSupport = new AnimationSupport(
                 gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
         List<Object> effectServices = List.of(
-                new MillResolutionService(graveyardService, gameBroadcastService, gameQueryService, permanentControlSupport),
-                new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService, permanentControlSupport),
                 exileResolutionService,

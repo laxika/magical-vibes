@@ -29,7 +29,8 @@ import java.util.List;
  *
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
- * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>, <b>Library Reveal</b>, and <b>Library Search</b> domain handlers.
+ * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>,
+ * <b>Library Reveal</b>, <b>Library Search</b>, <b>Library Mill</b>, and <b>Library Shuffle</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -510,7 +511,24 @@ public final class NormalEffectHandlerBeanFactory {
                 new SearchLibraryForCreatureWithExactMVToBattlefieldEffectHandler(librarySearchSupport),
                 new PayManaAndSearchLibraryForCardNamedToBattlefieldEffectHandler(gameBroadcastService, librarySearchSupport),
                 new HeadGamesEffectHandler(gameBroadcastService, librarySearchSupport),
-                new SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, librarySearchSupport)
+                new SacrificeCreatureSearchLibraryForCreatureToHandEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, librarySearchSupport),
+                new MillByHandSizeEffectHandler(graveyardService, gameBroadcastService),
+                new MillControllerEffectHandler(graveyardService),
+                new MillTargetPlayerEffectHandler(graveyardService),
+                new MillTargetPlayerXEffectHandler(graveyardService),
+                new EachOpponentMillsEffectHandler(graveyardService),
+                new ExileTopCardsRepeatOnDuplicateEffectHandler(gameBroadcastService),
+                new MillTargetPlayerByChargeCountersEffectHandler(graveyardService, gameBroadcastService),
+                new MillHalfLibraryEffectHandler(graveyardService, gameBroadcastService),
+                new MillBottomOfTargetLibraryConditionalTokenEffectHandler(graveyardService, gameBroadcastService, permanentControlSupport),
+                new MillTargetPlayerAndBoostSelfByManaValueEffectHandler(graveyardService, gameBroadcastService, gameQueryService),
+                new RevealUntilTypeMillAndBoostAttackerEffectHandler(graveyardService, gameBroadcastService, gameQueryService),
+                new ShuffleIntoLibraryEffectHandler(gameBroadcastService),
+                new ShuffleLibraryEffectHandler(gameBroadcastService),
+                new ShuffleGraveyardIntoLibraryEffectHandler(gameBroadcastService),
+                new ShuffleSelfAndGraveyardIntoLibraryEffectHandler(gameBroadcastService, gameQueryService, permanentRemovalService),
+                new EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler(gameBroadcastService),
+                new ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler(gameBroadcastService, gameQueryService)
         );
     }
 
