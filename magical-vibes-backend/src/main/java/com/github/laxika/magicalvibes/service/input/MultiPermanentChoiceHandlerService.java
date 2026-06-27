@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSu
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +61,7 @@ public class MultiPermanentChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final DestructionSupport destructionSupport;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final AnimationResolutionService animationResolutionService;
+    private final AnimationSupport animationSupport;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_PERMANENT_CHOICE)) {
@@ -176,7 +176,7 @@ public class MultiPermanentChoiceHandlerService {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to attach.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else {
-            animationResolutionService.completeTransformAndAttach(
+            animationSupport.completeTransformAndAttach(
                     gameData, playerId, sourcePermId, permanentIds.getFirst());
         }
 

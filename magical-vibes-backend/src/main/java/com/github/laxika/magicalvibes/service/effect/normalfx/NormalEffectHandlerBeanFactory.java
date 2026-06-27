@@ -27,7 +27,7 @@ import java.util.List;
  *
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
- * <b>Tap/Untap</b>, and <b>Keyword Grant</b> domain handlers.
+ * <b>Tap/Untap</b>, <b>Keyword Grant</b>, and <b>Animation</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -36,6 +36,7 @@ public final class NormalEffectHandlerBeanFactory {
 
     public static List<NormalEffectHandlerBean> createAll(LifeSupport lifeSupport,
                                                           TapUntapSupport tapUntapSupport,
+                                                          AnimationSupport animationSupport,
                                                           DamageSupport damageSupport,
                                                           DestructionSupport destructionSupport,
                                                           PermanentControlSupport permanentControlSupport,
@@ -391,7 +392,21 @@ public final class NormalEffectHandlerBeanFactory {
                 new GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
                 new GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
                 new GrantEffectToTargetUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService),
-                new GrantActivatedAbilityEffectHandler(gameQueryService, gameBroadcastService)
+                new GrantActivatedAbilityEffectHandler(gameQueryService, gameBroadcastService),
+                new AnimateLandEffectHandler(animationSupport),
+                new AnimateControlledPermanentsEffectHandler(gameQueryService, gameBroadcastService),
+                new AnimateSelfAsCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new AnimateSelfEffectHandler(gameQueryService, gameBroadcastService),
+                new AnimateSelfByChargeCountersEffectHandler(gameQueryService, gameBroadcastService),
+                new AnimateSelfWithStatsEffectHandler(gameQueryService, gameBroadcastService),
+                new AddCardTypeToTargetPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new AnimateTargetPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new TransformSelfEffectHandler(gameQueryService, animationSupport),
+                new TransformSelfAndAttachToCreatureDamagedPlayerControlsEffectHandler(gameQueryService, gameBroadcastService, playerInputService),
+                new TransformAllEffectHandler(gameQueryService, gameBroadcastService),
+                new TapAndTransformSelfEffectHandler(gameQueryService, gameBroadcastService),
+                new GrantBasicLandTypeToTargetEffectHandler(gameQueryService, playerInputService),
+                new AnimateTargetLandWhileSourceOnBattlefieldEffectHandler(gameQueryService, gameBroadcastService)
         );
     }
 
