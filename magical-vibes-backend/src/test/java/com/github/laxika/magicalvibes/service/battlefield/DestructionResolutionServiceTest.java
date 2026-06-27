@@ -27,7 +27,18 @@ import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyAllPermanentsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyEquipmentAttachedToTargetCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetAndControllerLosesLifePerCreatureDeathsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetLandAndDamageControllerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetPermanentAndBoostSelfByManaValueEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetPermanentAndGainLifeEqualToManaValueEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestroyTargetPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentSacrificesCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureOrDamageEffectHandler;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -66,7 +77,18 @@ class DestructionResolutionServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
 
-    @InjectMocks private DestructionResolutionService service;
+    @InjectMocks private DestructionSupport destructionSupport;
+
+    private DestroyAllPermanentsEffectHandler destroyAllPermanentsHandler;
+    private DestroyTargetPermanentEffectHandler destroyTargetPermanentHandler;
+    private DestroyEquipmentAttachedToTargetCreatureEffectHandler destroyEquipmentHandler;
+    private DestroyTargetLandAndDamageControllerEffectHandler destroyLandAndDamageHandler;
+    private SacrificeCreatureEffectHandler sacrificeCreatureHandler;
+    private SacrificeOtherCreatureOrDamageEffectHandler sacrificeOtherOrDamageHandler;
+    private DestroyTargetPermanentAndBoostSelfByManaValueEffectHandler destroyAndBoostHandler;
+    private DestroyTargetPermanentAndGainLifeEqualToManaValueEffectHandler destroyAndGainLifeHandler;
+    private DestroyTargetAndControllerLosesLifePerCreatureDeathsEffectHandler destroyAndLifePerDeathsHandler;
+    private EachOpponentSacrificesCreatureEffectHandler eachOpponentSacrificesCreatureHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -85,6 +107,22 @@ class DestructionResolutionServiceTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport, gameQueryService);
+        destroyTargetPermanentHandler = new DestroyTargetPermanentEffectHandler(destructionSupport, gameQueryService);
+        destroyEquipmentHandler = new DestroyEquipmentAttachedToTargetCreatureEffectHandler(destructionSupport);
+        destroyLandAndDamageHandler = new DestroyTargetLandAndDamageControllerEffectHandler(
+                destructionSupport, gameBroadcastService, gameOutcomeService, gameQueryService);
+        sacrificeCreatureHandler = new SacrificeCreatureEffectHandler(destructionSupport);
+        sacrificeOtherOrDamageHandler = new SacrificeOtherCreatureOrDamageEffectHandler(
+                destructionSupport, gameOutcomeService, gameQueryService, playerInputService);
+        destroyAndBoostHandler = new DestroyTargetPermanentAndBoostSelfByManaValueEffectHandler(
+                destructionSupport, gameBroadcastService, gameQueryService);
+        destroyAndGainLifeHandler = new DestroyTargetPermanentAndGainLifeEqualToManaValueEffectHandler(
+                destructionSupport, gameQueryService, lifeSupport);
+        destroyAndLifePerDeathsHandler = new DestroyTargetAndControllerLosesLifePerCreatureDeathsEffectHandler(
+                destructionSupport, gameBroadcastService, gameOutcomeService, gameQueryService);
+        eachOpponentSacrificesCreatureHandler = new EachOpponentSacrificesCreatureEffectHandler(destructionSupport);
     }
 
     // ===== Helper methods =====
@@ -169,7 +207,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
             when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
-            service.resolveDestroyAllPermanents(gd, entry, effect);
+            destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
             verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
@@ -193,7 +231,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
             when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
-            service.resolveDestroyAllPermanents(gd, entry, effect);
+            destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, spellbook);
@@ -215,7 +253,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
 
-            service.resolveDestroyAllPermanents(gd, entry, effect);
+            destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, golem);
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
@@ -234,7 +272,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
             when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
 
-            service.resolveDestroyAllPermanents(gd, entry, effect);
+            destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Indestructible Golem is indestructible.");
         }
@@ -255,7 +293,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.hasKeyword(gd, elves, Keyword.INDESTRUCTIBLE)).thenReturn(false);
             when(graveyardService.tryRegenerate(gd, elves)).thenReturn(true);
 
-            service.resolveDestroyAllPermanents(gd, entry, effect);
+            destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(graveyardService).tryRegenerate(gd, elves);
             verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, elves);
@@ -274,7 +312,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
             when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
 
-            service.resolveDestroyAllPermanents(gd, entry, effect);
+            destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(graveyardService, never()).tryRegenerate(any(), any());
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
@@ -298,7 +336,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
             when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
-            service.resolveDestroyAllPermanents(gd, entry, effect);
+            destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(gd, myBears);
             verify(permanentRemovalService).removePermanentToGraveyard(gd, angel);
@@ -320,7 +358,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
             when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
-            service.resolveDestroyAllPermanents(gd, entry, effect);
+            destroyAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
             verify(gameBroadcastService).logAndBroadcast(gd, "Llanowar Elves is destroyed.");
@@ -348,7 +386,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
             when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
 
-            service.resolveDestroyTargetPermanent(gd, entry, effect);
+            destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
             verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
@@ -368,7 +406,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentController(gd, spellbook.getId())).thenReturn(player2Id);
             when(permanentRemovalService.tryDestroyPermanent(gd, spellbook, false)).thenReturn(true);
 
-            service.resolveDestroyTargetPermanent(gd, entry, effect);
+            destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, spellbook, false);
             verify(gameBroadcastService).logAndBroadcast(gd, "Spellbook is destroyed.");
@@ -385,7 +423,7 @@ class DestructionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
 
-            service.resolveDestroyTargetPermanent(gd, entry, effect);
+            destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
         }
@@ -403,7 +441,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentController(gd, golem.getId())).thenReturn(player2Id);
             when(permanentRemovalService.tryDestroyPermanent(gd, golem, false)).thenReturn(false);
 
-            service.resolveDestroyTargetPermanent(gd, entry, effect);
+            destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, golem, false);
             verify(gameBroadcastService, never()).logAndBroadcast(eq(gd), eq("Indestructible Golem is destroyed."));
@@ -422,7 +460,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentController(gd, bears.getId())).thenReturn(player2Id);
             when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
 
-            service.resolveDestroyTargetPermanent(gd, entry, effect);
+            destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Grizzly Bears is destroyed.");
         }
@@ -445,7 +483,7 @@ class DestructionResolutionServiceTest {
             when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
             when(gameQueryService.getTokenMultiplier(gd, player2Id)).thenReturn(1);
 
-            service.resolveDestroyTargetPermanent(gd, entry, effect);
+            destroyTargetPermanentHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, bears, false);
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class), any());
@@ -477,7 +515,7 @@ class DestructionResolutionServiceTest {
 
             when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            service.resolveDestroyEquipmentAttachedToTargetCreature(gd, entry);
+            destroyEquipmentHandler.resolve(gd, entry, new DestroyEquipmentAttachedToTargetCreatureEffect());
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
             verify(gameBroadcastService).logAndBroadcast(gd, "Leonin Scimitar is destroyed.");
@@ -491,7 +529,7 @@ class DestructionResolutionServiceTest {
             Card turnToSlagCard = createCard("Turn to Slag");
             StackEntry entry = sorceryEntry(turnToSlagCard, player1Id, angel.getId());
 
-            service.resolveDestroyEquipmentAttachedToTargetCreature(gd, entry);
+            destroyEquipmentHandler.resolve(gd, entry, new DestroyEquipmentAttachedToTargetCreatureEffect());
 
             verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
         }
@@ -526,7 +564,7 @@ class DestructionResolutionServiceTest {
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gd, player2Id, 2, "Melt Terrain")).thenReturn(2);
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            service.resolveDestroyTargetLandAndDamageController(gd, entry, effect);
+            destroyLandAndDamageHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, mountain, false);
             assertThat(gd.getLife(player2Id)).isEqualTo(18);
@@ -544,7 +582,7 @@ class DestructionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
 
-            service.resolveDestroyTargetLandAndDamageController(gd, entry, effect);
+            destroyLandAndDamageHandler.resolve(gd, entry, effect);
 
             assertThat(gd.getLife(player2Id)).isEqualTo(20);
             verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
@@ -571,7 +609,7 @@ class DestructionResolutionServiceTest {
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gd, player2Id, 2, "Melt Terrain")).thenReturn(2);
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            service.resolveDestroyTargetLandAndDamageController(gd, entry, effect);
+            destroyLandAndDamageHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Mountain is destroyed.");
             verify(gameBroadcastService).logAndBroadcast(gd, "Melt Terrain deals 2 damage to Player2.");
@@ -597,7 +635,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            service.resolveSacrificeCreature(gd, entry);
+            sacrificeCreatureHandler.resolve(gd, entry, new SacrificeCreatureEffect());
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
             verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Grizzly Bears.");
@@ -615,7 +653,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.isCreature(gd, spider)).thenReturn(true);
 
-            service.resolveSacrificeCreature(gd, entry);
+            sacrificeCreatureHandler.resolve(gd, entry, new SacrificeCreatureEffect());
 
             assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
             verify(playerInputService).beginPermanentChoice(eq(gd), eq(player2Id), any(), anyString());
@@ -627,7 +665,7 @@ class DestructionResolutionServiceTest {
             Card edictCard = createCard("Cruel Edict");
             StackEntry entry = sorceryEntry(edictCard, player1Id, player2Id);
 
-            service.resolveSacrificeCreature(gd, entry);
+            sacrificeCreatureHandler.resolve(gd, entry, new SacrificeCreatureEffect());
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Player2 has no creatures to sacrifice.");
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -644,7 +682,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            service.resolveSacrificeCreature(gd, entry);
+            sacrificeCreatureHandler.resolve(gd, entry, new SacrificeCreatureEffect());
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Grizzly Bears.");
         }
@@ -677,7 +715,7 @@ class DestructionResolutionServiceTest {
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"))).thenReturn(7);
             when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
 
-            service.resolveSacrificeOtherCreatureOrDamage(gd, entry, effect);
+            sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
             assertThat(gd.getLife(player1Id)).isEqualTo(13);
             verify(gameOutcomeService).checkWinCondition(gd);
@@ -699,7 +737,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.isCreature(gd, elves)).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, elves.getId())).thenReturn(elves);
 
-            service.resolveSacrificeOtherCreatureOrDamage(gd, entry, effect);
+            sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, elves);
             verify(gameBroadcastService).logAndBroadcast(gd, "Player1 sacrifices Llanowar Elves.");
@@ -723,7 +761,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.isCreature(gd, elves)).thenReturn(true);
 
-            service.resolveSacrificeOtherCreatureOrDamage(gd, entry, effect);
+            sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
             verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), anyString());
@@ -747,7 +785,7 @@ class DestructionResolutionServiceTest {
             when(permanentRemovalService.redirectPlayerDamageToEnchantedCreature(eq(gd), eq(player1Id), eq(7), eq("Lord of the Pit"))).thenReturn(7);
             when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
 
-            service.resolveSacrificeOtherCreatureOrDamage(gd, entry, effect);
+            sacrificeOtherOrDamageHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Lord of the Pit deals 7 damage to Player1.");
         }
@@ -776,7 +814,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);
             when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            service.resolveDestroyTargetArtifactAndBoostSelfByManaValue(gd, entry);
+            destroyAndBoostHandler.resolve(gd, entry, new DestroyTargetPermanentAndBoostSelfByManaValueEffect());
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
             assertThat(dragon.getPowerModifier()).isEqualTo(1);
@@ -797,7 +835,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);
             when(permanentRemovalService.tryDestroyPermanent(gd, spellbook, false)).thenReturn(true);
 
-            service.resolveDestroyTargetArtifactAndBoostSelfByManaValue(gd, entry);
+            destroyAndBoostHandler.resolve(gd, entry, new DestroyTargetPermanentAndBoostSelfByManaValueEffect());
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, spellbook, false);
             // Dragon is found (self != null) but mana value is 0, so no boost is applied
@@ -820,7 +858,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, dragon.getId())).thenReturn(dragon);
             when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            service.resolveDestroyTargetArtifactAndBoostSelfByManaValue(gd, entry);
+            destroyAndBoostHandler.resolve(gd, entry, new DestroyTargetPermanentAndBoostSelfByManaValueEffect());
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Leonin Scimitar is destroyed.");
             verify(gameBroadcastService).logAndBroadcast(gd, "Hoard-Smelter Dragon gets +1/+0 until end of turn.");
@@ -847,7 +885,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, scimitar.getId())).thenReturn(scimitar);
             when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
+            destroyAndGainLifeHandler.resolve(gd, entry, new DestroyTargetPermanentAndGainLifeEqualToManaValueEffect());
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, scimitar, false);
             verify(lifeSupport).applyGainLife(gd, player1Id, 1,
@@ -866,7 +904,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, spellbook.getId())).thenReturn(spellbook);
             when(permanentRemovalService.tryDestroyPermanent(gd, spellbook, false)).thenReturn(true);
 
-            service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
+            destroyAndGainLifeHandler.resolve(gd, entry, new DestroyTargetPermanentAndGainLifeEqualToManaValueEffect());
 
             verify(lifeSupport, never()).applyGainLife(any(), any(), any(int.class), anyString());
         }
@@ -881,7 +919,7 @@ class DestructionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
 
-            service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
+            destroyAndGainLifeHandler.resolve(gd, entry, new DestroyTargetPermanentAndGainLifeEqualToManaValueEffect());
 
             verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), any(boolean.class));
             verify(lifeSupport, never()).applyGainLife(any(), any(), any(int.class), anyString());
@@ -899,7 +937,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, scimitar.getId())).thenReturn(scimitar);
             when(permanentRemovalService.tryDestroyPermanent(gd, scimitar, false)).thenReturn(true);
 
-            service.resolveDestroyTargetPermanentAndGainLifeEqualToManaValue(gd, entry);
+            destroyAndGainLifeHandler.resolve(gd, entry, new DestroyTargetPermanentAndGainLifeEqualToManaValueEffect());
 
             verify(lifeSupport).applyGainLife(gd, player1Id, 1,
                     "equal to Leonin Scimitar's mana value");
@@ -933,7 +971,7 @@ class DestructionResolutionServiceTest {
             when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            service.resolveDestroyTargetAndControllerLosesLifePerCreatureDeaths(gd, entry, effect);
+            destroyAndLifePerDeathsHandler.resolve(gd, entry, effect);
 
             assertThat(gd.getLife(player2Id)).isEqualTo(18);
             verify(gameBroadcastService).logAndBroadcast(gd, "Player2 loses 2 life (Flesh Allergy).");
@@ -959,7 +997,7 @@ class DestructionResolutionServiceTest {
             when(permanentRemovalService.tryDestroyPermanent(gd, bears, false)).thenReturn(true);
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            service.resolveDestroyTargetAndControllerLosesLifePerCreatureDeaths(gd, entry, effect);
+            destroyAndLifePerDeathsHandler.resolve(gd, entry, effect);
 
             assertThat(gd.getLife(player2Id)).isEqualTo(16);
             verify(gameBroadcastService).logAndBroadcast(gd, "Player2 loses 4 life (Flesh Allergy).");
@@ -985,7 +1023,7 @@ class DestructionResolutionServiceTest {
             when(gameQueryService.isCreature(gd, bears)).thenReturn(true);
             when(gameQueryService.findPermanentById(gd, bears.getId())).thenReturn(bears);
 
-            service.resolveEachOpponentSacrificesCreature(gd, entry);
+            eachOpponentSacrificesCreatureHandler.resolve(gd, entry, new EachOpponentSacrificesCreatureEffect());
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, bears);
             verify(gameBroadcastService).logAndBroadcast(gd, "Player2 sacrifices Grizzly Bears.");
@@ -997,7 +1035,7 @@ class DestructionResolutionServiceTest {
             Card gravePactCard = createCard("Grave Pact");
             StackEntry entry = triggeredAbilityEntry(gravePactCard, player1Id, null, null);
 
-            service.resolveEachOpponentSacrificesCreature(gd, entry);
+            eachOpponentSacrificesCreatureHandler.resolve(gd, entry, new EachOpponentSacrificesCreatureEffect());
 
             verify(gameBroadcastService).logAndBroadcast(gd, "Player2 has no creatures to sacrifice.");
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());

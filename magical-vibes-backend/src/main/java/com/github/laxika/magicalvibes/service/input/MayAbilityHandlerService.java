@@ -58,7 +58,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardReturnResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -88,7 +88,7 @@ public class MayAbilityHandlerService {
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
-    private final DestructionResolutionService destructionResolutionService;
+    private final DestructionSupport destructionSupport;
     private final GraveyardReturnResolutionService graveyardReturnResolutionService;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
@@ -109,7 +109,7 @@ public class MayAbilityHandlerService {
             if (!gameData.pendingPileSeparationCards.isEmpty()) {
                 graveyardReturnResolutionService.completeCardPileSeparationStep2(gameData, accepted);
             } else {
-                destructionResolutionService.completePileSeparationStep2(gameData, accepted);
+                destructionSupport.completePileSeparationStep2(gameData, accepted);
             }
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;

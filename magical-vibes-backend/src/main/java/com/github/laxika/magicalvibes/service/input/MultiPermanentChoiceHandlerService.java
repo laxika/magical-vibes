@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -59,7 +59,7 @@ public class MultiPermanentChoiceHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
-    private final DestructionResolutionService destructionResolutionService;
+    private final DestructionSupport destructionSupport;
     private final PermanentCounterResolutionService permanentCounterResolutionService;
     private final AnimationResolutionService animationResolutionService;
 
@@ -305,7 +305,7 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handleDestroyRestChoice(GameData gameData, List<UUID> permanentIds) {
-        destructionResolutionService.completeDestroyRestChoice(gameData, permanentIds);
+        destructionSupport.completeDestroyRestChoice(gameData, permanentIds);
 
         // If we're still awaiting input (next player's choice), return
         if (gameData.interaction.isAwaitingInput()) {
@@ -698,6 +698,6 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handlePileSeparation(GameData gameData, List<UUID> permanentIds) {
-        destructionResolutionService.completePileSeparationStep1(gameData, permanentIds);
+        destructionSupport.completePileSeparationStep1(gameData, permanentIds);
     }
 }

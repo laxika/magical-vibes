@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -19,7 +20,7 @@ import java.util.List;
  * {@link #createAll} to build the same set manually and {@link #registerAll} to register them. As
  * more domains migrate, only this factory needs updating — non-Spring sites never change again.
  *
- * <p>Currently holds the <b>Life</b>, <b>Boost</b>, and <b>Damage</b> domain handlers.
+ * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, and <b>Destruction</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -28,6 +29,8 @@ public final class NormalEffectHandlerBeanFactory {
 
     public static List<NormalEffectHandlerBean> createAll(LifeSupport lifeSupport,
                                                           DamageSupport damageSupport,
+                                                          DestructionSupport destructionSupport,
+                                                          BattlefieldEntryService battlefieldEntryService,
                                                           GameQueryService gameQueryService,
                                                           GameBroadcastService gameBroadcastService,
                                                           GameOutcomeService gameOutcomeService,
@@ -154,7 +157,44 @@ public final class NormalEffectHandlerBeanFactory {
                 new DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService),
                 new DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService),
                 new SacrificeSelfAndDealDamageToDamagedPlayerEffectHandler(damageSupport, gameQueryService, gameBroadcastService, gameOutcomeService, permanentRemovalService),
-                new BoostColorSourceDamageThisTurnEffectHandler(gameBroadcastService)
+                new BoostColorSourceDamageThisTurnEffectHandler(gameBroadcastService),
+                new DestroyAllPermanentsEffectHandler(destructionSupport, gameQueryService),
+                new DestroyAllPermanentsAndGainLifePerDestroyedEffectHandler(destructionSupport, gameBroadcastService, gameQueryService, graveyardService, lifeSupport, permanentRemovalService),
+                new EachPlayerChoosesCreatureDestroyRestEffectHandler(destructionSupport, gameBroadcastService, gameQueryService),
+                new DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffectHandler(destructionSupport, battlefieldEntryService, gameBroadcastService, gameQueryService, graveyardService, permanentRemovalService),
+                new DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffectHandler(destructionSupport),
+                new DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffectHandler(destructionSupport, gameBroadcastService),
+                new DestroyTargetPermanentEffectHandler(destructionSupport, gameQueryService),
+                new DestroyOneOfTargetsAtRandomEffectHandler(destructionSupport, gameQueryService),
+                new DestroyRandomOpponentPermanentWithCounterEffectHandler(destructionSupport),
+                new DestroyEquipmentAttachedToTargetCreatureEffectHandler(destructionSupport),
+                new DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffectHandler(destructionSupport, gameQueryService),
+                new DestroyTargetAndControllerLosesLifePerCreatureDeathsEffectHandler(destructionSupport, gameBroadcastService, gameOutcomeService, gameQueryService),
+                new DestroyTargetLandAndDamageControllerEffectHandler(destructionSupport, gameBroadcastService, gameOutcomeService, gameQueryService),
+                new DestroyTargetPermanentAndDamageControllerIfDestroyedEffectHandler(destructionSupport, gameOutcomeService, gameQueryService),
+                new DestroyTargetPermanentAndGiveControllerPoisonCountersEffectHandler(destructionSupport, gameBroadcastService, gameOutcomeService, gameQueryService),
+                new DestroyTargetPermanentAndControllerLosesLifeEffectHandler(destructionSupport, gameBroadcastService, gameOutcomeService, gameQueryService),
+                new SacrificeCreatureEffectHandler(destructionSupport),
+                new SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffectHandler(destructionSupport, gameBroadcastService, gameQueryService, lifeSupport, playerInputService),
+                new ControllerSacrificesCreatureEffectHandler(destructionSupport),
+                new SacrificeAttackingCreaturesEffectHandler(destructionSupport, gameBroadcastService, gameQueryService, playerInputService),
+                new EachOpponentSacrificesCreatureEffectHandler(destructionSupport),
+                new EachPlayerSacrificesPermanentsEffectHandler(destructionSupport, gameBroadcastService, gameQueryService),
+                new EachOpponentSacrificesPermanentsEffectHandler(destructionSupport, gameBroadcastService, gameQueryService),
+                new TargetPlayerSacrificesPermanentsEffectHandler(destructionSupport, gameBroadcastService, gameQueryService, playerInputService),
+                new DamageSourceControllerSacrificesPermanentsEffectHandler(destructionSupport, gameBroadcastService, playerInputService),
+                new SacrificeOtherCreatureOrDamageEffectHandler(destructionSupport, gameOutcomeService, gameQueryService, playerInputService),
+                new SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffectHandler(destructionSupport, gameBroadcastService, gameOutcomeService, gameQueryService, lifeSupport, playerInputService),
+                new ForcedCostOrElseEffectHandler(destructionSupport, gameQueryService, playerInputService),
+                new DestroyCreatureBlockingThisEffectHandler(destructionSupport, gameBroadcastService, gameQueryService),
+                new DestroyBlockedCreatureAndSelfEffectHandler(destructionSupport, gameQueryService),
+                new DestroySourcePermanentEffectHandler(destructionSupport, gameQueryService),
+                new DestroyTargetPermanentAndBoostSelfByManaValueEffectHandler(destructionSupport, gameBroadcastService, gameQueryService),
+                new DestroyTargetPermanentAndGainLifeEqualToManaValueEffectHandler(destructionSupport, gameQueryService, lifeSupport),
+                new DestroyTargetCreatureAndGainLifeEqualToToughnessEffectHandler(destructionSupport, gameQueryService, lifeSupport),
+                new SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler(destructionSupport, gameBroadcastService, gameQueryService, playerInputService),
+                new DestroyTargetPermanentAtEndStepEffectHandler(destructionSupport, gameBroadcastService, gameQueryService),
+                new SeparatePermanentsIntoPilesAndSacrificeEffectHandler(destructionSupport, gameBroadcastService, playerInputService)
         );
     }
 

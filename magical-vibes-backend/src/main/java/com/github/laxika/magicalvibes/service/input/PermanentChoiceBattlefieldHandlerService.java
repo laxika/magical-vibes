@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
-import com.github.laxika.magicalvibes.service.battlefield.DestructionResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
@@ -67,7 +67,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final DamageSupport damageSupport;
-    private final DestructionResolutionService destructionResolutionService;
+    private final DestructionSupport destructionSupport;
     private final LifeSupport lifeSupport;
     private final LibrarySearchResolutionService librarySearchResolutionService;
 
@@ -206,7 +206,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} sacrifices {}", gameData.id, playerName, target.getCard().getName());
 
         // Each opponent loses life equal to the sacrificed creature's power
-        destructionResolutionService.applyOpponentsLoseLife(gameData, sacrificingPlayerId, power, context.sourceCardName());
+        destructionSupport.applyOpponentsLoseLife(gameData, sacrificingPlayerId, power, context.sourceCardName());
 
         stateBasedActionService.performStateBasedActions(gameData);
 
@@ -220,7 +220,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleForcedCostOrElse(GameData gameData, UUID permanentId,
                                        PermanentChoiceContext.ForcedCostOrElse context) {
-        destructionResolutionService.completeForcedCostOrElse(gameData, permanentId, context);
+        destructionSupport.completeForcedCostOrElse(gameData, permanentId, context);
 
         stateBasedActionService.performStateBasedActions(gameData);
 
