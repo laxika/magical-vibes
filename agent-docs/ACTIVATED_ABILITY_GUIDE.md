@@ -433,6 +433,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_CONTROLLER_CASTS_SPELL` | Controller casts a spell ("whenever you cast...") |
 | `ON_ANY_PLAYER_TAPS_LAND` | Any player taps a land |
 | `ON_ENCHANTED_PERMANENT_TAPPED` | The permanent this aura is attached to becomes tapped. Does NOT fire for "enters tapped" (CR 603.6d). `affectedPlayerId` is baked in at trigger time with the enchanted permanent's controller |
+| `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` | The creature this aura is attached to is dealt damage (combat or non-combat). Damage amount passed via `TriggerContext.DamageToCreature` and snapshotted to xValue for "that much damage" effects |
 | `ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU` | Any permanent deals damage to this permanent's controller |
 | `ON_ALLY_PERMANENT_SACRIFICED` | A permanent you control is sacrificed (not this one — "another") |
 | `ON_BECOMES_TARGET_OF_SPELL` | This permanent becomes target of a spell |

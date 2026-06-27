@@ -45,6 +45,9 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ENCHANTED_PERMANENT_TAPPED,
+    /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
+     *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
+    ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
     ON_EQUIPPED_CREATURE_DIES,
     ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD,
     ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,

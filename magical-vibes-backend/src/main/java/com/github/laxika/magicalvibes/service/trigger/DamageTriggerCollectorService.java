@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsCo
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGetsPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDamageSourcePermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -188,6 +190,46 @@ public class DamageTriggerCollectorService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} ON_DEALT_DAMAGE target-opponent-or-planeswalker trigger fires",
                 gameData.id, dc.damagedCreature().getCard().getName());
+        return true;
+    }
+
+    // ── ON_ENCHANTED_CREATURE_DEALT_DAMAGE ─────────────────────────────
+
+    @CollectsTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
+            slot = EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
+    private boolean handleEnchantedCreatureDealtDamageToController(TriggerMatchContext match,
+            EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect trigger, TriggerContext ctx) {
+        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
+        if (dc.damageDealt() <= 0) return false;
+
+        GameData gameData = match.gameData();
+        Permanent aura = match.permanent();
+        Permanent enchantedCreature = dc.damagedCreature();
+
+        UUID controllerId = gameQueryService.findPermanentController(gameData, enchantedCreature.getId());
+        if (controllerId == null) return false;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                aura.getCard(),
+                match.controllerId(),
+                aura.getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(trigger)),
+                dc.damageDealt(),
+                controllerId,
+                aura.getId(),
+                Map.of(),
+                null,
+                List.of(),
+                List.of()
+        );
+        entry.setDamageSourceCard(enchantedCreature.getCard());
+        gameData.stack.add(entry);
+
+        String logEntry = aura.getCard().getName() + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires",
+                gameData.id, aura.getCard().getName());
         return true;
     }
 

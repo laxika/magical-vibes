@@ -1370,6 +1370,7 @@ public class CombatDamageService {
                 .computeIfAbsent(source, ignored -> new HashMap<>())
                 .merge(target.getId(), damage, Integer::sum);
         graveyardService.recordCreatureDamagedByPermanent(gameData, source.getId(), target, damage);
+        triggerCollectionService.checkEnchantedCreatureDealtDamageTriggers(gameData, target, damage);
     }
 
     // ===== Phase state helpers =====

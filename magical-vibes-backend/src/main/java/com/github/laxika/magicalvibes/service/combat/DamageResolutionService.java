@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermane
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilNonlandToHandRepeatIfHighMVEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetControllerIfTargetHasKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureControllerEffect;
@@ -2182,6 +2183,49 @@ public class DamageResolutionService {
         );
 
         dealDamageToPlayer(gameData, creatureEntry, ownerId, rawDamage);
+        gameOutcomeService.checkWinCondition(gameData);
+    }
+
+    /**
+     * Resolves {@link EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect} — the enchanted
+     * creature deals damage equal to the amount it was dealt (xValue) to its controller.
+     */
+    @HandlesEffect(EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class)
+    void resolveEnchantedCreatureDealsDamageEqualToDealtDamageToController(
+            GameData gameData, StackEntry entry,
+            EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect effect) {
+        UUID controllerId = entry.getTargetId();
+        if (controllerId == null) return;
+
+        Card sourceCard = entry.getDamageSourceCard();
+        if (sourceCard == null) {
+            Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+            if (aura == null || !aura.isAttached()) return;
+
+            Permanent creature = gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
+            if (creature == null) return;
+
+            sourceCard = creature.getCard();
+            controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
+            if (controllerId == null) return;
+        }
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, entry.getXValue(), entry);
+        if (rawDamage <= 0) return;
+
+        String creatureName = sourceCard.getName();
+
+        StackEntry creatureEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                creatureName + " deals damage to its controller",
+                List.of(),
+                controllerId,
+                entry.getSourcePermanentId()
+        );
+
+        dealDamageToPlayer(gameData, creatureEntry, controllerId, rawDamage);
         gameOutcomeService.checkWinCondition(gameData);
     }
 

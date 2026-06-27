@@ -564,6 +564,10 @@ public class TriggerCollectionService {
     }
 
     public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
+        if (damageDealt > 0) {
+            checkEnchantedCreatureDealtDamageTriggers(gameData, damagedCreature, damageDealt);
+        }
+
         List<CardEffect> effects = damagedCreature.getCard().getEffects(EffectSlot.ON_DEALT_DAMAGE);
         if (effects.isEmpty()) return;
 
@@ -576,6 +580,24 @@ public class TriggerCollectionService {
             var match = new TriggerMatchContext(gameData, damagedCreature, controllerId, effect);
             registry.dispatch(match, EffectSlot.ON_DEALT_DAMAGE, effect, ctx);
         }
+    }
+
+    // ── Enchanted-creature-dealt-damage triggers ───────────────────────
+
+    public void checkEnchantedCreatureDealtDamageTriggers(GameData gameData, Permanent damagedCreature, int damageDealt) {
+        if (damageDealt <= 0) return;
+
+        var ctx = new TriggerContext.DamageToCreature(damagedCreature, damageDealt, null);
+
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            if (!perm.isAttached() || !perm.getAttachedTo().equals(damagedCreature.getId())) {
+                return;
+            }
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)) {
+                var match = new TriggerMatchContext(gameData, perm, auraOwnerId, effect);
+                registry.dispatch(match, EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+            }
+        });
     }
 
     // ── Opponent-creature-dealt-damage triggers ──────────────────────────

@@ -967,6 +967,7 @@ Pass `null` as filter to allow any card.
 | `ControlEnchantedCreatureEffect` | `()` | control enchanted creature (static) |
 | `GrantSupertypeToEnchantedPermanentEffect` | `(CardSupertype supertype)` | enchanted permanent gains the specified supertype (static). E.g. In Bolas's Clutches — "Enchanted permanent is legendary." Integrates with legend rule |
 | `EnchantedCreatureDealsDamageToItsOwnerEffect` | `(int damage)` | enchanted creature deals N damage to its owner (the original owner, not current controller). Use on `UPKEEP_TRIGGERED` slot for auras that steal + ping owner |
+| `EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect` | `()` | enchanted creature deals damage equal to the amount it was dealt (xValue) to its controller. Use on `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` slot (Spiteful Shadows) |
 
 ## Prevention / protection / redirection
 
