@@ -119,14 +119,14 @@ have two methods → two beans.
 - [x] `ProtectionFromColorsEffect`
 
 ### Batch C — enchanted/chosen/animate
-- [ ] `EnchantedPermanentConditionalEffect`
-- [ ] `EnchantedPermanentBecomesTypeEffect`
-- [ ] `EnchantedPermanentBecomesChosenTypeEffect`
-- [ ] `GrantChosenSubtypeToOwnCreaturesEffect`
-- [ ] `BoostCreaturesOfChosenColorEffect`
-- [ ] `BoostCreaturesOfChosenSubtypeEffect`
-- [ ] `AnimateNoncreatureArtifactsEffect`
-- [ ] `GrantEquipByManaValueEffect`
+- [x] `EnchantedPermanentConditionalEffect`
+- [x] `EnchantedPermanentBecomesTypeEffect`
+- [x] `EnchantedPermanentBecomesChosenTypeEffect`
+- [x] `GrantChosenSubtypeToOwnCreaturesEffect`
+- [x] `BoostCreaturesOfChosenColorEffect`
+- [x] `BoostCreaturesOfChosenSubtypeEffect`
+- [x] `AnimateNoncreatureArtifactsEffect`
+- [x] `GrantEquipByManaValueEffect`
 
 ### Batch D — boost creature per X
 - [ ] `BoostCreaturePerCardsInAllGraveyardsEffect`

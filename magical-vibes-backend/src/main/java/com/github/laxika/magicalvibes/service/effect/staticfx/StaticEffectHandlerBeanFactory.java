@@ -37,7 +37,15 @@ public final class StaticEffectHandlerBeanFactory {
                 new GrantEffectSelfEffectHandler(support),
                 new GrantEffectEffectHandler(support),
                 new GrantActivatedAbilityEffectHandler(support),
-                new ProtectionFromColorsEffectHandler()
+                new ProtectionFromColorsEffectHandler(),
+                new AnimateNoncreatureArtifactsEffectHandler(gameQueryService),
+                new GrantEquipByManaValueEffectHandler(support),
+                new EnchantedPermanentConditionalEffectHandler(support, registry),
+                new GrantChosenSubtypeToOwnCreaturesEffectHandler(support),
+                new EnchantedPermanentBecomesTypeEffectHandler(),
+                new EnchantedPermanentBecomesChosenTypeEffectHandler(),
+                new BoostCreaturesOfChosenColorEffectHandler(),
+                new BoostCreaturesOfChosenSubtypeEffectHandler(support, gameQueryService)
         );
     }
 

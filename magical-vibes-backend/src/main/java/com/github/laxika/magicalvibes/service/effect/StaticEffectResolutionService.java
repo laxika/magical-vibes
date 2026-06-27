@@ -33,14 +33,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockedByMinCreaturesConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenColorEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledCardTypeEffect;
@@ -67,15 +61,10 @@ import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentCondi
 import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentPoisonedConditionalEffect;
@@ -109,69 +98,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class StaticEffectResolutionService {
 
     private final GameQueryService gameQueryService;
-    private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
     private final StaticEffectSupport support;
-
-    @HandlesStaticEffect(AnimateNoncreatureArtifactsEffect.class)
-    private void resolveAnimateNoncreatureArtifacts(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        if (gameQueryService.isArtifact(context.target())) {
-            accumulator.setAnimatedCreature(true);
-        }
-    }
-
-    @HandlesStaticEffect(GrantEquipByManaValueEffect.class)
-    private void resolveGrantEquipByManaValue(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var grant = (GrantEquipByManaValueEffect) effect;
-        Permanent target = context.target();
-        GameData gameData = context.gameData();
-        boolean hasAnimateArtifacts = hasAnimateArtifactEffect(gameData);
-
-        // Grant equip ability to matching permanents
-        if (matchesStaticFilter(target, grant.filter())) {
-            int manaValue = target.getCard().getManaValue();
-            String cost = "{" + manaValue + "}";
-            accumulator.addActivatedAbility(new ActivatedAbility(
-                    false,
-                    cost,
-                    List.of(new EquipEffect()),
-                    "Equip " + cost,
-                    new ControlledPermanentPredicateTargetFilter(
-                            new PermanentIsCreaturePredicate(),
-                            "Target must be a creature you control"
-                    ),
-                    null,
-                    null,
-                    ActivationTimingRestriction.SORCERY_SPEED
-            ));
-        }
-
-        // Boost creatures with matching permanents attached
-        if (isEffectivelyCreature(gameData, target, hasAnimateArtifacts)) {
-            gameData.forEachPermanent((playerId, permanent) -> {
-                if (permanent.isAttached()
-                        && permanent.getAttachedTo().equals(target.getId())
-                        && matchesStaticFilter(permanent, grant.filter())) {
-                    accumulator.addPower(permanent.getCard().getManaValue());
-                }
-            });
-        }
-    }
-
-    @HandlesStaticEffect(EnchantedPermanentConditionalEffect.class)
-    private void resolveEnchantedPermanentConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var conditional = (EnchantedPermanentConditionalEffect) effect;
-        if (!context.source().isAttached()
-                || !context.source().getAttachedTo().equals(context.target().getId())) {
-            return;
-        }
-        CardEffect activeEffect = matchesStaticFilter(context.target(), conditional.filter())
-                ? conditional.ifMatch()
-                : conditional.ifNotMatch();
-        StaticEffectHandler handler = staticEffectHandlerRegistry.getHandler(activeEffect);
-        if (handler != null) {
-            handler.apply(context, activeEffect, accumulator);
-        }
-    }
 
     @HandlesStaticEffect(BoostCreaturePerCardsInAllGraveyardsEffect.class)
     private void resolveBoostCreaturePerCardsInAllGraveyards(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
@@ -273,75 +200,6 @@ public class StaticEffectResolutionService {
 
         accumulator.addPower(count * boost.powerPerMatch());
         accumulator.addToughness(count * boost.toughnessPerMatch());
-    }
-
-    @HandlesStaticEffect(GrantChosenSubtypeToOwnCreaturesEffect.class)
-    private void resolveGrantChosenSubtypeToOwnCreatures(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        CardSubtype chosenSubtype = context.source().getChosenSubtype();
-        if (chosenSubtype == null) return;
-        if (matchesCreatureScope(context, GrantScope.OWN_CREATURES, null)) {
-            accumulator.addGrantedSubtype(chosenSubtype);
-        }
-    }
-
-    @HandlesStaticEffect(EnchantedPermanentBecomesTypeEffect.class)
-    private void resolveEnchantedPermanentBecomesType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var becomesType = (EnchantedPermanentBecomesTypeEffect) effect;
-        if (context.source().isAttached()
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addGrantedSubtype(becomesType.subtype());
-            accumulator.setSubtypeOverriding(true);
-            if (becomesType.isBasicLandSubtype()) {
-                accumulator.setLandSubtypeOverriding(true);
-            }
-        }
-    }
-
-    @HandlesStaticEffect(EnchantedPermanentBecomesChosenTypeEffect.class)
-    private void resolveEnchantedPermanentBecomesChosenType(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        CardSubtype chosenSubtype = context.source().getChosenSubtype();
-        if (chosenSubtype == null) return;
-        if (context.source().isAttached()
-                && context.source().getAttachedTo().equals(context.target().getId())) {
-            accumulator.addGrantedSubtype(chosenSubtype);
-            accumulator.setSubtypeOverriding(true);
-            accumulator.setLandSubtypeOverriding(true);
-        }
-    }
-
-    @HandlesStaticEffect(BoostCreaturesOfChosenColorEffect.class)
-    private void resolveBoostCreaturesOfChosenColor(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostCreaturesOfChosenColorEffect) effect;
-        CardColor chosenColor = context.source().getChosenColor();
-        if (chosenColor == null) return;
-        if (!context.targetOnSameBattlefield()) return;
-        Permanent target = context.target();
-        boolean colorMatch = false;
-        if (target.isColorOverridden()) {
-            colorMatch = target.getTransientColors().contains(chosenColor);
-        } else {
-            CardColor effectiveColor = target.getEffectiveColor();
-            colorMatch = (effectiveColor != null && effectiveColor == chosenColor)
-                    || target.getTransientColors().contains(chosenColor);
-        }
-        if (colorMatch) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-        }
-    }
-
-    @HandlesStaticEffect(BoostCreaturesOfChosenSubtypeEffect.class)
-    private void resolveBoostCreaturesOfChosenSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostCreaturesOfChosenSubtypeEffect) effect;
-        CardSubtype chosenSubtype = context.source().getChosenSubtype();
-        if (chosenSubtype == null) return;
-        if (!context.targetOnSameBattlefield()) return;
-        Permanent target = context.target();
-        if (!gameQueryService.isCreature(context.gameData(), target)) return;
-        if (matchesStaticFilter(target, new PermanentHasSubtypePredicate(chosenSubtype))) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-        }
     }
 
     @HandlesStaticEffect(BoostBySharedCreatureTypeEffect.class)

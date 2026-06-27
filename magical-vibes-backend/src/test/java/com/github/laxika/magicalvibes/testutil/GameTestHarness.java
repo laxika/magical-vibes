@@ -189,7 +189,7 @@ public class GameTestHarness {
         StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         staticGameQueryService = new GameQueryService(staticEffectHandlerRegistry);
         StaticEffectSupport staticEffectSupport = new StaticEffectSupport(staticGameQueryService);
-        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(staticGameQueryService, staticEffectHandlerRegistry, staticEffectSupport);
+        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(staticGameQueryService, staticEffectSupport);
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
         StaticEffectHandlerBeanFactory.registerAll(
                 StaticEffectHandlerBeanFactory.createAll(staticEffectSupport, staticGameQueryService, staticEffectHandlerRegistry),

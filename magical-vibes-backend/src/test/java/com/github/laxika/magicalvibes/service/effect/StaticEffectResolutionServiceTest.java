@@ -45,7 +45,7 @@ class StaticEffectResolutionServiceTest {
     @BeforeEach
     void setUp() throws Throwable {
         StaticEffectResolutionService service = new StaticEffectResolutionService(
-                gameQueryService, new StaticEffectHandlerRegistry(),
+                gameQueryService,
                 new com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport(gameQueryService));
         registry = new StaticEffectHandlerRegistry();
         registerStaticEffectHandlers(service, registry);

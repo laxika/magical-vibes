@@ -225,7 +225,7 @@ public class GameSimulator {
 
         StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         StaticEffectSupport staticEffectSupport = new StaticEffectSupport(sharedQueryService);
-        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(sharedQueryService, staticEffectHandlerRegistry, staticEffectSupport);
+        StaticEffectResolutionService staticEffectResolutionService = new StaticEffectResolutionService(sharedQueryService, staticEffectSupport);
         scanStaticEffectHandlers(staticEffectResolutionService, staticEffectHandlerRegistry);
         StaticEffectHandlerBeanFactory.registerAll(
                 StaticEffectHandlerBeanFactory.createAll(staticEffectSupport, sharedQueryService, staticEffectHandlerRegistry),
