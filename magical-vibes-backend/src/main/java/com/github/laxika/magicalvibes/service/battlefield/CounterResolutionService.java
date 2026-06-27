@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterlashEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,7 +48,7 @@ public class CounterResolutionService {
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
     private final StateTriggerService stateTriggerService;
-    private final PermanentControlResolutionService permanentControlResolutionService;
+    private final PermanentControlSupport permanentControlSupport;
 
     /**
      * Resolves an unconditional counter spell (e.g. Cancel, Counterspell).
@@ -211,7 +211,7 @@ public class CounterResolutionService {
         // Create Treasure tokens equal to the spell's mana value regardless of counter success
         if (manaValue > 0) {
             CreateTokenEffect treasures = CreateTokenEffect.ofTreasureToken(manaValue);
-            permanentControlResolutionService.applyCreateToken(
+            permanentControlSupport.applyCreateToken(
                     gameData, entry.getControllerId(), treasures, entry.getCard().getSetCode());
         }
     }

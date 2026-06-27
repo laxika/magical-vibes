@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class MillResolutionService {
     private final GraveyardService graveyardService;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
-    private final PermanentControlResolutionService permanentControlResolutionService;
+    private final PermanentControlSupport permanentControlSupport;
 
     /**
      * Mills the target player for a number of cards equal to their hand size.
@@ -236,7 +236,7 @@ public class MillResolutionService {
                     effect.tokenColor(), effect.tokenSubtypes(),
                     Set.of(), Set.of()
             );
-            permanentControlResolutionService.applyCreateToken(
+            permanentControlSupport.applyCreateToken(
                     gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode()
             );
         }

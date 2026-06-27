@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -20,7 +22,8 @@ import java.util.List;
  * {@link #createAll} to build the same set manually and {@link #registerAll} to register them. As
  * more domains migrate, only this factory needs updating — non-Spring sites never change again.
  *
- * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, and <b>Destruction</b> domain handlers.
+ * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>, and
+ * <b>Permanent Control</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -30,7 +33,10 @@ public final class NormalEffectHandlerBeanFactory {
     public static List<NormalEffectHandlerBean> createAll(LifeSupport lifeSupport,
                                                           DamageSupport damageSupport,
                                                           DestructionSupport destructionSupport,
+                                                          PermanentControlSupport permanentControlSupport,
                                                           BattlefieldEntryService battlefieldEntryService,
+                                                          LegendRuleService legendRuleService,
+                                                          CreatureControlService creatureControlService,
                                                           GameQueryService gameQueryService,
                                                           GameBroadcastService gameBroadcastService,
                                                           GameOutcomeService gameOutcomeService,
@@ -38,6 +44,9 @@ public final class NormalEffectHandlerBeanFactory {
                                                           PermanentRemovalService permanentRemovalService,
                                                           TriggerCollectionService triggerCollectionService,
                                                           PlayerInputService playerInputService) {
+        CreateTokenCopyOfImprintedCardEffectHandler createTokenCopyOfImprintedCardEffectHandler =
+                new CreateTokenCopyOfImprintedCardEffectHandler(
+                        battlefieldEntryService, gameQueryService, gameBroadcastService);
         return List.of(
                 new GainLifeEffectHandler(lifeSupport),
                 new PayXManaGainXLifeEffectHandler(lifeSupport, gameBroadcastService, playerInputService),
@@ -194,7 +203,48 @@ public final class NormalEffectHandlerBeanFactory {
                 new DestroyTargetCreatureAndGainLifeEqualToToughnessEffectHandler(destructionSupport, gameQueryService, lifeSupport),
                 new SacrificeSelfToDestroyCreatureDamagedPlayerControlsEffectHandler(destructionSupport, gameBroadcastService, gameQueryService, playerInputService),
                 new DestroyTargetPermanentAtEndStepEffectHandler(destructionSupport, gameBroadcastService, gameQueryService),
-                new SeparatePermanentsIntoPilesAndSacrificeEffectHandler(destructionSupport, gameBroadcastService, playerInputService)
+                new SeparatePermanentsIntoPilesAndSacrificeEffectHandler(destructionSupport, gameBroadcastService, playerInputService),
+                new AttachTargetToSourcePermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new CreateLifeTotalAvatarTokenEffectHandler(battlefieldEntryService, gameQueryService, gameBroadcastService),
+                new CreateTokenCopyOfEquippedCreatureEffectHandler(battlefieldEntryService, gameQueryService, gameBroadcastService),
+                createTokenCopyOfImprintedCardEffectHandler,
+                new CreateTokenCopyOfExiledCostCardEffectHandler(createTokenCopyOfImprintedCardEffectHandler),
+                new CreateTokenCopyOfSourceEffectHandler(battlefieldEntryService, gameQueryService, gameBroadcastService),
+                new CreateTokenCopyOfTargetPermanentEffectHandler(battlefieldEntryService, gameQueryService, gameBroadcastService),
+                new CreateTokenEffectHandler(permanentControlSupport),
+                new CreateTokenForTargetPlayerEffectHandler(permanentControlSupport),
+                new CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler(battlefieldEntryService, gameQueryService, gameBroadcastService, triggerCollectionService),
+                new CreateTokenPerAttachmentOnSourceEffectHandler(permanentControlSupport, gameQueryService),
+                new CreateTokenPerEquipmentOnSourceEffectHandler(permanentControlSupport, gameQueryService),
+                new CreateTokenPerOpponentPoisonCounterEffectHandler(permanentControlSupport),
+                new CreateTokensEqualToChargeCountersOnSourceEffectHandler(permanentControlSupport),
+                new CreateTokensEqualToControlledCreatureCountEffectHandler(permanentControlSupport, gameQueryService),
+                new CreateTokensPerControlledCreatureSubtypeEffectHandler(permanentControlSupport, gameQueryService),
+                new CreateTokensPerControlledLandSubtypeEffectHandler(permanentControlSupport),
+                new CreateTokensPerCreatureCardInGraveyardEffectHandler(permanentControlSupport),
+                new CreateTokensPerOwnCreatureDeathsThisTurnEffectHandler(permanentControlSupport),
+                new CreateXCreatureTokenEffectHandler(permanentControlSupport),
+                new GainControlOfEnchantedTargetEffectHandler(gameQueryService, gameBroadcastService, creatureControlService),
+                new GainControlOfTargetAuraEffectHandler(gameQueryService, gameBroadcastService, playerInputService),
+                new GainControlOfTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, creatureControlService),
+                new GainControlOfTargetPermanentUntilEndOfTurnEffectHandler(gameQueryService, creatureControlService),
+                new GainControlOfTargetPermanentWhileSourceEffectHandler(gameQueryService, gameBroadcastService, creatureControlService),
+                new GrantSubtypeToTargetCreatureEffectHandler(gameQueryService, gameBroadcastService),
+                new LivingWeaponEffectHandler(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService),
+                new PutAuraFromHandOntoSelfEffectHandler(gameBroadcastService, playerInputService),
+                new PutSlimeCounterAndCreateOozeTokenEffectHandler(permanentControlSupport, gameQueryService, gameBroadcastService),
+                new PutTargetOnBottomOfLibraryEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new PutTargetOnTopOfLibraryEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new PutTargetPermanentIntoLibraryNFromTopEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new RedirectUnblockedCombatDamageToSelfEffectHandler(gameBroadcastService),
+                new RegenerateAllOwnCreaturesEffectHandler(gameQueryService, gameBroadcastService),
+                new RegenerateEffectHandler(gameQueryService, gameBroadcastService),
+                new ReturnSelfToHandAndCreateTokensEffectHandler(permanentControlSupport, gameQueryService, gameBroadcastService, permanentRemovalService),
+                new SacrificeAtEndOfCombatEffectHandler(gameQueryService),
+                new SacrificeEnchantedCreatureAndCreateTokenEffectHandler(permanentControlSupport, gameQueryService, gameBroadcastService, permanentRemovalService),
+                new SacrificeEnchantedCreatureEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new SacrificeSelfEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService),
+                new TargetPlayerGainsControlOfSourceCreatureEffectHandler(gameBroadcastService, creatureControlService)
         );
     }
 

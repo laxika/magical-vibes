@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +52,7 @@ class MillResolutionServiceTest {
     private GameBroadcastService gameBroadcastService;
 
     @Mock
-    private PermanentControlResolutionService permanentControlResolutionService;
+    private PermanentControlSupport permanentControlSupport;
 
     @InjectMocks
     private MillResolutionService service;
@@ -373,7 +373,7 @@ class MillResolutionServiceTest {
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("library is empty")));
             verifyNoInteractions(graveyardService);
-            verifyNoInteractions(permanentControlResolutionService);
+            verifyNoInteractions(permanentControlSupport);
         }
 
         @Test
@@ -392,7 +392,7 @@ class MillResolutionServiceTest {
             service.resolveMillBottomOfTargetLibraryConditionalToken(gd, entry, effect);
 
             verify(graveyardService).addCardToGraveyard(gd, player2Id, creature);
-            verify(permanentControlResolutionService).applyCreateToken(
+            verify(permanentControlSupport).applyCreateToken(
                     eq(gd), eq(player1Id), any(CreateTokenEffect.class), eq("ISD"));
             assertThat(gd.playerDecks.get(player2Id)).isEmpty();
         }
@@ -412,7 +412,7 @@ class MillResolutionServiceTest {
             service.resolveMillBottomOfTargetLibraryConditionalToken(gd, entry, effect);
 
             verify(graveyardService).addCardToGraveyard(gd, player2Id, land);
-            verifyNoInteractions(permanentControlResolutionService);
+            verifyNoInteractions(permanentControlSupport);
             assertThat(gd.playerDecks.get(player2Id)).isEmpty();
         }
     }

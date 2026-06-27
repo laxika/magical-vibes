@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -53,8 +53,8 @@ public class MiscTriggerCollectorService {
     private final ExileService exileService;
     private final DrawService drawService;
     // @Lazy to break indirect circular dependency:
-    // MiscTriggerCollectorService → PermanentControlResolutionService → TriggerCollectionService → MiscTriggerCollectorService
-    private PermanentControlResolutionService permanentControlResolutionService;
+    // MiscTriggerCollectorService → PermanentControlSupport → TriggerCollectionService → MiscTriggerCollectorService
+    private PermanentControlSupport permanentControlSupport;
     private PermanentRemovalService permanentRemovalService;
 
     public MiscTriggerCollectorService(GameBroadcastService gameBroadcastService,
@@ -62,23 +62,23 @@ public class MiscTriggerCollectorService {
                                        GameQueryService gameQueryService,
                                        ExileService exileService,
                                        @Lazy DrawService drawService,
-                                       @Lazy PermanentControlResolutionService permanentControlResolutionService,
+                                       @Lazy PermanentControlSupport permanentControlSupport,
                                        @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameBroadcastService = gameBroadcastService;
         this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.drawService = drawService;
-        this.permanentControlResolutionService = permanentControlResolutionService;
+        this.permanentControlSupport = permanentControlSupport;
         this.permanentRemovalService = permanentRemovalService;
     }
 
     /**
-     * Sets the PermanentControlResolutionService for manual (non-Spring) construction where
+     * Sets the PermanentControlSupport for manual (non-Spring) construction where
      * the circular dependency prevents passing it in the constructor.
      */
-    public void setPermanentControlResolutionService(PermanentControlResolutionService permanentControlResolutionService) {
-        this.permanentControlResolutionService = permanentControlResolutionService;
+    public void setPermanentControlSupport(PermanentControlSupport permanentControlSupport) {
+        this.permanentControlSupport = permanentControlSupport;
     }
 
     // ── ON_ALLY_PERMANENT_SACRIFICED ───────────────────────────────────
@@ -303,7 +303,7 @@ public class MiscTriggerCollectorService {
                 effect.tokenColor(), effect.tokenSubtypes(),
                 Set.of(), Set.of()
         );
-        permanentControlResolutionService.applyCreateToken(
+        permanentControlSupport.applyCreateToken(
                 gameData, match.controllerId(), tokenEffect, match.permanent().getCard().getSetCode()
         );
 

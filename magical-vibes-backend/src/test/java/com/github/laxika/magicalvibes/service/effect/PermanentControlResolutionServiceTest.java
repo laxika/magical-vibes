@@ -9,19 +9,14 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GainControlOfTargetPermanentEffectHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -41,16 +36,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class PermanentControlResolutionServiceTest {
 
-    @Mock private BattlefieldEntryService battlefieldEntryService;
-    @Mock private LegendRuleService legendRuleService;
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
-    @Mock private PlayerInputService playerInputService;
-    @Mock private PermanentRemovalService permanentRemovalService;
-    @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private CreatureControlService creatureControlService;
 
-    @InjectMocks private PermanentControlResolutionService service;
+    private GainControlOfTargetPermanentEffectHandler handler;
 
     private GameData gd;
     private UUID player1Id;
@@ -69,6 +59,7 @@ class PermanentControlResolutionServiceTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        handler = new GainControlOfTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, creatureControlService);
     }
 
     // ===== Helper methods =====
@@ -117,7 +108,7 @@ class PermanentControlResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).stealPermanent(gd, player1Id, target);
             assertThat(gd.permanentControlStolenCreatures).contains(target.getId());
@@ -133,7 +124,7 @@ class PermanentControlResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, missingId)).thenReturn(null);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             verify(creatureControlService, never()).stealPermanent(any(), any(), any());
             assertThat(gd.permanentControlStolenCreatures).isEmpty();
@@ -152,7 +143,7 @@ class PermanentControlResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             verify(creatureControlService, never()).stealPermanent(any(), any(), any());
             assertThat(gd.permanentControlStolenCreatures).isEmpty();
@@ -171,7 +162,7 @@ class PermanentControlResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).stealPermanent(gd, player1Id, target);
             assertThat(target.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
@@ -193,7 +184,7 @@ class PermanentControlResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             assertThat(target.getGrantedSubtypes().stream()
                     .filter(s -> s == CardSubtype.VAMPIRE).count()).isEqualTo(1);
@@ -223,7 +214,7 @@ class PermanentControlResolutionServiceTest {
             when(gameQueryService.findPermanentController(gd, target2.getId())).thenReturn(player2Id);
             when(gameQueryService.findPermanentController(gd, target3.getId())).thenReturn(player2Id);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).stealPermanent(gd, player1Id, target1);
             verify(creatureControlService).stealPermanent(gd, player1Id, target2);
@@ -252,7 +243,7 @@ class PermanentControlResolutionServiceTest {
             when(gameQueryService.findPermanentController(gd, target1.getId())).thenReturn(player2Id);
             when(gameQueryService.findPermanentController(gd, target2.getId())).thenReturn(player2Id);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             verify(creatureControlService).stealPermanent(gd, player1Id, target1);
             verify(creatureControlService).stealPermanent(gd, player1Id, target2);
@@ -268,7 +259,7 @@ class PermanentControlResolutionServiceTest {
             GainControlOfTargetPermanentEffect effect = new GainControlOfTargetPermanentEffect();
             StackEntry entry = entryWithMultiTargets(card, player1Id, List.of(effect), List.of());
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             verify(creatureControlService, never()).stealPermanent(any(), any(), any());
             assertThat(gd.permanentControlStolenCreatures).isEmpty();
@@ -292,7 +283,7 @@ class PermanentControlResolutionServiceTest {
             when(gameQueryService.findPermanentController(gd, target1.getId())).thenReturn(player2Id);
             when(gameQueryService.findPermanentController(gd, target2.getId())).thenReturn(player2Id);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             assertThat(target1.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
             assertThat(target2.getGrantedSubtypes()).contains(CardSubtype.VAMPIRE);
@@ -317,7 +308,7 @@ class PermanentControlResolutionServiceTest {
             when(gameQueryService.findPermanentController(gd, ownCreature.getId())).thenReturn(player1Id);
             when(gameQueryService.findPermanentController(gd, opponentCreature.getId())).thenReturn(player2Id);
 
-            service.resolveGainControlOfTargetPermanent(gd, entry, effect);
+            handler.resolve(gd, entry, effect);
 
             verify(creatureControlService, times(1)).stealPermanent(gd, player1Id, opponentCreature);
             verify(creatureControlService, never()).stealPermanent(gd, player1Id, ownCreature);

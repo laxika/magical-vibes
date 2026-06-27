@@ -109,7 +109,7 @@ import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
-import com.github.laxika.magicalvibes.service.effect.PermanentControlResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
@@ -305,20 +305,20 @@ public class GameSimulator {
         PlayerInteractionResolutionService playerInteractionResolutionService = new PlayerInteractionResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, battlefieldEntryService, triggerCollectionService, effectHandlerRegistry);
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         DestructionSupport destructionSupport = new DestructionSupport(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport);
-        PermanentControlResolutionService permanentControlResolutionService = new PermanentControlResolutionService(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService, triggerCollectionService, creatureControlService);
-        miscTriggerCollectorService.setPermanentControlResolutionService(permanentControlResolutionService);
+        PermanentControlSupport permanentControlSupport = new PermanentControlSupport(battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService);
+        miscTriggerCollectorService.setPermanentControlSupport(permanentControlSupport);
         LibrarySearchResolutionService librarySearchResolutionService = new LibrarySearchResolutionService(drawService, gameBroadcastService, noOpSession, cardViewFactory, gameQueryService, permanentRemovalService, playerInputService);
         GraveyardReturnResolutionService graveyardReturnResolutionService = new GraveyardReturnResolutionService(battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport, exileService, cardViewFactory);
         PermanentCounterResolutionService permanentCounterResolutionService = new PermanentCounterResolutionService(gameQueryService, gameBroadcastService, playerInputService, permanentRemovalService);
         AnimationResolutionService animationResolutionService = new AnimationResolutionService(
                 gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
         List<Object> effectServices = List.of(
-                new MillResolutionService(graveyardService, gameBroadcastService, gameQueryService, permanentControlResolutionService),
+                new MillResolutionService(graveyardService, gameBroadcastService, gameQueryService, permanentControlSupport),
                 new LibraryShuffleResolutionService(gameBroadcastService, gameQueryService, permanentRemovalService),
                 librarySearchResolutionService,
                 new LibraryRevealResolutionService(gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, battlefieldEntryService, exileService, triggerCollectionService),
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
-                new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService, permanentControlResolutionService),
+                new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService, permanentControlSupport),
                 exileResolutionService,
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService, cloneService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
@@ -330,7 +330,6 @@ public class GameSimulator {
                 new TapUntapResolutionService(gameQueryService, gameBroadcastService, triggerCollectionService),
                 permanentCounterResolutionService,
                 playerInteractionResolutionService,
-                permanentControlResolutionService,
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
                 new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, permanentRemovalService, legendRuleService, exileService),
@@ -340,7 +339,8 @@ public class GameSimulator {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                lifeSupport, damageSupport, destructionSupport, battlefieldEntryService, gameQueryService, gameBroadcastService, gameOutcomeService,
+                lifeSupport, damageSupport, destructionSupport, permanentControlSupport, battlefieldEntryService, legendRuleService, creatureControlService,
+                gameQueryService, gameBroadcastService, gameOutcomeService,
                 graveyardService, permanentRemovalService, triggerCollectionService, playerInputService);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
 
