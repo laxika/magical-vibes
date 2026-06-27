@@ -102,11 +102,11 @@ import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.KeywordGrantResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.TapUntapResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
@@ -276,6 +276,7 @@ public class GameSimulator {
         StateBasedActionService stateBasedActionService = new StateBasedActionService(
                 gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, graveyardService, stateTriggerService);
         LifeSupport lifeSupport = new LifeSupport(gameQueryService, gameBroadcastService, triggerCollectionService);
+        TapUntapSupport tapUntapSupport = new TapUntapSupport(triggerCollectionService);
         DamageSupport damageSupport = new DamageSupport(graveyardService, damagePreventionService, gameOutcomeService, gameQueryService, gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeSupport);
         CombatTriggerService combatTriggerService = new CombatTriggerService(gameBroadcastService);
         this.combatAttackService = new CombatAttackService(gameQueryService, gameBroadcastService, noOpSession, triggerCollectionService, combatTriggerService);
@@ -327,7 +328,6 @@ public class GameSimulator {
                 animationResolutionService,
                 new KeywordGrantResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),
-                new TapUntapResolutionService(gameQueryService, gameBroadcastService, triggerCollectionService),
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
                 new CardSpecificResolutionService(graveyardService, warpWorldService, battlefieldEntryService, gameQueryService, gameBroadcastService, noOpSession, cardViewFactory, permanentRemovalService, legendRuleService, exileService),
@@ -337,7 +337,7 @@ public class GameSimulator {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                lifeSupport, damageSupport, destructionSupport, permanentControlSupport, permanentCounterSupport,
+                lifeSupport, tapUntapSupport, damageSupport, destructionSupport, permanentControlSupport, permanentCounterSupport,
                 battlefieldEntryService, legendRuleService, creatureControlService,
                 gameQueryService, gameBroadcastService, gameOutcomeService,
                 graveyardService, permanentRemovalService, triggerCollectionService, playerInputService,

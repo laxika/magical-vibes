@@ -96,12 +96,12 @@ import com.github.laxika.magicalvibes.service.effect.AnimationResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.KeywordGrantResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.TapUntapResolutionService;
 import com.github.laxika.magicalvibes.service.effect.CardSpecificResolutionService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
@@ -239,6 +239,7 @@ public class GameTestHarness {
         staticStateBasedActionService = new StateBasedActionService(
                 gameOutcomeService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, graveyardService, stateTriggerService);
         staticLifeSupport = new LifeSupport(staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService);
+        TapUntapSupport staticTapUntapSupport = new TapUntapSupport(staticTriggerCollectionService);
         DamageSupport damageSupport = new DamageSupport(graveyardService, damagePreventionService, gameOutcomeService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticTriggerCollectionService, staticLifeSupport);
         CombatTriggerService combatTriggerService = new CombatTriggerService(staticGameBroadcastService);
         staticCombatAttackService = new CombatAttackService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticTriggerCollectionService, combatTriggerService);
@@ -293,7 +294,6 @@ public class GameTestHarness {
                 animationResolutionService,
                 new KeywordGrantResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new CombatRestrictionResolutionService(staticGameQueryService, staticGameBroadcastService),
-                new TapUntapResolutionService(staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService),
                 new TurnResolutionService(combatService, staticGameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService),
                 new CardSpecificResolutionService(graveyardService, warpWorldService, staticBattlefieldEntryService, staticGameQueryService, staticGameBroadcastService, staticSessionManager, cardViewFactory, staticPermanentRemovalService, staticLegendRuleService, exileService),
@@ -303,7 +303,7 @@ public class GameTestHarness {
             scanEffectHandlers(service, effectHandlerRegistry);
         }
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                staticLifeSupport, damageSupport, destructionSupport, permanentControlSupport, permanentCounterSupport,
+                staticLifeSupport, staticTapUntapSupport, damageSupport, destructionSupport, permanentControlSupport, permanentCounterSupport,
                 staticBattlefieldEntryService, staticLegendRuleService, creatureControlService,
                 staticGameQueryService, staticGameBroadcastService, gameOutcomeService,
                 graveyardService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,

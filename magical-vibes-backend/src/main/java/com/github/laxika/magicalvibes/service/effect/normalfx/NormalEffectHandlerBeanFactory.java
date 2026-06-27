@@ -26,7 +26,8 @@ import java.util.List;
  * more domains migrate, only this factory needs updating â€” non-Spring sites never change again.
  *
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
- * <b>Permanent Control</b>, <b>Permanent Counter</b>, and <b>Player Interaction</b> domain handlers.
+ * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>, and
+ * <b>Tap/Untap</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -34,6 +35,7 @@ public final class NormalEffectHandlerBeanFactory {
     }
 
     public static List<NormalEffectHandlerBean> createAll(LifeSupport lifeSupport,
+                                                          TapUntapSupport tapUntapSupport,
                                                           DamageSupport damageSupport,
                                                           DestructionSupport destructionSupport,
                                                           PermanentControlSupport permanentControlSupport,
@@ -349,7 +351,28 @@ public final class NormalEffectHandlerBeanFactory {
                 new LoseLifeUnlessPaysEffectHandler(gameBroadcastService, gameQueryService, playerInteractionSupport),
                 new SacrificeUnlessReturnOwnPermanentTypeToHandEffectHandler(gameBroadcastService, permanentRemovalService, playerInteractionSupport),
                 new GrantPermanentNoMaxHandSizeEffectHandler(gameBroadcastService, playerInteractionSupport),
-                new RevealRandomHandCardAndPlayEffectHandler(battlefieldEntryService, cardViewFactory, gameBroadcastService, gameQueryService, playerInputService, playerInteractionSupport, sessionManager, triggerCollectionService)
+                new RevealRandomHandCardAndPlayEffectHandler(battlefieldEntryService, cardViewFactory, gameBroadcastService, gameQueryService, playerInputService, playerInteractionSupport, sessionManager, triggerCollectionService),
+                new TapCreaturesEffectHandler(gameQueryService, gameBroadcastService, tapUntapSupport),
+                new TapAllAttackingCreaturesEffectHandler(gameQueryService, gameBroadcastService, tapUntapSupport),
+                new SkipNextUntapAllAttackingCreaturesEffectHandler(gameQueryService, gameBroadcastService),
+                new TapSelfEffectHandler(gameQueryService, gameBroadcastService, tapUntapSupport),
+                new TapEnchantedCreatureEffectHandler(gameQueryService, gameBroadcastService, tapUntapSupport),
+                new TapOrUntapTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, triggerCollectionService),
+                new TapTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, tapUntapSupport),
+                new SkipNextUntapOnTargetEffectHandler(gameQueryService, gameBroadcastService),
+                new PreventTargetUntapWhileSourceTappedEffectHandler(gameQueryService, gameBroadcastService),
+                new PreventTargetUntapWhileSourceOnBattlefieldEffectHandler(gameQueryService, gameBroadcastService),
+                new UntapAllTargetPermanentsEffectHandler(gameQueryService, gameBroadcastService),
+                new UntapTargetPermanentEffectHandler(gameQueryService, gameBroadcastService),
+                new RemoveTargetFromCombatEffectHandler(gameQueryService, gameBroadcastService),
+                new UntapSelfEffectHandler(gameQueryService, gameBroadcastService),
+                new UntapAttackedCreaturesEffectHandler(gameQueryService, gameBroadcastService),
+                new UntapEachOtherCreatureYouControlEffectHandler(gameQueryService, gameBroadcastService),
+                new TapPermanentsOfTargetPlayerEffectHandler(gameQueryService, gameBroadcastService, tapUntapSupport),
+                new SkipNextUntapPermanentsOfTargetPlayerEffectHandler(gameQueryService, gameBroadcastService),
+                new UntapAllControlledPermanentsEffectHandler(gameQueryService, gameBroadcastService),
+                new RegisterDelayedUntapPermanentsEffectHandler(),
+                new UntapUpToControlledPermanentsEffectHandler(gameQueryService, gameBroadcastService)
         );
     }
 
