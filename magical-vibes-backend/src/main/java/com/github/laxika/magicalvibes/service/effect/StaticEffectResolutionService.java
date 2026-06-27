@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfPerAttachmentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOtherControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
@@ -931,30 +930,6 @@ public class StaticEffectResolutionService {
         int slimeCount = (linked != null) ? linked.getCounterCount(CounterType.SLIME) : 0;
         accumulator.addPower(slimeCount);
         accumulator.addToughness(slimeCount);
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerControlledSubtypeEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerControlledSubtypeEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) {
-            return;
-        }
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.getCard().getSubtypes().contains(boost.subtype())) {
-                count++;
-            }
-        }
-
-        accumulator.addPower(count * boost.powerPerPermanent());
-        accumulator.addToughness(count * boost.toughnessPerPermanent());
     }
 
     @HandlesStaticEffect(value = BoostSelfPerOtherControlledSubtypeEffect.class, selfOnly = true)
