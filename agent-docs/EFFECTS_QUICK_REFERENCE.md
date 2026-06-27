@@ -440,6 +440,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `IncreaseOpponentCastCostEffect(Set<CardType>, int)` — opponents' spells cost more
 - `IncreaseOpponentCostForTargetingControlledPermanentEffect(PermanentPredicate, int)` — opponent spells/abilities targeting your matching permanent cost more
 - `ReduceOwnCastCostForCardTypeEffect(Set<CardType>, int)` — own spells cost less
+- `ReduceCastCostForMatchingSpellsEffect(CardPredicate, int, CostModificationScope)` — matching spells cost less (SELF = yours, OPPONENT = opponents'; e.g. CardSubtypePredicate, CardIsHistoricPredicate, CardAnyOfPredicate)
 - `ReduceOwnCastCostIfControlsPermanentEffect(PermanentPredicate, int)` — this spell costs less if you control a matching permanent
 - `ReduceOwnCastCostIfTargetingControlledPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target is your matching permanent
 - `ReduceOwnCastCostPerCreatureCardInGraveyardEffect(int)` — this spell costs N less per creature card in your graveyard (Ghoultree)

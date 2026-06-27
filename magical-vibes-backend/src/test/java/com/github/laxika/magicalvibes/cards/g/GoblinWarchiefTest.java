@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,12 +30,14 @@ class GoblinWarchiefTest extends BaseCardTest {
         GoblinWarchief card = new GoblinWarchief();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceOwnCastCostForSubtypeEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(StaticBoostEffect.class);
 
-        ReduceOwnCastCostForSubtypeEffect costEffect = (ReduceOwnCastCostForSubtypeEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(costEffect.affectedSubtypes()).containsExactly(CardSubtype.GOBLIN);
+        ReduceCastCostForMatchingSpellsEffect costEffect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
+        assertThat(costEffect.predicate()).isInstanceOf(CardSubtypePredicate.class);
+        assertThat(((CardSubtypePredicate) costEffect.predicate()).subtype()).isEqualTo(CardSubtype.GOBLIN);
         assertThat(costEffect.amount()).isEqualTo(1);
+        assertThat(costEffect.scope()).isEqualTo(CostModificationScope.SELF);
 
         StaticBoostEffect hasteEffect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(1);
         assertThat(hasteEffect.powerBoost()).isEqualTo(0);

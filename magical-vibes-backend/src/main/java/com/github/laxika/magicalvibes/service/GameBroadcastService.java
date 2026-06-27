@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
@@ -1205,7 +1204,6 @@ public class GameBroadcastService {
         List<ReduceOwnCastCostForSharedCardTypeWithImprintEffect> imprintReductions = new ArrayList<>();
         List<Card> imprintSources = new ArrayList<>();
         List<ReduceOwnCastCostForCardTypeEffect> cardTypeReductions = new ArrayList<>();
-        List<ReduceOwnCastCostForSubtypeEffect> subtypeReductions = new ArrayList<>();
         List<ReduceCastCostForMatchingSpellsEffect> selfMatchReductions = new ArrayList<>();
         List<ReduceCastCostForMatchingSpellsEffect> opponentMatchReductions = new ArrayList<>();
 
@@ -1238,9 +1236,6 @@ public class GameBroadcastService {
                         if (effect instanceof ReduceOwnCastCostForCardTypeEffect red) {
                             cardTypeReductions.add(red);
                         }
-                        if (effect instanceof ReduceOwnCastCostForSubtypeEffect red) {
-                            subtypeReductions.add(red);
-                        }
                         if (effect instanceof ReduceCastCostForMatchingSpellsEffect red
                                 && red.scope() == CostModificationScope.SELF) {
                             selfMatchReductions.add(red);
@@ -1260,7 +1255,7 @@ public class GameBroadcastService {
 
         return new CostModifierSnapshot(
                 opponentIncreases, spellCastTax, predicateIncreases,
-                imprintReductions, imprintSources, cardTypeReductions, subtypeReductions,
+                imprintReductions, imprintSources, cardTypeReductions,
                 selfMatchReductions, opponentMatchReductions);
     }
 
@@ -1315,14 +1310,6 @@ public class GameBroadcastService {
                 reduction += red.amount();
             }
         }
-        for (ReduceOwnCastCostForSubtypeEffect red : snapshot.subtypeReductions) {
-            for (CardSubtype subtype : red.affectedSubtypes()) {
-                if (gameQueryService.cardHasSubtype(card, subtype, gameData, playerId)) {
-                    reduction += red.amount();
-                    break;
-                }
-            }
-        }
         for (ReduceCastCostForMatchingSpellsEffect red : snapshot.selfMatchReductions) {
             if (gameQueryService.matchesCardPredicate(card, red.predicate(), null)) {
                 reduction += red.amount();
@@ -1344,7 +1331,6 @@ public class GameBroadcastService {
             List<ReduceOwnCastCostForSharedCardTypeWithImprintEffect> imprintReductions,
             List<Card> imprintSources,
             List<ReduceOwnCastCostForCardTypeEffect> cardTypeReductions,
-            List<ReduceOwnCastCostForSubtypeEffect> subtypeReductions,
             List<ReduceCastCostForMatchingSpellsEffect> selfMatchReductions,
             List<ReduceCastCostForMatchingSpellsEffect> opponentMatchReductions
     ) {}
@@ -1513,14 +1499,6 @@ public class GameBroadcastService {
                     if (effect instanceof ReduceOwnCastCostForCardTypeEffect cardTypeReduce) {
                         if (cardTypeReduce.affectedTypes().contains(card.getType())) {
                             reduction += cardTypeReduce.amount();
-                        }
-                    }
-                    if (effect instanceof ReduceOwnCastCostForSubtypeEffect subtypeReduce) {
-                        for (CardSubtype subtype : subtypeReduce.affectedSubtypes()) {
-                            if (gameQueryService.cardHasSubtype(card, subtype, gameData, playerId)) {
-                                reduction += subtypeReduce.amount();
-                                break;
-                            }
                         }
                     }
                     if (effect instanceof ReduceCastCostForMatchingSpellsEffect matchReduce

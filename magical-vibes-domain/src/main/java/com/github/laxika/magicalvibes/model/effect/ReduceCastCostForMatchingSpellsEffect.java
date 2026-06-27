@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>Examples:
  * <ul>
  *   <li>Jhoira's Familiar: {@code new ReduceCastCostForMatchingSpellsEffect(new CardIsHistoricPredicate(), 1, SELF)}</li>
+ *   <li>Goblin Warchief: {@code new ReduceCastCostForMatchingSpellsEffect(new CardSubtypePredicate(GOBLIN), 1, SELF)}</li>
+ *   <li>Danitha Capashen, Paragon: {@code new ReduceCastCostForMatchingSpellsEffect(new CardAnyOfPredicate(List.of(new CardSubtypePredicate(AURA), new CardSubtypePredicate(EQUIPMENT))), 1, SELF)}</li>
  * </ul>
  */
 public record ReduceCastCostForMatchingSpellsEffect(

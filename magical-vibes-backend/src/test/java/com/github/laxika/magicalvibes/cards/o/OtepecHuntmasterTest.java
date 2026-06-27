@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -40,11 +42,13 @@ class OtepecHuntmasterTest extends BaseCardTest {
         OtepecHuntmaster card = new OtepecHuntmaster();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceOwnCastCostForSubtypeEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
 
-        ReduceOwnCastCostForSubtypeEffect effect = (ReduceOwnCastCostForSubtypeEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.affectedSubtypes()).containsExactly(CardSubtype.DINOSAUR);
+        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
+        assertThat(effect.predicate()).isInstanceOf(CardSubtypePredicate.class);
+        assertThat(((CardSubtypePredicate) effect.predicate()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
         assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
     }
 
     @Test

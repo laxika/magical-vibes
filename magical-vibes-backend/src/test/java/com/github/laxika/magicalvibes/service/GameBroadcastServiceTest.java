@@ -18,8 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPer
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -191,7 +191,6 @@ class GameBroadcastServiceTest {
             assertThat(snapshot.spellCastTax()).isZero();
             assertThat(snapshot.predicateIncreases()).isEmpty();
             assertThat(snapshot.cardTypeReductions()).isEmpty();
-            assertThat(snapshot.subtypeReductions()).isEmpty();
             assertThat(snapshot.selfMatchReductions()).isEmpty();
             assertThat(snapshot.opponentMatchReductions()).isEmpty();
         }
@@ -346,20 +345,23 @@ class GameBroadcastServiceTest {
         }
 
         @Test
-        @DisplayName("Collects subtype reduction from own battlefield")
-        void collectsSubtypeReduction() {
+        @DisplayName("Collects SELF-scoped subtype match reduction from own battlefield")
+        void collectsSubtypeMatchReduction() {
             when(gameQueryService.getOpponentId(any(), eq(player1Id))).thenReturn(player2Id);
 
             Card reducer = new Card();
             reducer.setName("Goblin Warchief");
             reducer.setType(CardType.CREATURE);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForSubtypeEffect(Set.of(CardSubtype.GOBLIN), 1));
+                    new ReduceCastCostForMatchingSpellsEffect(
+                            new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
-            assertThat(snapshot.subtypeReductions()).hasSize(1);
+            assertThat(snapshot.selfMatchReductions()).hasSize(1);
+            assertThat(snapshot.selfMatchReductions().getFirst().predicate())
+                    .isInstanceOf(CardSubtypePredicate.class);
         }
 
         @Test
@@ -509,21 +511,23 @@ class GameBroadcastServiceTest {
         }
 
         @Test
-        @DisplayName("Subtype reduction applies when card has matching subtype")
-        void subtypeReductionAppliesForMatchingSubtype() {
+        @DisplayName("Subtype match reduction applies when card has matching subtype")
+        void subtypeMatchReductionAppliesForMatchingSubtype() {
             when(gameQueryService.getOpponentId(any(), eq(player1Id))).thenReturn(player2Id);
 
             Card warchief = new Card();
             warchief.setName("Goblin Warchief");
             warchief.setType(CardType.CREATURE);
             warchief.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForSubtypeEffect(Set.of(CardSubtype.GOBLIN), 1));
+                    new ReduceCastCostForMatchingSpellsEffect(
+                            new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(warchief));
 
-            when(gameQueryService.cardHasSubtype(any(), eq(CardSubtype.GOBLIN), any(), any()))
+            when(gameQueryService.matchesCardPredicate(any(), any(), any()))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
-                        return c.getSubtypes().contains(CardSubtype.GOBLIN);
+                        CardSubtypePredicate pred = inv.getArgument(1);
+                        return c.getSubtypes().contains(pred.subtype());
                     });
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
