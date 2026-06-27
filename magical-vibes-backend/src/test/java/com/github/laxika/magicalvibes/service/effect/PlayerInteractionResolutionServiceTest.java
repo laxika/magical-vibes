@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantPermanentNoMaxHandSizeEf
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentMayPlayCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectDrawsEffect;
@@ -88,12 +89,14 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -127,9 +130,8 @@ class PlayerInteractionResolutionServiceTest {
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private TriggerCollectionService triggerCollectionService;
-    @Mock private EffectHandlerRegistry effectHandlerRegistry;
-
-    @InjectMocks private PlayerInteractionResolutionService service;
+    private EffectHandlerRegistry registry;
+    private PlayerInteractionSupport support;
 
     private GameData gd;
     private UUID player1Id;
@@ -159,6 +161,22 @@ class PlayerInteractionResolutionServiceTest {
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
         gd.activePlayerId = player1Id;
+        support = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService,
+                gameBroadcastService, playerInputService, sessionManager, cardViewFactory,
+                permanentRemovalService, battlefieldEntryService, triggerCollectionService);
+        registry = new EffectHandlerRegistry();
+        java.util.List<NormalEffectHandlerBean> beans = NormalEffectHandlerBeanFactory.createPlayerInteractionHandlers(
+                support, drawService, graveyardService, gameQueryService, gameBroadcastService,
+                playerInputService, sessionManager, cardViewFactory, permanentRemovalService,
+                battlefieldEntryService, triggerCollectionService, registry);
+        NormalEffectHandlerBeanFactory.registerAll(beans, registry);
+
+    }
+
+
+    private void resolveEffect(GameData gd, StackEntry entry, CardEffect effect) {
+        EffectHandler handler = registry.getHandler(effect);
+        handler.resolve(gd, entry, effect);
     }
 
     // ===== Helper methods =====
@@ -212,7 +230,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawCardEffect effect = new DrawCardEffect(3);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveDrawCards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(3)).resolveDrawCard(gd, player1Id);
         }
@@ -224,7 +242,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawCardEffect effect = new DrawCardEffect(1);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveDrawCards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
         }
@@ -245,7 +263,7 @@ class PlayerInteractionResolutionServiceTest {
             EachPlayerDrawsCardEffect effect = new EachPlayerDrawsCardEffect(2);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveEachPlayerDrawsCard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
             verify(drawService, times(2)).resolveDrawCard(gd, player2Id);
@@ -258,7 +276,7 @@ class PlayerInteractionResolutionServiceTest {
             EachPlayerDrawsCardEffect effect = new EachPlayerDrawsCardEffect(1);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveEachPlayerDrawsCard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
             verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
@@ -285,7 +303,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
 
-            service.resolveSacrificeSelfAndDrawCards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
             verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
@@ -298,7 +316,7 @@ class PlayerInteractionResolutionServiceTest {
             SacrificeSelfAndDrawCardsEffect effect = new SacrificeSelfAndDrawCardsEffect(2);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveSacrificeSelfAndDrawCards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
             verify(drawService, never()).resolveDrawCard(any(), any());
@@ -314,7 +332,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, fakePermanentId)).thenReturn(null);
 
-            service.resolveSacrificeSelfAndDrawCards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
             verify(drawService, never()).resolveDrawCard(any(), any());
@@ -338,7 +356,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawXCardsEffect effect = new DrawXCardsEffect();
             StackEntry entry = createEntryWithXValue(card, player1Id, List.of(effect), 5);
 
-            service.resolveDrawXCards(gd, entry);
+            resolveEffect(gd, entry, new DrawXCardsEffect());
 
             verify(drawService, times(5)).resolveDrawCard(gd, player1Id);
         }
@@ -350,7 +368,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawXCardsEffect effect = new DrawXCardsEffect();
             StackEntry entry = createEntryWithXValue(card, player1Id, List.of(effect), 0);
 
-            service.resolveDrawXCards(gd, entry);
+            resolveEffect(gd, entry, new DrawXCardsEffect());
 
             verify(drawService, never()).resolveDrawCard(any(), any());
         }
@@ -376,7 +394,7 @@ class PlayerInteractionResolutionServiceTest {
             ShuffleHandIntoLibraryAndDrawEffect effect = new ShuffleHandIntoLibraryAndDrawEffect();
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveShuffleHandIntoLibraryAndDraw(gd, entry);
+            resolveEffect(gd, entry, new ShuffleHandIntoLibraryAndDrawEffect());
 
             // Hand should be cleared
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
@@ -394,7 +412,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             // Both players have empty hands
 
-            service.resolveShuffleHandIntoLibraryAndDraw(gd, entry);
+            resolveEffect(gd, entry, new ShuffleHandIntoLibraryAndDrawEffect());
 
             verify(drawService, never()).resolveDrawCard(any(), any());
             verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd), argThat(msg ->
@@ -411,7 +429,7 @@ class PlayerInteractionResolutionServiceTest {
             ShuffleHandIntoLibraryAndDrawEffect effect = new ShuffleHandIntoLibraryAndDrawEffect();
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveShuffleHandIntoLibraryAndDraw(gd, entry);
+            resolveEffect(gd, entry, new ShuffleHandIntoLibraryAndDrawEffect());
 
             verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
             verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
@@ -440,7 +458,7 @@ class PlayerInteractionResolutionServiceTest {
             when(gameQueryService.isCreature(gd, creature1)).thenReturn(true);
             when(gameQueryService.isCreature(gd, creature2)).thenReturn(true);
 
-            service.resolveDrawCardsEqualToControlledCreatureCount(gd, entry);
+            resolveEffect(gd, entry, new DrawCardsEqualToControlledCreatureCountEffect());
 
             verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
         }
@@ -452,7 +470,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawCardsEqualToControlledCreatureCountEffect effect = new DrawCardsEqualToControlledCreatureCountEffect();
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveDrawCardsEqualToControlledCreatureCount(gd, entry);
+            resolveEffect(gd, entry, new DrawCardsEqualToControlledCreatureCountEffect());
 
             verify(drawService, never()).resolveDrawCard(any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -473,7 +491,7 @@ class PlayerInteractionResolutionServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
 
-            service.resolveDrawCardsEqualToControlledCreatureCount(gd, entry);
+            resolveEffect(gd, entry, new DrawCardsEqualToControlledCreatureCountEffect());
 
             verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
         }
@@ -495,7 +513,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveDiscardCard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isFalse();
             verify(playerInputService).beginDiscardChoice(gd, player1Id);
@@ -509,7 +527,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).addAll(List.of(createCard("A"), createCard("B")));
 
-            service.resolveDiscardCard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
         }
@@ -521,7 +539,7 @@ class PlayerInteractionResolutionServiceTest {
             DiscardCardEffect effect = new DiscardCardEffect(1);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveDiscardCard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no cards to discard")));
@@ -545,7 +563,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
 
-            service.resolveDiscardCardUnlessAttackedThisTurn(gd, entry);
+            resolveEffect(gd, entry, new DiscardCardUnlessAttackedThisTurnEffect());
 
             verify(playerInputService, never()).beginDiscardChoice(any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -560,7 +578,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveDiscardCardUnlessAttackedThisTurn(gd, entry);
+            resolveEffect(gd, entry, new DiscardCardUnlessAttackedThisTurnEffect());
 
             assertThat(gd.discardCausedByOpponent).isFalse();
             verify(playerInputService).beginDiscardChoice(gd, player1Id);
@@ -584,7 +602,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.playerHands.get(player1Id).addAll(List.of(handCard1, handCard2));
             StackEntry entry = createEntry(card, player1Id, List.of(new DiscardOwnHandEffect()));
 
-            service.resolveDiscardOwnHand(gd, entry);
+            resolveEffect(gd, entry, new DiscardOwnHandEffect());
 
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
             verify(graveyardService).addCardToGraveyard(gd, player1Id, handCard1);
@@ -599,7 +617,7 @@ class PlayerInteractionResolutionServiceTest {
             Card card = createCard("One with Nothing");
             StackEntry entry = createEntry(card, player1Id, List.of(new DiscardOwnHandEffect()));
 
-            service.resolveDiscardOwnHand(gd, entry);
+            resolveEffect(gd, entry, new DiscardOwnHandEffect());
 
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -614,7 +632,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.discardCausedByOpponent = true;
             StackEntry entry = createEntry(card, player1Id, List.of(new DiscardOwnHandEffect()));
 
-            service.resolveDiscardOwnHand(gd, entry);
+            resolveEffect(gd, entry, new DiscardOwnHandEffect());
 
             assertThat(gd.discardCausedByOpponent).isFalse();
         }
@@ -626,7 +644,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.playerHands.get(player1Id).addAll(List.of(createCard("A"), createCard("B"), createCard("C")));
             StackEntry entry = createEntry(card, player1Id, List.of(new DiscardOwnHandEffect()));
 
-            service.resolveDiscardOwnHand(gd, entry);
+            resolveEffect(gd, entry, new DiscardOwnHandEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("discards their hand") && msg.contains("3 cards")));
@@ -650,7 +668,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.playerHands.get(player1Id).addAll(List.of(handCard1, handCard2));
             StackEntry entry = createEntry(card, player1Id, List.of(new DiscardOwnHandThenDrawThatManyEffect()));
 
-            service.resolveDiscardOwnHandThenDrawThatMany(gd, entry);
+            resolveEffect(gd, entry, new DiscardOwnHandThenDrawThatManyEffect());
 
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
             verify(graveyardService).addCardToGraveyard(gd, player1Id, handCard1);
@@ -666,7 +684,7 @@ class PlayerInteractionResolutionServiceTest {
             Card card = createCard("Shattered Perception");
             StackEntry entry = createEntry(card, player1Id, List.of(new DiscardOwnHandThenDrawThatManyEffect()));
 
-            service.resolveDiscardOwnHandThenDrawThatMany(gd, entry);
+            resolveEffect(gd, entry, new DiscardOwnHandThenDrawThatManyEffect());
 
             verify(graveyardService, never()).addCardToGraveyard(any(), any(), any());
             verify(drawService, never()).resolveDrawCard(any(), any());
@@ -691,7 +709,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveDrawAndDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
             assertThat(gd.discardCausedByOpponent).isFalse();
@@ -715,7 +733,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).addAll(List.of(createCard("A"), createCard("B")));
 
-            service.resolveTargetPlayerDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isTrue();
             verify(playerInputService).beginDiscardChoice(gd, player2Id);
@@ -728,7 +746,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetPlayerDiscardsEffect effect = new TargetPlayerDiscardsEffect(2);
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveTargetPlayerDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no cards to discard")));
@@ -757,7 +775,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntryWithTarget(sourceCard, player1Id, List.of(effect), targetSpellCard.getId());
             gd.playerHands.get(player2Id).add(createCard("Mountain"));
 
-            service.resolveTargetSpellControllerDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isTrue();
             verify(playerInputService).beginDiscardChoice(gd, player2Id);
@@ -770,7 +788,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetSpellControllerDiscardsEffect effect = new TargetSpellControllerDiscardsEffect(1);
             StackEntry entry = createEntryWithTarget(sourceCard, player1Id, List.of(effect), UUID.randomUUID());
 
-            service.resolveTargetSpellControllerDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginDiscardChoice(any(), any());
         }
@@ -782,7 +800,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetSpellControllerDiscardsEffect effect = new TargetSpellControllerDiscardsEffect(1);
             StackEntry entry = createEntry(sourceCard, player1Id, List.of(effect));
 
-            service.resolveTargetSpellControllerDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginDiscardChoice(any(), any());
         }
@@ -804,7 +822,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 3, player2Id);
             gd.playerHands.get(player2Id).addAll(List.of(createCard("A"), createCard("B"), createCard("C")));
 
-            service.resolveTargetPlayerDiscardsByChargeCounters(gd, entry);
+            resolveEffect(gd, entry, new TargetPlayerDiscardsByChargeCountersEffect());
 
             assertThat(gd.discardCausedByOpponent).isTrue();
             verify(playerInputService).beginDiscardChoice(gd, player2Id);
@@ -817,7 +835,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetPlayerDiscardsByChargeCountersEffect effect = new TargetPlayerDiscardsByChargeCountersEffect();
             StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 0, player2Id);
 
-            service.resolveTargetPlayerDiscardsByChargeCounters(gd, entry);
+            resolveEffect(gd, entry, new TargetPlayerDiscardsByChargeCountersEffect());
 
             verify(playerInputService, never()).beginDiscardChoice(any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -842,7 +860,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.activePlayerId = player1Id;
             gd.playerHands.get(player1Id).add(createCard("A"));
 
-            service.resolveEachPlayerDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             // Active player starts the discard
             verify(playerInputService).beginDiscardChoice(gd, player1Id);
@@ -859,7 +877,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.playerHands.get(player1Id).add(createCard("A"));
             gd.playerHands.get(player2Id).add(createCard("B"));
 
-            service.resolveEachPlayerDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             // player2 should be in the pending queue
             assertThat(gd.pendingEachPlayerDiscardQueue).containsExactly(player2Id);
@@ -873,7 +891,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("A"));
 
-            service.resolveEachPlayerDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingEachPlayerDiscardControllerId).isEqualTo(player1Id);
         }
@@ -896,7 +914,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.activePlayerId = player2Id;
             gd.playerHands.get(player2Id).addAll(List.of(createCard("A"), createCard("B")));
 
-            service.resolveEachOpponentDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             // Player2 (opponent) should be first since they're active player and not controller
             verify(playerInputService).beginDiscardChoice(gd, player2Id);
@@ -912,7 +930,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.activePlayerId = player1Id;
             gd.playerHands.get(player2Id).add(createCard("A"));
 
-            service.resolveEachOpponentDiscards(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             // player2 is the only opponent; active player is controller, so they start
             // with player2 from queue
@@ -936,7 +954,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.pendingEachPlayerDiscardControllerId = player1Id;
             gd.playerHands.get(player2Id).add(createCard("Mountain"));
 
-            service.startNextEachPlayerDiscard(gd);
+            support.startNextEachPlayerDiscard(gd);
 
             verify(playerInputService).beginDiscardChoice(gd, player2Id);
             assertThat(gd.discardCausedByOpponent).isTrue();
@@ -952,7 +970,7 @@ class PlayerInteractionResolutionServiceTest {
             // player1 has empty hand, player2 has cards
             gd.playerHands.get(player2Id).add(createCard("Mountain"));
 
-            service.startNextEachPlayerDiscard(gd);
+            support.startNextEachPlayerDiscard(gd);
 
             // player1 skipped, player2 gets the discard prompt
             verify(playerInputService).beginDiscardChoice(gd, player2Id);
@@ -966,7 +984,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.pendingEachPlayerDiscardControllerId = player1Id;
             // Empty queue — all players already processed
 
-            service.startNextEachPlayerDiscard(gd);
+            support.startNextEachPlayerDiscard(gd);
 
             assertThat(gd.pendingEachPlayerDiscardControllerId).isNull();
             verify(playerInputService, never()).beginDiscardChoice(any(), any());
@@ -980,7 +998,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.pendingEachPlayerDiscardControllerId = player1Id;
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.startNextEachPlayerDiscard(gd);
+            support.startNextEachPlayerDiscard(gd);
 
             assertThat(gd.discardCausedByOpponent).isFalse();
         }
@@ -1001,7 +1019,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetPlayerRandomDiscardOrControllerDrawsEffect effect = new TargetPlayerRandomDiscardOrControllerDrawsEffect();
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveTargetPlayerRandomDiscardOrControllerDraws(gd, entry);
+            resolveEffect(gd, entry, new TargetPlayerRandomDiscardOrControllerDrawsEffect());
 
             verify(drawService).resolveDrawCard(gd, player1Id);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -1017,7 +1035,7 @@ class PlayerInteractionResolutionServiceTest {
             Card handCard = createCard("Mountain");
             gd.playerHands.get(player2Id).add(handCard);
 
-            service.resolveTargetPlayerRandomDiscardOrControllerDraws(gd, entry);
+            resolveEffect(gd, entry, new TargetPlayerRandomDiscardOrControllerDrawsEffect());
 
             assertThat(gd.discardCausedByOpponent).isTrue();
             // Random discard removes from hand and sends to graveyard
@@ -1041,7 +1059,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetPlayerRandomDiscardXEffect effect = new TargetPlayerRandomDiscardXEffect();
             StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 0, player2Id);
 
-            service.resolveTargetPlayerRandomDiscardX(gd, entry);
+            resolveEffect(gd, entry, new TargetPlayerRandomDiscardXEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("discards 0 cards")));
@@ -1056,7 +1074,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 2, player2Id);
             gd.playerHands.get(player2Id).addAll(List.of(createCard("A"), createCard("B"), createCard("C")));
 
-            service.resolveTargetPlayerRandomDiscardX(gd, entry);
+            resolveEffect(gd, entry, new TargetPlayerRandomDiscardXEffect());
 
             assertThat(gd.discardCausedByOpponent).isTrue();
             // 2 cards should have been discarded
@@ -1085,7 +1103,7 @@ class PlayerInteractionResolutionServiceTest {
             CardView mockView = mock(CardView.class);
             when(cardViewFactory.create(handCard)).thenReturn(mockView);
 
-            service.resolveLookAtHand(gd, entry);
+            resolveEffect(gd, entry, new LookAtHandEffect());
 
             verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -1099,7 +1117,7 @@ class PlayerInteractionResolutionServiceTest {
             LookAtHandEffect effect = new LookAtHandEffect();
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveLookAtHand(gd, entry);
+            resolveEffect(gd, entry, new LookAtHandEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("looks at") && msg.contains("empty")));
@@ -1121,7 +1139,7 @@ class PlayerInteractionResolutionServiceTest {
             RedirectDrawsEffect effect = new RedirectDrawsEffect();
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveRedirectDraws(gd, entry);
+            resolveEffect(gd, entry, new RedirectDrawsEffect());
 
             assertThat(gd.drawReplacementTargetToController).containsEntry(player2Id, player1Id);
         }
@@ -1133,7 +1151,7 @@ class PlayerInteractionResolutionServiceTest {
             RedirectDrawsEffect effect = new RedirectDrawsEffect();
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), UUID.randomUUID());
 
-            service.resolveRedirectDraws(gd, entry);
+            resolveEffect(gd, entry, new RedirectDrawsEffect());
 
             assertThat(gd.drawReplacementTargetToController).isEmpty();
         }
@@ -1154,7 +1172,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawCardForTargetPlayerEffect effect = new DrawCardForTargetPlayerEffect(2, false, true);
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveDrawCardForTargetPlayer(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(2)).resolveDrawCard(gd, player2Id);
         }
@@ -1171,7 +1189,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
 
-            service.resolveDrawCardForTargetPlayer(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, never()).resolveDrawCard(any(), any());
         }
@@ -1187,7 +1205,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourcePermanentId)).thenReturn(null);
 
-            service.resolveDrawCardForTargetPlayer(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
         }
@@ -1203,7 +1221,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
 
-            service.resolveDrawCardForTargetPlayer(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
         }
@@ -1224,7 +1242,7 @@ class PlayerInteractionResolutionServiceTest {
             GrantPermanentNoMaxHandSizeEffect effect = new GrantPermanentNoMaxHandSizeEffect();
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveGrantPermanentNoMaxHandSize(gd, entry);
+            resolveEffect(gd, entry, new GrantPermanentNoMaxHandSizeEffect());
 
             assertThat(gd.playersWithNoMaximumHandSize).contains(player1Id);
         }
@@ -1236,7 +1254,7 @@ class PlayerInteractionResolutionServiceTest {
             GrantPermanentNoMaxHandSizeEffect effect = new GrantPermanentNoMaxHandSizeEffect();
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveGrantPermanentNoMaxHandSize(gd, entry);
+            resolveEffect(gd, entry, new GrantPermanentNoMaxHandSizeEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no maximum hand size")));
@@ -1268,7 +1286,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(true);
 
-            service.resolveDrawAndLoseLifePerSubtype(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(18);
@@ -1281,7 +1299,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawAndLoseLifePerSubtypeEffect effect = new DrawAndLoseLifePerSubtypeEffect(CardSubtype.ZOMBIE);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveDrawAndLoseLifePerSubtype(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, never()).resolveDrawCard(any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -1302,7 +1320,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.canPlayerLifeChange(gd, player1Id)).thenReturn(false);
 
-            service.resolveDrawAndLoseLifePerSubtype(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
@@ -1328,7 +1346,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            service.resolveLoseLifeUnlessDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -1344,7 +1362,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(false);
 
-            service.resolveLoseLifeUnlessDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
         }
@@ -1357,7 +1375,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).add(createCard("Mountain"));
 
-            service.resolveLoseLifeUnlessDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingMayAbilities).isNotEmpty();
             assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
@@ -1381,7 +1399,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
 
-            service.resolveLoseLifeUnlessPays(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
         }
@@ -1395,7 +1413,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(false);
 
-            service.resolveLoseLifeUnlessPays(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
         }
@@ -1409,7 +1427,7 @@ class PlayerInteractionResolutionServiceTest {
             // Add enough mana to pay {1}
             gd.playerManaPools.get(player2Id).add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);
 
-            service.resolveLoseLifeUnlessPays(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingMayAbilities).isNotEmpty();
             assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
@@ -1432,7 +1450,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawXCardsEffect effect = new DrawXCardsEffect();
             StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 4, player2Id);
 
-            service.resolveDrawXCardsForTargetPlayer(gd, entry);
+            resolveEffect(gd, entry, new DrawXCardsForTargetPlayerEffect());
 
             verify(drawService, times(4)).resolveDrawCard(gd, player2Id);
         }
@@ -1444,7 +1462,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawXCardsEffect effect = new DrawXCardsEffect();
             StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 3, player2Id);
 
-            service.resolveDrawXCardsForTargetPlayer(gd, entry);
+            resolveEffect(gd, entry, new DrawXCardsForTargetPlayerEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("Player2") && msg.contains("draws 3 cards")));
@@ -1466,7 +1484,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawCardsEqualToChargeCountersOnSourceEffect effect = new DrawCardsEqualToChargeCountersOnSourceEffect();
             StackEntry entry = createEntryWithXValue(card, player1Id, List.of(effect), 4);
 
-            service.resolveDrawCardsEqualToChargeCounters(gd, entry);
+            resolveEffect(gd, entry, new DrawCardsEqualToChargeCountersOnSourceEffect());
 
             verify(drawService, times(4)).resolveDrawCard(gd, player1Id);
         }
@@ -1478,7 +1496,7 @@ class PlayerInteractionResolutionServiceTest {
             DrawCardsEqualToChargeCountersOnSourceEffect effect = new DrawCardsEqualToChargeCountersOnSourceEffect();
             StackEntry entry = createEntryWithXValue(card, player1Id, List.of(effect), 0);
 
-            service.resolveDrawCardsEqualToChargeCounters(gd, entry);
+            resolveEffect(gd, entry, new DrawCardsEqualToChargeCountersOnSourceEffect());
 
             verify(drawService, never()).resolveDrawCard(any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -1502,7 +1520,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveDiscardAndDraw(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingRummageDrawCount).isEqualTo(2);
             assertThat(gd.discardCausedByOpponent).isFalse();
@@ -1516,7 +1534,7 @@ class PlayerInteractionResolutionServiceTest {
             DiscardAndDrawCardEffect effect = new DiscardAndDrawCardEffect(1, 2);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveDiscardAndDraw(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no cards to discard")));
@@ -1541,7 +1559,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createTriggeredEntry(card, player1Id, List.of(effect), sourcePermanentId);
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveDiscardAndUntapSelf(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingUntapAfterDiscardPermanentId).isEqualTo(sourcePermanentId);
             assertThat(gd.discardCausedByOpponent).isFalse();
@@ -1555,7 +1573,7 @@ class PlayerInteractionResolutionServiceTest {
             DiscardCardAndUntapSelfEffect effect = new DiscardCardAndUntapSelfEffect();
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveDiscardAndUntapSelf(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no cards to discard")));
@@ -1579,7 +1597,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createTriggeredEntry(card, player1Id, List.of(effect), sourcePermanentId);
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveDrawDiscardTransformIfCreatureDiscarded(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService).resolveDrawCard(gd, player1Id);
             assertThat(gd.pendingTransformOnCreatureDiscard).isNotNull();
@@ -1596,7 +1614,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveDrawDiscardTransformIfCreatureDiscarded(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService).resolveDrawCard(gd, player1Id);
             assertThat(gd.pendingTransformOnCreatureDiscard).isNull();
@@ -1618,7 +1636,7 @@ class PlayerInteractionResolutionServiceTest {
             RegisterDelayedCombatDamageLootEffect effect = new RegisterDelayedCombatDamageLootEffect(1, 1);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveRegisterDelayedCombatDamageLoot(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingDelayedCombatDamageLoots).hasSize(1);
             GameData.DelayedCombatDamageLoot loot = gd.pendingDelayedCombatDamageLoots.getFirst();
@@ -1644,7 +1662,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).add(createCard("Mountain"));
 
-            service.resolveTargetPlayerRandomDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isTrue();
             assertThat(gd.playerHands.get(player2Id)).isEmpty();
@@ -1659,7 +1677,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveTargetPlayerRandomDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isFalse();
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
@@ -1672,7 +1690,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetPlayerRandomDiscardEffect effect = new TargetPlayerRandomDiscardEffect(1, true);
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveTargetPlayerRandomDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no cards to discard")));
@@ -1697,7 +1715,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
             gd.playerHands.get(player2Id).add(createCard("Forest"));
 
-            service.resolveEachPlayerRandomDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             // Both hands should have been reduced
             assertThat(gd.playerHands.get(player1Id)).isEmpty();
@@ -1714,7 +1732,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.activePlayerId = player1Id;
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
-            service.resolveEachPlayerRandomDiscard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             // After processing, the last discardCausedByOpponent set for p2 is true (opponent)
             // But p1 (active+controller) was processed first with false
@@ -1743,7 +1761,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
 
-            service.resolveSacrificeSelfAndTargetDiscardsPerPoisonCounter(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
             verify(playerInputService).beginDiscardChoice(gd, player2Id);
@@ -1760,7 +1778,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
 
-            service.resolveSacrificeSelfAndTargetDiscardsPerPoisonCounter(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
             verify(playerInputService, never()).beginDiscardChoice(any(), any());
@@ -1778,7 +1796,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, fakePermanentId)).thenReturn(null);
 
-            service.resolveSacrificeSelfAndTargetDiscardsPerPoisonCounter(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -1792,7 +1810,7 @@ class PlayerInteractionResolutionServiceTest {
             SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect effect = new SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect();
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveSacrificeSelfAndTargetDiscardsPerPoisonCounter(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
@@ -1814,7 +1832,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).add(createCard("Mountain"));
 
-            service.resolveTargetPlayerDiscardsReturnSelfIfCardType(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingReturnToHandOnDiscardType).isNotNull();
             assertThat(gd.pendingReturnToHandOnDiscardType.requiredType()).isEqualTo(CardType.CREATURE);
@@ -1828,7 +1846,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetPlayerDiscardsReturnSelfIfCardTypeEffect effect = new TargetPlayerDiscardsReturnSelfIfCardTypeEffect(1, CardType.CREATURE);
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveTargetPlayerDiscardsReturnSelfIfCardType(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingReturnToHandOnDiscardType).isNull();
         }
@@ -1850,7 +1868,7 @@ class PlayerInteractionResolutionServiceTest {
             MayEffect mayEffect = new MayEffect(wrapped, "Draw a card?");
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(mayEffect), player2Id);
 
-            service.resolveMayEffect(gd, entry, mayEffect);
+            resolveEffect(gd, entry, mayEffect);
 
             assertThat(gd.resolvingMayEffectFromStack).isTrue();
             assertThat(gd.pendingMayAbilities).hasSize(1);
@@ -1867,7 +1885,7 @@ class PlayerInteractionResolutionServiceTest {
             UUID sourcePermanentId = UUID.randomUUID();
             StackEntry entry = createTriggeredEntryWithTarget(card, player1Id, List.of(mayEffect), player2Id, sourcePermanentId);
 
-            service.resolveMayEffect(gd, entry, mayEffect);
+            resolveEffect(gd, entry, mayEffect);
 
             assertThat(gd.pendingMayAbilities.getFirst().targetCardId()).isEqualTo(player2Id);
             assertThat(gd.pendingMayAbilities.getFirst().sourcePermanentId()).isEqualTo(sourcePermanentId);
@@ -1890,7 +1908,7 @@ class PlayerInteractionResolutionServiceTest {
             MayPayManaEffect mayPayEffect = new MayPayManaEffect("{1}", wrapped, "Pay {1}?");
             StackEntry entry = createEntry(card, player1Id, List.of(mayPayEffect));
 
-            service.resolveMayPayManaEffect(gd, entry, mayPayEffect);
+            resolveEffect(gd, entry, mayPayEffect);
 
             assertThat(gd.resolvingMayEffectFromStack).isTrue();
             assertThat(gd.pendingMayAbilities).hasSize(1);
@@ -1920,7 +1938,7 @@ class PlayerInteractionResolutionServiceTest {
             landCard.setType(CardType.LAND);
             gd.playerHands.get(player1Id).add(landCard);
 
-            service.resolveSacrificeUnlessDiscardCardType(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
         }
@@ -1937,7 +1955,7 @@ class PlayerInteractionResolutionServiceTest {
             creatureCard.setType(CardType.CREATURE);
             gd.playerHands.get(player1Id).add(creatureCard);
 
-            service.resolveSacrificeUnlessDiscardCardType(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingMayAbilities).isNotEmpty();
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -1950,7 +1968,7 @@ class PlayerInteractionResolutionServiceTest {
             SacrificeUnlessDiscardCardTypeEffect effect = new SacrificeUnlessDiscardCardTypeEffect(CardType.CREATURE);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveSacrificeUnlessDiscardCardType(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         }
@@ -1973,7 +1991,7 @@ class PlayerInteractionResolutionServiceTest {
             SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = new SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType.LAND);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveSacrificeUnlessReturnOwnPermanentType(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, source);
         }
@@ -1990,7 +2008,7 @@ class PlayerInteractionResolutionServiceTest {
             SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = new SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType.LAND);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveSacrificeUnlessReturnOwnPermanentType(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingMayAbilities).isNotEmpty();
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
@@ -2003,7 +2021,7 @@ class PlayerInteractionResolutionServiceTest {
             SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect = new SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType.LAND);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveSacrificeUnlessReturnOwnPermanentType(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
             assertThat(gd.pendingMayAbilities).isEmpty();
@@ -2030,7 +2048,7 @@ class PlayerInteractionResolutionServiceTest {
             CardView mockView = mock(CardView.class);
             when(cardViewFactory.create(handCard)).thenReturn(mockView);
 
-            service.resolveRevealRandomCardFromTargetPlayerHand(gd, entry);
+            resolveEffect(gd, entry, new RevealRandomCardFromTargetPlayerHandEffect());
 
             // All players receive the reveal message
             verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
@@ -2046,7 +2064,7 @@ class PlayerInteractionResolutionServiceTest {
             RevealRandomCardFromTargetPlayerHandEffect effect = new RevealRandomCardFromTargetPlayerHandEffect();
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveRevealRandomCardFromTargetPlayerHand(gd, entry);
+            resolveEffect(gd, entry, new RevealRandomCardFromTargetPlayerHandEffect());
 
             verify(sessionManager, never()).sendToPlayer(any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2070,7 +2088,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
 
-            service.resolveOpponentMayPlayCreature(gd, entry);
+            resolveEffect(gd, entry, new OpponentMayPlayCreatureEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no creature cards in hand")));
@@ -2087,7 +2105,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
 
-            service.resolveOpponentMayPlayCreature(gd, entry);
+            resolveEffect(gd, entry, new OpponentMayPlayCreatureEffect());
 
             verify(playerInputService).beginCardChoice(eq(gd), eq(player2Id), any(), any());
         }
@@ -2113,7 +2131,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.matchesCardPredicate(eq(creatureCard), eq(predicate), any())).thenReturn(true);
 
-            service.resolvePutCardToBattlefield(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any());
         }
@@ -2130,7 +2148,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.matchesCardPredicate(eq(nonMatchingCard), eq(predicate), any())).thenReturn(false);
 
-            service.resolvePutCardToBattlefield(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2145,7 +2163,7 @@ class PlayerInteractionResolutionServiceTest {
             PutCardToBattlefieldEffect effect = new PutCardToBattlefieldEffect(predicate, "creature");
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolvePutCardToBattlefield(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2170,7 +2188,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
             // Can't control ThreadLocalRandom, but we can verify the broadcast always happens
-            service.resolveFlipCoinWinEffect(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("coin flip") && msg.contains("Player1")));
@@ -2194,7 +2212,7 @@ class PlayerInteractionResolutionServiceTest {
             FlipTwoCoinsEffect effect = new FlipTwoCoinsEffect(headsEffect, tailsEffect);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveFlipTwoCoinsEffect(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("flips two coins") && msg.contains("Player1")));
@@ -2219,7 +2237,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.playerHands.get(player1Id).add(createCard("Mountain"));
 
             // No matching cards in graveyard
-            service.resolveDiscardUnlessExileFromGraveyard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isFalse();
             verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id));
@@ -2237,7 +2255,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.matchesCardPredicate(eq(graveyardCard), eq(predicate), any())).thenReturn(true);
 
-            service.resolveDiscardUnlessExileFromGraveyard(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingMayAbilities).isNotEmpty();
             assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player1Id);
@@ -2260,7 +2278,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.playerHands.get(player1Id).addAll(List.of(createCard("A"), createCard("B")));
 
-            service.resolveDiscardUpToThenDraw(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService).beginXValueChoice(eq(gd), eq(player1Id), eq(2), any(), any());
         }
@@ -2272,7 +2290,7 @@ class PlayerInteractionResolutionServiceTest {
             DiscardUpToThenDrawThatManyEffect effect = new DiscardUpToThenDrawThatManyEffect(3);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveDiscardUpToThenDraw(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginXValueChoice(any(), any(), any(int.class), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2288,7 +2306,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.playerHands.get(player1Id).addAll(List.of(createCard("A"), createCard("B")));
             gd.chosenXValue = 2;
 
-            service.resolveDiscardUpToThenDraw(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingRummageDrawCount).isEqualTo(2);
             assertThat(gd.chosenXValue).isNull();
@@ -2303,7 +2321,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.chosenXValue = 0;
 
-            service.resolveDiscardUpToThenDraw(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.chosenXValue).isNull();
             verify(playerInputService, never()).beginDiscardChoice(any(), any());
@@ -2329,7 +2347,7 @@ class PlayerInteractionResolutionServiceTest {
             Permanent sourcePermanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(sourcePermanent);
 
-            service.resolveTargetPlayerExilesFromHand(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService).beginExileFromHandChoice(eq(gd), eq(player2Id), any());
         }
@@ -2341,7 +2359,7 @@ class PlayerInteractionResolutionServiceTest {
             TargetPlayerExilesFromHandEffect effect = new TargetPlayerExilesFromHandEffect(1);
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveTargetPlayerExilesFromHand(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginExileFromHandChoice(any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2367,7 +2385,7 @@ class PlayerInteractionResolutionServiceTest {
             targetCard.setType(CardType.INSTANT);
             gd.playerHands.get(player2Id).add(targetCard);
 
-            service.resolveChooseCardFromTargetHandToDiscardHandler(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isTrue();
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2382,7 +2400,7 @@ class PlayerInteractionResolutionServiceTest {
             ChooseCardFromTargetHandToDiscardEffect effect = new ChooseCardFromTargetHandToDiscardEffect(1, List.of(CardType.LAND));
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveChooseCardFromTargetHandToDiscardHandler(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("hand") && msg.contains("empty")));
@@ -2408,7 +2426,7 @@ class PlayerInteractionResolutionServiceTest {
             targetCard.setType(CardType.INSTANT);
             gd.playerHands.get(player2Id).add(targetCard);
 
-            service.resolveChooseCardFromTargetHandToExileHandler(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("reveals their hand")));
@@ -2422,7 +2440,7 @@ class PlayerInteractionResolutionServiceTest {
             ChooseCardFromTargetHandToExileEffect effect = new ChooseCardFromTargetHandToExileEffect(1, List.of(CardType.LAND));
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveChooseCardFromTargetHandToExileHandler(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("hand") && msg.contains("empty")));
@@ -2444,7 +2462,7 @@ class PlayerInteractionResolutionServiceTest {
             ChooseCardNameAndExileFromZonesEffect effect = new ChooseCardNameAndExileFromZonesEffect(List.of(CardType.LAND));
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveChooseCardNameAndExileFromZones(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService).beginSpellCardNameChoice(gd, player1Id, player2Id, List.of(CardType.LAND));
         }
@@ -2468,7 +2486,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findCardInGraveyardById(gd, targetCardId)).thenReturn(null);
 
-            service.resolveExileTargetGraveyardCardAndSameNameFromZones(gd, entry);
+            resolveEffect(gd, entry, new ExileTargetGraveyardCardAndSameNameFromZonesEffect());
 
             verify(playerInputService, never()).beginMultiZoneExileChoice(any(), any(), any(), any(), any());
         }
@@ -2491,7 +2509,7 @@ class PlayerInteractionResolutionServiceTest {
             when(gameQueryService.findCardInGraveyardById(gd, targetCardId)).thenReturn(targetCard);
             when(gameQueryService.findGraveyardOwnerById(gd, targetCardId)).thenReturn(player2Id);
 
-            service.resolveExileTargetGraveyardCardAndSameNameFromZones(gd, entry);
+            resolveEffect(gd, entry, new ExileTargetGraveyardCardAndSameNameFromZonesEffect());
 
             verify(playerInputService).beginMultiZoneExileChoice(eq(gd), eq(player1Id), any(), eq(player2Id), eq("Lightning Bolt"));
         }
@@ -2510,7 +2528,7 @@ class PlayerInteractionResolutionServiceTest {
             when(gameQueryService.findGraveyardOwnerById(gd, targetCardId)).thenReturn(player2Id);
             // No matching cards anywhere
 
-            service.resolveExileTargetGraveyardCardAndSameNameFromZones(gd, entry);
+            resolveEffect(gd, entry, new ExileTargetGraveyardCardAndSameNameFromZonesEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("exiles 0 cards") && msg.contains("Unique Spell")));
@@ -2535,7 +2553,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createTriggeredEntry(card, player1Id, List.of(effect), sourcePermanentId);
             gd.playerHands.get(player1Id).addAll(List.of(createCard("A"), createCard("B"), createCard("C")));
 
-            service.resolveDrawAndRandomDiscardWithSharedTypeCounters(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
             verify(graveyardService, times(2)).addCardToGraveyard(eq(gd), eq(player1Id), any());
@@ -2551,7 +2569,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createTriggeredEntry(card, player1Id, List.of(effect), sourcePermanentId);
             gd.playerHands.get(player1Id).add(createCard("A"));
 
-            service.resolveDrawAndRandomDiscardWithSharedTypeCounters(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.discardCausedByOpponent).isFalse();
         }
@@ -2578,7 +2596,7 @@ class PlayerInteractionResolutionServiceTest {
             gd.playerBattlefields.get(player2Id).add(perm1);
             gd.playerBattlefields.get(player2Id).add(perm2);
 
-            service.resolveReturnPermanentsOnCombatDamage(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             assertThat(gd.pendingCombatDamageBounceTargetPlayerId).isEqualTo(player2Id);
             verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id), any(), eq(2), any());
@@ -2591,7 +2609,7 @@ class PlayerInteractionResolutionServiceTest {
             ReturnPermanentsOnCombatDamageToPlayerEffect effect = new ReturnPermanentsOnCombatDamageToPlayerEffect();
             StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 2, player2Id);
 
-            service.resolveReturnPermanentsOnCombatDamage(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2614,7 +2632,7 @@ class PlayerInteractionResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(gd, matching, filter)).thenReturn(true);
             when(gameQueryService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
 
-            service.resolveReturnPermanentsOnCombatDamage(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id),
                     argThat(ids -> ids.size() == 1 && ids.contains(matching.getId())), eq(1), any());
@@ -2641,7 +2659,7 @@ class PlayerInteractionResolutionServiceTest {
             Permanent land = new Permanent(landCard);
             gd.playerBattlefields.get(player1Id).add(land);
 
-            service.resolvePutAwakeningCounters(gd, entry);
+            resolveEffect(gd, entry, new PutAwakeningCountersOnTargetLandsEffect());
 
             assertThat(gd.pendingAwakeningCounterPlacement).isTrue();
             verify(playerInputService).beginMultiPermanentChoice(eq(gd), eq(player1Id),
@@ -2661,7 +2679,7 @@ class PlayerInteractionResolutionServiceTest {
             Permanent creature = new Permanent(creatureCard);
             gd.playerBattlefields.get(player1Id).add(creature);
 
-            service.resolvePutAwakeningCounters(gd, entry);
+            resolveEffect(gd, entry, new PutAwakeningCountersOnTargetLandsEffect());
 
             verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), any(int.class), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2690,7 +2708,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.isArtifact(artifact)).thenReturn(true);
 
-            service.resolveSacrificeArtifactThenDealDividedDamage(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
         }
@@ -2703,7 +2721,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
             gd.pendingETBDamageAssignments = new HashMap<>(Map.of(player2Id, 5));
 
-            service.resolveSacrificeArtifactThenDealDividedDamage(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2734,7 +2752,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.matchesPermanentPredicate(gd, creature, filter)).thenReturn(true);
 
-            service.resolveSacrificePermanentThen(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
                     argThat(ids -> ids.contains(creature.getId())), any());
@@ -2754,7 +2772,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
 
-            service.resolveSacrificePermanentThen(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2778,7 +2796,7 @@ class PlayerInteractionResolutionServiceTest {
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
             gd.playerHands.get(player2Id).addAll(List.of(createCard("A"), createCard("B")));
 
-            service.resolveChooseCardsFromTargetHandToTopOfLibrary(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("looks at") && msg.contains("Player2")));
@@ -2792,7 +2810,7 @@ class PlayerInteractionResolutionServiceTest {
             ChooseCardsFromTargetHandToTopOfLibraryEffect effect = new ChooseCardsFromTargetHandToTopOfLibraryEffect(1);
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveChooseCardsFromTargetHandToTopOfLibrary(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(playerInputService, never()).beginRevealedHandChoice(any(), any(), any(), any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
@@ -2818,7 +2836,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
-            service.resolveChangeColorText(gd, entry);
+            resolveEffect(gd, entry, new ChangeColorTextEffect());
 
             verify(sessionManager).sendToPlayer(eq(player1Id), any(ChooseFromListMessage.class));
         }
@@ -2833,7 +2851,7 @@ class PlayerInteractionResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, missingId)).thenReturn(null);
 
-            service.resolveChangeColorText(gd, entry);
+            resolveEffect(gd, entry, new ChangeColorTextEffect());
 
             verify(sessionManager, never()).sendToPlayer(any(), any(ChooseFromListMessage.class));
         }
@@ -2854,7 +2872,7 @@ class PlayerInteractionResolutionServiceTest {
             AwardAnyColorManaWithInstantSorceryCopyEffect effect = new AwardAnyColorManaWithInstantSorceryCopyEffect(2);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveAwardAnyColorManaWithCopy(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(sessionManager).sendToPlayer(eq(player1Id), any(ChooseFromListMessage.class));
             assertThat(gd.pendingNextInstantSorceryCopyCount.get(player1Id)).isEqualTo(1);
@@ -2876,7 +2894,7 @@ class PlayerInteractionResolutionServiceTest {
             AwardAnyColorManaEffect effect = new AwardAnyColorManaEffect(1);
             StackEntry entry = createEntry(card, player1Id, List.of(effect));
 
-            service.resolveAwardAnyColorMana(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(sessionManager).sendToPlayer(eq(player1Id), any(ChooseFromListMessage.class));
         }
@@ -2898,7 +2916,7 @@ class PlayerInteractionResolutionServiceTest {
             // xValue = attacker count at trigger time
             StackEntry entry = createEntryWithXValue(card, player1Id, List.of(effect), 3);
 
-            service.resolveAddManaPerAttackingCreature(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(sessionManager).sendToPlayer(eq(player1Id), any(ChooseFromListMessage.class));
         }
@@ -2910,7 +2928,7 @@ class PlayerInteractionResolutionServiceTest {
             AddManaPerAttackingCreatureEffect effect = new AddManaPerAttackingCreatureEffect(ManaColor.RED, ManaColor.GREEN);
             StackEntry entry = createEntryWithXValue(card, player1Id, List.of(effect), 0);
 
-            service.resolveAddManaPerAttackingCreature(gd, entry, effect);
+            resolveEffect(gd, entry, effect);
 
             verify(sessionManager, never()).sendToPlayer(any(), any(ChooseFromListMessage.class));
         }
@@ -2931,7 +2949,7 @@ class PlayerInteractionResolutionServiceTest {
             RevealRandomHandCardAndPlayEffect effect = new RevealRandomHandCardAndPlayEffect();
             StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
-            service.resolveRevealRandomHandCardAndPlay(gd, entry);
+            resolveEffect(gd, entry, new RevealRandomHandCardAndPlayEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                     msg.contains("no cards in hand")));
@@ -2950,7 +2968,7 @@ class PlayerInteractionResolutionServiceTest {
             CardView mockView = mock(CardView.class);
             when(cardViewFactory.create(landCard)).thenReturn(mockView);
 
-            service.resolveRevealRandomHandCardAndPlay(gd, entry);
+            resolveEffect(gd, entry, new RevealRandomHandCardAndPlayEffect());
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player2Id), any(Permanent.class));
             assertThat(gd.playerHands.get(player2Id)).isEmpty();
@@ -2969,7 +2987,7 @@ class PlayerInteractionResolutionServiceTest {
             CardView mockView = mock(CardView.class);
             when(cardViewFactory.create(revealedCard)).thenReturn(mockView);
 
-            service.resolveRevealRandomHandCardAndPlay(gd, entry);
+            resolveEffect(gd, entry, new RevealRandomHandCardAndPlayEffect());
 
             verify(sessionManager).sendToPlayer(eq(player1Id), any(RevealHandMessage.class));
             verify(sessionManager).sendToPlayer(eq(player2Id), any(RevealHandMessage.class));

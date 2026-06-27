@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.effect.PlayerInteractionResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -48,7 +48,7 @@ public class CardChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final AbilityActivationService abilityActivationService;
     private final EffectResolutionService effectResolutionService;
-    private final PlayerInteractionResolutionService playerInteractionResolutionService;
+    private final PlayerInteractionSupport playerInteractionSupport;
     private final ExileService exileService;
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
@@ -179,7 +179,7 @@ public class CardChoiceHandlerService {
 
             // Continue "each player discards" queue (e.g. Serum Raker's death trigger)
             if (!gameData.pendingEachPlayerDiscardQueue.isEmpty()) {
-                playerInteractionResolutionService.startNextEachPlayerDiscard(gameData);
+                playerInteractionSupport.startNextEachPlayerDiscard(gameData);
                 return;
             }
 
