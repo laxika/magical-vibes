@@ -122,6 +122,9 @@ public class TargetLegalityService {
         for (int i = 0; i < targetIds.size(); i++) {
             UUID targetId = targetIds.get(i);
             TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
+            if (positionFilter == null) {
+                positionFilter = ability.getTargetFilter();
+            }
 
             // Player-targeting position
             if (positionFilter instanceof PlayerPredicateTargetFilter playerFilter) {

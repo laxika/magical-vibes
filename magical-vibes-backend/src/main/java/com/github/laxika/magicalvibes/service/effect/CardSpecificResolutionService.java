@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionReturnSilverCounterCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnScionRevealTwoOpponentChoosesEffect;
 import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.SorinLordOfInnistradEmblemEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.VenserEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
@@ -380,6 +382,23 @@ public class CardSpecificResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} gets Teferi Hero emblem", gameData.id, playerName);
+    }
+
+    @HandlesEffect(SorinLordOfInnistradEmblemEffect.class)
+    void resolveSorinLordOfInnistradEmblem(GameData gameData, StackEntry entry) {
+        UUID controllerId = entry.getControllerId();
+        String playerName = gameData.playerIdToName.get(controllerId);
+
+        Emblem emblem = new Emblem(controllerId, List.of(
+                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES)
+        ), entry.getCard());
+
+        gameData.emblems.add(emblem);
+
+        String logEntry = playerName + " gets an emblem with \"Creatures you control get +1/+0.\".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        log.info("Game {} - {} gets Sorin, Lord of Innistrad emblem", gameData.id, playerName);
     }
 
     @HandlesEffect(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class)

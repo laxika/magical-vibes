@@ -132,6 +132,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect()` — opponents search
 - `DestroyTargetLandAndDamageControllerEffect(int)` — destroy land + damage
 - `DestroyTargetPermanentAndDamageControllerIfDestroyedEffect(int)` — destroy + conditional damage
+- `DestroyUpToTargetsThenReturnFromGraveyardEffect()` — destroy each targeted permanent and return cards put into graveyard this way under your control (multi-target via ability `minTargets`/`maxTargets`)
 - `DestroyTargetPermanentAndControllerLosesLifeEffect(int)` — destroy + life loss
 - `DestroyTargetPermanentAndGiveControllerPoisonCountersEffect(int)` — destroy + poison
 - `DestroySourcePermanentEffect()` — destroy source

@@ -65,6 +65,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayer
 import com.github.laxika.magicalvibes.model.effect.MultiplyTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleEquippedCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerShroudEffect;
@@ -1290,6 +1291,13 @@ public class GameQueryService {
                         && grant.scope() == GrantScope.OWN_PERMANENTS
                         && (grant.filter() == null || matchesPermanentPredicate(gameData, target, grant.filter()))) {
                     accumulator.addActivatedAbility(grant.ability());
+                } else if (effect instanceof StaticBoostEffect boost
+                        && (boost.scope() == GrantScope.OWN_CREATURES || boost.scope() == GrantScope.ALL_OWN_CREATURES)
+                        && isCreature(gameData, target)
+                        && (boost.filter() == null || matchesPermanentPredicate(gameData, target, boost.filter()))) {
+                    accumulator.addPower(boost.powerBoost());
+                    accumulator.addToughness(boost.toughnessBoost());
+                    accumulator.addKeywords(boost.grantedKeywords());
                 }
             }
         }

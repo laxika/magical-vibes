@@ -677,8 +677,9 @@ public class AbilityActivationService {
                 .toList();
 
         // For regular targeting abilities, validate legality before costs are paid (CR 602.2b/601.2c).
-        if (ability.isMultiTarget()) {
-            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability, targetIds, permanent.getCard());
+        if (ability.isMultiTarget() || (ability.getMaxTargets() > 1 && targetIds != null)) {
+            targetLegalityService.validateMultiTargetAbility(gameData, playerId, ability,
+                    targetIds != null ? targetIds : List.of(), permanent.getCard());
         } else if (targetZone == Zone.GRAVEYARD && targetIds != null && !targetIds.isEmpty()) {
             targetLegalityService.validateMultiTargetGraveyardAbility(gameData, playerId, abilityEffects, targetIds);
         } else {

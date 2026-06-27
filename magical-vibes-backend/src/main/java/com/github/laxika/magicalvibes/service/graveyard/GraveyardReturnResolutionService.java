@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCre
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyUpToTargetsThenReturnFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -614,6 +615,72 @@ public class GraveyardReturnResolutionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+    }
+
+    /**
+     * Destroys each targeted permanent and returns each card actually put into a graveyard this way
+     * to the battlefield under the controller's control. Indestructible or regenerated permanents are
+     * not returned.
+     */
+    @HandlesEffect(DestroyUpToTargetsThenReturnFromGraveyardEffect.class)
+    void resolveDestroyUpToTargetsThenReturnFromGraveyard(GameData gameData, StackEntry entry) {
+        List<UUID> targetIds = entry.getTargetIds();
+        if (targetIds == null || targetIds.isEmpty()) {
+            return;
+        }
+
+        UUID controllerId = entry.getControllerId();
+        String sourceName = entry.getCard().getName();
+        List<Card> cardsToReturn = new ArrayList<>();
+
+        for (UUID targetId : targetIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null) {
+                continue;
+            }
+
+            Card card = target.getCard();
+            if (permanentRemovalService.tryDestroyPermanent(gameData, target, false)) {
+                gameBroadcastService.logAndBroadcast(gameData, card.getName() + " is destroyed.");
+                log.info("Game {} - {} is destroyed by {}", gameData.id, card.getName(), sourceName);
+                cardsToReturn.add(card);
+            }
+        }
+
+        for (Card card : cardsToReturn) {
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+            if (graveyardOwnerId == null) {
+                continue;
+            }
+
+            permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+
+            if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+                gameData.playerGraveyards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(card);
+                String blockedLog = gameData.playerIdToName.get(controllerId) + " can't put " + card.getName()
+                        + " onto the battlefield from a graveyard; it stays in the graveyard.";
+                gameBroadcastService.logAndBroadcast(gameData, blockedLog);
+                log.info("Game {} - {} blocked from entering the battlefield from a graveyard",
+                        gameData.id, card.getName());
+                continue;
+            }
+
+            Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
+            Permanent permanent = new Permanent(card);
+            if (card.hasType(CardType.PLANESWALKER) && card.getLoyalty() != null) {
+                permanent.setCounterCount(CounterType.LOYALTY, card.getLoyalty());
+            }
+            permanent.setEnteredFromGraveyardOwnerId(controllerId);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
+
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    playerName + " puts " + card.getName() + " onto the battlefield from a graveyard.");
+            log.info("Game {} - {} returns {} to the battlefield under {}", gameData.id, playerName,
+                    card.getName(), playerName);
+
+            handleCreatureEtbAndLegendRule(gameData, controllerId, permanent, card);
+        }
     }
 
     /**
