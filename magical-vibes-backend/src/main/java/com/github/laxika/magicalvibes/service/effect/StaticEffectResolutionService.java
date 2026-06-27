@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -35,18 +34,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockedByMinCreaturesConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostByOtherCreaturesWithSameNameEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerAttachmentEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEnchantmentOnBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfByImprintedCreaturePTEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOtherControlledSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerCardsInControllerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerTurnConditionalEffect;
@@ -85,7 +73,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
-import com.github.laxika.magicalvibes.model.CounterType;
 
 @Service
 @RequiredArgsConstructor
@@ -155,97 +142,6 @@ public class StaticEffectResolutionService {
         }
     }
 
-    @HandlesStaticEffect(value = BoostByOtherCreaturesWithSameNameEffect.class, selfOnly = true)
-    private void resolveBoostByOtherCreaturesWithSameName(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostByOtherCreaturesWithSameNameEffect) effect;
-        String sourceName = context.source().getCard().getName();
-        GameData gameData = context.gameData();
-        boolean hasAnimateArtifacts = hasAnimateArtifactEffect(gameData);
-
-        final int[] count = {0};
-        gameData.forEachPermanent((playerId, permanent) -> {
-            if (permanent.getId().equals(context.source().getId())) return;
-            if (!isEffectivelyCreature(permanent, hasAnimateArtifacts)) return;
-            if (!sourceName.equals(permanent.getCard().getName())) return;
-            count[0]++;
-        });
-
-        accumulator.addPower(count[0] * boost.powerPerCreature());
-        accumulator.addToughness(count[0] * boost.toughnessPerCreature());
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerEnchantmentOnBattlefieldEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerEnchantmentOnBattlefield(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerEnchantmentOnBattlefieldEffect) effect;
-        final int[] count = {0};
-        context.gameData().forEachPermanent((playerId, permanent) -> {
-            if (permanent.getCard().hasType(CardType.ENCHANTMENT)) {
-                count[0]++;
-            }
-        });
-        accumulator.addPower(count[0] * boost.powerPerEnchantment());
-        accumulator.addToughness(count[0] * boost.toughnessPerEnchantment());
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerControlledPermanentEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerControlledPermanent(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerControlledPermanentEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return;
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) return;
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            // Pass null for gameData to avoid recursive computeStaticBonus calls —
-            // type-checking predicates (isArtifact, isCreature) would otherwise trigger
-            // computeStaticBonus on each permanent, causing infinite recursion when the
-            // source itself is being evaluated. Natural type is sufficient here.
-            if (gameQueryService.matchesPermanentPredicate(null, permanent, boost.filter())) {
-                count++;
-            }
-        }
-        accumulator.addPower(count * boost.powerPerPermanent());
-        accumulator.addToughness(count * boost.toughnessPerPermanent());
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerCardsInControllerGraveyardEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerCardsInControllerGraveyard(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerCardsInControllerGraveyardEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return;
-        List<Card> graveyard = context.gameData().playerGraveyards.get(controllerId);
-        int count = 0;
-        if (graveyard != null) {
-            for (Card card : graveyard) {
-                if (card.isToken()) continue;
-                if (gameQueryService.matchesCardPredicate(card, boost.filter(), null)) {
-                    count++;
-                }
-            }
-        }
-        accumulator.addPower(count * boost.powerPerCard());
-        accumulator.addToughness(count * boost.toughnessPerCard());
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerOpponentPermanentEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerOpponentPermanent(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerOpponentPermanentEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) return;
-
-        final int[] count = {0};
-        context.gameData().forEachPermanent((playerId, permanent) -> {
-            if (!playerId.equals(controllerId)
-                    && gameQueryService.matchesPermanentPredicate(context.gameData(), permanent, boost.filter())) {
-                count[0]++;
-            }
-        });
-        accumulator.addPower(count[0] * boost.powerPerPermanent());
-        accumulator.addToughness(count[0] * boost.toughnessPerPermanent());
-    }
-
     @HandlesStaticEffect(value = AnyPlayerControlsPermanentConditionalEffect.class, selfOnly = true)
     private void resolveAnyPlayerControlsPermanentConditional(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var conditional = (AnyPlayerControlsPermanentConditionalEffect) effect;
@@ -294,96 +190,6 @@ public class StaticEffectResolutionService {
 
     private void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
         support.applySelfOnlyConditionalStaticEffect(context, wrapped, accumulator);
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerEquipmentAttachedEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerEquipmentAttached(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerEquipmentAttachedEffect) effect;
-        final int[] count = {0};
-        context.gameData().forEachPermanent((playerId, permanent) -> {
-            if (permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
-                    && permanent.isAttached()
-                    && permanent.getAttachedTo().equals(context.target().getId())) {
-                count[0]++;
-            }
-        });
-        accumulator.addPower(count[0] * boost.powerPerEquipment());
-        accumulator.addToughness(count[0] * boost.toughnessPerEquipment());
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerAttachmentEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerAttachment(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerAttachmentEffect) effect;
-        final int[] count = {0};
-        context.gameData().forEachPermanent((playerId, permanent) -> {
-            if (permanent.isAttached() && permanent.getAttachedTo().equals(context.target().getId())) {
-                boolean isAura = permanent.getCard().getSubtypes().contains(CardSubtype.AURA);
-                boolean isEquipment = permanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT);
-                if ((boost.countAuras() && isAura) || (boost.countEquipment() && isEquipment)) {
-                    count[0]++;
-                }
-            }
-        });
-        accumulator.addPower(count[0] * boost.power());
-        accumulator.addToughness(count[0] * boost.toughness());
-    }
-
-    @HandlesStaticEffect(value = BoostSelfByImprintedCreaturePTEffect.class, selfOnly = true)
-    private void resolveBoostSelfByImprintedCreaturePT(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        Card imprintedCard = context.source().getCard().getImprintedCard();
-        if (imprintedCard == null || imprintedCard.getPower() == null || imprintedCard.getToughness() == null) {
-            return;
-        }
-        accumulator.addPower(imprintedCard.getPower());
-        accumulator.addToughness(imprintedCard.getToughness());
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerOpponentPoisonCounterEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerOpponentPoisonCounter(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerOpponentPoisonCounterEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        int totalPoison = 0;
-        for (UUID playerId : context.gameData().orderedPlayerIds) {
-            if (!playerId.equals(controllerId)) {
-                totalPoison += context.gameData().playerPoisonCounters.getOrDefault(playerId, 0);
-            }
-        }
-        accumulator.addPower(totalPoison * boost.powerPerCounter());
-        accumulator.addToughness(totalPoison * boost.toughnessPerCounter());
-    }
-
-    @HandlesStaticEffect(value = BoostSelfBySlimeCountersOnLinkedPermanentEffect.class, selfOnly = true)
-    private void resolveBoostSelfBySlimeCountersOnLinkedPermanent(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfBySlimeCountersOnLinkedPermanentEffect) effect;
-        Permanent linked = gameQueryService.findPermanentById(context.gameData(), boost.linkedPermanentId());
-        int slimeCount = (linked != null) ? linked.getCounterCount(CounterType.SLIME) : 0;
-        accumulator.addPower(slimeCount);
-        accumulator.addToughness(slimeCount);
-    }
-
-    @HandlesStaticEffect(value = BoostSelfPerOtherControlledSubtypeEffect.class, selfOnly = true)
-    private void resolveBoostSelfPerOtherControlledSubtype(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var boost = (BoostSelfPerOtherControlledSubtypeEffect) effect;
-        UUID controllerId = findControllerId(context.gameData(), context.source());
-        if (controllerId == null) {
-            return;
-        }
-
-        List<Permanent> battlefield = context.gameData().playerBattlefields.get(controllerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        int count = 0;
-        for (Permanent permanent : battlefield) {
-            if (permanent.getId().equals(context.source().getId())) continue;
-            if (permanent.getCard().getSubtypes().contains(boost.subtype())) {
-                count++;
-            }
-        }
-
-        accumulator.addPower(count * boost.powerPerPermanent());
-        accumulator.addToughness(count * boost.toughnessPerPermanent());
     }
 
     @HandlesStaticEffect(value = EquippedConditionalEffect.class, selfOnly = true)

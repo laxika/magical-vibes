@@ -137,17 +137,17 @@ have two methods → two beans.
 - [x] `BoostBySharedCreatureTypeEffect`
 
 ### Batch E — boost self per X
-- [ ] `BoostSelfPerEnchantmentOnBattlefieldEffect`
-- [ ] `BoostSelfPerControlledPermanentEffect`
-- [ ] `BoostSelfPerCardsInControllerGraveyardEffect`
-- [ ] `BoostSelfPerOpponentPermanentEffect`
-- [ ] `BoostSelfPerEquipmentAttachedEffect`
-- [ ] `BoostSelfPerAttachmentEffect`
-- [ ] `BoostSelfByImprintedCreaturePTEffect`
-- [ ] `BoostSelfPerOpponentPoisonCounterEffect`
-- [ ] `BoostSelfBySlimeCountersOnLinkedPermanentEffect`
-- [ ] `BoostSelfPerOtherControlledSubtypeEffect`
-- [ ] `BoostByOtherCreaturesWithSameNameEffect`
+- [x] `BoostSelfPerEnchantmentOnBattlefieldEffect`
+- [x] `BoostSelfPerControlledPermanentEffect`
+- [x] `BoostSelfPerCardsInControllerGraveyardEffect`
+- [x] `BoostSelfPerOpponentPermanentEffect`
+- [x] `BoostSelfPerEquipmentAttachedEffect`
+- [x] `BoostSelfPerAttachmentEffect`
+- [x] `BoostSelfByImprintedCreaturePTEffect`
+- [x] `BoostSelfPerOpponentPoisonCounterEffect`
+- [x] `BoostSelfBySlimeCountersOnLinkedPermanentEffect`
+- [x] `BoostSelfPerOtherControlledSubtypeEffect`
+- [x] `BoostByOtherCreaturesWithSameNameEffect`
 
 ### Batch F — power/toughness equal to X
 - [ ] `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`

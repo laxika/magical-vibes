@@ -51,7 +51,18 @@ public final class StaticEffectHandlerBeanFactory {
                 new BoostCreaturePerMatchingLandNameEffectHandler(support),
                 new BoostCreaturePerControlledSubtypeEffectHandler(support),
                 new BoostCreaturePerControlledCardTypeEffectHandler(support),
-                new BoostBySharedCreatureTypeEffectHandler(support)
+                new BoostBySharedCreatureTypeEffectHandler(support),
+                new BoostByOtherCreaturesWithSameNameSelfEffectHandler(support),
+                new BoostSelfPerEnchantmentOnBattlefieldSelfEffectHandler(),
+                new BoostSelfPerControlledPermanentSelfEffectHandler(support, gameQueryService),
+                new BoostSelfPerCardsInControllerGraveyardSelfEffectHandler(support, gameQueryService),
+                new BoostSelfPerOpponentPermanentSelfEffectHandler(support, gameQueryService),
+                new BoostSelfPerEquipmentAttachedSelfEffectHandler(),
+                new BoostSelfPerAttachmentSelfEffectHandler(),
+                new BoostSelfByImprintedCreaturePTSelfEffectHandler(),
+                new BoostSelfPerOpponentPoisonCounterSelfEffectHandler(support),
+                new BoostSelfBySlimeCountersOnLinkedPermanentSelfEffectHandler(gameQueryService),
+                new BoostSelfPerOtherControlledSubtypeSelfEffectHandler(support)
         );
     }
 
