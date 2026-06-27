@@ -34,7 +34,8 @@ import java.util.List;
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
  * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>,
  * <b>Library Reveal</b>, <b>Library Search</b>, <b>Library Mill</b>, <b>Library Shuffle</b>, <b>Exile</b>,
- * <b>Bounce</b>, <b>Copy</b>, <b>Counter</b>, and <b>Prevention</b> domain handlers.
+ * <b>Bounce</b>, <b>Copy</b>, <b>Counter</b>, <b>Prevention</b>, <b>Combat Restriction</b>,
+ * <b>Win Condition</b>, and <b>Equip</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -77,6 +78,7 @@ public final class NormalEffectHandlerBeanFactory {
         CounterSupport counterSupport = new CounterSupport(
                 graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService);
         PreventionSupport preventionSupport = new PreventionSupport(gameBroadcastService);
+        EquipSupport equipSupport = new EquipSupport(gameQueryService, gameBroadcastService, permanentRemovalService);
         PlayerInteractionSupport playerInteractionSupport = new PlayerInteractionSupport(
                 drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService,
                 sessionManager, cardViewFactory, permanentRemovalService, battlefieldEntryService,
@@ -601,7 +603,22 @@ public final class NormalEffectHandlerBeanFactory {
                 new PreventXDamageToControllerAndRedirectToTargetPlayerEffectHandler(gameBroadcastService),
                 new PreventDamageFromChosenSourceAndRedirectToAnyTargetEffectHandler(preventionSupport, playerInputService),
                 new PreventAllDamageFromChosenSourceEffectHandler(preventionSupport, playerInputService),
-                new PreventDamageToTargetFromChosenSourceEffectHandler(preventionSupport, playerInputService)
+                new PreventDamageToTargetFromChosenSourceEffectHandler(preventionSupport, playerInputService),
+                new CantBlockSourceEffectHandler(gameQueryService, gameBroadcastService),
+                new MustAttackThisTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new MustBeBlockedIfAbleThisTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new MustBlockSourceEffectHandler(gameQueryService, gameBroadcastService),
+                new TargetCreatureCantBlockThisTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new TargetPlayerCreaturesCantBlockThisTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new CantBlockThisTurnEffectHandler(gameQueryService, gameBroadcastService),
+                new MakeCreatureUnblockableEffectHandler(gameQueryService, gameBroadcastService),
+                new MakeAllCreaturesUnblockableEffectHandler(gameQueryService, gameBroadcastService),
+                new WinGameIfCreaturesInGraveyardEffectHandler(gameOutcomeService, gameBroadcastService, gameQueryService),
+                new WinGameEffectHandler(gameOutcomeService, gameBroadcastService, gameQueryService),
+                new TargetPlayerLosesGameEffectHandler(gameOutcomeService, gameBroadcastService, gameQueryService),
+                new EquipEffectHandler(gameQueryService, gameBroadcastService, equipSupport),
+                new AttachSourceEquipmentToTargetCreatureEffectHandler(gameQueryService, gameBroadcastService, equipSupport),
+                new AttachTargetEquipmentToTargetCreatureEffectHandler(gameQueryService, gameBroadcastService, equipSupport)
         );
     }
 

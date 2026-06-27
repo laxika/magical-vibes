@@ -87,11 +87,9 @@ import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerServic
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceSpellHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceTriggerHandlerService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
-import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
@@ -108,7 +106,6 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
-import com.github.laxika.magicalvibes.service.effect.WinConditionResolutionService;
 import com.github.laxika.magicalvibes.service.validate.BounceTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.CreatureModTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.DamageTargetValidators;
@@ -275,10 +272,7 @@ public class GameTestHarness {
                 new TargetRedirectionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticTargetLegalityService),
                 new ExileReturnResolutionService(staticGameQueryService, staticGameBroadcastService),
                 new ExileEggCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticBattlefieldEntryService),
-                new CombatRestrictionResolutionService(staticGameQueryService, staticGameBroadcastService),
-                new TurnResolutionService(combatService, staticGameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
-                new EquipResolutionService(staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService),
-                new WinConditionResolutionService(gameOutcomeService, staticGameBroadcastService, staticGameQueryService)
+                new TurnResolutionService(combatService, staticGameBroadcastService, auraAttachmentService, turnCleanupService, exileService)
         );
         for (Object service : effectServices) {
             scanEffectHandlers(service, effectHandlerRegistry);

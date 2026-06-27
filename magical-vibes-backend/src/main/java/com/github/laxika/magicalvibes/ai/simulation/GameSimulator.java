@@ -93,10 +93,8 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
-import com.github.laxika.magicalvibes.service.effect.CombatRestrictionResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.EquipResolutionService;
 import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
@@ -111,7 +109,6 @@ import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
-import com.github.laxika.magicalvibes.service.effect.WinConditionResolutionService;
 import com.github.laxika.magicalvibes.service.validate.BounceTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.CreatureModTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.DamageTargetValidators;
@@ -309,10 +306,7 @@ public class GameSimulator {
                 gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
         List<Object> effectServices = List.of(
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
-                new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),
-                new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
-                new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
-                new WinConditionResolutionService(gameOutcomeService, gameBroadcastService, gameQueryService)
+                new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService)
         );
         for (Object service : effectServices) {
             scanEffectHandlers(service, effectHandlerRegistry);
