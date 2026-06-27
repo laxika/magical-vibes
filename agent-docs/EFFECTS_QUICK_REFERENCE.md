@@ -346,6 +346,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `PowerToughnessEqualToControlledLandCountEffect()` — P/T = lands
 - `PowerToughnessEqualToControlledCreatureCountEffect()` — P/T = creatures
+- `PowerToughnessEqualToControlledPermanentCountEffect(PermanentPredicate)` — P/T = matching controlled permanents (e.g. `PermanentHasSubtypePredicate`, `PermanentIsArtifactPredicate`)
 - `PowerToughnessEqualToCardsInHandEffect()` — P/T = hand size
 - `PowerToughnessEqualToControllerLifeTotalEffect()` — P/T = life total
 - `PutCountersOnSourceEffect(int power, int toughness, int amount)` — counters on self

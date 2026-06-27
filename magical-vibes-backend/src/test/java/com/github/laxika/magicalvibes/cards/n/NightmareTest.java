@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,10 +30,10 @@ class NightmareTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToControlledSubtypeCountEffect.class);
-        PowerToughnessEqualToControlledSubtypeCountEffect effect =
-                (PowerToughnessEqualToControlledSubtypeCountEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.SWAMP);
+                .isInstanceOf(PowerToughnessEqualToControlledPermanentCountEffect.class);
+        PowerToughnessEqualToControlledPermanentCountEffect effect =
+                (PowerToughnessEqualToControlledPermanentCountEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.SWAMP));
     }
 
     @Test

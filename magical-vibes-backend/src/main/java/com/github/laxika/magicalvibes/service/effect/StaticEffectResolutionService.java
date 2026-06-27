@@ -96,7 +96,6 @@ import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControll
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledCreatureCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledLandCountEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInAllGraveyardsEffect;
@@ -1086,14 +1085,6 @@ public class StaticEffectResolutionService {
                 accumulator.addProtectionColors(protection.colors());
             }
         }
-    }
-
-    @HandlesStaticEffect(value = PowerToughnessEqualToControlledSubtypeCountEffect.class, selfOnly = true)
-    private void resolvePowerToughnessEqualToControlledSubtypeCount(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
-        var pt = (PowerToughnessEqualToControlledSubtypeCountEffect) effect;
-        int count = countControlledPermanents(context, p -> p.getCard().getSubtypes().contains(pt.subtype()));
-        accumulator.addPower(count);
-        accumulator.addToughness(count);
     }
 
     @HandlesStaticEffect(value = PowerToughnessEqualToControlledLandCountEffect.class, selfOnly = true)

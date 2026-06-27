@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledSubtypeCountEffect;
+import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -34,10 +34,10 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
 
         assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(PowerToughnessEqualToControlledSubtypeCountEffect.class);
-        PowerToughnessEqualToControlledSubtypeCountEffect ptEffect =
-                (PowerToughnessEqualToControlledSubtypeCountEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(ptEffect.subtype()).isEqualTo(CardSubtype.ISLAND);
+                .isInstanceOf(PowerToughnessEqualToControlledPermanentCountEffect.class);
+        PowerToughnessEqualToControlledPermanentCountEffect ptEffect =
+                (PowerToughnessEqualToControlledPermanentCountEffect) card.getEffects(EffectSlot.STATIC).get(0);
+        assertThat(ptEffect.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
 
         assertThat(card.getEffects(EffectSlot.STATIC).get(1))
                 .isInstanceOf(CantAttackUnlessDefenderControlsMatchingPermanentEffect.class);

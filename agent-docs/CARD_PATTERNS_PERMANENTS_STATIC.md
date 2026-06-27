@@ -48,7 +48,7 @@ All paths relative to `cards/`.
 | Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, OWN_CREATURES) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) |
 | P/T = lands | `m/MolimoMaroSorcerer.java` | STATIC PowerToughnessEqualToControlledLandCountEffect |
 | P/T = creatures | `s/ScionOfTheWild.java` | STATIC PowerToughnessEqualToControlledCreatureCountEffect |
-| P/T = subtype | `n/Nightmare.java` | STATIC PowerToughnessEqualToControlledSubtypeCountEffect |
+| P/T = subtype | `n/Nightmare.java` | STATIC PowerToughnessEqualToControlledPermanentCountEffect(PermanentHasSubtypePredicate) |
 | P/T = GY creatures | `m/Mortivore.java` | STATIC PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect |
 | P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC PowerToughnessEqualToCardsInHandEffect + ON_CONTROLLER_DRAWS EachOpponentLosesLifeEffect |
 | Self boost per lands + GY lands | `m/MultaniYavimayasAvatar.java` | STATIC BoostSelfPerControlledPermanentEffect(1, 1, PermanentIsLandPredicate) + BoostSelfPerCardsInControllerGraveyardEffect(CardTypePredicate(LAND), 1, 1) — +1/+1 per land you control and per land card in your graveyard |
