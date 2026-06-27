@@ -59,7 +59,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.battlefield.ExileResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.DeathTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -299,7 +299,7 @@ public class GameSimulator {
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
 
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
-        ExileResolutionService exileResolutionService = new ExileResolutionService(drawService, graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, cardViewFactory, triggerCollectionService, battlefieldEntryService, exileService);
+        ExileSupport exileSupport = new ExileSupport(graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService, playerInputService, triggerCollectionService);
         PlayerInteractionSupport playerInteractionSupport = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService, noOpSession, cardViewFactory, permanentRemovalService, battlefieldEntryService, triggerCollectionService);
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         DestructionSupport destructionSupport = new DestructionSupport(battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport);
@@ -314,7 +314,6 @@ public class GameSimulator {
         List<Object> effectServices = List.of(
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
                 new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService, permanentControlSupport),
-                exileResolutionService,
                 new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService, cloneService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
                 new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService, effectHandlerRegistry),
@@ -328,7 +327,7 @@ public class GameSimulator {
         }
         CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, permanentControlSupport, permanentCounterSupport,
+                lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, exileSupport, permanentControlSupport, permanentCounterSupport,
                 battlefieldEntryService, legendRuleService, creatureControlService,
                 gameQueryService, gameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, permanentRemovalService, triggerCollectionService, playerInputService,
@@ -403,7 +402,7 @@ public class GameSimulator {
                 mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 spellCastingService,
                 stackResolutionService, abilityActivationService, mulliganService, reconnectionService,
-                exileResolutionService, gameOutcomeService);
+                exileSupport, gameOutcomeService);
 
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);

@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
-import com.github.laxika.magicalvibes.service.battlefield.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.battlefield.ExileResolutionService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -61,7 +60,7 @@ public class GameService {
     private final AbilityActivationService abilityActivationService;
     private final MulliganService mulliganService;
     private final ReconnectionService reconnectionService;
-    private final ExileResolutionService exileResolutionService;
+    private final ExileSupport exileSupport;
     private final GameOutcomeService gameOutcomeService;
 
     /**
@@ -505,9 +504,9 @@ public class GameService {
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
                 listChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
-                exileResolutionService.handleKnowledgePoolCastChoice(gameData, player, cardIds);
+                exileSupport.handleKnowledgePoolCastChoice(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
-                exileResolutionService.handleMirrorOfFateChoice(gameData, player, cardIds);
+                exileSupport.handleMirrorOfFateChoice(gameData, player, cardIds);
             } else {
                 graveyardChoiceHandlerService.handleMultipleCardsChosen(gameData, player, cardIds);
             }

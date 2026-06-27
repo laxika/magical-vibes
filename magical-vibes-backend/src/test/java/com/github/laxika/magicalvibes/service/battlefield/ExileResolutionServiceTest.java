@@ -32,10 +32,25 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerExilesTopCardsToSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileAllPermanentsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFromHandToImprintEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentDamagedPlayerControlsEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnAtEndStepEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPermanentAndImprintEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPermanentAndReturnAtEndStepEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPermanentAndTrackWithSourceEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPermanentUntilSourceLeavesEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ImprintDyingCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.KnowledgePoolExileAndCastEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.MirrorOfFateEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.OmenMachineDrawStepEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -78,7 +93,22 @@ class ExileResolutionServiceTest {
     @Mock private ExileService exileService;
 
     @InjectMocks
-    private ExileResolutionService exileResolutionService;
+    private ExileSupport exileSupport;
+
+    private ExileAllPermanentsEffectHandler exileAllPermanentsHandler;
+    private ExileTargetPermanentEffectHandler exileTargetPermanentHandler;
+    private ExilePermanentDamagedPlayerControlsEffectHandler exilePermanentDamagedPlayerControlsHandler;
+    private ExileTargetPermanentAndTrackWithSourceEffectHandler exileTargetPermanentAndTrackWithSourceHandler;
+    private ExileTargetPermanentAndImprintEffectHandler exileTargetPermanentAndImprintHandler;
+    private ExileTargetPermanentAndReturnAtEndStepEffectHandler exileTargetPermanentAndReturnAtEndStepHandler;
+    private ExileSelfAndReturnAtEndStepEffectHandler exileSelfAndReturnAtEndStepHandler;
+    private ExileTargetPermanentUntilSourceLeavesEffectHandler exileTargetPermanentUntilSourceLeavesHandler;
+    private ImprintDyingCreatureEffectHandler imprintDyingCreatureHandler;
+    private ExileFromHandToImprintEffectHandler exileFromHandToImprintHandler;
+    private EachPlayerExilesTopCardsToSourceEffectHandler eachPlayerExilesTopCardsToSourceHandler;
+    private KnowledgePoolExileAndCastEffectHandler knowledgePoolExileAndCastHandler;
+    private OmenMachineDrawStepEffectHandler omenMachineDrawStepHandler;
+    private MirrorOfFateEffectHandler mirrorOfFateHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -103,6 +133,21 @@ class ExileResolutionServiceTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        exileAllPermanentsHandler = new ExileAllPermanentsEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exilePermanentDamagedPlayerControlsHandler = new ExilePermanentDamagedPlayerControlsEffectHandler(gameQueryService, gameBroadcastService, playerInputService);
+        exileTargetPermanentAndTrackWithSourceHandler = new ExileTargetPermanentAndTrackWithSourceEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exileTargetPermanentAndImprintHandler = new ExileTargetPermanentAndImprintEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exileTargetPermanentAndReturnAtEndStepHandler = new ExileTargetPermanentAndReturnAtEndStepEffectHandler(exileSupport, gameQueryService);
+        exileSelfAndReturnAtEndStepHandler = new ExileSelfAndReturnAtEndStepEffectHandler(exileSupport, gameQueryService);
+        exileTargetPermanentUntilSourceLeavesHandler = new ExileTargetPermanentUntilSourceLeavesEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        imprintDyingCreatureHandler = new ImprintDyingCreatureEffectHandler(gameQueryService, gameBroadcastService, graveyardService, exileService);
+        exileFromHandToImprintHandler = new ExileFromHandToImprintEffectHandler(gameQueryService, playerInputService);
+        eachPlayerExilesTopCardsToSourceHandler = new EachPlayerExilesTopCardsToSourceEffectHandler(gameQueryService, gameBroadcastService, exileService);
+        knowledgePoolExileAndCastHandler = new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, exileService);
+        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, gameBroadcastService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService);
+        mirrorOfFateHandler = new MirrorOfFateEffectHandler(exileSupport, playerInputService, cardViewFactory);
     }
 
     // ===== Helper methods =====
@@ -197,7 +242,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(any(Permanent.class), eq(filter), any()))
                     .thenReturn(true);
 
-            exileResolutionService.resolveExileAllPermanents(gd, entry, effect);
+            exileAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToExile(gd, creature1);
             verify(permanentRemovalService).removePermanentToExile(gd, creature2);
@@ -227,7 +272,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.matchesPermanentPredicate(eq(land), eq(filter), any()))
                     .thenReturn(false);
 
-            exileResolutionService.resolveExileAllPermanents(gd, entry, effect);
+            exileAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToExile(gd, creature);
             verify(permanentRemovalService, never()).removePermanentToExile(gd, land);
@@ -245,7 +290,7 @@ class ExileResolutionServiceTest {
                     List.of(effect), 0, (UUID) null, null
             );
 
-            exileResolutionService.resolveExileAllPermanents(gd, entry, effect);
+            exileAllPermanentsHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
             verify(permanentRemovalService).removeOrphanedAuras(gd);
@@ -271,7 +316,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
-            exileResolutionService.resolveExileTargetPermanent(gd, entry);
+            exileTargetPermanentHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             verify(gameBroadcastService).logAndBroadcast(eq(gd), eq("Spellbook is exiled."));
@@ -288,7 +333,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            exileResolutionService.resolveExileTargetPermanent(gd, entry);
+            exileTargetPermanentHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
             verify(permanentRemovalService).removeOrphanedAuras(gd);
@@ -318,7 +363,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target1.getId())).thenReturn(target1);
             when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
 
-            exileResolutionService.resolveExileTargetPermanent(gd, entry);
+            exileTargetPermanentHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target1);
             verify(permanentRemovalService).removePermanentToExile(gd, target2);
@@ -340,7 +385,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, removedId)).thenReturn(null);
             when(gameQueryService.findPermanentById(gd, target2.getId())).thenReturn(target2);
 
-            exileResolutionService.resolveExileTargetPermanent(gd, entry);
+            exileTargetPermanentHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target2);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
@@ -368,7 +413,7 @@ class ExileResolutionServiceTest {
                     List.of(effect), 0, player2Id, null
             );
 
-            exileResolutionService.resolveExilePermanentDamagedPlayerControls(gd, entry, effect);
+            exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
             assertThat(gd.pendingExileDamagedPlayerControlsPermanent).isTrue();
             verify(playerInputService).beginMultiPermanentChoice(
@@ -396,7 +441,7 @@ class ExileResolutionServiceTest {
                         return p.getCard().getType() == CardType.CREATURE;
                     });
 
-            exileResolutionService.resolveExilePermanentDamagedPlayerControls(gd, entry, effect);
+            exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
             verify(playerInputService).beginMultiPermanentChoice(
                     eq(gd), eq(player1Id),
@@ -417,7 +462,7 @@ class ExileResolutionServiceTest {
                     List.of(effect), 0, player2Id, null
             );
 
-            exileResolutionService.resolveExilePermanentDamagedPlayerControls(gd, entry, effect);
+            exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), anyString());
             verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), anyString());
@@ -435,7 +480,7 @@ class ExileResolutionServiceTest {
                     List.of(effect), 0, (UUID) null, null
             );
 
-            exileResolutionService.resolveExilePermanentDamagedPlayerControls(gd, entry, effect);
+            exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
             verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), anyString());
             verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
@@ -466,7 +511,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
-            exileResolutionService.resolveExileTargetPermanentAndTrackWithSource(gd, entry);
+            exileTargetPermanentAndTrackWithSourceHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.getCardsExiledByPermanent(source.getId()))
@@ -493,7 +538,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
-            exileResolutionService.resolveExileTargetPermanentAndTrackWithSource(gd, entry);
+            exileTargetPermanentAndTrackWithSourceHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.getCardsExiledByPermanent(source.getId()))
@@ -514,7 +559,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            exileResolutionService.resolveExileTargetPermanentAndTrackWithSource(gd, entry);
+            exileTargetPermanentAndTrackWithSourceHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
         }
@@ -544,7 +589,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
-            exileResolutionService.resolveExileTargetPermanentAndImprint(gd, entry);
+            exileTargetPermanentAndImprintHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(source.getCard().getImprintedCard()).isSameAs(targetCard);
@@ -567,7 +612,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            exileResolutionService.resolveExileTargetPermanentAndImprint(gd, entry);
+            exileTargetPermanentAndImprintHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
         }
@@ -588,7 +633,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
 
-            exileResolutionService.resolveExileTargetPermanentAndImprint(gd, entry);
+            exileTargetPermanentAndImprintHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             // No permanent to imprint onto
@@ -623,7 +668,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            exileResolutionService.resolveExileTargetPermanentAndReturnAtEndStep(gd, entry);
+            exileTargetPermanentAndReturnAtEndStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.pendingExileReturns)
@@ -641,7 +686,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            exileResolutionService.resolveExileTargetPermanentAndReturnAtEndStep(gd, entry);
+            exileTargetPermanentAndReturnAtEndStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
             assertThat(gd.pendingExileReturns).isEmpty();
@@ -662,7 +707,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            exileResolutionService.resolveExileTargetPermanentAndReturnAtEndStep(gd, entry);
+            exileTargetPermanentAndReturnAtEndStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             assertThat(gd.pendingExileReturns)
                     .anyMatch(per -> per.card().getName().equals("Grizzly Bears")
@@ -681,7 +726,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            exileResolutionService.resolveExileTargetPermanentAndReturnAtEndStep(gd, entry);
+            exileTargetPermanentAndReturnAtEndStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Grizzly Bears is exiled. It will return at the beginning of the next end step."));
@@ -713,7 +758,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
 
-            exileResolutionService.resolveExileSelfAndReturnAtEndStep(gd, entry);
+            exileSelfAndReturnAtEndStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, source);
             assertThat(gd.pendingExileReturns)
@@ -731,7 +776,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
 
-            exileResolutionService.resolveExileSelfAndReturnAtEndStep(gd, entry);
+            exileSelfAndReturnAtEndStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
             assertThat(gd.pendingExileReturns).isEmpty();
@@ -747,7 +792,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
 
-            exileResolutionService.resolveExileSelfAndReturnAtEndStep(gd, entry);
+            exileSelfAndReturnAtEndStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Argent Sphinx is exiled. It will return at the beginning of the next end step."));
@@ -782,7 +827,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
+            exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.exileReturnOnPermanentLeave).isNotEmpty();
@@ -804,7 +849,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
+            exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
             assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
@@ -823,7 +868,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
+            exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
             assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
@@ -845,7 +890,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player1Id);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
+            exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             assertThat(gd.exileReturnOnPermanentLeave.get(source.getId()))
                     .isNotNull()
@@ -868,7 +913,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(gameQueryService.findPermanentController(gd, target.getId())).thenReturn(player2Id);
 
-            exileResolutionService.resolveExileTargetPermanentUntilSourceLeaves(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
+            exileTargetPermanentUntilSourceLeavesHandler.resolve(gd, entry, new ExileTargetPermanentUntilSourceLeavesEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Spellbook is exiled by Leonin Relic-Warder."));
@@ -900,7 +945,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
-            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+            imprintDyingCreatureHandler.resolve(gd, entry, effect);
 
             // Dying card moved from graveyard to exile
             assertThat(gd.playerGraveyards.get(player2Id))
@@ -933,7 +978,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
-            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+            imprintDyingCreatureHandler.resolve(gd, entry, effect);
 
             // New card should be imprinted
             assertThat(vatPerm.getCard().getImprintedCard()).isSameAs(dyingCard);
@@ -961,7 +1006,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, vatId)).thenReturn(null);
 
-            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+            imprintDyingCreatureHandler.resolve(gd, entry, effect);
 
             // Dying card should still be in graveyard
             assertThat(gd.playerGraveyards.get(player2Id))
@@ -983,7 +1028,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
-            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+            imprintDyingCreatureHandler.resolve(gd, entry, effect);
 
             assertThat(vatPerm.getCard().getImprintedCard()).isNull();
         }
@@ -1005,7 +1050,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, vatPerm.getId())).thenReturn(vatPerm);
 
-            exileResolutionService.resolveImprintDyingCreature(gd, entry, effect);
+            imprintDyingCreatureHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Grizzly Bears is exiled and imprinted on Mimic Vat."));
@@ -1041,7 +1086,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
             when(gameQueryService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(true);
 
-            exileResolutionService.resolveExileFromHandToImprint(gd, entry, effect);
+            exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
             verify(playerInputService).beginImprintFromHandChoice(
                     eq(gd), eq(player1Id), eq(List.of(0)),
@@ -1065,7 +1110,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
 
-            exileResolutionService.resolveExileFromHandToImprint(gd, entry, effect);
+            exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
             verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
         }
@@ -1089,7 +1134,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, anvilPerm.getId())).thenReturn(anvilPerm);
             when(gameQueryService.matchesCardPredicate(eq(handCard), any(), any())).thenReturn(false);
 
-            exileResolutionService.resolveExileFromHandToImprint(gd, entry, effect);
+            exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
             verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
         }
@@ -1108,7 +1153,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, anvilId)).thenReturn(null);
 
-            exileResolutionService.resolveExileFromHandToImprint(gd, entry, effect);
+            exileFromHandToImprintHandler.resolve(gd, entry, effect);
 
             verify(playerInputService, never()).beginImprintFromHandChoice(any(), any(), any(), any(), any());
         }
@@ -1146,7 +1191,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
             stubExileCardTrackedWithSource();
 
-            exileResolutionService.resolveEachPlayerExilesTopCardsToSource(gd, entry, effect);
+            eachPlayerExilesTopCardsToSourceHandler.resolve(gd, entry, effect);
 
             // Player1 exiles 3, player2 exiles 2 (only has 2)
             assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(5);
@@ -1169,7 +1214,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourceId)).thenReturn(null);
 
-            exileResolutionService.resolveEachPlayerExilesTopCardsToSource(gd, entry, effect);
+            eachPlayerExilesTopCardsToSourceHandler.resolve(gd, entry, effect);
 
             assertThat(gd.exiledCards.stream().anyMatch(e -> e.sourcePermanentId() != null)).isFalse();
         }
@@ -1193,7 +1238,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
             stubExileCardTrackedWithSource();
 
-            exileResolutionService.resolveEachPlayerExilesTopCardsToSource(gd, entry, effect);
+            eachPlayerExilesTopCardsToSourceHandler.resolve(gd, entry, effect);
 
             assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
             // Only one log message (player1 only)
@@ -1224,7 +1269,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, kpId)).thenReturn(null);
 
-            exileResolutionService.resolveKnowledgePoolExileAndCast(gd, entry, effect);
+            knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
         }
@@ -1244,7 +1289,7 @@ class ExileResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, kp.getId())).thenReturn(kp);
 
-            exileResolutionService.resolveKnowledgePoolExileAndCast(gd, entry, effect);
+            knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Knowledge Pool's ability — original spell is no longer on the stack."));
@@ -1273,7 +1318,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, kp.getId())).thenReturn(kp);
             stubExileCardTrackedWithSource();
 
-            exileResolutionService.resolveKnowledgePoolExileAndCast(gd, entry, effect);
+            knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
             // Original spell removed from stack
             assertThat(gd.stack).doesNotContain(originalSpell);
@@ -1313,7 +1358,7 @@ class ExileResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, kp.getId())).thenReturn(kp);
             when(cardViewFactory.create(poolCard)).thenReturn(mockCardView);
 
-            exileResolutionService.resolveKnowledgePoolExileAndCast(gd, entry, effect);
+            knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
 
             assertThat(gd.knowledgePoolSourcePermanentId).isEqualTo(kp.getId());
             verify(playerInputService).sendKnowledgePoolCastChoice(
@@ -1337,7 +1382,7 @@ class ExileResolutionServiceTest {
             gd.knowledgePoolSourcePermanentId = kpId;
             gd.interaction.beginKnowledgePoolCastChoice(player1Id, java.util.Set.of(), 1);
 
-            exileResolutionService.handleKnowledgePoolCastChoice(gd, player, List.of());
+            exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Player1 declines to cast a spell from Knowledge Pool."));
@@ -1357,7 +1402,7 @@ class ExileResolutionServiceTest {
             gd.interaction.beginKnowledgePoolCastChoice(player1Id,
                     java.util.Set.of(chosenCard.getId()), 1);
 
-            exileResolutionService.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
+            exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
 
             // Card removed from pool and exile
             assertThat(gd.getCardsExiledByPermanent(kpId)).doesNotContain(chosenCard);
@@ -1386,7 +1431,7 @@ class ExileResolutionServiceTest {
             Card creatureCard = createCreatureCard("Baneslayer Angel");
             addPermanent(player2Id, creatureCard);
 
-            exileResolutionService.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
+            exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(chosenCard.getId()));
 
             // Should begin permanent choice with only the two player IDs
             @SuppressWarnings("unchecked")
@@ -1404,7 +1449,7 @@ class ExileResolutionServiceTest {
             gd.knowledgePoolSourcePermanentId = kpId;
             gd.interaction.beginKnowledgePoolCastChoice(player1Id, java.util.Set.of(), 1);
 
-            exileResolutionService.handleKnowledgePoolCastChoice(gd, player, List.of(UUID.randomUUID()));
+            exileSupport.handleKnowledgePoolCastChoice(gd, player, List.of(UUID.randomUUID()));
 
             verify(gameBroadcastService).broadcastGameState(gd);
         }
@@ -1428,7 +1473,7 @@ class ExileResolutionServiceTest {
                     List.of(new OmenMachineDrawStepEffect()), 0, player1Id, null
             );
 
-            exileResolutionService.resolveOmenMachineDrawStep(gd, entry);
+            omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Player1's library is empty (Omen Machine)."));
@@ -1446,7 +1491,7 @@ class ExileResolutionServiceTest {
                     List.of(new OmenMachineDrawStepEffect()), 0, player1Id, null
             );
 
-            exileResolutionService.resolveOmenMachineDrawStep(gd, entry);
+            omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
@@ -1466,7 +1511,7 @@ class ExileResolutionServiceTest {
                     List.of(new OmenMachineDrawStepEffect()), 0, player1Id, null
             );
 
-            exileResolutionService.resolveOmenMachineDrawStep(gd, entry);
+            omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             assertThat(gd.stack).anyMatch(se -> se.getCard() == sorceryCard);
             assertThat(gd.getSpellsCastThisTurnCount(player1Id)).isEqualTo(1);
@@ -1486,7 +1531,7 @@ class ExileResolutionServiceTest {
                     List.of(new OmenMachineDrawStepEffect()), 0, player1Id, null
             );
 
-            exileResolutionService.resolveOmenMachineDrawStep(gd, entry);
+            omenMachineDrawStepHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("Doom Blade has no valid targets and remains in exile."));
@@ -1514,7 +1559,7 @@ class ExileResolutionServiceTest {
                     List.of(new MirrorOfFateEffect())
             );
 
-            exileResolutionService.resolveMirrorOfFate(gd, entry);
+            mirrorOfFateHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             // Library exiled
             assertThat(gd.playerDecks.get(player1Id)).isEmpty();
@@ -1539,7 +1584,7 @@ class ExileResolutionServiceTest {
             CardView mockView = mock(CardView.class);
             when(cardViewFactory.create(exiledCard)).thenReturn(mockView);
 
-            exileResolutionService.resolveMirrorOfFate(gd, entry);
+            mirrorOfFateHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(playerInputService).sendMirrorOfFateChoice(
                     eq(gd), eq(player1Id), eq(List.of(exiledCard.getId())),
@@ -1568,7 +1613,7 @@ class ExileResolutionServiceTest {
             gd.interaction.beginMirrorOfFateChoice(player1Id,
                     java.util.Set.of(exiledCard.getId()), 7);
 
-            exileResolutionService.handleMirrorOfFateChoice(gd, player, List.of(exiledCard.getId()));
+            exileSupport.handleMirrorOfFateChoice(gd, player, List.of(exiledCard.getId()));
 
             // Library card exiled, chosen card on top
             assertThat(gd.playerDecks.get(player1Id)).containsExactly(exiledCard);
@@ -1583,7 +1628,7 @@ class ExileResolutionServiceTest {
             Player player = new Player(player1Id, "Player1");
 
             assertThatThrownBy(() ->
-                    exileResolutionService.handleMirrorOfFateChoice(gd, player, List.of()))
+                    exileSupport.handleMirrorOfFateChoice(gd, player, List.of()))
                     .isInstanceOf(IllegalStateException.class);
         }
 
@@ -1600,7 +1645,7 @@ class ExileResolutionServiceTest {
                     java.util.Set.of(card1.getId(), card2.getId()), 1);
 
             assertThatThrownBy(() ->
-                    exileResolutionService.handleMirrorOfFateChoice(gd, player,
+                    exileSupport.handleMirrorOfFateChoice(gd, player,
                             List.of(card1.getId(), card2.getId())))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Too many");
@@ -1618,7 +1663,7 @@ class ExileResolutionServiceTest {
             gd.interaction.beginMirrorOfFateChoice(player1Id,
                     java.util.Set.of(card1.getId(), card2.getId()), 7);
 
-            exileResolutionService.handleMirrorOfFateChoice(gd, player,
+            exileSupport.handleMirrorOfFateChoice(gd, player,
                     List.of(card1.getId(), card2.getId()));
 
             verify(playerInputService).beginLibraryReorderFromExile(eq(gd), eq(player1Id), anyList());

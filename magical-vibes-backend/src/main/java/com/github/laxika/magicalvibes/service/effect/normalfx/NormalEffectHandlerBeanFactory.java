@@ -30,7 +30,7 @@ import java.util.List;
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
  * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>,
- * <b>Library Reveal</b>, <b>Library Search</b>, <b>Library Mill</b>, and <b>Library Shuffle</b> domain handlers.
+ * <b>Library Reveal</b>, <b>Library Search</b>, <b>Library Mill</b>, <b>Library Shuffle</b>, and <b>Exile</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -45,6 +45,7 @@ public final class NormalEffectHandlerBeanFactory {
                                                           GraveyardReturnSupport graveyardReturnSupport,
                                                           LibraryRevealSupport libraryRevealSupport,
                                                           LibrarySearchSupport librarySearchSupport,
+                                                          ExileSupport exileSupport,
                                                           PermanentControlSupport permanentControlSupport,
                                                           PermanentCounterSupport permanentCounterSupport,
                                                           BattlefieldEntryService battlefieldEntryService,
@@ -528,7 +529,28 @@ public final class NormalEffectHandlerBeanFactory {
                 new ShuffleGraveyardIntoLibraryEffectHandler(gameBroadcastService),
                 new ShuffleSelfAndGraveyardIntoLibraryEffectHandler(gameBroadcastService, gameQueryService, permanentRemovalService),
                 new EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler(gameBroadcastService),
-                new ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler(gameBroadcastService, gameQueryService)
+                new ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler(gameBroadcastService, gameQueryService),
+                new ExileTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new ExileAllPermanentsEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new ExileAllGraveyardsEffectHandler(exileService, gameBroadcastService),
+                new ExileTargetCreatureAndAllWithSameNameEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new ExilePermanentDamagedPlayerControlsEffectHandler(gameQueryService, gameBroadcastService, playerInputService),
+                new ExileTargetPermanentAndTrackWithSourceEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new ExileTargetPermanentAndImprintEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new ExileTargetPermanentAndReturnAtEndStepEffectHandler(exileSupport, gameQueryService),
+                new ExileTargetPermanentAndReturnImmediatelyEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, battlefieldEntryService, drawService),
+                new ExileSelfAndReturnAtEndStepEffectHandler(exileSupport, gameQueryService),
+                new ExileSelfAtEndOfCombatAndReturnTransformedEffectHandler(gameQueryService),
+                new ExileTargetPermanentUntilSourceLeavesEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new ReturnAllCardsExiledWithSourceEffectHandler(battlefieldEntryService, gameBroadcastService),
+                new ImprintDyingCreatureEffectHandler(gameQueryService, gameBroadcastService, graveyardService, exileService),
+                new ExileFromHandToImprintEffectHandler(gameQueryService, playerInputService),
+                new EachPlayerExilesTopCardsToSourceEffectHandler(gameQueryService, gameBroadcastService, exileService),
+                new KnowledgePoolExileAndCastEffectHandler(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory, exileService),
+                new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, gameBroadcastService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService),
+                new MirrorOfFateEffectHandler(exileSupport, playerInputService, cardViewFactory),
+                new ExileTopCardMayCastNonlandThisTurnEffectHandler(exileService, gameBroadcastService),
+                new ExileTopCardOfOwnLibraryEffectHandler(exileService, gameBroadcastService)
         );
     }
 

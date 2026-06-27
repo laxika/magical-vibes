@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.DraftRegistry;
-import com.github.laxika.magicalvibes.service.battlefield.ExileResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
@@ -263,7 +263,7 @@ public class GameTestHarness {
         staticTargetLegalityService = new TargetLegalityService(staticGameQueryService, staticTargetValidationService);
         staticBattlefieldEntryService.setTargetLegalityService(staticTargetLegalityService);
         EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
-        ExileResolutionService exileResolutionService = new ExileResolutionService(staticDrawService, graveyardService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticPlayerInputService, cardViewFactory, staticTriggerCollectionService, staticBattlefieldEntryService, exileService);
+        ExileSupport exileSupport = new ExileSupport(graveyardService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticPlayerInputService, staticTriggerCollectionService);
         PlayerInteractionSupport playerInteractionSupport = new PlayerInteractionSupport(staticDrawService, graveyardService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticSessionManager, cardViewFactory, staticPermanentRemovalService, staticBattlefieldEntryService, staticTriggerCollectionService);
         TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
         DestructionSupport destructionSupport = new DestructionSupport(staticBattlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, staticPermanentRemovalService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeSupport);
@@ -278,7 +278,6 @@ public class GameTestHarness {
         List<Object> effectServices = List.of(
                 new PreventionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
                 new CounterResolutionService(graveyardService, exileService, staticGameBroadcastService, staticGameQueryService, stateTriggerService, permanentControlSupport),
-                exileResolutionService,
                 new CopyResolutionService(staticGameBroadcastService, validTargetService, staticGameQueryService, cloneService),
                 new TargetRedirectionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticTargetLegalityService),
                 new ExileReturnResolutionService(staticGameQueryService, staticGameBroadcastService),
@@ -294,7 +293,7 @@ public class GameTestHarness {
         }
         CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
         List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, permanentControlSupport, permanentCounterSupport,
+                staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, exileSupport, permanentControlSupport, permanentCounterSupport,
                 staticBattlefieldEntryService, staticLegendRuleService, creatureControlService,
                 staticGameQueryService, staticGameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,
@@ -368,7 +367,7 @@ public class GameTestHarness {
                 mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
                 staticSpellCastingService,
                 staticStackResolutionService, abilityActivationService, mulliganService, reconnectionService,
-                exileResolutionService, gameOutcomeService);
+                exileSupport, gameOutcomeService);
         staticLobbyService = new LobbyService(staticGameRegistry, staticGameBroadcastService, new DeckService(null, null));
 
         staticMessageHandler = new GameMessageHandler(
