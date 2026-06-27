@@ -1,10 +1,7 @@
 package com.github.laxika.magicalvibes.config;
 
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
@@ -73,7 +70,6 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
 
     @Override
     public void afterSingletonsInstantiated() {
-        int effectCount = 0;
         int validatorCount = 0;
 
         for (String beanName : applicationContext.getBeanDefinitionNames()) {
@@ -81,12 +77,6 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
             Class<?> beanClass = bean.getClass();
 
             for (Method method : beanClass.getDeclaredMethods()) {
-                HandlesEffect handlesEffect = method.getAnnotation(HandlesEffect.class);
-                if (handlesEffect != null) {
-                    registerEffectHandler(bean, method, handlesEffect.value());
-                    effectCount++;
-                }
-
                 ValidatesTarget validatesTarget = method.getAnnotation(ValidatesTarget.class);
                 if (validatesTarget != null) {
                     registerTargetValidator(bean, method, validatesTarget.value());
@@ -98,60 +88,8 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
         StaticEffectHandlerBeanFactory.registerAll(staticEffectHandlerBeans, staticEffectHandlerRegistry);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
 
-        log.info("Effect auto-registration complete: {} runtime handlers, {} normal handlers, {} static handlers, {} target validators",
-                effectCount, normalEffectHandlerBeans.size(), staticEffectHandlerBeans.size(), validatorCount);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void registerEffectHandler(Object bean, Method method, Class<? extends CardEffect> effectClass) {
-        method.setAccessible(true);
-        Class<?>[] params = method.getParameterTypes();
-
-        try {
-            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-
-            if (params.length == 3
-                    && params[0] == GameData.class
-                    && params[1] == StackEntry.class
-                    && CardEffect.class.isAssignableFrom(params[2])) {
-                // Pattern B: (GameData, StackEntry, ConcreteEffect)
-                Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[2];
-                effectHandlerRegistry.register(effectClass, (gd, entry, effect) -> {
-                    try {
-                        handle.invoke(gd, entry, effectParam.cast(effect));
-                    } catch (Throwable t) {
-                        throw wrapException(t, method);
-                    }
-                });
-            } else if (params.length == 2
-                    && params[0] == GameData.class
-                    && params[1] == StackEntry.class) {
-                // Pattern A: (GameData, StackEntry)
-                effectHandlerRegistry.register(effectClass, (gd, entry, effect) -> {
-                    try {
-                        handle.invoke(gd, entry);
-                    } catch (Throwable t) {
-                        throw wrapException(t, method);
-                    }
-                });
-            } else if (params.length == 1
-                    && params[0] == GameData.class) {
-                // Pattern C: (GameData)
-                effectHandlerRegistry.register(effectClass, (gd, entry, effect) -> {
-                    try {
-                        handle.invoke(gd);
-                    } catch (Throwable t) {
-                        throw wrapException(t, method);
-                    }
-                });
-            } else {
-                throw new IllegalStateException(
-                        "@HandlesEffect method " + method.getDeclaringClass().getSimpleName() + "." + method.getName()
-                                + " must have signature (GameData), (GameData, StackEntry), or (GameData, StackEntry, <? extends CardEffect>)");
-            }
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException("Cannot access @HandlesEffect method " + method.getName(), e);
-        }
+        log.info("Effect auto-registration complete: {} normal handlers, {} static handlers, {} target validators",
+                normalEffectHandlerBeans.size(), staticEffectHandlerBeans.size(), validatorCount);
     }
 
     @SuppressWarnings("unchecked")

@@ -86,7 +86,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
@@ -119,7 +118,6 @@ import com.github.laxika.magicalvibes.service.trigger.SpellCastTriggerCollectorS
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
-import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 
@@ -1100,49 +1098,6 @@ public class GameTestHarness {
     public void clearMessages() {
         conn1.clearMessages();
         conn2.clearMessages();
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void scanEffectHandlers(Object bean, EffectHandlerRegistry registry) {
-        for (Method method : bean.getClass().getDeclaredMethods()) {
-            HandlesEffect annotation = method.getAnnotation(HandlesEffect.class);
-            if (annotation == null) continue;
-
-            method.setAccessible(true);
-            Class<?>[] params = method.getParameterTypes();
-            try {
-                MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-
-                if (params.length == 3
-                        && params[0] == GameData.class
-                        && params[1] == StackEntry.class
-                        && CardEffect.class.isAssignableFrom(params[2])) {
-                    Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[2];
-                    registry.register(annotation.value(), (gd, entry, effect) -> {
-                        try { handle.invoke(gd, entry, effectParam.cast(effect)); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                } else if (params.length == 2
-                        && params[0] == GameData.class
-                        && params[1] == StackEntry.class) {
-                    registry.register(annotation.value(), (gd, entry, effect) -> {
-                        try { handle.invoke(gd, entry); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                } else if (params.length == 1
-                        && params[0] == GameData.class) {
-                    registry.register(annotation.value(), (gd, entry, effect) -> {
-                        try { handle.invoke(gd); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")

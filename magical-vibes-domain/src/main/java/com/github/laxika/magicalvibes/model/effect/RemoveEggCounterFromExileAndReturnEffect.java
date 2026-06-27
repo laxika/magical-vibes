@@ -9,8 +9,8 @@ import java.util.UUID;
  * remove an egg counter from it. Then if this card has no egg counters on it, return it
  * to the battlefield."</p>
  *
- * <p>Resolution is dispatched to {@code ExileEggCounterResolutionService} via
- * {@code @HandlesEffect}. The {@code cardId} identifies which exiled card to process.</p>
+ * <p>Resolution is handled by {@code RemoveEggCounterFromExileAndReturnEffectHandler}. The
+ * {@code cardId} identifies which exiled card to process.</p>
  */
 public record RemoveEggCounterFromExileAndReturnEffect(UUID cardId) implements CardEffect {
 }

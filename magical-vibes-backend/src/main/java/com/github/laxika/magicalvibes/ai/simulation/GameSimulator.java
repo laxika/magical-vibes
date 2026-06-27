@@ -93,7 +93,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSuppor
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.HandlesEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
@@ -1257,40 +1256,6 @@ public class GameSimulator {
             if (!id.equals(playerId)) return id;
         }
         return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void scanEffectHandlers(Object bean, EffectHandlerRegistry registry) {
-        for (Method method : bean.getClass().getDeclaredMethods()) {
-            HandlesEffect annotation = method.getAnnotation(HandlesEffect.class);
-            if (annotation == null) continue;
-            method.setAccessible(true);
-            Class<?>[] params = method.getParameterTypes();
-            try {
-                MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-                if (params.length == 3
-                        && params[0] == GameData.class
-                        && params[1] == com.github.laxika.magicalvibes.model.StackEntry.class
-                        && CardEffect.class.isAssignableFrom(params[2])) {
-                    Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[2];
-                    registry.register(annotation.value(), (gd, entry, effect) -> {
-                        try { handle.invoke(gd, entry, effectParam.cast(effect)); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                } else if (params.length == 2
-                        && params[0] == GameData.class
-                        && params[1] == com.github.laxika.magicalvibes.model.StackEntry.class) {
-                    registry.register(annotation.value(), (gd, entry, effect) -> {
-                        try { handle.invoke(gd, entry); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     @SuppressWarnings("unchecked")

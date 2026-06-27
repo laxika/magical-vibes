@@ -13,8 +13,8 @@ import lombok.Builder;
  * battlefield. Handles all graveyard-return patterns: choose one, return all, pre-targeted,
  * cross-graveyard search, aura attachment, equipment attachment to source, and life gain.
  *
- * <p>Resolution is dispatched to {@code GraveyardReturnResolutionService} via {@code @HandlesEffect},
- * which selects one of three paths:</p>
+ * <p>Resolution is handled by {@code ReturnCardFromGraveyardEffectHandler}, which selects one of
+ * three paths:</p>
  * <ol>
  *   <li><b>Pre-targeted</b> — the card was targeted during casting or ability activation
  *       ({@link #targetGraveyard} is {@code true} and the stack entry has a graveyard target).
