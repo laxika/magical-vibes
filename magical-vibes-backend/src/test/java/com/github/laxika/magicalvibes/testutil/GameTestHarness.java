@@ -15,15 +15,12 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
 import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.BounceResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.CombatBlockService;
 import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
-import com.github.laxika.magicalvibes.service.battlefield.CopyResolutionService;
-import com.github.laxika.magicalvibes.service.battlefield.CounterResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -277,12 +274,9 @@ public class GameTestHarness {
                 staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
         List<Object> effectServices = List.of(
                 new PreventionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService),
-                new CounterResolutionService(graveyardService, exileService, staticGameBroadcastService, staticGameQueryService, stateTriggerService, permanentControlSupport),
-                new CopyResolutionService(staticGameBroadcastService, validTargetService, staticGameQueryService, cloneService),
                 new TargetRedirectionResolutionService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticTargetLegalityService),
                 new ExileReturnResolutionService(staticGameQueryService, staticGameBroadcastService),
                 new ExileEggCounterResolutionService(staticGameQueryService, staticGameBroadcastService, staticBattlefieldEntryService),
-                new BounceResolutionService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, staticPlayerInputService, staticPermanentRemovalService, effectHandlerRegistry),
                 new CombatRestrictionResolutionService(staticGameQueryService, staticGameBroadcastService),
                 new TurnResolutionService(combatService, staticGameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService),
@@ -297,7 +291,8 @@ public class GameTestHarness {
                 staticBattlefieldEntryService, staticLegendRuleService, creatureControlService,
                 staticGameQueryService, staticGameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,
-                staticDrawService, staticSessionManager, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry);
+                staticDrawService, staticSessionManager, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry,
+                stateTriggerService, validTargetService, cloneService);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
         EffectResolutionService effectResolutionService = new EffectResolutionService(staticGameQueryService, effectHandlerRegistry, staticGameBroadcastService, staticPermanentRemovalService);
         staticStackResolutionService = new StackResolutionService(

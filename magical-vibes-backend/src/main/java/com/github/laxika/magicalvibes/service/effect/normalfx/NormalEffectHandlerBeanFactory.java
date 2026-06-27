@@ -7,10 +7,13 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.state.StateTriggerService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -30,7 +33,8 @@ import java.util.List;
  * <p>Currently holds the <b>Life</b>, <b>Boost</b>, <b>Damage</b>, <b>Destruction</b>,
  * <b>Permanent Control</b>, <b>Permanent Counter</b>, <b>Player Interaction</b>,
  * <b>Tap/Untap</b>, <b>Keyword Grant</b>, <b>Animation</b>, <b>Card-specific</b>, <b>Graveyard Return</b>,
- * <b>Library Reveal</b>, <b>Library Search</b>, <b>Library Mill</b>, <b>Library Shuffle</b>, and <b>Exile</b> domain handlers.
+ * <b>Library Reveal</b>, <b>Library Search</b>, <b>Library Mill</b>, <b>Library Shuffle</b>, <b>Exile</b>,
+ * <b>Bounce</b>, <b>Copy</b>, and <b>Counter</b> domain handlers.
  */
 public final class NormalEffectHandlerBeanFactory {
 
@@ -64,7 +68,14 @@ public final class NormalEffectHandlerBeanFactory {
                                                           CardViewFactory cardViewFactory,
                                                           CardSpecificSupport cardSpecificSupport,
                                                           WarpWorldService warpWorldService,
-                                                          EffectHandlerRegistry effectHandlerRegistry) {
+                                                          EffectHandlerRegistry effectHandlerRegistry,
+                                                          StateTriggerService stateTriggerService,
+                                                          ValidTargetService validTargetService,
+                                                          CloneService cloneService) {
+        BounceSupport bounceSupport = new BounceSupport(gameQueryService, gameBroadcastService, permanentRemovalService);
+        CopySupport copySupport = new CopySupport();
+        CounterSupport counterSupport = new CounterSupport(
+                graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService);
         PlayerInteractionSupport playerInteractionSupport = new PlayerInteractionSupport(
                 drawService, graveyardService, gameQueryService, gameBroadcastService, playerInputService,
                 sessionManager, cardViewFactory, permanentRemovalService, battlefieldEntryService,
@@ -550,7 +561,29 @@ public final class NormalEffectHandlerBeanFactory {
                 new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, gameBroadcastService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService),
                 new MirrorOfFateEffectHandler(exileSupport, playerInputService, cardViewFactory),
                 new ExileTopCardMayCastNonlandThisTurnEffectHandler(exileService, gameBroadcastService),
-                new ExileTopCardOfOwnLibraryEffectHandler(exileService, gameBroadcastService)
+                new ExileTopCardOfOwnLibraryEffectHandler(exileService, gameBroadcastService),
+                new ReturnSelfToHandEffectHandler(bounceSupport),
+                new ReturnTargetPermanentToHandEffectHandler(gameQueryService, gameBroadcastService, gameOutcomeService, permanentRemovalService),
+                new ReturnCreaturesToOwnersHandEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new ReturnArtifactsTargetPlayerOwnsToHandEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new ReturnPermanentsTargetPlayerControlsToHandEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService),
+                new BounceCreatureOnUpkeepEffectHandler(gameQueryService, gameBroadcastService, playerInputService),
+                new ReturnTargetPermanentToHandWithManaValueConditionalEffectHandler(
+                        gameQueryService, gameBroadcastService, permanentRemovalService, effectHandlerRegistry),
+                new ReturnSelfToHandOnCoinFlipLossEffectHandler(gameBroadcastService, bounceSupport),
+                new CopySpellEffectHandler(gameBroadcastService, copySupport),
+                new CopySpellForEachOtherSubtypePermanentEffectHandler(gameBroadcastService, validTargetService, copySupport),
+                new CopySpellForEachOtherPlayerEffectHandler(gameBroadcastService, copySupport),
+                new GrantInstantSorceryCopyUntilEndOfTurnEffectHandler(gameBroadcastService),
+                new CopyControllerCastSpellEffectHandler(gameBroadcastService, copySupport),
+                new BecomeCopyOfTargetCreatureEffectHandler(gameQueryService),
+                new BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler(gameQueryService, gameBroadcastService, cloneService),
+                new CounterSpellEffectHandler(counterSupport),
+                new CounterSpellAndExileEffectHandler(counterSupport),
+                new CounterSpellIfControllerPoisonedEffectHandler(counterSupport),
+                new CounterUnlessPaysEffectHandler(counterSupport),
+                new CounterSpellAndCreateTreasureTokensEffectHandler(counterSupport, gameQueryService, permanentControlSupport),
+                new CounterlashEffectHandler(counterSupport, gameQueryService)
         );
     }
 

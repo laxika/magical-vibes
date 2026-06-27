@@ -16,6 +16,11 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypeP
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfTargetCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherPlayerEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherSubtypePermanentEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,7 +53,12 @@ class CopyResolutionServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private CloneService cloneService;
 
-    @InjectMocks private CopyResolutionService service;
+    private final CopySupport copySupport = new CopySupport();
+
+    private CopySpellEffectHandler copySpellHandler;
+    private CopySpellForEachOtherSubtypePermanentEffectHandler copySpellForEachOtherSubtypeHandler;
+    private CopySpellForEachOtherPlayerEffectHandler copySpellForEachOtherPlayerHandler;
+    private BecomeCopyOfTargetCreatureEffectHandler becomeCopyOfTargetCreatureHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -67,6 +77,13 @@ class CopyResolutionServiceTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        copySpellHandler = new CopySpellEffectHandler(gameBroadcastService, copySupport);
+        copySpellForEachOtherSubtypeHandler = new CopySpellForEachOtherSubtypePermanentEffectHandler(
+                gameBroadcastService, validTargetService, copySupport);
+        copySpellForEachOtherPlayerHandler = new CopySpellForEachOtherPlayerEffectHandler(
+                gameBroadcastService, copySupport);
+        becomeCopyOfTargetCreatureHandler = new BecomeCopyOfTargetCreatureEffectHandler(gameQueryService);
     }
 
     // ===== Helper methods =====
@@ -129,7 +146,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             assertThat(gd.stack).hasSize(2);
             StackEntry copyEntry = gd.stack.getLast();
@@ -149,7 +166,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, shockCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getEffectsToResolve())
@@ -172,7 +189,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, consumeCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getXValue()).isEqualTo(3);
@@ -189,7 +206,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getControllerId()).isEqualTo(player2Id);
@@ -207,7 +224,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             StackEntry original = gd.stack.getFirst();
             StackEntry copy = gd.stack.getLast();
@@ -227,7 +244,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.isCopy()).isTrue();
@@ -249,7 +266,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, boomerangCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getDescription()).isEqualTo("Copy of Boomerang");
@@ -267,7 +284,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, boomerangCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             StackEntry copyEntry = gd.stack.getLast();
             assertThat(copyEntry.getTargetId()).isEqualTo(bearsPermId);
@@ -281,7 +298,7 @@ class CopyResolutionServiceTest {
             UUID removedCardId = UUID.randomUUID();
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, removedCardId);
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             assertThat(gd.stack).isEmpty();
             verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
@@ -298,7 +315,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("A copy of Counsel of the Soratami is created."));
@@ -312,7 +329,7 @@ class CopyResolutionServiceTest {
                     twincastCard.getName(), List.of(new CopySpellEffect()), 0,
                     (UUID) null, null, null, null, null, null);
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             assertThat(gd.stack).isEmpty();
             verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
@@ -330,7 +347,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, boomerangCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             assertThat(gd.pendingMayAbilities).hasSize(1);
             PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
@@ -350,7 +367,7 @@ class CopyResolutionServiceTest {
             Card twincastCard = createCard("Twincast");
             StackEntry twincastEntry = copySpellTriggerEntry(twincastCard, player2Id, counselCard.getId());
 
-            service.resolveCopySpell(gd, twincastEntry);
+            copySpellHandler.resolve(gd, twincastEntry, new CopySpellEffect());
 
             assertThat(gd.pendingMayAbilities).isEmpty();
         }
@@ -391,7 +408,7 @@ class CopyResolutionServiceTest {
             when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
                     .thenReturn(true);
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             // 2 copies added to the stack (one for each non-targeted Golem)
             assertThat(gd.stack).hasSize(2);
@@ -422,7 +439,7 @@ class CopyResolutionServiceTest {
             when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
                     .thenReturn(true);
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             List<UUID> copyTargets = gd.stack.stream()
                     .map(StackEntry::getTargetId)
@@ -456,7 +473,7 @@ class CopyResolutionServiceTest {
             when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
                     .thenReturn(true);
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().isCopy()).isTrue();
@@ -486,7 +503,7 @@ class CopyResolutionServiceTest {
             when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
                     .thenReturn(true);
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             gd.stack.forEach(se -> {
                 assertThat(se.getEffectsToResolve()).hasSize(1);
@@ -519,7 +536,7 @@ class CopyResolutionServiceTest {
             when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
                     .thenReturn(true);
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             verify(gameBroadcastService, times(2)).logAndBroadcast(eq(gd),
                     eq("A copy of Shock is created targeting Golem."));
@@ -552,7 +569,7 @@ class CopyResolutionServiceTest {
             when(validTargetService.canPermanentBeTargetedBySpell(gd, shroudedGolem, shockCard, player1Id))
                     .thenReturn(false);
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             // Only 1 copy created (for golem2)
             assertThat(gd.stack).hasSize(1);
@@ -579,7 +596,7 @@ class CopyResolutionServiceTest {
             StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                     "Precursor Golem trigger", List.of(effect));
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             // No copies since the only other permanent is a Bear, not a Golem
             assertThat(gd.stack).isEmpty();
@@ -595,7 +612,7 @@ class CopyResolutionServiceTest {
             StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                     "Precursor Golem trigger", List.of(effect));
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             assertThat(gd.stack).isEmpty();
             verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
@@ -624,7 +641,7 @@ class CopyResolutionServiceTest {
             when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id)))
                     .thenReturn(true);
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             gd.stack.forEach(se ->
                     assertThat(se.getControllerId()).isEqualTo(player1Id));
@@ -654,7 +671,7 @@ class CopyResolutionServiceTest {
             when(validTargetService.canPermanentBeTargetedBySpell(gd, opponentGolem, shockCard, player1Id))
                     .thenReturn(true);
 
-            service.resolveCopyForEachOtherSubtype(gd, triggerEntry, effect);
+            copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(opponentGolem.getId());
@@ -683,7 +700,7 @@ class CopyResolutionServiceTest {
             StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                     "Radiate trigger", List.of(effect));
 
-            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+            copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
             // One copy for player2 (the only other player)
             assertThat(gd.stack).hasSize(1);
@@ -706,7 +723,7 @@ class CopyResolutionServiceTest {
             StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                     "Radiate trigger", List.of(effect));
 
-            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+            copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(targetPermId);
         }
@@ -721,7 +738,7 @@ class CopyResolutionServiceTest {
             StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                     "Radiate trigger", List.of(effect));
 
-            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+            copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
             assertThat(gd.stack).isEmpty();
             verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
@@ -741,7 +758,7 @@ class CopyResolutionServiceTest {
             StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                     "Radiate trigger", List.of(effect));
 
-            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+            copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     eq("A copy of Syphon Mind is created for Player2."));
@@ -762,7 +779,7 @@ class CopyResolutionServiceTest {
             StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                     "Radiate trigger", List.of(effect));
 
-            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+            copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
             assertThat(gd.pendingMayAbilities).hasSize(1);
             PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
@@ -784,7 +801,7 @@ class CopyResolutionServiceTest {
             StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                     "Radiate trigger", List.of(effect));
 
-            service.resolveCopyForEachOtherPlayer(gd, triggerEntry, effect);
+            copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
             assertThat(gd.pendingMayAbilities).isEmpty();
         }
@@ -811,7 +828,7 @@ class CopyResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetCreature.getId())).thenReturn(targetCreature);
 
-            service.resolveBecomeCopyOfTargetCreature(gd, entry);
+            becomeCopyOfTargetCreatureHandler.resolve(gd, entry, new BecomeCopyOfTargetCreatureEffect());
 
             assertThat(gd.pendingMayAbilities).hasSize(1);
             PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
@@ -829,7 +846,7 @@ class CopyResolutionServiceTest {
                     cloneCard.getName(), List.of(new BecomeCopyOfTargetCreatureEffect()), 0,
                     (UUID) null, null, null, null, null, null);
 
-            service.resolveBecomeCopyOfTargetCreature(gd, entry);
+            becomeCopyOfTargetCreatureHandler.resolve(gd, entry, new BecomeCopyOfTargetCreatureEffect());
 
             assertThat(gd.pendingMayAbilities).isEmpty();
         }
@@ -845,7 +862,7 @@ class CopyResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, removedCreatureId)).thenReturn(null);
 
-            service.resolveBecomeCopyOfTargetCreature(gd, entry);
+            becomeCopyOfTargetCreatureHandler.resolve(gd, entry, new BecomeCopyOfTargetCreatureEffect());
 
             assertThat(gd.pendingMayAbilities).isEmpty();
         }
@@ -863,7 +880,7 @@ class CopyResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetCreature.getId())).thenReturn(targetCreature);
 
-            service.resolveBecomeCopyOfTargetCreature(gd, entry);
+            becomeCopyOfTargetCreatureHandler.resolve(gd, entry, new BecomeCopyOfTargetCreatureEffect());
 
             PendingMayAbility ability = gd.pendingMayAbilities.getFirst();
             assertThat(ability.effects())

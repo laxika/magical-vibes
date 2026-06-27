@@ -16,6 +16,13 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BounceCreatureOnUpkeepEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.BounceSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnArtifactsTargetPlayerOwnsToHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCreaturesToOwnersHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnSelfToHandEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnSelfToHandOnCoinFlipLossEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTargetPermanentToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +60,15 @@ class BounceResolutionServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentRemovalService permanentRemovalService;
 
-    @InjectMocks private BounceResolutionService service;
+    @InjectMocks
+    private BounceSupport bounceSupport;
+
+    private ReturnSelfToHandEffectHandler returnSelfToHandHandler;
+    private ReturnTargetPermanentToHandEffectHandler returnTargetPermanentToHandHandler;
+    private ReturnCreaturesToOwnersHandEffectHandler returnCreaturesToOwnersHandHandler;
+    private ReturnArtifactsTargetPlayerOwnsToHandEffectHandler returnArtifactsTargetPlayerOwnsToHandHandler;
+    private BounceCreatureOnUpkeepEffectHandler bounceCreatureOnUpkeepHandler;
+    private ReturnSelfToHandOnCoinFlipLossEffectHandler returnSelfToHandOnCoinFlipLossHandler;
 
     private GameData gd;
     private UUID player1Id;
@@ -72,6 +87,18 @@ class BounceResolutionServiceTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+
+        returnSelfToHandHandler = new ReturnSelfToHandEffectHandler(bounceSupport);
+        returnTargetPermanentToHandHandler = new ReturnTargetPermanentToHandEffectHandler(
+                gameQueryService, gameBroadcastService, gameOutcomeService, permanentRemovalService);
+        returnCreaturesToOwnersHandHandler = new ReturnCreaturesToOwnersHandEffectHandler(
+                gameQueryService, gameBroadcastService, permanentRemovalService);
+        returnArtifactsTargetPlayerOwnsToHandHandler = new ReturnArtifactsTargetPlayerOwnsToHandEffectHandler(
+                gameQueryService, gameBroadcastService, permanentRemovalService);
+        bounceCreatureOnUpkeepHandler = new BounceCreatureOnUpkeepEffectHandler(
+                gameQueryService, gameBroadcastService, playerInputService);
+        returnSelfToHandOnCoinFlipLossHandler = new ReturnSelfToHandOnCoinFlipLossEffectHandler(
+                gameBroadcastService, bounceSupport);
     }
 
     // ===== Helper methods =====
@@ -136,7 +163,7 @@ class BounceResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
 
-            service.resolveReturnSelfToHand(gd, entry);
+            returnSelfToHandHandler.resolve(gd, entry, new ReturnSelfToHandEffect());
 
             verify(permanentRemovalService).removePermanentToHand(gd, permanent);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
@@ -155,7 +182,7 @@ class BounceResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, sourcePermanentId)).thenReturn(null);
 
-            service.resolveReturnSelfToHand(gd, entry);
+            returnSelfToHandHandler.resolve(gd, entry, new ReturnSelfToHandEffect());
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
@@ -184,7 +211,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
 
-            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect());
+            returnTargetPermanentToHandHandler.resolve(gd, entry, new ReturnTargetPermanentToHandEffect());
 
             verify(permanentRemovalService).removePermanentToHand(gd, target);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
@@ -203,7 +230,7 @@ class BounceResolutionServiceTest {
 
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
 
-            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect());
+            returnTargetPermanentToHandHandler.resolve(gd, entry, new ReturnTargetPermanentToHandEffect());
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
             verify(permanentRemovalService).removeOrphanedAuras(gd);
@@ -225,7 +252,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
 
-            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect(1));
+            returnTargetPermanentToHandHandler.resolve(gd, entry, new ReturnTargetPermanentToHandEffect(1));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
             verify(gameOutcomeService).checkWinCondition(gd);
@@ -247,7 +274,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.canPlayerLifeChange(gd, player2Id)).thenReturn(false);
             when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
 
-            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect(1));
+            returnTargetPermanentToHandHandler.resolve(gd, entry, new ReturnTargetPermanentToHandEffect(1));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(20);
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
@@ -267,7 +294,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
             when(permanentRemovalService.removePermanentToHand(gd, target)).thenReturn(true);
 
-            service.resolveReturnTargetPermanentToHand(gd, entry, new ReturnTargetPermanentToHandEffect());
+            returnTargetPermanentToHandHandler.resolve(gd, entry, new ReturnTargetPermanentToHandEffect());
 
             verify(permanentRemovalService).removePermanentToHand(gd, target);
         }
@@ -299,7 +326,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.matchesFilters(any(), eq(Set.of()), any())).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 
-            service.resolveReturnCreaturesToOwnersHand(gd, entry, effect);
+            returnCreaturesToOwnersHandHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToHand(gd, creature1);
             verify(permanentRemovalService).removePermanentToHand(gd, creature2);
@@ -324,7 +351,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(gd, creature)).thenReturn(true);
 
-            service.resolveReturnCreaturesToOwnersHand(gd, entry, effect);
+            returnCreaturesToOwnersHandHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService).removePermanentToHand(gd, creature);
             verify(permanentRemovalService, never()).removePermanentToHand(gd, enchantment);
@@ -337,7 +364,7 @@ class BounceResolutionServiceTest {
             ReturnCreaturesToOwnersHandEffect effect = new ReturnCreaturesToOwnersHandEffect(Set.of());
             StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), null);
 
-            service.resolveReturnCreaturesToOwnersHand(gd, entry, effect);
+            returnCreaturesToOwnersHandHandler.resolve(gd, entry, effect);
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
             verify(permanentRemovalService, never()).removeOrphanedAuras(any());
@@ -368,7 +395,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isArtifact(artifact2)).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 
-            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+            returnArtifactsTargetPlayerOwnsToHandHandler.resolve(gd, entry, new ReturnArtifactsTargetPlayerOwnsToHandEffect());
 
             verify(permanentRemovalService).removePermanentToHand(gd, artifact1);
             verify(permanentRemovalService).removePermanentToHand(gd, artifact2);
@@ -391,7 +418,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isArtifact(creature)).thenReturn(false);
             when(permanentRemovalService.removePermanentToHand(gd, artifact)).thenReturn(true);
 
-            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+            returnArtifactsTargetPlayerOwnsToHandHandler.resolve(gd, entry, new ReturnArtifactsTargetPlayerOwnsToHandEffect());
 
             verify(permanentRemovalService).removePermanentToHand(gd, artifact);
             verify(permanentRemovalService, never()).removePermanentToHand(gd, creature);
@@ -413,7 +440,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isArtifact(player2Artifact)).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(gd, player2Artifact)).thenReturn(true);
 
-            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+            returnArtifactsTargetPlayerOwnsToHandHandler.resolve(gd, entry, new ReturnArtifactsTargetPlayerOwnsToHandEffect());
 
             verify(permanentRemovalService).removePermanentToHand(gd, player2Artifact);
             verify(permanentRemovalService, never()).removePermanentToHand(gd, player1Artifact);
@@ -431,7 +458,7 @@ class BounceResolutionServiceTest {
 
             when(gameQueryService.isArtifact(creature)).thenReturn(false);
 
-            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+            returnArtifactsTargetPlayerOwnsToHandHandler.resolve(gd, entry, new ReturnArtifactsTargetPlayerOwnsToHandEffect());
 
             verify(permanentRemovalService, never()).removePermanentToHand(any(), any());
         }
@@ -458,7 +485,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isArtifact(ownArtifact)).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(gd, ownArtifact)).thenReturn(true);
 
-            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+            returnArtifactsTargetPlayerOwnsToHandHandler.resolve(gd, entry, new ReturnArtifactsTargetPlayerOwnsToHandEffect());
 
             // Stolen artifact (owned by player2) should NOT be returned when targeting player1
             verify(permanentRemovalService, never()).removePermanentToHand(gd, stolen);
@@ -483,7 +510,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isArtifact(stolen)).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(gd, stolen)).thenReturn(true);
 
-            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+            returnArtifactsTargetPlayerOwnsToHandHandler.resolve(gd, entry, new ReturnArtifactsTargetPlayerOwnsToHandEffect());
 
             verify(permanentRemovalService).removePermanentToHand(gd, stolen);
         }
@@ -501,7 +528,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isArtifact(artifact)).thenReturn(true);
             when(permanentRemovalService.removePermanentToHand(gd, artifact)).thenReturn(true);
 
-            service.resolveReturnArtifactsTargetPlayerOwnsToHand(gd, entry);
+            returnArtifactsTargetPlayerOwnsToHandHandler.resolve(gd, entry, new ReturnArtifactsTargetPlayerOwnsToHandEffect());
 
             verify(permanentRemovalService).removePermanentToHand(gd, artifact);
         }
@@ -531,7 +558,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
 
-            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
+            bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
             verify(playerInputService).beginPermanentChoice(eq(gd), eq(player2Id),
                     eq(List.of(creature.getId())), anyString());
@@ -553,7 +580,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
 
-            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
+            bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
             verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
                     eq(List.of(creature.getId())), anyString());
@@ -575,7 +602,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
             when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
 
-            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
+            bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
             assertThat(gd.interaction.permanentChoiceContext())
                     .isInstanceOf(PermanentChoiceContext.BounceCreature.class);
@@ -593,7 +620,7 @@ class BounceResolutionServiceTest {
             StackEntry entry = entryWithTargetAndSource(card, player1Id,
                     List.of(effect), player1Id, UUID.randomUUID());
 
-            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
+            bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd),
                     argThat(msg -> msg.contains("controls no valid creatures")));
@@ -620,7 +647,7 @@ class BounceResolutionServiceTest {
             when(gameQueryService.matchesFilters(eq(matchingCreature), any(), any())).thenReturn(true);
             when(gameQueryService.matchesFilters(eq(nonMatchingCreature), any(), any())).thenReturn(false);
 
-            service.resolveBounceCreatureOnUpkeep(gd, entry, effect);
+            bounceCreatureOnUpkeepHandler.resolve(gd, entry, effect);
 
             @SuppressWarnings("unchecked")
             ArgumentCaptor<List<UUID>> idsCaptor = ArgumentCaptor.forClass(List.class);
@@ -655,7 +682,7 @@ class BounceResolutionServiceTest {
             lenient().when(gameQueryService.findPermanentById(gd, permanent.getId())).thenReturn(permanent);
             lenient().when(permanentRemovalService.removePermanentToHand(gd, permanent)).thenReturn(true);
 
-            service.resolveReturnSelfToHandOnCoinFlipLoss(gd, entry);
+            returnSelfToHandOnCoinFlipLossHandler.resolve(gd, entry, new ReturnSelfToHandOnCoinFlipLossEffect());
 
             // Verify coin flip was logged
             ArgumentCaptor<String> logCaptor = ArgumentCaptor.forClass(String.class);

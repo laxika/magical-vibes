@@ -45,15 +45,12 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.ability.ActivatedAbilityExecutionService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.BounceResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.CombatBlockService;
 import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
-import com.github.laxika.magicalvibes.service.battlefield.CopyResolutionService;
-import com.github.laxika.magicalvibes.service.battlefield.CounterResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -313,10 +310,7 @@ public class GameSimulator {
                 gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
         List<Object> effectServices = List.of(
                 new PreventionResolutionService(gameQueryService, gameBroadcastService, playerInputService),
-                new CounterResolutionService(graveyardService, exileService, gameBroadcastService, gameQueryService, stateTriggerService, permanentControlSupport),
-                new CopyResolutionService(gameBroadcastService, validTargetService, gameQueryService, cloneService),
                 new TargetRedirectionResolutionService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService),
-                new BounceResolutionService(gameQueryService, gameBroadcastService, gameOutcomeService, playerInputService, permanentRemovalService, effectHandlerRegistry),
                 new CombatRestrictionResolutionService(gameQueryService, gameBroadcastService),
                 new TurnResolutionService(combatService, gameBroadcastService, auraAttachmentService, turnCleanupService, exileService),
                 new EquipResolutionService(gameQueryService, gameBroadcastService, permanentRemovalService),
@@ -331,7 +325,8 @@ public class GameSimulator {
                 battlefieldEntryService, legendRuleService, creatureControlService,
                 gameQueryService, gameBroadcastService, gameOutcomeService,
                 graveyardService, exileService, permanentRemovalService, triggerCollectionService, playerInputService,
-                drawService, noOpSession, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry);
+                drawService, noOpSession, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry,
+                stateTriggerService, validTargetService, cloneService);
         NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
 
         EffectResolutionService effectResolutionService = new EffectResolutionService(gameQueryService, effectHandlerRegistry, gameBroadcastService, permanentRemovalService);
