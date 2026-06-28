@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.config;
 
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
-import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBean;
@@ -17,9 +14,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
 import java.util.List;
 
 @Slf4j
@@ -74,15 +68,7 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
 
         for (String beanName : applicationContext.getBeanDefinitionNames()) {
             Object bean = applicationContext.getBean(beanName);
-            Class<?> beanClass = bean.getClass();
-
-            for (Method method : beanClass.getDeclaredMethods()) {
-                ValidatesTarget validatesTarget = method.getAnnotation(ValidatesTarget.class);
-                if (validatesTarget != null) {
-                    registerTargetValidator(bean, method, validatesTarget.value());
-                    validatorCount++;
-                }
-            }
+            validatorCount += TargetValidatorRegistry.scanBean(bean, targetValidatorRegistry);
         }
 
         StaticEffectHandlerBeanFactory.registerAll(staticEffectHandlerBeans, staticEffectHandlerRegistry);
@@ -90,52 +76,5 @@ public class EffectRegistryConfig implements SmartInitializingSingleton {
 
         log.info("Effect auto-registration complete: {} normal handlers, {} static handlers, {} target validators",
                 normalEffectHandlerBeans.size(), staticEffectHandlerBeans.size(), validatorCount);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void registerTargetValidator(Object bean, Method method, Class<? extends CardEffect> effectClass) {
-        method.setAccessible(true);
-        Class<?>[] params = method.getParameterTypes();
-
-        try {
-            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-
-            if (params.length == 2
-                    && params[0] == TargetValidationContext.class
-                    && CardEffect.class.isAssignableFrom(params[1])) {
-                // Pattern B: (TargetValidationContext, ConcreteEffectType)
-                Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
-                targetValidatorRegistry.register(effectClass, (ctx, effect) -> {
-                    try {
-                        handle.invoke(ctx, effectParam.cast(effect));
-                    } catch (Throwable t) {
-                        throw wrapException(t, method);
-                    }
-                });
-            } else if (params.length == 1
-                    && params[0] == TargetValidationContext.class) {
-                // Pattern A: (TargetValidationContext)
-                targetValidatorRegistry.register(effectClass, (ctx, effect) -> {
-                    try {
-                        handle.invoke(ctx);
-                    } catch (Throwable t) {
-                        throw wrapException(t, method);
-                    }
-                });
-            } else {
-                throw new IllegalStateException(
-                        "@ValidatesTarget method " + method.getDeclaringClass().getSimpleName() + "." + method.getName()
-                                + " must have signature (TargetValidationContext) or (TargetValidationContext, <? extends CardEffect>)");
-            }
-        } catch (IllegalAccessException e) {
-            throw new IllegalStateException("Cannot access @ValidatesTarget method " + method.getName(), e);
-        }
-    }
-
-    private static RuntimeException wrapException(Throwable t, Method method) {
-        if (t instanceof RuntimeException re) {
-            throw re;
-        }
-        throw new RuntimeException("Error invoking handler " + method.getDeclaringClass().getSimpleName() + "." + method.getName(), t);
     }
 }

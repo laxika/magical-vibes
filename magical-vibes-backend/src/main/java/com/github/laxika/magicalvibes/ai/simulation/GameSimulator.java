@@ -102,10 +102,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionS
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
-import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
-import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
 import com.github.laxika.magicalvibes.service.validate.BounceTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.CreatureModTargetValidators;
 import com.github.laxika.magicalvibes.service.validate.DamageTargetValidators;
@@ -139,10 +137,7 @@ import com.github.laxika.magicalvibes.service.input.PermanentChoiceSpellHandlerS
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceTriggerHandlerService;
 import lombok.extern.slf4j.Slf4j;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -284,7 +279,7 @@ public class GameSimulator {
                 new LifeTargetValidators(targetValidationService)
         );
         for (Object bean : validatorBeans) {
-            scanTargetValidators(bean, targetValidatorRegistry);
+            TargetValidatorRegistry.scanBean(bean, targetValidatorRegistry);
         }
         TargetLegalityService targetLegalityService = new TargetLegalityService(gameQueryService, targetValidationService);
 
@@ -1256,37 +1251,5 @@ public class GameSimulator {
             if (!id.equals(playerId)) return id;
         }
         return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    private static void scanTargetValidators(Object bean, TargetValidatorRegistry registry) {
-        for (Method method : bean.getClass().getDeclaredMethods()) {
-            ValidatesTarget annotation = method.getAnnotation(ValidatesTarget.class);
-            if (annotation == null) continue;
-            method.setAccessible(true);
-            Class<?>[] params = method.getParameterTypes();
-            try {
-                MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-                if (params.length == 2
-                        && params[0] == TargetValidationContext.class
-                        && CardEffect.class.isAssignableFrom(params[1])) {
-                    Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
-                    registry.register(annotation.value(), (ctx, effect) -> {
-                        try { handle.invoke(ctx, effectParam.cast(effect)); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                } else if (params.length == 1
-                        && params[0] == TargetValidationContext.class) {
-                    registry.register(annotation.value(), (ctx, effect) -> {
-                        try { handle.invoke(ctx); }
-                        catch (RuntimeException re) { throw re; }
-                        catch (Throwable t) { throw new RuntimeException(t); }
-                    });
-                }
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }
