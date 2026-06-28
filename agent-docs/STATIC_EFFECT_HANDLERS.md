@@ -57,7 +57,7 @@ Verification after adding a handler:
 
 ```
 ./gradlew :magical-vibes-backend:compileJava :magical-vibes-backend:compileTestJava
-./gradlew :magical-vibes-backend:test --tests "*StaticEffectResolutionServiceTest"
+./gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.service.effect.staticfx.*"
 ```
 
 Plus card tests for the relevant effect(s).
