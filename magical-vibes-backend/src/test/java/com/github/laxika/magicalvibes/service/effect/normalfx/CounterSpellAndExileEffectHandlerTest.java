@@ -2,12 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileEffect;
@@ -16,10 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellIfControllerPoiso
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSpellAndExileEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSpellEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSpellIfControllerPoisonedEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CounterUnlessPaysEffectHandler;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
