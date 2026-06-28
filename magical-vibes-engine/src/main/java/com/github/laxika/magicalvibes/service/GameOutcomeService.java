@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.GameOverMessage;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.webservice.DraftService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +28,7 @@ public class GameOutcomeService {
     private final SessionManager sessionManager;
     private final GameRegistry gameRegistry;
     private final DraftRegistry draftRegistry;
-    private final DraftService draftService;
+    private final ObjectProvider<TournamentResultHandler> tournamentResultHandler;
     private final GameTimeoutService gameTimeoutService;
 
     public GameOutcomeService(GameQueryService gameQueryService,
@@ -36,14 +36,14 @@ public class GameOutcomeService {
                               SessionManager sessionManager,
                               GameRegistry gameRegistry,
                               DraftRegistry draftRegistry,
-                              @Lazy DraftService draftService,
+                              ObjectProvider<TournamentResultHandler> tournamentResultHandler,
                               @Lazy GameTimeoutService gameTimeoutService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.sessionManager = sessionManager;
         this.gameRegistry = gameRegistry;
         this.draftRegistry = draftRegistry;
-        this.draftService = draftService;
+        this.tournamentResultHandler = tournamentResultHandler;
         this.gameTimeoutService = gameTimeoutService;
     }
 
@@ -165,7 +165,10 @@ public class GameOutcomeService {
         if (gameData.draftId != null) {
             DraftData draftData = draftRegistry.get(gameData.draftId);
             if (draftData != null) {
-                draftService.handleGameFinished(draftData, winnerId);
+                TournamentResultHandler handler = tournamentResultHandler.getIfAvailable();
+                if (handler != null) {
+                    handler.handleGameFinished(draftData, winnerId);
+                }
             }
         }
     }

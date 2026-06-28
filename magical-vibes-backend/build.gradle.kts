@@ -12,6 +12,7 @@ dependencies {
     runtimeOnly("org.hibernate.orm:hibernate-community-dialects:6.6.4.Final")
 
     implementation(project(":magical-vibes-card"))
+    implementation(project(":magical-vibes-engine"))
     implementation(project(":magical-vibes-websocket"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.networking.message.LoginResponse;
 import com.github.laxika.magicalvibes.networking.message.SetInfo;
 import com.github.laxika.magicalvibes.entity.User;
 import com.github.laxika.magicalvibes.repository.UserRepository;
-import com.github.laxika.magicalvibes.service.LobbyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

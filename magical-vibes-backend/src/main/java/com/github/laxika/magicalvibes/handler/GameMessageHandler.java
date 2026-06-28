@@ -67,7 +67,7 @@ import com.github.laxika.magicalvibes.service.GameTimeoutService;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.service.LobbyService;
+import com.github.laxika.magicalvibes.webservice.LobbyService;
 import com.github.laxika.magicalvibes.webservice.LoginService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;

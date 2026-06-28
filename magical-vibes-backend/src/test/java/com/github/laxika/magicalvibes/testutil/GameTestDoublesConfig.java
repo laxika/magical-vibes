@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;
-import com.github.laxika.magicalvibes.service.LobbyService;
+import com.github.laxika.magicalvibes.webservice.LobbyService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.webservice.CardBrowserService;
 import com.github.laxika.magicalvibes.webservice.DeckService;
@@ -58,10 +58,13 @@ public class GameTestDoublesConfig {
         return new DeckService((DeckRepository) null, (ObjectMapper) null);
     }
 
+    /**
+     * {@code LobbyService} now lives in the application layer (outside the engine scan), so the
+     * test context provides it explicitly for the message handler and harness.
+     */
     @Bean
-    @Primary
-    DraftService draftService() {
-        return Mockito.mock(DraftService.class);
+    LobbyService lobbyService(TestGameRegistry gameRegistry, GameBroadcastService gameBroadcastService) {
+        return new LobbyService(gameRegistry, gameBroadcastService, deckService());
     }
 
     @Bean

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
+import com.github.laxika.magicalvibes.networking.SessionManager;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,7 +45,7 @@ public class GameTimeoutService {
 
     private final GameRegistry gameRegistry;
     private final GameOutcomeService gameOutcomeService;
-    private final WebSocketSessionManager sessionManager;
+    private final SessionManager sessionManager;
     private final Duration bothDisconnectedTimeout;
     private final Duration singleDisconnectedTimeout;
     private final ScheduledExecutorService scheduler;
@@ -56,7 +56,7 @@ public class GameTimeoutService {
 
     public GameTimeoutService(GameRegistry gameRegistry,
                               @Lazy GameOutcomeService gameOutcomeService,
-                              WebSocketSessionManager sessionManager,
+                              SessionManager sessionManager,
                               @Value("${magicalvibes.game.timeout.both-disconnected:5m}") Duration bothDisconnectedTimeout,
                               @Value("${magicalvibes.game.timeout.single-disconnected:15m}") Duration singleDisconnectedTimeout) {
         this(gameRegistry, gameOutcomeService, sessionManager, bothDisconnectedTimeout, singleDisconnectedTimeout,
@@ -69,7 +69,7 @@ public class GameTimeoutService {
 
     GameTimeoutService(GameRegistry gameRegistry,
                        GameOutcomeService gameOutcomeService,
-                       WebSocketSessionManager sessionManager,
+                       SessionManager sessionManager,
                        Duration bothDisconnectedTimeout,
                        Duration singleDisconnectedTimeout,
                        ScheduledExecutorService scheduler) {
