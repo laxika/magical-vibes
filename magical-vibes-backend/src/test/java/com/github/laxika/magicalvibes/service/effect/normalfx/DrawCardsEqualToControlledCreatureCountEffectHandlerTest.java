@@ -103,7 +103,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;

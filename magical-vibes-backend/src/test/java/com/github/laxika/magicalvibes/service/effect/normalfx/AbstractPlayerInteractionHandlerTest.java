@@ -72,55 +72,12 @@ abstract class AbstractPlayerInteractionHandlerTest {
                 gameBroadcastService, playerInputService, sessionManager, cardViewFactory,
                 permanentRemovalService, battlefieldEntryService, triggerCollectionService);
         registry = new EffectHandlerRegistry();
-        LifeSupport lifeSupport = new LifeSupport(gameQueryService, gameBroadcastService, triggerCollectionService);
-        TapUntapSupport tapUntapSupport = new TapUntapSupport(triggerCollectionService);
-        CreatureControlService creatureControlService = mock(CreatureControlService.class);
-        AnimationSupport animationSupport = new AnimationSupport(
-                gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
-        DamagePreventionService damagePreventionService = mock(DamagePreventionService.class);
-        GameOutcomeService gameOutcomeService = mock(GameOutcomeService.class);
-        DamageSupport damageSupport = new DamageSupport(
-                graveyardService, damagePreventionService, gameOutcomeService, gameQueryService,
-                gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeSupport);
-        LegendRuleService legendRuleService = mock(LegendRuleService.class);
-        DestructionSupport destructionSupport = new DestructionSupport(
-                battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService,
-                permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport);
-        ExileService exileService = mock(ExileService.class);
-        GraveyardReturnSupport graveyardReturnSupport = new GraveyardReturnSupport(
-                battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService,
-                gameBroadcastService, playerInputService, lifeSupport, exileService, cardViewFactory);
-        LibraryRevealSupport libraryRevealSupport = new LibraryRevealSupport(
-                gameBroadcastService, sessionManager, cardViewFactory);
-        LibrarySearchSupport librarySearchSupport = new LibrarySearchSupport(
-                gameBroadcastService, sessionManager, cardViewFactory);
-        ExileSupport exileSupport = new ExileSupport(
-                graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService,
-                playerInputService, triggerCollectionService);
-        PermanentControlSupport permanentControlSupport = new PermanentControlSupport(
-                battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService);
-        PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(
-                gameQueryService, gameBroadcastService, playerInputService);
-        CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
-        WarpWorldService warpWorldService = mock(WarpWorldService.class);
-        StateTriggerService stateTriggerService = mock(StateTriggerService.class);
-        ValidTargetService validTargetService = mock(ValidTargetService.class);
-        CloneService cloneService = mock(CloneService.class);
-        CombatService combatService = mock(CombatService.class);
-        AuraAttachmentService auraAttachmentService = mock(AuraAttachmentService.class);
-        TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
-        TargetLegalityService targetLegalityService = mock(TargetLegalityService.class);
-        NormalEffectHandlerBeanFactory.registerAll(
-                NormalEffectHandlerBeanFactory.createAll(
-                        lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport,
-                        graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, exileSupport,
-                        permanentControlSupport, permanentCounterSupport, battlefieldEntryService, legendRuleService,
-                        creatureControlService, gameQueryService, gameBroadcastService, gameOutcomeService,
-                        graveyardService, exileService, permanentRemovalService, triggerCollectionService,
-                        playerInputService, drawService, sessionManager, cardViewFactory, cardSpecificSupport,
-                        warpWorldService, registry, stateTriggerService, validTargetService, cloneService,
-                        combatService, auraAttachmentService, turnCleanupService, targetLegalityService),
-                registry);
+        String handlerName = getClass().getSimpleName().replace("Test", "");
+        NormalEffectHandlerBean handler = PlayerInteractionHandlerTestSupport.createHandler(
+                handlerName, support, registry, gameBroadcastService, drawService, sessionManager, cardViewFactory,
+                gameQueryService, playerInputService, triggerCollectionService, battlefieldEntryService,
+                permanentRemovalService, graveyardService);
+        PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);
         setUpHandler();
     }
 

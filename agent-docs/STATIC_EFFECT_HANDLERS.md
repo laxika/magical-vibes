@@ -12,23 +12,20 @@ Static/continuous effects (P/T bonuses, keyword grants, conditionals computed du
    - `void apply(StaticEffectContext, CardEffect, StaticBonusAccumulator)` — handler body.
    - Constructor-inject `StaticEffectSupport` and/or `GameQueryService` as needed (`@RequiredArgsConstructor`).
 4. **Self vs non-self.** An effect with both a self-only bonus and a broader-scope bonus becomes **two** beans (see Metalcraft below).
-5. **Dual registration.** Every handler must be registered in two ways:
-   - As a Spring `@Component` (collected via `List<StaticEffectHandlerBean>` in `EffectRegistryConfig` and registered through `StaticEffectHandlerBeanFactory.registerAll`).
-   - Added to `StaticEffectHandlerBeanFactory.createAll(...)` so non-Spring sites (`GameTestHarness`, `GameSimulator`) register the same set. `createAll` is the single source of truth for non-Spring instantiation.
+5. **Spring registration only.** Annotate each handler `@Component` (use an explicit bean name if the class name collides with a `normalfx` handler). `GameEngineConfig` collects all `StaticEffectHandlerBean` components in `afterSingletonsInstantiated()` and registers them into `StaticEffectHandlerRegistry`.
 
 ## Infrastructure
 
 - `staticfx/StaticEffectHandlerBean.java` — interface (extends `StaticEffectHandler`).
 - `staticfx/StaticEffectSupport.java` — `@Component`, shared helpers (constructor-injects `GameQueryService`).
-- `staticfx/StaticEffectHandlerBeanFactory.java` — `createAll(support, gameQueryService, registry)` returns every handler; `registerAll(beans, registry)` registers each (self vs non-self based on `bean.selfOnly()`).
-- `EffectRegistryConfig` — field-injects `List<StaticEffectHandlerBean>` and calls `registerAll` in `afterSingletonsInstantiated()`.
-- `GameTestHarness` & `GameSimulator` — construct `StaticEffectSupport`, build the registry, then call `StaticEffectHandlerBeanFactory.createAll(...)` + `registerAll(...)`.
+- `config/GameEngineConfig.java` — component-scans engine packages, exposes registry beans, and registers all `@Component` static handlers after singletons are created.
+- `testutil/GameTestDoublesConfig` + `GameTestEngineContext` — card tests load the same `GameEngineConfig` graph via a cached Spring test context.
+- `ai/simulation/HeadlessSimulationDoublesConfig` + `HeadlessSimulationContext` — MCTS loads the same engine graph headlessly (no WebSocket broadcasts).
 
 ## Worked example: Metalcraft
 
 - `MetalcraftConditionalSelfEffectHandler` — `handledEffect()=MetalcraftConditionalEffect.class`, `selfOnly()=true`.
 - `MetalcraftConditionalEffectHandler` — `handledEffect()=MetalcraftConditionalEffect.class`, `selfOnly()=false`.
-- Both listed in `StaticEffectHandlerBeanFactory.createAll(...)`.
 
 ## `StaticEffectSupport` public helpers
 
@@ -50,8 +47,7 @@ Static/continuous effects (P/T bonuses, keyword grants, conditionals computed du
 
 1. Add the effect record in `magical-vibes-domain/.../model/effect/` if it does not exist.
 2. Create the handler class(es) in `staticfx/` following the naming convention above.
-3. Add each bean to `StaticEffectHandlerBeanFactory.createAll(...)`.
-4. Add card tests covering the static behavior.
+3. Add card tests covering the static behavior.
 
 Verification after adding a handler:
 

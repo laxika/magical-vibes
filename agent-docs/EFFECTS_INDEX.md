@@ -7,7 +7,7 @@ Purpose: cut token usage when implementing cards by quickly mapping "card text i
 1. Parse card text into primitive actions (damage, draw, bounce, etc.).
 2. Find each primitive below in the categorized sections and reuse existing effects.
 3. Only add new effect records when no existing effect can express the behavior.
-4. If you add a new effect record, create a `<EffectName>EffectHandler` `@Component` implementing `NormalEffectHandlerBean` in `service/effect/normalfx/` and add it to `NormalEffectHandlerBeanFactory.createAll(...)`. Spring auto-discovers `@Component` handlers; non-Spring sites (`GameTestHarness`, `GameSimulator`) use the factory. See provider map at bottom.
+4. If you add a new effect record, create a `<EffectName>EffectHandler` `@Component` implementing `NormalEffectHandlerBean` in `service/effect/normalfx/`. `GameEngineConfig` auto-registers `@Component` handlers for production, card tests (`GameTestEngineContext`), and headless simulation (`HeadlessSimulationContext`). See provider map at bottom.
 5. If your new effect targets something, override the appropriate `canTarget*()` method(s) on `CardEffect` to return `true` (see targeting section below).
 6. If your new effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see target validator map at bottom).
 
@@ -1203,7 +1203,7 @@ Pass `null` as filter to allow any card.
 
 ## Provider map (where to add normal effect handlers)
 
-All stack-resolution ("normal") effects use one `@Component` handler class per effect in `service/effect/normalfx/`, implementing `NormalEffectHandlerBean`. Shared logic lives in domain `*Support` classes in the same package (e.g. `DamageSupport`, `LibraryRevealSupport`). Register every new handler in `NormalEffectHandlerBeanFactory.createAll(...)`.
+All stack-resolution ("normal") effects use one `@Component` handler class per effect in `service/effect/normalfx/`, implementing `NormalEffectHandlerBean`. Shared logic lives in domain `*Support` classes in the same package (e.g. `DamageSupport`, `LibraryRevealSupport`). New handlers need only the `@Component` annotation — `GameEngineConfig` registers them at startup.
 
 | Category | Handler location | Shared helpers |
 |----------|------------------|----------------|

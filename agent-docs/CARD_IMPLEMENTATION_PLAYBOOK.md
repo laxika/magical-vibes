@@ -239,8 +239,8 @@ Then do all of:
       }
   }
   ```
-  Add the handler to `NormalEffectHandlerBeanFactory.createAll(...)`. Spring auto-discovers `@Component` handlers via `EffectRegistryConfig`; `GameTestHarness` and `GameSimulator` use the factory.
-- For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/` and add it to `StaticEffectHandlerBeanFactory.createAll(...)`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
+  Add the `@Component` handler in `service/effect/normalfx/`. Spring auto-discovers it via `GameEngineConfig`; card tests and MCTS simulation reuse the same graph through `GameTestEngineContext` / `HeadlessSimulationContext`.
+- For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
 - If the effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see `EFFECTS_INDEX.md` target validator map):
   ```java
   @ValidatesTarget(YourNewEffect.class)

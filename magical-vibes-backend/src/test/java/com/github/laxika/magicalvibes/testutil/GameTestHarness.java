@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.testutil;
 
-import com.github.laxika.magicalvibes.handler.GameMessageHandler;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -11,115 +10,28 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.networking.service.PermanentViewFactory;
-import com.github.laxika.magicalvibes.networking.service.StackEntryViewFactory;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.battlefield.CloneService;
-import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
-import com.github.laxika.magicalvibes.service.combat.CombatBlockService;
-import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
-import com.github.laxika.magicalvibes.service.combat.CombatService;
-import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
-import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
-import com.github.laxika.magicalvibes.service.DraftRegistry;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
-import com.github.laxika.magicalvibes.service.DamagePreventionService;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.GameOutcomeService;
-import com.github.laxika.magicalvibes.service.trigger.DeathTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.DrawService;
-import com.github.laxika.magicalvibes.service.exile.ExileService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.service.GameTimeoutService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
-import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.DeckService;
 import com.github.laxika.magicalvibes.service.LobbyService;
-import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
-import com.github.laxika.magicalvibes.service.ability.ActivatedAbilityExecutionService;
-import com.github.laxika.magicalvibes.service.MulliganService;
-import com.github.laxika.magicalvibes.service.ReconnectionService;
-import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
+import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
-import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.WarpWorldService;
-import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.turn.AutoPassService;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
-import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
-import com.github.laxika.magicalvibes.service.turn.UntapStepService;
-import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
-import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayCopyHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayMiscHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayPenaltyChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.MultiPermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceBattlefieldHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceSpellHandlerService;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceTriggerHandlerService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSupport;
-import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
-import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
-import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
-import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBeanFactory;
-import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
-import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
-import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
-import com.github.laxika.magicalvibes.service.validate.BounceTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.CreatureModTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.DamageTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.DestructionTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.ExileTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.GraveyardTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.LibraryTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.LifeTargetValidators;
-import com.github.laxika.magicalvibes.service.validate.PermanentControlTargetValidators;
-import com.github.laxika.magicalvibes.service.trigger.DamageTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.DiscardTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.LandTapTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.MiscTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.SpellCastTriggerCollectorService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
-import com.github.laxika.magicalvibes.config.JacksonConfig;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
+import org.springframework.context.ApplicationContext;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -157,191 +69,27 @@ public class GameTestHarness {
             return;
         }
 
-        ScryfallOracleLoader.loadAll("./scryfall-cache");
-
-        staticGameRegistry = new TestGameRegistry();
-        staticSessionManager = new TestWebSocketSessionManager(new JacksonConfig().objectMapper());
-        CardViewFactory cardViewFactory = new CardViewFactory();
-        PermanentViewFactory permanentViewFactory = new PermanentViewFactory(cardViewFactory);
-        StackEntryViewFactory stackEntryViewFactory = new StackEntryViewFactory(cardViewFactory);
-        StaticEffectHandlerRegistry staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
-        staticGameQueryService = new GameQueryService(staticEffectHandlerRegistry);
-        StaticEffectSupport staticEffectSupport = new StaticEffectSupport(staticGameQueryService);
-        StaticEffectHandlerBeanFactory.registerAll(
-                StaticEffectHandlerBeanFactory.createAll(staticEffectSupport, staticGameQueryService, staticEffectHandlerRegistry),
-                staticEffectHandlerRegistry);
-        staticPlayerInputService = new PlayerInputService(staticSessionManager, cardViewFactory);
-        ValidTargetService validTargetService = new ValidTargetService(staticGameQueryService);
-        staticGameBroadcastService = new GameBroadcastService(
-                staticSessionManager, cardViewFactory, permanentViewFactory, stackEntryViewFactory, staticGameQueryService, validTargetService);
-        DraftRegistry draftRegistry = new DraftRegistry();
-        staticLegendRuleService = new LegendRuleService(staticPlayerInputService, staticGameQueryService);
-        TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(staticGameQueryService);
-        TriggeredAbilityQueueService triggeredAbilityQueueService = new TriggeredAbilityQueueService(
-                staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, cardViewFactory, triggerTargetCollector);
-        CreatureControlService creatureControlService = new CreatureControlService(staticGameBroadcastService, staticGameQueryService);
-        DamagePreventionService damagePreventionService = new DamagePreventionService(staticGameQueryService);
-        // GameTimeoutService <-> GameOutcomeService is a circular dependency (both @Lazy in production).
-        // Timers never fire in tests, and the timeout service only touches GameOutcomeService inside those
-        // timer callbacks, so we can safely construct it with a null outcome service and wire it the other way.
-        GameTimeoutService gameTimeoutService = new GameTimeoutService(
-                staticGameRegistry, null, staticSessionManager, Duration.ofMinutes(5), Duration.ofMinutes(15));
-        GameOutcomeService gameOutcomeService = new GameOutcomeService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticGameRegistry, draftRegistry, null, gameTimeoutService);
-        staticDrawService = new DrawService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, triggeredAbilityQueueService);
-        staticBattlefieldEntryService = new BattlefieldEntryService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, cardViewFactory, null, null);
-        CloneService cloneService = new CloneService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLegendRuleService, staticBattlefieldEntryService);
-        staticBattlefieldEntryService.setCloneService(cloneService);
-        WarpWorldService warpWorldService = new WarpWorldService(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticBattlefieldEntryService, staticLegendRuleService, creatureControlService, cardViewFactory, staticSessionManager);
-        ExileService exileService = new ExileService();
-        GraveyardService graveyardService = new GraveyardService(staticGameQueryService, staticGameBroadcastService, exileService, null);
-        AuraAttachmentService auraAttachmentService = new AuraAttachmentService(staticGameQueryService, staticGameBroadcastService, graveyardService);
-        staticPermanentRemovalService = new PermanentRemovalService(
-                graveyardService, staticBattlefieldEntryService, null, damagePreventionService, auraAttachmentService, staticGameQueryService, staticGameBroadcastService, exileService);
-        TriggerCollectorRegistry triggerCollectorRegistry = new TriggerCollectorRegistry();
-        MiscTriggerCollectorService miscTriggerCollectorService = new MiscTriggerCollectorService(staticGameBroadcastService, graveyardService, staticGameQueryService, exileService, staticDrawService, null, staticPermanentRemovalService);
-        List<Object> triggerCollectorBeans = List.of(
-                new SpellCastTriggerCollectorService(staticGameQueryService, staticGameBroadcastService),
-                new DiscardTriggerCollectorService(staticGameBroadcastService, staticGameQueryService, damagePreventionService, staticPermanentRemovalService),
-                new LandTapTriggerCollectorService(staticGameQueryService, staticGameBroadcastService, damagePreventionService, staticPermanentRemovalService),
-                new DamageTriggerCollectorService(staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, creatureControlService),
-                new DeathTriggerCollectorService(staticGameQueryService, staticGameBroadcastService),
-                miscTriggerCollectorService
-        );
-        for (Object bean : triggerCollectorBeans) {
-            TriggerCollectorRegistry.scanBean(bean, triggerCollectorRegistry);
-        }
-        staticTriggerCollectionService = new TriggerCollectionService(
-                triggerCollectorRegistry, gameOutcomeService, staticPlayerInputService, triggeredAbilityQueueService, staticGameQueryService, staticGameBroadcastService);
-        graveyardService.setTriggerCollectionService(staticTriggerCollectionService);
-        staticPermanentRemovalService.setTriggerCollectionService(staticTriggerCollectionService);
-        StateTriggerService stateTriggerService = new StateTriggerService(staticGameBroadcastService);
-        staticStateBasedActionService = new StateBasedActionService(
-                gameOutcomeService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, graveyardService, stateTriggerService);
-        staticLifeSupport = new LifeSupport(staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService);
-        TapUntapSupport staticTapUntapSupport = new TapUntapSupport(staticTriggerCollectionService);
-        DamageSupport damageSupport = new DamageSupport(graveyardService, damagePreventionService, gameOutcomeService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticTriggerCollectionService, staticLifeSupport);
-        CombatTriggerService combatTriggerService = new CombatTriggerService(staticGameBroadcastService);
-        staticCombatAttackService = new CombatAttackService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticTriggerCollectionService, combatTriggerService);
-        CombatBlockService combatBlockService = new CombatBlockService(staticGameQueryService, staticGameBroadcastService, staticSessionManager, staticCombatAttackService, combatTriggerService);
-        CombatDamageService combatDamageService = new CombatDamageService(staticGameQueryService, staticGameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService, staticPermanentRemovalService, staticPlayerInputService, staticSessionManager, staticTriggerCollectionService, staticLifeSupport, staticCombatAttackService, combatTriggerService);
-        CombatService combatService = new CombatService(
-                staticCombatAttackService, combatBlockService, combatDamageService, staticGameBroadcastService, staticPermanentRemovalService, staticBattlefieldEntryService);
-        TargetValidatorRegistry targetValidatorRegistry = new TargetValidatorRegistry();
-        staticTargetValidationService = new TargetValidationService(staticGameQueryService, targetValidatorRegistry);
-        List<Object> validatorBeans = List.of(
-                new DamageTargetValidators(staticTargetValidationService, staticGameQueryService),
-                new CreatureModTargetValidators(staticTargetValidationService),
-                new DestructionTargetValidators(staticTargetValidationService, staticGameQueryService),
-                new GraveyardTargetValidators(staticTargetValidationService, staticGameQueryService),
-                new ExileTargetValidators(staticGameQueryService),
-                new BounceTargetValidators(staticTargetValidationService),
-                new LibraryTargetValidators(staticTargetValidationService),
-                new PermanentControlTargetValidators(staticTargetValidationService, staticGameQueryService),
-                new LifeTargetValidators(staticTargetValidationService)
-        );
-        for (Object bean : validatorBeans) {
-            TargetValidatorRegistry.scanBean(bean, targetValidatorRegistry);
-        }
-        staticTargetLegalityService = new TargetLegalityService(staticGameQueryService, staticTargetValidationService);
-        staticBattlefieldEntryService.setTargetLegalityService(staticTargetLegalityService);
-        EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
-        ExileSupport exileSupport = new ExileSupport(graveyardService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticPlayerInputService, staticTriggerCollectionService);
-        PlayerInteractionSupport playerInteractionSupport = new PlayerInteractionSupport(staticDrawService, graveyardService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticSessionManager, cardViewFactory, staticPermanentRemovalService, staticBattlefieldEntryService, staticTriggerCollectionService);
-        TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
-        DestructionSupport destructionSupport = new DestructionSupport(staticBattlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService, staticPermanentRemovalService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeSupport);
-        PermanentControlSupport permanentControlSupport = new PermanentControlSupport(staticBattlefieldEntryService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService);
-        miscTriggerCollectorService.setPermanentControlSupport(permanentControlSupport);
-        LibrarySearchSupport librarySearchSupport = new LibrarySearchSupport(staticGameBroadcastService, staticSessionManager, cardViewFactory);
-        GraveyardReturnSupport graveyardReturnSupport = new GraveyardReturnSupport(staticBattlefieldEntryService, staticPermanentRemovalService, staticLegendRuleService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticLifeSupport, exileService, cardViewFactory);
-        LibraryRevealSupport libraryRevealSupport = new LibraryRevealSupport(staticGameBroadcastService, staticSessionManager, cardViewFactory);
-        PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(staticGameQueryService, staticGameBroadcastService, staticPlayerInputService);
-        AnimationSupport animationSupport = new AnimationSupport(
-                staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, creatureControlService);
-        CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
-        List<NormalEffectHandlerBean> normalEffectHandlerBeans = NormalEffectHandlerBeanFactory.createAll(
-                staticLifeSupport, staticTapUntapSupport, animationSupport, damageSupport, destructionSupport, graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, exileSupport, permanentControlSupport, permanentCounterSupport,
-                staticBattlefieldEntryService, staticLegendRuleService, creatureControlService,
-                staticGameQueryService, staticGameBroadcastService, gameOutcomeService,
-                graveyardService, exileService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService,
-                staticDrawService, staticSessionManager, cardViewFactory, cardSpecificSupport, warpWorldService, effectHandlerRegistry,
-                stateTriggerService, validTargetService, cloneService,
-                combatService, auraAttachmentService, turnCleanupService, staticTargetLegalityService);
-        NormalEffectHandlerBeanFactory.registerAll(normalEffectHandlerBeans, effectHandlerRegistry);
-        EffectResolutionService effectResolutionService = new EffectResolutionService(staticGameQueryService, effectHandlerRegistry, staticGameBroadcastService, staticPermanentRemovalService);
-        staticStackResolutionService = new StackResolutionService(
-                staticBattlefieldEntryService, cloneService, graveyardService, staticLegendRuleService, staticStateBasedActionService, staticGameQueryService, staticTargetLegalityService,
-                staticGameBroadcastService, effectResolutionService, staticPlayerInputService, staticTriggerCollectionService, creatureControlService, stateTriggerService, exileService);
-        UntapStepService untapStepService = new UntapStepService(staticGameQueryService, staticGameBroadcastService);
-        StepTriggerService stepTriggerService = new StepTriggerService(staticDrawService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService, staticBattlefieldEntryService, staticTriggerCollectionService, triggerTargetCollector);
-        AutoPassService autoPassService = new AutoPassService(staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService, staticStackResolutionService, stepTriggerService, staticCombatAttackService);
-        TurnProgressionService turnProgressionService = new TurnProgressionService(
-                combatService, staticGameBroadcastService, staticPlayerInputService, turnCleanupService, untapStepService, stepTriggerService, autoPassService);
-        ActivatedAbilityExecutionService activatedAbilityExecutionService = new ActivatedAbilityExecutionService(
-                damagePreventionService, staticPermanentRemovalService, staticTriggerCollectionService, staticStateBasedActionService, staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, staticSessionManager, staticLifeSupport);
-        AbilityActivationService abilityActivationService = new AbilityActivationService(
-                graveyardService, staticGameQueryService, staticGameBroadcastService, staticTargetLegalityService, activatedAbilityExecutionService,
-                staticPlayerInputService, staticSessionManager, staticPermanentRemovalService, staticTriggerCollectionService, exileService);
-        staticSpellCastingService = new SpellCastingService(
-                staticBattlefieldEntryService, staticGameQueryService, staticGameBroadcastService, turnProgressionService, staticTargetLegalityService, staticPermanentRemovalService, staticTriggerCollectionService);
-        ChoiceHandlerService listChoiceHandlerService = new ChoiceHandlerService(
-                staticSessionManager, staticGameQueryService, warpWorldService, staticBattlefieldEntryService, staticGameBroadcastService,
-                staticPlayerInputService, turnProgressionService, staticLegendRuleService, effectResolutionService);
-        CardChoiceHandlerService cardChoiceHandlerService = new CardChoiceHandlerService(
-                staticDrawService, staticGameQueryService, graveyardService, staticBattlefieldEntryService, staticGameBroadcastService,
-                staticPlayerInputService, staticTriggerCollectionService, turnProgressionService, abilityActivationService, effectResolutionService, playerInteractionSupport, exileService);
-        InputCompletionService inputCompletionService = new InputCompletionService(
-                staticPlayerInputService, staticGameBroadcastService, turnProgressionService, staticStateBasedActionService, effectResolutionService);
-        PermanentChoiceTriggerHandlerService permanentChoiceTriggerHandler = new PermanentChoiceTriggerHandlerService(
-                staticGameQueryService, staticGameBroadcastService, staticTriggerCollectionService, staticPlayerInputService, turnProgressionService, effectResolutionService, inputCompletionService, staticBattlefieldEntryService);
-        PermanentChoiceSpellHandlerService permanentChoiceSpellHandler = new PermanentChoiceSpellHandlerService(
-                staticGameQueryService, graveyardService, staticGameBroadcastService, staticTriggerCollectionService, staticPlayerInputService, turnProgressionService);
-        PermanentChoiceBattlefieldHandlerService permanentChoiceBattlefieldHandler = new PermanentChoiceBattlefieldHandlerService(
-                inputCompletionService, staticGameQueryService, staticBattlefieldEntryService, cloneService, warpWorldService, staticGameBroadcastService, abilityActivationService,
-                staticPermanentRemovalService, staticPlayerInputService, staticStateBasedActionService, staticTriggerCollectionService, creatureControlService, turnProgressionService, effectResolutionService, damageSupport, destructionSupport, staticLifeSupport, librarySearchSupport);
-        MultiPermanentChoiceHandlerService multiPermanentChoiceHandler = new MultiPermanentChoiceHandlerService(
-                inputCompletionService, staticGameQueryService, staticGameBroadcastService, staticPermanentRemovalService, staticPlayerInputService, staticStateBasedActionService, staticTriggerCollectionService, turnProgressionService, effectResolutionService, destructionSupport, permanentCounterSupport, animationSupport);
-        PermanentChoiceHandlerService permanentChoiceHandlerService = new PermanentChoiceHandlerService(
-                permanentChoiceTriggerHandler, permanentChoiceSpellHandler, permanentChoiceBattlefieldHandler, multiPermanentChoiceHandler);
-        GraveyardChoiceHandlerService graveyardChoiceHandlerService = new GraveyardChoiceHandlerService(
-                staticGameQueryService, staticBattlefieldEntryService, staticLegendRuleService, staticGameBroadcastService, turnProgressionService, staticPermanentRemovalService, staticTriggerCollectionService, staticPlayerInputService, staticLifeSupport, exileService, graveyardReturnSupport, inputCompletionService, effectResolutionService);
-        MayCastHandlerService mayCastHandlerService = new MayCastHandlerService(
-                inputCompletionService, staticGameQueryService, graveyardService, staticGameBroadcastService, staticPlayerInputService, staticPermanentRemovalService, staticTriggerCollectionService, staticBattlefieldEntryService, exileService);
-        MayCopyHandlerService mayCopyHandlerService = new MayCopyHandlerService(
-                inputCompletionService, staticGameQueryService, cloneService, staticStateBasedActionService, staticGameBroadcastService, staticPlayerInputService, turnProgressionService, staticTargetLegalityService, staticTriggerCollectionService);
-        MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService = new MayPenaltyChoiceHandlerService(
-                inputCompletionService, staticGameQueryService, graveyardService, exileService, stateTriggerService, staticDrawService, staticGameBroadcastService, staticPlayerInputService, turnProgressionService, staticStateBasedActionService, staticPermanentRemovalService);
-        MulliganService mulliganService = new MulliganService(
-                staticSessionManager, staticGameBroadcastService, turnProgressionService, staticBattlefieldEntryService, staticPlayerInputService);
-        MayMiscHandlerService mayMiscHandlerService = new MayMiscHandlerService(
-                inputCompletionService, staticGameQueryService, staticDrawService, staticGameBroadcastService, mulliganService, staticPlayerInputService, turnProgressionService, staticBattlefieldEntryService, staticSessionManager);
-        mayMiscHandlerService.setTriggerCollectionService(staticTriggerCollectionService);
-        MayAbilityHandlerService mayAbilityHandlerService = new MayAbilityHandlerService(
-                inputCompletionService, mayCastHandlerService, mayCopyHandlerService, mayPenaltyChoiceHandlerService, mayMiscHandlerService,
-                staticGameQueryService, staticGameBroadcastService, staticPlayerInputService, turnProgressionService, effectResolutionService, destructionSupport, graveyardReturnSupport);
-        XValueChoiceHandlerService xValueChoiceHandlerService = new XValueChoiceHandlerService(
-                staticGameBroadcastService, staticStateBasedActionService,
-                staticPlayerInputService, turnProgressionService, effectResolutionService);
-        LibraryChoiceHandlerService libraryChoiceHandlerService = new LibraryChoiceHandlerService(
-                staticSessionManager, staticGameQueryService, graveyardService, warpWorldService, staticBattlefieldEntryService, staticLegendRuleService, staticStateBasedActionService, staticGameBroadcastService,
-                cardViewFactory, turnProgressionService, staticPlayerInputService, effectResolutionService, exileService, staticTriggerCollectionService);
-        ReconnectionService reconnectionService = new ReconnectionService(
-                staticSessionManager, cardViewFactory, combatService, staticGameQueryService, staticGameBroadcastService);
-        staticGameService = new GameService(
-                staticGameRegistry, staticGameQueryService, staticGameBroadcastService,
-                combatService,
-                turnProgressionService,
-                listChoiceHandlerService, cardChoiceHandlerService,
-                permanentChoiceHandlerService, graveyardChoiceHandlerService,
-                mayAbilityHandlerService, xValueChoiceHandlerService, libraryChoiceHandlerService,
-                staticSpellCastingService,
-                staticStackResolutionService, abilityActivationService, mulliganService, reconnectionService,
-                exileSupport, gameOutcomeService);
-        staticLobbyService = new LobbyService(staticGameRegistry, staticGameBroadcastService, new DeckService(null, null));
-
-        staticMessageHandler = new GameMessageHandler(
-                null, staticGameService, staticGameBroadcastService, staticLobbyService, staticGameRegistry,
-                staticSessionManager, new JacksonConfig().objectMapper(),
-                null, null, draftRegistry, null, validTargetService, null, null);
+        ApplicationContext context = GameTestEngineContext.get();
+        staticGameRegistry = context.getBean(TestGameRegistry.class);
+        staticSessionManager = context.getBean(TestWebSocketSessionManager.class);
+        staticGameService = context.getBean(GameService.class);
+        staticGameQueryService = context.getBean(GameQueryService.class);
+        staticTargetValidationService = context.getBean(TargetValidationService.class);
+        staticTargetLegalityService = context.getBean(TargetLegalityService.class);
+        staticMessageHandler = context.getBean(MessageHandler.class);
+        staticLobbyService = context.getBean(LobbyService.class);
+        staticLegendRuleService = context.getBean(LegendRuleService.class);
+        staticPermanentRemovalService = context.getBean(PermanentRemovalService.class);
+        staticStackResolutionService = context.getBean(StackResolutionService.class);
+        staticDrawService = context.getBean(DrawService.class);
+        staticPlayerInputService = context.getBean(PlayerInputService.class);
+        staticGameBroadcastService = context.getBean(GameBroadcastService.class);
+        staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
+        staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
+        staticSpellCastingService = context.getBean(SpellCastingService.class);
+        staticCombatAttackService = context.getBean(CombatAttackService.class);
+        staticStateBasedActionService = context.getBean(StateBasedActionService.class);
+        staticLifeSupport = context.getBean(LifeSupport.class);
     }
 
     // ---- Per-test instance state ----

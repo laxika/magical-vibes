@@ -640,7 +640,13 @@ class HardAiDecisionEngineTest {
                 return null;
             }).when(mockMessageHandler).handlePlayCard(any(), any());
 
-            createEngine().handleMessage("GAME_STATE", "");
+            HardAiDecisionEngine engine = createEngine();
+            MCTSEngine failingMcts = Mockito.mock(MCTSEngine.class);
+            Mockito.when(failingMcts.search(any(), any(), Mockito.anyInt()))
+                    .thenThrow(new RuntimeException("MCTS disabled for test"));
+            engine.setMctsEngine(failingMcts);
+
+            engine.handleMessage("GAME_STATE", "");
 
             ArgumentCaptor<PlayCardRequest> captor = ArgumentCaptor.forClass(PlayCardRequest.class);
             verify(mockMessageHandler).handlePlayCard(eq(mockConnection), captor.capture());

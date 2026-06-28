@@ -93,7 +93,7 @@ public class GameBroadcastService {
     private final ValidTargetService validTargetService;
 
     public void broadcastGameState(GameData gameData) {
-        // Skip expensive view computation during MCTS simulation (NoOpSessionManager discards the result)
+        // Skip expensive view computation during MCTS simulation (headless session manager discards the result)
         if (gameData.simulation) return;
 
         List<String> newLogEntries;

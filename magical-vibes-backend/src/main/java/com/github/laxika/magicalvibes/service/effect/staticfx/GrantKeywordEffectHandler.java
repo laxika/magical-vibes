@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("staticGrantKeywordEffectHandler")
 @RequiredArgsConstructor
 public class GrantKeywordEffectHandler implements StaticEffectHandlerBean {
 

@@ -463,7 +463,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Provider map
 
-All normal (stack-resolution) effects: one `NormalEffectHandlerBean` `@Component` per effect in `service/effect/normalfx/`, registered via `NormalEffectHandlerBeanFactory.createAll(...)`. Shared logic in `*Support` classes in the same package.
+All normal (stack-resolution) effects: one `NormalEffectHandlerBean` `@Component` per effect in `service/effect/normalfx/`, auto-registered by `GameEngineConfig`. Shared logic in `*Support` classes in the same package.
 
 | Category | Handler package | Shared helpers |
 |----------|-----------------|----------------|
