@@ -81,17 +81,41 @@ import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.RevealHandMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.WarpWorldService;
+import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.CloneService;
+import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CardSpecificSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.state.StateTriggerService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
-import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBeanFactory;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
+import com.github.laxika.magicalvibes.service.turn.TurnCleanupService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -165,12 +189,55 @@ class PlayerInteractionResolutionServiceTest {
                 gameBroadcastService, playerInputService, sessionManager, cardViewFactory,
                 permanentRemovalService, battlefieldEntryService, triggerCollectionService);
         registry = new EffectHandlerRegistry();
-        java.util.List<NormalEffectHandlerBean> beans = NormalEffectHandlerBeanFactory.createPlayerInteractionHandlers(
-                support, drawService, graveyardService, gameQueryService, gameBroadcastService,
-                playerInputService, sessionManager, cardViewFactory, permanentRemovalService,
-                battlefieldEntryService, triggerCollectionService, registry);
-        NormalEffectHandlerBeanFactory.registerAll(beans, registry);
-
+        LifeSupport lifeSupport = new LifeSupport(gameQueryService, gameBroadcastService, triggerCollectionService);
+        TapUntapSupport tapUntapSupport = new TapUntapSupport(triggerCollectionService);
+        CreatureControlService creatureControlService = mock(CreatureControlService.class);
+        AnimationSupport animationSupport = new AnimationSupport(
+                gameQueryService, gameBroadcastService, playerInputService, creatureControlService);
+        DamagePreventionService damagePreventionService = mock(DamagePreventionService.class);
+        GameOutcomeService gameOutcomeService = mock(GameOutcomeService.class);
+        DamageSupport damageSupport = new DamageSupport(
+                graveyardService, damagePreventionService, gameOutcomeService, gameQueryService,
+                gameBroadcastService, permanentRemovalService, triggerCollectionService, lifeSupport);
+        LegendRuleService legendRuleService = mock(LegendRuleService.class);
+        DestructionSupport destructionSupport = new DestructionSupport(
+                battlefieldEntryService, graveyardService, damagePreventionService, gameOutcomeService,
+                permanentRemovalService, gameQueryService, gameBroadcastService, playerInputService, lifeSupport);
+        ExileService exileService = mock(ExileService.class);
+        GraveyardReturnSupport graveyardReturnSupport = new GraveyardReturnSupport(
+                battlefieldEntryService, permanentRemovalService, legendRuleService, gameQueryService,
+                gameBroadcastService, playerInputService, lifeSupport, exileService, cardViewFactory);
+        LibraryRevealSupport libraryRevealSupport = new LibraryRevealSupport(
+                gameBroadcastService, sessionManager, cardViewFactory);
+        LibrarySearchSupport librarySearchSupport = new LibrarySearchSupport(
+                gameBroadcastService, sessionManager, cardViewFactory);
+        ExileSupport exileSupport = new ExileSupport(
+                graveyardService, gameQueryService, gameBroadcastService, permanentRemovalService,
+                playerInputService, triggerCollectionService);
+        PermanentControlSupport permanentControlSupport = new PermanentControlSupport(
+                battlefieldEntryService, legendRuleService, gameQueryService, gameBroadcastService);
+        PermanentCounterSupport permanentCounterSupport = new PermanentCounterSupport(
+                gameQueryService, gameBroadcastService, playerInputService);
+        CardSpecificSupport cardSpecificSupport = new CardSpecificSupport();
+        WarpWorldService warpWorldService = mock(WarpWorldService.class);
+        StateTriggerService stateTriggerService = mock(StateTriggerService.class);
+        ValidTargetService validTargetService = mock(ValidTargetService.class);
+        CloneService cloneService = mock(CloneService.class);
+        CombatService combatService = mock(CombatService.class);
+        AuraAttachmentService auraAttachmentService = mock(AuraAttachmentService.class);
+        TurnCleanupService turnCleanupService = new TurnCleanupService(auraAttachmentService);
+        TargetLegalityService targetLegalityService = mock(TargetLegalityService.class);
+        NormalEffectHandlerBeanFactory.registerAll(
+                NormalEffectHandlerBeanFactory.createAll(
+                        lifeSupport, tapUntapSupport, animationSupport, damageSupport, destructionSupport,
+                        graveyardReturnSupport, libraryRevealSupport, librarySearchSupport, exileSupport,
+                        permanentControlSupport, permanentCounterSupport, battlefieldEntryService, legendRuleService,
+                        creatureControlService, gameQueryService, gameBroadcastService, gameOutcomeService,
+                        graveyardService, exileService, permanentRemovalService, triggerCollectionService,
+                        playerInputService, drawService, sessionManager, cardViewFactory, cardSpecificSupport,
+                        warpWorldService, registry, stateTriggerService, validTargetService, cloneService,
+                        combatService, auraAttachmentService, turnCleanupService, targetLegalityService),
+                registry);
     }
 
 
