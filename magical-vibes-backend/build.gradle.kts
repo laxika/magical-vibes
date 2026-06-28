@@ -13,6 +13,7 @@ dependencies {
 
     implementation(project(":magical-vibes-card"))
     implementation(project(":magical-vibes-engine"))
+    implementation(project(":magical-vibes-scryfall"))
     implementation(project(":magical-vibes-websocket"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
