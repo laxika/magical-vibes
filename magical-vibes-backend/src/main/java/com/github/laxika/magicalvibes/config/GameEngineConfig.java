@@ -11,17 +11,12 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
-import com.github.laxika.magicalvibes.service.CardBrowserService;
-import com.github.laxika.magicalvibes.service.DeckService;
-import com.github.laxika.magicalvibes.service.DraftService;
-import com.github.laxika.magicalvibes.service.LoginService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.FilterType;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -42,11 +37,7 @@ import java.util.List;
                 "com.github.laxika.magicalvibes.service",
                 "com.github.laxika.magicalvibes.networking.service",
                 "com.github.laxika.magicalvibes.scryfall"
-        },
-        excludeFilters = @ComponentScan.Filter(
-                type = FilterType.ASSIGNABLE_TYPE,
-                classes = {LoginService.class, DeckService.class, DraftService.class, CardBrowserService.class}
-        )
+        }
 )
 public class GameEngineConfig implements SmartInitializingSingleton {
 
