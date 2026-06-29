@@ -194,6 +194,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "When this dies, if it had one or more counters on it, create a 0/0 [color] [Subtype] token, then put this creature's counters on that token" | `CreateTokenWithDyingSourceCountersEffect(new CreateTokenEffect("name", 0, 0, color, Set.of(colors), List.of(subtype)))` | `ON_DEATH` | Snapshots dying creature's +1/+1 counters onto the new token (e.g. Ambitious Augmenter's Fractal) |
 | "create a N/N [color] [Subtype] creature token with [keyword]" | `CreateTokenEffect("name", N, N, color, subtype, keyword)` | SPELL/trigger | With keyword |
 | "create N tokens. If this spell was cast from a graveyard, create M of those tokens instead" | `CreateTokenEffect(N, ...)` + `CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CreateTokenEffect(M - N, ...))` | SPELL | Add the base amount first, then the conditional extra amount; add `FlashbackCast` separately when appropriate |
+| "Then if this spell was cast from anywhere other than your hand, [effect]" | `CastNotFromHandConditionalEffect(...)` | SPELL | Broader than graveyard-only; covers flashback and any future non-hand cast paths. E.g. Antiquities on the Loose |
 
 ## Graveyard return
 

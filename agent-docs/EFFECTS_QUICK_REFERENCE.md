@@ -58,6 +58,7 @@ Other wrappers:
 - `NoSpellsCastLastTurnConditionalEffect(CardEffect)` — werewolf front
 - `TwoOrMoreSpellsCastLastTurnConditionalEffect(CardEffect)` — werewolf back
 - `CastFromZoneConditionalEffect(Zone, CardEffect)` — resolves wrapped effect only if cast from that zone (`Zone.HAND` / `Zone.GRAVEYARD`)
+- `CastNotFromHandConditionalEffect(CardEffect)` — resolves wrapped effect only if cast from anywhere other than hand (e.g. flashback)
 - `KickedConditionalEffect(CardEffect)` — kicked adds effect
 
 See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker count, etc.)

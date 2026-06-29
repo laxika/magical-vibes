@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CastNotFromHandConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -233,6 +235,8 @@ public class EffectResolutionService {
                     entry.isKicked();
             case CastFromZoneConditionalEffect sourceCheck ->
                     sourceCheck.sourceZone() == entry.getSourceZone();
+            case CastNotFromHandConditionalEffect ignored ->
+                    entry.getSourceZone() != Zone.HAND;
             case NotKickedConditionalEffect ignored ->
                     !entry.isKicked();
             case DidntAttackConditionalEffect ignored ->
