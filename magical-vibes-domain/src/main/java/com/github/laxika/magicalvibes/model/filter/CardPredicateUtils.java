@@ -55,6 +55,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";
         }
+        if (predicate instanceof CardNamedPredicate p) {
+            return "card named " + p.cardName();
+        }
         if (predicate instanceof CardNotPredicate p) {
             String inner = describeFilter(p.predicate());
             if (inner.endsWith(" card")) {

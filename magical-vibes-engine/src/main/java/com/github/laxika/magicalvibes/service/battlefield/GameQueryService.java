@@ -100,6 +100,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -437,6 +438,9 @@ public class GameQueryService {
         }
         if (predicate instanceof CardMinManaValuePredicate p) {
             return card.getManaValue() >= p.minManaValue();
+        }
+        if (predicate instanceof CardNamedPredicate p) {
+            return p.cardName().equals(card.getName());
         }
         if (predicate instanceof CardNotPredicate p) {
             return !matchesCardPredicate(card, p.predicate(), sourceCardId, gameData, cardOwnerId);

@@ -753,6 +753,7 @@ Pass `null` as filter to allow any card.
 | `SwitchPowerToughnessEffect` | `()` | switch target creature's power and toughness until end of turn |
 | `BoostTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | target creature gets +X/+Y until end of turn |
 | `BoostTargetCreaturePerControlledPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | target creature gets +N/+N per controlled permanent matching filter until end of turn |
+| `BoostTargetCreaturePerCardsInControllerGraveyardEffect` | `(CardPredicate filter, int basePower, int powerPerCard, int baseToughness, int toughnessPerCard)` | target creature gets +(base + count×powerPer)/+(base + count×toughPer) until end of turn, where count = matching cards in controller's graveyard at resolution. Used by Ancestral Anger with `CardNamedPredicate` |
 | `BoostSelfEffect` | `(int powerBoost, int toughnessBoost)` | this creature gets +X/+Y until end of turn |
 | `BoostSelfBySpellManaSpentEffect` | `(int powerMultiplier, int toughnessMultiplier)` | source permanent gets +(multiplier×X)/+(multiplier×X) until end of turn, where X is mana spent to cast the triggering instant/sorcery spell. Used inside `SpellCastTriggerEffect` on `ON_CONTROLLER_CASTS_SPELL`; trigger collector sets stack entry `xValue` from `GameData.spellCastManaSpent`. Used by Aberrant Manawurm |
 | `DoubleSelfPowerToughnessEffect` | `()` | double this creature's power and toughness until end of turn. Per CR 701.9a/b, adds current effective P/T as modifier |

@@ -339,6 +339,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Creature pump / boost
 
 - `BoostTargetCreatureEffect(int power, int toughness)` — target +X/+Y
+- `BoostTargetCreaturePerCardsInControllerGraveyardEffect(CardPredicate filter, int basePower, int powerPerCard, int baseToughness, int toughnessPerCard)` — target +(base + count×powerPer)/+(base + count×toughPer) where count = matching cards in controller's graveyard
+- `CardNamedPredicate(String cardName)` — card filter for exact name match (use with graveyard-count boost above)
 - `BoostSelfEffect(int, int)` — self +X/+Y
 - `DoubleSelfPowerToughnessEffect()` — double self P/T
 - `BoostAllOwnCreaturesEffect(int, int)` or `(int, int, PermanentPredicate)` — all own +X/+Y

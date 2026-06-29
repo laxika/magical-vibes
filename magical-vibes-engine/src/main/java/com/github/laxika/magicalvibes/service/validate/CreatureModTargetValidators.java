@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -54,6 +55,12 @@ public class CreatureModTargetValidators {
 
     @ValidatesTarget(BoostTargetCreaturePerControlledPermanentEffect.class)
     public void validateBoostTargetCreaturePerControlledPermanent(TargetValidationContext ctx) {
+        Permanent target = tvs.requireBattlefieldTarget(ctx);
+        tvs.requireCreature(ctx, target);
+    }
+
+    @ValidatesTarget(BoostTargetCreaturePerCardsInControllerGraveyardEffect.class)
+    public void validateBoostTargetCreaturePerCardsInControllerGraveyard(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
     }
