@@ -102,7 +102,8 @@ public class PermanentViewFactory {
                 Map.copyOf(p.getCounters()),
                 p.getAttackTarget(),
                 p.getMarkedDamage(),
-                p.isTransformed()
+                p.isTransformed(),
+                p.isPrepared()
         );
     }
 

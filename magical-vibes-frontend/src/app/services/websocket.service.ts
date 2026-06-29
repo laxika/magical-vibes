@@ -214,6 +214,9 @@ export interface Permanent {
   attackTargetId: string | null;
   markedDamage: number;
   transformed: boolean;
+  /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (a castable copy of its
+   * prepare spell sits in exile). Not a transform — the front face stays; the prepare spell is shown inset. */
+  prepared: boolean;
 }
 
 export interface StackEntry {

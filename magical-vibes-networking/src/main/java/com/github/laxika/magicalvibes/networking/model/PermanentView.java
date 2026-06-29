@@ -27,5 +27,9 @@ public record PermanentView(
         Map<CounterType, Integer> counters,
         UUID attackTargetId,
         int markedDamage,
-        boolean transformed
+        boolean transformed,
+        /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (a castable copy of
+         *  its prepare spell sits in exile). Not a transform — the front face stays visible; the prepare
+         *  spell is shown inset on the card. */
+        boolean prepared
 ) {}
