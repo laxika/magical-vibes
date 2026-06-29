@@ -1,0 +1,126 @@
+package com.github.laxika.magicalvibes.cards.w;
+
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToSelfEffect;
+import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class WrackWithMadnessTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Wrack with Madness has correct card properties")
+    void hasCorrectProperties() {
+        WrackWithMadness card = new WrackWithMadness();
+
+        assertThat(EffectResolution.needsTarget(card)).isTrue();
+        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
+                .isInstanceOf(TargetCreatureDealsPowerDamageToSelfEffect.class);
+    }
+
+    @Test
+    @DisplayName("Casting Wrack with Madness targeting a creature puts it on the stack")
+    void castingTargetingCreaturePutsItOnStack() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castSorcery(player1, 0, targetId);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
+        assertThat(entry.getCard().getName()).isEqualTo("Wrack with Madness");
+        assertThat(entry.getTargetId()).isEqualTo(targetId);
+    }
+
+    @Test
+    @DisplayName("Wrack with Madness kills a 2/2 when it deals 2 damage to itself")
+    void killsCreatureWhenPowerIsLethal() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castSorcery(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
+        assertThat(gd.playerGraveyards.get(player2.getId()))
+                .anyMatch(c -> c.getName().equals("Grizzly Bears"));
+    }
+
+    @Test
+    @DisplayName("Wrack with Madness leaves a 3/5 alive with 3 marked damage")
+    void survivesWhenPowerIsBelowToughness() {
+        harness.addToBattlefield(player2, new WallOfSwords());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Wall of Swords");
+        harness.castSorcery(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        Permanent wall = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Wall of Swords"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(wall.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Wrack with Madness deals no damage when target has 0 power")
+    void dealsNoDamageWhenPowerIsZero() {
+        harness.addToBattlefield(player2, new WallOfVines());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Wall of Vines");
+        harness.castSorcery(player1, 0, targetId);
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        Permanent wall = gd.playerBattlefields.get(player2.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Wall of Vines"))
+                .findFirst()
+                .orElseThrow();
+        assertThat(wall.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Wrack with Madness fizzles when target is gone before resolution")
+    void fizzlesWhenTargetLeavesBattlefield() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new WrackWithMadness()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        harness.castSorcery(player1, 0, targetId);
+
+        harness.getGameData().playerBattlefields.get(player2.getId()).clear();
+        harness.passBothPriorities();
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Wrack with Madness"));
+    }
+}

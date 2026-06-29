@@ -108,6 +108,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealXDamageDividedEvenlyAmongTargetsEffect()` — X divided evenly (Fireball-style)
 - `DealXDamageToEachTargetEffect()` — X to each target
 - `FirstTargetDealsPowerDamageToSecondTargetEffect()` — bite
+- `TargetCreatureDealsPowerDamageToSelfEffect()` — target deals its power to itself
 - `FirstTargetFightsSecondTargetEffect()` — fight
 - `MassFightTargetCreatureEffect()` — Alpha Brawl-style mass fight
 - `DoubleDamageEffect()` — double all damage (static)
