@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceE
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -1102,6 +1103,67 @@ public class BattlefieldEntryService {
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, maxTargets,
                     "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from graveyards to exile.");
         }
+    }
+
+    /**
+     * Handles graveyard targeting for beginning-of-combat triggered abilities that exile up to one
+     * target card from a graveyard (e.g. Ascendant Dustspeaker).
+     */
+    public void handleBeginningOfCombatGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId,
+            ExileTargetCardFromGraveyardEffect exileEffect) {
+        CardType requiredType = exileEffect.requiredType();
+        boolean anyGraveyard = exileEffect.canTargetAnyGraveyard();
+
+        List<UUID> allCardIds = new ArrayList<>();
+        List<CardView> allCardViews = new ArrayList<>();
+        List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(controllerId);
+        for (UUID playerId : searchPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (requiredType == null || graveyardCard.hasType(requiredType)) {
+                    allCardIds.add(graveyardCard.getId());
+                    allCardViews.add(cardViewFactory.create(graveyardCard));
+                }
+            }
+        }
+
+        String description = card.getName() + "'s beginning of combat ability";
+
+        if (allCardIds.isEmpty()) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    description,
+                    new ArrayList<>(effects),
+                    0,
+                    null,
+                    sourcePermanentId,
+                    Map.of(),
+                    null,
+                    List.of(),
+                    List.of()
+            ));
+            String logEntry = description + " triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} beginning-of-combat trigger pushed onto stack with 0 graveyard targets",
+                    gameData.id, card.getName());
+            return;
+        }
+
+        gameData.graveyardTargetOperation.card = card;
+        gameData.graveyardTargetOperation.controllerId = controllerId;
+        gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+        gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
+        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, 1,
+                "Choose up to one target card from a graveyard to exile.");
+
+        String logEntry = description + " triggers — choose a graveyard target.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} beginning-of-combat trigger awaiting graveyard target selection",
+                gameData.id, card.getName());
     }
 
     private void handleGraveyardCastETBTargeting(GameData gameData, UUID controllerId, Card card,

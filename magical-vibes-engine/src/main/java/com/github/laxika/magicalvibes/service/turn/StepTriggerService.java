@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -1546,9 +1547,19 @@ public class StepTriggerService {
             }
 
             if (!mandatoryEffects.isEmpty()) {
-                boolean needsTarget = mandatoryEffects.stream()
+                boolean needsPermanentTarget = mandatoryEffects.stream()
                         .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
-                if (needsTarget) {
+                boolean needsGraveyardTarget = mandatoryEffects.stream()
+                        .anyMatch(CardEffect::canTargetGraveyard);
+                if (needsGraveyardTarget) {
+                    ExileTargetCardFromGraveyardEffect exileEffect = mandatoryEffects.stream()
+                            .filter(e -> e instanceof ExileTargetCardFromGraveyardEffect)
+                            .map(e -> (ExileTargetCardFromGraveyardEffect) e)
+                            .findFirst()
+                            .orElseThrow();
+                    battlefieldEntryService.handleBeginningOfCombatGraveyardTargeting(
+                            gameData, activePlayerId, perm.getCard(), mandatoryEffects, perm.getId(), exileEffect);
+                } else if (needsPermanentTarget) {
                     gameData.pendingBeginningOfCombatTriggerTargets.add(
                             new PermanentChoiceContext.BeginningOfCombatTriggerTarget(
                                     perm.getCard(), activePlayerId,
@@ -1578,6 +1589,10 @@ public class StepTriggerService {
 
         if (!gameData.pendingBeginningOfCombatTriggerTargets.isEmpty()) {
             processNextBeginningOfCombatTriggerTarget(gameData);
+            return;
+        }
+
+        if (gameData.interaction.isAwaitingInput()) {
             return;
         }
 

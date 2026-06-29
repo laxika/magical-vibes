@@ -32,7 +32,15 @@ public class ExileTargetCardFromGraveyardEffectHandler implements NormalEffectHa
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileTargetCardFromGraveyardEffect) effect;
 
-        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null && !entry.getTargetCardIds().isEmpty()) {
+            targetCardId = entry.getTargetCardIds().getFirst();
+        }
+        if (targetCardId == null) {
+            return;
+        }
+
+        Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         if (targetCard == null) {
             gameBroadcastService.logAndBroadcast(gameData,
                     entry.getDescription() + " fizzles (target no longer in a graveyard).");
