@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetC
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -193,6 +194,20 @@ public final class EffectResolution {
                         || e instanceof DealDividedDamageAmongAnyTargetsEffect
                         || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
         return inSpell || inAbility;
+    }
+
+    /**
+     * Returns true if any of the given effects use the Converge mechanic.
+     */
+    public static boolean hasConvergeEffect(List<CardEffect> effects) {
+        return effects.stream().anyMatch(TargetPlayerDiscardsByConvergeEffect.class::isInstance);
+    }
+
+    /**
+     * Returns true if the card's spell effects use the Converge mechanic.
+     */
+    public static boolean hasConvergeEffect(Card card) {
+        return hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {

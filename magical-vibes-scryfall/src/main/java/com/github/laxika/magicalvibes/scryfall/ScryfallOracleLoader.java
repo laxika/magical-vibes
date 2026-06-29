@@ -78,6 +78,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Deathtouch", Keyword.DEATHTOUCH);
         KEYWORD_MAP.put("Transform", Keyword.TRANSFORM);
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
+        KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
         KEYWORD_MAP.put("Undying", Keyword.UNDYING);
     }
 

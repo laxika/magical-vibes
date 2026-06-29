@@ -117,6 +117,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "discard all the cards in your hand, then draw that many cards" | `DiscardOwnHandThenDrawThatManyEffect()` | SPELL | Shattered Perception |
 | "discard a card" / "discard N cards" | `DiscardCardEffect(N)` | SPELL/trigger | Controller discards |
 | "target player discards N cards" | `TargetPlayerDiscardsEffect(N)` | SPELL | |
+| "Converge — Target player discards X cards, where X is the number of colors of mana spent to cast this spell." | `TargetPlayerDiscardsByConvergeEffect()` | SPELL | Arcane Omens |
 | "each player discards N cards" | `EachPlayerDiscardsEffect(N)` | SPELL | |
 | "each opponent discards a card" | `EachOpponentDiscardsEffect(1)` | SPELL/trigger | |
 | "look at target player's hand" | `LookAtHandEffect()` | SPELL | |

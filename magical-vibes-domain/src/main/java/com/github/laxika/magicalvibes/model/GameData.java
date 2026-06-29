@@ -56,6 +56,11 @@ public class GameData {
      * Populated during spell payment and consumed when spell-cast triggers fire.
      */
     public final Map<UUID, Integer> spellCastManaSpent = new ConcurrentHashMap<>();
+    /**
+     * Transient Converge value for a spell, keyed by spell card instance id.
+     * Populated during spell payment and consumed when the spell resolves.
+     */
+    public final Map<UUID, Integer> spellCastConvergeValue = new ConcurrentHashMap<>();
     /** Tracks which permanent types each player has cast from graveyard this turn via Muldrotha-style effects. */
     public final Map<UUID, Set<CardType>> permanentTypesCastFromGraveyardThisTurn = new ConcurrentHashMap<>();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
@@ -447,6 +452,18 @@ public class GameData {
 
     public void clearSpellCastManaSpent(UUID spellCardId) {
         spellCastManaSpent.remove(spellCardId);
+    }
+
+    public void setSpellCastConvergeValue(UUID spellCardId, int convergeValue) {
+        spellCastConvergeValue.put(spellCardId, convergeValue);
+    }
+
+    public int getSpellCastConvergeValue(UUID spellCardId) {
+        return spellCastConvergeValue.getOrDefault(spellCardId, 0);
+    }
+
+    public void clearSpellCastConvergeValue(UUID spellCardId) {
+        spellCastConvergeValue.remove(spellCardId);
     }
 
     /**

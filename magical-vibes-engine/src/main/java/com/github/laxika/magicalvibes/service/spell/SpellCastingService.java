@@ -677,6 +677,11 @@ public class SpellCastingService {
             List<UUID> costReductionTargetIds = !targetIds.isEmpty() ? targetIds
                     : (targetId != null && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget ? List.of(targetId) : List.of());
             int targetSubtypeCostReduction = computeTargetSubtypeCostReduction(card, gameData, playerId, costReductionTargetIds);
+            boolean needsConvergeValue = EffectResolution.hasConvergeEffect(filteredSpellEffects)
+                    && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX());
+            java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
+                    ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
+                    : null;
             // Validate mana when target-based cost reduction doesn't apply but playability
             // check passed optimistically (e.g. Savage Stomp targeting a non-Dinosaur)
             if (targetSubtypeCostReduction == 0 && !usingAlternateCost && hasTargetBasedCastCostReduction(card)) {
@@ -699,6 +704,13 @@ public class SpellCastingService {
             KickerEffect kickerEffect = findKickerEffect(card);
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId);
+            }
+            if (convergeSnapshot != null) {
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                int converge = ManaPool.countDistinctColoredManaSpent(
+                        convergeSnapshot, pool.getColoredManaTotals(), convokeContributions);
+                gameData.setSpellCastConvergeValue(card.getId(), converge);
+                resolvedXValue = converge;
             }
 
             // Check for "up to N target cards from all graveyards" pile separation spells (e.g. Boneyard Parley)

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.Collection;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -371,5 +373,59 @@ public class ManaPool {
             map.put(color.getCode(), amount);
         }
         return map;
+    }
+
+    /**
+     * Returns the total colored mana available across all pool buckets.
+     * Colorless-only buckets (artifact-only, myr-only, etc.) are excluded.
+     */
+    public EnumMap<ManaColor, Integer> getColoredManaTotals() {
+        EnumMap<ManaColor, Integer> totals = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            if (color == ManaColor.COLORLESS) {
+                continue;
+            }
+            int amount = pool.getOrDefault(color, 0);
+            amount += instantSorceryOnlyColored.getOrDefault(color, 0);
+            amount += flashbackOnlyMana.getOrDefault(color, 0);
+            if (color == ManaColor.RED) {
+                amount += restrictedRed;
+            }
+            if (color == ManaColor.GREEN) {
+                amount += kickedOnlyGreen;
+            }
+            for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
+                amount += colorMap.getOrDefault(color, 0);
+            }
+            totals.put(color, amount);
+        }
+        return totals;
+    }
+
+    /**
+     * Counts distinct colors of mana spent between two snapshots, including convoke contributions.
+     * Colorless mana does not count toward Converge.
+     */
+    public static int countDistinctColoredManaSpent(EnumMap<ManaColor, Integer> before,
+                                                   EnumMap<ManaColor, Integer> after,
+                                                   Collection<ManaColor> convokeContributions) {
+        EnumSet<ManaColor> colorsSpent = EnumSet.noneOf(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            if (color == ManaColor.COLORLESS) {
+                continue;
+            }
+            int spent = before.getOrDefault(color, 0) - after.getOrDefault(color, 0);
+            if (spent > 0) {
+                colorsSpent.add(color);
+            }
+        }
+        if (convokeContributions != null) {
+            for (ManaColor color : convokeContributions) {
+                if (color != null && color != ManaColor.COLORLESS) {
+                    colorsSpent.add(color);
+                }
+            }
+        }
+        return colorsSpent.size();
     }
 }

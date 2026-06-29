@@ -506,6 +506,10 @@ public class StackResolutionService {
 
             handleSpellDisposition(gameData, entry);
         }
+
+        if (entry.getCard() != null) {
+            gameData.clearSpellCastConvergeValue(entry.getCard().getId());
+        }
     }
 
     /**
