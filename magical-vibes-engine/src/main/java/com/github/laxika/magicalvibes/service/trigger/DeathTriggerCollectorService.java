@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
@@ -70,6 +73,37 @@ public class DeathTriggerCollectorService {
                 new ArrayList<>(List.of(deathDmg)),
                 0,
                 targetIds
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = CreateTokenWithDyingSourceCountersEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleCreateTokenWithDyingSourceCounters(TriggerMatchContext match,
+            CreateTokenWithDyingSourceCountersEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        // Intervening-if: only fires if it had one or more +1/+1 counters on it.
+        int counters = dyingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+        if (counters < 1) {
+            return false;
+        }
+
+        CreateTokenEffect t = effect.tokenTemplate();
+        CreateTokenEffect resolved = new CreateTokenEffect(
+                t.primaryType(), t.amount(), t.tokenName(), t.power(), t.toughness(),
+                t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
+                t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
+                t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), counters);
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sd.dyingCard(),
+                sd.controllerId(),
+                sd.dyingCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolved))
         ));
         return true;
     }

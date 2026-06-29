@@ -301,6 +301,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CreateTokenEffect.blackZombie(int)` — 2/2 black Zombie creature token
 - `CreateTokenEffect.whiteSoldier(int)` — 1/1 white Soldier creature token
 - `CreateTokenEffect.ofTreasureToken(int)` — treasure tokens
+- `CreateTokenWithDyingSourceCountersEffect(CreateTokenEffect template)` — `ON_DEATH`: if the dying creature had ≥1 +1/+1 counter, create `template` with that many +1/+1 counters (e.g. Ambitious Augmenter's Fractal)
 - `CreateTokenForEachControlledPermanentEffect(PermanentPredicate, ...)` — token per permanent
 - `CreateTokenForEachOpponentCreatureEffect(...)` — token per opponent creature
 - `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(CardPredicate, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep)` — exile graveyard target, create token copy with optional extra subtypes/haste/end-step exile
@@ -366,6 +367,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `EnterWithXPlusOnePlusOneCountersEffect()` — ETB X +1/+1 counters
 - `EnterWithFixedChargeCountersEffect(int)` — ETB fixed charge counters
 - `PutChargeCounterOnSelfEffect()` — charge counter on self
+- `IncrementTriggerEffect()` — Increment keyword (`ON_CONTROLLER_CASTS_SPELL`): +1/+1 counter on self when mana spent on a cast spell exceeds self's current power or toughness (e.g. Ambitious Augmenter)
 - `ProliferateEffect()` — proliferate
 - `KickerEffect(String cost)` — kicker declaration
 
