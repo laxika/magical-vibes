@@ -1548,6 +1548,9 @@ public class SpellCastingService {
 
         // Use null hand list — card was already removed from exile
         gameData.recordSpellCast(playerId, card);
+        // "Prepared" (Secrets of Strixhaven): casting an exiled prepare-spell copy unprepares its
+        // linked permanent as part of casting (not resolution), so a counter doesn't undo it.
+        unprepareSourceOfCastSpell(gameData, exileCardId);
         gameData.priorityPassedBy.clear();
 
         String logEntry = player.getUsername() + " casts " + card.getName() + " from exile.";
@@ -1558,6 +1561,22 @@ public class SpellCastingService {
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         gameBroadcastService.broadcastGameState(gameData);
         turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    /**
+     * If the just-cast exiled card was a prepared permanent's prepare-spell copy, unprepares that
+     * permanent (clearing its prepared designation and link). No-op when no permanent is linked.
+     */
+    private void unprepareSourceOfCastSpell(GameData gameData, UUID exileCardId) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent perm : battlefield) {
+                if (perm.isPrepared() && exileCardId.equals(perm.getPreparedSpellCardId())) {
+                    perm.setPrepared(false);
+                    perm.setPreparedSpellCardId(null);
+                    return;
+                }
+            }
+        }
     }
 
     private boolean hasCastFromExiledWithSourcePermission(GameData gameData, UUID playerId, UUID cardId) {

@@ -118,6 +118,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDividedDamageAmongAnyTargetsEffect(int)` — divided among any targets
 - `SacrificePermanentThenEffect(PermanentPredicate, CardEffect, String)` — sacrifice then effect
 - `SpellCastTriggerEffect(CardPredicate, List<CardEffect>)` + overloads — spell cast trigger
+- `BecomePreparedEffect()` — source becomes "prepared" (Strixhaven); exiles a castable copy of its prepare spell (back face)
 
 See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 

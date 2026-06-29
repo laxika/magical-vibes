@@ -235,4 +235,79 @@ class ManaCostTest {
             assertThat(cost.calculateMaxX(pool, ManaColor.BLACK, 0)).isEqualTo(3);
         }
     }
+
+    @Nested
+    @DisplayName("hybrid mana")
+    class HybridMana {
+
+        @Test
+        void colorHybridManaValueCountsAsOne() {
+            // {1}{W/B} — generic 1 + one color-hybrid symbol = mana value 2.
+            assertThat(new ManaCost("{1}{W/B}").getManaValue()).isEqualTo(2);
+        }
+
+        @Test
+        void monocoloredHybridManaValueUsesGenericSide() {
+            // CR 202.3f: the mana value of {2/W} is 2.
+            assertThat(new ManaCost("{2/W}").getManaValue()).isEqualTo(2);
+        }
+
+        @Test
+        void colorHybridPaidWithEitherColor() {
+            ManaCost cost = new ManaCost("{1}{W/B}");
+
+            ManaPool white = new ManaPool();
+            white.add(ManaColor.WHITE, 2);
+            assertThat(cost.canPay(white, 0)).isTrue();
+
+            ManaPool black = new ManaPool();
+            black.add(ManaColor.WHITE, 1);
+            black.add(ManaColor.BLACK, 1);
+            assertThat(cost.canPay(black, 0)).isTrue();
+        }
+
+        @Test
+        void colorHybridCannotBePaidWithUnlistedColor() {
+            // {W/B} must be paid with white or black — red can only cover the {1}.
+            ManaCost cost = new ManaCost("{1}{W/B}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.RED, 2);
+            assertThat(cost.canPay(pool, 0)).isFalse();
+        }
+
+        @Test
+        void colorHybridDrainsExactlyTheCost() {
+            ManaCost cost = new ManaCost("{1}{W/B}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.WHITE, 1);
+            pool.add(ManaColor.BLACK, 1);
+
+            cost.pay(pool, 0);
+
+            // One mana for {W/B}, one for {1}: pool fully drained.
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        void monocoloredHybridPaidWithGenericWhenColorUnavailable() {
+            // {2/W} with no white: pay the 2-generic alternative.
+            ManaCost cost = new ManaCost("{2/W}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.COLORLESS, 2);
+            assertThat(cost.canPay(pool, 0)).isTrue();
+            cost.pay(pool, 0);
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        void monocoloredHybridPaidWithSingleColoredMana() {
+            // {2/W} with one white: pay the cheaper colored side.
+            ManaCost cost = new ManaCost("{2/W}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.WHITE, 1);
+            assertThat(cost.canPay(pool, 0)).isTrue();
+            cost.pay(pool, 0);
+            assertThat(pool.getTotal()).isZero();
+        }
+    }
 }

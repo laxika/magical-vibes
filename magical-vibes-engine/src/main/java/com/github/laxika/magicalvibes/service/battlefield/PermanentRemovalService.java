@@ -438,6 +438,7 @@ public class PermanentRemovalService {
         UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), controllerId);
         gameData.stolenCreatures.remove(target.getId());
         handleSourceLinkedAnimationCleanup(gameData, target);
+        handlePreparedSpellCleanup(gameData, target);
         return new RemovedPermanentInfo(controllerId, ownerId);
     }
 
@@ -555,6 +556,22 @@ public class PermanentRemovalService {
 
         // Also clean up if the removed permanent was itself an animated target
         gameData.sourceLinkedAnimations.remove(removedId);
+    }
+
+    /**
+     * "Prepared" (Secrets of Strixhaven): a prepare-spell copy only exists in exile while its
+     * prepared permanent is on the battlefield. When that permanent leaves, the exiled copy ceases
+     * to exist and its play permission is removed.
+     */
+    private void handlePreparedSpellCleanup(GameData gameData, Permanent removedPermanent) {
+        if (!removedPermanent.isPrepared()) return;
+        UUID prepareCopyId = removedPermanent.getPreparedSpellCardId();
+        if (prepareCopyId != null) {
+            gameData.removeFromExile(prepareCopyId);
+            gameData.exilePlayPermissions.remove(prepareCopyId);
+        }
+        removedPermanent.setPrepared(false);
+        removedPermanent.setPreparedSpellCardId(null);
     }
 
     /**

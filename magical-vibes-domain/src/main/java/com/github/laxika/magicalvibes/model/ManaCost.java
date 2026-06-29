@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,9 +15,17 @@ public class ManaCost {
 
     private static final Pattern MANA_SYMBOL = Pattern.compile("\\{([^}]+)}");
 
+    /**
+     * A hybrid mana symbol. {@code colors} are the colored ways to pay (one mana of any of them);
+     * {@code genericAlternative} is the generic amount that may be paid instead for monocolored
+     * hybrids like {2/W} (-1 when there is no generic option, e.g. the color-hybrid {W/B}).
+     */
+    private record HybridSymbol(Set<ManaColor> colors, int genericAlternative) {}
+
     private final int genericCost;
     private final Map<ManaColor, Integer> coloredCosts;
     private final Map<ManaColor, Integer> phyrexianCosts;
+    private final List<HybridSymbol> hybridCosts;
     private final int xSymbolCount;
 
     public ManaCost(String manaCostString) {
@@ -22,6 +33,7 @@ public class ManaCost {
         int xCount = 0;
         Map<ManaColor, Integer> colored = new EnumMap<>(ManaColor.class);
         Map<ManaColor, Integer> phyrexian = new EnumMap<>(ManaColor.class);
+        List<HybridSymbol> hybrid = new ArrayList<>();
 
         Matcher matcher = MANA_SYMBOL.matcher(manaCostString);
         while (matcher.find()) {
@@ -32,6 +44,19 @@ public class ManaCost {
                 // Phyrexian mana (e.g. R/P) — can be paid with its color or 2 life
                 ManaColor color = ManaColor.fromCode(symbol.substring(0, symbol.length() - 2));
                 phyrexian.merge(color, 1, Integer::sum);
+            } else if (symbol.contains("/")) {
+                // Hybrid mana, e.g. {W/B} (pay W or B) or {2/W} (pay 2 generic or W)
+                Set<ManaColor> colors = EnumSet.noneOf(ManaColor.class);
+                int genericAlt = -1;
+                for (String part : symbol.split("/")) {
+                    ManaColor color = ManaColor.fromCode(part);
+                    if (color != null) {
+                        colors.add(color);
+                    } else {
+                        genericAlt = Integer.parseInt(part);
+                    }
+                }
+                hybrid.add(new HybridSymbol(colors, genericAlt));
             } else {
                 ManaColor color = ManaColor.fromCode(symbol);
                 if (color != null) {
@@ -45,6 +70,7 @@ public class ManaCost {
         this.genericCost = generic;
         this.coloredCosts = colored;
         this.phyrexianCosts = phyrexian;
+        this.hybridCosts = hybrid;
         this.xSymbolCount = xCount;
     }
 
@@ -85,6 +111,10 @@ public class ManaCost {
         }
         for (int count : phyrexianCosts.values()) {
             total += count;
+        }
+        for (HybridSymbol hybrid : hybridCosts) {
+            // CR 202.3f: a monocolored hybrid {2/W} has mana value 2; a color hybrid {W/B} has 1.
+            total += hybrid.genericAlternative() >= 0 ? hybrid.genericAlternative() : 1;
         }
         return total;
     }
@@ -171,18 +201,81 @@ public class ManaCost {
     }
 
     public boolean canPay(ManaPool pool, int xValue) {
+        Map<ManaColor, Integer> available = availableByColor(pool);
+        if (!reserveColoredCosts(available)) {
+            return false;
+        }
+        int[] extraGeneric = {0};
+        if (!assignHybrids(available, extraGeneric)) {
+            return false;
+        }
+        int remaining = totalOf(available);
+        return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
+    }
+
+    // ── Hybrid mana support (shared by the core canPay/pay path) ───────
+
+    private Map<ManaColor, Integer> availableByColor(ManaPool pool) {
+        Map<ManaColor, Integer> available = new EnumMap<>(ManaColor.class);
+        for (ManaColor color : ManaColor.values()) {
+            available.put(color, pool.get(color));
+        }
+        return available;
+    }
+
+    private boolean reserveColoredCosts(Map<ManaColor, Integer> available) {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            if (pool.get(entry.getKey()) < entry.getValue()) {
+            int left = available.get(entry.getKey()) - entry.getValue();
+            if (left < 0) {
+                return false;
+            }
+            available.put(entry.getKey(), left);
+        }
+        return true;
+    }
+
+    private static int totalOf(Map<ManaColor, Integer> available) {
+        return available.values().stream().mapToInt(Integer::intValue).sum();
+    }
+
+    /**
+     * Greedily assigns each hybrid symbol (most-constrained first) to one available color, decrementing
+     * {@code available}. A monocolored hybrid with no available color falls back to its generic
+     * alternative (accumulated into {@code extraGeneric}). Returns false if a color hybrid cannot be
+     * satisfied by any of its colors.
+     */
+    private boolean assignHybrids(Map<ManaColor, Integer> available, int[] extraGeneric) {
+        for (HybridSymbol hybrid : hybridsMostConstrainedFirst(available)) {
+            ManaColor chosen = pickRichestColor(hybrid.colors(), available);
+            if (chosen != null) {
+                available.put(chosen, available.get(chosen) - 1);
+            } else if (hybrid.genericAlternative() >= 0) {
+                extraGeneric[0] += hybrid.genericAlternative();
+            } else {
                 return false;
             }
         }
+        return true;
+    }
 
-        int remaining = pool.getTotal();
-        for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
-            remaining -= entry.getValue();
+    private List<HybridSymbol> hybridsMostConstrainedFirst(Map<ManaColor, Integer> available) {
+        List<HybridSymbol> sorted = new ArrayList<>(hybridCosts);
+        sorted.sort(Comparator.comparingInt(h -> (int) h.colors().stream()
+                .filter(c -> available.get(c) > 0).count()));
+        return sorted;
+    }
+
+    private static ManaColor pickRichestColor(Set<ManaColor> colors, Map<ManaColor, Integer> available) {
+        ManaColor best = null;
+        int bestAmount = 0;
+        for (ManaColor color : colors) {
+            int amount = available.get(color);
+            if (amount > bestAmount) {
+                bestAmount = amount;
+                best = color;
+            }
         }
-
-        return remaining >= genericCost + xValue * effectiveXMultiplier();
+        return best;
     }
 
     public boolean canPay(ManaPool pool, int xValue, boolean artifactContext) {
@@ -451,7 +544,33 @@ public class ManaCost {
             }
         }
 
-        payGenericPreferColorless(pool, genericCost + xValue * effectiveXMultiplier());
+        // Pay hybrid symbols: assign each to an available color (or its generic alternative), then
+        // remove the colors the assignment consumed from the pool.
+        int extraHybridGeneric = payHybrids(pool);
+
+        payGenericPreferColorless(pool, genericCost + extraHybridGeneric + xValue * effectiveXMultiplier());
+    }
+
+    /**
+     * Spends colored mana for the hybrid symbols (after fixed colored costs are already paid) and
+     * returns the additional generic mana owed for any monocolored hybrids paid via their generic
+     * alternative. Assumes the cost is affordable (callers gate on {@link #canPay}).
+     */
+    private int payHybrids(ManaPool pool) {
+        if (hybridCosts.isEmpty()) {
+            return 0;
+        }
+        Map<ManaColor, Integer> available = availableByColor(pool);
+        Map<ManaColor, Integer> before = new EnumMap<>(available);
+        int[] extraGeneric = {0};
+        assignHybrids(available, extraGeneric);
+        for (ManaColor color : ManaColor.values()) {
+            int spent = before.get(color) - available.get(color);
+            for (int i = 0; i < spent; i++) {
+                pool.remove(color);
+            }
+        }
+        return extraGeneric[0];
     }
 
     public void pay(ManaPool pool, int xValue, boolean artifactContext) {

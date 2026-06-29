@@ -315,6 +315,11 @@ public class GameTestHarness {
         gameService.playCardFromExile(gameData, player, exileCardId, null, null);
     }
 
+    public void castFromExile(Player player, UUID exileCardId, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardFromExile(gameData, player, exileCardId, null, targetId);
+    }
+
     public void castCreatureWithAlternateCost(Player player, int cardIndex, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);

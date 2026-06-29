@@ -48,6 +48,12 @@ public class Permanent {
     @Setter private boolean cantRegenerateThisTurn;
     /** If true, this creature is exiled instead of dying this turn (e.g. Red Sun's Zenith). Cleared at end of turn. */
     @Setter private boolean exileInsteadOfDieThisTurn;
+    /** Secrets of Strixhaven "Prepared": true while this permanent is prepared (CR-style designation). While
+     *  prepared, a copy of its prepare spell sits in exile (see {@link #preparedSpellCardId}) and the controller
+     *  may cast it; casting it unprepares this permanent. */
+    @Setter private boolean prepared;
+    /** The id of the exiled prepare-spell copy linked to this permanent while it is prepared (null otherwise). */
+    @Setter private UUID preparedSpellCardId;
     /** If true, this creature has "Whenever this creature deals damage to an opponent, you may return target creature
      *  that player controls to its owner's hand" until end of turn (e.g. Arm with Aether). Cleared at end of turn. */
     @Setter private boolean hasDamageToOpponentCreatureBounce;
@@ -220,6 +226,8 @@ public class Permanent {
         this.mustBeBlockedThisTurn = source.mustBeBlockedThisTurn;
         this.cantRegenerateThisTurn = source.cantRegenerateThisTurn;
         this.exileInsteadOfDieThisTurn = source.exileInsteadOfDieThisTurn;
+        this.prepared = source.prepared;
+        this.preparedSpellCardId = source.preparedSpellCardId;
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         source.temporaryTriggeredEffects.forEach((slot, effects) ->
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
