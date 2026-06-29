@@ -20,7 +20,8 @@ public enum CardSet {
     INNISTRAD("ISD"),
     DARK_ASCENSION("DKA"),
     IXALAN("XLN"),
-    DOMINARIA("DOM");
+    DOMINARIA("DOM"),
+    SECRETS_OF_STRIXHAVEN("SOS");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
     private static volatile Map<CardSet, List<CardPrinting>> scannedPrintings;

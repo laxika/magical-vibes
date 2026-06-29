@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfBySpellManaSpentEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -489,6 +490,9 @@ public class SpellCastTriggerCollectorService {
         boolean needsGraveyardTarget = resolved.stream().anyMatch(CardEffect::canTargetGraveyard);
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
+        boolean needsSpellManaSpentX = resolved.stream().anyMatch(BoostSelfBySpellManaSpentEffect.class::isInstance);
+        int spellManaSpentX = needsSpellManaSpentX
+                ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
 
         if (match.rawEffect() instanceof MayEffect may) {
             match.gameData().pendingMayAbilities.add(new PendingMayAbility(
@@ -513,11 +517,21 @@ public class SpellCastTriggerCollectorService {
                     + "'s triggered ability triggers — choose a target.";
             gameBroadcastService.logAndBroadcast(match.gameData(), logEntry);
         } else {
-            StackEntry entry = selfTarget
-                    ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                        match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId())
-                    : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                        match.permanent().getCard().getName() + "'s ability", resolved);
+            StackEntry entry;
+            if (selfTarget) {
+                entry = spellManaSpentX > 0
+                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                            match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX,
+                            match.permanent().getId())
+                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                            match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId());
+            } else {
+                entry = spellManaSpentX > 0
+                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                            match.permanent().getCard().getName() + "'s ability", resolved, spellManaSpentX)
+                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                            match.permanent().getCard().getName() + "'s ability", resolved);
+            }
             match.gameData().stack.add(entry);
         }
         return true;

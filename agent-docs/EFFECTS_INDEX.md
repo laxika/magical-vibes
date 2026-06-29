@@ -753,6 +753,7 @@ Pass `null` as filter to allow any card.
 | `BoostTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | target creature gets +X/+Y until end of turn |
 | `BoostTargetCreaturePerControlledPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | target creature gets +N/+N per controlled permanent matching filter until end of turn |
 | `BoostSelfEffect` | `(int powerBoost, int toughnessBoost)` | this creature gets +X/+Y until end of turn |
+| `BoostSelfBySpellManaSpentEffect` | `(int powerMultiplier, int toughnessMultiplier)` | source permanent gets +(multiplier×X)/+(multiplier×X) until end of turn, where X is mana spent to cast the triggering instant/sorcery spell. Used inside `SpellCastTriggerEffect` on `ON_CONTROLLER_CASTS_SPELL`; trigger collector sets stack entry `xValue` from `GameData.spellCastManaSpent`. Used by Aberrant Manawurm |
 | `DoubleSelfPowerToughnessEffect` | `()` | double this creature's power and toughness until end of turn. Per CR 701.9a/b, adds current effective P/T as modifier |
 | `BoostAllOwnCreaturesEffect` | `(int powerBoost, int toughnessBoost)` or `(int powerBoost, int toughnessBoost, PermanentPredicate filter)` | all your creatures get +X/+Y until end of turn (one-shot). Optional predicate filter |
 | `BoostAllOwnCreaturesByGreatestPowerEffect` | `()` | all your creatures get +X/+X until end of turn, where X is the greatest power among creatures you control at resolution time. Used by Overwhelming Stampede |

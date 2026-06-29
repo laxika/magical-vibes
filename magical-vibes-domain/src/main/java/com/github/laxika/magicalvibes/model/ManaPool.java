@@ -83,6 +83,28 @@ public class ManaPool {
         return total;
     }
 
+    /**
+     * Total mana available across all pool buckets (regular, restricted, flashback-only, etc.).
+     * Used to snapshot mana before/after spell payment to compute mana spent.
+     */
+    public int getTotalAllMana() {
+        // NOTE: creatureMana and persistentMana are tags on a subset of the regular pool, not
+        // separate buckets, so they are already counted by getTotal() and must not be added again.
+        int total = getTotal();
+        total += artifactOnlyColorless;
+        total += myrOnlyColorless;
+        total += restrictedRed;
+        total += kickedOnlyGreen;
+        total += instantSorceryOnlyColorless;
+        total += getFlashbackOnlyManaTotal();
+        for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
+            for (int value : colorMap.values()) {
+                total += value;
+            }
+        }
+        return total;
+    }
+
     public void remove(ManaColor color) {
         pool.merge(color, -1, Integer::sum);
         // Clamp creature mana so it never exceeds total for this color

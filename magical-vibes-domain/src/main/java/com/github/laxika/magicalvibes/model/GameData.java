@@ -51,6 +51,11 @@ public class GameData {
     public final Map<UUID, List<Card>> permanentsEnteredBattlefieldThisTurn = new ConcurrentHashMap<>();
     /** All spells cast by each player this turn. Access via {@link #recordSpellCast}, {@link #getSpellsCastThisTurnCount}, etc. */
     private final Map<UUID, List<Card>> spellsCastThisTurn = new ConcurrentHashMap<>();
+    /**
+     * Transient mana spent to cast a spell, keyed by spell card instance id.
+     * Populated during spell payment and consumed when spell-cast triggers fire.
+     */
+    public final Map<UUID, Integer> spellCastManaSpent = new ConcurrentHashMap<>();
     /** Tracks which permanent types each player has cast from graveyard this turn via Muldrotha-style effects. */
     public final Map<UUID, Set<CardType>> permanentTypesCastFromGraveyardThisTurn = new ConcurrentHashMap<>();
     /** Snapshot of per-player spell counts from the previous turn. Used by werewolf transform triggers. */
@@ -427,6 +432,20 @@ public class GameData {
      */
     public void recordSpellCast(UUID playerId, Card card) {
         spellsCastThisTurn.computeIfAbsent(playerId, k -> Collections.synchronizedList(new ArrayList<>())).add(card);
+    }
+
+    public void addSpellCastManaSpent(UUID spellCardId, int manaSpent) {
+        if (manaSpent > 0) {
+            spellCastManaSpent.merge(spellCardId, manaSpent, Integer::sum);
+        }
+    }
+
+    public int getSpellCastManaSpent(UUID spellCardId) {
+        return spellCastManaSpent.getOrDefault(spellCardId, 0);
+    }
+
+    public void clearSpellCastManaSpent(UUID spellCardId) {
+        spellCastManaSpent.remove(spellCardId);
     }
 
     /**

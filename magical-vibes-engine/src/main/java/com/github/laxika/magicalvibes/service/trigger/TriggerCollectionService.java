@@ -99,6 +99,8 @@ public class TriggerCollectionService {
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_CASTS_SPELL, ctx);
         });
 
+        gameData.clearSpellCastManaSpent(spellCard.getId());
+
         // GRAVEYARD_ON_CONTROLLER_CASTS_SPELL — graveyard-resident spell-cast triggers
         // (e.g. Lingering Phantom: "Whenever you cast a historic spell, you may pay {B}. If you do, return ~ to hand.")
         List<Card> castingPlayerGraveyard = gameData.playerGraveyards.get(castingPlayerId);

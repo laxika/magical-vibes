@@ -104,6 +104,24 @@ public class StackEntry {
         this.targetIds = List.of();
     }
 
+    // Triggered ability with source permanent and xValue constructor (e.g. spell-cast self-boost by mana spent)
+    public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
+                      List<CardEffect> effectsToResolve, int xValue, UUID sourcePermanentId) {
+        this.entryType = entryType;
+        this.card = card;
+        this.controllerId = controllerId;
+        this.description = description;
+        this.effectsToResolve = effectsToResolve;
+        this.xValue = xValue;
+        this.targetId = null;
+        this.sourcePermanentId = sourcePermanentId;
+        this.damageAssignments = Map.of();
+        this.targetZone = null;
+        this.targetCardIds = List.of();
+        this.targetFilter = null;
+        this.targetIds = List.of();
+    }
+
     // Triggered ability with source and target permanent constructor
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetId, UUID sourcePermanentId) {
         this.entryType = entryType;
