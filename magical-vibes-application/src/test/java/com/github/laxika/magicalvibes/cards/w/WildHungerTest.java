@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
@@ -98,6 +99,19 @@ class WildHungerTest extends BaseCardTest {
         assertThat(bears.getPowerModifier()).isEqualTo(3);
         assertThat(bears.getToughnessModifier()).isEqualTo(1);
         assertThat(bears.hasKeyword(Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("Cannot target a non-creature permanent")
+    void cannotTargetNonCreature() {
+        harness.addToBattlefield(player1, new Plains());
+        harness.setHand(player1, List.of(new WildHunger()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        UUID landId = harness.getPermanentId(player1, "Plains");
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, landId))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

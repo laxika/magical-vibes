@@ -8,13 +8,19 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 @CardRegistration(set = "DKA", collectorNumber = "132")
 public class WildHunger extends Card {
 
     public WildHunger() {
-        addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 1));
-        addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+        target(new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(),
+                "Target must be a creature"
+        ))
+                .addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(3, 1))
+                .addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
         addCastingOption(new FlashbackCast("{3}{R}"));
     }
 }
