@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.ai.AiPlayerService;
-import com.github.laxika.magicalvibes.config.GameEngineConfig;
 import com.github.laxika.magicalvibes.config.JacksonConfig;
+import com.github.laxika.magicalvibes.service.GameEngineConfig;
 import com.github.laxika.magicalvibes.handler.GameMessageHandler;
 import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.repository.DeckRepository;

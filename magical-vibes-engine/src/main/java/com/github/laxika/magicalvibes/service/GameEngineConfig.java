@@ -1,6 +1,8 @@
-package com.github.laxika.magicalvibes.config;
+package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.networking.NetworkingConfig;
+import com.github.laxika.magicalvibes.scryfall.ScryfallConfig;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
@@ -17,6 +19,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -29,16 +32,16 @@ import java.util.List;
  * effect handlers, target validators, and trigger collectors. Used by production, card tests,
  * and headless AI simulation — with different {@code SessionManager} / {@code GameRegistry}
  * bindings supplied by each outer context.
+ *
+ * <p>Owns only the engine's own {@code service} package and composes the lower-level module
+ * wiring ({@link NetworkingConfig}, {@link ScryfallConfig}) via {@code @Import}. This keeps each
+ * module responsible for its own beans instead of having downstream modules reach in with their
+ * own component scans.
  */
 @Slf4j
 @Configuration
-@ComponentScan(
-        basePackages = {
-                "com.github.laxika.magicalvibes.service",
-                "com.github.laxika.magicalvibes.networking.service",
-                "com.github.laxika.magicalvibes.scryfall"
-        }
-)
+@ComponentScan(basePackages = "com.github.laxika.magicalvibes.service")
+@Import({NetworkingConfig.class, ScryfallConfig.class})
 public class GameEngineConfig implements SmartInitializingSingleton {
 
     private final ApplicationContext applicationContext;

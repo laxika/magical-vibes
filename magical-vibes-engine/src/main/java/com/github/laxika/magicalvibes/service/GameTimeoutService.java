@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,7 @@ public class GameTimeoutService {
     private final Map<UUID, ScheduledFuture<?>> bothGoneTimers = new ConcurrentHashMap<>();
     private final Map<UUID, ScheduledFuture<?>> singleGoneTimers = new ConcurrentHashMap<>();
 
+    @Autowired
     public GameTimeoutService(GameRegistry gameRegistry,
                               @Lazy GameOutcomeService gameOutcomeService,
                               SessionManager sessionManager,

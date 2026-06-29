@@ -14,7 +14,7 @@ import java.util.Map;
 /**
  * Registry that maps (EffectSlot, CardEffect class) pairs to trigger collector handlers.
  * <p>
- * Discovered automatically at startup by {@link com.github.laxika.magicalvibes.config.GameEngineConfig}.
+ * Discovered automatically at startup by {@link com.github.laxika.magicalvibes.service.GameEngineConfig}.
  */
 public class TriggerCollectorRegistry {
 
