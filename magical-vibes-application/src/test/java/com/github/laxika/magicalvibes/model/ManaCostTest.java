@@ -309,5 +309,52 @@ class ManaCostTest {
             cost.pay(pool, 0);
             assertThat(pool.getTotal()).isZero();
         }
+
+        @Test
+        @DisplayName("Hybrid pip cannot reuse mana already needed for a fixed colored pip")
+        void hybridPipCannotReuseManaClaimedByColoredPip() {
+            // {U}{U/R}{R} with exactly U + R + G: the U and R are consumed by the fixed pips,
+            // leaving only G, which cannot pay the {U/R} hybrid. Must be unpayable.
+            ManaCost cost = new ManaCost("{U}{U/R}{R}");
+
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.BLUE, 1);
+            pool.add(ManaColor.RED, 1);
+            pool.add(ManaColor.GREEN, 1);
+
+            assertThat(cost.canPay(pool, 0)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Paying a cost with a fixed and a hybrid pip spends exactly the right mana")
+        void payingHybridCostSpendsTheRightMana() {
+            ManaCost cost = new ManaCost("{U}{U/R}{R}");
+
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.BLUE, 2);
+            pool.add(ManaColor.RED, 1);
+
+            assertThat(cost.canPay(pool, 0)).isTrue();
+            cost.pay(pool, 0);
+
+            // {U} from a blue, {U/R} from the other blue, {R} from the red — pool fully drained.
+            assertThat(pool.getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Two hybrid pips competing for a single color are both satisfied")
+        void competingHybridPipsAreBothSatisfied() {
+            // {U/G}{U/R} with U + G: a naive assignment of U to the first pip would strand the
+            // second; a correct assignment gives G to the first pip and U to the second.
+            ManaCost cost = new ManaCost("{U/G}{U/R}");
+
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.BLUE, 1);
+            pool.add(ManaColor.GREEN, 1);
+
+            assertThat(cost.canPay(pool, 0)).isTrue();
+            cost.pay(pool, 0);
+            assertThat(pool.getTotal()).isZero();
+        }
     }
 }

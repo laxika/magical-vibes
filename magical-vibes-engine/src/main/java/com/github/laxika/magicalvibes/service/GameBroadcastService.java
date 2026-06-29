@@ -378,7 +378,7 @@ public class GameBroadcastService {
                         }
                         boolean kickedOnlyGreen = hasKicker && pool.getKickedOnlyGreen() > 0;
                         boolean instantSorceryOnlyColorless = (card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY))
-                                && pool.getInstantSorceryOnlyColorless() > 0;
+                                && (pool.getInstantSorceryOnlyColorless() > 0 || pool.getInstantSorceryOnlyColoredTotal() > 0);
                         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
                         boolean hasRestricted = isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || !subtypeCreatureContext.isEmpty();
                         boolean canAfford = hasRestricted

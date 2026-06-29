@@ -300,6 +300,9 @@ public class ManaCost {
 
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
+            if (instantSorceryOnlyColorlessContext) {
+                available += pool.getInstantSorceryOnlyColored(entry.getKey());
+            }
             if (entry.getKey() == ManaColor.RED) {
                 available += extraRed;
             }
@@ -324,6 +327,15 @@ public class ManaCost {
         }
         if (instantSorceryOnlyColorlessContext) {
             remaining += pool.getInstantSorceryOnlyColorless();
+            for (ManaColor color : ManaColor.values()) {
+                if (color == ManaColor.COLORLESS) {
+                    continue;
+                }
+                int coloredNeeded = coloredCosts.getOrDefault(color, 0);
+                int regular = pool.get(color);
+                int instantSorceryOnlyUsedForColored = Math.max(0, coloredNeeded - regular);
+                remaining += pool.getInstantSorceryOnlyColored(color) - instantSorceryOnlyUsedForColored;
+            }
         }
         if (restrictedRedContext) {
             int redNeeded = coloredCosts.getOrDefault(ManaColor.RED, 0);
@@ -352,6 +364,9 @@ public class ManaCost {
         for (Map.Entry<ManaColor, Integer> entry : coloredCosts.entrySet()) {
             int available = pool.get(entry.getKey());
             available += pool.getSubtypeCreatureManaForColor(subtypeCreatureContext, entry.getKey());
+            if (instantSorceryOnlyColorlessContext) {
+                available += pool.getInstantSorceryOnlyColored(entry.getKey());
+            }
             if (entry.getKey() == ManaColor.RED) {
                 available += extraRed;
             }
@@ -377,6 +392,15 @@ public class ManaCost {
         }
         if (instantSorceryOnlyColorlessContext) {
             remaining += pool.getInstantSorceryOnlyColorless();
+            for (ManaColor color : ManaColor.values()) {
+                if (color == ManaColor.COLORLESS) {
+                    continue;
+                }
+                int coloredNeeded = coloredCosts.getOrDefault(color, 0);
+                int regular = pool.get(color);
+                int instantSorceryOnlyUsedForColored = Math.max(0, coloredNeeded - regular);
+                remaining += pool.getInstantSorceryOnlyColored(color) - instantSorceryOnlyUsedForColored;
+            }
         }
         if (restrictedRedContext) {
             int redNeeded = coloredCosts.getOrDefault(ManaColor.RED, 0);
@@ -603,6 +627,8 @@ public class ManaCost {
                     // Prefer spending kicked-only green first (more restricted = use first)
                     pool.removeKickedOnlyGreen(1);
                     extraGreen--;
+                } else if (instantSorceryOnlyColorlessContext && pool.getInstantSorceryOnlyColored(entry.getKey()) > 0) {
+                    pool.removeInstantSorceryOnlyColored(entry.getKey(), 1);
                 } else {
                     pool.remove(entry.getKey());
                 }
@@ -630,6 +656,21 @@ public class ManaCost {
             int fromRestricted = Math.min(remainingGeneric, pool.getInstantSorceryOnlyColorless());
             pool.removeInstantSorceryOnlyColorless(fromRestricted);
             remainingGeneric -= fromRestricted;
+        }
+
+        // Spend instant/sorcery-only colored mana for generic costs
+        if (instantSorceryOnlyColorlessContext && remainingGeneric > 0) {
+            for (ManaColor color : ManaColor.values()) {
+                if (remainingGeneric <= 0) {
+                    break;
+                }
+                if (color == ManaColor.COLORLESS) {
+                    continue;
+                }
+                int fromRestricted = Math.min(remainingGeneric, pool.getInstantSorceryOnlyColored(color));
+                pool.removeInstantSorceryOnlyColored(color, fromRestricted);
+                remainingGeneric -= fromRestricted;
+            }
         }
 
         // Spend creature-or-artifact-only red for generic costs
@@ -669,6 +710,8 @@ public class ManaCost {
                 } else if (kickedOnlyGreenContext && entry.getKey() == ManaColor.GREEN && extraGreen > 0) {
                     pool.removeKickedOnlyGreen(1);
                     extraGreen--;
+                } else if (instantSorceryOnlyColorlessContext && pool.getInstantSorceryOnlyColored(entry.getKey()) > 0) {
+                    pool.removeInstantSorceryOnlyColored(entry.getKey(), 1);
                 } else {
                     pool.remove(entry.getKey());
                 }
@@ -714,6 +757,20 @@ public class ManaCost {
             int fromRestricted = Math.min(remainingGeneric, pool.getInstantSorceryOnlyColorless());
             pool.removeInstantSorceryOnlyColorless(fromRestricted);
             remainingGeneric -= fromRestricted;
+        }
+
+        if (instantSorceryOnlyColorlessContext && remainingGeneric > 0) {
+            for (ManaColor color : ManaColor.values()) {
+                if (remainingGeneric <= 0) {
+                    break;
+                }
+                if (color == ManaColor.COLORLESS) {
+                    continue;
+                }
+                int fromRestricted = Math.min(remainingGeneric, pool.getInstantSorceryOnlyColored(color));
+                pool.removeInstantSorceryOnlyColored(color, fromRestricted);
+                remainingGeneric -= fromRestricted;
+            }
         }
 
         if (restrictedRedContext && remainingGeneric > 0) {

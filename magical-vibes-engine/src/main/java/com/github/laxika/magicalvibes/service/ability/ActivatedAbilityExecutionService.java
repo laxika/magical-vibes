@@ -404,14 +404,7 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof AwardKickedOnlyManaEffect kom) {
                 gameData.playerManaPools.get(playerId).addKickedOnlyGreen(kom.amount());
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                if (arm.color() == ManaColor.RED) {
-                    pool.addRestrictedRed(arm.amount());
-                } else if (arm.color() == ManaColor.COLORLESS) {
-                    pool.addInstantSorceryOnlyColorless(arm.amount());
-                } else {
-                    pool.add(arm.color(), arm.amount());
-                }
+                arm.applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
                 int count = 0;

@@ -93,7 +93,7 @@ class JayaBallardTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(jaya.getCounterCount(CounterType.LOYALTY)).isEqualTo(6);
-        assertThat(gd.playerManaPools.get(player1.getId()).getRestrictedRed()).isEqualTo(3);
+        assertThat(gd.playerManaPools.get(player1.getId()).getInstantSorceryOnlyColored(ManaColor.RED)).isEqualTo(3);
     }
 
     // ===== +1 rummage ability =====

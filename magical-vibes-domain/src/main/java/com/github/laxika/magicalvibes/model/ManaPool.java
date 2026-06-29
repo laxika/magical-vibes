@@ -17,6 +17,8 @@ public class ManaPool {
     private int restrictedRed;
     private int kickedOnlyGreen;
     private int instantSorceryOnlyColorless;
+    /** Colored mana that can only be spent to cast instant or sorcery spells (e.g. Abstract Paintmage). */
+    private final EnumMap<ManaColor, Integer> instantSorceryOnlyColored = new EnumMap<>(ManaColor.class);
     /** Per-color mana that can only be spent to cast spells with flashback from a graveyard (e.g. Altar of the Lost). */
     private final EnumMap<ManaColor, Integer> flashbackOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-subtype, per-color mana that can only be spent to cast creature spells with a matching subtype (e.g. Pillar of Origins). */
@@ -28,6 +30,7 @@ public class ManaPool {
             creatureMana.put(color, 0);
             persistentMana.put(color, 0);
             flashbackOnlyMana.put(color, 0);
+            instantSorceryOnlyColored.put(color, 0);
         }
     }
 
@@ -44,6 +47,7 @@ public class ManaPool {
         this.restrictedRed = source.restrictedRed;
         this.kickedOnlyGreen = source.kickedOnlyGreen;
         this.instantSorceryOnlyColorless = source.instantSorceryOnlyColorless;
+        instantSorceryOnlyColored.putAll(source.instantSorceryOnlyColored);
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeCreatureMana.entrySet()) {
             subtypeCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
@@ -68,6 +72,9 @@ public class ManaPool {
         restrictedRed = 0;
         kickedOnlyGreen = 0;
         instantSorceryOnlyColorless = 0;
+        for (ManaColor color : ManaColor.values()) {
+            instantSorceryOnlyColored.put(color, 0);
+        }
         subtypeCreatureMana.clear();
     }
 
@@ -212,6 +219,27 @@ public class ManaPool {
         instantSorceryOnlyColorless = Math.max(0, instantSorceryOnlyColorless - amount);
     }
 
+    public int getInstantSorceryOnlyColored(ManaColor color) {
+        return instantSorceryOnlyColored.getOrDefault(color, 0);
+    }
+
+    public int getInstantSorceryOnlyColoredTotal() {
+        int total = 0;
+        for (int value : instantSorceryOnlyColored.values()) {
+            total += value;
+        }
+        return total;
+    }
+
+    public void addInstantSorceryOnlyColored(ManaColor color, int amount) {
+        instantSorceryOnlyColored.merge(color, amount, Integer::sum);
+    }
+
+    public void removeInstantSorceryOnlyColored(ManaColor color, int amount) {
+        int current = instantSorceryOnlyColored.getOrDefault(color, 0);
+        instantSorceryOnlyColored.put(color, Math.max(0, current - amount));
+    }
+
     public void addSubtypeCreatureMana(CardSubtype subtype, ManaColor color, int amount) {
         subtypeCreatureMana.computeIfAbsent(subtype, k -> {
             EnumMap<ManaColor, Integer> m = new EnumMap<>(ManaColor.class);
@@ -303,6 +331,7 @@ public class ManaPool {
         instantSorceryOnlyColorless = 0;
         for (ManaColor color : ManaColor.values()) {
             flashbackOnlyMana.put(color, 0);
+            instantSorceryOnlyColored.put(color, 0);
         }
         subtypeCreatureMana.clear();
     }
@@ -334,6 +363,7 @@ public class ManaPool {
             if (color == ManaColor.GREEN) {
                 amount += kickedOnlyGreen;
             }
+            amount += instantSorceryOnlyColored.getOrDefault(color, 0);
             amount += flashbackOnlyMana.getOrDefault(color, 0);
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);

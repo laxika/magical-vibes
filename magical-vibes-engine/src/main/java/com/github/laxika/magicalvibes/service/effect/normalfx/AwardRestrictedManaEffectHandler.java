@@ -30,13 +30,7 @@ public class AwardRestrictedManaEffectHandler implements NormalEffectHandlerBean
         var e = (AwardRestrictedManaEffect) effect;
         UUID controllerId = entry.getControllerId();
         ManaPool pool = gameData.playerManaPools.get(controllerId);
-        if (e.color() == ManaColor.RED) {
-            pool.addRestrictedRed(e.amount());
-        } else if (e.color() == ManaColor.COLORLESS) {
-            pool.addInstantSorceryOnlyColorless(e.amount());
-        } else {
-            pool.add(e.color(), e.amount());
-        }
+        e.applyTo(pool);
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String logEntry = playerName + " adds " + e.amount() + " " + e.color().getCode()

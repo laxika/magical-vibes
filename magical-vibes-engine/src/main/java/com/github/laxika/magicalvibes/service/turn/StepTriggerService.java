@@ -817,6 +817,8 @@ public class StepTriggerService {
         // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
         handleSagaLoreCounters(gameData);
 
+        handlePrecombatMainBattlefieldTriggers(gameData);
+
         // Chancellor-style delayed mana triggers: fire at the beginning of the revealing player's first main phase
         if (!gameData.openingHandManaTriggers.isEmpty()) {
             UUID activePlayerId = gameData.activePlayerId;
@@ -842,6 +844,40 @@ public class StepTriggerService {
                             gameData.playerIdToName.get(activePlayerId));
                 }
             }
+        }
+    }
+
+    /**
+     * Fires triggered abilities on permanents the active player controls at the
+     * beginning of the precombat main phase (e.g. Abstract Paintmage).
+     */
+    private void handlePrecombatMainBattlefieldTriggers(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
+        if (battlefield == null) {
+            return;
+        }
+
+        for (Permanent perm : battlefield) {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED);
+            if (effects == null || effects.isEmpty()) {
+                continue;
+            }
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    activePlayerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    perm.getId()
+            ));
+
+            String logEntry = perm.getCard().getName() + "'s ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} precombat main trigger pushed onto stack",
+                    gameData.id, perm.getCard().getName());
         }
     }
 

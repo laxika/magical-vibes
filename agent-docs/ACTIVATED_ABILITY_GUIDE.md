@@ -461,6 +461,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `SAGA_CHAPTER_II` | Saga chapter II (second lore counter) |
 | `SAGA_CHAPTER_III` | Saga chapter III (third lore counter, saga sacrificed after) |
 | `BEGINNING_OF_COMBAT_TRIGGERED` | Beginning of combat on controller's turn |
+| `PRECOMBAT_MAIN_TRIGGERED` | Beginning of precombat main phase on controller's turn |
 | `ON_OPPONENT_CREATURE_DEALT_DAMAGE` | An opponent's creature is dealt damage |
 | `ON_CONTROLLER_LOSES_LIFE` | Controller loses life |
 | `ON_SELF_LEAVES_BATTLEFIELD` | This permanent leaves the battlefield (any means) |
