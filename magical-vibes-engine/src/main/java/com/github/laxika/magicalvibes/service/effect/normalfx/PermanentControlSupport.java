@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,6 +55,9 @@ public class PermanentControlSupport {
             tokenCard.setManaCost("");
             tokenCard.setToken(true);
             tokenCard.setColor(token.color());
+            if (token.colors() != null && !token.colors().isEmpty()) {
+                tokenCard.setColors(token.colors().stream().toList());
+            }
             if (isCreature) {
                 tokenCard.setPower(token.power());
                 tokenCard.setToughness(token.toughness());
@@ -96,6 +100,11 @@ public class PermanentControlSupport {
             }
 
             Permanent tokenPermanent = new Permanent(tokenCard);
+            if (token.initialPlusOnePlusOneCounters() > 0
+                    && !gameQueryService.cantHaveCounters(gameData, tokenPermanent)) {
+                tokenPermanent.setCounterCount(
+                        CounterType.PLUS_ONE_PLUS_ONE, token.initialPlusOnePlusOneCounters());
+            }
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent, enterTappedTypesSnapshot);
 
             if (token.tappedAndAttacking()) {

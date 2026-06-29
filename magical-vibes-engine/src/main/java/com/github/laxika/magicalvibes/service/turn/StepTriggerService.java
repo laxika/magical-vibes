@@ -1490,35 +1490,117 @@ public class StepTriggerService {
             List<CardEffect> combatEffects = perm.getCard().getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED);
             if (combatEffects == null || combatEffects.isEmpty()) continue;
 
-            for (CardEffect effect : combatEffects) {
-                // For equipment triggers, only fire if the equipment is attached to a creature
-                if (perm.isAttached()) {
-                    Permanent equippedCreature = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
-                    if (equippedCreature == null || !gameQueryService.isCreature(gameData, equippedCreature)) {
-                        continue;
-                    }
+            // For equipment triggers, only fire if the equipment is attached to a creature
+            if (perm.isAttached()) {
+                Permanent equippedCreature = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
+                if (equippedCreature == null || !gameQueryService.isCreature(gameData, equippedCreature)) {
+                    continue;
                 }
+            }
 
-                if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
+            List<CardEffect> mayEffects = combatEffects.stream()
+                    .filter(e -> e instanceof MayEffect)
+                    .toList();
+            List<CardEffect> mandatoryEffects = combatEffects.stream()
+                    .filter(e -> !(e instanceof MayEffect))
+                    .toList();
+
+            for (CardEffect effect : mayEffects) {
+                gameData.queueMayAbility(perm.getCard(), activePlayerId, (MayEffect) effect, null, perm.getId());
+            }
+
+            if (!mandatoryEffects.isEmpty()) {
+                boolean needsTarget = mandatoryEffects.stream()
+                        .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
+                if (needsTarget) {
+                    gameData.pendingBeginningOfCombatTriggerTargets.add(
+                            new PermanentChoiceContext.BeginningOfCombatTriggerTarget(
+                                    perm.getCard(), activePlayerId,
+                                    new ArrayList<>(mandatoryEffects), perm.getId()));
+                    String logMsg = perm.getCard().getName() + "'s beginning of combat ability triggers.";
+                    gameBroadcastService.logAndBroadcast(gameData, logMsg);
+                    log.info("Game {} - {} beginning-of-combat trigger queued for targeting",
+                            gameData.id, perm.getCard().getName());
                 } else {
                     gameData.stack.add(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             activePlayerId,
                             perm.getCard().getName() + "'s combat ability",
-                            new ArrayList<>(List.of(effect)),
+                            new ArrayList<>(mandatoryEffects),
                             (UUID) null,
                             perm.getId()
                     ));
 
                     String logMsg = perm.getCard().getName() + "'s beginning of combat ability triggers.";
                     gameBroadcastService.logAndBroadcast(gameData, logMsg);
-                    log.info("Game {} - {} beginning-of-combat trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                    log.info("Game {} - {} beginning-of-combat trigger pushed onto stack",
+                            gameData.id, perm.getCard().getName());
                 }
             }
         }
 
+        if (!gameData.pendingBeginningOfCombatTriggerTargets.isEmpty()) {
+            processNextBeginningOfCombatTriggerTarget(gameData);
+            return;
+        }
+
         playerInputService.processNextMayAbility(gameData);
+    }
+
+    /**
+     * Processes the next pending beginning-of-combat targeted trigger.
+     * Presents the controller with a permanent choice; when selected, the trigger is
+     * pushed onto the stack with the chosen target.
+     */
+    public void processNextBeginningOfCombatTriggerTarget(GameData gameData) {
+        if (gameData.pendingBeginningOfCombatTriggerTargets.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        PermanentChoiceContext.BeginningOfCombatTriggerTarget trigger =
+                gameData.pendingBeginningOfCombatTriggerTargets.removeFirst();
+
+        TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData,
+                trigger.effects(),
+                targetFilter,
+                trigger.controllerId(),
+                trigger.sourceCard(),
+                TriggerTargetCollector.Options.END_STEP);
+        List<UUID> validTargets = result.validTargets();
+
+        if (validTargets.isEmpty()) {
+            String logEntry = trigger.sourceCard().getName() + "'s beginning of combat trigger has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} beginning-of-combat trigger skipped (no valid targets)",
+                    gameData.id, trigger.sourceCard().getName());
+            processNextBeginningOfCombatTriggerTarget(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(trigger);
+
+        String targetDescription;
+        if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
+            targetDescription = ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
+        } else if (result.canTargetPlayers() && result.canTargetPermanents()) {
+            targetDescription = "any target";
+        } else if (result.canTargetPlayers()) {
+            targetDescription = "target player";
+        } else {
+            targetDescription = "target permanent";
+        }
+
+        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
+                trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
+
+        String logEntry = trigger.sourceCard().getName() + "'s beginning of combat trigger — choose "
+                + targetDescription + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} beginning-of-combat trigger awaiting target selection",
+                gameData.id, trigger.sourceCard().getName());
     }
 }

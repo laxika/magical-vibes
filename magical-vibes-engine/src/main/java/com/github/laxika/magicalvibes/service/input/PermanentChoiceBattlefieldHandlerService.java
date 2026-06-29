@@ -488,7 +488,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     t.primaryType(), toughness, t.tokenName(), t.power(), t.toughness(),
                     t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
                     t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
-                    t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary());
+                    t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), t.initialPlusOnePlusOneCounters());
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     ctx.sourceCard(),

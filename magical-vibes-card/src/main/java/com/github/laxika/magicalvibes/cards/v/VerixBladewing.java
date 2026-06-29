@@ -28,7 +28,7 @@ public class VerixBladewing extends Card {
                 new CreateTokenEffect(CardType.CREATURE, 1, "Karox Bladewing", 4, 4,
                         CardColor.RED, null, List.of(CardSubtype.DRAGON),
                         Set.of(Keyword.FLYING), Set.of(),
-                        false, false, Map.of(), List.of(), false, false, true)
+                        false, false, Map.of(), List.of(), false, false, true, 0)
         ));
     }
 }

@@ -129,6 +129,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleETBTokenMultiTargetTrigger(gameData, permanentId, etbMtt);
         } else if (context instanceof PermanentChoiceContext.EndStepTriggerTarget est) {
             triggerHandler.handleEndStepTrigger(gameData, permanentId, est);
+        } else if (context instanceof PermanentChoiceContext.BeginningOfCombatTriggerTarget boct) {
+            triggerHandler.handleBeginningOfCombatTrigger(gameData, permanentId, boct);
         } else if (context instanceof PermanentChoiceContext.ExploreTriggerTarget ett) {
             triggerHandler.handleExploreTrigger(gameData, permanentId, ett);
         } else if (context instanceof PermanentChoiceContext.TransformOpponentThenCreatureTarget tot) {

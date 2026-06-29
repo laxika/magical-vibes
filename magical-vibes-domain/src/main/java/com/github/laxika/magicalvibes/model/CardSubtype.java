@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum CardSubtype {
 
+    FRACTAL("Fractal"),
     FOREST("Forest"),
     MOUNTAIN("Mountain"),
     ISLAND("Island"),

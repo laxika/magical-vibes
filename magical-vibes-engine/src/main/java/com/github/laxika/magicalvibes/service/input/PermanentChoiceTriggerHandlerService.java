@@ -913,6 +913,40 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleBeginningOfCombatTrigger(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.BeginningOfCombatTriggerTarget boct) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                boct.sourceCard(),
+                boct.controllerId(),
+                boct.sourceCard().getName() + "'s combat ability",
+                new ArrayList<>(boct.effects()),
+                permanentId,
+                boct.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, permanentId);
+        String logEntry = boct.sourceCard().getName() + "'s ability targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} beginning-of-combat trigger targets {}",
+                gameData.id, boct.sourceCard().getName(), targetName);
+
+        if (!gameData.pendingBeginningOfCombatTriggerTargets.isEmpty()) {
+            turnProgressionService.processNextBeginningOfCombatTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleSagaChapterTarget(GameData gameData, UUID chosenId, PermanentChoiceContext.SagaChapterTarget sct) {
         // If the player chose their own player ID, it means "skip" (up to one — chose zero)
         boolean skipped = gameData.playerIdToName.containsKey(chosenId)

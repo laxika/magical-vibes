@@ -261,4 +261,8 @@ public class TurnProgressionService {
     public void processNextEndStepTriggerTarget(GameData gameData) {
         stepTriggerService.processNextEndStepTriggerTarget(gameData);
     }
+
+    public void processNextBeginningOfCombatTriggerTarget(GameData gameData) {
+        stepTriggerService.processNextBeginningOfCombatTriggerTarget(gameData);
+    }
 }

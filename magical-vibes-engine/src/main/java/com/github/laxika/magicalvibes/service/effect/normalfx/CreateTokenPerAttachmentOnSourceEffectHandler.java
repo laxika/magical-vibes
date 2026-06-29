@@ -69,7 +69,7 @@ public class CreateTokenPerAttachmentOnSourceEffectHandler implements NormalEffe
                 CreateTokenEffect tokenEffect = new CreateTokenEffect(
                         CardType.CREATURE, attachmentCount, e.tokenName(), e.power(), e.toughness(),
                         e.color(), null, e.subtypes(), e.keywords(), e.additionalTypes(),
-                        false, false, Map.of(), List.of(), false, e.exileAtEndStep(), false
+                        false, false, Map.of(), List.of(), false, e.exileAtEndStep(), false, 0
                 );
                 permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     

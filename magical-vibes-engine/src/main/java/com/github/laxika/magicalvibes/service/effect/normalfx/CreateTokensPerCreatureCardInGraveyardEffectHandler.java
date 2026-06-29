@@ -43,7 +43,7 @@ public class CreateTokensPerCreatureCardInGraveyardEffectHandler implements Norm
                 CreateTokenEffect tokenEffect = new CreateTokenEffect(
                         CardType.CREATURE, creatureCount, e.tokenName(), e.power(), e.toughness(),
                         e.color(), null, e.subtypes(), e.keywords(), e.additionalTypes(),
-                        e.tappedAndAttacking(), false, Map.of(), List.of(), false, false, false
+                        e.tappedAndAttacking(), false, Map.of(), List.of(), false, false, false, 0
                 );
                 permanentControlSupport.applyCreateToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     
