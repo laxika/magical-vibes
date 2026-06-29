@@ -82,6 +82,8 @@ public class TurnProgressionService {
 
             if (gameData.status == GameStatus.FINISHED) return;
 
+            stepTriggerService.processPendingExileReturns(gameData, next);
+
             if (next == TurnStep.UPKEEP) {
                 stepTriggerService.handleUpkeepTriggers(gameData);
             } else if (next == TurnStep.PRECOMBAT_MAIN) {

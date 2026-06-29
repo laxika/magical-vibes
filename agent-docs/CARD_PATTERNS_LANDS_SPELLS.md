@@ -77,6 +77,7 @@ All paths relative to `cards/`.
 | Bounce creature + conditional draw | `t/TemporalMachinations.java` | SPELL ReturnTargetPermanentToHandEffect() + SPELL ControlsPermanentConditionalEffect(PermanentIsArtifactPredicate(), DrawCardEffect(1)) — bounce target creature, if you control an artifact draw a card. Use ControlsPermanentConditionalEffect for "if you control a [type]" conditions |
 | Bounce mass | `e/Evacuation.java` | ReturnCreaturesToOwnersHandEffect |
 | Bounce mass (target player, filtered) | `r/RiversRebuke.java` | ReturnPermanentsTargetPlayerControlsToHandEffect(PermanentNotPredicate(PermanentIsLandPredicate())) — return all nonland permanents target player controls to their owners' hands |
+| Mass exile + return at step (target player, filtered) | `s/SuddenDisappearance.java` | ExilePermanentsTargetPlayerControlsAndReturnAtStepEffect(PermanentNotPredicate(PermanentIsLandPredicate()), TurnStep.END_STEP) — exile all nonland permanents target player controls, return at next end step |
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardCardEffect |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + EachPlayerRandomDiscardEffect |

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -51,15 +52,22 @@ public class ExileSupport {
 
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped) {
+        exileAndScheduleReturn(gameData, entry, permanent, ownerId, returnTapped, TurnStep.END_STEP);
+    }
+
+    public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
+                                        Permanent permanent, UUID ownerId, boolean returnTapped,
+                                        TurnStep returnStep) {
         Card card = permanent.getOriginalCard();
         permanentRemovalService.removePermanentToExile(gameData, permanent);
 
-        String logEntry = card.getName() + " is exiled. It will return at the beginning of the next end step.";
+        String logEntry = card.getName() + " is exiled. It will return at the beginning of the next "
+                + returnStep.getDisplayName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} exiles {}; will return at next end step",
-                gameData.id, entry.getCard().getName(), card.getName());
+        log.info("Game {} - {} exiles {}; will return at next {}",
+                gameData.id, entry.getCard().getName(), card.getName(), returnStep);
 
-        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId, returnTapped));
+        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId, returnTapped, false, returnStep));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -931,8 +932,50 @@ public class StepTriggerService {
     }
 
     /**
+     * Returns exiled cards scheduled for the given step from exile to the battlefield
+     * under their owner's control.
+     */
+    public void processPendingExileReturns(GameData gameData, TurnStep step) {
+        if (gameData.pendingExileReturns.isEmpty()) {
+            return;
+        }
+
+        List<PendingExileReturn> matching = new ArrayList<>();
+        List<PendingExileReturn> remaining = new ArrayList<>();
+        for (PendingExileReturn pending : gameData.pendingExileReturns) {
+            if (pending.returnStep() == step) {
+                matching.add(pending);
+            } else {
+                remaining.add(pending);
+            }
+        }
+        if (matching.isEmpty()) {
+            return;
+        }
+
+        gameData.pendingExileReturns.clear();
+        gameData.pendingExileReturns.addAll(remaining);
+
+        for (PendingExileReturn pending : matching) {
+            Card card = pending.card();
+            UUID controllerId = pending.controllerId();
+            gameData.removeFromExile(card.getId());
+            Permanent perm = new Permanent(card);
+            if (pending.returnTapped()) {
+                perm.tap();
+            }
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+            String playerName = gameData.playerIdToName.get(controllerId);
+            String logEntry = card.getName() + " returns to the battlefield under " + playerName + "'s control.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
+            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
+        }
+    }
+
+    /**
      * Processes end-step triggers: exiles pending tokens (e.g. Mimic Vat),
-     * returns pending exile-return cards, then scans battlefields for
+     * then scans battlefields for
      * {@code END_STEP_TRIGGERED} and {@code CONTROLLER_END_STEP_TRIGGERED}
      * abilities.
      *
@@ -968,29 +1011,6 @@ public class StepTriggerService {
                         log.info("Game {} - {} destroyed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
                     }
                 }
-            }
-        }
-
-        // Process pending exile returns (e.g. Argent Sphinx)
-        if (!gameData.pendingExileReturns.isEmpty()) {
-            List<PendingExileReturn> returns = new ArrayList<>(gameData.pendingExileReturns);
-            gameData.pendingExileReturns.clear();
-            for (PendingExileReturn pending : returns) {
-                Card card = pending.card();
-                UUID controllerId = pending.controllerId();
-                // Remove card from exile zone
-                gameData.removeFromExile(card.getId());
-                // Return as a new permanent
-                Permanent perm = new Permanent(card);
-                if (pending.returnTapped()) {
-                    perm.tap();
-                }
-                battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
-                String playerName = gameData.playerIdToName.get(controllerId);
-                String logEntry = card.getName() + " returns to the battlefield under " + playerName + "'s control.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                log.info("Game {} - {} returns from exile for {}", gameData.id, card.getName(), playerName);
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
             }
         }
 

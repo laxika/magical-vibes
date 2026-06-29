@@ -1175,7 +1175,7 @@ class StepTriggerServiceTest {
             gd.getPlayerExiledCards(player1Id).add(card);
             gd.pendingExileReturns.add(new PendingExileReturn(card, player1Id, false));
 
-            sut.handleEndStepTriggers(gd);
+            sut.processPendingExileReturns(gd, TurnStep.END_STEP);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
             verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player1Id), eq(card), any(), eq(false));
@@ -1190,7 +1190,7 @@ class StepTriggerServiceTest {
             gd.getPlayerExiledCards(player1Id).add(card);
             gd.pendingExileReturns.add(new PendingExileReturn(card, player1Id, true));
 
-            sut.handleEndStepTriggers(gd);
+            sut.processPendingExileReturns(gd, TurnStep.END_STEP);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
         }
