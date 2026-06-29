@@ -454,7 +454,7 @@ public class PermanentRemovalService {
             triggerCollectionService.collectDeathTrigger(gameData, target.getCard(), controllerId, wasCreature, target);
             if (wasCreature) {
                 gameData.creatureDeathCountThisTurn.merge(controllerId, 1, Integer::sum);
-                triggerCollectionService.checkAllyCreatureDeathTriggers(gameData, controllerId, target.getCard());
+                triggerCollectionService.checkAllyCreatureDeathTriggers(gameData, controllerId, target);
                 triggerCollectionService.checkAnyCreatureDeathTriggers(gameData, controllerId, target.getCard());
                 triggerCollectionService.checkAllyNontokenCreatureDeathTriggers(gameData, controllerId, target.getCard());
                 triggerCollectionService.checkAnyNontokenCreatureDeathTriggers(gameData, target.getCard());

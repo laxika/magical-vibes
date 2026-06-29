@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
@@ -862,19 +863,24 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.SelfDeath(dyingCard, controllerId, wasCreature, dyingPermanent);
         Permanent perm = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
         for (CardEffect effect : deathEffects) {
-            var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
-            registry.dispatch(match, EffectSlot.ON_DEATH, effect, ctx);
+            CardEffect resolvedEffect = unwrapCreatureDeathConditional(effect, dyingCard, dyingPermanent, gameData, controllerId);
+            if (resolvedEffect == null) continue;
+            var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
+            registry.dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
         }
         for (CardEffect effect : temporaryDeathEffects) {
-            var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
-            registry.dispatch(match, EffectSlot.ON_DEATH, effect, ctx);
+            CardEffect resolvedEffect = unwrapCreatureDeathConditional(effect, dyingCard, dyingPermanent, gameData, controllerId);
+            if (resolvedEffect == null) continue;
+            var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
+            registry.dispatch(match, EffectSlot.ON_DEATH, resolvedEffect, ctx);
         }
     }
 
-    public void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Card dyingCard) {
+    public void checkAllyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Permanent dyingPermanent) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(dyingCreatureControllerId);
         if (battlefield == null) return;
 
+        Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
 
         for (Permanent perm : battlefield) {
@@ -885,7 +891,8 @@ public class TriggerCollectionService {
             List<CardEffect> stackEffects = new ArrayList<>();
 
             for (CardEffect effect : effects) {
-                CardEffect resolvedEffect = unwrapTriggeringCardConditional(effect, dyingCard, gameData, dyingCreatureControllerId);
+                CardEffect resolvedEffect = unwrapCreatureDeathConditional(
+                        effect, dyingCard, dyingPermanent, gameData, dyingCreatureControllerId);
                 if (resolvedEffect == null) continue;
 
                 if (resolvedEffect instanceof MayPayManaEffect || resolvedEffect instanceof MayEffect) {
@@ -1121,6 +1128,29 @@ public class TriggerCollectionService {
         if (effect instanceof TriggeringCardConditionalEffect conditional) {
             if (!gameQueryService.matchesCardPredicate(triggeringCard, conditional.predicate(), null,
                     gameData, controllerId)) {
+                return null;
+            }
+            return conditional.wrapped();
+        }
+        return effect;
+    }
+
+    /**
+     * Unwraps death-trigger conditionals that reference the dying creature's card or
+     * on-battlefield characteristics (e.g. power/toughness).
+     */
+    CardEffect unwrapCreatureDeathConditional(CardEffect effect, Card dyingCard, Permanent dyingPermanent,
+                                              GameData gameData, UUID controllerId) {
+        if (effect instanceof TriggeringCardConditionalEffect conditional) {
+            if (!gameQueryService.matchesCardPredicate(dyingCard, conditional.predicate(), null,
+                    gameData, controllerId)) {
+                return null;
+            }
+            return conditional.wrapped();
+        }
+        if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+            Permanent perm = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
+            if (!gameQueryService.matchesPermanentPredicate(gameData, perm, conditional.predicate())) {
                 return null;
             }
             return conditional.wrapped();
