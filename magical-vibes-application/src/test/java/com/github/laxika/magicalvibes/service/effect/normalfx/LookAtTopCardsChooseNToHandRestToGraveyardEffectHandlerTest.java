@@ -77,7 +77,8 @@ class LookAtTopCardsChooseNToHandRestToGraveyardEffectHandlerTest {
         gd.activePlayerId = player1Id;
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopCardsChooseNToHandRestToGraveyardEffectHandler = new LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler(gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport);
+        lookAtTopCardsChooseNToHandRestToGraveyardEffectHandler = new LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler(
+                gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport, gameQueryService);
 
     }
 
