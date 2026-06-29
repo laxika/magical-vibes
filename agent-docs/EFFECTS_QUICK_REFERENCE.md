@@ -306,6 +306,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CreateTokenForEachControlledPermanentEffect(PermanentPredicate, ...)` — token per permanent
 - `CreateTokenForEachOpponentCreatureEffect(...)` — token per opponent creature
 - `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(CardPredicate, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep)` — exile graveyard target, create token copy with optional extra subtypes/haste/end-step exile
+- `CreateTokenCopyOfTargetPermanentEffect()` or `(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, Map<CounterType, Integer> initialCounters)` — create token copy of targeted permanent; optional type/subtype/P/T overrides and post-ETB counters
 
 ## Life
 
