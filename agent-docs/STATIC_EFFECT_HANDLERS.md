@@ -1,6 +1,6 @@
 # Static Effect Handlers (`staticfx`)
 
-Static/continuous effects (P/T bonuses, keyword grants, conditionals computed during `computeStaticBonus()`) are resolved by one self-contained handler class per effect type in `magical-vibes-backend/.../service/effect/staticfx/`.
+Static/continuous effects (P/T bonuses, keyword grants, conditionals computed during `computeStaticBonus()`) are resolved by one self-contained handler class per effect type in `magical-vibes-engine/.../service/effect/staticfx/` (the tests live in `magical-vibes-application/src/test/.../service/effect/staticfx/`).
 
 ## Pattern
 
@@ -52,8 +52,8 @@ Static/continuous effects (P/T bonuses, keyword grants, conditionals computed du
 Verification after adding a handler:
 
 ```
-./gradlew :magical-vibes-backend:compileJava :magical-vibes-backend:compileTestJava
-./gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.service.effect.staticfx.*"
+./gradlew :magical-vibes-engine:compileJava :magical-vibes-application:compileTestJava
+./gradlew :magical-vibes-application:test --tests "com.github.laxika.magicalvibes.service.effect.staticfx.*"
 ```
 
 Plus card tests for the relevant effect(s).

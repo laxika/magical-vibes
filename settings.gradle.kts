@@ -1,7 +1,8 @@
 rootProject.name = "magical-vibes"
 
 include("magical-vibes-frontend")
-include("magical-vibes-backend")
+include("magical-vibes-application")
+include("magical-vibes-webservice")
 include("magical-vibes-ai")
 include("magical-vibes-domain")
 include("magical-vibes-card")

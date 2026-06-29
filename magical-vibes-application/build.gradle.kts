@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":magical-vibes-ai"))
     implementation(project(":magical-vibes-scryfall"))
     implementation(project(":magical-vibes-websocket"))
+    implementation(project(":magical-vibes-webservice"))
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.github.classgraph:classgraph:4.8.179")

@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-TEST_ROOT = ROOT / "magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes"
+TEST_ROOT = ROOT / "magical-vibes-application/src/test/java/com/github/laxika/magicalvibes"
 NORMALFX_TEST = TEST_ROOT / "service/effect/normalfx"
 STATICFX_TEST = TEST_ROOT / "service/effect/staticfx"
 
@@ -106,7 +106,7 @@ def read_monolith(relative: str) -> str:
     path = TEST_ROOT / relative
     if path.exists():
         return path.read_text(encoding="utf-8")
-    git_path = f":magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/{relative}"
+    git_path = f":magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/{relative}"
     result = subprocess.run(
         ["git", "show", git_path],
         cwd=ROOT,

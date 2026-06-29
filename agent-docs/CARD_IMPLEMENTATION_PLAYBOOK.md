@@ -220,7 +220,7 @@ Create a new `CardEffect` record only if both are true:
 Then do all of:
 - Add effect record in `magical-vibes-domain/src/main/java/com/github/laxika/magicalvibes/model/effect/`
   - Override `canTargetPlayer()`, `canTargetPermanent()`, `canTargetSpell()`, or `canTargetGraveyard()` to return `true` as appropriate. This drives `EffectResolution.needsTarget()`/`needsSpellTarget()` computation and the `targetsPlayer` flag in `CardViewFactory`.
-- Add a handler in `magical-vibes-backend/.../service/effect/normalfx/`:
+- Add a handler in `magical-vibes-engine/.../service/effect/normalfx/`:
   ```java
   @Component
   @RequiredArgsConstructor
@@ -265,7 +265,7 @@ Then do all of:
    ```
    Add constructor parameters only if the predicate needs static values (e.g. `(int maxPower)`). Dynamic predicates that read game state at evaluation time typically have no parameters.
 
-2. **Add evaluation logic** in `GameQueryService.matchesPermanentPredicate()` (in `magical-vibes-backend/.../service/battlefield/GameQueryService.java`):
+2. **Add evaluation logic** in `GameQueryService.matchesPermanentPredicate()` (in `magical-vibes-engine/.../service/battlefield/GameQueryService.java`):
    - Find the predicate chain (search for `instanceof PermanentPowerAtMost` to see examples)
    - Add a new `if (predicate instanceof YourNewPredicate)` block
    - Use `filterContext.gameData()`, `filterContext.sourceControllerId()`, `filterContext.sourceCardId()`, `filterContext.xValue()` as needed

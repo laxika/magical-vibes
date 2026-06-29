@@ -23,8 +23,8 @@ An experimental online Magic game engine. The goal is to show that modern agents
 
 **How to start the application:**
 - Run `./gradlew clean build`
-- `cd` to `magical-vibes-backend/build/libs/`
-- Run `java -jar magical-vibes-backend-1.0.0-SNAPSHOT.jar`
+- `cd` to `magical-vibes-application/build/libs/`
+- Run `java -jar magical-vibes-application-1.0.0-SNAPSHOT.jar`
 - Open a new terminal, go to `magical-vibes-frontend`
 - Run `npm install` (you need npm for this).
 - Run `ng serve` (you need to have the angular cli tool installed.
@@ -33,5 +33,5 @@ An experimental online Magic game engine. The goal is to show that modern agents
 If you get stuck then ask Gemini. :) Or feel free to create an issue on GitHub.
 
 **How to run fizz tests from the command line:**
-- Card fuzzing: `.\gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.ai.RandomAiFuzzTest" -DrunCardFuzz=true -DfuzzGames=5 -Dorg.gradle.jvmargs="-Xmx6g" --info --rerun  > fuzz.log 2>&1`
-- Scenario fuzzing (loops every printing until failure): `.\gradlew :magical-vibes-backend:test --tests "com.github.laxika.magicalvibes.ai.SingleCardScenarioFuzzTest" -DrunScenarioFuzz=true -Dorg.gradle.jvmargs="-Xmx6g" --info --rerun  > scenario-fuzz.log 2>&1`
+- Card fuzzing: `.\gradlew :magical-vibes-ai:test --tests "com.github.laxika.magicalvibes.ai.RandomAiFuzzTest" -DrunCardFuzz=true -DfuzzGames=5 -Dorg.gradle.jvmargs="-Xmx6g" --info --rerun  > fuzz.log 2>&1`
+- Scenario fuzzing (loops every printing until failure): `.\gradlew :magical-vibes-ai:test --tests "com.github.laxika.magicalvibes.ai.SingleCardScenarioFuzzTest" -DrunScenarioFuzz=true -Dorg.gradle.jvmargs="-Xmx6g" --info --rerun  > scenario-fuzz.log 2>&1`

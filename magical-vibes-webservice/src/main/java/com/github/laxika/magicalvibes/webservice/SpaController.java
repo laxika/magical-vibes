@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.config;
+package com.github.laxika.magicalvibes.webservice;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;

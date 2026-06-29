@@ -448,7 +448,7 @@ if ($knownMatches.Count -gt 0) {
     foreach ($match in $knownMatches) {
         Write-Host "$($match.Reference): $($match.Effect)"
         $referenceCardFile = Find-ClassFile -ClassName $match.Reference -RootPath "magical-vibes-card/src/main/java"
-        $referenceTestFile = Find-ClassFile -ClassName "$($match.Reference)Test" -RootPath "magical-vibes-backend/src/test/java"
+        $referenceTestFile = Find-ClassFile -ClassName "$($match.Reference)Test" -RootPath "magical-vibes-application/src/test/java"
         if ($referenceCardFile) {
             Write-Host "  Reference card file: $referenceCardFile"
         } else {
@@ -484,7 +484,7 @@ if ($knownMatches.Count -gt 0) {
     $primaryMatch = @($knownMatches)[0]
     Write-Host "Closest pattern: $($primaryMatch.Reference)"
     $primaryReferenceCardFile = Find-ClassFile -ClassName $primaryMatch.Reference -RootPath "magical-vibes-card/src/main/java"
-    $primaryReferenceTestFile = Find-ClassFile -ClassName "$($primaryMatch.Reference)Test" -RootPath "magical-vibes-backend/src/test/java"
+    $primaryReferenceTestFile = Find-ClassFile -ClassName "$($primaryMatch.Reference)Test" -RootPath "magical-vibes-application/src/test/java"
     if ($primaryReferenceCardFile) {
         Write-Host "Closest card file: $primaryReferenceCardFile"
     }
@@ -544,9 +544,9 @@ if ($skipBroadContext) {
             Write-Host "-- $pattern"
             $hits = Invoke-RepoSearch -Pattern $pattern -Paths @(
                 "magical-vibes-card/src/main/java",
-                "magical-vibes-backend/src/test/java",
+                "magical-vibes-application/src/test/java",
                 "magical-vibes-domain/src/main/java",
-                "magical-vibes-backend/src/main/java"
+                "magical-vibes-engine/src/main/java"
             ) -MaxResults 15
             Write-LinesOrNone -Lines $hits -NoneText "  No hits."
         }
@@ -555,7 +555,7 @@ if ($skipBroadContext) {
 
 Write-Section "Suggested Files"
 Write-Host "Card: magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/$packageLetter/$ClassName.java"
-Write-Host "Test: magical-vibes-backend/src/test/java/com/github/laxika/magicalvibes/cards/$packageLetter/${ClassName}Test.java"
+Write-Host "Test: magical-vibes-application/src/test/java/com/github/laxika/magicalvibes/cards/$packageLetter/${ClassName}Test.java"
 
 Write-Section "Suggested Test Command"
-Write-Host "./gradlew :magical-vibes-backend:test --tests `"com.github.laxika.magicalvibes.cards.$packageLetter.${ClassName}Test`""
+Write-Host "./gradlew :magical-vibes-application:test --tests `"com.github.laxika.magicalvibes.cards.$packageLetter.${ClassName}Test`""

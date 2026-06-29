@@ -37,9 +37,10 @@ Gradle multi-module project: a collectible card game with WebSocket-based real-t
 ### Module Dependency Graph
 
 ```
-backend → ai → engine → {card, networking, scryfall} → domain
-          ai → websocket → networking
-backend → engine, websocket
+application → webservice → {ai, engine, websocket} → {card, networking, scryfall} → domain
+              ai → engine
+              ai → websocket → networking
+application → engine, websocket, ai (config @Imports)
 ```
 
 - **`magical-vibes-domain`** — Core domain model: `Card`, `Permanent`, `GameData`, `StackEntry`, `ManaPool`, `ManaCost`, enums (`CardType`, `CardColor`, `CardSubtype`, `Keyword`, `TurnStep`), and all `CardEffect` records (in `model/effect/`).
@@ -49,7 +50,8 @@ backend → engine, websocket
 - **`magical-vibes-engine`** — The game engine and its Spring wiring (`GameEngineConfig`, `JacksonConfig`). `GameService` (~1700 lines) is the protocol-agnostic game-action API: turn progression, combat, stack resolution, effect dispatch, plus actions like `playCard`/`activateAbility`/`declareAttackers`. `GameSetupService` seats players and runs the opening sequence (custom decks resolved via the optional `CustomDeckSource` interface). The shared card/AI test harness (`GameTestHarness`, `BaseCardTest`, …) lives in this module's `src/testFixtures`.
 - **`magical-vibes-websocket`** — WebSocket infrastructure: `WebSocketSessionManager` (implements `SessionManager`), `WebSocketHandler`, Spring config. Depends on networking for the `SessionManager` interface.
 - **`magical-vibes-ai`** — Computer opponents. `AiDecisionEngine` (+ `EasyAiDecisionEngine`/`MediumAiDecisionEngine`/`HardAiDecisionEngine`) plays by calling the engine's `GameService` via the `AiGameActions` adapter; `AiPlayerService` seats an AI via `GameSetupService`. Headless MCTS simulation lives in `ai/simulation`. Wired into the app via `AiConfig`.
-- **`magical-vibes-backend`** — Spring Boot application (web layer only). `GameMessageHandler` adapts WebSocket wire messages to engine `GameService` calls (and routes login/lobby/draft/deck to `LoginService`/`LobbyService`/`DraftService`/`DeckService`). `LobbyService` builds lobby views and delegates seating to the engine's `GameSetupService`.
+- **`magical-vibes-webservice`** — Web service layer. `GameMessageHandler` (the `MessageHandler` impl) adapts WebSocket wire messages to engine `GameService` calls (and routes login/lobby/draft/deck to `LoginService`/`LobbyService`/`DraftService`/`DeckService`). `LobbyService` builds lobby views and delegates seating to the engine's `GameSetupService`. Owns the JPA entities/repositories (`User`/`Deck`), the SPA forwarding controller (`SpaController`), and its own `WebServiceConfig` (component-scans `webservice` + `handler`).
+- **`magical-vibes-application`** — Spring Boot application (composition root only). Holds just `MagicalVibesApplication` (in its own `application` package so the default component scan picks up nothing else), which `@Import`s each module's config (`GameEngineConfig`, `WebSocketConfiguration`, `AiConfig`, `WebServiceConfig`) and declares `@EntityScan`/`@EnableJpaRepositories` for the webservice module's persistence packages. Owns the runtime DB wiring (Liquibase changelogs, SQLite driver, Hibernate dialect) and `application.properties`. The card/engine unit tests live in this module's `src/test`.
 - **`magical-vibes-frontend`** — Angular standalone components. `websocket.service.ts` defines all TypeScript interfaces (`Card`, `Permanent`, `Game`, `StackEntry`) and handles WebSocket communication. `game.component.ts` is the main game UI.
 
 ### Key Patterns
@@ -77,8 +79,8 @@ All card metadata (name, type, mana cost, color, supertypes, subtypes, card text
 
 ### Testing Cards
 
-Tests live in `magical-vibes-backend/src/test/java/.../cards/{letter}/CardNameTest.java`. All card tests extend `BaseCardTest` which provides common fields (`harness`, `player1`, `player2`, `gs`, `gqs`, `gd`) and `@BeforeEach setUp()`. Key harness methods: `skipMulligan()`, `setHand()`, `addMana()`, `addToBattlefield()`, `castCreature()`, `castInstant()`, `activateAbility()`, `passBothPriorities()`, `forceStep()`, `forceActivePlayer()`. Tests use JUnit 5 + AssertJ.
+Tests live in `magical-vibes-application/src/test/java/.../cards/{letter}/CardNameTest.java`. All card tests extend `BaseCardTest` which provides common fields (`harness`, `player1`, `player2`, `gs`, `gqs`, `gd`) and `@BeforeEach setUp()`. Key harness methods: `skipMulligan()`, `setHand()`, `addMana()`, `addToBattlefield()`, `castCreature()`, `castInstant()`, `activateAbility()`, `passBothPriorities()`, `forceStep()`, `forceActivePlayer()`. Tests use JUnit 5 + AssertJ.
 
-The harness itself (`GameTestHarness`, `BaseCardTest`, `FakeConnection`, `TestGameRegistry`, `TestWebSocketSessionManager`, `GameTestDoublesConfig`) lives in `magical-vibes-engine/src/testFixtures` and is consumed by both the backend card tests and the `magical-vibes-ai` test suite via `testFixtures(project(":magical-vibes-engine"))`. AI tests live in `magical-vibes-ai/src/test/.../ai/`.
+The harness itself (`GameTestHarness`, `BaseCardTest`, `FakeConnection`, `TestGameRegistry`, `TestWebSocketSessionManager`, `GameTestDoublesConfig`) lives in `magical-vibes-engine/src/testFixtures` and is consumed by both the application module's card tests and the `magical-vibes-ai` test suite via `testFixtures(project(":magical-vibes-engine"))`. AI tests live in `magical-vibes-ai/src/test/.../ai/`.
 
 Do NOT test Scryfall-loaded metadata (name, type, mana cost, color, power, toughness, subtypes, keywords) in card tests — card metadata is auto-loaded from Scryfall and doesn't require engine-side verification. Card tests should only verify engine logic: effects, abilities, targeting, game interactions.
