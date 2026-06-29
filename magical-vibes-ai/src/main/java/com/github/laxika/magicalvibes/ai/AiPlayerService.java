@@ -3,17 +3,16 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.model.AiDifficulty;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.GameService;
+import com.github.laxika.magicalvibes.service.GameSetupService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
-import com.github.laxika.magicalvibes.webservice.LobbyService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
@@ -24,34 +23,34 @@ import java.util.UUID;
 public class AiPlayerService {
 
     private final GameRegistry gameRegistry;
-    private final ObjectProvider<MessageHandler> messageHandlerProvider;
+    private final GameService gameService;
+    private final GameSetupService gameSetupService;
     private final GameQueryService gameQueryService;
     private final CombatAttackService combatAttackService;
     private final GameBroadcastService gameBroadcastService;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
-    private final LobbyService lobbyService;
     private final WebSocketSessionManager sessionManager;
     private final ObjectMapper objectMapper;
 
     public AiPlayerService(GameRegistry gameRegistry,
-                           ObjectProvider<MessageHandler> messageHandlerProvider,
+                           GameService gameService,
+                           GameSetupService gameSetupService,
                            GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
                            GameBroadcastService gameBroadcastService,
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService,
-                           LobbyService lobbyService,
                            WebSocketSessionManager sessionManager,
                            ObjectMapper objectMapper) {
         this.gameRegistry = gameRegistry;
-        this.messageHandlerProvider = messageHandlerProvider;
+        this.gameService = gameService;
+        this.gameSetupService = gameSetupService;
         this.gameQueryService = gameQueryService;
         this.combatAttackService = combatAttackService;
         this.gameBroadcastService = gameBroadcastService;
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
-        this.lobbyService = lobbyService;
         this.sessionManager = sessionManager;
         this.objectMapper = objectMapper;
     }
@@ -68,11 +67,10 @@ public class AiPlayerService {
         UUID aiPlayerId = UUID.randomUUID();
         Player aiPlayer = new Player(aiPlayerId, aiName);
 
-        MessageHandler handler = messageHandlerProvider.getObject();
         AiDecisionEngine engine = switch (aiDifficulty) {
-            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
         };
         String connectionId = "ai-" + gameData.id;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());
@@ -83,7 +81,7 @@ public class AiPlayerService {
         sessionManager.setInGame(connectionId);
 
         // Join the game — this triggers initializeGame() which sets status to MULLIGAN
-        lobbyService.joinGame(gameData, aiPlayer, aiDeckId);
+        gameSetupService.joinGame(gameData, aiPlayer, aiDeckId);
 
         // Schedule the AI's initial mulligan decision
         aiConnection.scheduleInitialAction(engine::handleInitialMulligan);
@@ -91,4 +89,3 @@ public class AiPlayerService {
         log.info("AI opponent joined game {} with deck {}", gameData.id, aiDeckId);
     }
 }
-

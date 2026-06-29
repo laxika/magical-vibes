@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
-import com.github.laxika.magicalvibes.config.JacksonConfig;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.service.GameEngineConfig;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameTimeoutService;

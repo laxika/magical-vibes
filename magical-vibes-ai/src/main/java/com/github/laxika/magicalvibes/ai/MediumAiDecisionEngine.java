@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -23,6 +22,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -44,12 +44,24 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
     private final CombatSimulator combatSimulator;
 
     public MediumAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
-                                  MessageHandler messageHandler, GameQueryService gameQueryService,
+                                  GameService gameService, GameQueryService gameQueryService,
                                   CombatAttackService combatAttackService,
                                   GameBroadcastService gameBroadcastService,
                                   TargetValidationService targetValidationService,
                                   TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        this(gameId, aiPlayer, gameRegistry,
+                new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
+                gameQueryService, combatAttackService, gameBroadcastService,
+                targetValidationService, targetLegalityService);
+    }
+
+    public MediumAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
+                                  AiGameActions gameActions, GameQueryService gameQueryService,
+                                  CombatAttackService combatAttackService,
+                                  GameBroadcastService gameBroadcastService,
+                                  TargetValidationService targetValidationService,
+                                  TargetLegalityService targetLegalityService) {
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
@@ -81,7 +93,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         }
 
         // Pass priority
-        send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
+        send(() -> gameActions.handlePassPriority(selfConnection, new PassPriorityRequest()));
     }
 
     protected boolean tryCastSpell(GameData gameData) {
@@ -212,7 +224,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final UUID finalSacrificePermanentId = sacrificePermanentId;
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
         final List<UUID> finalMultiTargetIds = multiTargetIds;
-        send(() -> messageHandler.handlePlayCard(selfConnection,
+        send(() -> gameActions.handlePlayCard(selfConnection,
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
         // Verify the spell was actually cast — handlePlayCard silently
         // swallows errors, so we must confirm the state actually changed.
@@ -373,7 +385,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         final UUID finalSacrificePermanentId = sacrificePermanentId;
         final List<Integer> finalExileGraveyardCardIndices = exileGraveyardCardIndices;
         final List<UUID> finalMultiTargetIds = multiTargetIds;
-        send(() -> messageHandler.handlePlayCard(selfConnection,
+        send(() -> gameActions.handlePlayCard(selfConnection,
                 new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, null, finalExileGraveyardCardIndices, null, null, null)));
         // Identity check: hand size alone is unreliable because ETB/cast triggers
         // can add cards back to hand (e.g. Explore), masking a successful cast.
@@ -400,7 +412,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Medium): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> messageHandler.handleDeclareAttackers(selfConnection,
+        send(() -> gameActions.handleDeclareAttackers(selfConnection,
                 new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
@@ -411,7 +423,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
         if (battlefield == null) {
-            send(() -> messageHandler.handleDeclareBlockers(selfConnection,
+            send(() -> gameActions.handleDeclareBlockers(selfConnection,
                     new DeclareBlockersRequest(List.of())));
             return;
         }
@@ -464,7 +476,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI (Medium): Discarding card at index {} in game {}", bestIndex, gameId);
-        send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
     }
 
     @Override

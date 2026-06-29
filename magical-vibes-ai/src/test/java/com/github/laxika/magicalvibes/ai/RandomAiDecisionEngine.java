@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
@@ -65,12 +65,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
     private final Random rng;
 
     RandomAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
-                           MessageHandler messageHandler, GameQueryService gameQueryService,
+                           GameService gameService, GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
                            GameBroadcastService gameBroadcastService,
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService, Random rng) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
         this.rng = rng;
     }
 
@@ -112,7 +112,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
-        send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
+        send(() -> gameActions.handlePassPriority(selfConnection, new PassPriorityRequest()));
     }
 
     // ===== Random Spell Casting =====
@@ -278,7 +278,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final UUID finalSacrificePermanentId = sacrificePermanentId;
             final Map<UUID, Integer> finalDamageAssignments = damageAssignments;
             final List<UUID> finalMultiTargetIds = multiTargetIds;
-            send(() -> messageHandler.handlePlayCard(selfConnection,
+            send(() -> gameActions.handlePlayCard(selfConnection,
                     new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null)));
 
             // Identity check: hand size alone is unreliable because ETB/cast triggers
@@ -425,7 +425,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> battlefield = gameData.playerBattlefields.get(aiPlayer.getId());
         List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
         if (battlefield == null || availableIndices.isEmpty()) {
-            send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of(), null)));
+            send(() -> gameActions.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(List.of(), null)));
             return;
         }
 
@@ -467,7 +467,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         log.info("Random AI: Declaring {} of {} attackers in game {}",
                 attackerIndices.size(), availableIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> messageHandler.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices, null)));
+        send(() -> gameActions.handleDeclareAttackers(selfConnection, new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
     // ===== Combat: Random Blockers =====
@@ -704,7 +704,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         int chosen = indices.get(rng.nextInt(indices.size()));
 
         log.info("Random AI: Choosing card at index {} in game {}", chosen, gameId);
-        send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(chosen)));
+        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(chosen)));
     }
 
     // ===== Mulligan: always keep (speeds up games) =====

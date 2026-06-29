@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
@@ -68,6 +67,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -98,12 +98,24 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private final RaceEvaluator raceEvaluator;
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
-                                MessageHandler messageHandler, GameQueryService gameQueryService,
+                                GameService gameService, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
                                 GameBroadcastService gameBroadcastService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, messageHandler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        this(gameId, aiPlayer, gameRegistry,
+                new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
+                gameQueryService, combatAttackService, gameBroadcastService,
+                targetValidationService, targetLegalityService);
+    }
+
+    public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
+                                AiGameActions gameActions, GameQueryService gameQueryService,
+                                CombatAttackService combatAttackService,
+                                GameBroadcastService gameBroadcastService,
+                                TargetValidationService targetValidationService,
+                                TargetLegalityService targetLegalityService) {
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
@@ -198,7 +210,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 landCard.getName(), landIndices.size(),
                 String.format("%.1f", bestSpellValue), bestColorCoverage, gameId);
         final int idx = bestLandIndex;
-        send(() -> messageHandler.handlePlayCard(selfConnection,
+        send(() -> gameActions.handlePlayCard(selfConnection,
                 new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
         // Identity check: hand size alone is unreliable because landfall/ETB triggers
         // can add cards to hand (e.g. "draw a card" effects), masking a successful play.
@@ -311,7 +323,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
-        send(() -> messageHandler.handlePassPriority(selfConnection, new PassPriorityRequest()));
+        send(() -> gameActions.handlePassPriority(selfConnection, new PassPriorityRequest()));
     }
 
     // ===== Precombat vs Postcombat Timing =====
@@ -1073,7 +1085,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final UUID fSacrifice = plan.sacrificePermanentId;
         final List<Integer> fExileIndices = plan.exileGraveyardCardIndices;
         final List<UUID> fMultiTargets = plan.multiTargetIds;
-        send(() -> messageHandler.handlePlayCard(selfConnection,
+        send(() -> gameActions.handlePlayCard(selfConnection,
                 new PlayCardRequest(idx, fXValue, fTargetId, fDamage,
                         fMultiTargets, null, null, fSacrifice,
                         null, null, null, null, null, fExileIndices, null, null, null)));
@@ -1894,7 +1906,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         final int permIdx = best.permanentIndex();
         final int abilIdx = best.abilityIndex();
         final UUID finalTargetId = best.targetId();
-        send(() -> messageHandler.handleActivateAbility(selfConnection,
+        send(() -> gameActions.handleActivateAbility(selfConnection,
                 new ActivateAbilityRequest(permIdx, abilIdx, null, finalTargetId, null, null, null)));
         return true;
     }
@@ -2179,7 +2191,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     protected void handleAttackers(GameData gameData) {
         List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gameData, aiPlayer.getId());
         if (availableIndices.isEmpty()) {
-            send(() -> messageHandler.handleDeclareAttackers(selfConnection,
+            send(() -> gameActions.handleDeclareAttackers(selfConnection,
                     new DeclareAttackersRequest(List.of(), null)));
             return;
         }
@@ -2195,7 +2207,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             log.info("AI (Hard): Alpha strike + burn is lethal! Declaring {} attackers in game {}",
                     attackerIndices.size(), gameId);
             final List<Integer> finalAttackerIndices = attackerIndices;
-            send(() -> messageHandler.handleDeclareAttackers(selfConnection,
+            send(() -> gameActions.handleDeclareAttackers(selfConnection,
                     new DeclareAttackersRequest(finalAttackerIndices, null)));
             return;
         }
@@ -2213,7 +2225,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
             log.info("AI (Hard): Declaring {} aggressive attackers in game {}", attackerIndices.size(), gameId);
             final List<Integer> finalAttackerIndices = attackerIndices;
-            send(() -> messageHandler.handleDeclareAttackers(selfConnection,
+            send(() -> gameActions.handleDeclareAttackers(selfConnection,
                     new DeclareAttackersRequest(finalAttackerIndices, null)));
             return;
         }
@@ -2237,7 +2249,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 attackerIndices = prepareAttackersForTax(gameData, attackerIndices);
                 log.info("AI (Hard/MCTS): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
                 final List<Integer> finalAttackerIndices = attackerIndices;
-                send(() -> messageHandler.handleDeclareAttackers(selfConnection,
+                send(() -> gameActions.handleDeclareAttackers(selfConnection,
                         new DeclareAttackersRequest(finalAttackerIndices, null)));
                 return;
             }
@@ -2276,7 +2288,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Declaring {} attackers in game {}", attackerIndices.size(), gameId);
         final List<Integer> finalAttackerIndices = attackerIndices;
-        send(() -> messageHandler.handleDeclareAttackers(selfConnection,
+        send(() -> gameActions.handleDeclareAttackers(selfConnection,
                 new DeclareAttackersRequest(finalAttackerIndices, null)));
     }
 
@@ -2287,7 +2299,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         List<Permanent> opponentBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
         if (battlefield == null) {
-            send(() -> messageHandler.handleDeclareBlockers(selfConnection,
+            send(() -> gameActions.handleDeclareBlockers(selfConnection,
                     new DeclareBlockersRequest(List.of())));
             return;
         }
@@ -2464,7 +2476,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Discarding card at index {} ({}) in game {}",
                 bestIndex, hand.get(bestIndex).getName(), gameId);
-        send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
     }
 
     // ===== Mulligan (scoring-based) =====
@@ -2660,7 +2672,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             }
             final int idx = cardIndex;
             final UUID targetId = opponentId;
-            send(() -> messageHandler.handlePlayCard(selfConnection,
+            send(() -> gameActions.handlePlayCard(selfConnection,
                     new PlayCardRequest(idx, null, targetId, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand, masking a successful cast.
@@ -2871,7 +2883,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (gameData.pendingMayAbilities.isEmpty()) {
             // No pending ability data — fall back to accepting
             log.info("AI (Hard): Accepting may ability (no pending data) in game {}", gameId);
-            send(() -> messageHandler.handleMayAbilityChosen(selfConnection,
+            send(() -> gameActions.handleMayAbilityChosen(selfConnection,
                     new MayAbilityChosenRequest(null, true)));
             return;
         }
@@ -2887,7 +2899,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 // Can't afford it — decline
                 log.info("AI (Hard): Declining may ability '{}' (can't afford mana cost {}) in game {}",
                         pending.description(), pending.manaCost(), gameId);
-                send(() -> messageHandler.handleMayAbilityChosen(selfConnection,
+                send(() -> gameActions.handleMayAbilityChosen(selfConnection,
                         new MayAbilityChosenRequest(null, false)));
                 return;
             }
@@ -2899,7 +2911,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         log.info("AI (Hard): {} may ability '{}' (value={}) in game {}",
                 accept ? "Accepting" : "Declining", pending.description(),
                 String.format("%.1f", value), gameId);
-        send(() -> messageHandler.handleMayAbilityChosen(selfConnection,
+        send(() -> gameActions.handleMayAbilityChosen(selfConnection,
                 new MayAbilityChosenRequest(null, accept)));
     }
 
@@ -2959,7 +2971,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         log.info("AI (Hard): Scry {} — keeping {} on top (needsLand={}), {} on bottom in game {}",
                 cards.size(), topOrder.size(), needsLand, bottomOrder.size(), gameId);
-        send(() -> messageHandler.handleScryCompleted(selfConnection,
+        send(() -> gameActions.handleScryCompleted(selfConnection,
                 new ScryCompletedRequest(topOrder, bottomOrder)));
     }
 
@@ -2979,7 +2991,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             String bestSubtype = findMostCommonCreatureType(gameData);
             log.info("AI (Hard): Choosing creature type {} in game {}", bestSubtype, gameId);
             final String subtype = bestSubtype;
-            send(() -> messageHandler.handleListChoice(selfConnection,
+            send(() -> gameActions.handleListChoice(selfConnection,
                     new ChosenFromListRequest(null, subtype)));
             return;
         }
@@ -2989,7 +3001,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             String bestLandType = findMostNeededBasicLandType(gameData);
             log.info("AI (Hard): Choosing basic land type {} in game {}", bestLandType, gameId);
             final String landType = bestLandType;
-            send(() -> messageHandler.handleListChoice(selfConnection,
+            send(() -> gameActions.handleListChoice(selfConnection,
                     new ChosenFromListRequest(null, landType)));
             return;
         }

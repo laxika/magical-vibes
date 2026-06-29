@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
@@ -86,7 +85,7 @@ class MediumAiDecisionEngineTest {
         FakeConnection aiConn = new FakeConnection("ai-medium-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new MediumAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
     }
@@ -405,7 +404,7 @@ class MediumAiDecisionEngineTest {
     @DisplayName("tryCastSpell silent failure recovery")
     class TryCastSpellSilentFailureRecovery {
 
-        @Mock private MessageHandler mockMessageHandler;
+        @Mock private AiGameActions mockMessageHandler;
         @Mock private GameQueryService mockGameQueryService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;

@@ -9,12 +9,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
-import com.github.laxika.magicalvibes.webservice.LobbyService;
+import com.github.laxika.magicalvibes.service.GameSetupService;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -49,8 +48,7 @@ public class GameTestHarness {
     private static GameQueryService staticGameQueryService;
     private static TargetValidationService staticTargetValidationService;
     private static TargetLegalityService staticTargetLegalityService;
-    private static MessageHandler staticMessageHandler;
-    private static LobbyService staticLobbyService;
+    private static GameSetupService staticGameSetupService;
     private static LegendRuleService staticLegendRuleService;
     private static PermanentRemovalService staticPermanentRemovalService;
     private static StackResolutionService staticStackResolutionService;
@@ -76,8 +74,7 @@ public class GameTestHarness {
         staticGameQueryService = context.getBean(GameQueryService.class);
         staticTargetValidationService = context.getBean(TargetValidationService.class);
         staticTargetLegalityService = context.getBean(TargetLegalityService.class);
-        staticMessageHandler = context.getBean(MessageHandler.class);
-        staticLobbyService = context.getBean(LobbyService.class);
+        staticGameSetupService = context.getBean(GameSetupService.class);
         staticLegendRuleService = context.getBean(LegendRuleService.class);
         staticPermanentRemovalService = context.getBean(PermanentRemovalService.class);
         staticStackResolutionService = context.getBean(StackResolutionService.class);
@@ -100,8 +97,7 @@ public class GameTestHarness {
     private final GameQueryService gameQueryService;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
-    private final MessageHandler messageHandler;
-    private final LobbyService lobbyService;
+    private final GameSetupService gameSetupService;
     private final GameData gameData;
     private final Player player1;
     private final Player player2;
@@ -134,8 +130,7 @@ public class GameTestHarness {
         gameQueryService = staticGameQueryService;
         targetValidationService = staticTargetValidationService;
         targetLegalityService = staticTargetLegalityService;
-        messageHandler = staticMessageHandler;
-        lobbyService = staticLobbyService;
+        gameSetupService = staticGameSetupService;
         legendRuleService = staticLegendRuleService;
         permanentRemovalService = staticPermanentRemovalService;
         stackResolutionService = staticStackResolutionService;
@@ -158,9 +153,9 @@ public class GameTestHarness {
         sessionManager.registerPlayer(conn1, player1.getId(), player1.getUsername());
         sessionManager.registerPlayer(conn2, player2.getId(), player2.getUsername());
 
-        lobbyService.createGame("Test Game", player1, "cho-mannos-resolve");
+        gameSetupService.createGame("Test Game", player1, "cho-mannos-resolve");
         GameData gd = gameRegistry.getGameForPlayer(player1.getId());
-        lobbyService.joinGame(gd, player2, "cho-mannos-resolve");
+        gameSetupService.joinGame(gd, player2, "cho-mannos-resolve");
 
         this.gameData = gameRegistry.getGameForPlayer(player1.getId());
 
@@ -790,9 +785,6 @@ public class GameTestHarness {
         return legendRuleService;
     }
 
-    public MessageHandler getMessageHandler() {
-        return messageHandler;
-    }
 
     public WebSocketSessionManager getSessionManager() {
         return sessionManager;

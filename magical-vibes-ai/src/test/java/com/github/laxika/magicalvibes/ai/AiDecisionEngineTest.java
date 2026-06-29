@@ -49,7 +49,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -97,7 +96,7 @@ class AiDecisionEngineTest {
         FakeConnection aiConn = new FakeConnection("ai-test");
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new EasyAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
-                harness.getMessageHandler(), harness.getGameQueryService(), harness.getCombatAttackService(),
+                harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
                 harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
     }
@@ -1877,7 +1876,7 @@ class AiDecisionEngineTest {
     @DisplayName("tryPlayLand silent failure recovery")
     class TryPlayLandSilentFailureRecovery {
 
-        @Mock private MessageHandler mockMessageHandler;
+        @Mock private AiGameActions mockMessageHandler;
         @Mock private GameQueryService mockGameQueryService;
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;

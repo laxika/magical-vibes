@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.config;
+package com.github.laxika.magicalvibes.service;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -29,4 +29,3 @@ public class JacksonConfig {
         abstract String getDisplayName();
     }
 }
-

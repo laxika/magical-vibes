@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
@@ -48,16 +47,16 @@ class AiChoiceHandler {
     private final UUID gameId;
     private final UUID aiPlayerId;
     private final GameQueryService gameQueryService;
-    private final MessageHandler messageHandler;
+    private final AiGameActions gameActions;
 
     @Setter
     private Connection selfConnection;
 
-    AiChoiceHandler(UUID gameId, UUID aiPlayerId, GameQueryService gameQueryService, MessageHandler messageHandler) {
+    AiChoiceHandler(UUID gameId, UUID aiPlayerId, GameQueryService gameQueryService, AiGameActions gameActions) {
         this.gameId = gameId;
         this.aiPlayerId = aiPlayerId;
         this.gameQueryService = gameQueryService;
-        this.messageHandler = messageHandler;
+        this.gameActions = gameActions;
     }
 
     // ===== Card Choice (discard) =====
@@ -85,7 +84,7 @@ class AiChoiceHandler {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing card at index {} in game {}", bestIndex, gameId);
-        send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
     }
 
     // ===== Permanent Choice =====
@@ -136,7 +135,7 @@ class AiChoiceHandler {
 
         log.info("AI: Choosing permanent {} in game {}", best, gameId);
         final UUID finalBest = best;
-        send(() -> messageHandler.handlePermanentChosen(selfConnection, new PermanentChosenRequest(finalBest)));
+        send(() -> gameActions.handlePermanentChosen(selfConnection, new PermanentChosenRequest(finalBest)));
     }
 
     // ===== Multiple Permanent Choice =====
@@ -174,7 +173,7 @@ class AiChoiceHandler {
 
         log.info("AI: Choosing {} permanents in game {}", chosen.size(), gameId);
         final List<UUID> finalChosen = chosen;
-        send(() -> messageHandler.handleMultiplePermanentsChosen(selfConnection, new MultiplePermanentsChosenRequest(finalChosen)));
+        send(() -> gameActions.handleMultiplePermanentsChosen(selfConnection, new MultiplePermanentsChosenRequest(finalChosen)));
     }
 
     // ===== Color Choice =====
@@ -193,14 +192,14 @@ class AiChoiceHandler {
         if (colorChoice.context() instanceof ChoiceContext.DrawReplacementChoice drc
                 && drc.kind() == DrawReplacementKind.ABUNDANCE) {
             log.info("AI: Choosing NONLAND for Abundance in game {}", gameId);
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, "NONLAND")));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, "NONLAND")));
             return;
         }
 
         if (colorChoice.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
             String chosenKeyword = kgc.options().getFirst().name();
             log.info("AI: Choosing keyword {} in game {}", chosenKeyword, gameId);
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, chosenKeyword)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, chosenKeyword)));
             return;
         }
 
@@ -214,7 +213,7 @@ class AiChoiceHandler {
                     .orElse(opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName());
             log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
             final String finalName = chosenName;
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, finalName)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, finalName)));
             return;
         }
 
@@ -224,7 +223,7 @@ class AiChoiceHandler {
             String chosenName = aiDeck.isEmpty() ? "Island" : aiDeck.getFirst().getName();
             log.info("AI: Choosing card name \"{}\" for reveal in game {}", chosenName, gameId);
             final String finalName = chosenName;
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, finalName)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, finalName)));
             return;
         }
 
@@ -232,7 +231,7 @@ class AiChoiceHandler {
             String chosenSubtype = "HUMAN";
             log.info("AI: Choosing creature type {} in game {}", chosenSubtype, gameId);
             final String subtype = chosenSubtype;
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, subtype)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, subtype)));
             return;
         }
 
@@ -240,7 +239,7 @@ class AiChoiceHandler {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type {} in game {}", chosenType, gameId);
             final String landType = chosenType;
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, landType)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, landType)));
             return;
         }
 
@@ -248,7 +247,7 @@ class AiChoiceHandler {
             String chosenType = "ISLAND";
             log.info("AI: Choosing basic land type to add {} in game {}", chosenType, gameId);
             final String landType = chosenType;
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, landType)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, landType)));
             return;
         }
 
@@ -262,7 +261,7 @@ class AiChoiceHandler {
                     .orElse("Sphinx Ambassador");
             log.info("AI: Choosing card name \"{}\" for Sphinx Ambassador in game {}", chosenName, gameId);
             final String name = chosenName;
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, name)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, name)));
             return;
         }
 
@@ -279,7 +278,7 @@ class AiChoiceHandler {
                     .orElse(CardType.CREATURE);
             log.info("AI: Choosing permanent type {} in game {}", bestType.name(), gameId);
             final String typeName = bestType.name();
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, typeName)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, typeName)));
             return;
         }
 
@@ -293,7 +292,7 @@ class AiChoiceHandler {
                     .orElse("Lightning Bolt");
             log.info("AI: Choosing card name \"{}\" for exile in game {}", chosenName, gameId);
             final String name = chosenName;
-            send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, name)));
+            send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, name)));
             return;
         }
 
@@ -320,7 +319,7 @@ class AiChoiceHandler {
 
         log.info("AI: Choosing color {} in game {}", bestColor.name(), gameId);
         final String colorName = bestColor.name();
-        send(() -> messageHandler.handleListChoice(selfConnection, new ChosenFromListRequest(null, colorName)));
+        send(() -> gameActions.handleListChoice(selfConnection, new ChosenFromListRequest(null, colorName)));
     }
 
     // ===== May Ability Choice =====
@@ -337,7 +336,7 @@ class AiChoiceHandler {
         }
 
         log.info("AI: Accepting may ability in game {}", gameId);
-        send(() -> messageHandler.handleMayAbilityChosen(selfConnection, new MayAbilityChosenRequest(null, true)));
+        send(() -> gameActions.handleMayAbilityChosen(selfConnection, new MayAbilityChosenRequest(null, true)));
     }
 
     // ===== X Value Choice =====
@@ -355,7 +354,7 @@ class AiChoiceHandler {
 
         int chosenValue = xValueChoice.maxValue();
         log.info("AI: Choosing X={} for {} in game {}", chosenValue, xValueChoice.cardName(), gameId);
-        send(() -> messageHandler.handleXValueChosen(selfConnection, new XValueChosenRequest(null, chosenValue)));
+        send(() -> gameActions.handleXValueChosen(selfConnection, new XValueChosenRequest(null, chosenValue)));
     }
 
     // ===== Scry =====
@@ -389,7 +388,7 @@ class AiChoiceHandler {
         }
 
         log.info("AI: Scry {} - keeping {} on top, {} on bottom in game {}", cards.size(), topOrder.size(), bottomOrder.size(), gameId);
-        send(() -> messageHandler.handleScryCompleted(selfConnection, new ScryCompletedRequest(topOrder, bottomOrder)));
+        send(() -> gameActions.handleScryCompleted(selfConnection, new ScryCompletedRequest(topOrder, bottomOrder)));
     }
 
     // ===== Reorder Cards =====
@@ -422,7 +421,7 @@ class AiChoiceHandler {
         List<Integer> order = indexedCards.stream().map(a -> a[0]).toList();
 
         log.info("AI: Reordering {} library cards in game {}", order.size(), gameId);
-        send(() -> messageHandler.handleLibraryCardsReordered(selfConnection, new ReorderLibraryCardsRequest(order)));
+        send(() -> gameActions.handleLibraryCardsReordered(selfConnection, new ReorderLibraryCardsRequest(order)));
     }
 
     // ===== Library Search =====
@@ -457,7 +456,7 @@ class AiChoiceHandler {
 
         log.info("AI: Choosing card {} from library in game {}", searchCards.get(bestIndex).getName(), gameId);
         final int idx = bestIndex;
-        send(() -> messageHandler.handleLibraryCardChosen(selfConnection, new LibraryCardChosenRequest(idx)));
+        send(() -> gameActions.handleLibraryCardChosen(selfConnection, new LibraryCardChosenRequest(idx)));
     }
 
     // ===== Graveyard Choice =====
@@ -489,7 +488,7 @@ class AiChoiceHandler {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing graveyard card at index {} in game {}", bestIndex, gameId);
-        send(() -> messageHandler.handleGraveyardCardChosen(selfConnection, new GraveyardCardChosenRequest(bestIndex)));
+        send(() -> gameActions.handleGraveyardCardChosen(selfConnection, new GraveyardCardChosenRequest(bestIndex)));
     }
 
     // ===== Multi-Graveyard Choice =====
@@ -501,7 +500,7 @@ class AiChoiceHandler {
             if (kpc != null && aiPlayerId.equals(kpc.playerId())) {
                 List<UUID> chosen = kpc.validCardIds().stream().limit(1).toList();
                 log.info("AI: Choosing card from Knowledge Pool in game {}", gameId);
-                send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
+                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
             return;
         }
@@ -512,7 +511,7 @@ class AiChoiceHandler {
             if (mfc != null && aiPlayerId.equals(mfc.playerId())) {
                 List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
                 log.info("AI: Choosing {} exiled cards for Mirror of Fate in game {}", chosen.size(), gameId);
-                send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
+                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
             return;
         }
@@ -523,7 +522,7 @@ class AiChoiceHandler {
             if (mzec != null && aiPlayerId.equals(mzec.playerId())) {
                 List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
                 log.info("AI: Exiling {} cards named \"{}\" in game {}", chosen.size(), mzec.cardName(), gameId);
-                send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
+                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
             return;
         }
@@ -543,7 +542,7 @@ class AiChoiceHandler {
                     chosen = new ArrayList<>(lrc.validCardIds());
                     log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), gameId);
                 }
-                send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
+                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
             return;
         }
@@ -567,7 +566,7 @@ class AiChoiceHandler {
         List<UUID> chosen = validIds.stream().limit(maxCount).toList();
 
         log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), gameId);
-        send(() -> messageHandler.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
+        send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
     }
 
     // ===== Hand Top/Bottom Choice =====
@@ -613,7 +612,7 @@ class AiChoiceHandler {
         log.info("AI: Choosing hand={} top={} in game {}", handCardIndex, topCardIndex, gameId);
         final int h = handCardIndex;
         final int t = topCardIndex;
-        send(() -> messageHandler.handleHandTopBottomChosen(selfConnection, new HandTopBottomChosenRequest(h, t)));
+        send(() -> gameActions.handleHandTopBottomChosen(selfConnection, new HandTopBottomChosenRequest(h, t)));
     }
 
     // ===== Revealed Hand Choice =====
@@ -645,7 +644,7 @@ class AiChoiceHandler {
                 .orElse(validIndices.iterator().next());
 
         log.info("AI: Choosing card {} from revealed hand in game {}", bestIndex, gameId);
-        send(() -> messageHandler.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
     }
 
     // ===== Bottom Cards (mulligan) =====
@@ -686,7 +685,7 @@ class AiChoiceHandler {
         }
 
         log.info("AI: Bottoming {} cards in game {}", toBottom.size(), gameId);
-        send(() -> messageHandler.handleBottomCards(selfConnection, new BottomCardsRequest(toBottom)));
+        send(() -> gameActions.handleBottomCards(selfConnection, new BottomCardsRequest(toBottom)));
     }
 
     // ===== Combat Damage Assignment =====
@@ -735,7 +734,7 @@ class AiChoiceHandler {
         }
 
         log.info("AI: Assigning combat damage for attacker {} in game {}: {}", atkIdx, gameId, assignments);
-        send(() -> messageHandler.handleCombatDamageAssigned(selfConnection,
+        send(() -> gameActions.handleCombatDamageAssigned(selfConnection,
                 new CombatDamageAssignedRequest(atkIdx, assignments)));
     }
 

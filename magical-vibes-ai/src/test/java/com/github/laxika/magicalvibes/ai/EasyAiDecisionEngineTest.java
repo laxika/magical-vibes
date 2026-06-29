@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
@@ -60,7 +59,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class EasyAiDecisionEngineTest {
 
-    @Mock private MessageHandler messageHandler;
+    @Mock private AiGameActions messageHandler;
     @Mock private GameQueryService gameQueryService;
     @Mock private CombatAttackService combatAttackService;
     @Mock private GameBroadcastService gameBroadcastService;
@@ -1013,7 +1012,7 @@ class EasyAiDecisionEngineTest {
             FakeConnection aiConn = new FakeConnection("ai-easy-test");
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
-                    testHarness.getMessageHandler(), testHarness.getGameQueryService(),
+                    testHarness.getGameService(), testHarness.getGameQueryService(),
                     testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
             easyAi.setSelfConnection(aiConn);
@@ -1290,7 +1289,7 @@ class EasyAiDecisionEngineTest {
             FakeConnection aiConn = new FakeConnection("ai-easy-test");
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
-                    testHarness.getMessageHandler(), testHarness.getGameQueryService(),
+                    testHarness.getGameService(), testHarness.getGameQueryService(),
                     testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
             easyAi.setSelfConnection(aiConn);

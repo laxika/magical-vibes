@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
+import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.DeckBuildingStateMessage;
 import com.github.laxika.magicalvibes.networking.message.DraftFinishedMessage;
@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.ObjectMapper;
 
@@ -71,7 +70,7 @@ public class DraftService {
     private final DraftRegistry draftRegistry;
     private final GameRegistry gameRegistry;
     private final GameBroadcastService gameBroadcastService;
-    private final ObjectProvider<MessageHandler> messageHandlerProvider;
+    private final GameService gameService;
     private final GameQueryService gameQueryService;
     private final CombatAttackService combatAttackService;
     private final SessionManager sessionManager;
@@ -87,7 +86,7 @@ public class DraftService {
     public DraftService(DraftRegistry draftRegistry,
                         GameRegistry gameRegistry,
                         GameBroadcastService gameBroadcastService,
-                        ObjectProvider<MessageHandler> messageHandlerProvider,
+                        GameService gameService,
                         GameQueryService gameQueryService,
                         CombatAttackService combatAttackService,
                         SessionManager sessionManager,
@@ -99,7 +98,7 @@ public class DraftService {
         this.draftRegistry = draftRegistry;
         this.gameRegistry = gameRegistry;
         this.gameBroadcastService = gameBroadcastService;
-        this.messageHandlerProvider = messageHandlerProvider;
+        this.gameService = gameService;
         this.gameQueryService = gameQueryService;
         this.combatAttackService = combatAttackService;
         this.sessionManager = sessionManager;
@@ -589,11 +588,10 @@ public class DraftService {
 
     private void registerAiForTournamentGame(GameData gameData, UUID aiPlayerId, String aiName, AiDifficulty aiDifficulty) {
         Player aiPlayer = new Player(aiPlayerId, aiName);
-        MessageHandler handler = messageHandlerProvider.getObject();
         AiDecisionEngine engine = switch (aiDifficulty) {
-            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
-            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
-            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, handler, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+            case HARD -> new HardAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+            case MEDIUM -> new MediumAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+            case EASY -> new EasyAiDecisionEngine(gameData.id, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
         };
         String connectionId = "ai-draft-" + gameData.id + "-" + aiPlayerId;
         AiConnection aiConnection = new AiConnection(connectionId, engine, objectMapper, aiDifficulty.getDecisionDelayMs());

@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.networking.Connection;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.KeepHandRequest;
 import com.github.laxika.magicalvibes.networking.message.MulliganRequest;
@@ -41,6 +40,7 @@ import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -68,7 +68,7 @@ public abstract class AiDecisionEngine {
     protected final UUID gameId;
     protected final Player aiPlayer;
     protected final GameRegistry gameRegistry;
-    protected final MessageHandler messageHandler;
+    protected final AiGameActions gameActions;
     protected final GameQueryService gameQueryService;
     protected final CombatAttackService combatAttackService;
     protected final GameBroadcastService gameBroadcastService;
@@ -80,7 +80,19 @@ public abstract class AiDecisionEngine {
     protected Connection selfConnection;
 
     public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
-                            MessageHandler messageHandler, GameQueryService gameQueryService,
+                            GameService gameService, GameQueryService gameQueryService,
+                            CombatAttackService combatAttackService,
+                            GameBroadcastService gameBroadcastService,
+                            TargetValidationService targetValidationService,
+                            TargetLegalityService targetLegalityService) {
+        this(gameId, aiPlayer, gameRegistry,
+                new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
+                gameQueryService, combatAttackService, gameBroadcastService,
+                targetValidationService, targetLegalityService);
+    }
+
+    public AiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
+                            AiGameActions gameActions, GameQueryService gameQueryService,
                             CombatAttackService combatAttackService,
                             GameBroadcastService gameBroadcastService,
                             TargetValidationService targetValidationService,
@@ -88,7 +100,7 @@ public abstract class AiDecisionEngine {
         this.gameId = gameId;
         this.aiPlayer = aiPlayer;
         this.gameRegistry = gameRegistry;
-        this.messageHandler = messageHandler;
+        this.gameActions = gameActions;
         this.gameQueryService = gameQueryService;
         this.combatAttackService = combatAttackService;
         this.gameBroadcastService = gameBroadcastService;
@@ -97,7 +109,7 @@ public abstract class AiDecisionEngine {
         BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
         this.targetSelector = new AiTargetSelector(gameQueryService, targetValidationService,
                 targetLegalityService, boardEvaluator);
-        this.choiceHandler = new AiChoiceHandler(gameId, aiPlayer.getId(), gameQueryService, messageHandler);
+        this.choiceHandler = new AiChoiceHandler(gameId, aiPlayer.getId(), gameQueryService, gameActions);
     }
 
     public void setSelfConnection(Connection selfConnection) {
@@ -173,10 +185,10 @@ public abstract class AiDecisionEngine {
         if (gameData == null) return;
         if (shouldKeepHand(gameData)) {
             log.info("AI: Keeping hand in game {}", gameId);
-            send(() -> messageHandler.handleKeepHand(selfConnection, new KeepHandRequest()));
+            send(() -> gameActions.handleKeepHand(selfConnection, new KeepHandRequest()));
         } else {
             log.info("AI: Taking mulligan in game {}", gameId);
-            send(() -> messageHandler.handleMulligan(selfConnection, new MulliganRequest()));
+            send(() -> gameActions.handleMulligan(selfConnection, new MulliganRequest()));
         }
     }
 
@@ -228,7 +240,7 @@ public abstract class AiDecisionEngine {
             if (card.hasType(CardType.LAND)) {
                 log.info("AI: Playing land {} in game {}", card.getName(), gameId);
                 final int idx = i;
-                send(() -> messageHandler.handlePlayCard(selfConnection,
+                send(() -> gameActions.handlePlayCard(selfConnection,
                         new PlayCardRequest(idx, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null)));
                 // Verify the land was actually played — handlePlayCard silently
                 // swallows errors, so we must confirm the state actually changed.
@@ -379,7 +391,7 @@ public abstract class AiDecisionEngine {
      */
     protected void sendBlockerDeclaration(GameData gameData, DeclareBlockersRequest request) {
         try {
-            messageHandler.handleDeclareBlockers(selfConnection, request);
+            gameActions.handleDeclareBlockers(selfConnection, request);
         } catch (Exception e) {
             log.warn("AI: Blocker declaration threw in game {}: {}. Falling back to no blockers.", gameId, e.getMessage(), e);
             sendEmptyBlockerFallback();
@@ -399,7 +411,7 @@ public abstract class AiDecisionEngine {
 
     private void sendEmptyBlockerFallback() {
         try {
-            messageHandler.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of()));
+            gameActions.handleDeclareBlockers(selfConnection, new DeclareBlockersRequest(List.of()));
         } catch (Exception e) {
             log.error("AI: Empty blocker declaration also failed in game {}", gameId, e);
         }
@@ -788,10 +800,10 @@ public abstract class AiDecisionEngine {
     protected AiManaManager.ManaTapAction manaTapAction() {
         return (idx, abilityIndex) -> {
             if (abilityIndex != null) {
-                send(() -> messageHandler.handleActivateAbility(selfConnection,
+                send(() -> gameActions.handleActivateAbility(selfConnection,
                         new ActivateAbilityRequest(idx, abilityIndex, null, null, null, null, null)));
             } else {
-                send(() -> messageHandler.handleTapPermanent(selfConnection, new TapPermanentRequest(idx)));
+                send(() -> gameActions.handleTapPermanent(selfConnection, new TapPermanentRequest(idx)));
             }
         };
     }

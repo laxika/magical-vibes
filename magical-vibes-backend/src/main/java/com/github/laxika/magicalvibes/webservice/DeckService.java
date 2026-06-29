@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.networking.message.DeckInfo;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckRequest;
 import com.github.laxika.magicalvibes.networking.message.SaveDeckResponse;
 import com.github.laxika.magicalvibes.repository.DeckRepository;
+import com.github.laxika.magicalvibes.service.CustomDeckSource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,7 +26,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class DeckService {
+public class DeckService implements CustomDeckSource {
 
     private static final String CUSTOM_DECK_PREFIX = "custom-";
 

@@ -2,17 +2,16 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.cards.CardPrinting;
 import com.github.laxika.magicalvibes.cards.CardSet;
-import com.github.laxika.magicalvibes.config.JacksonConfig;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.networking.MessageHandler;
 import com.github.laxika.magicalvibes.service.GameRegistry;
+import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.junit.jupiter.api.Tag;
@@ -24,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -33,26 +33,21 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.fail;
 
 /**
- * Fuzz test that pits two Random AI players against each other with randomly built
- * 2-color decks. Unlike {@link AiVsAiStressTest} which uses the smart Hard AI, this
- * test uses purely random decision-making to exercise far more edge cases — unusual
- * spell timing, bizarre combat assignments, random targets, etc.
- *
- * <p>Each game prints its random seed so failures can be reproduced by hardcoding
- * the seed in code or via {@code -DfuzzSeed=12345} system property.</p>
+ * Infinite soak test that pits two Hard AI players against each other with randomly
+ * built 2-color decks. Detects game-engine deadlocks and stuck states by monitoring
+ * the game state fingerprint — if the same fingerprint is observed {@value #MAX_SAME_STATE_COUNT}
+ * consecutive times the test fails, pointing at the stuck state for debugging.
  *
  * <p>Disabled by default; enable manually to run.</p>
  */
 @Tag("scryfall")
-@EnabledIfSystemProperty(named = "runCardFuzz", matches = "true")
-class RandomAiFuzzTest {
+@EnabledIfSystemProperty(named = "runAiStress", matches = "true")
+class AiVsAiStressTest {
 
-    private static final int DEFAULT_GAME_COUNT = 50;
     private static final int DECK_SIZE = 40;
     private static final int LAND_COUNT = 18;
     private static final int SPELL_COUNT = DECK_SIZE - LAND_COUNT;
     private static final int MAX_SAME_STATE_COUNT = 30;
-    private static final int MAX_TURNS = 250;
     private static final long POLL_INTERVAL_MS = 200;
     private static final long MAX_GAME_DURATION_MS = 300_000;
     private static final long AI_DECISION_DELAY_MS = 10;
@@ -61,34 +56,27 @@ class RandomAiFuzzTest {
     private static List<CardPrinting> allNonLandPrintings;
 
     @Test
-    void fuzzTestRandomAi() throws Exception {
-        int gameCount = Integer.getInteger("fuzzGames", DEFAULT_GAME_COUNT);
-        Long fixedSeed = Long.getLong("fuzzSeed");
-
-        int passed = 0;
-        for (int game = 1; game <= gameCount; game++) {
-            long seed = fixedSeed != null ? fixedSeed : System.nanoTime();
-            System.out.printf("=== Game #%d/%d  seed=%d ===%n", game, gameCount, seed);
+    void stressTestAiVsAi() throws Exception {
+        for (int game = 1; ; game++) {
+            System.out.printf("=== Starting Game #%d ===%n", game);
             long start = System.currentTimeMillis();
-            runOneGame(game, new Random(seed));
+            runOneGame(game);
             long elapsed = System.currentTimeMillis() - start;
             System.out.printf("=== Game #%d completed in %d ms ===%n%n", game, elapsed);
-            passed++;
         }
-        System.out.printf("All %d fuzz games passed.%n", passed);
     }
 
     // ------------------------------------------------------------------
     // Game lifecycle
     // ------------------------------------------------------------------
 
-    private void runOneGame(int gameNumber, Random rng) throws Exception {
+    private void runOneGame(int gameNumber) throws Exception {
         // 1. Bootstrap the full service graph via the test harness
         GameTestHarness harness = new GameTestHarness();
         initializeCardPool();
 
         WebSocketSessionManager sessionManager = harness.getSessionManager();
-        MessageHandler messageHandler = harness.getMessageHandler();
+        GameService gameService = harness.getGameService();
         GameRegistry gameRegistry = harness.getGameRegistry();
         GameQueryService gqs = harness.getGameQueryService();
         GameData gd = harness.getGameData();
@@ -96,6 +84,7 @@ class RandomAiFuzzTest {
         Player player2 = harness.getPlayer2();
 
         // 2. Pick random 2-color combinations (independently for each player)
+        Random rng = new Random();
         CardColor[] p1Colors = pickTwoColors(rng);
         CardColor[] p2Colors = pickTwoColors(rng);
 
@@ -110,33 +99,28 @@ class RandomAiFuzzTest {
         assignDeck(gd, player1.getId(), deck1);
         assignDeck(gd, player2.getId(), deck2);
 
-        // 4. Replace the harness's FakeConnections with Random AI connections
-        FakeConnection fakeConn1 = harness.getConn1();
-        FakeConnection fakeConn2 = harness.getConn2();
-        sessionManager.unregisterSession(fakeConn1.getId());
-        sessionManager.unregisterSession(fakeConn2.getId());
+        // 4. Replace the harness's FakeConnections with AI connections
+        sessionManager.unregisterSession(harness.getConn1().getId());
+        sessionManager.unregisterSession(harness.getConn2().getId());
 
         ObjectMapper objectMapper = new JacksonConfig().objectMapper();
 
-        // Each engine gets its own Random derived from the master seed for thread safety
-        RandomAiDecisionEngine engine1 = new RandomAiDecisionEngine(
-                gd.id, player1, gameRegistry, messageHandler, gqs,
-                harness.getCombatAttackService(), harness.getGameBroadcastService(),
-                harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()));
-        RandomAiDecisionEngine engine2 = new RandomAiDecisionEngine(
-                gd.id, player2, gameRegistry, messageHandler, gqs,
-                harness.getCombatAttackService(), harness.getGameBroadcastService(),
-                harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()));
+        HardAiDecisionEngine engine1 = new HardAiDecisionEngine(
+                gd.id, player1, gameRegistry, gameService, gqs, harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+        HardAiDecisionEngine engine2 = new HardAiDecisionEngine(
+                gd.id, player2, gameRegistry, gameService, gqs, harness.getCombatAttackService(),
+                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
-        AiConnection aiConn1 = new AiConnection("ai-fuzz-1", engine1, objectMapper, AI_DECISION_DELAY_MS);
-        AiConnection aiConn2 = new AiConnection("ai-fuzz-2", engine2, objectMapper, AI_DECISION_DELAY_MS);
+        AiConnection aiConn1 = new AiConnection("ai-stress-1", engine1, objectMapper, AI_DECISION_DELAY_MS);
+        AiConnection aiConn2 = new AiConnection("ai-stress-2", engine2, objectMapper, AI_DECISION_DELAY_MS);
         engine1.setSelfConnection(aiConn1);
         engine2.setSelfConnection(aiConn2);
 
-        sessionManager.registerPlayer(aiConn1, player1.getId(), "Random AI 1");
-        sessionManager.registerPlayer(aiConn2, player2.getId(), "Random AI 2");
-        sessionManager.setInGame("ai-fuzz-1");
-        sessionManager.setInGame("ai-fuzz-2");
+        sessionManager.registerPlayer(aiConn1, player1.getId(), "AI Player 1");
+        sessionManager.registerPlayer(aiConn2, player2.getId(), "AI Player 2");
+        sessionManager.setInGame("ai-stress-1");
+        sessionManager.setInGame("ai-stress-2");
 
         // 5. Both AIs keep their opening hand — transitions the game to RUNNING
         harness.getGameService().keepHand(gd, player1);
@@ -152,25 +136,14 @@ class RandomAiFuzzTest {
 
             if (System.currentTimeMillis() - startTime > MAX_GAME_DURATION_MS) {
                 dumpGameState(gameNumber, gd, player1, player2);
-                aiConn1.close();
-                aiConn2.close();
                 fail("Game #" + gameNumber + " timed out after " + (MAX_GAME_DURATION_MS / 1000) + "s");
-            }
-
-            if (gd.turnNumber > MAX_TURNS) {
-                System.out.printf("Game #%d declared a draw at turn %d (exceeded %d-turn cap)%n",
-                        gameNumber, gd.turnNumber, MAX_TURNS);
-                break;
             }
 
             String fingerprint = computeFingerprint(gd, player1.getId(), player2.getId());
             if (fingerprint.equals(lastFingerprint)) {
                 sameCount++;
-
                 if (sameCount >= MAX_SAME_STATE_COUNT) {
                     dumpGameState(gameNumber, gd, player1, player2);
-                    aiConn1.close();
-                    aiConn2.close();
                     fail("Game #" + gameNumber + " stuck — same state observed "
                             + MAX_SAME_STATE_COUNT + " consecutive times:\n" + fingerprint);
                 }
@@ -186,7 +159,7 @@ class RandomAiFuzzTest {
     }
 
     // ------------------------------------------------------------------
-    // Random deck construction (same as AiVsAiStressTest)
+    // Random deck construction
     // ------------------------------------------------------------------
 
     private CardColor[] pickTwoColors(Random rng) {
@@ -202,6 +175,7 @@ class RandomAiFuzzTest {
     private List<Card> buildRandomDeck(CardColor c1, CardColor c2, Random rng) {
         Set<CardColor> deckColors = EnumSet.of(c1, c2);
 
+        // Collect non-land cards whose color identity fits the two chosen colors
         List<CardPrinting> playable = new ArrayList<>();
         for (CardPrinting printing : allNonLandPrintings) {
             Card sample = printing.createCard();
@@ -213,10 +187,12 @@ class RandomAiFuzzTest {
 
         List<Card> deck = new ArrayList<>();
 
+        // Pick up to SPELL_COUNT non-land cards
         for (int i = 0; i < Math.min(SPELL_COUNT, playable.size()); i++) {
             deck.add(playable.get(i).createCard());
         }
 
+        // Fill with basic lands (split evenly, extra land goes to the first color)
         int landsPerColor = LAND_COUNT / 2;
         int extra = LAND_COUNT % 2;
         CardPrinting land1 = BASIC_LAND_PRINTINGS.get(c1);
@@ -308,6 +284,7 @@ class RandomAiFuzzTest {
             return;
         }
 
+        // Basic lands — using Scars of Mirrodin printings (confirmed present in all 5 colors)
         BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("230"));
         BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("234"));
         BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("238"));
