@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.NotControllerTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfOpponentAbilitiesEffect;
@@ -644,8 +645,8 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the permanent has a metalcraft-conditional
-     * {@link AnimateSelfWithStatsEffect} and its controller currently meets metalcraft.
+     * Returns {@code true} if the permanent has a conditional
+     * {@link AnimateSelfWithStatsEffect} and its condition is currently met.
      */
     public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent) {
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
@@ -656,6 +657,13 @@ public class GameQueryService {
                     if (battlefield != null && battlefield.contains(permanent)) {
                         if (isMetalcraftMet(gameData, playerId)) return true;
                     }
+                }
+            }
+            if (effect instanceof NotControllerTurnConditionalEffect notControllerTurn
+                    && notControllerTurn.wrapped() instanceof AnimateSelfWithStatsEffect) {
+                UUID controllerId = findPermanentController(gameData, permanent.getId());
+                if (controllerId != null && !controllerId.equals(gameData.activePlayerId)) {
+                    return true;
                 }
             }
         }

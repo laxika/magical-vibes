@@ -34,6 +34,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `ControlsAnotherPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls another matching permanent
 - `ControllerLifeThresholdConditionalEffect(int, CardEffect)` — life >= N
 - `ControllerTurnConditionalEffect(CardEffect)` — during your turn
+- `NotControllerTurnConditionalEffect(CardEffect)` — during turns other than yours
 - `ControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls matching
 - `EnchantedPermanentConditionalEffect(PermanentPredicate, CardEffect ifMatch, CardEffect ifNotMatch)` — aura active branch based on enchanted permanent predicate
 - `OpponentControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — opponent controls matching

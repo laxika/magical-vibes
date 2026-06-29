@@ -505,6 +505,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 | `DefendingPlayerPoisonedConditionalEffect` | - | yes | - |
 | `PermanentEnteredThisTurnConditionalEffect` | - | yes | - |
 | `ControllerTurnConditionalEffect` | yes | - | - |
+| `NotControllerTurnConditionalEffect` | yes | - | - |
 | `OpponentControlsPermanentConditionalEffect` | yes | yes | - |
 | `AnyPlayerControlsPermanentConditionalEffect` | yes | - | - |
 | `SelfHasKeywordConditionalEffect` | yes | - | - |

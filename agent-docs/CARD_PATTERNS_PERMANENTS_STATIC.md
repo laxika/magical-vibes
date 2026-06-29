@@ -74,6 +74,7 @@ All paths relative to `cards/`.
 | Metalcraft boost only | `c/CarapaceForger.java` | STATIC MetalcraftConditionalEffect(StaticBoostEffect(2, 2, SELF)) |
 | Metalcraft boost + ignore defender | `s/SpireSerpent.java` | STATIC MetalcraftConditionalEffect(StaticBoostEffect) + MetalcraftConditionalEffect(CanAttackAsThoughNoDefenderEffect) |
 | Metalcraft become creature | `r/RustedRelic.java` | STATIC MetalcraftConditionalEffect(AnimateSelfWithStatsEffect(5, 5, [GOLEM], [])) — noncreature becomes creature with fixed P/T and subtypes |
+| Opponent-turn become creature | `w/WardenOfTheWall.java` | STATIC EntersTappedEffect + mana ability + NotControllerTurnConditionalEffect(AnimateSelfWithStatsEffect(2, 3, [GARGOYLE], [FLYING])) — artifact animates on opponent's turn only |
 | Metalcraft burn spell | `g/GalvanicBlast.java` | SPELL MetalcraftReplacementEffect(DealDamageToAnyTargetEffect(2), DealDamageToAnyTargetEffect(4)) — picks base/upgrade at resolution |
 | Morbid burn spell | `b/BrimstoneVolley.java` | SPELL MorbidReplacementEffect(DealDamageToAnyTargetEffect(3), DealDamageToAnyTargetEffect(5)) — picks base/upgrade at resolution based on creature death this turn |
 | Morbid land search | `c/CaravanVigil.java` | SPELL MorbidReplacementEffect(SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand()), SearchLibraryForCardTypesToBattlefieldEffect(LAND, basic, untapped)) — search for basic land to hand, or to battlefield untapped if morbid |
