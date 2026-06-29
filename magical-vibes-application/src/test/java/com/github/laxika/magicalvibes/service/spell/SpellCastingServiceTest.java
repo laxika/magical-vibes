@@ -19,7 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -433,6 +435,31 @@ class SpellCastingServiceTest {
 
             svc.playCard(gd, player1, 0, null, null, null,
                     List.of(dinosaur.getId(), opponentCreature.getId()), null, false, null);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Target-based predicate cost reduction applies to any matching first target")
+        void targetPredicateCostReductionAppliesToMatchingFirstTarget() {
+            Card instant = createInstant("Test Response", "{4}{W}");
+            instant.target(1, 1);
+            var predicate = new PermanentIsTappedPredicate();
+            instant.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingPermanentEffect(predicate, 3));
+            setHand(player1Id, List.of(instant));
+            addMana(player1Id, ManaColor.WHITE, 2);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            Permanent tappedCreature = new Permanent(createCreature("Bear", "{1}{G}"));
+            tappedCreature.tap();
+            gd.playerBattlefields.get(player2Id).add(tappedCreature);
+
+            when(gameQueryService.findPermanentById(gd, tappedCreature.getId())).thenReturn(tappedCreature);
+            when(gameQueryService.matchesPermanentPredicate(gd, tappedCreature, predicate)).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, null, null, null,
+                    List.of(tappedCreature.getId()), null, false, null);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();

@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
@@ -673,22 +674,17 @@ public class SpellCastingService {
             StackEntryType entryType = cardTypeToStackEntryType(card.getType());
             int resolvedXValue = effectiveXValue;
             int perTargetCost = card.getAdditionalCostPerExtraTarget() * Math.max(0, targetIds.size() - 1);
-            int targetSubtypeCostReduction = computeTargetSubtypeCostReduction(card, gameData, playerId, targetIds);
+            List<UUID> costReductionTargetIds = !targetIds.isEmpty() ? targetIds
+                    : (targetId != null && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget ? List.of(targetId) : List.of());
+            int targetSubtypeCostReduction = computeTargetSubtypeCostReduction(card, gameData, playerId, costReductionTargetIds);
             // Validate mana when target-based cost reduction doesn't apply but playability
             // check passed optimistically (e.g. Savage Stomp targeting a non-Dinosaur)
-            if (targetSubtypeCostReduction == 0 && !usingAlternateCost) {
-                ReduceOwnCastCostIfTargetingControlledPermanentEffect targetReduceEffect =
-                        card.getEffects(EffectSlot.STATIC).stream()
-                                .filter(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::isInstance)
-                                .map(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::cast)
-                                .findFirst().orElse(null);
-                if (targetReduceEffect != null) {
-                    ManaCost validationCost = new ManaCost(card.getManaCost());
-                    ManaPool pool = gameData.playerManaPools.get(playerId);
-                    int costModifier = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
-                    if (!validationCost.canPay(pool, costModifier)) {
-                        throw new IllegalStateException("Not enough mana — target does not qualify for cost reduction");
-                    }
+            if (targetSubtypeCostReduction == 0 && !usingAlternateCost && hasTargetBasedCastCostReduction(card)) {
+                ManaCost validationCost = new ManaCost(card.getManaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                int costModifier = gameBroadcastService.getCastCostModifier(gameData, playerId, card);
+                if (!validationCost.canPay(pool, costModifier)) {
+                    throw new IllegalStateException("Not enough mana — target does not qualify for cost reduction");
                 }
             }
             if (usingAlternateCost) {
@@ -1047,15 +1043,12 @@ public class SpellCastingService {
 
     /**
      * Computes the actual cost reduction for spells that cost less when targeting a
-     * controlled permanent matching a predicate (e.g. Savage Stomp targeting a Dinosaur).
+     * permanent matching a predicate (e.g. Ajani's Response targeting a tapped creature)
+     * or a controlled permanent matching a predicate (e.g. Savage Stomp targeting a Dinosaur).
      * Returns the reduction amount if the first target matches, 0 otherwise.
      */
     private int computeTargetSubtypeCostReduction(Card card, GameData gameData, UUID playerId, List<UUID> targetIds) {
-        ReduceOwnCastCostIfTargetingControlledPermanentEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::isInstance)
-                .map(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::cast)
-                .findFirst().orElse(null);
-        if (effect == null || targetIds.isEmpty()) {
+        if (targetIds.isEmpty()) {
             return 0;
         }
 
@@ -1065,12 +1058,35 @@ public class SpellCastingService {
             return 0;
         }
 
+        ReduceOwnCastCostIfTargetingPermanentEffect generalEffect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(ReduceOwnCastCostIfTargetingPermanentEffect.class::isInstance)
+                .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
+                .findFirst().orElse(null);
+        if (generalEffect != null
+                && gameQueryService.matchesPermanentPredicate(gameData, firstTarget, generalEffect.predicate())) {
+            return generalEffect.amount();
+        }
+
+        ReduceOwnCastCostIfTargetingControlledPermanentEffect controlledEffect = card.getEffects(EffectSlot.STATIC).stream()
+                .filter(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::isInstance)
+                .map(ReduceOwnCastCostIfTargetingControlledPermanentEffect.class::cast)
+                .findFirst().orElse(null);
+        if (controlledEffect == null) {
+            return 0;
+        }
+
         UUID targetController = gameQueryService.findPermanentController(gameData, firstTargetId);
         if (playerId.equals(targetController)
-                && gameQueryService.matchesPermanentPredicate(gameData, firstTarget, effect.predicate())) {
-            return effect.amount();
+                && gameQueryService.matchesPermanentPredicate(gameData, firstTarget, controlledEffect.predicate())) {
+            return controlledEffect.amount();
         }
         return 0;
+    }
+
+    private boolean hasTargetBasedCastCostReduction(Card card) {
+        return card.getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof ReduceOwnCastCostIfTargetingPermanentEffect
+                        || e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect);
     }
 
     private int paySacrificeCreaturesForCostReduction(GameData gameData, Player player, Card card, List<UUID> sacrificeIds) {

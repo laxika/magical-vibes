@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeE
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCardTypeWithImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureCardInGraveyardEffect;
@@ -430,14 +431,25 @@ public class GameBroadcastService {
                                 }
                             }
                         }
-                        // Check if castable with target-subtype cost reduction (e.g. Savage Stomp)
+                        // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response)
                         if (!added) {
                             ReduceOwnCastCostIfTargetingControlledPermanentEffect targetReduce = null;
+                            ReduceOwnCastCostIfTargetingPermanentEffect generalTargetReduce = null;
                             for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
-                                if (e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect r) { targetReduce = r; break; }
+                                if (e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect r) {
+                                    targetReduce = r;
+                                } else if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
+                                    generalTargetReduce = r;
+                                }
                             }
                             if (targetReduce != null && controlsPermanent(gameData, playerId, targetReduce.predicate())) {
                                 if (cost.canPay(pool, additionalCost - targetReduce.amount())) {
+                                    playable.add(i);
+                                    added = true;
+                                }
+                            } else if (generalTargetReduce != null
+                                    && battlefieldHasPermanentMatching(gameData, generalTargetReduce.predicate())) {
+                                if (cost.canPay(pool, additionalCost - generalTargetReduce.amount())) {
                                     playable.add(i);
                                     added = true;
                                 }
@@ -1536,6 +1548,21 @@ public class GameBroadcastService {
         for (Permanent p : battlefield) {
             if (gameQueryService.matchesPermanentPredicate(gameData, p, predicate)) {
                 return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean battlefieldHasPermanentMatching(GameData gameData,
+            com.github.laxika.magicalvibes.model.filter.PermanentPredicate predicate) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            if (battlefield == null) {
+                continue;
+            }
+            for (Permanent p : battlefield) {
+                if (gameQueryService.matchesPermanentPredicate(gameData, p, predicate)) {
+                    return true;
+                }
             }
         }
         return false;

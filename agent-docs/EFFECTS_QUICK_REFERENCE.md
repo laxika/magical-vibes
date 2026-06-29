@@ -451,6 +451,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ReduceCastCostForMatchingSpellsEffect(CardPredicate, int, CostModificationScope)` — matching spells cost less (SELF = yours, OPPONENT = opponents'; e.g. CardSubtypePredicate, CardIsHistoricPredicate, CardAnyOfPredicate)
 - `ReduceOwnCastCostIfControlsPermanentEffect(PermanentPredicate, int)` — this spell costs less if you control a matching permanent
 - `ReduceOwnCastCostIfTargetingControlledPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target is your matching permanent
+- `ReduceOwnCastCostIfTargetingPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target matches predicate (any controller)
 - `ReduceOwnCastCostPerCreatureCardInGraveyardEffect(int)` — this spell costs N less per creature card in your graveyard (Ghoultree)
 - `LimitSpellsPerTurnEffect(int)` — max spells per turn (all players)
 - `LimitSpellsForEnchantedPlayerEffect(int)` — max spells per turn for the enchanted player (Curse Aura)
