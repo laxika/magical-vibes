@@ -58,18 +58,5 @@
       "Bash(../gradlew compileTestJava)",
       "Bash(../gradlew :magical-vibes-backend:compileTestJava)"
     ]
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": ".claude/hooks/block-cd.sh"
-          }
-        ]
-      }
-    ]
   }
 }
