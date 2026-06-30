@@ -34,6 +34,8 @@ public class StackEntry {
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
+    /** Excess damage dealt by a prior effect on this stack entry (e.g. Archaic's Agony). */
+    @Setter private int excessDamageDealt;
     private final List<UUID> targetIds;
 
     // Creature spell constructor
@@ -219,6 +221,7 @@ public class StackEntry {
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
+        this.excessDamageDealt = source.excessDamageDealt;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }
 

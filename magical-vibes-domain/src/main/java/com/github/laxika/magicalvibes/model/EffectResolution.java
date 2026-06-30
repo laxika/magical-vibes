@@ -204,10 +204,11 @@ public final class EffectResolution {
     }
 
     /**
-     * Returns true if the card's spell effects use the Converge mechanic.
+     * Returns true if the card uses the Converge mechanic (keyword or converge-scaling spell effect).
      */
     public static boolean hasConvergeEffect(Card card) {
-        return hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
+        return card.getKeywords().contains(Keyword.CONVERGE)
+                || hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {

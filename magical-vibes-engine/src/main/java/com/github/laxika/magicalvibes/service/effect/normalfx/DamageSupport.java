@@ -249,6 +249,23 @@ public class DamageSupport {
         dealDamageAndDestroyIfLethal(gameData, entry, target, damage);
     }
 
+    /**
+     * Excess damage dealt to a creature: damage beyond what was needed for lethal damage,
+     * accounting for damage already marked and deathtouch (CR 120.10).
+     */
+    public int computeExcessDamageToCreature(GameData gameData, Permanent target, int damageDealt,
+                                             int markedDamageBefore, boolean sourceHasDeathtouch) {
+        if (damageDealt <= 0) {
+            return 0;
+        }
+        if (sourceHasDeathtouch) {
+            return Math.max(0, damageDealt - 1);
+        }
+        int toughness = gameQueryService.getEffectiveToughness(gameData, target);
+        int lethalNeeded = Math.max(0, toughness - markedDamageBefore);
+        return Math.max(0, damageDealt - lethalNeeded);
+    }
+
     public boolean isDamagePreventedForCreature(GameData gameData, StackEntry entry, Permanent target) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamagePreventable(gameData)

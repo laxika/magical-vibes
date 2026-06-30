@@ -118,6 +118,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "discard a card" / "discard N cards" | `DiscardCardEffect(N)` | SPELL/trigger | Controller discards |
 | "target player discards N cards" | `TargetPlayerDiscardsEffect(N)` | SPELL | |
 | "Converge — Target player discards X cards, where X is the number of colors of mana spent to cast this spell." | `TargetPlayerDiscardsByConvergeEffect()` | SPELL | Arcane Omens |
+| "Converge — deals X damage to target creature" + excess-damage exile | `DealXDamageToTargetCreatureEffect()` + `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect()` | SPELL | Converge keyword snapshotted to xValue; Archaic's Agony |
 | "each player discards N cards" | `EachPlayerDiscardsEffect(N)` | SPELL | |
 | "each opponent discards a card" | `EachOpponentDiscardsEffect(1)` | SPELL/trigger | |
 | "look at target player's hand" | `LookAtHandEffect()` | SPELL | |

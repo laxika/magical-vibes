@@ -324,6 +324,9 @@ public class GameData {
     /** Card UUIDs whose exile-play permission expires at end of turn (impulse draw, e.g. Vance's Blasting Cannons).
      *  Cleared during cleanup step — matching entries are also removed from {@link #exilePlayPermissions}. */
     public final Set<UUID> exilePlayPermissionsExpireEndOfTurn = ConcurrentHashMap.newKeySet();
+    /** Card UUIDs whose exile-play permission expires at end of the turn number stored as the value
+     *  (e.g. Archaic's Agony: until end of your next turn). */
+    public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
     /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
     public UUID knowledgePoolSourcePermanentId;
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
@@ -967,6 +970,7 @@ public class GameData {
 
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
+        copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
         copy.pendingExileFromHandPlayPermissionController = this.pendingExileFromHandPlayPermissionController;
 

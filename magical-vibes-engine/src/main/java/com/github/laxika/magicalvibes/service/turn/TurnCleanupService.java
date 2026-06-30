@@ -104,6 +104,15 @@ public class TurnCleanupService {
         }
         gameData.exilePlayPermissionsExpireEndOfTurn.clear();
 
+        int currentTurn = gameData.turnNumber;
+        gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
+            if (entry.getValue() <= currentTurn) {
+                gameData.exilePlayPermissions.remove(entry.getKey());
+                return true;
+            }
+            return false;
+        });
+
         // Clear persistent mana tracking so the next drain empties pools fully
         for (UUID playerId : gameData.orderedPlayerIds) {
             ManaPool manaPool = gameData.playerManaPools.get(playerId);

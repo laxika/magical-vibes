@@ -677,7 +677,7 @@ public class SpellCastingService {
             List<UUID> costReductionTargetIds = !targetIds.isEmpty() ? targetIds
                     : (targetId != null && unwrappedNeedsTarget && !unwrappedNeedsSpellTarget ? List.of(targetId) : List.of());
             int targetSubtypeCostReduction = computeTargetSubtypeCostReduction(card, gameData, playerId, costReductionTargetIds);
-            boolean needsConvergeValue = EffectResolution.hasConvergeEffect(filteredSpellEffects)
+            boolean needsConvergeValue = EffectResolution.hasConvergeEffect(card)
                     && (card.getManaCost() == null || !new ManaCost(card.getManaCost()).hasX());
             java.util.EnumMap<ManaColor, Integer> convergeSnapshot = needsConvergeValue
                     ? gameData.playerManaPools.get(playerId).getColoredManaTotals()
