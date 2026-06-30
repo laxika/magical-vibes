@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -43,6 +44,7 @@ public class PermanentControlSupport {
     private final GameBroadcastService gameBroadcastService;
 
     public void applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
+        Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
         int totalAmount = token.amount() * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
@@ -112,6 +114,10 @@ public class PermanentControlSupport {
                 tokenPermanent.setAttacking(true);
             } else if (token.tapped()) {
                 tokenPermanent.tap();
+            }
+
+            if (grantedKeywordsUntilEndOfTurn != null && !grantedKeywordsUntilEndOfTurn.isEmpty()) {
+                tokenPermanent.getGrantedKeywords().addAll(grantedKeywordsUntilEndOfTurn);
             }
 
             if (token.exileAtEndOfCombat()) {

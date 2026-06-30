@@ -61,8 +61,10 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
-| "target creature gains [keyword] until end of turn" | `GrantKeywordEffect(Keyword.X, GrantScope.TARGET)` | SPELL | |
+| "target creature gains [keyword] until end of turn" | `GrantKeywordEffect(Keyword.X, GrantScope.TARGET)` | SPELL | default duration is `END_OF_TURN` |
 | "creatures you control gain [keyword] until end of turn" | `GrantKeywordEffect(Keyword.X, GrantScope.OWN_CREATURES)` | SPELL | |
+| "target creature gains [keyword] until your next turn" | `GrantKeywordEffect(Keyword.X, GrantScope.TARGET, GrantDuration.UNTIL_YOUR_NEXT_TURN)` | SPELL | pass `GrantDuration` for non-default expiry |
+| "create a ... token. It gains [keyword] until end of turn" | `CreateTokenEffect(..., innateKeywords, Set.of(Keyword.X))` (the `grantedKeywordsUntilEndOfTurn` arg) | SPELL | Artistic Process — Elemental gains haste. Keep innate keywords separate from the granted set |
 | "enchanted creature has [keyword]" | `GrantKeywordEffect(Keyword.X, GrantScope.ENCHANTED_CREATURE)` | STATIC | |
 | "equipped creature has [keyword]" | `GrantKeywordEffect(Keyword.X, GrantScope.EQUIPPED_CREATURE)` | STATIC | |
 | "other [subtype] creatures you control have [keyword]" | `GrantKeywordEffect(Keyword.X, GrantScope.OWN_CREATURES, predicate)` | STATIC | |

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +70,7 @@ public class CreateTokenPerAttachmentOnSourceEffectHandler implements NormalEffe
                 CreateTokenEffect tokenEffect = new CreateTokenEffect(
                         CardType.CREATURE, attachmentCount, e.tokenName(), e.power(), e.toughness(),
                         e.color(), null, e.subtypes(), e.keywords(), e.additionalTypes(),
-                        false, false, Map.of(), List.of(), false, e.exileAtEndStep(), false, 0
+                        false, false, Map.of(), List.of(), false, e.exileAtEndStep(), false, 0, Set.of()
                 );
                 permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(), tokenEffect, entry.getCard().getSetCode());
     

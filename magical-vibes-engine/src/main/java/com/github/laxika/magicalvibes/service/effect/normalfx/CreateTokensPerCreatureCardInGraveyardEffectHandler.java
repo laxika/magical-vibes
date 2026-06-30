@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensPerCreatureCardIn
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -43,7 +44,7 @@ public class CreateTokensPerCreatureCardInGraveyardEffectHandler implements Norm
                 CreateTokenEffect tokenEffect = new CreateTokenEffect(
                         CardType.CREATURE, creatureCount, e.tokenName(), e.power(), e.toughness(),
                         e.color(), null, e.subtypes(), e.keywords(), e.additionalTypes(),
-                        e.tappedAndAttacking(), false, Map.of(), List.of(), false, false, false, 0
+                        e.tappedAndAttacking(), false, Map.of(), List.of(), false, false, false, 0, Set.of()
                 );
                 permanentControlSupport.applyCreateToken(gameData, controllerId, tokenEffect, entry.getCard().getSetCode());
     

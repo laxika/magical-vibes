@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -48,12 +49,12 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         && !gameQueryService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     continue;
                 }
-                permanent.getGrantedKeywords().addAll(grant.keywords());
+                bucketFor(permanent, grant.duration()).addAll(grant.keywords());
                 count++;
             }
 
             String keywordNames = formatKeywords(grant.keywords());
-            String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count + " creature(s) until end of turn.";
+            String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} grants {} to {} own creature(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count);
             return;
@@ -72,12 +73,12 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                         && !gameQueryService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     return;
                 }
-                permanent.getGrantedKeywords().addAll(grant.keywords());
+                bucketFor(permanent, grant.duration()).addAll(grant.keywords());
                 count[0]++;
             });
 
             String keywordNames = formatKeywords(grant.keywords());
-            String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count[0] + " creature(s) until end of turn.";
+            String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count[0] + " creature(s) " + durationLabel(grant.duration()) + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} grants {} to {} creature(s)", gameData.id, entry.getCard().getName(), grant.keywords(), count[0]);
             return;
@@ -97,11 +98,23 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        target.getGrantedKeywords().addAll(grant.keywords());
+        bucketFor(target, grant.duration()).addAll(grant.keywords());
         String keywordNames = formatKeywords(grant.keywords());
-        String logEntry = target.getCard().getName() + " gains " + keywordNames + " until end of turn.";
+        String logEntry = target.getCard().getName() + " gains " + keywordNames + " " + durationLabel(grant.duration()) + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keywords(), grant.scope());
+    }
+
+    private Set<Keyword> bucketFor(Permanent permanent, GrantDuration duration) {
+        return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                ? permanent.getUntilNextTurnKeywords()
+                : permanent.getGrantedKeywords();
+    }
+
+    private String durationLabel(GrantDuration duration) {
+        return duration == GrantDuration.UNTIL_YOUR_NEXT_TURN
+                ? "until your next turn"
+                : "until end of turn";
     }
 
     private String formatKeywords(Set<Keyword> keywords) {
