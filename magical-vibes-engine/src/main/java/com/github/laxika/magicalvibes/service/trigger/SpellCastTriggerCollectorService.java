@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaVal
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
@@ -227,33 +226,6 @@ public class SpellCastTriggerCollectorService {
 
         log.info("Game {} - {} chosen-subtype spell-cast trigger queued",
                 match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    @CollectsTrigger(value = IncrementTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleIncrementSpellCast(TriggerMatchContext match,
-            IncrementTriggerEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        int manaSpent = match.gameData().getSpellCastManaSpent(sc.spellCard().getId());
-        Permanent self = match.permanent();
-
-        // Intervening-if at trigger time: only triggers if the mana spent is greater than the
-        // creature's current power or toughness (CR 603.4 — re-checked again at resolution).
-        if (manaSpent <= self.getEffectivePower() && manaSpent <= self.getEffectiveToughness()) {
-            return false;
-        }
-
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                self.getCard(),
-                match.controllerId(),
-                self.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                manaSpent,
-                self.getId()
-        ));
-        log.info("Game {} - {} increment trigger queued (mana spent {})",
-                match.gameData().id, self.getCard().getName(), manaSpent);
         return true;
     }
 

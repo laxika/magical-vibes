@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,13 +37,9 @@ class AmbitiousAugmenterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has an Increment spell-cast trigger and a death trigger creating a Fractal with its counters")
+    @DisplayName("Has a death trigger creating a Fractal carrying its counters (Increment is keyword-driven)")
     void hasCorrectEffects() {
         AmbitiousAugmenter card = new AmbitiousAugmenter();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(IncrementTriggerEffect.class);
 
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())

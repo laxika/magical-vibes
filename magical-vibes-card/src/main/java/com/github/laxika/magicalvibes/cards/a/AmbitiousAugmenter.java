@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -16,9 +15,7 @@ import java.util.Set;
 public class AmbitiousAugmenter extends Card {
 
     public AmbitiousAugmenter() {
-        // Increment (Whenever you cast a spell, if the amount of mana you spent is greater than this
-        // creature's power or toughness, put a +1/+1 counter on this creature.)
-        addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new IncrementTriggerEffect());
+        // Increment is driven automatically by the Scryfall-loaded INCREMENT keyword; no effect needed.
 
         // When this creature dies, if it had one or more counters on it, create a 0/0 green and blue
         // Fractal creature token, then put this creature's counters on that token.

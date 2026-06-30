@@ -369,7 +369,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `EnterWithXPlusOnePlusOneCountersEffect()` — ETB X +1/+1 counters
 - `EnterWithFixedChargeCountersEffect(int)` — ETB fixed charge counters
 - `PutChargeCounterOnSelfEffect()` — charge counter on self
-- `IncrementTriggerEffect()` — Increment keyword (`ON_CONTROLLER_CASTS_SPELL`): +1/+1 counter on self when mana spent on a cast spell exceeds self's current power or toughness (e.g. Ambitious Augmenter)
+- Increment keyword — keyword-driven (`Keyword.INCREMENT`, auto-loaded from Scryfall): +1/+1 counter on self when mana spent on a cast spell exceeds self's current power or toughness. Add nothing to the card; behavior lives in `TriggerCollectionService.collectIncrementTriggers` (resolution effect: `IncrementTriggerEffect`). E.g. Ambitious Augmenter
 - `ProliferateEffect()` — proliferate
 - `KickerEffect(String cost)` — kicker declaration
 

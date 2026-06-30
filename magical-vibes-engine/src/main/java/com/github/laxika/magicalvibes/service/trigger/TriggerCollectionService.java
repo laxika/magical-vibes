@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -99,6 +101,12 @@ public class TriggerCollectionService {
             if (playerId.equals(castingPlayerId)) return;
             dispatchSlot(gameData, perm, playerId, EffectSlot.ON_OPPONENT_CASTS_SPELL, ctx);
         });
+
+        // Increment keyword (CR keyword): "Whenever you cast a spell, if the amount of mana you spent
+        // is greater than this creature's power or toughness, put a +1/+1 counter on it." Driven by the
+        // Scryfall-loaded keyword (like Undying) rather than a per-card effect. Read before mana-spent
+        // is cleared below.
+        collectIncrementTriggers(gameData, spellCard, castingPlayerId);
 
         gameData.clearSpellCastManaSpent(spellCard.getId());
 
@@ -1115,6 +1123,34 @@ public class TriggerCollectionService {
             var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
             registry.dispatch(match, slot, effect, ctx);
         }
+    }
+
+    /**
+     * Increment keyword. For each permanent the casting player controls with the {@link Keyword#INCREMENT}
+     * keyword, fire the trigger if the mana spent on the cast spell is greater than that creature's current
+     * power or toughness (the intervening-if; re-checked again at resolution per CR 603.4). The mana spent is
+     * snapshotted into the stack entry's {@code xValue} for the resolution handler.
+     */
+    private void collectIncrementTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
+        int manaSpent = gameData.getSpellCastManaSpent(spellCard.getId());
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!playerId.equals(castingPlayerId)) return;
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
+            if (!gameQueryService.hasKeyword(gameData, perm, Keyword.INCREMENT)) return;
+            if (manaSpent <= perm.getEffectivePower() && manaSpent <= perm.getEffectiveToughness()) return;
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    castingPlayerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(new IncrementTriggerEffect())),
+                    manaSpent,
+                    perm.getId()
+            ));
+            log.info("Game {} - {} increment trigger queued (mana spent {})",
+                    gameData.id, perm.getCard().getName(), manaSpent);
+        });
     }
 
     /**

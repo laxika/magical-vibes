@@ -80,6 +80,7 @@ public class ScryfallOracleLoader {
         KEYWORD_MAP.put("Kicker", Keyword.KICKER);
         KEYWORD_MAP.put("Converge", Keyword.CONVERGE);
         KEYWORD_MAP.put("Undying", Keyword.UNDYING);
+        KEYWORD_MAP.put("Increment", Keyword.INCREMENT);
     }
 
     public static void loadAll(String cacheDir) {
