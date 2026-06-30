@@ -78,12 +78,17 @@ public class PermanentCounterSupport {
     }
 
     public void applyPlusOnePlusOneCounters(GameData gameData, StackEntry entry, Permanent target, int counters) {
+        if (counters <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
+            return;
+        }
         target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + counters);
 
         String counterText = counters == 1 ? "a +1/+1 counter" : counters + " +1/+1 counters";
         String logEntry = target.getCard().getName() + " gets " + counterText + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets {} +1/+1 counter(s)", gameData.id, target.getCard().getName(), counters);
+
+        firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
     }
 
     public void placeCountersOnPermanents(GameData gameData, StackEntry entry, List<UUID> permanentIds, CounterType counterType) {
@@ -158,7 +163,14 @@ public class PermanentCounterSupport {
             case CHARGE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.CHARGE, target.getCounterCount(CounterType.CHARGE) + 1); yield "charge"; }
             case LORE -> { for (int i = 0; i < count; i++) target.setCounterCount(CounterType.LORE, target.getCounterCount(CounterType.LORE) + 1); yield "lore"; }
             case LOYALTY -> { target.setCounterCount(CounterType.LOYALTY, target.getCounterCount(CounterType.LOYALTY) + count); yield "loyalty"; }
-            case PLUS_ONE_PLUS_ONE -> { target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count); yield "+1/+1"; }
+            case PLUS_ONE_PLUS_ONE -> {
+                if (count <= 0 || gameQueryService.cantHaveCounters(gameData, target)) {
+                    yield null;
+                }
+                target.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + count);
+                firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, target);
+                yield "+1/+1";
+            }
             case MINUS_ONE_MINUS_ONE -> {
                 if (gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, target)) { yield null; }
                 target.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, target.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) + count);
@@ -238,5 +250,39 @@ public class PermanentCounterSupport {
         String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
+    }
+
+    private void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
+        Card card = target.getCard();
+        List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
+        if (effects.isEmpty()) {
+            return;
+        }
+
+        UUID controllerId = null;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield != null && battlefield.contains(target)) {
+                controllerId = playerId;
+                break;
+            }
+        }
+        if (controllerId == null) {
+            return;
+        }
+
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s triggered ability",
+                new ArrayList<>(effects),
+                null,
+                target.getId()
+        ));
+
+        String logEntry = card.getName() + "'s triggered ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
     }
 }

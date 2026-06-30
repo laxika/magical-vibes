@@ -194,6 +194,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "create a Treasure token" | `CreateTokenEffect.ofTreasureToken(1)` | SPELL/trigger | Static factory |
 | "create a N/N [color] [Subtype] creature token" | `CreateTokenEffect("name", N, N, color, subtype)` | SPELL/trigger | Custom token |
 | "create a 0/0 [color] and [color] [Subtype] creature token. Put N +1/+1 counters on it" | `CreateTokenEffect("name", 0, 0, color, Set.of(colors), List.of(subtype), N)` | SPELL/trigger/ETB | `initialPlusOnePlusOneCounters` on `CreateTokenEffect` (e.g. Additive Evolution) |
+| "{X}, {T}: Create a 0/0 [color] and [color] [Subtype] creature token and put X +1/+1 counters on it" | `CreateXTokenWithXCountersEffect("name", 0, 0, color, Set.of(colors), List.of(subtype), CounterType.PLUS_ONE_PLUS_ONE)` | activated ability | X from `StackEntry.getXValue()` (e.g. Berta, Wise Extrapolator) |
 | "Increment (Whenever you cast a spell, if the mana you spent is greater than this creature's power or toughness, put a +1/+1 counter on it)" | *(none — keyword-driven)* | — | Increment keyword (SOS). Auto-loaded from Scryfall as `Keyword.INCREMENT`; behavior is driven by the keyword in `TriggerCollectionService.collectIncrementTriggers` (like Undying). Add **nothing** to the card (e.g. Ambitious Augmenter) |
 | "When this dies, if it had one or more counters on it, create a 0/0 [color] [Subtype] token, then put this creature's counters on that token" | `CreateTokenWithDyingSourceCountersEffect(new CreateTokenEffect("name", 0, 0, color, Set.of(colors), List.of(subtype)))` | `ON_DEATH` | Snapshots dying creature's +1/+1 counters onto the new token (e.g. Ambitious Augmenter's Fractal) |
 | "create a N/N [color] [Subtype] creature token with [keyword]" | `CreateTokenEffect("name", N, N, color, subtype, keyword)` | SPELL/trigger | With keyword |
@@ -215,6 +216,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "put a +1/+1 counter on target creature" | `PutPlusOnePlusOneCounterOnTargetCreatureEffect(1)` | SPELL/trigger | |
+| "Whenever one or more +1/+1 counters are put on CARDNAME" | `AwardAnyColorManaEffect()` (or other effects) | `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` | Fired from `PermanentCounterSupport` after each +1/+1 placement event (once per event). Used by Berta, Wise Extrapolator |
 | "put N +1/+1 counters on target creature" | `PutPlusOnePlusOneCounterOnTargetCreatureEffect(N)` | SPELL/trigger | |
 | "put a +1/+1 counter on each creature you control" | `PutPlusOnePlusOneCounterOnEachOwnCreatureEffect()` | SPELL/trigger | |
 | "put a -1/-1 counter on target creature" | `PutMinusOneMinusOneCounterOnTargetCreatureEffect(1)` | SPELL/trigger | |
@@ -249,7 +251,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "add {C}" / "add one mana of [color]" | `AwardManaEffect(ManaColor.X, 1)` | ON_TAP/ability | |
-| "add one mana of any color" | `AwardAnyColorManaEffect()` | ON_TAP/ability | |
+| "add one mana of any color" | `AwardAnyColorManaEffect()` | ON_TAP/ability/`ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` | |
 | "add N mana of any one color" | `AwardAnyColorManaEffect(N)` | ability | |
 
 ## Prevention

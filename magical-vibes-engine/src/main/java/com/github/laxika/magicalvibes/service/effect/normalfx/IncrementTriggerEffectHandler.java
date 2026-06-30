@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
-import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,7 +22,7 @@ import org.springframework.stereotype.Component;
 public class IncrementTriggerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameBroadcastService gameBroadcastService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,10 +47,7 @@ public class IncrementTriggerEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, self.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + 1);
-
-        String logEntry = self.getCard().getName() + " gets a +1/+1 counter (Increment).";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, entry, self, 1);
         log.info("Game {} - {} gets a +1/+1 counter from Increment (mana spent {})",
                 gameData.id, self.getCard().getName(), manaSpent);
     }

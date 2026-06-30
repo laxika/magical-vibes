@@ -119,6 +119,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  while this card is in the controller's graveyard.  The attacker count is passed via
      *  xValue.  Checked in {@code CombatAttackService.declareAttackers}. */
     GRAVEYARD_ON_ALLY_CREATURES_ATTACK,
+    /** Triggers whenever one or more +1/+1 counters are put on this permanent.
+     *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
+     *  event regardless of count). Used by Berta, Wise Extrapolator. */
+    ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
     /** Triggers whenever a creature controlled by the same player explores.
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */
