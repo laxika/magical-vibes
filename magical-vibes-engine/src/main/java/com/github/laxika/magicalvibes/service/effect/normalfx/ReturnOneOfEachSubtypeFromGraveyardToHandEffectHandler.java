@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +26,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,6 +62,7 @@ public class ReturnOneOfEachSubtypeFromGraveyardToHandEffectHandler implements N
                 // Only one match — return it automatically
                 Card card = matching.getFirst();
                 graveyard.remove(card);
+                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
                 gameData.addCardToHand(controllerId, card);
 
                 String playerName = gameData.playerIdToName.get(controllerId);

@@ -354,6 +354,7 @@ public class PermanentRemovalService {
                 if (tracked != null) {
                     tracked.remove(cardId);
                 }
+                graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
                 return;
             }
         }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEff
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class ExileCardsFromOwnGraveyardEffectHandler implements NormalEffectHand
     private final GameBroadcastService gameBroadcastService;
     private final ExileService exileService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +55,7 @@ public class ExileCardsFromOwnGraveyardEffectHandler implements NormalEffectHand
             // Auto-exile all cards
             List<Card> toExile = new ArrayList<>(graveyard);
             graveyard.clear();
+            graveyardService.notifyCardsLeftGraveyard(gameData, affectedPlayerId);
             List<String> exiledNames = new ArrayList<>();
             for (Card card : toExile) {
                 exileService.exileCard(gameData, affectedPlayerId, card);

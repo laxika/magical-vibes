@@ -130,7 +130,8 @@ public class GraveyardChoiceHandlerService {
             } else {
                 // Standard choice: indices into the player's own graveyard
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-                card = graveyard.remove(cardIndex);
+                card = graveyard.get(cardIndex);
+                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 cardGraveyardOwnerId = playerId;
             }
 

@@ -123,6 +123,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fired from {@code PermanentCounterSupport} after each counter-placement event (once per
      *  event regardless of count). Used by Berta, Wise Extrapolator. */
     ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT,
+    /** Triggers whenever one or more cards leave the controller's graveyard.
+     *  Fires once per leave event (batched when multiple cards leave together).
+     *  Checked in {@code GraveyardService.notifyCardsLeftGraveyard}. */
+    ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
     /** Triggers whenever a creature controlled by the same player explores.
      *  Fired from {@code ExploreEffectHandler} (land branch) and
      *  {@code MayMiscHandlerService} (non-land branch) after explore completes. */

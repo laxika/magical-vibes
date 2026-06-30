@@ -61,6 +61,7 @@ public class ChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final LegendRuleService legendRuleService;
     private final EffectResolutionService effectResolutionService;
+    private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)) {
@@ -637,10 +638,16 @@ public class ChoiceHandlerService {
         String playerName = gameData.playerIdToName.get(controllerId);
         if (!toReturn.isEmpty()) {
             List<String> returnedNames = new ArrayList<>();
-            for (Card card : toReturn) {
-                graveyard.remove(card);
-                gameData.addCardToHand(controllerId, card);
-                returnedNames.add(card.getName());
+            graveyardService.beginGraveyardLeaveBatch(gameData);
+            try {
+                for (Card card : toReturn) {
+                    graveyard.remove(card);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                    gameData.addCardToHand(controllerId, card);
+                    returnedNames.add(card.getName());
+                }
+            } finally {
+                graveyardService.endGraveyardLeaveBatch(gameData);
             }
 
             String logEntry = playerName + " chooses " + chosenType.getDisplayName()
@@ -903,6 +910,9 @@ public class ChoiceHandlerService {
             graveyard.removeAll(toExile);
             for (Card card : toExile) {
                 gameData.addToExile(targetPlayerId, card);
+            }
+            if (!toExile.isEmpty()) {
+                graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
             }
             exiledCount += toExile.size();
         }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,6 +48,7 @@ public class EachPlayerShufflesHandAndGraveyardIntoLibraryEffectHandler implemen
             if (graveyard != null && !graveyard.isEmpty()) {
                 deck.addAll(graveyard);
                 graveyard.clear();
+                graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
             }
 
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);

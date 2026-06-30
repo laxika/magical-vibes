@@ -82,6 +82,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
 
         // Remove dying card from graveyard
         gameData.playerGraveyards.get(graveyardOwnerId).remove(dyingCard);
+        graveyardService.notifyCardsLeftGraveyard(gameData, graveyardOwnerId);
 
         // Exile the dying card (add to card owner's exile zone)
         exileService.exileCard(gameData, graveyardOwnerId, dyingCard);

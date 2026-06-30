@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
 
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,12 +50,18 @@ public class ShuffleTargetCardsFromGraveyardIntoLibraryEffectHandler implements 
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         List<String> movedNames = new ArrayList<>();
 
-        for (UUID cardId : targetCardIds) {
-            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-            if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
-                deck.add(card);
-                movedNames.add(card.getName());
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (UUID cardId : targetCardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                    deck.add(card);
+                    movedNames.add(card.getName());
+                    graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
+                }
             }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);

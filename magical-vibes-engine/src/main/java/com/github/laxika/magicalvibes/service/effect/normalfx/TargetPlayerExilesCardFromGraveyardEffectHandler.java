@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGra
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
@@ -28,6 +29,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
     private final PlayerInputService playerInputService;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +55,7 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
         if (graveyard.size() == 1) {
             // Auto-exile the only card
             Card card = graveyard.removeFirst();
+            graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
             exileService.exileCard(gameData, targetPlayerId, card);
 
             String logEntry = targetName + " exiles " + card.getName() + " from their graveyard.";

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleSelfAndGraveyardIntoLi
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.List;
 import java.util.UUID;
@@ -24,6 +25,7 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
     private final PermanentRemovalService permanentRemovalService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,6 +55,7 @@ public class ShuffleSelfAndGraveyardIntoLibraryEffectHandler implements NormalEf
         if (!graveyard.isEmpty()) {
             deck.addAll(graveyard);
             graveyard.clear();
+            graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
         }
 
         // Shuffle the library

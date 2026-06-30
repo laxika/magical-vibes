@@ -62,7 +62,7 @@ public class ExileSupport {
         permanentRemovalService.removePermanentToExile(gameData, permanent);
 
         String logEntry = card.getName() + " is exiled. It will return at the beginning of the next "
-                + returnStep.getDisplayName() + ".";
+                + returnStep.getDisplayName().toLowerCase() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} exiles {}; will return at next {}",
                 gameData.id, entry.getCard().getName(), card.getName(), returnStep);

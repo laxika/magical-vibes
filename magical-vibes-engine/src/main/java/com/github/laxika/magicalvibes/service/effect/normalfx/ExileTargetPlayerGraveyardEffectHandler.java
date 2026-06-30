@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class ExileTargetPlayerGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,6 +45,7 @@ public class ExileTargetPlayerGraveyardEffectHandler implements NormalEffectHand
             gameData.addToExile(targetPlayerId, card);
         }
         graveyard.clear();
+        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
 
         String logEntry = playerName + "'s graveyard is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

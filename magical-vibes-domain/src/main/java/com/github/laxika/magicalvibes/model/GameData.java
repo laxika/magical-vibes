@@ -327,6 +327,15 @@ public class GameData {
     /** Card UUIDs whose exile-play permission expires at end of the turn number stored as the value
      *  (e.g. Archaic's Agony: until end of your next turn). */
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
+    /** Maps graveyard card UUID → player UUID who may play it this turn (e.g. Ark of Hunger).
+     *  Cleared during cleanup step for entries in {@link #graveyardPlayPermissionsExpireEndOfTurn}. */
+    public final Map<UUID, UUID> graveyardPlayPermissions = new ConcurrentHashMap<>();
+    /** Graveyard card UUIDs whose play permission expires at end of turn. */
+    public final Set<UUID> graveyardPlayPermissionsExpireEndOfTurn = ConcurrentHashMap.newKeySet();
+    /** Depth counter for batching "cards leave graveyard" triggers (one trigger per batch). */
+    public int graveyardLeaveNotificationDepth = 0;
+    /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
+    public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
     /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
     public UUID knowledgePoolSourcePermanentId;
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
@@ -971,6 +980,10 @@ public class GameData {
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
+        copy.graveyardPlayPermissions.putAll(this.graveyardPlayPermissions);
+        copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
+        copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
+        copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
         copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
         copy.pendingExileFromHandPlayPermissionController = this.pendingExileFromHandPlayPermissionController;
 

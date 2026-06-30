@@ -1435,6 +1435,7 @@ public class AbilityActivationService {
         }
 
         Card exiled = graveyard.remove((int) exileCardIndex);
+        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
         exileService.exileCard(gameData, playerId, exiled);
 
         String logEntry = player.getUsername() + " exiles " + exiled.getName() + " from graveyard as an activation cost.";

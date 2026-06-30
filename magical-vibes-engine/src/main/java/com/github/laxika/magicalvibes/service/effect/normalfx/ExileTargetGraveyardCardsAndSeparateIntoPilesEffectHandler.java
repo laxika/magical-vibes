@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +28,7 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final CardViewFactory cardViewFactory;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,16 +50,22 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
         List<Card> exiledCards = new ArrayList<>();
         Map<UUID, UUID> cardOwners = new HashMap<>();
 
-        for (UUID cardId : targetCardIds) {
-            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-            if (card != null && ownerId != null) {
-                List<Card> ownerGraveyard = gameData.playerGraveyards.get(ownerId);
-                if (ownerGraveyard != null && ownerGraveyard.removeIf(c -> c.getId().equals(cardId))) {
-                    exiledCards.add(card);
-                    cardOwners.put(cardId, ownerId);
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (UUID cardId : targetCardIds) {
+                UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null && ownerId != null) {
+                    List<Card> ownerGraveyard = gameData.playerGraveyards.get(ownerId);
+                    if (ownerGraveyard != null && ownerGraveyard.removeIf(c -> c.getId().equals(cardId))) {
+                        exiledCards.add(card);
+                        cardOwners.put(cardId, ownerId);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, ownerId);
+                    }
                 }
             }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
         if (exiledCards.isEmpty()) {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +26,7 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,10 +61,16 @@ public class EachPlayerReturnsCardsFromGraveyardToBattlefieldEffectHandler imple
             if (matching.size() <= e.maxCount()) {
                 // Auto-return all matching cards — no choice needed
                 List<String> returnedNames = new ArrayList<>();
-                for (Card card : matching) {
-                    graveyard.remove(card);
-                    graveyardReturnSupport.putCardOntoBattlefield(gameData, playerId, card);
-                    returnedNames.add(card.getName());
+                graveyardService.beginGraveyardLeaveBatch(gameData);
+                try {
+                    for (Card card : matching) {
+                        graveyard.remove(card);
+                        graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
+                        graveyardReturnSupport.putCardOntoBattlefield(gameData, playerId, card);
+                        returnedNames.add(card.getName());
+                    }
+                } finally {
+                    graveyardService.endGraveyardLeaveBatch(gameData);
                 }
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameBroadcastService.logAndBroadcast(gameData,

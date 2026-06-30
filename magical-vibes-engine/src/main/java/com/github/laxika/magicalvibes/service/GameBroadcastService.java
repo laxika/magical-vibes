@@ -518,7 +518,10 @@ public class GameBroadcastService {
             return playable;
         }
 
-        if (!canPlayLandsFromGraveyard(gameData, playerId)) {
+        boolean canPlayAnyLandsFromGraveyard = canPlayLandsFromGraveyard(gameData, playerId);
+        boolean hasAnyGraveyardLandPermission = gameData.graveyardPlayPermissions.values().stream()
+                .anyMatch(permittedPlayer -> permittedPlayer.equals(playerId));
+        if (!canPlayAnyLandsFromGraveyard && !hasAnyGraveyardLandPermission) {
             return playable;
         }
 
@@ -538,7 +541,10 @@ public class GameBroadcastService {
         }
 
         for (int i = 0; i < graveyard.size(); i++) {
-            if (graveyard.get(i).hasType(CardType.LAND)) {
+            Card card = graveyard.get(i);
+            if (card.hasType(CardType.LAND)
+                    && (canPlayAnyLandsFromGraveyard
+                    || hasGraveyardPlayPermission(gameData, card.getId(), playerId))) {
                 playable.add(i);
             }
         }
@@ -597,23 +603,30 @@ public class GameBroadcastService {
                     && !emblemFlashback
                     && card.hasType(CardType.CREATURE)
                     && hasHavengulCastPermission(gameData, card, playerId);
+            boolean isGrantedGraveyardPlay = flashback.isEmpty()
+                    && !grantedFlashback
+                    && !emblemFlashback
+                    && !grantedHavengulCast
+                    && hasGraveyardPlayPermission(gameData, card.getId(), playerId);
             boolean isGraveyardCast = graveyardCast.isPresent()
                     && flashback.isEmpty()
                     && !grantedFlashback
                     && !emblemFlashback
                     && !grantedHavengulCast
+                    && !isGrantedGraveyardPlay
                     && isGraveyardCastAvailable(gameData, playerId, graveyardCast.get());
 
             // Check if this card is castable via a Muldrotha-style graveyard permanent cast effect
             boolean isGrantedGraveyardCast = false;
-            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
+            if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast
+                    && !isGrantedGraveyardPlay && !isGraveyardCast
                     && graveyardCastSourceId.isPresent()) {
                 // Card must be a non-land permanent type with at least one unused type slot
                 isGrantedGraveyardCast = hasUnusedPermanentTypeSlot(card, typesCastFromGraveyard);
             }
 
             if (flashback.isEmpty() && !grantedFlashback && !emblemFlashback && !grantedHavengulCast && !isGraveyardCast
-                    && !isGrantedGraveyardCast) {
+                    && !isGrantedGraveyardCast && !isGrantedGraveyardPlay) {
                 continue;
             }
 
@@ -623,8 +636,10 @@ public class GameBroadcastService {
                 continue;
             }
 
-            // GraveyardCast, granted flashback, emblem flashback, and granted graveyard cast use the card's mana cost
-            String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast || isGrantedGraveyardCast)
+            // GraveyardCast, granted flashback, emblem flashback, granted graveyard cast, and granted
+            // graveyard play use the card's mana cost
+            String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
+                    || isGrantedGraveyardCast || isGrantedGraveyardPlay)
                     ? card.getManaCost()
                     : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             if (manaCostStr == null) {
@@ -1049,6 +1064,11 @@ public class GameBroadcastService {
         GameData.GraveyardCreatureCastPermission permission =
                 gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.get(card.getId());
         return permission != null && playerId.equals(permission.castingPlayerId());
+    }
+
+    public boolean hasGraveyardPlayPermission(GameData gameData, UUID cardId, UUID playerId) {
+        UUID permittedPlayer = gameData.graveyardPlayPermissions.get(cardId);
+        return permittedPlayer != null && permittedPlayer.equals(playerId);
     }
 
     public boolean isGraveyardCastAvailable(GameData gameData, UUID playerId, GraveyardCast graveyardCast) {

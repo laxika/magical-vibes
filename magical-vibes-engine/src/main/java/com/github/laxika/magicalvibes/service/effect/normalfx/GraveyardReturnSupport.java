@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -95,6 +96,7 @@ public class GraveyardReturnSupport {
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
     private final CardViewFactory cardViewFactory;
+    private final GraveyardService graveyardService;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -212,11 +214,17 @@ public class GraveyardReturnSupport {
             }
 
             List<String> returnedNames = new ArrayList<>();
-            for (Card card : toReturn) {
-                graveyard.remove(card);
-                gameData.addCardToHand(controllerId, card);
-                returnedNames.add(card.getName());
-                trackedIds.remove(card.getId());
+            graveyardService.beginGraveyardLeaveBatch(gameData);
+            try {
+                for (Card card : toReturn) {
+                    graveyard.remove(card);
+                    gameData.addCardToHand(controllerId, card);
+                    returnedNames.add(card.getName());
+                    trackedIds.remove(card.getId());
+                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                }
+            } finally {
+                graveyardService.endGraveyardLeaveBatch(gameData);
             }
 
             String playerName = gameData.playerIdToName.get(controllerId);
@@ -247,25 +255,31 @@ public class GraveyardReturnSupport {
         }
 
         List<String> returnedNames = new ArrayList<>();
-        for (Map.Entry<UUID, List<Card>> gyEntry : graveyardsToSearch.entrySet()) {
-            List<Card> gy = gyEntry.getValue();
-            List<Card> toReturn = new ArrayList<>();
-            for (Card card : gy) {
-                if (gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
-                    toReturn.add(card);
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (Map.Entry<UUID, List<Card>> gyEntry : graveyardsToSearch.entrySet()) {
+                List<Card> gy = gyEntry.getValue();
+                List<Card> toReturn = new ArrayList<>();
+                for (Card card : gy) {
+                    if (gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                        toReturn.add(card);
+                    }
+                }
+                for (Card card : toReturn) {
+                    gy.remove(card);
+                    graveyardService.notifyCardsLeftGraveyard(gameData, gyEntry.getKey());
+                    UUID targetPlayerId = effect.underOwnersControl() ? gyEntry.getKey() : controllerId;
+                    if (effect.destination() == GraveyardChoiceDestination.HAND) {
+                        gameData.addCardToHand(targetPlayerId, card);
+                    } else {
+                        putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
+                                effect.enterTapped(), effect.enterAttacking());
+                    }
+                    returnedNames.add(card.getName());
                 }
             }
-            for (Card card : toReturn) {
-                gy.remove(card);
-                UUID targetPlayerId = effect.underOwnersControl() ? gyEntry.getKey() : controllerId;
-                if (effect.destination() == GraveyardChoiceDestination.HAND) {
-                    gameData.addCardToHand(targetPlayerId, card);
-                } else {
-                    putCardOntoBattlefield(gameData, targetPlayerId, card, effect.grantColor(), effect.grantSubtype(),
-                            effect.enterTapped(), effect.enterAttacking());
-                }
-                returnedNames.add(card.getName());
-            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
         if (returnedNames.isEmpty()) {
@@ -294,6 +308,7 @@ public class GraveyardReturnSupport {
                     .orElse(null);
             if (sourceCard != null) {
                 graveyard.remove(sourceCard);
+                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
                 exileService.exileCard(gameData, controllerId, sourceCard);
                 String playerName = gameData.playerIdToName.get(controllerId);
                 String exileLog = playerName + " exiles " + sourceCard.getName() + " from graveyard.";
@@ -323,17 +338,23 @@ public class GraveyardReturnSupport {
 
         int count = Math.min(effect.randomCount(), matchingCards.size());
         List<String> returnedNames = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            Card randomCard = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
-            matchingCards.remove(randomCard);
-            graveyard.remove(randomCard);
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (int i = 0; i < count; i++) {
+                Card randomCard = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
+                matchingCards.remove(randomCard);
+                graveyard.remove(randomCard);
+                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
 
-            if (effect.destination() == GraveyardChoiceDestination.HAND) {
-                gameData.addCardToHand(controllerId, randomCard);
-            } else {
-                putCardOntoBattlefield(gameData, controllerId, randomCard, null, null, effect.enterTapped());
+                if (effect.destination() == GraveyardChoiceDestination.HAND) {
+                    gameData.addCardToHand(controllerId, randomCard);
+                } else {
+                    putCardOntoBattlefield(gameData, controllerId, randomCard, null, null, effect.enterTapped());
+                }
+                returnedNames.add(randomCard.getName());
             }
-            returnedNames.add(randomCard.getName());
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -466,12 +487,18 @@ public class GraveyardReturnSupport {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         List<String> movedNames = new ArrayList<>();
 
-        for (UUID cardId : targetCardIds) {
-            Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-            if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
-                cardConsumer.accept(graveyard, card);
-                movedNames.add(card.getName());
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (UUID cardId : targetCardIds) {
+                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
+                if (card != null && graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                    cardConsumer.accept(graveyard, card);
+                    movedNames.add(card.getName());
+                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                }
             }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
 
         if (!movedNames.isEmpty()) {
@@ -615,6 +642,7 @@ public class GraveyardReturnSupport {
         for (UUID pid : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard != null && graveyard.removeIf(c -> c.getId().equals(cardId))) {
+                graveyardService.notifyCardsLeftGraveyard(gameData, pid);
                 exileService.exileCard(gameData, pid, card);
                 return true;
             }

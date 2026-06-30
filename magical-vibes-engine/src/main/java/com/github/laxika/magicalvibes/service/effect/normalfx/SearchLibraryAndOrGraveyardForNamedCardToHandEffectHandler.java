@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implemen
 
     private final GameBroadcastService gameBroadcastService;
     private final LibrarySearchSupport librarySearchSupport;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,6 +52,7 @@ public class SearchLibraryAndOrGraveyardForNamedCardToHandEffectHandler implemen
             if (graveyardMatch.isPresent()) {
                 Card found = graveyardMatch.get();
                 graveyard.remove(found);
+                graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
                 gameData.playerHands.get(controllerId).add(found);
                 String logMsg = playerName + " searches their graveyard, reveals " + found.getName() + ", and puts it into their hand.";
                 gameBroadcastService.logAndBroadcast(gameData, logMsg);

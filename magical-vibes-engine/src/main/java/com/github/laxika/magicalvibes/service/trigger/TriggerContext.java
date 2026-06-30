@@ -125,4 +125,9 @@ public sealed interface TriggerContext {
      */
     record AllyAuraOrEquipmentGraveyard(Card dyingCard,
                                         UUID controllerId) implements TriggerContext {}
+
+    /**
+     * Context for ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD triggers.
+     */
+    record ControllerCardsLeaveGraveyard(UUID graveyardOwnerId) implements TriggerContext {}
 }

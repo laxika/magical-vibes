@@ -1121,7 +1121,7 @@ public class StepTriggerService {
                     }
                 }
                 if (cardToReturn != null) {
-                    graveyard.remove(cardToReturn);
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
                     gameData.addCardToHand(pending.ownerId(), cardToReturn);
                     String playerName = gameData.playerIdToName.get(pending.ownerId());
                     String logEntry = cardToReturn.getName() + " returns to " + playerName + "'s hand (delayed trigger).";
@@ -1167,7 +1167,7 @@ public class StepTriggerService {
                     continue;
                 }
 
-                graveyard.remove(cardToReturn);
+                permanentRemovalService.removeCardFromGraveyardById(gameData, cardToReturn.getId());
                 Permanent permanent = new Permanent(cardToReturn);
                 permanent.setCard(backFace);
                 permanent.setTransformed(true);

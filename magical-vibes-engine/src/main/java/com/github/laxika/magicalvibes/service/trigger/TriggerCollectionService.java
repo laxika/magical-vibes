@@ -1096,6 +1096,17 @@ public class TriggerCollectionService {
         }
     }
 
+    public void checkControllerCardsLeaveGraveyardTriggers(GameData gameData, UUID graveyardOwnerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) return;
+
+        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(graveyardOwnerId);
+
+        for (Permanent perm : battlefield) {
+            dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, ctx);
+        }
+    }
+
     public void triggerDelayedPoisonOnDeath(GameData gameData, UUID dyingCreatureCardId, UUID controllerId) {
         Integer poisonAmount = gameData.creatureGivingControllerPoisonOnDeathThisTurn.remove(dyingCreatureCardId);
         if (poisonAmount == null || poisonAmount <= 0) {

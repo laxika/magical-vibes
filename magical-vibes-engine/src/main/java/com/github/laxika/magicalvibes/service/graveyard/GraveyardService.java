@@ -95,7 +95,7 @@ public class GraveyardService {
                     int graveyardCount = graveyard.size();
                     if (graveyardCount > 0) {
                         deck.addAll(graveyard);
-                        graveyard.clear();
+                        clearGraveyard(gameData, targetPlayerId);
                         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
                         String shuffleLog = card.getName() + " was milled — " + playerName
                                 + " shuffles their graveyard (" + graveyardCount
@@ -324,5 +324,61 @@ public class GraveyardService {
             }
         }
         return null;
+    }
+
+    // ===== Cards leave graveyard triggers =====
+
+    /**
+     * Begins a batch of graveyard removals that should produce a single
+     * "one or more cards leave your graveyard" trigger event.
+     */
+    public void beginGraveyardLeaveBatch(GameData gameData) {
+        gameData.graveyardLeaveNotificationDepth++;
+    }
+
+    /**
+     * Ends a graveyard-leave batch and fires any deferred triggers.
+     */
+    public void endGraveyardLeaveBatch(GameData gameData) {
+        if (gameData.graveyardLeaveNotificationDepth <= 0) {
+            return;
+        }
+        gameData.graveyardLeaveNotificationDepth--;
+        if (gameData.graveyardLeaveNotificationDepth == 0) {
+            for (UUID ownerId : gameData.graveyardLeaveNotificationPendingOwners) {
+                triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
+            }
+            gameData.graveyardLeaveNotificationPendingOwners.clear();
+        }
+    }
+
+    /**
+     * Notifies that one or more cards left the given player's graveyard.
+     * When inside a batch ({@link #beginGraveyardLeaveBatch}), defers until the batch ends.
+     */
+    public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+        if (gameData.graveyardLeaveNotificationDepth > 0) {
+            gameData.graveyardLeaveNotificationPendingOwners.add(ownerId);
+            return;
+        }
+        triggerCollectionService.checkControllerCardsLeaveGraveyardTriggers(gameData, ownerId);
+    }
+
+    /**
+     * Clears a player's graveyard and fires a single leave-graveyard trigger if it was non-empty.
+     * The cards must already have been moved to their destination zone (exile, etc.) by the caller —
+     * this only empties the graveyard list and fires the trigger.
+     */
+    public void clearGraveyard(GameData gameData, UUID ownerId) {
+        List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
+        if (graveyard == null || graveyard.isEmpty()) {
+            return;
+        }
+        graveyard.clear();
+        Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(ownerId);
+        if (tracked != null) {
+            tracked.clear();
+        }
+        notifyCardsLeftGraveyard(gameData, ownerId);
     }
 }

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class ExileNonBasicLandGraveyardAndSameNameFromLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -73,6 +75,7 @@ public class ExileNonBasicLandGraveyardAndSameNameFromLibraryEffectHandler imple
         for (Card card : toExile) {
             gameData.addToExile(targetPlayerId, card);
         }
+        graveyardService.notifyCardsLeftGraveyard(gameData, targetPlayerId);
 
         // Collect unique card names from the exiled graveyard cards
         Set<String> exiledNames = new java.util.LinkedHashSet<>();

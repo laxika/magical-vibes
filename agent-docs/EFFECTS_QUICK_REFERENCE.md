@@ -278,6 +278,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Mill
 
 - `MillControllerEffect(int)` — self-mill N
+- `MillControllerAndMayPlayFromGraveyardThisTurnEffect()` — mill 1, grant play-from-graveyard permission until end of turn
 - `MillTargetPlayerEffect(int)` — mill target N
 - `MillTargetPlayerXEffect(int)` — target mills X, optional flashback multiplier
 - `MillTargetPlayerByChargeCountersEffect()` — mill = charge counters

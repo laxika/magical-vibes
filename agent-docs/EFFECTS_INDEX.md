@@ -572,6 +572,7 @@ Pass `null` as filter to allow any card.
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
 | `MillControllerEffect` | `(int count)` | controller mills N cards (self-mill, no target). Used by Armored Skaab |
+| `MillControllerAndMayPlayFromGraveyardThisTurnEffect` | `()` | mills 1 card from controller's library, grants permission to play that card from graveyard this turn (lands or spells, normal costs). Permission expires at end of turn. Used by Ark of Hunger |
 | `MillControllerAndDealDamageByHighestManaValueEffect` | `(int count)` | mills N cards from controller's library, deals damage to any target equal to greatest mana value among milled cards. Used by Heretic's Punishment |
 | `MillControllerCost` | `(int count)` | **Cost**: controller mills N cards as activation cost. Blocks activation if library too small. Used by Deranged Assistant |
 | `MillTargetPlayerAndBoostSelfByManaValueEffect` | `()` | target player mills one card, source creature gets +X/+X until end of turn where X is milled card's mana value. Used by Mindshrieker |

@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTargetPlayerG
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,6 +53,8 @@ class ExileTargetPlayerGraveyardEffectHandlerTest {
     private LifeSupport lifeSupport;
     @Mock
     private ExileService exileService;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
     @InjectMocks
     private GraveyardReturnSupport support;
     private GameData gd;
@@ -78,7 +82,10 @@ class ExileTargetPlayerGraveyardEffectHandlerTest {
         gd.playerHands.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPlayerGraveyardHandler = new ExileTargetPlayerGraveyardEffectHandler(gameBroadcastService);
+        GraveyardService graveyardService = new GraveyardService(
+                gameQueryService, gameBroadcastService, exileService, triggerCollectionService);
+        exileTargetPlayerGraveyardHandler =
+                new ExileTargetPlayerGraveyardEffectHandler(gameBroadcastService, graveyardService);
 
     }
 
@@ -112,6 +119,8 @@ class ExileTargetPlayerGraveyardEffectHandlerTest {
                         .containsExactlyInAnyOrder("Grizzly Bears", "Leonin Scimitar");
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("exiled") && msg.contains("2 cards")));
+                // Two cards leaving the graveyard in one event fires a single leave-graveyard trigger
+                verify(triggerCollectionService).checkControllerCardsLeaveGraveyardTriggers(gd, player2Id);
             }
 
             @Test
@@ -127,5 +136,7 @@ class ExileTargetPlayerGraveyardEffectHandlerTest {
                 assertThat(gd.getPlayerExiledCards(player2Id)).isEmpty();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("already empty")));
+                // No cards left the graveyard, so no trigger fires
+                verify(triggerCollectionService, never()).checkControllerCardsLeaveGraveyardTriggers(eq(gd), any());
             }
 }

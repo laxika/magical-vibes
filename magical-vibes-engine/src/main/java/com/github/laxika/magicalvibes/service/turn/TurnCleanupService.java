@@ -96,7 +96,16 @@ public class TurnCleanupService {
         gameData.playersSilencedThisTurn.clear();
         gameData.cardsGrantedFlashbackUntilEndOfTurn.clear();
         gameData.graveyardCreatureCastPermissionsUntilEndOfTurn.clear();
+        for (var cardId : gameData.graveyardPlayPermissionsExpireEndOfTurn) {
+            gameData.graveyardPlayPermissions.remove(cardId);
+        }
+        gameData.graveyardPlayPermissionsExpireEndOfTurn.clear();
         gameData.playersWithSpellCopyUntilEndOfTurn.clear();
+
+        // Defensive reset of graveyard-leave batching state (always balanced via try/finally,
+        // but guard against any leaked batch depth across turns).
+        gameData.graveyardLeaveNotificationDepth = 0;
+        gameData.graveyardLeaveNotificationPendingOwners.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {

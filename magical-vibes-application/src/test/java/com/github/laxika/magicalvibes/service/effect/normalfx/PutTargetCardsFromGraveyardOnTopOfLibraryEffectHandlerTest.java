@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,8 @@ class PutTargetCardsFromGraveyardOnTopOfLibraryEffectHandlerTest {
     private LifeSupport lifeSupport;
     @Mock
     private ExileService exileService;
+    @Mock
+    private GraveyardService graveyardService;
     @InjectMocks
     private GraveyardReturnSupport support;
     private GameData gd;

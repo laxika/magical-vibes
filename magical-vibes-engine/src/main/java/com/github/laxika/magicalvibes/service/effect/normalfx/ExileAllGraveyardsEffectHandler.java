@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllGraveyardsEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class ExileAllGraveyardsEffectHandler implements NormalEffectHandlerBean 
 
     private final ExileService exileService;
     private final GameBroadcastService gameBroadcastService;
+    private final GraveyardService graveyardService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,6 +39,7 @@ public class ExileAllGraveyardsEffectHandler implements NormalEffectHandlerBean 
                 totalExiled++;
             }
             graveyard.clear();
+            graveyardService.notifyCardsLeftGraveyard(gameData, playerId);
         }
 
         if (totalExiled > 0) {

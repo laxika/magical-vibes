@@ -394,13 +394,19 @@ public class MiscTriggerCollectorService {
         // 1. Exile from graveyard first
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
-            while (remaining > 0 && !graveyard.isEmpty()) {
-                Card card = graveyard.removeLast();
-                exileService.exileCard(gameData, controllerId, card);
-                String logEntry = gameData.playerIdToName.get(controllerId) + " exiles "
-                        + card.getName() + " from their graveyard.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                remaining--;
+            graveyardService.beginGraveyardLeaveBatch(gameData);
+            try {
+                while (remaining > 0 && !graveyard.isEmpty()) {
+                    Card card = graveyard.removeLast();
+                    graveyardService.notifyCardsLeftGraveyard(gameData, controllerId);
+                    exileService.exileCard(gameData, controllerId, card);
+                    String logEntry = gameData.playerIdToName.get(controllerId) + " exiles "
+                            + card.getName() + " from their graveyard.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    remaining--;
+                }
+            } finally {
+                graveyardService.endGraveyardLeaveBatch(gameData);
             }
         }
 
@@ -456,5 +462,26 @@ public class MiscTriggerCollectorService {
             log.info("Game {} - {} ran out of things to exile ({} remaining)",
                     gameData.id, gameData.playerIdToName.get(controllerId), remaining);
         }
+    }
+
+    // ── ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD ────────────────────────────
+
+    @CollectsTrigger(value = CardEffect.class, slot = EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
+    boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(match.gameData(), triggerLog);
+        log.info("Game {} - {} triggers (cards left graveyard)",
+                match.gameData().id, match.permanent().getCard().getName());
+        return true;
     }
 }

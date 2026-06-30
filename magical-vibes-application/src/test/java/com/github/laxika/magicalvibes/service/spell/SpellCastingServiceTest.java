@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingP
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -79,6 +80,9 @@ class SpellCastingServiceTest {
 
     @Mock
     private TriggerCollectionService triggerCollectionService;
+
+    @Mock
+    private GraveyardService graveyardService;
 
     @InjectMocks
     private SpellCastingService svc;
