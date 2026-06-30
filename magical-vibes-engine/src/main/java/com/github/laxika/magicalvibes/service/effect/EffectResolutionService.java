@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
@@ -147,6 +148,20 @@ public class EffectResolutionService {
                             gameData.id, entry.getCard().getName());
                 } else {
                     log.info("Game {} - Player declined may-pay ability from {} — skipping",
+                            gameData.id, entry.getCard().getName());
+                    continue;
+                }
+            }
+
+            if (effectToResolve instanceof MayPayTapPermanentsEffect mayPayTap && gameData.resolvedMayAccepted != null) {
+                boolean accepted = gameData.resolvedMayAccepted;
+                gameData.resolvedMayAccepted = null;
+                if (accepted) {
+                    effectToResolve = mayPayTap.wrapped();
+                    log.info("Game {} - Player accepted may-tap ability from {} — resolving inner effect",
+                            gameData.id, entry.getCard().getName());
+                } else {
+                    log.info("Game {} - Player declined may-tap ability from {} — skipping",
                             gameData.id, entry.getCard().getName());
                     continue;
                 }

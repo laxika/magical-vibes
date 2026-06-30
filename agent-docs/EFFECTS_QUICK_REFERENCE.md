@@ -26,6 +26,7 @@ For detailed descriptions, targeting info, and examples, see EFFECTS_INDEX.md.
 Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `MayEffect(CardEffect, String prompt)` — "you may"
 - `MayPayManaEffect(String manaCost, CardEffect, String prompt)` — "you may pay {X}"
+- `MayPayTapPermanentsEffect(TapMultiplePermanentsCost, CardEffect, String prompt)` — "you may tap N permanents"
 - `MetalcraftConditionalEffect(CardEffect)` — 3+ artifacts
 - `MorbidConditionalEffect(CardEffect)` — creature died this turn
 - `RaidConditionalEffect(CardEffect)` — attacked this turn
@@ -429,6 +430,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `CopyPermanentOnEnterEffect(PermanentPredicate, String)` + overloads — Clone-style
 - `CopySpellEffect()` or `(StackEntryPredicate)` — copy target spell; for "copy twice if cast from a graveyard" add `CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CopySpellEffect())` (Increasing Vengeance)
+- `CopyControllerCastSpellOnSpellCastEffect(CardPredicate, TapMultiplePermanentsCost)` — ON_CONTROLLER_CASTS_SPELL: copy cast instant/sorcery; optional tap cost wraps `MayPayTapPermanentsEffect` + `CopyControllerCastSpellEffect` (Aziza, Mage Tower Captain)
 - `ChangeTargetOfTargetSpellWithSingleTargetEffect()` — redirect spell
 - `ChooseNewTargetsForTargetSpellEffect()` — choose new targets
 

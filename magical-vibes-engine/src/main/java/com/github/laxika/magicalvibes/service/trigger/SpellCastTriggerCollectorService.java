@@ -11,7 +11,10 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
@@ -200,6 +203,49 @@ public class SpellCastTriggerCollectorService {
     private boolean handleControllerSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         return handleGenericSpellCastTrigger(match, trigger, sc.spellCard(), sc.castingPlayerId());
+    }
+
+    @CollectsTrigger(value = CopyControllerCastSpellOnSpellCastEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)
+    private boolean handleCopyControllerCastSpellOnSpellCast(TriggerMatchContext match,
+            CopyControllerCastSpellOnSpellCastEffect trigger, TriggerContext ctx) {
+        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
+
+        if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                match.gameData(), sc.castingPlayerId())) {
+            return false;
+        }
+
+        StackEntry spellEntry = null;
+        for (StackEntry se : match.gameData().stack) {
+            if (se.getCard().getId().equals(sc.spellCard().getId())) {
+                spellEntry = se;
+                break;
+            }
+        }
+        if (spellEntry == null) return false;
+
+        StackEntry snapshot = new StackEntry(spellEntry);
+        CopyControllerCastSpellEffect copyEffect =
+                new CopyControllerCastSpellEffect(snapshot, sc.castingPlayerId());
+
+        CardEffect resolutionEffect = trigger.tapCost() != null
+                ? new MayPayTapPermanentsEffect(
+                        trigger.tapCost(),
+                        copyEffect,
+                        "Tap " + trigger.tapCost().count() + " untapped creatures you control to copy "
+                                + sc.spellCard().getName() + "?")
+                : copyEffect;
+
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(resolutionEffect)),
+                null,
+                match.permanent().getId()
+        ));
+        return true;
     }
 
     @CollectsTrigger(value = ChosenSubtypeSpellCastTriggerEffect.class, slot = EffectSlot.ON_CONTROLLER_CASTS_SPELL)

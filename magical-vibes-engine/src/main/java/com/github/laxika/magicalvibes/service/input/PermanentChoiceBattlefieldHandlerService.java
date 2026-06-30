@@ -70,6 +70,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final DestructionSupport destructionSupport;
     private final LifeSupport lifeSupport;
     private final LibrarySearchSupport librarySearchSupport;
+    private final MayAbilityTapCostService mayAbilityTapCostService;
 
     public void handleCloneCopy(GameData gameData, UUID permanentId) {
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, permanentId);
@@ -270,6 +271,11 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleGraveyardAbilityCostChoice(GameData gameData, Player player, UUID permanentId, PermanentChoiceContext.GraveyardAbilityCostChoice graveyardCostChoice) {
         abilityActivationService.completeGraveyardAbilityCostChoice(gameData, player, graveyardCostChoice, permanentId);
+    }
+
+    public void handleMayAbilityTapCostChoice(GameData gameData, Player player, UUID permanentId,
+                                              PermanentChoiceContext.MayAbilityTapCostChoice mayTapCostChoice) {
+        mayAbilityTapCostService.completeTapCostChoice(gameData, player, mayTapCostChoice, permanentId);
     }
 
     public void handleBounceCreature(GameData gameData, UUID permanentId) {

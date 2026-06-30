@@ -90,6 +90,7 @@ public class MayAbilityHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final DestructionSupport destructionSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
+    private final MayAbilityTapCostService mayAbilityTapCostService;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
@@ -732,7 +733,13 @@ public class MayAbilityHandlerService {
             return;
         }
         if (accepted) {
-            if (ability.manaCost() != null) {
+            if (ability.tapPermanentsCost() != null) {
+                // beginTapCostPayment either awaits player input or (on auto-pay / failure
+                // to pay) already resumes stack resolution itself — nothing left to do here.
+                mayAbilityTapCostService.beginTapCostPayment(
+                        gameData, player, ability.tapPermanentsCost(), ability.sourcePermanentId());
+                return;
+            } else if (ability.manaCost() != null) {
                 ManaCost cost = new ManaCost(ability.manaCost());
                 ManaPool pool = gameData.playerManaPools.get(player.getId());
                 if (!cost.canPay(pool)) {

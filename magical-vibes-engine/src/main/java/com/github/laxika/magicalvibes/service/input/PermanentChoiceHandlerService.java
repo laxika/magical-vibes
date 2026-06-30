@@ -69,6 +69,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleActivatedAbilityCostChoice(gameData, player, permanentId, costChoice);
         } else if (context instanceof PermanentChoiceContext.GraveyardAbilityCostChoice graveyardCostChoice) {
             battlefieldHandler.handleGraveyardAbilityCostChoice(gameData, player, permanentId, graveyardCostChoice);
+        } else if (context instanceof PermanentChoiceContext.MayAbilityTapCostChoice mayTapCostChoice) {
+            battlefieldHandler.handleMayAbilityTapCostChoice(gameData, player, permanentId, mayTapCostChoice);
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             battlefieldHandler.handleBounceCreature(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf bounceOrSac) {

@@ -154,6 +154,12 @@ public sealed interface PermanentChoiceContext {
                                       CardEffect costEffect,
                                       int remaining) implements PermanentChoiceContext {}
 
+    /** Tap-cost payment for a resolution-time may ability (e.g. Aziza, Mage Tower Captain). */
+    record MayAbilityTapCostChoice(UUID playerId,
+                                   UUID sourcePermanentId,
+                                   com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost costEffect,
+                                   int remaining) implements PermanentChoiceContext {}
+
     /** Spell-cast trigger that needs to target a card in a graveyard (e.g. Teshar, Ancestor's Apostle). */
     record SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
