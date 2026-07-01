@@ -1635,10 +1635,88 @@ public class SpellCastingService {
             effectsToResolve = List.of();
         }
 
-        gameData.stack.add(new StackEntry(
-                entryType, card, playerId, card.getName(),
-                effectsToResolve, effectiveXValue, targetId, null
-        ));
+        ReturnCardFromGraveyardEffect graveyardReturnEffect = effectsToResolve.stream()
+                .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
+                .map(e -> (ReturnCardFromGraveyardEffect) e)
+                .findFirst()
+                .orElse(null);
+        boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
+        boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
+                && effectsToResolve.stream().anyMatch(CardEffect::canTargetGraveyard);
+
+        ReturnTargetCardFromExileToHandEffect exileReturnEffect = effectsToResolve.stream()
+                .filter(e -> e instanceof ReturnTargetCardFromExileToHandEffect)
+                .map(e -> (ReturnTargetCardFromExileToHandEffect) e)
+                .findFirst()
+                .orElse(null);
+        boolean needsExileTargeting = exileReturnEffect != null;
+
+        if (targetId == null && EffectResolution.needsTarget(card)
+                && !EffectResolution.needsSpellTarget(effectsToResolve)
+                && !EffectResolution.needsDamageDistribution(card)
+                && !(needsSingleGraveyardTargeting || needsGraveyardEffectTargeting || needsExileTargeting)) {
+            throw new IllegalStateException("Spell requires a target");
+        }
+
+        if (targetId != null && EffectResolution.needsSpellTarget(effectsToResolve)) {
+            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
+        } else if (targetId != null && needsExileTargeting) {
+            if (exileReturnEffect.ownedOnly()) {
+                boolean inControllersExile = gameData.getPlayerExiledCards(playerId)
+                        .stream()
+                        .anyMatch(c -> c.getId().equals(targetId));
+                if (!inControllersExile) {
+                    throw new IllegalStateException("Target must be an exiled card you own");
+                }
+            }
+            targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.EXILE);
+        } else if (targetId != null && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting)) {
+            if (needsSingleGraveyardTargeting
+                    && graveyardReturnEffect.source() == GraveyardSearchScope.CONTROLLERS_GRAVEYARD) {
+                String filterLabel = CardPredicateUtils.describeFilter(graveyardReturnEffect.filter());
+                boolean inControllersGraveyard = gameData.playerGraveyards
+                        .getOrDefault(playerId, List.of())
+                        .stream()
+                        .anyMatch(c -> c.getId().equals(targetId));
+                if (!inControllersGraveyard) {
+                    throw new IllegalStateException("Target must be a " + filterLabel + " in your graveyard");
+                }
+            }
+            targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD, effectiveXValue);
+        } else if (targetId != null && EffectResolution.needsTarget(card)) {
+            targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, true);
+        } else if (EffectResolution.needsTarget(card) && targetId == null
+                && (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting || needsExileTargeting)) {
+            throw new IllegalStateException("Spell requires a target");
+        }
+
+        StackEntry stackEntry;
+        if (EffectResolution.needsSpellTarget(effectsToResolve) && targetId != null) {
+            stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    effectsToResolve, effectiveXValue, targetId,
+                    null, Map.of(), Zone.STACK, List.of(), List.of()
+            );
+        } else if (needsExileTargeting) {
+            stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    effectsToResolve, effectiveXValue, targetId, null,
+                    Map.of(), Zone.EXILE, List.of(), List.of()
+            );
+        } else if (needsSingleGraveyardTargeting || needsGraveyardEffectTargeting) {
+            stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    effectsToResolve, effectiveXValue, targetId, null,
+                    Map.of(), Zone.GRAVEYARD, List.of(), List.of()
+            );
+        } else {
+            stackEntry = new StackEntry(
+                    entryType, card, playerId, card.getName(),
+                    effectsToResolve, effectiveXValue, targetId, null
+            );
+        }
+        stackEntry.setSourceZone(Zone.EXILE);
+        gameData.stack.add(stackEntry);
 
         // Use null hand list — card was already removed from exile
         gameData.recordSpellCast(playerId, card);
