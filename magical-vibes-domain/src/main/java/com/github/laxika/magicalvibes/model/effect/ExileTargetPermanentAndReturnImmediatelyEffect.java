@@ -11,14 +11,26 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  */
 public record ExileTargetPermanentAndReturnImmediatelyEffect(
         CardSubtype bonusSubtype,
-        CardEffect bonusEffect
+        CardEffect bonusEffect,
+        int plusOnePlusOneCountersOnReturn
 ) implements CardEffect {
 
     /**
      * Plain flicker with no conditional bonus.
      */
     public ExileTargetPermanentAndReturnImmediatelyEffect() {
-        this(null, null);
+        this(null, null, 0);
+    }
+
+    public ExileTargetPermanentAndReturnImmediatelyEffect(CardSubtype bonusSubtype, CardEffect bonusEffect) {
+        this(bonusSubtype, bonusEffect, 0);
+    }
+
+    /**
+     * Flicker that returns the permanent with +1/+1 counters (Daydream-style).
+     */
+    public ExileTargetPermanentAndReturnImmediatelyEffect(int plusOnePlusOneCountersOnReturn) {
+        this(null, null, plusOnePlusOneCountersOnReturn);
     }
 
     @Override

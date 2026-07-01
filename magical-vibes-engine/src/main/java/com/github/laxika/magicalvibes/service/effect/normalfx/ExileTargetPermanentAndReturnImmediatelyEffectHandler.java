@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -55,6 +56,10 @@ public class ExileTargetPermanentAndReturnImmediatelyEffectHandler implements No
         // Immediately return from exile as a new permanent
         gameData.removeFromExile(card.getId());
         Permanent returned = new Permanent(card);
+        if (e.plusOnePlusOneCountersOnReturn() > 0
+                && !gameQueryService.cantHaveCounters(gameData, returned)) {
+            returned.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, e.plusOnePlusOneCountersOnReturn());
+        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, returned);
 
         String logEntry = card.getName() + " is exiled by " + entry.getCard().getName()
