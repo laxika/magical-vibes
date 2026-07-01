@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -396,6 +398,34 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+        }
+    }
+
+    // ===== ON_CONTROLLER_GAINS_LIFE — PutCountersOnSelfEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — PutCountersOnSelfEffect")
+    class LifeGainPutCountersOnSelf {
+
+        @Test
+        @DisplayName("puts triggered ability on stack and returns true")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Comforting Counsel");
+            var effect = new PutCountersOnSelfEffect(CounterType.GROWTH);
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getDescription()).contains("Comforting Counsel");
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
         }
     }
 

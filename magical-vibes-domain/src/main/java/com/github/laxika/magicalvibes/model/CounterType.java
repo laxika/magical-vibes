@@ -6,6 +6,7 @@ public enum CounterType {
     AWAKENING,
     CHARGE,
     EYEBALL,
+    GROWTH,
     HATCHLING,
     LANDMARK,
     LOYALTY,

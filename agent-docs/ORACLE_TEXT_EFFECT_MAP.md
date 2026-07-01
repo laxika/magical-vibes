@@ -139,6 +139,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "each opponent loses N life" | `EachOpponentLosesLifeEffect(N)` | SPELL/trigger | |
 | "each opponent loses N life and you gain life equal to the life lost" | `EachOpponentLosesLifeAndControllerGainsLifeLostEffect(N)` | SPELL | Drain |
 | "whenever you gain life, draw a card" | `DrawCardEffect(1)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `d/DrogskolReaver.java` |
+| "whenever you gain life, put a growth counter on this enchantment" | `PutCountersOnSelfEffect(CounterType.GROWTH)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `c/ComfortingCounsel.java` |
+| "as long as there are five or more growth counters on this enchantment, creatures you control get +3/+3" | `SourceCounterThresholdConditionalEffect(5, CounterType.GROWTH, StaticBoostEffect(3, 3, OWN_CREATURES))` | STATIC | |
 | "double target player's life total" | `DoubleTargetPlayerLifeEffect()` | SPELL | |
 | "players can't gain life" | `PlayersCantGainLifeEffect()` | STATIC | |
 

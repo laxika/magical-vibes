@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControl
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
@@ -203,6 +204,28 @@ public class MiscTriggerCollectorService {
         String triggerLog = cardName + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);
         log.info("Game {} - {} triggers on life gain", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSelfEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainPutCountersOnSelf(TriggerMatchContext match,
+            PutCountersOnSelfEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        String triggerLog = cardName + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} triggers on life gain (put counter on self)", gameData.id, cardName);
         return true;
     }
 

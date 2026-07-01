@@ -43,6 +43,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `OpponentControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — opponent controls matching
 - `HasAttackerConditionalEffect(PermanentPredicate, CardEffect)` — one or more matching attackers
 - `ControllerGraveyardCardThresholdConditionalEffect(int, CardPredicate, CardEffect)` — graveyard threshold
+- `SourceCounterThresholdConditionalEffect(int, CounterType, CardEffect)` — source counter threshold (e.g. 5+ growth counters)
 - `EnteringCreatureMinPowerConditionalEffect(int, CardEffect)` — entering power >= N
 - `EnteringCreatureMaxPowerConditionalEffect(int, CardEffect)` — entering power <= N
 
