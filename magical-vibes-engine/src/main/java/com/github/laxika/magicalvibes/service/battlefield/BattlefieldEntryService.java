@@ -1,71 +1,51 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMaxPowerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -77,7 +57,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Component
@@ -87,9 +66,10 @@ public class BattlefieldEntryService {
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final CardViewFactory cardViewFactory;
-    private final TargetLegalityService targetLegalityService;
     private final PermanentCopierService permanentCopierService;
+    private final EnterTriggerScanService enterTriggerScanService;
+    private final GraveyardTargetingService graveyardTargetingService;
+    private final ETBTokenTargetService etbTokenTargetService;
 
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent) {
@@ -616,7 +596,7 @@ public class BattlefieldEntryService {
                         List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                         UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
 
-                        if (card.getSpellTargets().size() > 1 || hasGroupWithMaxTargetsGreaterThanOne(card)) {
+                        if (card.getSpellTargets().size() > 1 || etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(card)) {
                             // Multi-target ETB on a token copy (e.g. Burning Sun's Avatar, or a
                             // single group with "up to N" targets): choose slot-by-slot at
                             // trigger time, accumulating into targetIds.
@@ -651,21 +631,21 @@ public class BattlefieldEntryService {
                 for (CardEffect effect : graveyardExileEffects) {
                     ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
                     for (int t = 0; t < 1 + extraWizardTriggers; t++) {
-                        handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
+                        graveyardTargetingService.handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
                     }
                 }
 
                 // Handle graveyard cast effects: target instant/sorcery in opponent's graveyard
                 for (CardEffect effect : graveyardCastEffects) {
                     for (int t = 0; t < 1 + extraWizardTriggers; t++) {
-                        handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
+                        graveyardTargetingService.handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
                     }
                 }
 
                 // Handle graveyard flashback-grant effects: target instant/sorcery in controller's graveyard
                 for (CardEffect effect : graveyardFlashbackEffects) {
                     for (int t = 0; t < 1 + extraWizardTriggers; t++) {
-                        handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
+                        graveyardTargetingService.handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
                     }
                 }
 
@@ -680,1102 +660,29 @@ public class BattlefieldEntryService {
                 }
                 if (!gameData.pendingETBSpellTargetTriggers.isEmpty()
                         && !gameData.interaction.isAwaitingInput()) {
-                    processNextETBSpellTargetTrigger(gameData);
+                    etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
                 }
                 if (!gameData.pendingETBTokenTargetTriggers.isEmpty()
                         && !gameData.interaction.isAwaitingInput()) {
-                    processNextETBTokenTargetTrigger(gameData);
+                    etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
                 }
                 if (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()
                         && !gameData.interaction.isAwaitingInput()) {
-                    processNextETBTokenMultiTargetTrigger(gameData);
+                    etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
                 }
             }
         }
 
-        checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers);
-        checkAllyArtifactEntersTriggers(gameData, controllerId, card);
-        checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
-        checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
-        checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
-        checkAnyCreatureEntersTriggers(gameData, controllerId, card);
-        checkEntersFromGraveyardTriggers(gameData, controllerId, card);
+        enterTriggerScanService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers);
+        enterTriggerScanService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
+        enterTriggerScanService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
+        enterTriggerScanService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
+        enterTriggerScanService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
+        enterTriggerScanService.checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+        enterTriggerScanService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (card.hasType(CardType.LAND)) {
-            checkOpponentLandEntersTriggers(gameData, controllerId, card);
-            checkAllyLandEntersTriggers(gameData, controllerId, card);
+            enterTriggerScanService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
+            enterTriggerScanService.checkAllyLandEntersTriggers(gameData, controllerId, card);
         }
-    }
-
-    /**
-     * Fires "whenever this creature or another creature enters from your graveyard" triggers
-     * (e.g. Flayer of the Hatebound). The entering creature carries an
-     * {@code enteredFromGraveyardOwnerId} set when it was put onto the battlefield from a graveyard;
-     * this method scans every battlefield for permanents with
-     * {@link EffectSlot#ON_CREATURE_ENTERS_FROM_GRAVEYARD} controlled by that graveyard's owner and
-     * routes each effect into the any-target trigger pipeline, with the entering creature as the
-     * damage source.
-     */
-    void checkEntersFromGraveyardTriggers(GameData gameData, UUID enteringControllerId, Card enteringCreature) {
-        if (enteringCreature.getToughness() == null) return;
-
-        Permanent enteringPermanent = null;
-        List<Permanent> controllerBf = gameData.playerBattlefields.get(enteringControllerId);
-        if (controllerBf != null) {
-            for (Permanent p : controllerBf) {
-                if (p.getCard() == enteringCreature) {
-                    enteringPermanent = p;
-                    break;
-                }
-            }
-        }
-        if (enteringPermanent == null || enteringPermanent.getEnteredFromGraveyardOwnerId() == null) {
-            return;
-        }
-
-        UUID graveyardOwnerId = enteringPermanent.getEnteredFromGraveyardOwnerId();
-        UUID enteringPermanentId = enteringPermanent.getId();
-
-        gameData.forEachPermanent((playerId, perm) -> {
-            // "your graveyard" — the watching permanent's controller must own the graveyard the creature left.
-            if (!playerId.equals(graveyardOwnerId)) return;
-
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD);
-            if (effects == null || effects.isEmpty()) return;
-
-            for (CardEffect effect : effects) {
-                gameData.pendingEntersFromGraveyardTriggerTargets.add(
-                        new PermanentChoiceContext.EntersFromGraveyardTriggerTarget(
-                                perm.getCard(), playerId, new ArrayList<>(List.of(effect)), enteringPermanentId));
-                String triggerLog = perm.getCard().getName() + "'s ability triggers ("
-                        + enteringCreature.getName() + " entered from a graveyard).";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                log.info("Game {} - {} triggers ({} entered from graveyard)",
-                        gameData.id, perm.getCard().getName(), enteringCreature.getName());
-            }
-        });
-    }
-
-    /**
-     * Processes the next pending ETB trigger that targets a spell on the stack.
-     * Collects valid spells matching the trigger's filter and presents a choice
-     * to the controller. If no valid targets exist, the trigger is skipped.
-     */
-    public void processNextETBSpellTargetTrigger(GameData gameData) {
-        while (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
-            PermanentChoiceContext.ETBSpellTargetTrigger pending = gameData.pendingETBSpellTargetTriggers.peekFirst();
-
-            // Collect valid spells from the stack
-            List<UUID> validSpellCardIds = new ArrayList<>();
-            for (StackEntry se : gameData.stack) {
-                StackEntryType type = se.getEntryType();
-                if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL
-                        && type != StackEntryType.CREATURE_SPELL && type != StackEntryType.ENCHANTMENT_SPELL
-                        && type != StackEntryType.ARTIFACT_SPELL && type != StackEntryType.PLANESWALKER_SPELL) {
-                    continue; // skip triggered/activated abilities
-                }
-                if (pending.spellFilter() != null
-                        && !targetLegalityService.matchesStackEntryPredicate(gameData, se, pending.spellFilter(), pending.controllerId())) {
-                    continue;
-                }
-                validSpellCardIds.add(se.getCard().getId());
-            }
-
-            if (validSpellCardIds.isEmpty()) {
-                gameData.pendingETBSpellTargetTriggers.removeFirst();
-                String etbLog = pending.sourceCard().getName() + "'s enter-the-battlefield ability has no valid spell targets.";
-                gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                log.info("Game {} - {} ETB spell-target trigger skipped (no valid targets)", gameData.id, pending.sourceCard().getName());
-                continue;
-            }
-
-            gameData.pendingETBSpellTargetTriggers.removeFirst();
-            gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
-                    validSpellCardIds, List.of(),
-                    pending.sourceCard().getName() + "'s ability — Choose target spell.");
-
-            String logEntry = pending.sourceCard().getName() + "'s ETB ability triggers — choose a target spell.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} ETB spell-target trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
-            return;
-        }
-    }
-
-    /**
-     * Processes the next pending ETB trigger on a token copy that needs to choose a target
-     * (CR 603.3). Computes valid player/permanent targets from the effects' target types
-     * and the card's target filter, then prompts the controller. If no legal targets exist,
-     * the trigger is removed from the stack (CR 603.6c).
-     */
-    public void processNextETBTokenTargetTrigger(GameData gameData) {
-        while (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
-            PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.pendingETBTokenTargetTriggers.peekFirst();
-
-            boolean canTargetPlayer = pending.effects().stream().anyMatch(CardEffect::canTargetPlayer);
-            boolean canTargetPermanent = pending.effects().stream().anyMatch(CardEffect::canTargetPermanent);
-
-            List<UUID> validPlayerTargets = new ArrayList<>();
-            if (canTargetPlayer) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    if (matchesPlayerTargetFilter(pending.controllerId(), pid, pending.targetFilter())) {
-                        validPlayerTargets.add(pid);
-                    }
-                }
-            }
-
-            List<UUID> validPermanentTargets = new ArrayList<>();
-            if (canTargetPermanent) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (matchesPermanentTargetFilter(gameData, p, pending.targetFilter(), pending.effects())) {
-                            validPermanentTargets.add(p.getId());
-                        }
-                    }
-                }
-            }
-
-            if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
-                gameData.pendingETBTokenTargetTriggers.removeFirst();
-                String etbLog = pending.sourceCard().getName() + "'s enter-the-battlefield ability has no valid targets.";
-                gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                log.info("Game {} - {} ETB token-target trigger skipped (no valid targets)",
-                        gameData.id, pending.sourceCard().getName());
-                continue;
-            }
-
-            gameData.pendingETBTokenTargetTriggers.removeFirst();
-            gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
-                    validPermanentTargets, validPlayerTargets,
-                    pending.sourceCard().getName() + "'s ability — Choose a target.");
-
-            log.info("Game {} - {} ETB token-target trigger awaiting target selection",
-                    gameData.id, pending.sourceCard().getName());
-            return;
-        }
-    }
-
-    /**
-     * Processes the next pending multi-target ETB trigger on a token copy (CR 603.3).
-     * Walks the source card's target groups slot-by-slot: each group accepts up to
-     * {@code maxTargets} targets before advancing to the next group. Valid player/permanent
-     * targets are computed from the group's filter and the effects mapped to that group.
-     * A mandatory group that can't reach its {@code minTargets} causes the trigger to be
-     * removed (CR 603.6c); an optional group with no (remaining) legal targets auto-advances.
-     * Once a group's minimum is met, the controller may end the group early by selecting
-     * their own player ID as the "done" signal.
-     */
-    public void processNextETBTokenMultiTargetTrigger(GameData gameData) {
-        while (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()) {
-            PermanentChoiceContext.ETBTokenMultiTargetTrigger pending = gameData.pendingETBTokenMultiTargetTriggers.peekFirst();
-            Card card = pending.sourceCard();
-            List<SpellTarget> groups = card.getSpellTargets();
-            int idx = pending.currentGroupIndex();
-            int chosenInGroup = pending.chosenInCurrentGroup();
-
-            // All groups satisfied → push final ETB onto the stack.
-            if (idx >= groups.size()) {
-                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
-                pushMultiTargetETBStackEntry(gameData, pending);
-                continue;
-            }
-
-            SpellTarget group = groups.get(idx);
-
-            // Group's max targets reached → advance to next group.
-            if (chosenInGroup >= group.getMaxTargets()) {
-                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
-                gameData.pendingETBTokenMultiTargetTriggers.addFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                        pending.chosenTargetsSoFar(), idx + 1, 0));
-                continue;
-            }
-
-            List<CardEffect> groupEffects = effectsForTargetGroup(card, pending.effects(), group.getIndex());
-            boolean canTargetPlayer = groupEffects.stream().anyMatch(CardEffect::canTargetPlayer);
-            boolean canTargetPermanent = groupEffects.stream().anyMatch(CardEffect::canTargetPermanent);
-
-            List<UUID> validPlayerTargets = new ArrayList<>();
-            if (canTargetPlayer) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    if (pending.chosenTargetsSoFar().contains(pid)) continue;
-                    if (matchesPlayerTargetFilter(pending.controllerId(), pid, group.getFilter())) {
-                        validPlayerTargets.add(pid);
-                    }
-                }
-            }
-
-            List<UUID> validPermanentTargets = new ArrayList<>();
-            if (canTargetPermanent) {
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                    if (battlefield == null) continue;
-                    for (Permanent p : battlefield) {
-                        if (pending.chosenTargetsSoFar().contains(p.getId())) continue;
-                        if (matchesPermanentTargetFilter(gameData, p, group.getFilter(), groupEffects)) {
-                            validPermanentTargets.add(p.getId());
-                        }
-                    }
-                }
-            }
-
-            boolean noLegalTargets = validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty();
-
-            if (noLegalTargets) {
-                if (chosenInGroup < group.getMinTargets()) {
-                    // Can't meet the mandatory minimum → trigger removed (CR 603.6c).
-                    gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
-                    String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
-                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                    log.info("Game {} - {} ETB multi-target trigger skipped (no valid targets for mandatory group {} at slot {})",
-                            gameData.id, card.getName(), idx, chosenInGroup);
-                    continue;
-                }
-                // Minimum met (or none required) → advance to next group.
-                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
-                gameData.pendingETBTokenMultiTargetTriggers.addFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                        pending.chosenTargetsSoFar(), idx + 1, 0));
-                continue;
-            }
-
-            // Once the group's minimum is met, let the controller end the group early by
-            // selecting their own player ID (CR 601.2c — "up to" groups can choose fewer).
-            boolean minMet = chosenInGroup >= group.getMinTargets();
-            if (minMet && !validPlayerTargets.contains(pending.controllerId())) {
-                validPlayerTargets.add(pending.controllerId());
-            }
-
-            gameData.interaction.setPermanentChoiceContext(pending);
-            String slotLabel = "target " + (idx + 1)
-                    + (group.getMaxTargets() > 1 ? "." + (chosenInGroup + 1) : "");
-            String prompt = minMet
-                    ? card.getName() + "'s ability — Choose " + slotLabel + " (or yourself to stop)."
-                    : card.getName() + "'s ability — Choose " + slotLabel + ".";
-            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
-                    validPermanentTargets, validPlayerTargets, prompt);
-
-            log.info("Game {} - {} ETB multi-target trigger awaiting target (group {} slot {})",
-                    gameData.id, card.getName(), idx, chosenInGroup);
-            return;
-        }
-    }
-
-    /**
-     * Pushes the final ETB triggered ability onto the stack after all target groups
-     * on a multi-target token copy have been satisfied.
-     */
-    private void pushMultiTargetETBStackEntry(GameData gameData,
-                                               PermanentChoiceContext.ETBTokenMultiTargetTrigger pending) {
-        Card card = pending.sourceCard();
-        StackEntry etbEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                pending.controllerId(),
-                card.getName() + "'s ETB ability",
-                new ArrayList<>(pending.effects()),
-                0,
-                null,
-                pending.sourcePermanentId(),
-                Map.of(),
-                null,
-                List.of(),
-                new ArrayList<>(pending.chosenTargetsSoFar())
-        );
-        gameData.stack.add(etbEntry);
-        String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-        gameBroadcastService.logAndBroadcast(gameData, etbLog);
-        log.info("Game {} - {} ETB multi-target ability pushed onto stack", gameData.id, card.getName());
-    }
-
-    private boolean hasGroupWithMaxTargetsGreaterThanOne(Card card) {
-        return card.getSpellTargets().stream().anyMatch(g -> g.getMaxTargets() > 1);
-    }
-
-    private List<CardEffect> effectsForTargetGroup(Card card, List<CardEffect> effects, int groupIndex) {
-        List<CardEffect> matched = new ArrayList<>();
-        for (CardEffect effect : effects) {
-            if (card.getEffectTargetIndex(effect) == groupIndex) {
-                matched.add(effect);
-            }
-        }
-        return matched;
-    }
-
-    private boolean matchesPlayerTargetFilter(UUID controllerId, UUID candidatePlayerId, TargetFilter targetFilter) {
-        if (!(targetFilter instanceof PlayerPredicateTargetFilter playerFilter)) {
-            // No player-specific filter → any player is a legal player target.
-            return true;
-        }
-        PlayerPredicate predicate = playerFilter.predicate();
-        if (predicate instanceof PlayerRelationPredicate relation) {
-            return switch (relation.relation()) {
-                case ANY -> true;
-                case SELF -> controllerId != null && controllerId.equals(candidatePlayerId);
-                case OPPONENT -> controllerId != null && !controllerId.equals(candidatePlayerId);
-            };
-        }
-        return true;
-    }
-
-    private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
-                                                  TargetFilter targetFilter, List<CardEffect> effects) {
-        if (targetFilter == null) {
-            // No card-level filter: default to creatures when an effect can target permanents
-            // (matches MTG's most common targeted ETB pattern — target creature).
-            return gameQueryService.isCreature(gameData, permanent);
-        }
-        if (targetFilter instanceof PlayerPredicateTargetFilter) {
-            // Filter targets players only; no permanent matches.
-            return false;
-        }
-        return gameQueryService.checkTargetFilter(targetFilter, permanent).isEmpty();
-    }
-
-    private void handleGraveyardExileETBTargeting(GameData gameData, UUID controllerId, Card card,
-                                                   List<CardEffect> allEffects, ExileCardsFromGraveyardEffect exile) {
-        // Collect all cards from all graveyards
-        List<UUID> allCardIds = new ArrayList<>();
-        List<CardView> allCardViews = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card graveyardCard : graveyard) {
-                allCardIds.add(graveyardCard.getId());
-                allCardViews.add(cardViewFactory.create(graveyardCard));
-            }
-        }
-
-        if (allCardIds.isEmpty()) {
-            // No graveyard cards: put ability on stack with 0 targets (just gains life on resolution)
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s ETB ability",
-                    new ArrayList<>(allEffects),
-                    List.of()
-            ));
-            String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, etbLog);
-            log.info("Game {} - {} ETB ability pushed onto stack with 0 targets (no graveyard cards)", gameData.id, card.getName());
-        } else {
-            // Prompt player to choose targets before putting ability on the stack
-            int maxTargets = Math.min(exile.maxTargets(), allCardIds.size());
-            gameData.graveyardTargetOperation.card = card;
-            gameData.graveyardTargetOperation.controllerId = controllerId;
-            gameData.graveyardTargetOperation.effects = new ArrayList<>(allEffects);
-            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, maxTargets,
-                    "Choose up to " + maxTargets + " target card" + (maxTargets != 1 ? "s" : "") + " from graveyards to exile.");
-        }
-    }
-
-    /**
-     * Handles graveyard targeting for beginning-of-combat triggered abilities that exile up to one
-     * target card from a graveyard (e.g. Ascendant Dustspeaker).
-     */
-    public void handleBeginningOfCombatGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
-            List<CardEffect> effects, UUID sourcePermanentId,
-            ExileTargetCardFromGraveyardEffect exileEffect) {
-        CardType requiredType = exileEffect.requiredType();
-        boolean anyGraveyard = exileEffect.canTargetAnyGraveyard();
-
-        List<UUID> allCardIds = new ArrayList<>();
-        List<CardView> allCardViews = new ArrayList<>();
-        List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(controllerId);
-        for (UUID playerId : searchPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card graveyardCard : graveyard) {
-                if (requiredType == null || graveyardCard.hasType(requiredType)) {
-                    allCardIds.add(graveyardCard.getId());
-                    allCardViews.add(cardViewFactory.create(graveyardCard));
-                }
-            }
-        }
-
-        String description = card.getName() + "'s beginning of combat ability";
-
-        if (allCardIds.isEmpty()) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    description,
-                    new ArrayList<>(effects),
-                    0,
-                    null,
-                    sourcePermanentId,
-                    Map.of(),
-                    null,
-                    List.of(),
-                    List.of()
-            ));
-            String logEntry = description + " triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} beginning-of-combat trigger pushed onto stack with 0 graveyard targets",
-                    gameData.id, card.getName());
-            return;
-        }
-
-        gameData.graveyardTargetOperation.card = card;
-        gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
-        gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, allCardIds, allCardViews, 1,
-                "Choose up to one target card from a graveyard to exile.");
-
-        String logEntry = description + " triggers — choose a graveyard target.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} beginning-of-combat trigger awaiting graveyard target selection",
-                gameData.id, card.getName());
-    }
-
-    private void handleGraveyardCastETBTargeting(GameData gameData, UUID controllerId, Card card,
-                                                  List<CardEffect> effects) {
-        CastTargetInstantOrSorceryFromGraveyardEffect castEffect = effects.stream()
-                .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)
-                .map(e -> (CastTargetInstantOrSorceryFromGraveyardEffect) e)
-                .findFirst().orElseThrow();
-        GraveyardSearchScope scope = castEffect.scope();
-
-        // Collect instant and sorcery cards from graveyards matching the scope
-        List<UUID> eligibleCardIds = new ArrayList<>();
-        List<CardView> cardViews = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            boolean include = switch (scope) {
-                case OPPONENT_GRAVEYARD -> !playerId.equals(controllerId);
-                case CONTROLLERS_GRAVEYARD -> playerId.equals(controllerId);
-                case ALL_GRAVEYARDS -> true;
-            };
-            if (!include) continue;
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card graveyardCard : graveyard) {
-                if (graveyardCard.hasType(CardType.INSTANT) || graveyardCard.hasType(CardType.SORCERY)) {
-                    eligibleCardIds.add(graveyardCard.getId());
-                    cardViews.add(cardViewFactory.create(graveyardCard));
-                }
-            }
-        }
-
-        if (eligibleCardIds.isEmpty()) {
-            // No valid targets — trigger doesn't go on the stack
-            String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
-            gameBroadcastService.logAndBroadcast(gameData, etbLog);
-            log.info("Game {} - {} ETB graveyard cast has no valid targets", gameData.id, card.getName());
-        } else {
-            // Prompt player to choose a target before putting ability on the stack
-            gameData.graveyardTargetOperation.card = card;
-            gameData.graveyardTargetOperation.controllerId = controllerId;
-            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
-            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, eligibleCardIds, cardViews, 1,
-                    "Choose target instant or sorcery card from a graveyard to cast.");
-        }
-    }
-
-    private void handleGrantFlashbackETBTargeting(GameData gameData, UUID controllerId, Card card,
-                                                     List<CardEffect> effects) {
-        GrantFlashbackToTargetGraveyardCardEffect flashbackEffect = effects.stream()
-                .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect)
-                .map(e -> (GrantFlashbackToTargetGraveyardCardEffect) e)
-                .findFirst().orElseThrow();
-
-        // Collect eligible cards from controller's own graveyard
-        List<UUID> eligibleCardIds = new ArrayList<>();
-        List<CardView> cardViews = new ArrayList<>();
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (graveyard != null) {
-            for (Card graveyardCard : graveyard) {
-                boolean matchesType = false;
-                for (CardType type : flashbackEffect.cardTypes()) {
-                    if (graveyardCard.hasType(type)) {
-                        matchesType = true;
-                        break;
-                    }
-                }
-                if (matchesType) {
-                    eligibleCardIds.add(graveyardCard.getId());
-                    cardViews.add(cardViewFactory.create(graveyardCard));
-                }
-            }
-        }
-
-        if (eligibleCardIds.isEmpty()) {
-            // No valid targets — trigger doesn't go on the stack
-            String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
-            gameBroadcastService.logAndBroadcast(gameData, etbLog);
-            log.info("Game {} - {} ETB grant flashback has no valid targets", gameData.id, card.getName());
-        } else {
-            // Prompt player to choose a target before putting ability on the stack
-            gameData.graveyardTargetOperation.card = card;
-            gameData.graveyardTargetOperation.controllerId = controllerId;
-            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
-            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, eligibleCardIds, cardViews, 1,
-                    "Choose target instant or sorcery card in your graveyard to gain flashback.");
-        }
-    }
-
-
-    public void handleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
-                                       StackEntryType entryType, int xValue) {
-        // Collect creature cards from controller's own graveyard
-        List<UUID> creatureCardIds = new ArrayList<>();
-        List<CardView> cardViews = new ArrayList<>();
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (graveyard != null) {
-            for (Card graveyardCard : graveyard) {
-                if (graveyardCard.hasType(CardType.CREATURE)) {
-                    creatureCardIds.add(graveyardCard.getId());
-                    cardViews.add(cardViewFactory.create(graveyardCard));
-                }
-            }
-        }
-
-        gameData.graveyardTargetOperation.card = card;
-        gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
-        gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = xValue;
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, creatureCardIds, cardViews, xValue,
-                "Choose " + xValue + " target creature card" + (xValue != 1 ? "s" : "") + " from your graveyard to exile.");
-    }
-
-    public void handleAnyNumberGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
-                                                StackEntryType entryType, CardPredicate filter) {
-        List<UUID> matchingCardIds = new ArrayList<>();
-        List<CardView> cardViews = new ArrayList<>();
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (graveyard != null) {
-            for (Card graveyardCard : graveyard) {
-                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
-                    matchingCardIds.add(graveyardCard.getId());
-                    cardViews.add(cardViewFactory.create(graveyardCard));
-                }
-            }
-        }
-
-        int maxTargets = matchingCardIds.size();
-        gameData.graveyardTargetOperation.card = card;
-        gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
-        gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = 0;
-        gameData.graveyardTargetOperation.anyNumber = true;
-        String filterLabel = CardPredicateUtils.describeFilter(filter);
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
-                "Choose any number of target " + filterLabel + "s from your graveyard.");
-    }
-
-    public void handleUpToNGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
-                                            StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
-                                            List<CardEffect> spellEffects) {
-        List<UUID> matchingCardIds = new ArrayList<>();
-        List<CardView> cardViews = new ArrayList<>();
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        if (graveyard != null) {
-            for (Card graveyardCard : graveyard) {
-                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
-                    matchingCardIds.add(graveyardCard.getId());
-                    cardViews.add(cardViewFactory.create(graveyardCard));
-                }
-            }
-        }
-
-        int maxTargets = Math.min(maxTargetsCap, matchingCardIds.size());
-        gameData.graveyardTargetOperation.card = card;
-        gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
-        gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = 0;
-        gameData.graveyardTargetOperation.anyNumber = true;
-        String filterLabel = CardPredicateUtils.describeFilter(filter);
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
-                "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from your graveyard.");
-    }
-
-    public void handleUpToNTargetPlayerGraveyardSpellTargeting(GameData gameData, UUID controllerId,
-                                            UUID targetPlayerId, Card card,
-                                            StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
-                                            List<CardEffect> spellEffects) {
-        List<UUID> matchingCardIds = new ArrayList<>();
-        List<CardView> cardViews = new ArrayList<>();
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        if (graveyard != null) {
-            for (Card graveyardCard : graveyard) {
-                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
-                    matchingCardIds.add(graveyardCard.getId());
-                    cardViews.add(cardViewFactory.create(graveyardCard));
-                }
-            }
-        }
-
-        int maxTargets = Math.min(maxTargetsCap, matchingCardIds.size());
-        gameData.graveyardTargetOperation.card = card;
-        gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
-        gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = 0;
-        gameData.graveyardTargetOperation.anyNumber = true;
-        gameData.graveyardTargetOperation.targetPlayerId = targetPlayerId;
-        String targetPlayerName = gameData.playerIdToName.get(targetPlayerId);
-        String filterLabel = CardPredicateUtils.describeFilter(filter);
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
-                "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from " + targetPlayerName + "'s graveyard.");
-    }
-
-    public void handleUpToNAllGraveyardsSpellTargeting(GameData gameData, UUID controllerId, Card card,
-                                            StackEntryType entryType, CardPredicate filter, int maxTargetsCap,
-                                            List<CardEffect> spellEffects) {
-        List<UUID> matchingCardIds = new ArrayList<>();
-        List<CardView> cardViews = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) continue;
-            for (Card graveyardCard : graveyard) {
-                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
-                    matchingCardIds.add(graveyardCard.getId());
-                    cardViews.add(cardViewFactory.create(graveyardCard));
-                }
-            }
-        }
-
-        int maxTargets = Math.min(maxTargetsCap, matchingCardIds.size());
-        gameData.graveyardTargetOperation.card = card;
-        gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(spellEffects);
-        gameData.graveyardTargetOperation.entryType = entryType;
-        gameData.graveyardTargetOperation.xValue = 0;
-        gameData.graveyardTargetOperation.anyNumber = true;
-        String filterLabel = CardPredicateUtils.describeFilter(filter);
-        playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCardIds, cardViews, maxTargets,
-                "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from graveyards.");
-    }
-
-
-    void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {
-        if (enteringCreature.getToughness() == null) return;
-
-        int stackSizeBefore = gameData.stack.size();
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        for (Permanent perm : battlefield) {
-            if (perm.getCard() == enteringCreature) continue;
-
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) continue;
-
-            for (CardEffect effect : effects) {
-                if (effect instanceof EnteringCreatureMinPowerConditionalEffect conditional) {
-                    if (enteringCreature.getPower() == null || enteringCreature.getPower() < conditional.minPower()) {
-                        continue;
-                    }
-                    CardEffect innerEffect = conditional.wrapped();
-                    if (innerEffect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), controllerId, may);
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for {} entering (power {} >= {})",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                                enteringCreature.getPower(), conditional.minPower());
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                controllerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(innerEffect))
-                        ));
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for {} entering (power {} >= {})",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                                enteringCreature.getPower(), conditional.minPower());
-                    }
-                } else if (effect instanceof EnteringCreatureMaxPowerConditionalEffect conditional) {
-                    if (enteringCreature.getPower() == null || enteringCreature.getPower() > conditional.maxPower()) {
-                        continue;
-                    }
-                    CardEffect innerEffect = conditional.wrapped();
-                    if (innerEffect instanceof MayPayManaEffect mayPay) {
-                        gameData.queueMayAbility(perm.getCard(), controllerId, mayPay, null);
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for {} entering (power {} <= {})",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                                enteringCreature.getPower(), conditional.maxPower());
-                    } else if (innerEffect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), controllerId, may);
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for {} entering (power {} <= {})",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                                enteringCreature.getPower(), conditional.maxPower());
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                controllerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(innerEffect))
-                        ));
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for {} entering (power {} <= {})",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                                enteringCreature.getPower(), conditional.maxPower());
-                    }
-                } else if (effect instanceof TriggeringCardConditionalEffect conditional) {
-                    if (!gameQueryService.matchesCardPredicate(enteringCreature, conditional.predicate(), null,
-                            gameData, controllerId)) {
-                        continue;
-                    }
-                    CardEffect innerEffect = conditional.wrapped();
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(innerEffect)),
-                            null,
-                            perm.getId()
-                    ));
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (card predicate {})",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                            conditional.predicate());
-                } else if (effect instanceof GainLifeEqualToToughnessEffect) {
-                    int toughness = enteringCreature.getToughness();
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            List.of(new GainLifeEffect(toughness))
-                    ));
-                    String triggerLog = perm.getCard().getName() + " triggers — " +
-                            gameData.playerIdToName.get(controllerId) + " will gain " + toughness + " life.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (toughness={})",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), toughness);
-                } else if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(perm.getCard(), controllerId, may);
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (may effect)",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName());
-                }
-            }
-        }
-
-        // Naban: duplicate all triggers that were just added for Wizard ETB
-        if (extraWizardTriggers > 0) {
-            List<StackEntry> newEntries = new ArrayList<>(gameData.stack.subList(stackSizeBefore, gameData.stack.size()));
-            for (int i = 0; i < extraWizardTriggers; i++) {
-                for (StackEntry entry : newEntries) {
-                    gameData.stack.add(new StackEntry(entry));
-                }
-            }
-        }
-    }
-
-    void checkAllyArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
-        if (!enteringCard.hasType(CardType.ARTIFACT)) return;
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        for (Permanent perm : battlefield) {
-            if (perm.getCard() == enteringCard) continue;
-
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) continue;
-
-            for (CardEffect effect : effects) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        controllerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
-                        null,
-                        perm.getId()
-                ));
-                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                log.info("Game {} - {} triggers for {} entering (ally artifact entered)",
-                        gameData.id, perm.getCard().getName(), enteringCard.getName());
-            }
-        }
-    }
-
-    void checkAllyEquipmentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
-        if (!enteringCard.getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        for (Permanent perm : battlefield) {
-            if (perm.getCard() == enteringCard) continue;
-
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) continue;
-
-            for (CardEffect effect : effects) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        controllerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
-                        null,
-                        perm.getId()
-                ));
-                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                log.info("Game {} - {} triggers for {} entering (ally equipment entered)",
-                        gameData.id, perm.getCard().getName(), enteringCard.getName());
-            }
-        }
-    }
-
-    void checkAllyNontokenArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
-        if (enteringCard.isToken()) return;
-
-        if (!enteringCard.hasType(CardType.ARTIFACT)) return;
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-
-        // Find the entering permanent's ID
-        UUID enteringPermanentId = null;
-        for (Permanent p : battlefield) {
-            if (p.getCard() == enteringCard) {
-                enteringPermanentId = p.getId();
-                break;
-            }
-        }
-
-        for (Permanent perm : battlefield) {
-            if (perm.getCard() == enteringCard) continue;
-
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) continue;
-
-            for (CardEffect effect : effects) {
-                if (effect instanceof MayPayManaEffect mayPay) {
-                    gameData.queueMayAbility(perm.getCard(), controllerId, mayPay, enteringPermanentId);
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for nontoken artifact {} entering",
-                            gameData.id, perm.getCard().getName(), enteringCard.getName());
-                } else if (effect instanceof MayEffect may) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
-                            null,
-                            perm.getId()
-                    ));
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for nontoken artifact {} entering",
-                            gameData.id, perm.getCard().getName(), enteringCard.getName());
-                } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
-                            null,
-                            perm.getId()
-                    ));
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for nontoken artifact {} entering",
-                            gameData.id, perm.getCard().getName(), enteringCard.getName());
-                }
-            }
-        }
-    }
-
-    void checkOpponentLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            if (playerId.equals(landControllerId)) return;
-
-            for (Permanent perm : battlefield) {
-                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD);
-                if (effects == null || effects.isEmpty()) continue;
-
-                for (CardEffect effect : effects) {
-                    CardEffect effectToResolve = effect;
-
-                    if (effect instanceof PermanentEnteredThisTurnConditionalEffect conditional) {
-                        List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn
-                                .getOrDefault(landControllerId, List.of());
-                        long matchCount = entered.stream()
-                                .filter(c -> gameQueryService.matchesCardPredicate(c, conditional.predicate(), null))
-                                .count();
-                        if (matchCount < conditional.minCount()) continue;
-                        effectToResolve = conditional.wrapped();
-                    }
-
-                    if (effect instanceof ImprintedCardNameMatchesEnteringPermanentConditionalEffect conditional) {
-                        Card imprintedCard = perm.getCard().getImprintedCard();
-                        if (imprintedCard == null || !imprintedCard.getName().equals(enteringLand.getName())) continue;
-                        effectToResolve = conditional.wrapped();
-                    }
-
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effectToResolve)),
-                            landControllerId,
-                            perm.getId()
-                    ));
-
-                    String logEntry = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} triggers on opponent land entering", gameData.id, perm.getCard().getName());
-                }
-            }
-        });
-    }
-
-    void checkAllyLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(landControllerId);
-        for (Permanent perm : battlefield) {
-            if (perm.getCard() == enteringLand) continue;
-
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) continue;
-
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    landControllerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
-                    null,
-                    perm.getId()
-            ));
-
-            String logEntry = perm.getCard().getName() + "'s ability triggers.";
-            gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
-        }
-    }
-
-    void checkOpponentCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
-        if (enteringCreature.getToughness() == null) return;
-
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            if (playerId.equals(enteringCreatureControllerId)) return;
-
-            for (Permanent perm : battlefield) {
-                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD);
-                if (effects == null || effects.isEmpty()) continue;
-
-                for (CardEffect effect : effects) {
-                    if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may, enteringCreatureControllerId, perm.getId());
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for opponent creature {} entering",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName());
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(effect)),
-                                enteringCreatureControllerId,
-                                perm.getId()
-                        ));
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for opponent creature {} entering",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName());
-                    }
-                }
-            }
-        });
-    }
-
-    void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
-        // Non-creature permanents (e.g. artifacts) should not trigger "creature enters" triggers
-        if (enteringCreature.getToughness() == null) return;
-
-        int extraWizardTriggers = gameQueryService.countETBExtraTriggers(gameData, enteringCreatureControllerId, enteringCreature);
-
-        gameData.forEachPermanent((playerId, perm) -> {
-            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD);
-            if (effects == null || effects.isEmpty()) return;
-
-            if (perm.getCard() == enteringCreature) return;
-
-            // Naban: only doubles triggers on permanents controlled by the Wizard's controller
-            int extraTriggers = playerId.equals(enteringCreatureControllerId) ? extraWizardTriggers : 0;
-
-            for (CardEffect effect : effects) {
-                if (effect instanceof GainLifeEffect gainLife) {
-                    for (int t = 0; t < 1 + extraTriggers; t++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                List.of(new GainLifeEffect(gainLife.amount()))
-                        ));
-                    }
-                    String triggerLog = perm.getCard().getName() + " triggers — " +
-                            gameData.playerIdToName.get(playerId) + " will gain " + gainLife.amount() + " life.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (gain {} life)",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), gainLife.amount());
-                } else if (effect instanceof DealDamageToTargetPlayerEffect damageEffect) {
-                    for (int t = 0; t < 1 + extraTriggers; t++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(new DealDamageToTargetPlayerEffect(damageEffect.damage()))),
-                                enteringCreatureControllerId,
-                                perm.getId()
-                        ));
-                    }
-                    String triggerLog = perm.getCard().getName() + " triggers — deals " + damageEffect.damage() +
-                            " damage to " + gameData.playerIdToName.get(enteringCreatureControllerId) + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), damageEffect.damage());
-                } else if (!effect.canTargetPlayer()
-                        && !effect.canTargetPermanent()
-                        && !effect.canTargetSpell()
-                        && !effect.canTargetGraveyard()
-                        && !effect.canTargetAnyGraveyard()) {
-                    for (int t = 0; t < 1 + extraTriggers; t++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(effect)),
-                                null,
-                                perm.getId()
-                        ));
-                    }
-                    String triggerLog = perm.getCard().getName() + " triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName());
-                }
-            }
-        });
     }
 }

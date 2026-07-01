@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.spell;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -80,6 +81,7 @@ import java.util.function.Predicate;
 public class SpellCastingService {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final GraveyardTargetingService graveyardTargetingService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
@@ -749,7 +751,7 @@ public class SpellCastingService {
                             .count();
                 }
                 if (matchingCount > 0) {
-                    battlefieldEntryService.handleUpToNAllGraveyardsSpellTargeting(gameData, playerId, card,
+                    graveyardTargetingService.handleUpToNAllGraveyardsSpellTargeting(gameData, playerId, card,
                             entryType, pileSeparationEffect.filter(),
                             pileSeparationEffect.maxTargets(), filteredSpellEffects);
                     return; // finishSpellCast handled in handleMultipleCardsChosen
@@ -770,7 +772,7 @@ public class SpellCastingService {
                         .filter(c -> gameQueryService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
-                    battlefieldEntryService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
+                    graveyardTargetingService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
                             targetGraveyardOwner, card, entryType, shuffleGraveyardCardsEffect.filter(),
                             shuffleGraveyardCardsEffect.maxTargets(), filteredSpellEffects);
                     return; // finishSpellCast handled in handleMultipleCardsChosen
@@ -786,7 +788,7 @@ public class SpellCastingService {
                         .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToHandEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
-                    battlefieldEntryService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
+                    graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
                             entryType, graveyardToHandEffect.filter(),
                             graveyardToHandEffect.maxTargets(), filteredSpellEffects);
                     return; // finishSpellCast handled in handleMultipleCardsChosen
@@ -802,7 +804,7 @@ public class SpellCastingService {
                         .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToTopEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
-                    battlefieldEntryService.handleAnyNumberGraveyardSpellTargeting(gameData, playerId, card,
+                    graveyardTargetingService.handleAnyNumberGraveyardSpellTargeting(gameData, playerId, card,
                             entryType, graveyardToTopEffect.filter());
                     return; // finishSpellCast handled in handleMultipleCardsChosen
                 }
@@ -814,7 +816,7 @@ public class SpellCastingService {
                 ));
             } else if (needsGraveyardCreatureTargeting && resolvedXValue > 0) {
                 // Prompt player to choose graveyard targets before putting spell on stack
-                battlefieldEntryService.handleGraveyardSpellTargeting(gameData, playerId, card,
+                graveyardTargetingService.handleGraveyardSpellTargeting(gameData, playerId, card,
                         entryType, resolvedXValue);
                 return; // finishSpellCast handled in graveyard targeting callback
             } else if (needsGraveyardCreatureTargeting) {
@@ -1471,7 +1473,7 @@ public class SpellCastingService {
                     .filter(c -> gameQueryService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
                     .count();
             if (matchingCount > 0) {
-                battlefieldEntryService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
+                graveyardTargetingService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
                         targetGraveyardOwner, card, entryType, shuffleGraveyardCardsEffect.filter(),
                         shuffleGraveyardCardsEffect.maxTargets(), spellEffects);
                 gameData.graveyardTargetOperation.flashback = true;
