@@ -569,7 +569,6 @@ public class CombatAttackService {
         return indices;
     }
 
-    // ===== Private helpers =====
 
     private boolean canCreatureAttack(GameData gameData, Permanent creature,
                                        UUID defenderId, List<Permanent> defenderBattlefield) {

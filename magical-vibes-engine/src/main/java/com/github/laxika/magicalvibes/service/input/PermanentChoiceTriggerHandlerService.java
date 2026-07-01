@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
-import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +46,7 @@ public class PermanentChoiceTriggerHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
-    private final BattlefieldEntryService battlefieldEntryService;
+    private final ETBTokenTargetService etbTokenTargetService;
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
         StackEntry entry = new StackEntry(
@@ -758,7 +758,7 @@ public class PermanentChoiceTriggerHandlerService {
         log.info("Game {} - {} ETB spell-target trigger targets {}", gameData.id, etbStt.sourceCard().getName(), targetName);
 
         if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
-            battlefieldEntryService.processNextETBSpellTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
             return;
         }
 
@@ -812,19 +812,19 @@ public class PermanentChoiceTriggerHandlerService {
                 etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
                 updatedChosen, nextGroupIdx, nextChosenInGroup));
 
-        battlefieldEntryService.processNextETBTokenMultiTargetTrigger(gameData);
+        etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
 
         if (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
-            battlefieldEntryService.processNextETBTokenTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
             return;
         }
 
         if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
-            battlefieldEntryService.processNextETBSpellTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
             return;
         }
 
@@ -858,17 +858,17 @@ public class PermanentChoiceTriggerHandlerService {
         log.info("Game {} - {} ETB token-target trigger targets {}", gameData.id, etbTtt.sourceCard().getName(), targetName);
 
         if (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
-            battlefieldEntryService.processNextETBTokenTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
             return;
         }
 
         if (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()) {
-            battlefieldEntryService.processNextETBTokenMultiTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             return;
         }
 
         if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
-            battlefieldEntryService.processNextETBSpellTargetTrigger(gameData);
+            etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
             return;
         }
 

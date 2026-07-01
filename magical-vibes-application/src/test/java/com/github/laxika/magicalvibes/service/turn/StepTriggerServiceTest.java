@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -89,6 +90,9 @@ class StepTriggerServiceTest {
     private BattlefieldEntryService battlefieldEntryService;
 
     @Mock
+    private GraveyardTargetingService graveyardTargetingService;
+
+    @Mock
     private TriggerCollectionService triggerCollectionService;
 
     private StepTriggerService sut;
@@ -110,6 +114,7 @@ class StepTriggerServiceTest {
                 playerInputService,
                 permanentRemovalService,
                 battlefieldEntryService,
+                graveyardTargetingService,
                 triggerCollectionService,
                 triggerTargetCollector);
 

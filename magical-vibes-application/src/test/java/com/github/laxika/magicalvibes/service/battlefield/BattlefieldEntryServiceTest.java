@@ -8,11 +8,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,9 +32,10 @@ class BattlefieldEntryServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private CardViewFactory cardViewFactory;
-    @Mock private TargetLegalityService targetLegalityService;
-    @Mock private CloneService cloneService;
+    @Mock private PermanentCopierService permanentCopierService;
+    @Mock private EnterTriggerScanService enterTriggerScanService;
+    @Mock private GraveyardTargetingService graveyardTargetingService;
+    @Mock private ETBTokenTargetService etbTokenTargetService;
 
     private BattlefieldEntryService service;
     private GameData gd;
@@ -47,7 +45,8 @@ class BattlefieldEntryServiceTest {
     void setUp() {
         service = new BattlefieldEntryService(
                 gameQueryService, gameBroadcastService, playerInputService,
-                cardViewFactory, targetLegalityService, cloneService);
+                permanentCopierService, enterTriggerScanService,
+                graveyardTargetingService, etbTokenTargetService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

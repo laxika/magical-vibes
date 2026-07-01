@@ -442,7 +442,6 @@ public class CombatBlockService {
                 mustBeBlockedIndices, menaceIndices, mustBlockReqs);
     }
 
-    // ===== Private helpers =====
 
     private boolean canBlockAttacker(GameData gameData, Permanent blocker,
                                       Permanent attacker, List<Permanent> defenderBattlefield) {

@@ -408,7 +408,6 @@ public class CombatDamageService {
         return blockerMap;
     }
 
-    // ===== Damage phase resolution =====
 
     private void resolveDamagePhase(GameData gameData, CombatDamageState state,
                                      Map<Integer, List<Integer>> blockerMap,
@@ -586,7 +585,6 @@ public class CombatDamageService {
         }
     }
 
-    // ===== Lifelink and life gain =====
 
     private void processLifelink(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
         for (var entry : combatDamageDealt.entrySet()) {
@@ -617,7 +615,6 @@ public class CombatDamageService {
         }
     }
 
-    // ===== Combat damage triggers =====
 
     private void processCombatDamageToPlayerTriggers(GameData gameData, Map<Permanent, Integer> combatDamageDealtToPlayer, UUID attackerId, UUID defenderId) {
         for (var entry : combatDamageDealtToPlayer.entrySet()) {
@@ -1001,7 +998,6 @@ public class CombatDamageService {
         }
     }
 
-    // ===== Creature death and player damage =====
 
     /**
      * Updates markedDamage on creatures from combat damage maps (CR 704.5g).
@@ -1217,7 +1213,6 @@ public class CombatDamageService {
         }
     }
 
-    // ===== Damage computation helpers =====
 
     private void determineCasualties(GameData gameData, List<Integer> indices,
                                       List<Permanent> battlefield, Map<Integer, Integer> damageTaken,
@@ -1373,7 +1368,6 @@ public class CombatDamageService {
         triggerCollectionService.checkEnchantedCreatureDealtDamageTriggers(gameData, target, damage);
     }
 
-    // ===== Phase state helpers =====
 
     private boolean hasFirstOrDoubleStrike(GameData gameData, Permanent creature) {
         return gameQueryService.hasKeyword(gameData, creature, Keyword.FIRST_STRIKE)

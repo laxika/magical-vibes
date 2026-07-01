@@ -455,7 +455,6 @@ public class GameService {
         }
     }
 
-    // ===== Delegated user input handlers =====
 
     public void handleListChoice(GameData gameData, Player player, String choiceName) {
         synchronized (gameData) {
@@ -555,7 +554,6 @@ public class GameService {
         }
     }
 
-    // ===== Combat wrapper methods =====
 
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices) {
         declareAttackers(gameData, player, attackerIndices, null);

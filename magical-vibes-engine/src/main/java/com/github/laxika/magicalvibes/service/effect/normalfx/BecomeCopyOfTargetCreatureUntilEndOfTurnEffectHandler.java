@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final CloneService cloneService;
+    private final PermanentCopierService permanentCopierService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,7 +50,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         }
 
         String originalName = sourcePermanent.getCard().getName();
-        cloneService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
+        permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
         sourcePermanent.setCopyUntilEndOfTurn(true);
 
         String targetName = targetPerm.getCard().getName();

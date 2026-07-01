@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
@@ -90,6 +91,7 @@ public class StepTriggerService {
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final GraveyardTargetingService graveyardTargetingService;
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
 
@@ -1557,7 +1559,7 @@ public class StepTriggerService {
                             .map(e -> (ExileTargetCardFromGraveyardEffect) e)
                             .findFirst()
                             .orElseThrow();
-                    battlefieldEntryService.handleBeginningOfCombatGraveyardTargeting(
+                    graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(
                             gameData, activePlayerId, perm.getCard(), mandatoryEffects, perm.getId(), exileEffect);
                 } else if (needsPermanentTarget) {
                     gameData.pendingBeginningOfCombatTriggerTargets.add(

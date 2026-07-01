@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
@@ -224,6 +225,29 @@ public class MiscTriggerCollectorService {
         String triggerLog = cardName + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);
         log.info("Game {} - {} triggers on life gain (draw a card)", gameData.id, cardName);
+        return true;
+    }
+
+    @CollectsTrigger(value = PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class,
+            slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainPutCountersOnMatching(TriggerMatchContext match,
+            PutPlusOnePlusOneCounterOnEachControlledPermanentEffect effect, TriggerContext ctx) {
+        var gameData = match.gameData();
+        String cardName = match.permanent().getCard().getName();
+
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                cardName + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId()
+        ));
+
+        String triggerLog = cardName + "'s ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+        log.info("Game {} - {} triggers on life gain (put +1/+1 counters)", gameData.id, cardName);
         return true;
     }
 

@@ -60,7 +60,6 @@ public class GraveyardService {
         this.triggerCollectionService = triggerCollectionService;
     }
 
-    // ===== Graveyard zone transitions =====
 
     public void resolveMillPlayer(GameData gameData, UUID targetPlayerId, int count) {
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
@@ -161,7 +160,6 @@ public class GraveyardService {
         return true;
     }
 
-    // ===== Regeneration =====
 
     public boolean tryRegenerate(GameData gameData, Permanent perm) {
         if (perm.isCantRegenerateThisTurn()) {
@@ -185,7 +183,6 @@ public class GraveyardService {
         return false;
     }
 
-    // ===== Damage tracking =====
 
     public void recordCreatureDamagedByPermanent(GameData gameData, UUID sourcePermanentId, Permanent damagedCreature, int damage) {
         if (sourcePermanentId == null || damagedCreature == null || damage <= 0) {
@@ -200,7 +197,6 @@ public class GraveyardService {
                 .add(damagedCreature.getCard().getId());
     }
 
-    // ===== Private helpers =====
 
     private boolean hasExileWithEggCountersReplacementEffect(Card card) {
         return card.getEffects(EffectSlot.STATIC).stream()
@@ -326,7 +322,6 @@ public class GraveyardService {
         return null;
     }
 
-    // ===== Cards leave graveyard triggers =====
 
     /**
      * Begins a batch of graveyard removals that should produce a single
