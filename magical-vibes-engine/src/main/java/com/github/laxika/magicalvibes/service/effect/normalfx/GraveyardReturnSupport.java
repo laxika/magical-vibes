@@ -1012,7 +1012,6 @@ public class GraveyardReturnSupport {
      * to the battlefield transformed at the beginning of the next end step.
      */
 
-    // ===== Card pile separation (Boneyard Parley) =====
 
 
     /**

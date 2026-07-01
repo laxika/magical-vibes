@@ -43,7 +43,6 @@ public class CombatService {
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
 
-    // ===== Attack delegation =====
 
     public List<Integer> getAttackableCreatureIndices(GameData gameData, UUID playerId) {
         return combatAttackService.getAttackableCreatureIndices(gameData, playerId);
@@ -73,7 +72,6 @@ public class CombatService {
         return combatAttackService.getAttackingCreatureIndices(gameData, playerId);
     }
 
-    // ===== Block delegation =====
 
     public List<Integer> getBlockableCreatureIndices(GameData gameData, UUID playerId) {
         return combatBlockService.getBlockableCreatureIndices(gameData, playerId);
@@ -103,7 +101,6 @@ public class CombatService {
         return combatBlockService.declareBlockers(gameData, player, blockerAssignments);
     }
 
-    // ===== Damage delegation =====
 
     public CombatResult resolveCombatDamage(GameData gameData) {
         return combatDamageService.resolveCombatDamage(gameData);
@@ -113,7 +110,6 @@ public class CombatService {
         combatDamageService.handleCombatDamageAssigned(gameData, player, attackerIndex, assignments);
     }
 
-    // ===== Combat state management =====
 
     /**
      * Resets all combat-related state on permanents and game data.

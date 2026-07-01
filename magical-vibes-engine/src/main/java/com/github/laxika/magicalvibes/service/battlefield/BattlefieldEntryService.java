@@ -91,7 +91,6 @@ public class BattlefieldEntryService {
     private final TargetLegalityService targetLegalityService;
     private final PermanentCopierService permanentCopierService;
 
-    // ===== Permanent entry =====
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent) {
         putPermanentOntoBattlefield(gameData, controllerId, permanent, snapshotEnterTappedTypes(gameData), List.of());
@@ -369,7 +368,6 @@ public class BattlefieldEntryService {
         }
     }
 
-    // ===== ETB pipeline =====
 
     public void handleCreatureEnteredBattlefield(GameData gameData, UUID controllerId, Card card, UUID targetId, boolean wasCastFromHand) {
         handleCreatureEnteredBattlefield(gameData, controllerId, card, targetId, wasCastFromHand, 0, false, List.of());
@@ -1220,7 +1218,6 @@ public class BattlefieldEntryService {
         }
     }
 
-    // ===== Graveyard spell targeting helpers =====
 
     public void handleGraveyardSpellTargeting(GameData gameData, UUID controllerId, Card card,
                                        StackEntryType entryType, int xValue) {
@@ -1357,7 +1354,6 @@ public class BattlefieldEntryService {
                 "Choose up to " + maxTargetsCap + " target " + filterLabel + "s from graveyards.");
     }
 
-    // ===== Enter triggers =====
 
     void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {
         if (enteringCreature.getToughness() == null) return;
