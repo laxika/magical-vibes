@@ -240,6 +240,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DiscardCardEffect(int)` — discard N
 - `DiscardOwnHandEffect()` — discard entire hand
 - `DiscardOwnHandThenDrawThatManyEffect()` — discard entire hand, then draw that many
+- `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` — discard entire hand, then draw equal to target player's hand size (counted at draw time)
 - `EachPlayerDiscardsEffect(int)` — each player discards
 - `EachOpponentDiscardsEffect(int)` — each opponent discards
 - `TargetPlayerDiscardsEffect(int)` — target discards
