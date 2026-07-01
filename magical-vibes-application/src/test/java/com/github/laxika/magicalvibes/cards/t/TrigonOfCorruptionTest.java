@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -48,7 +48,7 @@ class TrigonOfCorruptionTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}{B}");
         assertThat(card.getActivatedAbilities().get(0).getEffects())
                 .hasSize(1)
-                .anyMatch(e -> e instanceof PutChargeCounterOnSelfEffect);
+                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
 
         // Second ability: {2}, {T}, remove a charge counter to put -1/-1 counter on target creature
         assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();

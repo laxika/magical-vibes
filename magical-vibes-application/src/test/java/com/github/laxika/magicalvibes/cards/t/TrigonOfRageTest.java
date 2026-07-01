@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -53,7 +53,7 @@ class TrigonOfRageTest extends BaseCardTest {
         assertThat(ability.getManaCost().toString()).isEqualTo("{R}{R}");
         assertThat(ability.getEffects())
                 .hasSize(1)
-                .anyMatch(e -> e instanceof PutChargeCounterOnSelfEffect);
+                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
     }
 
     @Test

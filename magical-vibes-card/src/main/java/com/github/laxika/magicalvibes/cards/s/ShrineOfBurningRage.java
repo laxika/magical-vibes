@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -18,12 +19,12 @@ public class ShrineOfBurningRage extends Card {
 
     public ShrineOfBurningRage() {
         // At the beginning of your upkeep, put a charge counter on Shrine of Burning Rage.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutChargeCounterOnSelfEffect());
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // Whenever you cast a red spell, put a charge counter on Shrine of Burning Rage.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardColorPredicate(CardColor.RED),
-                        List.of(new PutChargeCounterOnSelfEffect())));
+                        List.of(new PutCountersOnSelfEffect(CounterType.CHARGE))));
 
         // {3}, {T}, Sacrifice Shrine of Burning Rage: It deals damage equal to the number of
         // charge counters on it to any target.

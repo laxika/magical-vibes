@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public class LuxCannon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new PutChargeCounterOnSelfEffect()),
+                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "{T}: Put a charge counter on Lux Cannon."
         ));
 

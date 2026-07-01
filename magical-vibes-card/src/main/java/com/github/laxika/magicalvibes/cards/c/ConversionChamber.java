@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class ConversionChamber extends Card {
                 "{2}",
                 List.of(
                         new ExileTargetCardFromGraveyardEffect(CardType.ARTIFACT),
-                        new PutChargeCounterOnSelfEffect()
+                        new PutCountersOnSelfEffect(CounterType.CHARGE)
                 ),
                 "{2}, {T}: Exile target artifact card from a graveyard. Put a charge counter on Conversion Chamber."
         ));

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -34,7 +34,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         // Upkeep triggered ability (mandatory charge counter)
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutChargeCounterOnSelfEffect.class);
+                .isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Red spell cast trigger (mandatory charge counter)
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
@@ -66,7 +66,7 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // upkeep trigger goes on stack
-        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
+        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
 
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }

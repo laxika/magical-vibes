@@ -20,7 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
@@ -337,7 +338,7 @@ class DeathTriggerCollectorServiceTest {
         @DisplayName("Targeting effect queues DeathTriggerTarget")
         void targetingQueuesDeathTriggerTarget() {
             Card card = createCreature("Targeting Dude", 3, 3);
-            var effect = new PutChargeCounterOnTargetPermanentEffect();
+            var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
             Permanent perm = new Permanent(card);
             var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
 
@@ -412,7 +413,7 @@ class DeathTriggerCollectorServiceTest {
         @DisplayName("Targeting effect queues DeathTriggerTarget")
         void targetingQueuesDeathTriggerTarget() {
             Card equipment = createEquipment("Target Sword");
-            var effect = new PutChargeCounterOnTargetPermanentEffect();
+            var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
             Permanent perm = new Permanent(equipment);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID);
 
@@ -728,7 +729,7 @@ class DeathTriggerCollectorServiceTest {
         @DisplayName("Default targeting queues DeathTriggerTarget")
         void defaultTargetingQueuesDeathTriggerTarget() {
             Card watcher = createCreature("Target Watcher", 1, 1);
-            var effect = new PutChargeCounterOnTargetPermanentEffect();
+            var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID);
 

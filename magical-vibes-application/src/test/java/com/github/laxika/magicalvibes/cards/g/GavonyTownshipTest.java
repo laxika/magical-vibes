@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,7 +48,7 @@ class GavonyTownshipTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isTrue();
         assertThat(ability.getManaCost()).isEqualTo("{2}{G}{W}");
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutPlusOnePlusOneCounterOnEachOwnCreatureEffect.class);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
     }
 
     // ===== Mana ability =====

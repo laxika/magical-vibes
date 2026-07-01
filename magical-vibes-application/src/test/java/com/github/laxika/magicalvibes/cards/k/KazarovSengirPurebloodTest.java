@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -24,14 +24,14 @@ class KazarovSengirPurebloodTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Kazarov has ON_OPPONENT_CREATURE_DEALT_DAMAGE trigger with PutCounterOnSelfEffect")
+    @DisplayName("Kazarov has ON_OPPONENT_CREATURE_DEALT_DAMAGE trigger with PutCountersOnSelfEffect")
     void hasCorrectTriggeredEffect() {
         KazarovSengirPureblood card = new KazarovSengirPureblood();
 
         assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DEALT_DAMAGE)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(PutCounterOnSelfEffect.class);
-        PutCounterOnSelfEffect counterEffect = (PutCounterOnSelfEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DEALT_DAMAGE).getFirst();
+                .isInstanceOf(PutCountersOnSelfEffect.class);
+        PutCountersOnSelfEffect counterEffect = (PutCountersOnSelfEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DEALT_DAMAGE).getFirst();
         assertThat(counterEffect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
     }
 

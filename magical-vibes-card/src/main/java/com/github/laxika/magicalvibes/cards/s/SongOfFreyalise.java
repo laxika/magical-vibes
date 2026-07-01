@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -43,7 +45,7 @@ public class SongOfFreyalise extends Card {
 
         // Chapter III: Put a +1/+1 counter on each creature you control.
         // Those creatures gain vigilance, trample, and indestructible until end of turn.
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new PutPlusOnePlusOneCounterOnEachOwnCreatureEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
         addEffect(EffectSlot.SAGA_CHAPTER_III, new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),
                 GrantScope.OWN_CREATURES

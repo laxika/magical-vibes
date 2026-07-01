@@ -38,7 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
@@ -530,7 +530,7 @@ public class MayAbilityHandlerService {
 
             // Self-targeting effects need the source permanent's ID to resolve
             boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->
-                    e instanceof PutChargeCounterOnSelfEffect
+                    e instanceof PutCountersOnSelfEffect
                             || e instanceof AnimateSelfEffect || e instanceof AnimateSelfByChargeCountersEffect
                             || e instanceof AnimateSelfWithStatsEffect || e instanceof BoostSelfEffect
                             || e instanceof ImprintDyingCreatureEffect
@@ -790,7 +790,7 @@ public class MayAbilityHandlerService {
 
     private void setUpSelfTargetIfNeeded(GameData gameData, PendingMayAbility ability, StackEntry pendingEntry, CardEffect innerEffect) {
         if (innerEffect == null) return;
-        boolean needsSelfTarget = innerEffect instanceof PutChargeCounterOnSelfEffect || innerEffect instanceof AnimateSelfEffect || innerEffect instanceof AnimateSelfByChargeCountersEffect || innerEffect instanceof AnimateSelfWithStatsEffect || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
+        boolean needsSelfTarget = innerEffect instanceof PutCountersOnSelfEffect || innerEffect instanceof AnimateSelfEffect || innerEffect instanceof AnimateSelfByChargeCountersEffect || innerEffect instanceof AnimateSelfWithStatsEffect || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
         if (needsSelfTarget && pendingEntry.getTargetId() == null) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
             if (battlefield != null) { for (Permanent p : battlefield) { if (p.getCard() == ability.sourceCard()) { pendingEntry.setTargetId(p.getId()); break; } } }

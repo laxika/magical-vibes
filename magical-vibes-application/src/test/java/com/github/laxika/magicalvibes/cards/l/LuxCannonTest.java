@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,7 @@ class LuxCannonTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
         assertThat(card.getActivatedAbilities().get(0).getEffects())
                 .hasSize(1)
-                .anyMatch(e -> e instanceof PutChargeCounterOnSelfEffect);
+                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
 
         // Second ability: tap + remove 3 charge counters to destroy target permanent
         assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();

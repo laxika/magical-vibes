@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -27,7 +27,7 @@ public class GrimoireOfTheDead extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new DiscardCardTypeCost(null, null), new PutCounterOnSelfEffect(CounterType.STUDY)),
+                List.of(new DiscardCardTypeCost(null, null), new PutCountersOnSelfEffect(CounterType.STUDY)),
                 "{1}, {T}, Discard a card: Put a study counter on Grimoire of the Dead."
         ));
 

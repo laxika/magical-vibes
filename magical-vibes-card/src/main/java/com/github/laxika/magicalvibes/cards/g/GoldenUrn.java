@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
@@ -16,7 +17,7 @@ public class GoldenUrn extends Card {
 
     public GoldenUrn() {
         addEffect(EffectSlot.UPKEEP_TRIGGERED, new MayEffect(
-                new PutChargeCounterOnSelfEffect(),
+                new PutCountersOnSelfEffect(CounterType.CHARGE),
                 "Put a charge counter on Golden Urn?"
         ));
 

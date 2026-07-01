@@ -241,6 +241,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DiscardCardEffect(int)` — discard N
 - `DiscardOwnHandEffect()` — discard entire hand
 - `DiscardOwnHandThenDrawThatManyEffect()` — discard entire hand, then draw that many
+- `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` — discard entire hand, then draw equal to target player's hand size (counted at draw time)
 - `EachPlayerDiscardsEffect(int)` — each player discards
 - `EachOpponentDiscardsEffect(int)` — each opponent discards
 - `TargetPlayerDiscardsEffect(int)` — target discards
@@ -366,15 +367,15 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PowerToughnessEqualToCardsInHandEffect()` — P/T = hand size
 - `PowerToughnessEqualToControllerLifeTotalEffect()` — P/T = life total
 - `PutCountersOnSourceEffect(int power, int toughness, int amount)` — counters on self
-- `PutCounterOnSelfEffect(CounterType)` — one counter of a type on self
+- `PutCountersOnSelfEffect(CounterType)` — one counter of a type on self (charge, +1/+1, study, etc.)
 - `PutCountersOnSelfEffect(CounterType, int count)` — N counters of a type on self (e.g. Withengar Unbound: 13 +1/+1)
 - `PutPlusOnePlusOneCounterOnTargetCreatureEffect(int)` — +1/+1 on target
 - `PutMinusOneMinusOneCounterOnTargetCreatureEffect(int)` — -1/-1 on target
-- `PutPlusOnePlusOneCounterOnEachOwnCreatureEffect()` or `(int)` — +1/+1 on each own creature
+- `PutCounterOnEachControlledPermanentEffect(CounterType, int, PermanentPredicate)` — counters on each own permanent matching predicate (use `PermanentIsCreaturePredicate` for "each creature you control")
+- `PutCounterOnEnchantedCreatureEffect(CounterType)` or `(CounterType, int)` — counter(s) on enchanted creature
 - `EnterWithXChargeCountersEffect()` — ETB X charge counters
 - `EnterWithXPlusOnePlusOneCountersEffect()` — ETB X +1/+1 counters
 - `EnterWithFixedChargeCountersEffect(int)` — ETB fixed charge counters
-- `PutChargeCounterOnSelfEffect()` — charge counter on self
 - Increment keyword — keyword-driven (`Keyword.INCREMENT`, auto-loaded from Scryfall): +1/+1 counter on self when mana spent on a cast spell exceeds self's current power or toughness. Add nothing to the card; behavior lives in `TriggerCollectionService.collectIncrementTriggers` (resolution effect: `IncrementTriggerEffect`). E.g. Ambitious Augmenter
 - `ProliferateEffect()` — proliferate
 - `KickerEffect(String cost)` — kicker declaration
@@ -464,6 +465,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ReduceCastCostForMatchingSpellsEffect(CardPredicate, int, CostModificationScope)` — matching spells cost less (SELF = yours, OPPONENT = opponents'; e.g. CardSubtypePredicate, CardIsHistoricPredicate, CardAnyOfPredicate)
 - `ReduceOwnCastCostIfControlsPermanentEffect(PermanentPredicate, int)` — this spell costs less if you control a matching permanent
 - `ReduceOwnCastCostIfTargetingControlledPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target is your matching permanent
+- `ReduceOwnCastCostIfTargetingStackEntryEffect(StackEntryPredicate, int)` — this spell costs less if first target is a spell on the stack matching the predicate
 - `ReduceOwnCastCostIfTargetingPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target matches predicate (any controller)
 - `ReduceOwnCastCostPerCreatureCardInGraveyardEffect(int)` — this spell costs N less per creature card in your graveyard (Ghoultree)
 - `LimitSpellsPerTurnEffect(int)` — max spells per turn (all players)

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -41,7 +41,7 @@ class DaringArchaeologistTest extends BaseCardTest {
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
 
-        // Historic trigger: SpellCastTriggerEffect with PutCounterOnSelfEffect
+        // Historic trigger: SpellCastTriggerEffect with PutCountersOnSelfEffect
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
                 .isInstanceOf(SpellCastTriggerEffect.class);
@@ -49,8 +49,8 @@ class DaringArchaeologistTest extends BaseCardTest {
         SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
         assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
         assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(PutCounterOnSelfEffect.class);
-        PutCounterOnSelfEffect counterEffect = (PutCounterOnSelfEffect) trigger.resolvedEffects().getFirst();
+        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
+        PutCountersOnSelfEffect counterEffect = (PutCountersOnSelfEffect) trigger.resolvedEffects().getFirst();
         assertThat(counterEffect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
     }
 

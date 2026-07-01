@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class TrigonOfThought extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}{U}",
-                List.of(new PutChargeCounterOnSelfEffect()),
+                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "{U}{U}, {T}: Put a charge counter on Trigon of Thought."
         ));
 

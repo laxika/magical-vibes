@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,7 +57,7 @@ class SongOfFreyaliseTest extends BaseCardTest {
 
         var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
         assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(PutPlusOnePlusOneCounterOnEachOwnCreatureEffect.class);
+        assertThat(effects.get(0)).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
         assertThat(effects.get(1)).isInstanceOf(GrantKeywordEffect.class);
     }
 

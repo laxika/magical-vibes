@@ -20,7 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -1099,7 +1100,7 @@ class AbilityActivationServiceTest {
             card.setType(CardType.ARTIFACT);
             card.setManaCost("{0}");
             card.addActivatedAbility(new ActivatedAbility(
-                    true, null, List.of(new PutChargeCounterOnSelfEffect()), "{T}: Put a charge counter."
+                    true, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "{T}: Put a charge counter."
             ));
             Permanent perm = addReadyPermanent(player1Id, card);
 
@@ -1171,7 +1172,7 @@ class AbilityActivationServiceTest {
             card.setManaCost("{0}");
             // Ability 0: non-mana
             card.addActivatedAbility(new ActivatedAbility(
-                    true, null, List.of(new PutChargeCounterOnSelfEffect()), "{T}: Put a charge counter."
+                    true, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "{T}: Put a charge counter."
             ));
             // Ability 1: mana
             card.addActivatedAbility(new ActivatedAbility(
@@ -1284,7 +1285,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{4}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new PutChargeCounterOnSelfEffect()), "Tap to add counter"
+                true, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "Tap to add counter"
         ));
         return card;
     }
@@ -1310,7 +1311,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, manaCost, List.of(new PutChargeCounterOnSelfEffect()), "Pay mana to add counter"
+                false, manaCost, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)), "Pay mana to add counter"
         ));
         return card;
     }
@@ -1322,7 +1323,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new PutChargeCounterOnSelfEffect()),
+                false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "Test ability", restriction
         ));
         return card;
@@ -1375,7 +1376,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new RemoveChargeCountersFromSourceCost(requiredCount), new PutChargeCounterOnSelfEffect()),
+                true, null, List.of(new RemoveChargeCountersFromSourceCost(requiredCount), new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "Remove charge counters"
         ));
         return card;
@@ -1388,7 +1389,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new RemoveCounterFromSourceCost(), new PutChargeCounterOnSelfEffect()),
+                false, null, List.of(new RemoveCounterFromSourceCost(), new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "Remove counter, add charge counter"
         ));
         return card;
@@ -1401,7 +1402,7 @@ class AbilityActivationServiceTest {
         card.setManaCost("{0}");
         card.setColor(null);
         card.addActivatedAbility(new ActivatedAbility(
-                false, null, List.of(new PutChargeCounterOnSelfEffect()),
+                false, null, List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "Limited ability", maxPerTurn
         ));
         return card;

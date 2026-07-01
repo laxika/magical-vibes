@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +29,7 @@ class GoldenUrnTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutChargeCounterOnSelfEffect.class);
+        assertThat(mayEffect.wrapped()).isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Activated ability (tap + sacrifice to gain life)
         assertThat(card.getActivatedAbilities()).hasSize(1);

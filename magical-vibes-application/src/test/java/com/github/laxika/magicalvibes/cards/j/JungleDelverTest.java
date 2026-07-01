@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,9 +27,9 @@ class JungleDelverTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
         assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(PutCounterOnSelfEffect.class);
+                .isInstanceOf(PutCountersOnSelfEffect.class);
 
-        PutCounterOnSelfEffect effect = (PutCounterOnSelfEffect)
+        PutCountersOnSelfEffect effect = (PutCountersOnSelfEffect)
                 card.getActivatedAbilities().getFirst().getEffects().getFirst();
         assertThat(effect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
     }

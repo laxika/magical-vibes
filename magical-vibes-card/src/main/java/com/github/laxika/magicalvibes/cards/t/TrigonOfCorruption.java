@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +25,7 @@ public class TrigonOfCorruption extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}{B}",
-                List.of(new PutChargeCounterOnSelfEffect()),
+                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "{B}{B}, {T}: Put a charge counter on Trigon of Corruption."
         ));
 

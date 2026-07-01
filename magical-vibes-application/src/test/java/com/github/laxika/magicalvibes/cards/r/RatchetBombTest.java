@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,7 +36,7 @@ class RatchetBombTest extends BaseCardTest {
         assertThat(ability0.isRequiresTap()).isTrue();
         assertThat(ability0.getManaCost()).isNull();
         assertThat(ability0.getEffects()).hasSize(1);
-        assertThat(ability0.getEffects().getFirst()).isInstanceOf(PutChargeCounterOnSelfEffect.class);
+        assertThat(ability0.getEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Ability 1: {T}, Sacrifice Ratchet Bomb: Destroy each nonland permanent with mana value
         // equal to the number of charge counters on Ratchet Bomb.

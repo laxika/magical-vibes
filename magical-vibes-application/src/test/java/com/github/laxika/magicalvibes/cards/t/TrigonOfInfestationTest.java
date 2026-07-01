@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -53,7 +53,7 @@ class TrigonOfInfestationTest extends BaseCardTest {
         assertThat(ability.getManaCost().toString()).isEqualTo("{G}{G}");
         assertThat(ability.getEffects())
                 .hasSize(1)
-                .anyMatch(e -> e instanceof PutChargeCounterOnSelfEffect);
+                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
     }
 
     @Test

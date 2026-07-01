@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +32,7 @@ class PrimalCocoonTest extends BaseCardTest {
         assertThat(card.isAura()).isTrue();
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnEnchantedCreatureEffect.class);
+                .isInstanceOf(PutCounterOnEnchantedCreatureEffect.class);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
                 .isInstanceOf(SacrificeSelfEffect.class);
