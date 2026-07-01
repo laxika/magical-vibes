@@ -460,6 +460,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `EntersTappedEffect()` — enters tapped
 - `EntersTappedUnlessControlsPermanentEffect(PermanentPredicate)` — enters tapped unless you control a matching permanent (check lands)
+- `EntersTappedUnlessFewLandsEffect(int maxOtherLands)` — enters tapped unless you control N or fewer other lands (fast lands)
+- `EntersTappedUnlessManyLandsEffect(int minOtherLands)` — enters tapped unless you control N or more other lands (slow lands)
 - `NoMaximumHandSizeEffect()` — no max hand size (static)
 - `IncreaseOpponentCastCostEffect(Set<CardType>, int)` — opponents' spells cost more
 - `IncreaseOpponentCostForTargetingControlledPermanentEffect(PermanentPredicate, int)` — opponent spells/abilities targeting your matching permanent cost more

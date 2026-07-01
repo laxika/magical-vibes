@@ -1162,6 +1162,7 @@ Pass `null` as filter to allow any card.
 | `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` or `(Set<CardType> cardTypes, boolean opponentsOnly)` | permanents of specified types enter tapped (static). When `opponentsOnly` is true, only opponents' permanents are affected (e.g. Urabrask the Hidden) |
 | `EntersTappedUnlessControlsPermanentEffect` | `(PermanentPredicate predicate)` | enters tapped unless you control a permanent matching the predicate (check lands use `PermanentHasAnySubtypePredicate`, static, implements `ReplacementEffect`) |
 | `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static, implements `ReplacementEffect`) |
+| `EntersTappedUnlessManyLandsEffect` | `(int minOtherLands)` | enters tapped unless you control N or more other lands (slow lands, static, implements `ReplacementEffect`) |
 | `OpponentsCantAttackIfCastSpellThisTurnEffect` | `()` | each opponent who cast a spell this turn can't attack with creatures (static, Angelic Arbiter) |
 | `OpponentsCantCastSpellsIfAttackedThisTurnEffect` | `()` | each opponent who attacked with a creature this turn can't cast spells (static, Angelic Arbiter) |
 | `OpponentsCantCastSpellsThisTurnEffect` | `()` | opponents of the controller can't cast spells this turn (spell, Silence) |
