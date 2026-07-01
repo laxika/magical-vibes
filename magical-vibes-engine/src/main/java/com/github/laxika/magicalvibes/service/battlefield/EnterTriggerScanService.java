@@ -182,6 +182,21 @@ public class EnterTriggerScanService {
                     gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                     log.info("Game {} - {} triggers for {} entering (toughness={})",
                             gameData.id, perm.getCard().getName(), enteringCreature.getName(), toughness);
+                } else if (effect instanceof GainLifeEffect gainLife) {
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            List.of(new GainLifeEffect(gainLife.amount())),
+                            null,
+                            perm.getId()
+                    ));
+                    String triggerLog = perm.getCard().getName() + " triggers — " +
+                            gameData.playerIdToName.get(controllerId) + " will gain " + gainLife.amount() + " life.";
+                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                    log.info("Game {} - {} triggers for {} entering (gain {} life)",
+                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), gainLife.amount());
                 } else if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(perm.getCard(), controllerId, may);
                     String triggerLog = perm.getCard().getName() + "'s ability triggers.";
