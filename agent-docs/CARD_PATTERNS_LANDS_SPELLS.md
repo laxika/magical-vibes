@@ -14,6 +14,7 @@ All paths relative to `cards/`.
 | X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutXPlusOnePlusOneCountersOnTargetPermanentEffect + AnimateTargetPermanentEffect(0, 0, ELEMENTAL, HASTE) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
 | Check land | `d/DragonskullSummit.java` | STATIC EntersTappedUnlessControlsPermanentEffect(PermanentHasAnySubtypePredicate) + 2 mana abilities |
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC EntersTappedUnlessFewLandsEffect(2) + 2 mana abilities |
+| Slow land | `d/DeathcapGlade.java` | STATIC EntersTappedUnlessManyLandsEffect(2) + 2 mana abilities |
 | Utility land | `q/Quicksand.java` | mana ability + sacrifice-to-debuff ability |
 | Utility land (exile-return) | `m/MystifyingMaze.java` | colorless mana ability + {4},{T}: exile target attacking creature, return tapped at end step (ExileTargetPermanentAndReturnAtEndStepEffect(true) + PermanentIsAttackingPredicate) |
 | Utility land (destroy + each player search) | `f/FieldOfRuin.java` | colorless mana ability + {2},{T},Sacrifice: DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect + opponent nonbasic land filter (PermanentAllOfPredicate: land + not basic + not controlled by source controller) |

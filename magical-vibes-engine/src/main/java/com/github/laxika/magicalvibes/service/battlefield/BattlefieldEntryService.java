@@ -30,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCounte
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessManyLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
@@ -196,17 +197,14 @@ public class BattlefieldEntryService {
     private void applyConditionalEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
         for (CardEffect effect : enteringPermanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof EntersTappedUnlessFewLandsEffect fewLands) {
-                // Count other lands the controller already has on the battlefield
-                List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-                int otherLandCount = 0;
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (p.getCard().hasType(CardType.LAND)) {
-                            otherLandCount++;
-                        }
-                    }
-                }
+                int otherLandCount = countOtherLands(gameData, controllerId);
                 if (otherLandCount > fewLands.maxOtherLands()) {
+                    enteringPermanent.tap();
+                }
+            }
+            if (effect instanceof EntersTappedUnlessManyLandsEffect manyLands) {
+                int otherLandCount = countOtherLands(gameData, controllerId);
+                if (otherLandCount < manyLands.minOtherLands()) {
                     enteringPermanent.tap();
                 }
             }
@@ -216,6 +214,19 @@ public class BattlefieldEntryService {
                 }
             }
         }
+    }
+
+    private int countOtherLands(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        int otherLandCount = 0;
+        if (battlefield != null) {
+            for (Permanent p : battlefield) {
+                if (p.getCard().hasType(CardType.LAND)) {
+                    otherLandCount++;
+                }
+            }
+        }
+        return otherLandCount;
     }
 
     private boolean matchesAnyType(Card card, Set<CardType> types) {
