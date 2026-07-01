@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
@@ -39,7 +39,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
 
         // Upkeep trigger — mandatory charge counter
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).singleElement()
-                .isInstanceOf(PutChargeCounterOnSelfEffect.class);
+                .isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Cast trigger — black spell adds charge counter
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).singleElement()
@@ -47,7 +47,7 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         SpellCastTriggerEffect castTrigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
         assertThat(castTrigger.spellFilter()).isInstanceOf(CardColorPredicate.class);
         assertThat(((CardColorPredicate) castTrigger.spellFilter()).color()).isEqualTo(CardColor.BLACK);
-        assertThat(castTrigger.resolvedEffects()).singleElement().isInstanceOf(PutChargeCounterOnSelfEffect.class);
+        assertThat(castTrigger.resolvedEffects()).singleElement().isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Activated ability — {4}, T, sacrifice: target player discards by charge counters
         assertThat(card.getActivatedAbilities()).hasSize(1);

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
@@ -18,12 +19,12 @@ public class ShrineOfLimitlessPower extends Card {
 
     public ShrineOfLimitlessPower() {
         // At the beginning of your upkeep, put a charge counter on Shrine of Limitless Power.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutChargeCounterOnSelfEffect());
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // Whenever you cast a black spell, put a charge counter on Shrine of Limitless Power.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardColorPredicate(CardColor.BLACK),
-                        List.of(new PutChargeCounterOnSelfEffect())));
+                        List.of(new PutCountersOnSelfEffect(CounterType.CHARGE))));
 
         // {4}, {T}, Sacrifice Shrine of Limitless Power: Target player discards a card for each charge counter on Shrine of Limitless Power.
         addActivatedAbility(new ActivatedAbility(

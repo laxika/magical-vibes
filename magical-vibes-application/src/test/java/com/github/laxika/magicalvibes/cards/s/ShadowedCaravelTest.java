@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfAsCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,14 +30,14 @@ class ShadowedCaravelTest extends BaseCardTest {
     // ===== Card effect configuration =====
 
     @Test
-    @DisplayName("Has ON_ALLY_CREATURE_EXPLORES PutCounterOnSelfEffect(PLUS_ONE_PLUS_ONE)")
+    @DisplayName("Has ON_ALLY_CREATURE_EXPLORES PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE)")
     void hasExploreTriggeredCounterEffect() {
         ShadowedCaravel card = new ShadowedCaravel();
 
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst())
-                .isInstanceOf(PutCounterOnSelfEffect.class);
-        PutCounterOnSelfEffect effect = (PutCounterOnSelfEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst();
+                .isInstanceOf(PutCountersOnSelfEffect.class);
+        PutCountersOnSelfEffect effect = (PutCountersOnSelfEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst();
         assertThat(effect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
     }
 
@@ -67,7 +67,7 @@ class ShadowedCaravelTest extends BaseCardTest {
 
         castExplorerAndResolveExplore();
 
-        // Explore trigger resolves automatically (no target needed for PutCounterOnSelfEffect)
+        // Explore trigger resolves automatically (no target needed for PutCountersOnSelfEffect)
         harness.passBothPriorities();
 
         assertThat(caravel.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

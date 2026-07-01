@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -45,8 +45,8 @@ class MikaeusTheLunarchTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PutCounterOnSelfEffect.class);
-        PutCounterOnSelfEffect selfCounter = (PutCounterOnSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
+                .isInstanceOf(PutCountersOnSelfEffect.class);
+        PutCountersOnSelfEffect selfCounter = (PutCountersOnSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
         assertThat(selfCounter.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
 
         // Second ability: {T}, Remove a +1/+1 counter: Put a +1/+1 counter on each other creature you control
@@ -56,7 +56,7 @@ class MikaeusTheLunarchTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(1).getEffects().get(0))
                 .isInstanceOf(RemoveCounterFromSourceCost.class);
         assertThat(card.getActivatedAbilities().get(1).getEffects().get(1))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class);
+                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
     }
 
     // ===== Enters with X +1/+1 counters =====

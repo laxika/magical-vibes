@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -50,7 +50,7 @@ class TrigonOfMendingTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isTrue();
         assertThat(ability.getManaCost()).isEqualTo("{W}{W}");
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutChargeCounterOnSelfEffect.class);
+        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
     }
 
     @Test

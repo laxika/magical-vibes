@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +26,7 @@ public class GlisteningOil extends Card {
         .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE))
 
         // At the beginning of your upkeep, put a -1/-1 counter on enchanted creature.
-        .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutMinusOneMinusOneCounterOnEnchantedCreatureEffect());
+        .addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCounterOnEnchantedCreatureEffect(CounterType.MINUS_ONE_MINUS_ONE));
 
         // When Glistening Oil is put into a graveyard from the battlefield,
         // return Glistening Oil to its owner's hand.

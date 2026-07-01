@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -51,7 +51,7 @@ class HavengulRunebinderTest extends BaseCardTest {
         assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.ZOMBIE);
 
         assertThat(ability.getEffects().get(2))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class);
+                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
     }
 
     // ===== Activation / cost payment =====

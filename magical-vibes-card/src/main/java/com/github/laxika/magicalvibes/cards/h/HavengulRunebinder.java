@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +26,8 @@ public class HavengulRunebinder extends Card {
                 List.of(
                         new ExileCardFromGraveyardCost(CardType.CREATURE),
                         CreateTokenEffect.blackZombie(1),
-                        new PutPlusOnePlusOneCounterOnEachControlledPermanentEffect(
+                        new PutCounterOnEachControlledPermanentEffect(
+                                CounterType.PLUS_ONE_PLUS_ONE, 1,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                                         new PermanentIsCreaturePredicate()

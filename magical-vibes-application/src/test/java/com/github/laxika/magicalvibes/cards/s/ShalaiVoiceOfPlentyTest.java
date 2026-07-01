@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -76,7 +76,7 @@ class ShalaiVoiceOfPlentyTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isEqualTo("{4}{G}{G}");
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnEachOwnCreatureEffect.class);
+                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
     }
 
     // ===== Controller hexproof =====

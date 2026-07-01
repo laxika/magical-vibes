@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 
@@ -22,7 +23,7 @@ public class TrigonOfMending extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}{W}",
-                List.of(new PutChargeCounterOnSelfEffect()),
+                List.of(new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 "{W}{W}, {T}: Put a charge counter on Trigon of Mending."
         ));
 

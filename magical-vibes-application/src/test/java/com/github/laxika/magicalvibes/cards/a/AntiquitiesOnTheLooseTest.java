@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CastNotFromHandConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -58,9 +58,9 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CastNotFromHandConditionalEffect.class);
         CastNotFromHandConditionalEffect conditional =
                 (CastNotFromHandConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(conditional.wrapped()).isInstanceOf(PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class);
-        PutPlusOnePlusOneCounterOnEachControlledPermanentEffect counters =
-                (PutPlusOnePlusOneCounterOnEachControlledPermanentEffect) conditional.wrapped();
+        assertThat(conditional.wrapped()).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
+        PutCounterOnEachControlledPermanentEffect counters =
+                (PutCounterOnEachControlledPermanentEffect) conditional.wrapped();
         assertThat(counters.predicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT));
 
         FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();

@@ -32,7 +32,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -284,11 +286,11 @@ class SpellEvaluatorTest {
     }
 
     @Test
-    @DisplayName("PutPlusOnePlusOneCounterOnEachOwnCreatureEffect scales with creature count")
+    @DisplayName("PutCounterOnEachControlledPermanentEffect scales with creature count")
     void counterOnEachCreatureScalesWithCount() {
         // No creatures: value should be 0
         double noCreatures = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new PutPlusOnePlusOneCounterOnEachOwnCreatureEffect(1)), player1.getId());
+                gd, List.of(new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())), player1.getId());
         assertThat(noCreatures).isEqualTo(0.0);
 
         // Add 3 creatures
@@ -299,7 +301,7 @@ class SpellEvaluatorTest {
         }
 
         double withCreatures = spellEvaluator.evaluateAbilityEffects(
-                gd, List.of(new PutPlusOnePlusOneCounterOnEachOwnCreatureEffect(1)), player1.getId());
+                gd, List.of(new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())), player1.getId());
         assertThat(withCreatures).isEqualTo(10.5); // 3 * 1 * 3.5
     }
 

@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEff
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class AjaniGoldmane extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(
-                        new PutPlusOnePlusOneCounterOnEachOwnCreatureEffect(),
+                        new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES)
                 ),
                 "\u22121: Put a +1/+1 counter on each creature you control. Those creatures gain vigilance until end of turn."

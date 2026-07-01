@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentWhileSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -41,7 +41,7 @@ class OliviaVoldarenTest extends BaseCardTest {
                 .satisfies(effects -> {
                     assertThat(effects.get(0)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
                     assertThat(effects.get(1)).isInstanceOf(GrantSubtypeToTargetCreatureEffect.class);
-                    assertThat(effects.get(2)).isInstanceOf(PutCounterOnSelfEffect.class);
+                    assertThat(effects.get(2)).isInstanceOf(PutCountersOnSelfEffect.class);
                 });
     }
 

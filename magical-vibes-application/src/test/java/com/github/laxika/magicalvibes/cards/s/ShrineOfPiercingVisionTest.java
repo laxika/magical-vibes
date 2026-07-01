@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -35,7 +35,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         // Upkeep triggered ability (mandatory charge counter)
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutChargeCounterOnSelfEffect.class);
+                .isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Spell cast trigger (blue spell -> charge counter)
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
@@ -45,7 +45,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         assertThat(trigger.spellFilter()).isInstanceOf(CardColorPredicate.class);
         assertThat(((CardColorPredicate) trigger.spellFilter()).color()).isEqualTo(CardColor.BLUE);
         assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(PutChargeCounterOnSelfEffect.class);
+        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Activated ability (tap + sacrifice -> look at top X)
         assertThat(card.getActivatedAbilities()).hasSize(1);
@@ -68,7 +68,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // move to upkeep, trigger fires
-        harness.passBothPriorities(); // resolve PutChargeCounterOnSelfEffect
+        harness.passBothPriorities(); // resolve PutCountersOnSelfEffect
 
         assertThat(shrine.getCounterCount(CounterType.CHARGE)).isEqualTo(1);
     }

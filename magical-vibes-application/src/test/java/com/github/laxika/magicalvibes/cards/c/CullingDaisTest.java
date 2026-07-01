@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -38,7 +38,7 @@ class CullingDaisTest extends BaseCardTest {
         assertThat(ability0.getManaCost()).isNull();
         assertThat(ability0.getEffects()).hasSize(2);
         assertThat(ability0.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability0.getEffects().get(1)).isInstanceOf(PutChargeCounterOnSelfEffect.class);
+        assertThat(ability0.getEffects().get(1)).isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Ability 1: {1}, Sacrifice Culling Dais: Draw a card for each charge counter on Culling Dais.
         var ability1 = card.getActivatedAbilities().get(1);

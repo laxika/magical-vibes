@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -46,7 +46,7 @@ class ConversionChamberTest extends BaseCardTest {
         assertThat(ability.getEffects())
                 .anyMatch(e -> e instanceof ExileTargetCardFromGraveyardEffect ex
                         && ex.requiredType() == CardType.ARTIFACT)
-                .anyMatch(e -> e instanceof PutChargeCounterOnSelfEffect);
+                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
     }
 
     @Test

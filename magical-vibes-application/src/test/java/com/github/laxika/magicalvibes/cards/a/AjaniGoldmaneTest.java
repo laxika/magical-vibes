@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -57,7 +57,7 @@ class AjaniGoldmaneTest extends BaseCardTest {
         assertThat(ability.getLoyaltyCost()).isEqualTo(-1);
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(PutPlusOnePlusOneCounterOnEachOwnCreatureEffect.class);
+        assertThat(ability.getEffects().get(0)).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
     }
 

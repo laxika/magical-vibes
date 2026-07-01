@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -41,8 +41,8 @@ class GrimoireOfTheDeadTest extends BaseCardTest {
         assertThat(ability0.getEffects()).hasSize(2);
         assertThat(ability0.getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
         assertThat(((DiscardCardTypeCost) ability0.getEffects().get(0)).predicate()).isNull();
-        assertThat(ability0.getEffects().get(1)).isInstanceOf(PutCounterOnSelfEffect.class);
-        assertThat(((PutCounterOnSelfEffect) ability0.getEffects().get(1)).counterType()).isEqualTo(CounterType.STUDY);
+        assertThat(ability0.getEffects().get(1)).isInstanceOf(PutCountersOnSelfEffect.class);
+        assertThat(((PutCountersOnSelfEffect) ability0.getEffects().get(1)).counterType()).isEqualTo(CounterType.STUDY);
 
         // Ability 2: {T}, Remove three study counters and sacrifice: Return all creatures
         var ability1 = card.getActivatedAbilities().get(1);

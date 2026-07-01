@@ -31,7 +31,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCounters
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -395,11 +396,11 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("PutChargeCounterOnSelfEffect auto-targets source permanent")
+        @DisplayName("PutCountersOnSelfEffect auto-targets source permanent")
         void putChargeCounterAutoTargets() {
             Card card = createCard("Test Artifact", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new PutChargeCounterOnSelfEffect());
+            List<CardEffect> effects = List.of(new PutCountersOnSelfEffect(CounterType.CHARGE));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Put a charge counter.");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -479,7 +480,7 @@ class ActivatedAbilityExecutionServiceTest {
         void tapAbilityTapsPermanent() {
             Card card = createCard("Test Artifact", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new PutChargeCounterOnSelfEffect());
+            List<CardEffect> effects = List.of(new PutCountersOnSelfEffect(CounterType.CHARGE));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Put a charge counter.");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);

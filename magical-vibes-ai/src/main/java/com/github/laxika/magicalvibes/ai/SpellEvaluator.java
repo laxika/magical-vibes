@@ -43,7 +43,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachOwnCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
@@ -107,7 +108,8 @@ public class SpellEvaluator {
             return scry.count() * 2.0;
         }
         // +1/+1 counters on all own creatures
-        if (effect instanceof PutPlusOnePlusOneCounterOnEachOwnCreatureEffect counters) {
+        if (effect instanceof PutCounterOnEachControlledPermanentEffect counters
+                && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
             long creatureCount = aiBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
                     .count();

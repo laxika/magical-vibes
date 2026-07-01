@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -18,12 +19,12 @@ public class ShrineOfBoundlessGrowth extends Card {
 
     public ShrineOfBoundlessGrowth() {
         // At the beginning of your upkeep, put a charge counter on Shrine of Boundless Growth.
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutChargeCounterOnSelfEffect());
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         // Whenever you cast a green spell, put a charge counter on Shrine of Boundless Growth.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL,
                 new SpellCastTriggerEffect(new CardColorPredicate(CardColor.GREEN),
-                        List.of(new PutChargeCounterOnSelfEffect())));
+                        List.of(new PutCountersOnSelfEffect(CounterType.CHARGE))));
 
         // {T}, Sacrifice Shrine of Boundless Growth: Add {C} for each charge counter on Shrine of Boundless Growth.
         addActivatedAbility(new ActivatedAbility(

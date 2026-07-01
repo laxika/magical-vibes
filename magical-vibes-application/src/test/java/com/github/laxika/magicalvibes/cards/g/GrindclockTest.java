@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutChargeCounterOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,7 +35,7 @@ class GrindclockTest extends BaseCardTest {
         assertThat(ability0.isRequiresTap()).isTrue();
         assertThat(ability0.getManaCost()).isNull();
         assertThat(ability0.getEffects()).hasSize(1);
-        assertThat(ability0.getEffects().getFirst()).isInstanceOf(PutChargeCounterOnSelfEffect.class);
+        assertThat(ability0.getEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
 
         // Ability 1: {T}: Target player mills X cards, where X is the number of charge counters on Grindclock.
         var ability1 = card.getActivatedAbilities().get(1);

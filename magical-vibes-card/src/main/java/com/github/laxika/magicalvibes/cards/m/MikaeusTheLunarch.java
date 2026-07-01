@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,14 +25,15 @@ public class MikaeusTheLunarch extends Card {
 
         // {T}: Put a +1/+1 counter on Mikaeus.
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new PutCounterOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{T}: Put a +1/+1 counter on Mikaeus, the Lunarch."));
 
         // {T}, Remove a +1/+1 counter from Mikaeus: Put a +1/+1 counter on each other creature you control.
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new PutPlusOnePlusOneCounterOnEachControlledPermanentEffect(
+                        new PutCounterOnEachControlledPermanentEffect(
+                                CounterType.PLUS_ONE_PLUS_ONE, 1,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +37,7 @@ class GlisteningOilTest extends BaseCardTest {
                 .isInstanceOf(GrantKeywordEffect.class);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutMinusOneMinusOneCounterOnEnchantedCreatureEffect.class);
+                .isInstanceOf(PutCounterOnEnchantedCreatureEffect.class);
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
                 .isInstanceOf(ReturnCardFromGraveyardEffect.class);
