@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -29,6 +33,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -391,6 +396,38 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             verify(gameBroadcastService).logAndBroadcast(eq(gd), any(String.class));
+        }
+    }
+
+    // ===== ON_CONTROLLER_GAINS_LIFE — PutPlusOnePlusOneCounterOnEachControlledPermanentEffect =====
+
+    @Nested
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — PutPlusOnePlusOneCounterOnEachControlledPermanentEffect")
+    class LifeGainPutCountersOnMatching {
+
+        @Test
+        @DisplayName("puts triggered ability on stack and returns true")
+        void putsTriggeredAbilityOnStack() {
+            Permanent perm = createPermanent("Blech, Loafing Pest");
+            var effect = new PutPlusOnePlusOneCounterOnEachControlledPermanentEffect(
+                    new PermanentAnyOfPredicate(List.of(
+                            new PermanentHasSubtypePredicate(CardSubtype.PEST),
+                            new PermanentHasSubtypePredicate(CardSubtype.SPIDER)
+                    )));
+            var ctx = new TriggerContext.LifeGain(player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            var stackEntry = gd.stack.getLast();
+            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+            assertThat(stackEntry.getDescription()).contains("Blech, Loafing Pest");
+            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
+            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
+            assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
         }
     }
 
