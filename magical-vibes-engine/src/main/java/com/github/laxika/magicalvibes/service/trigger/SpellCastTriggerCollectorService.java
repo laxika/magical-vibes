@@ -33,7 +33,9 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySpellManaSpentEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellManaSpentAtLeastConditionalEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -536,7 +538,7 @@ public class SpellCastTriggerCollectorService {
         boolean needsGraveyardTarget = resolved.stream().anyMatch(CardEffect::canTargetGraveyard);
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
-        boolean needsSpellManaSpentX = resolved.stream().anyMatch(BoostSelfBySpellManaSpentEffect.class::isInstance);
+        boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX);
         int spellManaSpentX = needsSpellManaSpentX
                 ? match.gameData().getSpellCastManaSpent(spellCard.getId()) : 0;
 
@@ -581,6 +583,17 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private boolean effectNeedsSpellManaSpentX(CardEffect effect) {
+        if (effect instanceof BoostSelfBySpellManaSpentEffect
+                || effect instanceof SpellManaSpentAtLeastConditionalEffect) {
+            return true;
+        }
+        if (effect instanceof ConditionalEffect conditional) {
+            return effectNeedsSpellManaSpentX(conditional.wrapped());
+        }
+        return false;
     }
 
     private boolean addColorCounterTrigger(TriggerMatchContext match,

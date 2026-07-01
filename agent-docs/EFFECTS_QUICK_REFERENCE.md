@@ -28,6 +28,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `MayPayManaEffect(String manaCost, CardEffect, String prompt)` — "you may pay {X}"
 - `MayPayTapPermanentsEffect(TapMultiplePermanentsCost, CardEffect, String prompt)` — "you may tap N permanents"
 - `MetalcraftConditionalEffect(CardEffect)` — 3+ artifacts
+- `SpellManaSpentAtLeastConditionalEffect(int minMana, CardEffect)` — mana spent to cast triggering spell >= N
 - `MorbidConditionalEffect(CardEffect)` — creature died this turn
 - `RaidConditionalEffect(CardEffect)` — attacked this turn
 - `TriggeringCardConditionalEffect(CardPredicate, CardEffect)` — triggering card matches predicate

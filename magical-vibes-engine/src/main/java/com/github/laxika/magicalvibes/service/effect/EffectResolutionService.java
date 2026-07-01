@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnCondition
 import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceSubtypeReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.SpellManaSpentAtLeastConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -291,6 +292,8 @@ public class EffectResolutionService {
                 }
                 yield count >= graveCheck.threshold();
             }
+            case SpellManaSpentAtLeastConditionalEffect manaCheck ->
+                    entry.getXValue() >= manaCheck.minMana();
             default -> {
                 log.warn("Unknown conditional effect type: {}", conditional.getClass().getSimpleName());
                 yield false;
