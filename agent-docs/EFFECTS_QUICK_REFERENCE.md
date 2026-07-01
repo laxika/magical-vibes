@@ -31,6 +31,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `SpellManaSpentAtLeastConditionalEffect(int minMana, CardEffect)` — mana spent to cast triggering spell >= N
 - `MorbidConditionalEffect(CardEffect)` — creature died this turn
 - `RaidConditionalEffect(CardEffect)` — attacked this turn
+- `ControllerCastAnotherSpellThisTurnConditionalEffect(CardPredicate, CardEffect)` — another spell matching filter cast this turn (excludes resolving spell)
 - `TriggeringCardConditionalEffect(CardPredicate, CardEffect)` — triggering card matches predicate
 - `TriggeringPermanentConditionalEffect(PermanentPredicate, CardEffect)` — triggering permanent matches predicate
 - `ControlsAnotherPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls another matching permanent

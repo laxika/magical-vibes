@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CastNotFromHandConditionalEff
 import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerCastAnotherSpellThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
@@ -269,6 +270,9 @@ public class EffectResolutionService {
                     hasMatchingAttacker(gameData, entry, hasAttacker);
             case RaidConditionalEffect ignored ->
                     gameData.playersDeclaredAttackersThisTurn.contains(entry.getControllerId());
+            case ControllerCastAnotherSpellThisTurnConditionalEffect castAnother ->
+                    gameQueryService.hasControllerCastAnotherSpellThisTurn(
+                            gameData, entry.getControllerId(), entry.getCard(), castAnother.filter());
             case ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck -> {
                 int lifeTotal = gameData.playerLifeTotals.getOrDefault(entry.getControllerId(), 20);
                 yield lifeTotal <= lifeCheck.lifeThreshold();

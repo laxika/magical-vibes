@@ -707,6 +707,23 @@ public class GameQueryService {
     }
 
     /**
+     * Returns {@code true} if the given player has cast another spell matching {@code filter}
+     * this turn, excluding {@code excludeSpell} (typically the spell currently resolving).
+     */
+    public boolean hasControllerCastAnotherSpellThisTurn(
+            GameData gameData, UUID controllerId, Card excludeSpell, CardPredicate filter) {
+        for (Card spell : gameData.getSpellsCastThisTurn(controllerId)) {
+            if (spell == excludeSpell) {
+                continue;
+            }
+            if (matchesCardPredicate(spell, filter, spell.getId())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns {@code true} if the given creature can attack despite having defender.
      * Checks for {@link CanAttackAsThoughNoDefenderEffect} in static effects, including
      * those wrapped in {@link MetalcraftConditionalEffect}.
