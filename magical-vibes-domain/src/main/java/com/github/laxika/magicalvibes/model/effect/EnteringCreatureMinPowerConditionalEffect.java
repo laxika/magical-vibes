@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
+
 /**
  * Conditional wrapper for ally-creature-enters triggers: the wrapped effect only fires
  * if the entering creature has power >= {@code minPower}.
@@ -10,5 +12,15 @@ package com.github.laxika.magicalvibes.model.effect;
 public record EnteringCreatureMinPowerConditionalEffect(
         int minPower,
         CardEffect wrapped
-) implements CardEffect {
+) implements EnterCreatureConditionalEffect {
+
+    @Override
+    public boolean testEnteringCreature(Card enteringCreature) {
+        return enteringCreature.getPower() != null && enteringCreature.getPower() >= minPower;
+    }
+
+    @Override
+    public String triggerDescription(Card enteringCreature) {
+        return "power " + enteringCreature.getPower() + " >= " + minPower;
+    }
 }
