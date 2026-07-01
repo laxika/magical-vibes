@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,11 +32,13 @@ class BlechLoafingPestTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class);
+                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
 
-        PutPlusOnePlusOneCounterOnEachControlledPermanentEffect effect =
-                (PutPlusOnePlusOneCounterOnEachControlledPermanentEffect)
+        PutCounterOnEachControlledPermanentEffect effect =
+                (PutCounterOnEachControlledPermanentEffect)
                         card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst();
+        assertThat(effect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
+        assertThat(effect.count()).isEqualTo(1);
         assertThat(effect.predicate()).isInstanceOf(PermanentAnyOfPredicate.class);
 
         PermanentAnyOfPredicate anyOf = (PermanentAnyOfPredicate) effect.predicate();

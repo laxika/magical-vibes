@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -15,7 +16,8 @@ public class BlechLoafingPest extends Card {
 
     public BlechLoafingPest() {
         // Whenever you gain life, put a +1/+1 counter on each Pest, Bat, Insect, Snake, and Spider you control.
-        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new PutPlusOnePlusOneCounterOnEachControlledPermanentEffect(
+        addEffect(EffectSlot.ON_CONTROLLER_GAINS_LIFE, new PutCounterOnEachControlledPermanentEffect(
+                CounterType.PLUS_ONE_PLUS_ONE, 1,
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.PEST),
                         new PermanentHasSubtypePredicate(CardSubtype.BAT),
