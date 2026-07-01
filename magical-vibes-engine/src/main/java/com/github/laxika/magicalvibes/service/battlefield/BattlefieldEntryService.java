@@ -47,8 +47,9 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -61,16 +62,34 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class BattlefieldEntryService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final PermanentCopierService permanentCopierService;
-    private final EnterTriggerScanService enterTriggerScanService;
+    private final TriggerCollectionService triggerCollectionService;
     private final GraveyardTargetingService graveyardTargetingService;
     private final ETBTokenTargetService etbTokenTargetService;
+
+    // @Lazy on triggerCollectionService breaks the constructor cycle:
+    // BattlefieldEntryService → TriggerCollectionService → PlayerInputService/queue services →
+    // (effect handlers) → BattlefieldEntryService.
+    public BattlefieldEntryService(GameQueryService gameQueryService,
+                                   GameBroadcastService gameBroadcastService,
+                                   PlayerInputService playerInputService,
+                                   PermanentCopierService permanentCopierService,
+                                   @Lazy TriggerCollectionService triggerCollectionService,
+                                   GraveyardTargetingService graveyardTargetingService,
+                                   ETBTokenTargetService etbTokenTargetService) {
+        this.gameQueryService = gameQueryService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.playerInputService = playerInputService;
+        this.permanentCopierService = permanentCopierService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.graveyardTargetingService = graveyardTargetingService;
+        this.etbTokenTargetService = etbTokenTargetService;
+    }
 
 
     public void putPermanentOntoBattlefield(GameData gameData, UUID controllerId, Permanent permanent) {
@@ -684,16 +703,16 @@ public class BattlefieldEntryService {
             }
         }
 
-        enterTriggerScanService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers);
-        enterTriggerScanService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
-        enterTriggerScanService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
-        enterTriggerScanService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
-        enterTriggerScanService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
-        enterTriggerScanService.checkAnyCreatureEntersTriggers(gameData, controllerId, card);
-        enterTriggerScanService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraWizardTriggers);
+        triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkAllyEquipmentEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkAllyNontokenArtifactEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkAnyCreatureEntersTriggers(gameData, controllerId, card);
+        triggerCollectionService.checkEntersFromGraveyardTriggers(gameData, controllerId, card);
         if (card.hasType(CardType.LAND)) {
-            enterTriggerScanService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
-            enterTriggerScanService.checkAllyLandEntersTriggers(gameData, controllerId, card);
+            triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
+            triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
         }
     }
 }

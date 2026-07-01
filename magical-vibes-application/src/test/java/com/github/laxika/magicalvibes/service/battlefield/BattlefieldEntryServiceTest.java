@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPer
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class BattlefieldEntryServiceTest {
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
-    @Mock private EnterTriggerScanService enterTriggerScanService;
+    @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private GraveyardTargetingService graveyardTargetingService;
     @Mock private ETBTokenTargetService etbTokenTargetService;
 
@@ -45,7 +46,7 @@ class BattlefieldEntryServiceTest {
     void setUp() {
         service = new BattlefieldEntryService(
                 gameQueryService, gameBroadcastService, playerInputService,
-                permanentCopierService, enterTriggerScanService,
+                permanentCopierService, triggerCollectionService,
                 graveyardTargetingService, etbTokenTargetService);
 
         player1Id = UUID.randomUUID();

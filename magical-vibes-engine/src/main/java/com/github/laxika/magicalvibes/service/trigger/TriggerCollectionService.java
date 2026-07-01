@@ -22,6 +22,9 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffe
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterCreatureConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
@@ -1124,6 +1127,342 @@ public class TriggerCollectionService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} gets {} poison counter(s) (delayed trigger: creature died this turn)",
                 gameData.id, playerName, poisonAmount);
+    }
+
+    // ── Enter-the-battlefield triggers ─────────────────────────────────
+
+    /**
+     * "Whenever a creature enters under your control" (ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).
+     * Naban doubling snapshots every stack entry produced during the scan and re-adds it
+     * {@code extraWizardTriggers} times, so the duplication spans all triggering permanents.
+     */
+    public void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {
+        if (enteringCreature.getToughness() == null) return;
+
+        int stackSizeBefore = gameData.stack.size();
+        var ctx = new TriggerContext.PermanentEnters(enteringCreature, controllerId, null, 1, null);
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCreature) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCreature, gameData, controllerId);
+                if (resolved == null) continue;
+                resolved = unwrapEnterCreatureConditional(gameData, enteringCreature, perm, resolved);
+                if (resolved == null) continue;
+                dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
+            }
+        }
+
+        if (extraWizardTriggers > 0) {
+            List<StackEntry> newEntries = new ArrayList<>(gameData.stack.subList(stackSizeBefore, gameData.stack.size()));
+            for (int i = 0; i < extraWizardTriggers; i++) {
+                for (StackEntry entry : newEntries) {
+                    gameData.stack.add(new StackEntry(entry));
+                }
+            }
+        }
+    }
+
+    /**
+     * "Whenever another creature enters" (ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD). Naban doubling
+     * is applied per effect (only for permanents the entering creature's controller controls); the
+     * default fallback skips targeting effects.
+     */
+    public void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
+        if (enteringCreature.getToughness() == null) return;
+
+        int extraWizardTriggers = gameQueryService.countETBExtraTriggers(gameData, enteringCreatureControllerId, enteringCreature);
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) return;
+            if (perm.getCard() == enteringCreature) return;
+
+            int extraTriggers = playerId.equals(enteringCreatureControllerId) ? extraWizardTriggers : 0;
+            var ctx = new TriggerContext.PermanentEnters(
+                    enteringCreature, enteringCreatureControllerId, null, 1 + extraTriggers, null);
+
+            for (CardEffect effect : effects) {
+                CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCreature, gameData, playerId);
+                if (resolved == null) continue;
+                dispatchEnter(gameData, perm, playerId, EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
+            }
+        });
+    }
+
+    /** "Whenever a creature enters under an opponent's control" (ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD). */
+    public void checkOpponentCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
+        if (enteringCreature.getToughness() == null) return;
+
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (playerId.equals(enteringCreatureControllerId)) return;
+
+            var ctx = new TriggerContext.PermanentEnters(
+                    enteringCreature, enteringCreatureControllerId, enteringCreatureControllerId, 1, null);
+
+            for (Permanent perm : battlefield) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCreature, gameData, playerId);
+                    if (resolved == null) continue;
+                    dispatchEnter(gameData, perm, playerId, EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD, resolved, ctx);
+                }
+            }
+        });
+    }
+
+    /** "Whenever a land enters under an opponent's control" (ON_OPPONENT_LAND_ENTERS_BATTLEFIELD). */
+    public void checkOpponentLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
+        gameData.forEachBattlefield((playerId, battlefield) -> {
+            if (playerId.equals(landControllerId)) return;
+
+            var ctx = new TriggerContext.PermanentEnters(
+                    enteringLand, landControllerId, landControllerId, 1, null);
+
+            for (Permanent perm : battlefield) {
+                List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD);
+                if (effects == null || effects.isEmpty()) continue;
+
+                for (CardEffect effect : effects) {
+                    CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringLand, gameData, playerId);
+                    if (resolved == null) continue;
+                    resolved = unwrapImprintedCardNameConditional(enteringLand, perm, resolved);
+                    if (resolved == null) continue;
+                    resolved = unwrapPermanentEnteredThisTurnConditional(gameData, landControllerId, resolved);
+                    if (resolved == null) continue;
+                    dispatchEnter(gameData, perm, playerId, EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD, resolved, ctx);
+                }
+            }
+        });
+    }
+
+    /**
+     * "Whenever a nontoken artifact enters under your control" (ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD).
+     * The entering permanent's id is preserved on any queued may-pay ability (e.g. Mirrorworks).
+     */
+    public void checkAllyNontokenArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        if (enteringCard.isToken()) return;
+        if (!enteringCard.hasType(CardType.ARTIFACT)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+
+        UUID enteringPermanentId = null;
+        for (Permanent p : battlefield) {
+            if (p.getCard() == enteringCard) {
+                enteringPermanentId = p.getId();
+                break;
+            }
+        }
+
+        var ctx = new TriggerContext.PermanentEnters(enteringCard, controllerId, null, 1, enteringPermanentId);
+
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCard) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringCard, gameData, controllerId);
+                if (resolved == null) continue;
+                dispatchEnter(gameData, perm, controllerId, EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD, resolved, ctx);
+            }
+        }
+    }
+
+    /**
+     * "Whenever an artifact enters under your control" (ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD).
+     * Simple scan with no per-effect branching: each effect is put straight onto the stack.
+     */
+    public void checkAllyArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        if (!enteringCard.hasType(CardType.ARTIFACT)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCard) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} triggers for {} entering (ally artifact entered)",
+                        gameData.id, perm.getCard().getName(), enteringCard.getName());
+            }
+        }
+    }
+
+    /**
+     * "Whenever an Equipment enters under your control" (ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD).
+     * Simple scan with no per-effect branching: each effect is put straight onto the stack.
+     */
+    public void checkAllyEquipmentEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
+        if (!enteringCard.getSubtypes().contains(CardSubtype.EQUIPMENT)) return;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringCard) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            for (CardEffect effect : effects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} triggers for {} entering (ally equipment entered)",
+                        gameData.id, perm.getCard().getName(), enteringCard.getName());
+            }
+        }
+    }
+
+    /**
+     * "Whenever a land enters under your control" (ON_ALLY_LAND_ENTERS_BATTLEFIELD, e.g. Landfall).
+     * Bundles all of a permanent's effects into a single stack entry (one landfall trigger).
+     */
+    public void checkAllyLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(landControllerId);
+        for (Permanent perm : battlefield) {
+            if (perm.getCard() == enteringLand) continue;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD);
+            if (effects == null || effects.isEmpty()) continue;
+
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    landControllerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    perm.getId()
+            ));
+            gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+            log.info("Game {} - {} triggers on ally land entering", gameData.id, perm.getCard().getName());
+        }
+    }
+
+    /**
+     * "Whenever a creature enters from a graveyard" (ON_CREATURE_ENTERS_FROM_GRAVEYARD). Queues a
+     * pending target choice rather than a stack entry, so it stays outside the registry.
+     */
+    public void checkEntersFromGraveyardTriggers(GameData gameData, UUID enteringControllerId, Card enteringCreature) {
+        if (enteringCreature.getToughness() == null) return;
+
+        Permanent enteringPermanent = null;
+        List<Permanent> controllerBf = gameData.playerBattlefields.get(enteringControllerId);
+        if (controllerBf != null) {
+            for (Permanent p : controllerBf) {
+                if (p.getCard() == enteringCreature) {
+                    enteringPermanent = p;
+                    break;
+                }
+            }
+        }
+        if (enteringPermanent == null || enteringPermanent.getEnteredFromGraveyardOwnerId() == null) {
+            return;
+        }
+
+        UUID graveyardOwnerId = enteringPermanent.getEnteredFromGraveyardOwnerId();
+        UUID enteringPermanentId = enteringPermanent.getId();
+
+        gameData.forEachPermanent((playerId, perm) -> {
+            if (!playerId.equals(graveyardOwnerId)) return;
+
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                gameData.pendingEntersFromGraveyardTriggerTargets.add(
+                        new PermanentChoiceContext.EntersFromGraveyardTriggerTarget(
+                                perm.getCard(), playerId, new ArrayList<>(List.of(effect)), enteringPermanentId));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers ("
+                        + enteringCreature.getName() + " entered from a graveyard).");
+                log.info("Game {} - {} triggers ({} entered from graveyard)",
+                        gameData.id, perm.getCard().getName(), enteringCreature.getName());
+            }
+        });
+    }
+
+    private void dispatchEnter(GameData gameData, Permanent perm, UUID controllerId, EffectSlot slot,
+                              CardEffect effect, TriggerContext.PermanentEnters ctx) {
+        var match = new TriggerMatchContext(gameData, perm, controllerId, effect);
+        registry.dispatch(match, slot, effect, ctx);
+    }
+
+    /**
+     * Gates a stat-based enter trigger whose condition is computable from the entering creature
+     * alone (e.g. Garruk's Packleader), returning the wrapped effect if it fires, {@code null} to
+     * skip, or the original effect when it wasn't wrapped.
+     */
+    private CardEffect unwrapEnterCreatureConditional(GameData gameData, Card enteringCreature,
+                                                      Permanent source, CardEffect effect) {
+        if (effect instanceof EnterCreatureConditionalEffect conditional) {
+            if (!conditional.testEnteringCreature(enteringCreature)) {
+                return null;
+            }
+            log.info("Game {} - {} triggers for {} entering ({})",
+                    gameData.id, source.getCard().getName(),
+                    enteringCreature.getName(), conditional.triggerDescription(enteringCreature));
+            return conditional.wrapped();
+        }
+        return effect;
+    }
+
+    /**
+     * Gates an enter trigger on the entering permanent's name matching the source's imprinted card
+     * (Invader Parasite).
+     */
+    private CardEffect unwrapImprintedCardNameConditional(Card enteringCard, Permanent source, CardEffect effect) {
+        if (effect instanceof ImprintedCardNameMatchesEnteringPermanentConditionalEffect conditional) {
+            Card imprintedCard = source.getCard().getImprintedCard();
+            if (imprintedCard == null || !imprintedCard.getName().equals(enteringCard.getName())) {
+                return null;
+            }
+            return conditional.wrapped();
+        }
+        return effect;
+    }
+
+    /**
+     * Gates an enter trigger on at least {@code minCount} permanents matching a predicate having
+     * entered under {@code affectedPlayerId}'s control this turn (Landfall count).
+     */
+    private CardEffect unwrapPermanentEnteredThisTurnConditional(GameData gameData, UUID affectedPlayerId, CardEffect effect) {
+        if (effect instanceof PermanentEnteredThisTurnConditionalEffect conditional) {
+            List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn.getOrDefault(affectedPlayerId, List.of());
+            long matchCount = entered.stream()
+                    .filter(c -> gameQueryService.matchesCardPredicate(c, conditional.predicate(), null))
+                    .count();
+            if (matchCount < conditional.minCount()) {
+                return null;
+            }
+            return conditional.wrapped();
+        }
+        return effect;
     }
 
     // ── Internal dispatch ──────────────────────────────────────────────
