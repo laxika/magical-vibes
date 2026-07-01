@@ -10,16 +10,9 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterCreatureConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.entertrigger.EnterTriggerContext;
+import com.github.laxika.magicalvibes.service.battlefield.entertrigger.EnterTriggerHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,6 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Scans the battlefield for "when a permanent enters" triggered abilities and puts the matching
+ * triggers onto the stack. The per-effect placement logic (conditional gating, "may" queueing,
+ * value materialisation) lives in {@link EnterTriggerHandlerRegistry} rather than in
+ * {@code instanceof} chains here; each scan builds an {@link EnterTriggerContext} that captures
+ * the differences between scans and hands every candidate effect to the registry.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -35,6 +35,7 @@ public class EnterTriggerScanService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final EnterTriggerHandlerRegistry enterTriggerHandlerRegistry;
 
     public void checkEntersFromGraveyardTriggers(GameData gameData, UUID enteringControllerId, Card enteringCreature) {
         if (enteringCreature.getToughness() == null) return;
@@ -87,69 +88,9 @@ public class EnterTriggerScanService {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
 
+            EnterTriggerContext context = baseContext(gameData, perm, controllerId, enteringCreature, controllerId).build();
             for (CardEffect effect : effects) {
-                if (effect instanceof EnterCreatureConditionalEffect conditional) {
-                    if (!conditional.testEnteringCreature(enteringCreature)) continue;
-                    dispatchConditionalEnterEffect(gameData, perm, controllerId, conditional.wrapped());
-                    log.info("Game {} - {} triggers for {} entering ({})",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                            conditional.triggerDescription(enteringCreature));
-                } else if (effect instanceof TriggeringCardConditionalEffect conditional) {
-                    if (!gameQueryService.matchesCardPredicate(enteringCreature, conditional.predicate(), null,
-                            gameData, controllerId)) {
-                        continue;
-                    }
-                    CardEffect innerEffect = conditional.wrapped();
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(innerEffect)),
-                            null,
-                            perm.getId()
-                    ));
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (card predicate {})",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(),
-                            conditional.predicate());
-                } else if (effect instanceof GainLifeEqualToToughnessEffect) {
-                    int toughness = enteringCreature.getToughness();
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            List.of(new GainLifeEffect(toughness))
-                    ));
-                    String triggerLog = perm.getCard().getName() + " triggers — " +
-                            gameData.playerIdToName.get(controllerId) + " will gain " + toughness + " life.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (toughness={})",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), toughness);
-                } else if (effect instanceof GainLifeEffect gainLife) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            List.of(new GainLifeEffect(gainLife.amount())),
-                            null,
-                            perm.getId()
-                    ));
-                    String triggerLog = perm.getCard().getName() + " triggers — " +
-                            gameData.playerIdToName.get(controllerId) + " will gain " + gainLife.amount() + " life.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (gain {} life)",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), gainLife.amount());
-                } else if (effect instanceof MayEffect may) {
-                    gameData.queueMayAbility(perm.getCard(), controllerId, may);
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (may effect)",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName());
-                }
+                enterTriggerHandlerRegistry.dispatch(context, effect);
             }
         }
 
@@ -239,28 +180,11 @@ public class EnterTriggerScanService {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
 
+            EnterTriggerContext context = baseContext(gameData, perm, controllerId, enteringCard, controllerId)
+                    .mayPayTargetCardId(enteringPermanentId)
+                    .build();
             for (CardEffect effect : effects) {
-                if (effect instanceof MayPayManaEffect mayPay) {
-                    gameData.queueMayAbility(perm.getCard(), controllerId, mayPay, enteringPermanentId);
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for nontoken artifact {} entering",
-                            gameData.id, perm.getCard().getName(), enteringCard.getName());
-                } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
-                            null,
-                            perm.getId()
-                    ));
-                    String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for nontoken artifact {} entering",
-                            gameData.id, perm.getCard().getName(), enteringCard.getName());
-                }
+                enterTriggerHandlerRegistry.dispatch(context, effect);
             }
         }
     }
@@ -273,38 +197,11 @@ public class EnterTriggerScanService {
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD);
                 if (effects == null || effects.isEmpty()) continue;
 
+                EnterTriggerContext context = baseContext(gameData, perm, playerId, enteringLand, landControllerId)
+                        .defaultTargetPlayerId(landControllerId)
+                        .build();
                 for (CardEffect effect : effects) {
-                    CardEffect effectToResolve = effect;
-
-                    if (effect instanceof PermanentEnteredThisTurnConditionalEffect conditional) {
-                        List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn
-                                .getOrDefault(landControllerId, List.of());
-                        long matchCount = entered.stream()
-                                .filter(c -> gameQueryService.matchesCardPredicate(c, conditional.predicate(), null))
-                                .count();
-                        if (matchCount < conditional.minCount()) continue;
-                        effectToResolve = conditional.wrapped();
-                    }
-
-                    if (effect instanceof ImprintedCardNameMatchesEnteringPermanentConditionalEffect conditional) {
-                        Card imprintedCard = perm.getCard().getImprintedCard();
-                        if (imprintedCard == null || !imprintedCard.getName().equals(enteringLand.getName())) continue;
-                        effectToResolve = conditional.wrapped();
-                    }
-
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effectToResolve)),
-                            landControllerId,
-                            perm.getId()
-                    ));
-
-                    String logEntry = perm.getCard().getName() + "'s ability triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                    log.info("Game {} - {} triggers on opponent land entering", gameData.id, perm.getCard().getName());
+                    enterTriggerHandlerRegistry.dispatch(context, effect);
                 }
             }
         });
@@ -344,48 +241,14 @@ public class EnterTriggerScanService {
                 List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD);
                 if (effects == null || effects.isEmpty()) continue;
 
+                EnterTriggerContext context = baseContext(gameData, perm, playerId, enteringCreature, enteringCreatureControllerId)
+                        .defaultTargetPlayerId(enteringCreatureControllerId)
+                        .build();
                 for (CardEffect effect : effects) {
-                    if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), playerId, may, enteringCreatureControllerId, perm.getId());
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for opponent creature {} entering",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName());
-                    } else {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(effect)),
-                                enteringCreatureControllerId,
-                                perm.getId()
-                        ));
-                        String triggerLog = perm.getCard().getName() + "'s ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                        log.info("Game {} - {} triggers for opponent creature {} entering",
-                                gameData.id, perm.getCard().getName(), enteringCreature.getName());
-                    }
+                    enterTriggerHandlerRegistry.dispatch(context, effect);
                 }
             }
         });
-    }
-
-    private void dispatchConditionalEnterEffect(GameData gameData, Permanent perm, UUID controllerId, CardEffect inner) {
-        if (inner instanceof MayPayManaEffect mayPay) {
-            gameData.queueMayAbility(perm.getCard(), controllerId, mayPay, null);
-        } else if (inner instanceof MayEffect may) {
-            gameData.queueMayAbility(perm.getCard(), controllerId, may);
-        } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    controllerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(inner))
-            ));
-        }
-        gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
     }
 
     public void checkAnyCreatureEntersTriggers(GameData gameData, UUID enteringCreatureControllerId, Card enteringCreature) {
@@ -401,61 +264,28 @@ public class EnterTriggerScanService {
 
             int extraTriggers = playerId.equals(enteringCreatureControllerId) ? extraWizardTriggers : 0;
 
+            EnterTriggerContext context = baseContext(gameData, perm, playerId, enteringCreature, enteringCreatureControllerId)
+                    .perEffectTriggerCount(1 + extraTriggers)
+                    .defaultSkipsTargetingEffects(true)
+                    .build();
             for (CardEffect effect : effects) {
-                if (effect instanceof GainLifeEffect gainLife) {
-                    for (int t = 0; t < 1 + extraTriggers; t++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                List.of(new GainLifeEffect(gainLife.amount()))
-                        ));
-                    }
-                    String triggerLog = perm.getCard().getName() + " triggers — " +
-                            gameData.playerIdToName.get(playerId) + " will gain " + gainLife.amount() + " life.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (gain {} life)",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), gainLife.amount());
-                } else if (effect instanceof DealDamageToTargetPlayerEffect damageEffect) {
-                    for (int t = 0; t < 1 + extraTriggers; t++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(new DealDamageToTargetPlayerEffect(damageEffect.damage()))),
-                                enteringCreatureControllerId,
-                                perm.getId()
-                        ));
-                    }
-                    String triggerLog = perm.getCard().getName() + " triggers — deals " + damageEffect.damage() +
-                            " damage to " + gameData.playerIdToName.get(enteringCreatureControllerId) + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName(), damageEffect.damage());
-                } else if (!effect.canTargetPlayer()
-                        && !effect.canTargetPermanent()
-                        && !effect.canTargetSpell()
-                        && !effect.canTargetGraveyard()
-                        && !effect.canTargetAnyGraveyard()) {
-                    for (int t = 0; t < 1 + extraTriggers; t++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(effect)),
-                                null,
-                                perm.getId()
-                        ));
-                    }
-                    String triggerLog = perm.getCard().getName() + " triggers.";
-                    gameBroadcastService.logAndBroadcast(gameData, triggerLog);
-                    log.info("Game {} - {} triggers for {} entering",
-                            gameData.id, perm.getCard().getName(), enteringCreature.getName());
-                }
+                enterTriggerHandlerRegistry.dispatch(context, effect);
             }
         });
+    }
+
+    private EnterTriggerContext.EnterTriggerContextBuilder baseContext(GameData gameData, Permanent sourcePermanent,
+                                                                       UUID abilityControllerId, Card enteringCard,
+                                                                       UUID enteringControllerId) {
+        return EnterTriggerContext.builder()
+                .gameData(gameData)
+                .sourcePermanent(sourcePermanent)
+                .abilityControllerId(abilityControllerId)
+                .enteringCard(enteringCard)
+                .enteringControllerId(enteringControllerId)
+                .perEffectTriggerCount(1)
+                .gameBroadcastService(gameBroadcastService)
+                .gameQueryService(gameQueryService)
+                .registry(enterTriggerHandlerRegistry);
     }
 }

@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureMinPowerConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.entertrigger.EnterTriggerHandlerRegistry;
+import com.github.laxika.magicalvibes.service.battlefield.entertrigger.handler.EnterCreatureConditionalEnterTriggerHandler;
+import com.github.laxika.magicalvibes.service.battlefield.entertrigger.handler.GainLifeEnterTriggerHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,7 +38,10 @@ class EnterTriggerScanServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new EnterTriggerScanService(gameQueryService, gameBroadcastService);
+        EnterTriggerHandlerRegistry registry = new EnterTriggerHandlerRegistry(List.of(
+                new EnterCreatureConditionalEnterTriggerHandler(),
+                new GainLifeEnterTriggerHandler()));
+        service = new EnterTriggerScanService(gameQueryService, gameBroadcastService, registry);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
