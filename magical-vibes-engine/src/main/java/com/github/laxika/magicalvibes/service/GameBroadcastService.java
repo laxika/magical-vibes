@@ -55,6 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForSharedCar
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfMetalcraftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureCardInGraveyardEffect;
@@ -431,15 +432,18 @@ public class GameBroadcastService {
                                 }
                             }
                         }
-                        // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response)
+                        // Check if castable with target-subtype cost reduction (e.g. Savage Stomp, Ajani's Response, Brush Off)
                         if (!added) {
                             ReduceOwnCastCostIfTargetingControlledPermanentEffect targetReduce = null;
                             ReduceOwnCastCostIfTargetingPermanentEffect generalTargetReduce = null;
+                            ReduceOwnCastCostIfTargetingStackEntryEffect stackTargetReduce = null;
                             for (CardEffect e : card.getEffects(EffectSlot.STATIC)) {
                                 if (e instanceof ReduceOwnCastCostIfTargetingControlledPermanentEffect r) {
                                     targetReduce = r;
                                 } else if (e instanceof ReduceOwnCastCostIfTargetingPermanentEffect r) {
                                     generalTargetReduce = r;
+                                } else if (e instanceof ReduceOwnCastCostIfTargetingStackEntryEffect r) {
+                                    stackTargetReduce = r;
                                 }
                             }
                             if (targetReduce != null && controlsPermanent(gameData, playerId, targetReduce.predicate())) {
@@ -450,6 +454,12 @@ public class GameBroadcastService {
                             } else if (generalTargetReduce != null
                                     && battlefieldHasPermanentMatching(gameData, generalTargetReduce.predicate())) {
                                 if (cost.canPay(pool, additionalCost - generalTargetReduce.amount())) {
+                                    playable.add(i);
+                                    added = true;
+                                }
+                            } else if (stackTargetReduce != null
+                                    && stackHasMatchingSpell(gameData, stackTargetReduce.predicate())) {
+                                if (cost.canPay(pool, additionalCost - stackTargetReduce.amount())) {
                                     playable.add(i);
                                     added = true;
                                 }
@@ -1583,6 +1593,16 @@ public class GameBroadcastService {
                 if (gameQueryService.matchesPermanentPredicate(gameData, p, predicate)) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    public boolean stackHasMatchingSpell(GameData gameData,
+            com.github.laxika.magicalvibes.model.filter.StackEntryPredicate predicate) {
+        for (com.github.laxika.magicalvibes.model.StackEntry entry : gameData.stack) {
+            if (gameQueryService.matchesStackEntryPredicate(entry, predicate, null)) {
+                return true;
             }
         }
         return false;

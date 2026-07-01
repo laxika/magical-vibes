@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -466,6 +467,33 @@ class SpellCastingServiceTest {
                     List.of(tappedCreature.getId()), null, false, null);
 
             assertThat(gd.stack).hasSize(1);
+            assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
+        }
+
+        @Test
+        @DisplayName("Target-based stack spell cost reduction applies to chosen first target")
+        void targetStackEntryCostReductionAppliesToChosenFirstTarget() {
+            Card instant = createInstant("Test Brush Off", "{2}{U}{U}");
+            instant.target(1, 1);
+            var predicate = new com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate(
+                    java.util.Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL));
+            instant.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfTargetingStackEntryEffect(predicate, 2));
+            setHand(player1Id, List.of(instant));
+            addMana(player1Id, ManaColor.BLUE, 2);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            Card targetInstant = createInstant("Target Bolt", "{R}");
+            StackEntry targetEntry = new StackEntry(
+                    StackEntryType.INSTANT_SPELL, targetInstant, player2Id, "Target Bolt", List.of(), 0, null, null);
+            gd.stack.add(targetEntry);
+
+            when(gameQueryService.findStackEntryByCardId(gd, targetInstant.getId())).thenReturn(targetEntry);
+            when(gameQueryService.matchesStackEntryPredicate(targetEntry, predicate, null)).thenReturn(true);
+
+            svc.playCard(gd, player1, 0, null, null, null,
+                    List.of(targetInstant.getId()), null, false, null);
+
+            assertThat(gd.stack).hasSize(2);
             assertThat(gd.playerManaPools.get(player1Id).getTotal()).isZero();
         }
 
