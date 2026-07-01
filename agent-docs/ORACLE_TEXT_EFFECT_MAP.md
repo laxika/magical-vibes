@@ -116,6 +116,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "each player draws N cards" | `EachPlayerDrawsCardEffect(N)` | SPELL | |
 | "draw N cards, then discard M cards" | `DrawAndDiscardCardEffect(N, M)` | SPELL | Loot |
 | "discard N cards, then draw M cards" | `DiscardAndDrawCardEffect(N, M)` | SPELL | Rummage |
+| "discard up to N cards, then draw that many cards" | `DiscardUpToThenDrawThatManyEffect(N)` | SPELL/ability | Rummage with cap |
+| "discard any number of cards, then draw that many cards plus one" | `DiscardUpToThenDrawThatManyEffect(ANY_NUMBER, 1)` | ON_DEATH/trigger | Colossus of the Blood Age |
 | "discard all the cards in your hand, then draw that many cards" | `DiscardOwnHandThenDrawThatManyEffect()` | SPELL | Shattered Perception |
 | "discard your hand, then draw cards equal to the number of cards in target opponent's hand" | `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` | SPELL | Borrowed Knowledge (modal mode 0) |
 | "discard a card" / "discard N cards" | `DiscardCardEffect(N)` | SPELL/trigger | Controller discards |

@@ -44,11 +44,17 @@ public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHan
                 gameBroadcastService.logAndBroadcast(gameData,
                         playerName + " chooses to discard 0 cards for " + cardName + ".");
                 log.info("Game {} - {} chooses to discard 0 for {}", gameData.id, playerName, cardName);
+                if (e.extraDraw() > 0) {
+                    playerInteractionSupport.applyDrawCards(gameData, controllerId, e.extraDraw());
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            playerName + " draws " + e.extraDraw() + " card"
+                                    + (e.extraDraw() != 1 ? "s" : "") + ".");
+                }
                 return;
             }
 
             // Store the draw count for after discards complete
-            gameData.pendingRummageDrawCount = chosenCount;
+            gameData.pendingRummageDrawCount = chosenCount + e.extraDraw();
             gameData.discardCausedByOpponent = false;
             playerInteractionSupport.resolveDiscardCards(gameData, controllerId, chosenCount);
             return;
@@ -56,16 +62,39 @@ public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHan
 
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand == null || hand.isEmpty()) {
-            gameBroadcastService.logAndBroadcast(gameData,
-                    playerName + " has no cards to discard for " + cardName + ".");
-            log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
+            if (e.extraDraw() > 0) {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " chooses to discard 0 cards for " + cardName + ".");
+                playerInteractionSupport.applyDrawCards(gameData, controllerId, e.extraDraw());
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " draws " + e.extraDraw() + " card"
+                                + (e.extraDraw() != 1 ? "s" : "") + ".");
+                log.info("Game {} - {} discards 0 and draws {} for {}",
+                        gameData.id, playerName, e.extraDraw(), cardName);
+            } else {
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " has no cards to discard for " + cardName + ".");
+                log.info("Game {} - {} has no cards to discard for {}", gameData.id, playerName, cardName);
+            }
             return;
         }
 
-        int maxDiscard = Math.min(e.maxDiscard(), hand.size());
-        String prompt = "Discard up to " + e.maxDiscard() + " cards for " + cardName
-                + ". You will draw that many cards.";
+        int maxDiscard = e.maxDiscard() == DiscardUpToThenDrawThatManyEffect.ANY_NUMBER
+                ? hand.size()
+                : Math.min(e.maxDiscard(), hand.size());
+        String prompt = buildPrompt(e, cardName);
         playerInputService.beginXValueChoice(gameData, controllerId, maxDiscard, prompt, cardName);
-    
+    }
+
+    private static String buildPrompt(DiscardUpToThenDrawThatManyEffect e, String cardName) {
+        boolean anyNumber = e.maxDiscard() == DiscardUpToThenDrawThatManyEffect.ANY_NUMBER;
+        String discardPhrase = anyNumber
+                ? "Discard any number of cards"
+                : "Discard up to " + e.maxDiscard() + " cards";
+        if (e.extraDraw() > 0) {
+            return discardPhrase + " for " + cardName
+                    + ". You will draw that many cards plus " + e.extraDraw() + ".";
+        }
+        return discardPhrase + " for " + cardName + ". You will draw that many cards.";
     }
 }

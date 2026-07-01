@@ -71,4 +71,47 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
                 assertThat(gd.chosenXValue).isNull();
                 verify(playerInputService, never()).beginDiscardChoice(any(), any());
             }
+
+            @Test
+            @DisplayName("On re-entry with chosenXValue of 0 and extraDraw, draws extra cards")
+            void reEntryWithZeroChosenAndExtraDraw() {
+                Card card = createCard("Colossus of the Blood Age");
+                DiscardUpToThenDrawThatManyEffect effect =
+                        new DiscardUpToThenDrawThatManyEffect(DiscardUpToThenDrawThatManyEffect.ANY_NUMBER, 1);
+                StackEntry entry = createEntry(card, player1Id, List.of(effect));
+                gd.chosenXValue = 0;
+
+                resolveEffect(gd, entry, effect);
+
+                assertThat(gd.chosenXValue).isNull();
+                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+            }
+
+            @Test
+            @DisplayName("On re-entry with chosenXValue includes extraDraw in pending draw count")
+            void reEntryIncludesExtraDraw() {
+                Card card = createCard("Colossus of the Blood Age");
+                DiscardUpToThenDrawThatManyEffect effect =
+                        new DiscardUpToThenDrawThatManyEffect(DiscardUpToThenDrawThatManyEffect.ANY_NUMBER, 1);
+                StackEntry entry = createEntry(card, player1Id, List.of(effect));
+                gd.playerHands.get(player1Id).addAll(List.of(createCard("A"), createCard("B")));
+                gd.chosenXValue = 2;
+
+                resolveEffect(gd, entry, effect);
+
+                assertThat(gd.pendingRummageDrawCount).isEqualTo(3);
+            }
+
+            @Test
+            @DisplayName("Empty hand with extraDraw draws without prompting")
+            void emptyHandWithExtraDraw() {
+                Card card = createCard("Colossus of the Blood Age");
+                DiscardUpToThenDrawThatManyEffect effect =
+                        new DiscardUpToThenDrawThatManyEffect(DiscardUpToThenDrawThatManyEffect.ANY_NUMBER, 1);
+                StackEntry entry = createEntry(card, player1Id, List.of(effect));
+
+                resolveEffect(gd, entry, effect);
+
+                verify(playerInputService, never()).beginXValueChoice(any(), any(), any(int.class), any(), any());
+            }
 }
