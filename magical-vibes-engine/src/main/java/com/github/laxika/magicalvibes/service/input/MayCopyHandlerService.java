@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ public class MayCopyHandlerService {
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
     private final CloneService cloneService;
+    private final PermanentCopierService permanentCopierService;
     private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -302,7 +304,7 @@ public class MayCopyHandlerService {
 
         // Apply the copy
         String originalName = sourcePermanent.getCard().getName();
-        cloneService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
+        permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm, null, null);
 
         // Retain the upkeep copy ability per "except it has this ability"
         Card copiedCard = sourcePermanent.getCard();

@@ -66,8 +66,8 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -81,46 +81,15 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class BattlefieldEntryService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final CardViewFactory cardViewFactory;
-    private TargetLegalityService targetLegalityService;
-    // @Lazy to break circular dependency:
-    // BattlefieldEntryService → CloneService → BattlefieldEntryService
-    private CloneService cloneService;
-
-    public BattlefieldEntryService(GameQueryService gameQueryService,
-                                    GameBroadcastService gameBroadcastService,
-                                    PlayerInputService playerInputService,
-                                    CardViewFactory cardViewFactory,
-                                    TargetLegalityService targetLegalityService,
-                                    @Lazy CloneService cloneService) {
-        this.gameQueryService = gameQueryService;
-        this.gameBroadcastService = gameBroadcastService;
-        this.playerInputService = playerInputService;
-        this.cardViewFactory = cardViewFactory;
-        this.targetLegalityService = targetLegalityService;
-        this.cloneService = cloneService;
-    }
-
-    /**
-     * Sets the CloneService for manual (non-Spring) construction where
-     * the circular dependency prevents passing it in the constructor.
-     */
-    public void setCloneService(CloneService cloneService) {
-        this.cloneService = cloneService;
-    }
-
-    /**
-     * Sets the TargetLegalityService for manual (non-Spring) construction
-     * where initialization order prevents passing it in the constructor.
-     */
-    public void setTargetLegalityService(TargetLegalityService targetLegalityService) {
-        this.targetLegalityService = targetLegalityService;
-    }
+    private final TargetLegalityService targetLegalityService;
+    private final PermanentCopierService permanentCopierService;
 
     // ===== Permanent entry =====
 
@@ -173,7 +142,7 @@ public class BattlefieldEntryService {
             boolean hasEffect = source.getCard().getEffects(EffectSlot.STATIC).stream()
                     .anyMatch(e -> e instanceof CreaturesEnterAsCopyOfSourceEffect);
             if (hasEffect) {
-                cloneService.applyCloneCopy(entering, source, null, null);
+                permanentCopierService.applyCloneCopy(entering, source, null, null);
                 // Reset any counters that were pre-set by the original card's "enters with"
                 // replacement effects — the creature now enters as Essence, which has no such
                 // effects, so those counters should not apply.
