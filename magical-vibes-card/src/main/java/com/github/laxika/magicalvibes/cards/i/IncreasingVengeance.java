@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
@@ -30,7 +31,7 @@ public class IncreasingVengeance extends Card {
         )).addEffect(EffectSlot.SPELL, new CopySpellEffect());
 
         // If this spell was cast from a graveyard, copy that spell twice instead (make a second copy).
-        addEffect(EffectSlot.SPELL, new CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CopySpellEffect()));
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new CopySpellEffect()));
 
         addCastingOption(new FlashbackCast("{3}{R}{R}"));
     }

@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,9 +34,9 @@ class InvaderParasiteTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(ImprintedCardNameMatchesEnteringPermanentConditionalEffect.class);
-        ImprintedCardNameMatchesEnteringPermanentConditionalEffect trigger =
-                (ImprintedCardNameMatchesEnteringPermanentConditionalEffect)
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect trigger =
+                (ConditionalEffect)
                         card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst();
         assertThat(trigger.wrapped()).isInstanceOf(DealDamageToTargetPlayerEffect.class);
         assertThat(((DealDamageToTargetPlayerEffect) trigger.wrapped()).damage()).isEqualTo(2);

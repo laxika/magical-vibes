@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,9 +32,9 @@ class HinterlandHermitTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).isEmpty();
         assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect conditional =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
 
         assertThat(card.getBackFaceCard()).isInstanceOf(HinterlandScourge.class);
@@ -52,9 +53,9 @@ class HinterlandHermitTest extends BaseCardTest {
                 .isInstanceOf(MustBeBlockedIfAbleEffect.class);
         assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
-        TwoOrMoreSpellsCastLastTurnConditionalEffect conditional =
-                (TwoOrMoreSpellsCastLastTurnConditionalEffect) backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
     }
 

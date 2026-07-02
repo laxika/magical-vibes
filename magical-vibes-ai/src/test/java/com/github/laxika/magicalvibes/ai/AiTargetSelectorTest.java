@@ -47,7 +47,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -441,13 +442,13 @@ class AiTargetSelectorTest {
         }
 
         @Test
-        @DisplayName("Handles DealDividedDamageAmongAnyTargetsEffect inside KickerReplacementEffect")
+        @DisplayName("Handles DealDividedDamageAmongAnyTargetsEffect inside ConditionalReplacementEffect")
         void handlesAnyTargetDividedDamageFromKicker() {
             addCreature(opponentId, "Bear", 2);
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
                     new DealDividedDamageAmongAnyTargetsEffect(10)));
 
@@ -590,13 +591,13 @@ class AiTargetSelectorTest {
         }
 
         @Test
-        @DisplayName("KickerReplacementEffect uses only base effect targeting")
+        @DisplayName("ConditionalReplacementEffect uses only base effect targeting")
         void kickerReplacementUsesBaseOnly() {
             // Base: creature only (canTargetPermanent=true, canTargetPlayer=false)
             // Kicked: any targets (canTargetPermanent=true, canTargetPlayer=true)
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
                     new DealDividedDamageAmongAnyTargetsEffect(10)));
 
@@ -667,12 +668,12 @@ class AiTargetSelectorTest {
         }
 
         @Test
-        @DisplayName("Returns false when effect is wrapped in KickerReplacementEffect")
+        @DisplayName("Returns false when effect is wrapped in ConditionalReplacementEffect")
         void falseForWrappedKickerEffect() {
-            // The DealDividedDamageAmongAnyTargetsEffect is inside a KickerReplacementEffect,
+            // The DealDividedDamageAmongAnyTargetsEffect is inside a ConditionalReplacementEffect,
             // so needsDamageDistribution should return false (the wrapper type doesn't match)
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+            spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
                     new DealDividedDamageAmongAnyTargetsEffect(10)));
 

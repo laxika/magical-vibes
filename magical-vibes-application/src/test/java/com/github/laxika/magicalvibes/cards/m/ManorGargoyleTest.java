@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfHasKeywordConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,8 +34,8 @@ class ManorGargoyleTest extends BaseCardTest {
 
         // Static effect: indestructible as long as it has defender
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        var conditional = (SelfHasKeywordConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(conditional.keyword()).isEqualTo(Keyword.DEFENDER);
+        var conditional = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
+        assertThat(((SelfHasKeyword) conditional.condition()).keyword()).isEqualTo(Keyword.DEFENDER);
         assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect indestructible = (GrantKeywordEffect) conditional.wrapped();
         assertThat(indestructible.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);

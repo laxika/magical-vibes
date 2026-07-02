@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
@@ -27,8 +28,8 @@ public class ChaliceOfLife extends Card {
                 true, null,
                 List.of(
                         new GainLifeEffect(1),
-                        new ControllerLifeThresholdConditionalEffect(
-                                GameData.STARTING_LIFE_TOTAL + 10,
+                        new ConditionalEffect(
+                                new ControllerLifeAtLeast(GameData.STARTING_LIFE_TOTAL + 10),
                                 new TransformSelfEffect()
                         )
                 ),

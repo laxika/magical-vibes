@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCastAnotherSpellThisTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -29,10 +30,10 @@ class BurrogBarrageTest extends BaseCardTest {
         var effects = card.getEffects(EffectSlot.SPELL);
 
         assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(ControllerCastAnotherSpellThisTurnConditionalEffect.class);
+        assertThat(effects.get(0)).isInstanceOf(ConditionalEffect.class);
         assertThat(effects.get(1)).isInstanceOf(FirstTargetDealsPowerDamageToSecondTargetEffect.class);
 
-        var conditional = (ControllerCastAnotherSpellThisTurnConditionalEffect) effects.get(0);
+        var conditional = (ConditionalEffect) effects.get(0);
         assertThat(conditional.wrapped()).isInstanceOf(BoostFirstTargetCreatureEffect.class);
         assertThat(((BoostFirstTargetCreatureEffect) conditional.wrapped()).powerBoost()).isEqualTo(1);
     }

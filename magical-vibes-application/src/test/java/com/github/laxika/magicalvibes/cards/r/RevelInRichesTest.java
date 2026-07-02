@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -44,10 +45,10 @@ class RevelInRichesTest extends BaseCardTest {
         // Upkeep trigger: win if 10+ Treasures
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ControlsPermanentCountConditionalEffect.class);
-        ControlsPermanentCountConditionalEffect winCondition =
-                (ControlsPermanentCountConditionalEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(winCondition.minCount()).isEqualTo(10);
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect winCondition =
+                (ConditionalEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
+        assertThat(((ControlsPermanentCount) winCondition.condition()).minCount()).isEqualTo(10);
         assertThat(winCondition.wrapped()).isInstanceOf(WinGameEffect.class);
     }
 

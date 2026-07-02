@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -49,11 +50,11 @@ class ThrabenDoomsayerTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        ControllerLifeAtOrBelowThresholdConditionalEffect conditional =
-                (ControllerLifeAtOrBelowThresholdConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.lifeThreshold()).isEqualTo(5);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(((ControllerLifeAtMost) conditional.condition()).threshold()).isEqualTo(5);
         assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
 
         StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();

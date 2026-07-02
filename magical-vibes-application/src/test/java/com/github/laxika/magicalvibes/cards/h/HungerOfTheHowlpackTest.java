@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,14 +29,14 @@ class HungerOfTheHowlpackTest extends BaseCardTest {
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MorbidReplacementEffect.class);
+                .isInstanceOf(ConditionalReplacementEffect.class);
 
-        MorbidReplacementEffect effect =
-                (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        ConditionalReplacementEffect effect =
+                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(effect.morbidEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
+        assertThat(effect.upgradedEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
         assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) effect.baseEffect()).count()).isEqualTo(1);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) effect.morbidEffect()).count()).isEqualTo(3);
+        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) effect.upgradedEffect()).count()).isEqualTo(3);
     }
 
     @Test

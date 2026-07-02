@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -42,10 +43,10 @@ class GatherTheTownsfolkTest extends BaseCardTest {
         assertThat(base.subtypes()).containsExactly(CardSubtype.HUMAN);
 
         assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
-        ControllerLifeAtOrBelowThresholdConditionalEffect conditional =
-                (ControllerLifeAtOrBelowThresholdConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(conditional.lifeThreshold()).isEqualTo(5);
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
+        assertThat(((ControllerLifeAtMost) conditional.condition()).threshold()).isEqualTo(5);
         assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
         assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(3);
     }

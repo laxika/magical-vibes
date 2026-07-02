@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,16 +31,16 @@ class TragicSlipTest extends BaseCardTest {
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MorbidReplacementEffect.class);
+                .isInstanceOf(ConditionalReplacementEffect.class);
 
-        MorbidReplacementEffect effect =
-                (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        ConditionalReplacementEffect effect =
+                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(effect.morbidEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
+        assertThat(effect.upgradedEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
         assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).powerBoost()).isEqualTo(-1);
         assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).toughnessBoost()).isEqualTo(-1);
-        assertThat(((BoostTargetCreatureEffect) effect.morbidEffect()).powerBoost()).isEqualTo(-13);
-        assertThat(((BoostTargetCreatureEffect) effect.morbidEffect()).toughnessBoost()).isEqualTo(-13);
+        assertThat(((BoostTargetCreatureEffect) effect.upgradedEffect()).powerBoost()).isEqualTo(-13);
+        assertThat(((BoostTargetCreatureEffect) effect.upgradedEffect()).toughnessBoost()).isEqualTo(-13);
     }
 
     @Test

@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OpponentControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -27,8 +28,8 @@ class NightRevelersTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
 
-        var effect = (OpponentControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
+        var effect = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
+        assertThat(((OpponentControlsPermanent) effect.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
         assertThat(effect.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect haste = (GrantKeywordEffect) effect.wrapped();
         assertThat(haste.keywords()).containsExactly(Keyword.HASTE);

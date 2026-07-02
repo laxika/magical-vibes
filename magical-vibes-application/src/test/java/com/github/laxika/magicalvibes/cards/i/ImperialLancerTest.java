@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,17 +24,17 @@ class ImperialLancerTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC ControlsPermanentConditionalEffect(DINOSAUR) wrapping GrantKeywordEffect(DOUBLE_STRIKE, SELF)")
+    @DisplayName("Has STATIC ConditionalEffect(DINOSAUR) wrapping GrantKeywordEffect(DOUBLE_STRIKE, SELF)")
     void hasCorrectStaticEffect() {
         ImperialLancer card = new ImperialLancer();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlsPermanentConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        ControlsPermanentConditionalEffect conditional =
-                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(((ControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
         assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();

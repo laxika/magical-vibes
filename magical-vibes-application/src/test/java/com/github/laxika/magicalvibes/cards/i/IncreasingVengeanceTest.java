@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -40,10 +41,10 @@ class IncreasingVengeanceTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CopySpellEffect.class);
 
         // Extra copy only when cast from a graveyard.
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CastFromZoneConditionalEffect.class);
-        CastFromZoneConditionalEffect conditional =
-                (CastFromZoneConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(conditional.sourceZone()).isEqualTo(Zone.GRAVEYARD);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
+        assertThat(((CastFromZone) conditional.condition()).sourceZone()).isEqualTo(Zone.GRAVEYARD);
         assertThat(conditional.wrapped()).isInstanceOf(CopySpellEffect.class);
 
         FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();

@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HexproofFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -36,10 +37,10 @@ class KnightOfGraceTest extends BaseCardTest {
         assertThat(((HexproofFromColorsEffect) card.getEffects(EffectSlot.STATIC).get(0)).colors())
                 .containsExactly(CardColor.BLACK);
         assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(AnyPlayerControlsPermanentConditionalEffect.class);
-        AnyPlayerControlsPermanentConditionalEffect conditional =
-                (AnyPlayerControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(conditional.filter()).isEqualTo(new PermanentColorInPredicate(Set.of(CardColor.BLACK)));
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
+        assertThat(((AnyPlayerControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentColorInPredicate(Set.of(CardColor.BLACK)));
     }
 
     @Test

@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToXValueEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -51,10 +52,10 @@ class ArguelsBloodFastTest extends BaseCardTest {
         // Upkeep trigger: if you have 5 or less life, you may transform
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
-        var conditional = (ControllerLifeAtOrBelowThresholdConditionalEffect)
+                .isInstanceOf(ConditionalEffect.class);
+        var conditional = (ConditionalEffect)
                 card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.lifeThreshold()).isEqualTo(5);
+        assertThat(((ControllerLifeAtMost) conditional.condition()).threshold()).isEqualTo(5);
         assertThat(conditional.wrapped()).isInstanceOf(MayEffect.class);
         MayEffect may = (MayEffect) conditional.wrapped();
         assertThat(may.wrapped()).isInstanceOf(TransformSelfEffect.class);

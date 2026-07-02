@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.cards.i.ItlimocCradleOfTheSun;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,9 +32,7 @@ public class GrowingRitesOfItlimoc extends Card {
         // At the beginning of your end step, if you control four or more creatures,
         // transform Growing Rites of Itlimoc.
         addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                new ControlsPermanentCountConditionalEffect(4,
-                        new PermanentIsCreaturePredicate(),
-                        new TransformSelfEffect()));
+                new ConditionalEffect(new ControlsPermanentCount(4, new PermanentIsCreaturePredicate()), new TransformSelfEffect()));
     }
 
     @Override

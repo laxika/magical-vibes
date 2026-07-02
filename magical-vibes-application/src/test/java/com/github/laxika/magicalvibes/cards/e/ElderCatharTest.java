@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -55,18 +56,18 @@ class ElderCatharTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Has ON_DEATH TargetPermanentReplacementEffect(HUMAN) wrapping PutPlusOnePlusOneCounterOnTargetCreatureEffect")
+    @DisplayName("Has ON_DEATH ConditionalReplacementEffect(HUMAN) wrapping PutPlusOnePlusOneCounterOnTargetCreatureEffect")
     void hasCorrectEffects() {
         ElderCathar card = new ElderCathar();
 
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(TargetPermanentReplacementEffect.class);
+                .isInstanceOf(ConditionalReplacementEffect.class);
 
-        TargetPermanentReplacementEffect wrapper =
-                (TargetPermanentReplacementEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(wrapper.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) wrapper.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
+        ConditionalReplacementEffect wrapper =
+                (ConditionalReplacementEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
+        assertThat(((TargetPermanentMatches) wrapper.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) ((TargetPermanentMatches) wrapper.condition()).filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
         assertThat(wrapper.baseEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
         assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) wrapper.baseEffect()).count()).isEqualTo(1);
         assertThat(wrapper.upgradedEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);

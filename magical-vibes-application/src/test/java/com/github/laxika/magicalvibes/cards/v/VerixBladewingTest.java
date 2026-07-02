@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -33,9 +34,9 @@ class VerixBladewingTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(KickedConditionalEffect.class);
-        KickedConditionalEffect conditional =
-                (KickedConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect = (CreateTokenEffect) conditional.wrapped();
         assertThat(tokenEffect.tokenName()).isEqualTo("Karox Bladewing");

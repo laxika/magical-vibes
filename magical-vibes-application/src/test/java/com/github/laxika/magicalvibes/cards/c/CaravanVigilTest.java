@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -29,21 +30,21 @@ class CaravanVigilTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has MorbidReplacementEffect wrapping search-to-hand base and search-to-battlefield morbid")
+    @DisplayName("Has ConditionalReplacementEffect wrapping search-to-hand base and search-to-battlefield morbid")
     void hasCorrectStructure() {
         CaravanVigil card = new CaravanVigil();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MorbidReplacementEffect.class);
+                .isInstanceOf(ConditionalReplacementEffect.class);
 
-        MorbidReplacementEffect effect =
-                (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        ConditionalReplacementEffect effect =
+                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        assertThat(effect.morbidEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
+        assertThat(effect.upgradedEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
 
         SearchLibraryForCardTypesToBattlefieldEffect morbidEffect =
-                (SearchLibraryForCardTypesToBattlefieldEffect) effect.morbidEffect();
+                (SearchLibraryForCardTypesToBattlefieldEffect) effect.upgradedEffect();
         assertThat(CardPredicateUtils.describeFilter(morbidEffect.filter())).isEqualTo("basic land card");
         assertThat(morbidEffect.entersTapped()).isFalse();
     }

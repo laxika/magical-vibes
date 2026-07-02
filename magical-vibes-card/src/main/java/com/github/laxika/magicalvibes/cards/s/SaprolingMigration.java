@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,7 @@ public class SaprolingMigration extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
         // Create two 1/1 green Saproling creature tokens.
         // If this spell was kicked, create four of those tokens instead.
-        addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                 new CreateTokenEffect(2, "Saproling", 1, 1,
                         CardColor.GREEN, List.of(CardSubtype.SAPROLING),
                         Set.of(), Set.of()),

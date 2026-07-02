@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -25,16 +26,16 @@ class TilonallisKnightTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has ON_ATTACK trigger with ControlsPermanentConditionalEffect(DINOSAUR) wrapping BoostSelfEffect(1, 1)")
+    @DisplayName("Has ON_ATTACK trigger with ConditionalEffect(DINOSAUR) wrapping BoostSelfEffect(1, 1)")
     void hasCorrectStructure() {
         TilonallisKnight card = new TilonallisKnight();
 
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ControlsPermanentConditionalEffect.class);
-        ControlsPermanentConditionalEffect conditional =
-                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
+        assertThat(((ControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
         assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
         assertThat(boost.powerBoost()).isEqualTo(1);

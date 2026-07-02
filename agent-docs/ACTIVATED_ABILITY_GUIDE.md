@@ -407,7 +407,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `CONTROLLER_END_STEP_TRIGGERED` | Controller's end step only ("at the beginning of your end step") |
 | `ON_ATTACK` | This creature attacks |
 | `ON_ALLY_CREATURES_ATTACK` | One or more creatures the controller controls attack (fires once per combat, not per creature). Scans all controller's permanents after attackers declared |
-| `GRAVEYARD_ON_ALLY_CREATURES_ATTACK` | Like ON_ALLY_CREATURES_ATTACK but fires from the controller's graveyard. The attacker count is passed via xValue. Supports `MinimumAttackersConditionalEffect` wrapper for "N or more creatures" conditions. Used by Warcry Phoenix |
+| `GRAVEYARD_ON_ALLY_CREATURES_ATTACK` | Like ON_ALLY_CREATURES_ATTACK but fires from the controller's graveyard. The attacker count is passed via xValue. Supports `ConditionalEffect(new MinimumAttackers(minimumAttackers), wrapped)` wrapper for "N or more creatures" conditions. Used by Warcry Phoenix |
 | `ON_ALLY_CREATURE_ATTACKS` | Fires once per attacking creature the controller controls (unlike ON_ALLY_CREATURES_ATTACK which fires once per combat). Scans all controller's permanents for each attacker. Supports `TriggeringCardConditionalEffect` to filter by the attacking creature. Used by Sanctum Seeker |
 | `ON_CREATURE_ATTACKS_YOU` | Whenever a creature attacks you or a planeswalker you control. Fires once per attacking creature, on the defending player's permanents (the player being attacked, directly or via their planeswalker). The attacking creature's permanent ID is set as the non-targeting `targetId` on the stack entry. Checked in `CombatAttackService.declareAttackers`. Used by Lost in the Woods |
 | `ON_ALLY_CREATURE_EXPLORES` | Whenever a creature you control explores. Fires after the explore process completes (land into hand, or +1/+1 counter and may-graveyard choice). Supports targeted effects (e.g. BoostTargetCreatureEffect) via `pendingExploreTriggerTargets` queue — targets restricted to opponent's creatures. Used by Lurking Chupacabra |
@@ -443,7 +443,7 @@ addEffect(EffectSlot.SPELL, effect);     // effect resolved when spell resolves
 | `ON_EQUIPPED_CREATURE_DIES` | Equipped creature dies |
 | `ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD` | Enchanted permanent dies (graveyard only) |
 | `ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD` | Enchanted permanent leaves battlefield (any destination) |
-| `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` | Opponent's land enters. Wrap with `PermanentEnteredThisTurnConditionalEffect` for "second+ land" |
+| `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD` | Opponent's land enters. Wrap with `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` for "second+ land" |
 | `ON_ALLY_LAND_ENTERS_BATTLEFIELD` | Your land enters (landfall) |
 | `ON_OPPONENT_CREATURE_DIES` | An opponent's creature dies |
 | `ON_DEALT_DAMAGE` | This creature is dealt damage (combat or non-combat) |

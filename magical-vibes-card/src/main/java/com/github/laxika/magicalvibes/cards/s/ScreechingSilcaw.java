@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -11,6 +12,6 @@ public class ScreechingSilcaw extends Card {
 
     public ScreechingSilcaw() {
         addEffect(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
-                new MetalcraftConditionalEffect(new MillTargetPlayerEffect(4)));
+                new ConditionalEffect(new Metalcraft(), new MillTargetPlayerEffect(4)));
     }
 }

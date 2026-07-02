@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToSecondaryTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -37,9 +38,9 @@ class GoblinBarrageTest extends BaseCardTest {
                     assertThat(((DealDamageToTargetCreatureEffect) e).damage()).isEqualTo(4);
                 })
                 .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(KickedConditionalEffect.class);
-                    assertThat(((KickedConditionalEffect) e).wrapped()).isInstanceOf(DealDamageToSecondaryTargetEffect.class);
-                    assertThat(((DealDamageToSecondaryTargetEffect) ((KickedConditionalEffect) e).wrapped()).damage()).isEqualTo(4);
+                    assertThat(e).isInstanceOf(ConditionalEffect.class);
+                    assertThat(((ConditionalEffect) e).wrapped()).isInstanceOf(DealDamageToSecondaryTargetEffect.class);
+                    assertThat(((DealDamageToSecondaryTargetEffect) ((ConditionalEffect) e).wrapped()).damage()).isEqualTo(4);
                 });
     }
 

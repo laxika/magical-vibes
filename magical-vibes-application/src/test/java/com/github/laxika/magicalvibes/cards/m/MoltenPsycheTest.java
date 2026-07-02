@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,10 +32,10 @@ class MoltenPsycheTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))
                 .isInstanceOf(ShuffleHandIntoLibraryAndDrawEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(MetalcraftConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        MetalcraftConditionalEffect metalcraft =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
+        ConditionalEffect metalcraft =
+                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(metalcraft.wrapped())
                 .isInstanceOf(DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect.class);
     }

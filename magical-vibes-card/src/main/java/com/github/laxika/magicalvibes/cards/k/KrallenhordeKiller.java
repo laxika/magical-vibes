@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
 
@@ -27,6 +28,6 @@ public class KrallenhordeKiller extends Card {
         ));
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new TwoOrMoreSpellsCastLastTurnConditionalEffect(new TransformSelfEffect()));
+                new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 }

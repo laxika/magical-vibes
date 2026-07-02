@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -28,7 +29,7 @@ class ConcussiveBoltTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has DealDamageToTargetPlayerEffect(4) + MetalcraftConditionalEffect wrapping TargetPlayerCreaturesCantBlockThisTurnEffect")
+    @DisplayName("Has DealDamageToTargetPlayerEffect(4) + ConditionalEffect wrapping TargetPlayerCreaturesCantBlockThisTurnEffect")
     void hasCorrectStructure() {
         ConcussiveBolt card = new ConcussiveBolt();
 
@@ -36,8 +37,8 @@ class ConcussiveBoltTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToTargetPlayerEffect.class);
         assertThat(((DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0)).damage()).isEqualTo(4);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MetalcraftConditionalEffect.class);
-        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(metalcraft.wrapped()).isInstanceOf(TargetPlayerCreaturesCantBlockThisTurnEffect.class);
     }
 

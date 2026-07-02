@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "142")
 public class ShivanFire extends Card {
@@ -15,7 +16,7 @@ public class ShivanFire extends Card {
         addEffect(EffectSlot.STATIC, new KickerEffect("{4}"));
         // Shivan Fire deals 2 damage to target creature.
         // If this spell was kicked, it deals 4 damage instead.
-        addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                 new DealDamageToTargetCreatureEffect(2),
                 new DealDamageToTargetCreatureEffect(4)));
     }

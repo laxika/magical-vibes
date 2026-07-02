@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.HasAttacker;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -29,17 +30,17 @@ class MavrenFeinDuskApostleTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has ON_ALLY_CREATURES_ATTACK with HasAttackerConditionalEffect wrapping CreateTokenEffect")
+    @DisplayName("Has ON_ALLY_CREATURES_ATTACK with ConditionalEffect wrapping CreateTokenEffect")
     void hasCorrectAttackTrigger() {
         MavrenFeinDuskApostle card = new MavrenFeinDuskApostle();
 
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(HasAttackerConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        HasAttackerConditionalEffect conditional =
-                (HasAttackerConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new PermanentAllOfPredicate(List.of(
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst();
+        assertThat(((HasAttacker) conditional.condition()).predicate()).isEqualTo(new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
                 new PermanentNotPredicate(new PermanentIsTokenPredicate())
         )));

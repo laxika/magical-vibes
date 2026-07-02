@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -52,11 +53,11 @@ class ThaumaticCompassTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ControlsPermanentCountConditionalEffect.class);
-        var conditional = (ControlsPermanentCountConditionalEffect)
+                .isInstanceOf(ConditionalEffect.class);
+        var conditional = (ConditionalEffect)
                 card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(conditional.minCount()).isEqualTo(7);
-        assertThat(conditional.filter()).isInstanceOf(PermanentIsLandPredicate.class);
+        assertThat(((ControlsPermanentCount) conditional.condition()).minCount()).isEqualTo(7);
+        assertThat(((ControlsPermanentCount) conditional.condition()).filter()).isInstanceOf(PermanentIsLandPredicate.class);
         assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
     }
 

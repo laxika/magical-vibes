@@ -13,9 +13,10 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,9 +46,9 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect frontTransform =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect frontTransform =
+                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
         assertThat(frontTransform.wrapped()).isInstanceOf(TransformSelfEffect.class);
 
         assertThat(card.getBackFaceCard()).isInstanceOf(RavagerOfTheFells.class);
@@ -62,7 +63,7 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
                     assertThat(e.maxCreatureTargets()).isEqualTo(1);
                 });
         assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
     }
 
     @Test

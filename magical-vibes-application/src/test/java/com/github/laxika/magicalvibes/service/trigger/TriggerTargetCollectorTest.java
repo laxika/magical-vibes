@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -108,11 +109,11 @@ class TriggerTargetCollectorTest {
     }
 
     @Test
-    @DisplayName("END_STEP unwraps ConditionalEffect that does not delegate canTarget*")
-    void endStepUnwrapsConditionalEffect() {
-        // DidntAttackConditionalEffect does NOT override canTargetPlayer — so without unwrapping
-        // the helper sees canTargetPlayer=false (the CardEffect default).
-        List<CardEffect> effects = List.of(new DidntAttackConditionalEffect(new MillTargetPlayerEffect(1)));
+    @DisplayName("ConditionalEffect delegates canTarget* to the wrapped effect in every mode")
+    void conditionalEffectDelegatesTargeting() {
+        // The generic ConditionalEffect delegates canTargetPlayer to its wrapped effect,
+        // so target visibility no longer depends on the unwrapConditional option.
+        List<CardEffect> effects = List.of(new ConditionalEffect(new DidntAttack(), new MillTargetPlayerEffect(1)));
 
         TriggerTargetCollector.Result withUnwrap = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.END_STEP);
@@ -121,8 +122,8 @@ class TriggerTargetCollectorTest {
 
         TriggerTargetCollector.Result withoutUnwrap = collector.collect(
                 gd, effects, null, player1Id, sourceCard, TriggerTargetCollector.Options.DEATH);
-        assertThat(withoutUnwrap.canTargetPlayers()).isFalse();
-        assertThat(withoutUnwrap.validTargets()).isEmpty();
+        assertThat(withoutUnwrap.canTargetPlayers()).isTrue();
+        assertThat(withoutUnwrap.validTargets()).containsExactly(player1Id, player2Id);
     }
 
     @Test

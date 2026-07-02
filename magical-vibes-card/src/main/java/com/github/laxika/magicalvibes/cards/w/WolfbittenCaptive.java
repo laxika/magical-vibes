@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public class WolfbittenCaptive extends Card {
         ));
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new NoSpellsCastLastTurnConditionalEffect(new TransformSelfEffect()));
+                new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 
     @Override

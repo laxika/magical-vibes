@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -23,7 +24,7 @@ public class SlinnVodaTheRisingDeep extends Card {
         // When Slinn Voda, the Rising Deep enters, if it was kicked, return all
         // creatures to their owners' hands except for Merfolk, Krakens, Leviathans,
         // Octopuses, and Serpents.
-        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new KickedConditionalEffect(
+        addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), 
                 new ReturnCreaturesToOwnersHandEffect(Set.of(
                         new PermanentPredicateTargetFilter(
                                 new PermanentNotPredicate(new PermanentHasAnySubtypePredicate(Set.of(

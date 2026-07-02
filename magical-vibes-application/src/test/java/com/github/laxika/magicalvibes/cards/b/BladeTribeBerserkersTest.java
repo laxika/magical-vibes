@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,17 +29,17 @@ class BladeTribeBerserkersTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .allSatisfy(e -> assertThat(e).isInstanceOf(MetalcraftConditionalEffect.class));
+                .allSatisfy(e -> assertThat(e).isInstanceOf(ConditionalEffect.class));
 
-        MetalcraftConditionalEffect boost =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
+        ConditionalEffect boost =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
         assertThat(boost.wrapped()).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect boostEffect = (BoostSelfEffect) boost.wrapped();
         assertThat(boostEffect.powerBoost()).isEqualTo(3);
         assertThat(boostEffect.toughnessBoost()).isEqualTo(3);
 
-        MetalcraftConditionalEffect haste =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1);
+        ConditionalEffect haste =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1);
         assertThat(haste.wrapped()).isInstanceOf(GrantKeywordEffect.class);
     }
 

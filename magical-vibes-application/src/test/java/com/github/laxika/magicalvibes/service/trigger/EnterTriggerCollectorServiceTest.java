@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +54,9 @@ class EnterTriggerCollectorServiceTest {
         TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameBroadcastService), registry);
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
-                triggeredAbilityQueueService, gameQueryService, gameBroadcastService);
+                triggeredAbilityQueueService, gameQueryService,
+                new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService)),
+                gameBroadcastService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

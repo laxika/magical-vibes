@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,15 +24,15 @@ class MaraudingLooterTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Has RaidConditionalEffect wrapping MayEffect(DrawAndDiscardCardEffect) on CONTROLLER_END_STEP_TRIGGERED")
+    @DisplayName("Has ConditionalEffect wrapping MayEffect(DrawAndDiscardCardEffect) on CONTROLLER_END_STEP_TRIGGERED")
     void hasCorrectEffect() {
         MaraudingLooter card = new MaraudingLooter();
 
         assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect raid =
+                (ConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
         assertThat(raid.wrapped()).isInstanceOf(MayEffect.class);
         MayEffect may = (MayEffect) raid.wrapped();
         assertThat(may.wrapped()).isInstanceOf(DrawAndDiscardCardEffect.class);

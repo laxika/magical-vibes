@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,16 +25,16 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has END_STEP_TRIGGERED effect with MorbidConditionalEffect wrapping DestroyTargetPermanentEffect")
+    @DisplayName("Has END_STEP_TRIGGERED effect with ConditionalEffect wrapping DestroyTargetPermanentEffect")
     void hasCorrectStructure() {
         ReaperFromTheAbyss card = new ReaperFromTheAbyss();
 
         assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(MorbidConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        MorbidConditionalEffect morbid =
-                (MorbidConditionalEffect) card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst();
+        ConditionalEffect morbid =
+                (ConditionalEffect) card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst();
         assertThat(morbid.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
     }
 

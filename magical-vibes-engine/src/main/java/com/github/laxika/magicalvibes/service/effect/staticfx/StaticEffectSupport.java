@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -126,11 +127,13 @@ public class StaticEffectSupport {
 
     public void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
         if (wrapped instanceof StaticBoostEffect boost) {
-            accumulator.addPower(boost.powerBoost());
-            accumulator.addToughness(boost.toughnessBoost());
-            accumulator.addKeywords(boost.grantedKeywords());
+            if (selfInScope(context, boost.scope(), boost.filter())) {
+                accumulator.addPower(boost.powerBoost());
+                accumulator.addToughness(boost.toughnessBoost());
+                accumulator.addKeywords(boost.grantedKeywords());
+            }
         } else if (wrapped instanceof GrantKeywordEffect grant) {
-            if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
+            if (selfInScope(context, grant.scope(), grant.filter())) {
                 accumulator.addKeywords(grant.keywords());
             }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
@@ -139,7 +142,28 @@ public class StaticEffectSupport {
             if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
                 accumulator.addGrantedEffect(grant.effect());
             }
+        } else if (wrapped instanceof AnimateSelfWithStatsEffect animate) {
+            accumulator.setSelfBecomeCreature(true);
+            accumulator.addPower(animate.power());
+            accumulator.addToughness(animate.toughness());
+            for (CardSubtype subtype : animate.grantedSubtypes()) {
+                accumulator.addGrantedSubtype(subtype);
+            }
+            accumulator.addKeywords(animate.grantedKeywords());
         }
+    }
+
+    /**
+     * Whether a conditional static effect's scope covers the source permanent itself.
+     * {@link GrantScope#OWN_CREATURES} means "other creatures you control" and is excluded;
+     * attachment scopes (equipped/enchanted) never cover the source.
+     */
+    private boolean selfInScope(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
+        if (scope == GrantScope.SELF) return true;
+        boolean selfCoveringScope = scope == GrantScope.ALL_OWN_CREATURES
+                || scope == GrantScope.ALL_CREATURES
+                || scope == GrantScope.OWN_PERMANENTS;
+        return selfCoveringScope && matchesStaticFilter(context.target(), filter);
     }
 
     public boolean isEquipped(StaticEffectContext context) {

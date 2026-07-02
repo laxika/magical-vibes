@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndControllerGainsLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -26,10 +27,10 @@ class BleakCovenVampiresTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        MetalcraftConditionalEffect metalcraft =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        ConditionalEffect metalcraft =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(metalcraft.wrapped()).isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
 
         TargetPlayerLosesLifeAndControllerGainsLifeEffect drain =

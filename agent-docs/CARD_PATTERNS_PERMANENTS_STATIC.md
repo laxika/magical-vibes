@@ -69,22 +69,22 @@ All paths relative to `cards/`.
 | Draw replacement | `a/Abundance.java` | STATIC AbundanceDrawReplacementEffect |
 | Grant flash to spell type | `s/ShimmerMyr.java` | STATIC GrantFlashToCardTypeEffect(ARTIFACT) — controller may cast artifact spells as though they had flash |
 | Grant flash to all spells + leyline | `l/LeylineOfAnticipation.java` | ON_OPENING_HAND_REVEAL MayEffect(LeylineStartOnBattlefieldEffect) + STATIC GrantFlashToCardTypeEffect(null) — may start on battlefield from opening hand, grants flash to all spells |
-| Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC MetalcraftConditionalEffect(GrantKeywordEffect(DOUBLE_STRIKE, SELF)) |
-| Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC MetalcraftConditionalEffect(GrantKeywordEffect) + MetalcraftConditionalEffect(StaticBoostEffect) |
-| Metalcraft boost only | `c/CarapaceForger.java` | STATIC MetalcraftConditionalEffect(StaticBoostEffect(2, 2, SELF)) |
-| Metalcraft boost + ignore defender | `s/SpireSerpent.java` | STATIC MetalcraftConditionalEffect(StaticBoostEffect) + MetalcraftConditionalEffect(CanAttackAsThoughNoDefenderEffect) |
-| Metalcraft become creature | `r/RustedRelic.java` | STATIC MetalcraftConditionalEffect(AnimateSelfWithStatsEffect(5, 5, [GOLEM], [])) — noncreature becomes creature with fixed P/T and subtypes |
-| Opponent-turn become creature | `w/WardenOfTheWall.java` | STATIC EntersTappedEffect + mana ability + NotControllerTurnConditionalEffect(AnimateSelfWithStatsEffect(2, 3, [GARGOYLE], [FLYING])) — artifact animates on opponent's turn only |
-| Metalcraft burn spell | `g/GalvanicBlast.java` | SPELL MetalcraftReplacementEffect(DealDamageToAnyTargetEffect(2), DealDamageToAnyTargetEffect(4)) — picks base/upgrade at resolution |
-| Morbid burn spell | `b/BrimstoneVolley.java` | SPELL MorbidReplacementEffect(DealDamageToAnyTargetEffect(3), DealDamageToAnyTargetEffect(5)) — picks base/upgrade at resolution based on creature death this turn |
-| Morbid land search | `c/CaravanVigil.java` | SPELL MorbidReplacementEffect(SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand()), SearchLibraryForCardTypesToBattlefieldEffect(LAND, basic, untapped)) — search for basic land to hand, or to battlefield untapped if morbid |
-| Morbid ETB counters | `f/FesterhideBoar.java` | ON_ENTER_BATTLEFIELD MorbidConditionalEffect(PutCountersOnSourceEffect(1, 1, 2)) — enters with +1/+1 counters if a creature died this turn |
-| Metalcraft damage + can't block | `c/ConcussiveBolt.java` | SPELL DealDamageToTargetPlayerEffect(4) + MetalcraftConditionalEffect(TargetPlayerCreaturesCantBlockThisTurnEffect) — damage always, metalcraft adds mass can't-block on target player's creatures |
-| Life threshold boost + keyword | `s/SerraAscendant.java` | STATIC ControllerLifeThresholdConditionalEffect(30, StaticBoostEffect(5, 5, [FLYING], SELF)) — +5/+5 and flying as long as controller has 30+ life |
-| Life threshold transform (activated) | `c/ChaliceOfLife.java` | ActivatedAbility(tap, [GainLifeEffect(1), ControllerLifeThresholdConditionalEffect(30, TransformSelfEffect())]) — gain 1 life then transform if 30+ life |
-| Graveyard card threshold boost + keyword | `g/GhituLavarunner.java` | STATIC ControllerGraveyardCardThresholdConditionalEffect(2, instant/sorcery filter, StaticBoostEffect(1, 0, [HASTE], SELF)) — +1/+0 and haste as long as 2+ instant/sorcery cards in controller's graveyard |
-| Controls-subtype self-boost | `t/TeferisSentinel.java` | STATIC ControlsPermanentConditionalEffect(PermanentHasSubtypePredicate(TEFERI), StaticBoostEffect(4, 0, SELF)) — +4/+0 as long as you control a Teferi planeswalker |
-| Controls-subtype self-boost + unblockable | `j/JacesSentinel.java` | STATIC ControlsPermanentConditionalEffect(PermanentHasSubtypePredicate(JACE), StaticBoostEffect(1, 0, SELF)) + ControlsPermanentConditionalEffect(PermanentHasSubtypePredicate(JACE), GrantEffectEffect(CantBeBlockedEffect, SELF)) — +1/+0 and can't be blocked as long as you control a Jace planeswalker |
+| Metalcraft keyword | `a/AuriokEdgewright.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect(DOUBLE_STRIKE, SELF)) |
+| Metalcraft keyword + boost | `a/AuriokSunchaser.java` | STATIC ConditionalEffect(new Metalcraft(), GrantKeywordEffect) + ConditionalEffect(new Metalcraft(), StaticBoostEffect) |
+| Metalcraft boost only | `c/CarapaceForger.java` | STATIC ConditionalEffect(new Metalcraft(), StaticBoostEffect(2, 2, SELF)) |
+| Metalcraft boost + ignore defender | `s/SpireSerpent.java` | STATIC ConditionalEffect(new Metalcraft(), StaticBoostEffect) + ConditionalEffect(new Metalcraft(), CanAttackAsThoughNoDefenderEffect) |
+| Metalcraft become creature | `r/RustedRelic.java` | STATIC ConditionalEffect(new Metalcraft(), AnimateSelfWithStatsEffect(5, 5, [GOLEM], [])) — noncreature becomes creature with fixed P/T and subtypes |
+| Opponent-turn become creature | `w/WardenOfTheWall.java` | STATIC EntersTappedEffect + mana ability + ConditionalEffect(new NotControllerTurn(), AnimateSelfWithStatsEffect(2, 3, [GARGOYLE], [FLYING])) — artifact animates on opponent's turn only |
+| Metalcraft burn spell | `g/GalvanicBlast.java` | SPELL ConditionalReplacementEffect(new Metalcraft(), baseEffect, upgradedEffect)(DealDamageToAnyTargetEffect(2), DealDamageToAnyTargetEffect(4)) — picks base/upgrade at resolution |
+| Morbid burn spell | `b/BrimstoneVolley.java` | SPELL ConditionalReplacementEffect(new Morbid(), baseEffect, upgradedEffect)(DealDamageToAnyTargetEffect(3), DealDamageToAnyTargetEffect(5)) — picks base/upgrade at resolution based on creature death this turn |
+| Morbid land search | `c/CaravanVigil.java` | SPELL ConditionalReplacementEffect(new Morbid(), baseEffect, upgradedEffect)(SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand()), SearchLibraryForCardTypesToBattlefieldEffect(LAND, basic, untapped)) — search for basic land to hand, or to battlefield untapped if morbid |
+| Morbid ETB counters | `f/FesterhideBoar.java` | ON_ENTER_BATTLEFIELD ConditionalEffect(new Morbid(), PutCountersOnSourceEffect(1, 1, 2)) — enters with +1/+1 counters if a creature died this turn |
+| Metalcraft damage + can't block | `c/ConcussiveBolt.java` | SPELL DealDamageToTargetPlayerEffect(4) + ConditionalEffect(new Metalcraft(), TargetPlayerCreaturesCantBlockThisTurnEffect) — damage always, metalcraft adds mass can't-block on target player's creatures |
+| Life threshold boost + keyword | `s/SerraAscendant.java` | STATIC ConditionalEffect(new ControllerLifeAtLeast(30), StaticBoostEffect(5, 5, [FLYING], SELF)) — +5/+5 and flying as long as controller has 30+ life |
+| Life threshold transform (activated) | `c/ChaliceOfLife.java` | ActivatedAbility(tap, [GainLifeEffect(1), ConditionalEffect(new ControllerLifeAtLeast(30), TransformSelfEffect())]) — gain 1 life then transform if 30+ life |
+| Graveyard card threshold boost + keyword | `g/GhituLavarunner.java` | STATIC ConditionalEffect(new GraveyardCardThreshold(2, instant/sorcery filter), StaticBoostEffect(1, 0, [HASTE], SELF)) — +1/+0 and haste as long as 2+ instant/sorcery cards in controller's graveyard |
+| Controls-subtype self-boost | `t/TeferisSentinel.java` | STATIC ConditionalEffect(new ControlsPermanent(PermanentHasSubtypePredicate(TEFERI)), StaticBoostEffect(4, 0, SELF)) — +4/+0 as long as you control a Teferi planeswalker |
+| Controls-subtype self-boost + unblockable | `j/JacesSentinel.java` | STATIC ConditionalEffect(new ControlsPermanent(PermanentHasSubtypePredicate(JACE)), StaticBoostEffect(1, 0, SELF)) + ConditionalEffect(new ControlsPermanent(PermanentHasSubtypePredicate(JACE)), GrantEffectEffect(CantBeBlockedEffect, SELF)) — +1/+0 and can't be blocked as long as you control a Jace planeswalker |
 
 ## Auras
 

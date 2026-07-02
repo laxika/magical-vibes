@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,20 +21,20 @@ class GalvanicBlastTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has MetalcraftReplacementEffect wrapping 2-damage base and 4-damage metalcraft")
+    @DisplayName("Has ConditionalReplacementEffect wrapping 2-damage base and 4-damage metalcraft")
     void hasCorrectStructure() {
         GalvanicBlast card = new GalvanicBlast();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MetalcraftReplacementEffect.class);
+                .isInstanceOf(ConditionalReplacementEffect.class);
 
-        MetalcraftReplacementEffect effect =
-                (MetalcraftReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        ConditionalReplacementEffect effect =
+                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(effect.metalcraftEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
+        assertThat(effect.upgradedEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
         assertThat(((DealDamageToAnyTargetEffect) effect.baseEffect()).damage()).isEqualTo(2);
-        assertThat(((DealDamageToAnyTargetEffect) effect.metalcraftEffect()).damage()).isEqualTo(4);
+        assertThat(((DealDamageToAnyTargetEffect) effect.upgradedEffect()).damage()).isEqualTo(4);
     }
 
     // ===== Without metalcraft =====

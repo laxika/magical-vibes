@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -29,8 +30,8 @@ class ClingingMistsTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(PreventAllCombatDamageEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(ConditionalEffect.class);
     }
 
     // ===== Casting =====

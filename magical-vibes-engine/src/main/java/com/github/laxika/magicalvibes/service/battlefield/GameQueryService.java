@@ -24,11 +24,10 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
-import com.github.laxika.magicalvibes.model.effect.NotControllerTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfOpponentAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
@@ -149,7 +148,11 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 
 import java.util.*;
 import java.util.function.BiFunction;
@@ -182,6 +185,14 @@ public class GameQueryService {
     );
 
     private final StaticEffectHandlerRegistry staticEffectRegistry;
+
+    /**
+     * Evaluates conditional static effects (e.g. metalcraft-animate checks). Injected lazily
+     * because the evaluation service itself queries game state through this service.
+     */
+    @Autowired
+    @Lazy
+    private ConditionEvaluationService conditionEvaluationService;
 
     /**
      * Aggregated static bonuses from other permanents, auras, emblems, and self-referencing
@@ -654,19 +665,11 @@ public class GameQueryService {
      */
     public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent) {
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof MetalcraftConditionalEffect metalcraft
-                    && metalcraft.wrapped() instanceof AnimateSelfWithStatsEffect) {
-                for (UUID playerId : gameData.orderedPlayerIds) {
-                    List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                    if (battlefield != null && battlefield.contains(permanent)) {
-                        if (isMetalcraftMet(gameData, playerId)) return true;
-                    }
-                }
-            }
-            if (effect instanceof NotControllerTurnConditionalEffect notControllerTurn
-                    && notControllerTurn.wrapped() instanceof AnimateSelfWithStatsEffect) {
+            if (effect instanceof ConditionalEffect conditional
+                    && conditional.wrapped() instanceof AnimateSelfWithStatsEffect) {
                 UUID controllerId = findPermanentController(gameData, permanent.getId());
-                if (controllerId != null && !controllerId.equals(gameData.activePlayerId)) {
+                if (controllerId != null && conditionEvaluationService.isMet(gameData,
+                        conditional.condition(), ConditionContext.forPermanent(permanent, controllerId))) {
                     return true;
                 }
             }
@@ -726,7 +729,7 @@ public class GameQueryService {
     /**
      * Returns {@code true} if the given creature can attack despite having defender.
      * Checks for {@link CanAttackAsThoughNoDefenderEffect} in static effects, including
-     * those wrapped in {@link MetalcraftConditionalEffect}.
+     * those wrapped in a {@link ConditionalEffect} (e.g. metalcraft).
      */
     public boolean canAttackDespiteDefender(GameData gameData, Permanent creature) {
         UUID controllerId = findPermanentController(gameData, creature.getId());
@@ -735,9 +738,12 @@ public class GameQueryService {
             if (effect instanceof CanAttackAsThoughNoDefenderEffect) {
                 return true;
             }
-            if (effect instanceof MetalcraftConditionalEffect metalcraft
-                    && metalcraft.wrapped() instanceof CanAttackAsThoughNoDefenderEffect) {
-                if (isMetalcraftMet(gameData, controllerId)) return true;
+            if (effect instanceof ConditionalEffect conditional
+                    && conditional.wrapped() instanceof CanAttackAsThoughNoDefenderEffect) {
+                if (conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(creature, controllerId))) {
+                    return true;
+                }
             }
         }
         return false;

@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.HexproofFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -35,9 +36,7 @@ class KnightOfMaliceTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.STATIC).get(0))
                 .isEqualTo(new HexproofFromColorsEffect(Set.of(CardColor.WHITE)));
         assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isEqualTo(new AnyPlayerControlsPermanentConditionalEffect(
-                        new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
-                        new StaticBoostEffect(1, 0, GrantScope.SELF)));
+                .isEqualTo(new ConditionalEffect(new AnyPlayerControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.WHITE))), new StaticBoostEffect(1, 0, GrantScope.SELF)));
     }
 
     @Test

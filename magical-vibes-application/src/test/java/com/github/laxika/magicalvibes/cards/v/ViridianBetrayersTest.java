@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.OpponentPoisonedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,15 +18,15 @@ class ViridianBetrayersTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC effect with OpponentPoisonedConditionalEffect wrapping GrantKeywordEffect(INFECT, SELF)")
+    @DisplayName("Has STATIC effect with ConditionalEffect wrapping GrantKeywordEffect(INFECT, SELF)")
     void hasCorrectStructure() {
         ViridianBetrayers card = new ViridianBetrayers();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(OpponentPoisonedConditionalEffect.class);
-        OpponentPoisonedConditionalEffect conditional =
-                (OpponentPoisonedConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
         GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
         assertThat(grant.keywords()).containsExactly(Keyword.INFECT);

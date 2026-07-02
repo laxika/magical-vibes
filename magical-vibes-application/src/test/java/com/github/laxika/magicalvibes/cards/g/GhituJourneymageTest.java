@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -27,12 +28,12 @@ class GhituJourneymageTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        ControlsAnotherPermanentConditionalEffect conditional =
-                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) conditional.filter()).subtype()).isEqualTo(CardSubtype.WIZARD);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        assertThat(((ControlsAnotherPermanent) conditional.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
+        assertThat(((PermanentHasSubtypePredicate) ((ControlsAnotherPermanent) conditional.condition()).filter()).subtype()).isEqualTo(CardSubtype.WIZARD);
         assertThat(conditional.wrapped()).isInstanceOf(DealDamageToEachOpponentEffect.class);
 
         DealDamageToEachOpponentEffect damage = (DealDamageToEachOpponentEffect) conditional.wrapped();

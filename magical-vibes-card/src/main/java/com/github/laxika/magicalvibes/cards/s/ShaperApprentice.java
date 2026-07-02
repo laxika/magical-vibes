@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -14,9 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class ShaperApprentice extends Card {
 
     public ShaperApprentice() {
-        addEffect(EffectSlot.STATIC, new ControlsAnotherPermanentConditionalEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.MERFOLK),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)
-        ));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }
 }

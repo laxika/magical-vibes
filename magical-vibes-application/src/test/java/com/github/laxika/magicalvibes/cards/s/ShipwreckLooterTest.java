@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DrawAndDiscardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,10 +29,10 @@ class ShipwreckLooterTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        ConditionalEffect raid =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(raid.wrapped()).isInstanceOf(MayEffect.class);
 
         MayEffect may = (MayEffect) raid.wrapped();

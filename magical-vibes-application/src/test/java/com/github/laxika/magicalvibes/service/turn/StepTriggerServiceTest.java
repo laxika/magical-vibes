@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
@@ -24,12 +25,12 @@ import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NoOtherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
+import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -37,7 +38,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -45,6 +46,8 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
@@ -110,6 +113,7 @@ class StepTriggerServiceTest {
         sut = new StepTriggerService(
                 drawService,
                 gameQueryService,
+                new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService)),
                 gameBroadcastService,
                 playerInputService,
                 permanentRemovalService,
@@ -360,13 +364,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("NoOtherPermanentConditionalEffect triggers when no other permanents match")
+        @DisplayName("ConditionalEffect triggers when no other permanents match")
         void noOtherSubtypeTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Tribal Card");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new NoOtherPermanentConditionalEffect(
-                    new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
-                    new GainLifeEffect(1)));
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(new NoOtherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             // Only one permanent — no other permanents to match, so condition is met
@@ -378,13 +380,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("NoOtherPermanentConditionalEffect does not trigger when another permanent matches")
+        @DisplayName("ConditionalEffect does not trigger when another permanent matches")
         void noOtherSubtypeDoesNotTriggerWhenOtherExists() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Tribal Card");
-            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new NoOtherPermanentConditionalEffect(
-                    new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
-                    new GainLifeEffect(1)));
+            card.addEffect(EffectSlot.UPKEEP_TRIGGERED, new ConditionalEffect(new NoOtherPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
 
@@ -485,12 +485,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with MetalcraftConditionalEffect skips when metalcraft not met")
+        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with ConditionalEffect skips when metalcraft not met")
         void graveyardMetalcraftSkipsWhenNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Metalcraft Card");
             card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
-                    new MetalcraftConditionalEffect(new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?")));
+                    new ConditionalEffect(new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?")));
             gd.playerGraveyards.get(player1Id).add(card);
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -502,12 +502,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with MetalcraftConditionalEffect triggers when metalcraft met")
+        @DisplayName("GRAVEYARD_UPKEEP_TRIGGERED with ConditionalEffect triggers when metalcraft met")
         void graveyardMetalcraftTriggersWhenMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Metalcraft Card");
             card.addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
-                    new MetalcraftConditionalEffect(new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?")));
+                    new ConditionalEffect(new Metalcraft(), new MayPayManaEffect("{2}", new GainLifeEffect(1), "Pay?")));
             gd.playerGraveyards.get(player1Id).add(card);
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
@@ -534,12 +534,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with NoSpellsCastLastTurnConditionalEffect triggers when no spells cast")
+        @DisplayName("EACH_UPKEEP_TRIGGERED with ConditionalEffect triggers when no spells cast")
         void noSpellsCastTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf");
             card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                    new NoSpellsCastLastTurnConditionalEffect(new GainLifeEffect(1)));
+                    new ConditionalEffect(new NoSpellsCastLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             // No spells cast last turn (empty map)
@@ -550,12 +550,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with NoSpellsCastLastTurnConditionalEffect skips when spells were cast")
+        @DisplayName("EACH_UPKEEP_TRIGGERED with ConditionalEffect skips when spells were cast")
         void noSpellsCastSkipsWhenSpellsWereCast() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf");
             card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                    new NoSpellsCastLastTurnConditionalEffect(new GainLifeEffect(1)));
+                    new ConditionalEffect(new NoSpellsCastLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             gd.spellsCastLastTurn.put(player1Id, 1);
@@ -566,12 +566,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with TwoOrMoreSpellsCastLastTurnConditionalEffect triggers when condition met")
+        @DisplayName("EACH_UPKEEP_TRIGGERED with ConditionalEffect triggers when condition met")
         void twoOrMoreSpellsTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf Reverse");
             card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                    new TwoOrMoreSpellsCastLastTurnConditionalEffect(new GainLifeEffect(1)));
+                    new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             gd.spellsCastLastTurn.put(player1Id, 2);
@@ -582,12 +582,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("EACH_UPKEEP_TRIGGERED with TwoOrMoreSpellsCastLastTurnConditionalEffect skips when no one cast two")
+        @DisplayName("EACH_UPKEEP_TRIGGERED with ConditionalEffect skips when no one cast two")
         void twoOrMoreSpellsSkipsWhenNotMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Werewolf Reverse");
             card.addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                    new TwoOrMoreSpellsCastLastTurnConditionalEffect(new GainLifeEffect(1)));
+                    new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             gd.spellsCastLastTurn.put(player1Id, 1);
@@ -977,11 +977,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("DidntAttackConditionalEffect triggers when creature did not attack this turn")
+        @DisplayName("ConditionalEffect triggers when creature did not attack this turn")
         void didntAttackTriggersWhenNotAttacked() {
             Card card = createCardWithName("Vigilant Creature");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new DidntAttackConditionalEffect(new GainLifeEffect(1)));
+                    new ConditionalEffect(new DidntAttack(), new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             // Did not attack this turn (default)
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -993,11 +993,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("DidntAttackConditionalEffect skips when creature attacked this turn")
+        @DisplayName("ConditionalEffect skips when creature attacked this turn")
         void didntAttackSkipsWhenAttacked() {
             Card card = createCardWithName("Vigilant Creature");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new DidntAttackConditionalEffect(new GainLifeEffect(1)));
+                    new ConditionalEffect(new DidntAttack(), new GainLifeEffect(1)));
             Permanent perm = new Permanent(card);
             perm.setAttackedThisTurn(true);
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -1008,11 +1008,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect wrapping MayEffect queues may ability when raid met")
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect wrapping MayEffect queues may ability when raid met")
         void raidConditionalEndStepMayEffectQueuedWhenRaidMet() {
             Card card = createCardWithName("Raiding Looter");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new RaidConditionalEffect(new MayEffect(new GainLifeEffect(1), "Gain life?")));
+                    new ConditionalEffect(new Raid(), new MayEffect(new GainLifeEffect(1), "Gain life?")));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
 
@@ -1022,11 +1022,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect skips when raid not met")
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect skips when raid not met")
         void raidConditionalEndStepSkipsWhenRaidNotMet() {
             Card card = createCardWithName("Raiding Looter");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new RaidConditionalEffect(new MayEffect(new GainLifeEffect(1), "Gain life?")));
+                    new ConditionalEffect(new Raid(), new MayEffect(new GainLifeEffect(1), "Gain life?")));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             // Do NOT add player1Id to playersDeclaredAttackersThisTurn
 
@@ -1036,11 +1036,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect wrapping non-MayEffect pushes to stack when raid met")
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect wrapping non-MayEffect pushes to stack when raid met")
         void raidConditionalEndStepNonMayPushesToStackWhenRaidMet() {
             Card card = createCardWithName("Raiding Creature");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new RaidConditionalEffect(new GainLifeEffect(1)));
+                    new ConditionalEffect(new Raid(), new GainLifeEffect(1)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
 
@@ -1051,11 +1051,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect wrapping targeting effect queues for target selection when raid met")
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect wrapping targeting effect queues for target selection when raid met")
         void raidConditionalEndStepTargetingEffectQueuesWhenRaidMet() {
             Card card = createCardWithName("Navigator's Ruin");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new RaidConditionalEffect(new MillTargetPlayerEffect(4)));
+                    new ConditionalEffect(new Raid(), new MillTargetPlayerEffect(4)));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
@@ -1072,11 +1072,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with RaidConditionalEffect wrapping targeting effect skips when raid not met")
+        @DisplayName("CONTROLLER_END_STEP_TRIGGERED with ConditionalEffect wrapping targeting effect skips when raid not met")
         void raidConditionalEndStepTargetingEffectSkipsWhenRaidNotMet() {
             Card card = createCardWithName("Navigator's Ruin");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new RaidConditionalEffect(new MillTargetPlayerEffect(4)));
+                    new ConditionalEffect(new Raid(), new MillTargetPlayerEffect(4)));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
@@ -1109,11 +1109,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("NotKickedConditionalEffect triggers when permanent was not kicked")
+        @DisplayName("ConditionalEffect triggers when permanent was not kicked")
         void notKickedTriggersWhenNotKicked() {
             Card card = createCardWithName("Unkicked Elemental");
             card.addEffect(EffectSlot.END_STEP_TRIGGERED,
-                    new NotKickedConditionalEffect(new SacrificeSelfEffect()));
+                    new ConditionalEffect(new NotKicked(), new SacrificeSelfEffect()));
             Permanent perm = new Permanent(card);
             // Not kicked (default)
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -1125,11 +1125,11 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("NotKickedConditionalEffect skips when permanent was kicked")
+        @DisplayName("ConditionalEffect skips when permanent was kicked")
         void notKickedSkipsWhenKicked() {
             Card card = createCardWithName("Kicked Elemental");
             card.addEffect(EffectSlot.END_STEP_TRIGGERED,
-                    new NotKickedConditionalEffect(new SacrificeSelfEffect()));
+                    new ConditionalEffect(new NotKicked(), new SacrificeSelfEffect()));
             Permanent perm = new Permanent(card);
             perm.setKicked(true);
             gd.playerBattlefields.get(player1Id).add(perm);

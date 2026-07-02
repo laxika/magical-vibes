@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +34,6 @@ public class DreamcallerSiren extends Card {
                 "Target must be a nonland permanent"
         ), 0, 2)
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
-                        new ControlsAnotherPermanentConditionalEffect(new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
-                                new TapTargetPermanentEffect()));
+                        new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)), new TapTargetPermanentEffect()));
     }
 }

@@ -50,8 +50,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 |---|---|---|---|
 | "other [subtype] creatures you control get +X/+Y" | `StaticBoostEffect(X, Y, Set.of(), OWN_CREATURES, PermanentHasAnySubtypePredicate(subtype))` | STATIC | Lord |
 | "creatures you control get +X/+Y" | `StaticBoostEffect(X, Y, Set.of(), OWN_CREATURES, null)` | STATIC | Anthem |
-| "fateful hour — as long as you have 5 or less life, other creatures you control get +X/+Y" | `ControllerLifeAtOrBelowThresholdConditionalEffect(5, StaticBoostEffect(X, Y, OWN_CREATURES))` | STATIC | Gavony Ironwright |
-| "as long as you have N or more life, [self/creatures] get +X/+Y [and keywords]" | `ControllerLifeThresholdConditionalEffect(N, StaticBoostEffect(X, Y, keywords, scope))` | STATIC | Serra Ascendant |
+| "fateful hour — as long as you have 5 or less life, other creatures you control get +X/+Y" | `ConditionalEffect(new ControllerLifeAtMost(5), StaticBoostEffect(X, Y, OWN_CREATURES))` | STATIC | Gavony Ironwright |
+| "as long as you have N or more life, [self/creatures] get +X/+Y [and keywords]" | `ConditionalEffect(new ControllerLifeAtLeast(N), StaticBoostEffect(X, Y, keywords, scope))` | STATIC | Serra Ascendant |
 | "other [subtype] creatures get +X/+Y" (all players) | `StaticBoostEffect(X, Y, Set.of(), ALL_CREATURES, PermanentHasAnySubtypePredicate(subtype))` | STATIC | Global lord |
 | "creatures opponents control get -X/-Y" | `StaticBoostEffect(-X, -Y, Set.of(), OPPONENT_CREATURES, null)` | STATIC | |
 | "enchanted creature gets +X/+Y" | `StaticBoostEffect(X, Y, Set.of(), ENCHANTED_CREATURE, null)` | STATIC | Aura |
@@ -140,7 +140,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "each opponent loses N life and you gain life equal to the life lost" | `EachOpponentLosesLifeAndControllerGainsLifeLostEffect(N)` | SPELL | Drain |
 | "whenever you gain life, draw a card" | `DrawCardEffect(1)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `d/DrogskolReaver.java` |
 | "whenever you gain life, put a growth counter on this enchantment" | `PutCountersOnSelfEffect(CounterType.GROWTH)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `c/ComfortingCounsel.java` |
-| "as long as there are five or more growth counters on this enchantment, creatures you control get +3/+3" | `SourceCounterThresholdConditionalEffect(5, CounterType.GROWTH, StaticBoostEffect(3, 3, OWN_CREATURES))` | STATIC | |
+| "as long as there are five or more growth counters on this enchantment, creatures you control get +3/+3" | `ConditionalEffect(new SourceCounterThreshold(5, CounterType.GROWTH), StaticBoostEffect(3, 3, OWN_CREATURES))` | STATIC | |
 | "double target player's life total" | `DoubleTargetPlayerLifeEffect()` | SPELL | |
 | "players can't gain life" | `PlayersCantGainLifeEffect()` | STATIC | |
 
@@ -203,8 +203,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "Increment (Whenever you cast a spell, if the mana you spent is greater than this creature's power or toughness, put a +1/+1 counter on it)" | *(none — keyword-driven)* | — | Increment keyword (SOS). Auto-loaded from Scryfall as `Keyword.INCREMENT`; behavior is driven by the keyword in `TriggerCollectionService.collectIncrementTriggers` (like Undying). Add **nothing** to the card (e.g. Ambitious Augmenter) |
 | "When this dies, if it had one or more counters on it, create a 0/0 [color] [Subtype] token, then put this creature's counters on that token" | `CreateTokenWithDyingSourceCountersEffect(new CreateTokenEffect("name", 0, 0, color, Set.of(colors), List.of(subtype)))` | `ON_DEATH` | Snapshots dying creature's +1/+1 counters onto the new token (e.g. Ambitious Augmenter's Fractal) |
 | "create a N/N [color] [Subtype] creature token with [keyword]" | `CreateTokenEffect("name", N, N, color, subtype, keyword)` | SPELL/trigger | With keyword |
-| "create N tokens. If this spell was cast from a graveyard, create M of those tokens instead" | `CreateTokenEffect(N, ...)` + `CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CreateTokenEffect(M - N, ...))` | SPELL | Add the base amount first, then the conditional extra amount; add `FlashbackCast` separately when appropriate |
-| "Then if this spell was cast from anywhere other than your hand, [effect]" | `CastNotFromHandConditionalEffect(...)` | SPELL | Broader than graveyard-only; covers flashback and any future non-hand cast paths. E.g. Antiquities on the Loose |
+| "create N tokens. If this spell was cast from a graveyard, create M of those tokens instead" | `CreateTokenEffect(N, ...)` + `ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new CreateTokenEffect(M - N, ...))` | SPELL | Add the base amount first, then the conditional extra amount; add `FlashbackCast` separately when appropriate |
+| "Then if this spell was cast from anywhere other than your hand, [effect]" | `ConditionalEffect(new CastNotFromHand(), ...)` | SPELL | Broader than graveyard-only; covers flashback and any future non-hand cast paths. E.g. Antiquities on the Loose |
 
 ## Graveyard return
 
@@ -271,17 +271,17 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Wrapper | Notes |
 |---|---|---|
 | "you may [effect]" | `MayEffect(innerEffect, "prompt")` | Player chooses |
-| "if you control three or more artifacts, [effect]" | `MetalcraftConditionalEffect(innerEffect)` | Metalcraft |
-| "if a creature died this turn, [effect]" | `MorbidConditionalEffect(innerEffect)` | Morbid |
-| "if you attacked this turn, [effect]" | `RaidConditionalEffect(innerEffect)` | Raid |
-| "if five or more mana was spent to cast that spell, [effect]" | `SpellManaSpentAtLeastConditionalEffect(5, innerEffect)` inside `SpellCastTriggerEffect` | Trigger collector snapshots mana spent into stack entry `xValue` |
-| "if you've cast another instant or sorcery spell this turn, [effect]" | `ControllerCastAnotherSpellThisTurnConditionalEffect(CardAnyOfPredicate(INSTANT, SORCERY), innerEffect)` | SPELL | Excludes the resolving spell; checked at resolution time |
-| "if [base], [effect]. If kicked, [upgraded effect] instead" | `KickerReplacementEffect(base, kicked)` | Kicker replaces |
-| "if this spell was kicked, [additional effect]" | `KickedConditionalEffect(innerEffect)` | Kicker adds |
-| "if you control a [subtype], [effect]" | `ControlsPermanentConditionalEffect(new PermanentHasSubtypePredicate(subtype), innerEffect)` | Permanent predicate check |
-| "if you control a [matching permanent], [effect]" | `ControlsPermanentConditionalEffect(predicate, innerEffect)` | Permanent check |
-| "if you control a [subtype], [upgraded effect] instead" | `ControlsPermanentReplacementEffect(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Resolution-time replacement |
-| "if that/target creature is a [subtype], [upgraded effect] instead" | `TargetPermanentReplacementEffect(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Target permanent checked at resolution; falls back to base if missing or nonmatching |
+| "if you control three or more artifacts, [effect]" | `ConditionalEffect(new Metalcraft(), innerEffect)` | Metalcraft |
+| "if a creature died this turn, [effect]" | `ConditionalEffect(new Morbid(), innerEffect)` | Morbid |
+| "if you attacked this turn, [effect]" | `ConditionalEffect(new Raid(), innerEffect)` | Raid |
+| "if five or more mana was spent to cast that spell, [effect]" | `ConditionalEffect(new SpellManaSpentAtLeast(5), innerEffect)` inside `SpellCastTriggerEffect` | Trigger collector snapshots mana spent into stack entry `xValue` |
+| "if you've cast another instant or sorcery spell this turn, [effect]" | `ConditionalEffect(new ControllerCastAnotherSpellThisTurn(CardAnyOfPredicate(INSTANT, SORCERY)), innerEffect)` | SPELL | Excludes the resolving spell; checked at resolution time |
+| "if [base], [effect]. If kicked, [upgraded effect] instead" | `ConditionalReplacementEffect(new Kicked(), baseEffect, upgradedEffect)(base, kicked)` | Kicker replaces |
+| "if this spell was kicked, [additional effect]" | `ConditionalEffect(new Kicked(), innerEffect)` | Kicker adds |
+| "if you control a [subtype], [effect]" | `ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(subtype)), innerEffect)` | Permanent predicate check |
+| "if you control a [matching permanent], [effect]" | `ConditionalEffect(new ControlsPermanent(predicate), innerEffect)` | Permanent check |
+| "if you control a [subtype], [upgraded effect] instead" | `ConditionalReplacementEffect(new ControlsPermanent(filter), baseEffect, upgradedEffect)(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Resolution-time replacement |
+| "if that/target creature is a [subtype], [upgraded effect] instead" | `ConditionalReplacementEffect(new TargetPermanentMatches(filter), baseEffect, upgradedEffect)(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Target permanent checked at resolution; falls back to base if missing or nonmatching |
 | "choose one —" | `ChooseOneEffect(List<ChooseOneOption>)` | Modal |
 
 ## Turn / phase
@@ -296,7 +296,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "copy target instant or sorcery spell" | `CopySpellEffect()` | SPELL | Filter on the Card's SpellTarget via `target(...)`. Add `StackEntryControlledByPredicate` for "...spell you control" |
-| "copy target instant or sorcery spell. If this spell was cast from a graveyard, copy that spell twice instead" | `CopySpellEffect()` + `CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CopySpellEffect())` | SPELL | Increasing Vengeance — base copy plus a graveyard-conditional second copy; add `FlashbackCast` separately. Flashback can target a spell on the stack |
+| "copy target instant or sorcery spell. If this spell was cast from a graveyard, copy that spell twice instead" | `CopySpellEffect()` + `ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new CopySpellEffect())` | SPELL | Increasing Vengeance — base copy plus a graveyard-conditional second copy; add `FlashbackCast` separately. Flashback can target a spell on the stack |
 | "whenever a player casts an instant or sorcery spell, each other player copies that spell" | `CopySpellForEachOtherPlayerEffect()` | ON_ANY_PLAYER_CASTS_SPELL | Hive Mind (mandatory) |
 | "whenever enchanted player casts an instant or sorcery spell, each other player may copy that spell" | `CopySpellForEachOtherPlayerEffect(true, new StackEntryControlledByEnchantedPlayerPredicate())` | ON_ANY_PLAYER_CASTS_SPELL | Curse of Echoes — the `StackEntryControlledByEnchantedPlayerPredicate` filter gates to casts by the enchanted player; each other player *may* copy |
 | "whenever you cast an instant or sorcery spell, you may tap three untapped creatures you control. If you do, copy that spell" | `CopyControllerCastSpellOnSpellCastEffect(CardAnyOfPredicate(INSTANT, SORCERY), new TapMultiplePermanentsCost(3, PermanentIsCreaturePredicate))` | ON_CONTROLLER_CASTS_SPELL | Aziza, Mage Tower Captain — snapshots cast spell, `MayPayTapPermanentsEffect` + `CopyControllerCastSpellEffect` at resolution |

@@ -5,7 +5,7 @@ Static/continuous effects (P/T bonuses, keyword grants, conditionals computed du
 ## Pattern
 
 1. **Package is `staticfx`, not `static`.** `static` is a reserved word and cannot be a package segment.
-2. **Naming convention.** The non-self handler is `<EffectName>Handler` (e.g. `MetalcraftConditionalEffectHandler`). The self handler inserts `Self` before the trailing `Effect`: `<...>SelfEffectHandler` (e.g. `MetalcraftConditionalSelfEffectHandler`). An effect with only a self handler still uses the `SelfEffectHandler` suffix.
+2. **Naming convention.** The non-self handler is `<EffectName>Handler` (e.g. `StaticBoostEffectHandler`). The self handler inserts `Self` before the trailing `Effect`: `<...>SelfEffectHandler` (e.g. `StaticBoostSelfEffectHandler`). An effect with only a self handler still uses the `SelfEffectHandler` suffix.
 3. **One `@Component` per handler**, implementing `StaticEffectHandlerBean`:
    - `Class<? extends CardEffect> handledEffect()` — the effect type it handles.
    - `boolean selfOnly()` — `true` for characteristic-defining / self handlers (registered into the registry's `selfHandlers` map), `false` (default) for broader-scope handlers.
@@ -22,10 +22,17 @@ Static/continuous effects (P/T bonuses, keyword grants, conditionals computed du
 - `testutil/GameTestDoublesConfig` + `GameTestEngineContext` — card tests load the same `GameEngineConfig` graph via a cached Spring test context.
 - `ai/simulation/HeadlessSimulationDoublesConfig` + `HeadlessSimulationContext` — MCTS loads the same engine graph headlessly (no WebSocket broadcasts).
 
-## Worked example: Metalcraft
+## Conditional static effects
 
-- `MetalcraftConditionalSelfEffectHandler` — `handledEffect()=MetalcraftConditionalEffect.class`, `selfOnly()=true`.
-- `MetalcraftConditionalEffectHandler` — `handledEffect()=MetalcraftConditionalEffect.class`, `selfOnly()=false`.
+Conditional static effects (`ConditionalEffect(condition, wrapped)`) are handled by exactly two
+generic handlers — do NOT add per-condition handlers:
+
+- `ConditionalStaticSelfEffectHandler` — `handledEffect()=ConditionalEffect.class`, `selfOnly()=true`.
+  Evaluates the condition via `ConditionEvaluationService`, then applies the wrapped effect to the
+  source itself via `StaticEffectSupport.applySelfOnlyConditionalStaticEffect` (scope-aware:
+  `SELF`/`ALL_OWN_CREATURES` cover the source, `OWN_CREATURES` means "other creatures").
+- `ConditionalStaticEffectHandler` — `handledEffect()=ConditionalEffect.class`, `selfOnly()=false`.
+  Evaluates the condition, then delegates to the wrapped effect's own registered handler.
 
 ## `StaticEffectSupport` public helpers
 

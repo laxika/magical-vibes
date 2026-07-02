@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -33,10 +34,10 @@ class DeadeyeTormentorTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        ConditionalEffect raid =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(raid.wrapped()).isInstanceOf(TargetPlayerDiscardsEffect.class);
 
         TargetPlayerDiscardsEffect discard = (TargetPlayerDiscardsEffect) raid.wrapped();

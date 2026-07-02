@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
 
@@ -28,6 +29,6 @@ public class UlvenwaldPrimordials extends Card {
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn, transform Ulvenwald Primordials.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new TwoOrMoreSpellsCastLastTurnConditionalEffect(new TransformSelfEffect()));
+                new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 }

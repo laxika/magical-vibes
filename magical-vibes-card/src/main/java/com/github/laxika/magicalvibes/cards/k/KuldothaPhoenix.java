@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 
@@ -14,7 +15,7 @@ public class KuldothaPhoenix extends Card {
 
     public KuldothaPhoenix() {
         addEffect(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED,
-                new MetalcraftConditionalEffect(
+                new ConditionalEffect(new Metalcraft(), 
                         new MayPayManaEffect("{4}",
                                 ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)

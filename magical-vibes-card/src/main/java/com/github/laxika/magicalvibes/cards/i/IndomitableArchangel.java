@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "SOM", collectorNumber = "11")
@@ -14,7 +15,7 @@ public class IndomitableArchangel extends Card {
 
     public IndomitableArchangel() {
         // Metalcraft — Artifacts you control have shroud as long as you control three or more artifacts.
-        addEffect(EffectSlot.STATIC, new MetalcraftConditionalEffect(
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Metalcraft(), 
                 new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS, new PermanentIsArtifactPredicate())));
     }
 }

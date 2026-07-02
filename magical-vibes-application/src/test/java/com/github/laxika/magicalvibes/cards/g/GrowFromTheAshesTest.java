@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -39,24 +40,24 @@ class GrowFromTheAshesTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has KickerReplacementEffect with search-for-basic-land effects")
+    @DisplayName("Has ConditionalReplacementEffect with search-for-basic-land effects")
     void hasCorrectSpellEffects() {
         GrowFromTheAshes card = new GrowFromTheAshes();
 
         assertThat(card.getEffects(EffectSlot.SPELL))
                 .hasSize(1)
                 .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(KickerReplacementEffect.class);
-                    KickerReplacementEffect kre = (KickerReplacementEffect) e;
+                    assertThat(e).isInstanceOf(ConditionalReplacementEffect.class);
+                    ConditionalReplacementEffect kre = (ConditionalReplacementEffect) e;
                     assertThat(kre.baseEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
                     SearchLibraryForCardTypesToBattlefieldEffect base =
                             (SearchLibraryForCardTypesToBattlefieldEffect) kre.baseEffect();
                     assertThat(base.entersTapped()).isFalse();
                     assertThat(base.maxCount()).isEqualTo(1);
 
-                    assertThat(kre.kickedEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
+                    assertThat(kre.upgradedEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
                     SearchLibraryForCardTypesToBattlefieldEffect kicked =
-                            (SearchLibraryForCardTypesToBattlefieldEffect) kre.kickedEffect();
+                            (SearchLibraryForCardTypesToBattlefieldEffect) kre.upgradedEffect();
                     assertThat(kicked.entersTapped()).isFalse();
                     assertThat(kicked.maxCount()).isEqualTo(2);
                 });

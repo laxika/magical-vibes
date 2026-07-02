@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,9 +28,9 @@ class RustedRelicTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(metalcraft.wrapped()).isInstanceOf(AnimateSelfWithStatsEffect.class);
 
         AnimateSelfWithStatsEffect animate = (AnimateSelfWithStatsEffect) metalcraft.wrapped();

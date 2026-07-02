@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,20 +21,20 @@ class BrimstoneVolleyTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has MorbidReplacementEffect wrapping 3-damage base and 5-damage morbid")
+    @DisplayName("Has ConditionalReplacementEffect wrapping 3-damage base and 5-damage morbid")
     void hasCorrectStructure() {
         BrimstoneVolley card = new BrimstoneVolley();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MorbidReplacementEffect.class);
+                .isInstanceOf(ConditionalReplacementEffect.class);
 
-        MorbidReplacementEffect effect =
-                (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        ConditionalReplacementEffect effect =
+                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(effect.morbidEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
+        assertThat(effect.upgradedEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
         assertThat(((DealDamageToAnyTargetEffect) effect.baseEffect()).damage()).isEqualTo(3);
-        assertThat(((DealDamageToAnyTargetEffect) effect.morbidEffect()).damage()).isEqualTo(5);
+        assertThat(((DealDamageToAnyTargetEffect) effect.upgradedEffect()).damage()).isEqualTo(5);
     }
 
     // ===== Without morbid =====

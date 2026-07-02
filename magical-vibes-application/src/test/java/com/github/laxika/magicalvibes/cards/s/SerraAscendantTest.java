@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -25,11 +26,11 @@ class SerraAscendantTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControllerLifeThresholdConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        ControllerLifeThresholdConditionalEffect conditional =
-                (ControllerLifeThresholdConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.lifeThreshold()).isEqualTo(30);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(((ControllerLifeAtLeast) conditional.condition()).threshold()).isEqualTo(30);
         assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
 
         StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();

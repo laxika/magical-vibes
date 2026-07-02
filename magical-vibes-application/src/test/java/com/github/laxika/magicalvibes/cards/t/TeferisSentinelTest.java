@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,17 +23,17 @@ class TeferisSentinelTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC ControlsPermanentConditionalEffect(TEFERI) wrapping StaticBoostEffect(4, 0, SELF)")
+    @DisplayName("Has STATIC ConditionalEffect(TEFERI) wrapping StaticBoostEffect(4, 0, SELF)")
     void hasCorrectStructure() {
         TeferisSentinel card = new TeferisSentinel();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlsPermanentConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        ControlsPermanentConditionalEffect conditional =
-                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.TEFERI));
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(((ControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.TEFERI));
         assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
 
         StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();

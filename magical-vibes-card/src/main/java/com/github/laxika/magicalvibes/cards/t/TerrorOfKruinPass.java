@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -29,6 +30,6 @@ public class TerrorOfKruinPass extends Card {
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn, transform Terror of Kruin Pass.
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new TwoOrMoreSpellsCastLastTurnConditionalEffect(new TransformSelfEffect()));
+                new ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 }

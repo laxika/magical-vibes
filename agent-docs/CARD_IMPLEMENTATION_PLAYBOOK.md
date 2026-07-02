@@ -438,12 +438,12 @@ boolean sharesType = (aIsChangeling && (bIsChangeling || !typesB.isEmpty()))
    - Add front face abilities/effects
    - Override `getBackFaceClassName()` returning `"BackFaceName"`
 3. **Transform trigger** — Choose the right pattern:
-   - Werewolf: `EACH_UPKEEP_TRIGGERED` + `NoSpellsCastLastTurnConditionalEffect` (front) / `TwoOrMoreSpellsCastLastTurnConditionalEffect` (back)
-   - Life threshold: `ControllerLifeThresholdConditionalEffect(N, TransformSelfEffect())` or `ControllerLifeAtOrBelowThresholdConditionalEffect(N, MayEffect(TransformSelfEffect(), "..."))`
+   - Werewolf: `EACH_UPKEEP_TRIGGERED` + `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` (front) / `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` (back)
+   - Life threshold: `ConditionalEffect(new ControllerLifeAtLeast(N), TransformSelfEffect())` or `ConditionalEffect(new ControllerLifeAtMost(N), MayEffect(TransformSelfEffect(), "..."))`
    - Counter threshold: `PutCounterOnSelfThenTransformIfThresholdEffect(counterType, N, optional, onTransformEffects)`
-   - Creature count: `ControlsPermanentCountConditionalEffect(N, PermanentIsCreaturePredicate, TransformSelfEffect())`
+   - Creature count: `ConditionalEffect(new ControlsPermanentCount(N, PermanentIsCreaturePredicate), TransformSelfEffect())`
    - Activated ability: `ActivatedAbility(tap, null, List.of(TransformSelfEffect()), "...")` with optional subtype restriction
-   - Inline conditional: chain effects in activated ability list, e.g. `[GainLifeEffect(1), ControllerLifeThresholdConditionalEffect(30, TransformSelfEffect())]`
+   - Inline conditional: chain effects in activated ability list, e.g. `[GainLifeEffect(1), ConditionalEffect(new ControllerLifeAtLeast(30), TransformSelfEffect())]`
 4. **Tests** — See TEST_RECIPES.md "Transform DFC" recipe
 
 ### Transform card template
@@ -481,37 +481,37 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 
 | ConditionalEffect | Static | Effect Resolution | Trigger Time |
 |---|---|---|---|
-| `ControllerLifeThresholdConditionalEffect` | yes | yes | - |
-| `ControllerLifeAtOrBelowThresholdConditionalEffect` | - | yes | yes (upkeep) |
-| `MetalcraftConditionalEffect` | yes | yes | yes (graveyard upkeep) |
-| `MorbidConditionalEffect` | - | yes | yes (end step) |
-| `KickedConditionalEffect` | - | yes | - |
-| `NotKickedConditionalEffect` | - | yes | yes (end step) |
-| `RaidConditionalEffect` | - | yes | yes (end step) |
-| `EquippedConditionalEffect` | yes | yes | - |
-| `ControlsAnotherPermanentConditionalEffect` | yes | yes | - |
-| `ControlsPermanentConditionalEffect` | yes | yes | yes (attack) |
+| `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new ControllerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new Metalcraft(), wrapped)` | yes | yes | yes (graveyard upkeep) |
+| `ConditionalEffect(new Morbid(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |
+| `ConditionalEffect(new NotKicked(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new Raid(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new Equipped(), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new ControlsPermanent(filter), wrapped)` | yes | yes | yes (attack) |
 | `EnchantedPermanentConditionalEffect` | yes | - | - |
-| `ControlsPermanentCountConditionalEffect` | - | yes | yes (upkeep, end step) |
-| `NoOtherPermanentConditionalEffect` | - | yes | yes (upkeep) |
-| `NoSpellsCastLastTurnConditionalEffect` | - | yes | yes (each upkeep) |
-| `TwoOrMoreSpellsCastLastTurnConditionalEffect` | - | yes | yes (each upkeep) |
-| `ActivationCountConditionalEffect` | - | yes | - |
-| `DidntAttackConditionalEffect` | - | yes | yes (end step) |
-| `AttacksAloneConditionalEffect` | - | yes | yes (attack) |
-| `MinimumAttackersConditionalEffect` | - | yes | yes (attack) |
-| `HasAttackerConditionalEffect` | - | yes | yes (attack) |
-| `ControllerGraveyardCardThresholdConditionalEffect` | yes | yes | - |
-| `DefendingPlayerPoisonedConditionalEffect` | - | yes | - |
-| `PermanentEnteredThisTurnConditionalEffect` | - | yes | - |
-| `ControllerTurnConditionalEffect` | yes | - | - |
-| `NotControllerTurnConditionalEffect` | yes | - | - |
-| `OpponentControlsPermanentConditionalEffect` | yes | yes | - |
-| `AnyPlayerControlsPermanentConditionalEffect` | yes | - | - |
-| `SelfHasKeywordConditionalEffect` | yes | - | - |
-| `TopCardOfLibraryColorConditionalEffect` | yes | - | - |
-| `BlockedByMinCreaturesConditionalEffect` | yes | - | - |
-| `OpponentPoisonedConditionalEffect` | yes | - | - |
+| `ConditionalEffect(new ControlsPermanentCount(minCount, filter), wrapped)` | - | yes | yes (upkeep, end step) |
+| `ConditionalEffect(new NoOtherPermanent(filter), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new NoSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
+| `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), wrapped)` | - | yes | yes (each upkeep) |
+| `ConditionalEffect(new ActivationCount(threshold, abilityIndex), wrapped)` | - | yes | - |
+| `ConditionalEffect(new DidntAttack(), wrapped)` | - | yes | yes (end step) |
+| `ConditionalEffect(new AttacksAlone(), wrapped)` | - | yes | yes (attack) |
+| `ConditionalEffect(new MinimumAttackers(minimumAttackers), wrapped)` | - | yes | yes (attack) |
+| `ConditionalEffect(new HasAttacker(predicate), wrapped)` | - | yes | yes (attack) |
+| `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new DefendingPlayerPoisoned(), wrapped)` | - | yes | - |
+| `ConditionalEffect(new PermanentEnteredThisTurn(predicate, minCount), wrapped)` | - | yes | - |
+| `ConditionalEffect(new ControllerTurn(), wrapped)` | yes | - | - |
+| `ConditionalEffect(new NotControllerTurn(), wrapped)` | yes | - | - |
+| `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` | yes | yes | - |
+| `ConditionalEffect(new AnyPlayerControlsPermanent(filter), wrapped)` | yes | - | - |
+| `ConditionalEffect(new SelfHasKeyword(keyword), wrapped)` | yes | - | - |
+| `ConditionalEffect(new TopCardOfLibraryColor(color), wrapped)` | yes | - | - |
+| `ConditionalEffect(new BlockedByMinCreatures(minBlockers), wrapped)` | yes | - | - |
+| `ConditionalEffect(new OpponentPoisoned(), wrapped)` | yes | - | - |
 
 **Key:** "yes" = supported; "-" = not supported. If you need a conditional in a context marked "-", you must add a handler in the corresponding service (`staticfx` `StaticEffectHandlerBean`, `EffectResolutionService.evaluateCondition()`, or `StepTriggerService`).
 

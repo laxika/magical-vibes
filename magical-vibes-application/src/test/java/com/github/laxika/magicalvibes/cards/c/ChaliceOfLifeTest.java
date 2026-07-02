@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -32,9 +33,9 @@ class ChaliceOfLifeTest extends BaseCardTest {
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(GainLifeEffect.class);
         assertThat(((GainLifeEffect) ability.getEffects().get(0)).amount()).isEqualTo(1);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(ControllerLifeThresholdConditionalEffect.class);
-        var conditional = (ControllerLifeThresholdConditionalEffect) ability.getEffects().get(1);
-        assertThat(conditional.lifeThreshold()).isEqualTo(30);
+        assertThat(ability.getEffects().get(1)).isInstanceOf(ConditionalEffect.class);
+        var conditional = (ConditionalEffect) ability.getEffects().get(1);
+        assertThat(((ControllerLifeAtLeast) conditional.condition()).threshold()).isEqualTo(30);
         assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
     }
 

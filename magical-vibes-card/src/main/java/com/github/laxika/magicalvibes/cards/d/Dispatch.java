@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -19,6 +20,6 @@ public class Dispatch extends Card {
                 "Target must be a creature"
         ))
                 .addEffect(EffectSlot.SPELL, new TapTargetPermanentEffect())
-                .addEffect(EffectSlot.SPELL, new MetalcraftConditionalEffect(new ExileTargetPermanentEffect()));
+                .addEffect(EffectSlot.SPELL, new ConditionalEffect(new Metalcraft(), new ExileTargetPermanentEffect()));
     }
 }

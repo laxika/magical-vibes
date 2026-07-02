@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceCounterThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -36,11 +37,11 @@ class ComfortingCounselTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(SourceCounterThresholdConditionalEffect.class);
-        SourceCounterThresholdConditionalEffect conditional =
-                (SourceCounterThresholdConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.threshold()).isEqualTo(5);
-        assertThat(conditional.counterType()).isEqualTo(CounterType.GROWTH);
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(((SourceCounterThreshold) conditional.condition()).threshold()).isEqualTo(5);
+        assertThat(((SourceCounterThreshold) conditional.condition()).counterType()).isEqualTo(CounterType.GROWTH);
         assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
 
         StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();

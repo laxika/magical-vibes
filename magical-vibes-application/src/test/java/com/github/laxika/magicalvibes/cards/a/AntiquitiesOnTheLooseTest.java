@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CastNotFromHandConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -55,9 +56,9 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         assertThat(token.colors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
         assertThat(token.subtypes()).containsExactly(CardSubtype.SPIRIT);
 
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CastNotFromHandConditionalEffect.class);
-        CastNotFromHandConditionalEffect conditional =
-                (CastNotFromHandConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(conditional.wrapped()).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
         PutCounterOnEachControlledPermanentEffect counters =
                 (PutCounterOnEachControlledPermanentEffect) conditional.wrapped();

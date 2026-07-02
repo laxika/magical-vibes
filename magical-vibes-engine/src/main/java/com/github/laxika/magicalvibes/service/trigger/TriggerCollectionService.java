@@ -23,8 +23,11 @@ import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditiona
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterCreatureConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintedCardNameMatchesEnteringPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentEnteredThisTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
+import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
@@ -56,6 +59,7 @@ public class TriggerCollectionService {
     private final PlayerInputService playerInputService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final GameQueryService gameQueryService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     // ── Spell-cast triggers ────────────────────────────────────────────
@@ -1233,7 +1237,7 @@ public class TriggerCollectionService {
                 for (CardEffect effect : effects) {
                     CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringLand, gameData, playerId);
                     if (resolved == null) continue;
-                    resolved = unwrapImprintedCardNameConditional(enteringLand, perm, resolved);
+                    resolved = unwrapImprintedCardNameConditional(gameData, enteringLand, perm, resolved);
                     if (resolved == null) continue;
                     resolved = unwrapPermanentEnteredThisTurnConditional(gameData, landControllerId, resolved);
                     if (resolved == null) continue;
@@ -1436,10 +1440,12 @@ public class TriggerCollectionService {
      * Gates an enter trigger on the entering permanent's name matching the source's imprinted card
      * (Invader Parasite).
      */
-    private CardEffect unwrapImprintedCardNameConditional(Card enteringCard, Permanent source, CardEffect effect) {
-        if (effect instanceof ImprintedCardNameMatchesEnteringPermanentConditionalEffect conditional) {
-            Card imprintedCard = source.getCard().getImprintedCard();
-            if (imprintedCard == null || !imprintedCard.getName().equals(enteringCard.getName())) {
+    private CardEffect unwrapImprintedCardNameConditional(GameData gameData, Card enteringCard, Permanent source, CardEffect effect) {
+        if (effect instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof ImprintedCardNameMatchesEnteringPermanent) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+            ConditionContext ctx = ConditionContext.forPermanent(source, controllerId).withTriggeringCard(enteringCard);
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
                 return null;
             }
             return conditional.wrapped();
@@ -1452,12 +1458,11 @@ public class TriggerCollectionService {
      * entered under {@code affectedPlayerId}'s control this turn (Landfall count).
      */
     private CardEffect unwrapPermanentEnteredThisTurnConditional(GameData gameData, UUID affectedPlayerId, CardEffect effect) {
-        if (effect instanceof PermanentEnteredThisTurnConditionalEffect conditional) {
-            List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn.getOrDefault(affectedPlayerId, List.of());
-            long matchCount = entered.stream()
-                    .filter(c -> gameQueryService.matchesCardPredicate(c, conditional.predicate(), null))
-                    .count();
-            if (matchCount < conditional.minCount()) {
+        if (effect instanceof ConditionalEffect conditional
+                && conditional.condition() instanceof PermanentEnteredThisTurn) {
+            ConditionContext ctx = new ConditionContext(affectedPlayerId, null, null, null,
+                    false, null, 0, null, null, false);
+            if (!conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
                 return null;
             }
             return conditional.wrapped();

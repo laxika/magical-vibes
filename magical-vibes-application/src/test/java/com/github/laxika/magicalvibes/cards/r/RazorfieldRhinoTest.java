@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,10 +24,10 @@ class RazorfieldRhinoTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        MetalcraftConditionalEffect metalcraft =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        ConditionalEffect metalcraft =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(metalcraft.wrapped()).isInstanceOf(StaticBoostEffect.class);
 
         StaticBoostEffect boost = (StaticBoostEffect) metalcraft.wrapped();

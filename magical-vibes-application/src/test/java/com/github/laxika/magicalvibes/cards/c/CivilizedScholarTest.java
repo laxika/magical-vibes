@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardTransformIfCreatureDiscardedEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -144,7 +145,7 @@ class CivilizedScholarTest extends BaseCardTest {
 
         // Back face has end step trigger with conditional
         assertThat(card.getBackFaceCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED))
-                .anyMatch(e -> e instanceof DidntAttackConditionalEffect);
+                .anyMatch(e -> e instanceof ConditionalEffect);
     }
 
     // ===== Helpers =====

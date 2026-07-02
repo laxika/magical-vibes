@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,18 +32,18 @@ class FathomFleetCaptainTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has ControlsAnotherPermanentConditionalEffect(PIRATE and nontoken) wrapping MayPayManaEffect")
+    @DisplayName("Has ConditionalEffect(PIRATE and nontoken) wrapping MayPayManaEffect")
     void hasCorrectStructure() {
         FathomFleetCaptain card = new FathomFleetCaptain();
 
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ControlsAnotherPermanentConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        ControlsAnotherPermanentConditionalEffect conditional =
-                (ControlsAnotherPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.filter()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate filter = (PermanentAllOfPredicate) conditional.filter();
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
+        assertThat(((ControlsAnotherPermanent) conditional.condition()).filter()).isInstanceOf(PermanentAllOfPredicate.class);
+        PermanentAllOfPredicate filter = (PermanentAllOfPredicate) ((ControlsAnotherPermanent) conditional.condition()).filter();
         assertThat(filter.predicates()).anySatisfy(predicate -> {
             assertThat(predicate).isInstanceOf(PermanentHasSubtypePredicate.class);
             assertThat(((PermanentHasSubtypePredicate) predicate).subtype()).isEqualTo(CardSubtype.PIRATE);

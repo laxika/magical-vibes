@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -35,15 +36,15 @@ class RaidersWakeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has RaidConditionalEffect wrapping TargetPlayerDiscardsEffect(1) on CONTROLLER_END_STEP_TRIGGERED")
+    @DisplayName("Has ConditionalEffect wrapping TargetPlayerDiscardsEffect(1) on CONTROLLER_END_STEP_TRIGGERED")
     void hasRaidEndStepDiscardEffect() {
         RaidersWake card = new RaidersWake();
 
         assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(RaidConditionalEffect.class);
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect raid =
+                (ConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
         assertThat(raid.wrapped()).isInstanceOf(TargetPlayerDiscardsEffect.class);
         TargetPlayerDiscardsEffect discard = (TargetPlayerDiscardsEffect) raid.wrapped();
         assertThat(discard.amount()).isEqualTo(1);

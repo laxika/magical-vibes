@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,13 +32,13 @@ class GruesomeDiscoveryTest extends BaseCardTest {
 
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MorbidReplacementEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ConditionalReplacementEffect.class);
 
-        MorbidReplacementEffect effect = (MorbidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        ConditionalReplacementEffect effect = (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(TargetPlayerDiscardsEffect.class);
         assertThat(((TargetPlayerDiscardsEffect) effect.baseEffect()).amount()).isEqualTo(2);
-        assertThat(effect.morbidEffect()).isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
-        assertThat(((ChooseCardFromTargetHandToDiscardEffect) effect.morbidEffect()).count()).isEqualTo(2);
+        assertThat(effect.upgradedEffect()).isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
+        assertThat(((ChooseCardFromTargetHandToDiscardEffect) effect.upgradedEffect()).count()).isEqualTo(2);
     }
 
     @Test

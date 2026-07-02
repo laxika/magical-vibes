@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -20,6 +21,6 @@ public class BlinkOfAnEye extends Card {
                 new PermanentNotPredicate(new PermanentIsLandPredicate()),
                 "Target must be a nonland permanent"
         )).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
-        addEffect(EffectSlot.SPELL, new KickedConditionalEffect(new DrawCardEffect()));
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new DrawCardEffect()));
     }
 }

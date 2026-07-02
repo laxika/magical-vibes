@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 
 import java.util.List;
 import java.util.Set;
@@ -14,7 +15,7 @@ import java.util.Set;
 public class RustedRelic extends Card {
 
     public RustedRelic() {
-        addEffect(EffectSlot.STATIC, new MetalcraftConditionalEffect(
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new Metalcraft(), 
                 new AnimateSelfWithStatsEffect(5, 5, List.of(CardSubtype.GOLEM), Set.of())));
     }
 }

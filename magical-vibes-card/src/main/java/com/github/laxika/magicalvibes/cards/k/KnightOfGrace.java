@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.AnyPlayerControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HexproofFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -25,9 +26,6 @@ public class KnightOfGrace extends Card {
         addEffect(EffectSlot.STATIC, new HexproofFromColorsEffect(Set.of(CardColor.BLACK)));
 
         // +1/+0 as long as any player controls a black permanent
-        addEffect(EffectSlot.STATIC, new AnyPlayerControlsPermanentConditionalEffect(
-                new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
-                new StaticBoostEffect(1, 0, GrantScope.SELF)
-        ));
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new AnyPlayerControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.BLACK))), new StaticBoostEffect(1, 0, GrantScope.SELF)));
     }
 }

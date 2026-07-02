@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DefendingPlayerPoisonedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,15 +23,15 @@ class SepticRatsTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has ON_ATTACK trigger with DefendingPlayerPoisonedConditionalEffect wrapping BoostSelfEffect(1,1)")
+    @DisplayName("Has ON_ATTACK trigger with ConditionalEffect wrapping BoostSelfEffect(1,1)")
     void hasCorrectStructure() {
         SepticRats card = new SepticRats();
 
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(DefendingPlayerPoisonedConditionalEffect.class);
-        DefendingPlayerPoisonedConditionalEffect conditional =
-                (DefendingPlayerPoisonedConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
         assertThat(boost.powerBoost()).isEqualTo(1);

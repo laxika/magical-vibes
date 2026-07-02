@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.NotControllerTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,8 +32,8 @@ class WardenOfTheWallTest extends BaseCardTest {
                 .hasSize(2)
                 .anySatisfy(e -> assertThat(e).isInstanceOf(EntersTappedEffect.class))
                 .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(NotControllerTurnConditionalEffect.class);
-                    NotControllerTurnConditionalEffect conditional = (NotControllerTurnConditionalEffect) e;
+                    assertThat(e).isInstanceOf(ConditionalEffect.class);
+                    ConditionalEffect conditional = (ConditionalEffect) e;
                     assertThat(conditional.wrapped()).isInstanceOf(AnimateSelfWithStatsEffect.class);
 
                     AnimateSelfWithStatsEffect animate = (AnimateSelfWithStatsEffect) conditional.wrapped();

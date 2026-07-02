@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,16 +26,16 @@ class WakedancerTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has MorbidConditionalEffect wrapping CreateTokenEffect in ON_ENTER_BATTLEFIELD")
+    @DisplayName("Has ConditionalEffect wrapping CreateTokenEffect in ON_ENTER_BATTLEFIELD")
     void hasCorrectStructure() {
         Wakedancer card = new Wakedancer();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MorbidConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        MorbidConditionalEffect morbid =
-                (MorbidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        ConditionalEffect morbid =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(morbid.wrapped()).isInstanceOf(CreateTokenEffect.class);
 
         CreateTokenEffect token = (CreateTokenEffect) morbid.wrapped();

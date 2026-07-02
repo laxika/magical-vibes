@@ -1,19 +1,21 @@
 package com.github.laxika.magicalvibes.service.battlefield.etb;
 
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -33,16 +35,17 @@ import java.util.Map;
  *
  * <p><b>Gate vs. unwrap asymmetry (preserved deliberately):</b> Metalcraft / Morbid / Raid /
  * ControlsAnother gates return the <em>conditional effect unchanged</em> when met (it stays wrapped
- * and is re-evaluated at stack resolution by {@code EffectResolutionService.evaluateCondition}),
- * whereas Kicked / CastFromZone <em>unwrap</em> to their inner effect. Dropping ({@code null}) applies
- * the intervening-if rule (CR 603.4): the ability never goes on the stack.
+ * and is re-evaluated at stack resolution by {@code EffectResolutionService}), whereas Kicked /
+ * CastFromZone <em>unwrap</em> to their inner effect. Conditions with no ETB policy pass through
+ * unchanged. Dropping ({@code null}) applies the intervening-if rule (CR 603.4): the ability never
+ * goes on the stack.
  */
 @Component
 public class EtbEffectResolver {
 
     private final Map<Class<? extends CardEffect>, EtbEffectHandler> handlers = new HashMap<>();
 
-    public EtbEffectResolver(GameQueryService gameQueryService) {
+    public EtbEffectResolver(ConditionEvaluationService conditionEvaluationService) {
         // "you lose the game unless this was cast from your hand" — no-op (drop) when cast from hand,
         // otherwise materialise into the controller losing the game.
         register(LoseGameIfNotCastFromHandEffect.class, (ctx, effect) ->
@@ -58,33 +61,41 @@ public class EtbEffectResolver {
             return coe.options().getFirst().effect();
         });
 
-        // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
-        register(KickedConditionalEffect.class, (ctx, effect) ->
-                ctx.kicked() ? ((KickedConditionalEffect) effect).wrapped() : null);
-
-        // Cast-from-hand intervening-if (CR 603.4): unwrap only when cast from hand, otherwise drop.
-        register(CastFromZoneConditionalEffect.class, (ctx, effect) -> {
-            CastFromZoneConditionalEffect cfhce = (CastFromZoneConditionalEffect) effect;
-            return ctx.wasCastFromHand() && cfhce.sourceZone() == Zone.HAND ? cfhce.wrapped() : null;
-        });
-
         // "Gain life equal to that creature's toughness" — read toughness at trigger time.
         register(GainLifeEqualToToughnessEffect.class, (ctx, effect) ->
                 new GainLifeEffect(ctx.card().getToughness()));
 
-        // Intervening-if gates (CR 603.4): keep the conditional effect when met (re-checked at stack
-        // resolution), drop it when not.
-        register(MetalcraftConditionalEffect.class, (ctx, effect) ->
-                gameQueryService.isMetalcraftMet(ctx.gameData(), ctx.controllerId()) ? effect : null);
-        register(MorbidConditionalEffect.class, (ctx, effect) ->
-                gameQueryService.isMorbidMet(ctx.gameData()) ? effect : null);
-        register(ControlsAnotherPermanentConditionalEffect.class, (ctx, effect) -> {
-            ControlsAnotherPermanentConditionalEffect capc = (ControlsAnotherPermanentConditionalEffect) effect;
-            return gameQueryService.controlsAnotherPermanent(ctx.gameData(), ctx.controllerId(), ctx.card(), capc.filter())
-                    ? effect : null;
+        // Conditional ETB effects: unwrap types (Kicked / CastFromZone) resolve to the inner effect
+        // when met, gate types (Metalcraft / Morbid / Raid / ControlsAnother) stay wrapped for
+        // re-evaluation at stack resolution, and every other condition passes through unchanged.
+        register(ConditionalEffect.class, (ctx, effect) -> {
+            ConditionalEffect conditional = (ConditionalEffect) effect;
+            ConditionContext conditionContext = new ConditionContext(ctx.controllerId(), null, null,
+                    ctx.card(), ctx.kicked(), ctx.wasCastFromHand() ? Zone.HAND : null, 0, null, null, false);
+            return switch (conditional.condition()) {
+                // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
+                case Kicked ignored -> ctx.kicked() ? conditional.wrapped() : null;
+                // Cast-from-hand intervening-if (CR 603.4): unwrap only when cast from hand, otherwise drop.
+                case CastFromZone castFromZone ->
+                        conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)
+                                ? conditional.wrapped() : null;
+                // Intervening-if gates (CR 603.4): keep the conditional effect when met (re-checked at
+                // stack resolution), drop it when not.
+                case Metalcraft ignored ->
+                        conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
+                                ? effect : null;
+                case Morbid ignored ->
+                        conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
+                                ? effect : null;
+                case Raid ignored ->
+                        conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
+                                ? effect : null;
+                case ControlsAnotherPermanent ignored ->
+                        conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext)
+                                ? effect : null;
+                default -> effect;
+            };
         });
-        register(RaidConditionalEffect.class, (ctx, effect) ->
-                ctx.gameData().playersDeclaredAttackersThisTurn.contains(ctx.controllerId()) ? effect : null);
     }
 
     private void register(Class<? extends CardEffect> effectClass, EtbEffectHandler handler) {

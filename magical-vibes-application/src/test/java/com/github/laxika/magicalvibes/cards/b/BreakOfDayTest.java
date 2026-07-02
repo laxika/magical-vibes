@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class BreakOfDayTest extends BaseCardTest {
         BoostAllOwnCreaturesEffect boost = (BoostAllOwnCreaturesEffect) card.getEffects(EffectSlot.SPELL).get(0);
         assertThat(boost.powerBoost()).isEqualTo(1);
         assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
     }
 
     @Test

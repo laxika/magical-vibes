@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 
 @CardRegistration(set = "DKA", collectorNumber = "125")
@@ -21,7 +22,7 @@ public class ScornedVillager extends Card {
         addEffect(EffectSlot.ON_TAP, new AwardManaEffect(ManaColor.GREEN));
 
         addEffect(EffectSlot.EACH_UPKEEP_TRIGGERED,
-                new NoSpellsCastLastTurnConditionalEffect(new TransformSelfEffect()));
+                new ConditionalEffect(new NoSpellsCastLastTurn(), new TransformSelfEffect()));
     }
 
     @Override

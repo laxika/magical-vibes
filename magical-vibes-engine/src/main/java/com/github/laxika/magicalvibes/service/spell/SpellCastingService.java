@@ -52,7 +52,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -1942,8 +1943,8 @@ public class SpellCastingService {
 
     private DealDividedDamageAmongAnyTargetsEffect findKickedDividedDamageEffect(List<CardEffect> effects) {
         for (CardEffect e : effects) {
-            if (e instanceof KickerReplacementEffect kre
-                    && kre.kickedEffect() instanceof DealDividedDamageAmongAnyTargetsEffect ddae) {
+            if (e instanceof ConditionalReplacementEffect kre && kre.condition() instanceof Kicked
+                    && kre.upgradedEffect() instanceof DealDividedDamageAmongAnyTargetsEffect ddae) {
                 return ddae;
             }
         }

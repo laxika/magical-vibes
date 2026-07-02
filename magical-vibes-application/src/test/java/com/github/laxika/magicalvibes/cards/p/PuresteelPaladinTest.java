@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -45,8 +46,8 @@ class PuresteelPaladinTest extends BaseCardTest {
 
         var effects = card.getEffects(EffectSlot.STATIC);
         assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(MetalcraftConditionalEffect.class);
-        MetalcraftConditionalEffect mc = (MetalcraftConditionalEffect) effects.getFirst();
+        assertThat(effects.getFirst()).isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect mc = (ConditionalEffect) effects.getFirst();
         assertThat(mc.wrapped()).isInstanceOf(GrantActivatedAbilityEffect.class);
     }
 

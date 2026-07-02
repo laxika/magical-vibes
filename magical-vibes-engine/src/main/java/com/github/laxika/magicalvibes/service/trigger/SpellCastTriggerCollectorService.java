@@ -35,7 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTrigger
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySpellManaSpentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellManaSpentAtLeastConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -586,12 +586,12 @@ public class SpellCastTriggerCollectorService {
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {
-        if (effect instanceof BoostSelfBySpellManaSpentEffect
-                || effect instanceof SpellManaSpentAtLeastConditionalEffect) {
+        if (effect instanceof BoostSelfBySpellManaSpentEffect) {
             return true;
         }
         if (effect instanceof ConditionalEffect conditional) {
-            return effectNeedsSpellManaSpentX(conditional.wrapped());
+            return conditional.condition() instanceof SpellManaSpentAtLeast
+                    || effectNeedsSpellManaSpentX(conditional.wrapped());
         }
         return false;
     }

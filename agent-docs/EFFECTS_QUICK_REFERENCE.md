@@ -27,43 +27,43 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `MayEffect(CardEffect, String prompt)` — "you may"
 - `MayPayManaEffect(String manaCost, CardEffect, String prompt)` — "you may pay {X}"
 - `MayPayTapPermanentsEffect(TapMultiplePermanentsCost, CardEffect, String prompt)` — "you may tap N permanents"
-- `MetalcraftConditionalEffect(CardEffect)` — 3+ artifacts
-- `SpellManaSpentAtLeastConditionalEffect(int minMana, CardEffect)` — mana spent to cast triggering spell >= N
-- `MorbidConditionalEffect(CardEffect)` — creature died this turn
-- `RaidConditionalEffect(CardEffect)` — attacked this turn
-- `ControllerCastAnotherSpellThisTurnConditionalEffect(CardPredicate, CardEffect)` — another spell matching filter cast this turn (excludes resolving spell)
+- `ConditionalEffect(new Metalcraft(), CardEffect)` — 3+ artifacts
+- `ConditionalEffect(new SpellManaSpentAtLeast(minMana), wrapped)` — mana spent to cast triggering spell >= N
+- `ConditionalEffect(new Morbid(), CardEffect)` — creature died this turn
+- `ConditionalEffect(new Raid(), CardEffect)` — attacked this turn
+- `ConditionalEffect(new ControllerCastAnotherSpellThisTurn(filter), wrapped)` — another spell matching filter cast this turn (excludes resolving spell)
 - `TriggeringCardConditionalEffect(CardPredicate, CardEffect)` — triggering card matches predicate
 - `TriggeringPermanentConditionalEffect(PermanentPredicate, CardEffect)` — triggering permanent matches predicate
-- `ControlsAnotherPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls another matching permanent
-- `ControllerLifeThresholdConditionalEffect(int, CardEffect)` — life >= N
-- `ControllerTurnConditionalEffect(CardEffect)` — during your turn
-- `NotControllerTurnConditionalEffect(CardEffect)` — during turns other than yours
-- `ControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — controls matching
+- `ConditionalEffect(new ControlsAnotherPermanent(filter), wrapped)` — controls another matching permanent
+- `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` — life >= N
+- `ConditionalEffect(new ControllerTurn(), CardEffect)` — during your turn
+- `ConditionalEffect(new NotControllerTurn(), CardEffect)` — during turns other than yours
+- `ConditionalEffect(new ControlsPermanent(filter), wrapped)` — controls matching
 - `EnchantedPermanentConditionalEffect(PermanentPredicate, CardEffect ifMatch, CardEffect ifNotMatch)` — aura active branch based on enchanted permanent predicate
-- `OpponentControlsPermanentConditionalEffect(PermanentPredicate, CardEffect)` — opponent controls matching
-- `HasAttackerConditionalEffect(PermanentPredicate, CardEffect)` — one or more matching attackers
-- `ControllerGraveyardCardThresholdConditionalEffect(int, CardPredicate, CardEffect)` — graveyard threshold
-- `SourceCounterThresholdConditionalEffect(int, CounterType, CardEffect)` — source counter threshold (e.g. 5+ growth counters)
+- `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` — opponent controls matching
+- `ConditionalEffect(new HasAttacker(predicate), wrapped)` — one or more matching attackers
+- `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` — graveyard threshold
+- `ConditionalEffect(new SourceCounterThreshold(threshold, counterType), wrapped)` — source counter threshold (e.g. 5+ growth counters)
 - `EnteringCreatureMinPowerConditionalEffect(int, CardEffect)` — entering power >= N
 - `EnteringCreatureMaxPowerConditionalEffect(int, CardEffect)` — entering power <= N
 
 Replacement wrappers (pick between base/upgraded at resolution):
-- `MetalcraftReplacementEffect(CardEffect base, CardEffect metalcraft)`
-- `MorbidReplacementEffect(CardEffect base, CardEffect morbid)`
-- `RaidReplacementEffect(CardEffect base, CardEffect raid)`
-- `KickerReplacementEffect(CardEffect base, CardEffect kicked)`
-- `ControlsPermanentReplacementEffect(PermanentPredicate, CardEffect base, CardEffect upgraded)`
-- `TargetPermanentReplacementEffect(PermanentPredicate, CardEffect base, CardEffect upgraded)` — target permanent predicate
+- `ConditionalReplacementEffect(new Metalcraft(), baseEffect, upgradedEffect)(CardEffect base, CardEffect metalcraft)`
+- `ConditionalReplacementEffect(new Morbid(), baseEffect, upgradedEffect)(CardEffect base, CardEffect morbid)`
+- `ConditionalReplacementEffect(new Raid(), baseEffect, upgradedEffect)(CardEffect base, CardEffect raid)`
+- `ConditionalReplacementEffect(new Kicked(), baseEffect, upgradedEffect)(CardEffect base, CardEffect kicked)`
+- `ConditionalReplacementEffect(new ControlsPermanent(filter), baseEffect, upgradedEffect)(PermanentPredicate, CardEffect base, CardEffect upgraded)`
+- `ConditionalReplacementEffect(new TargetPermanentMatches(filter), baseEffect, upgradedEffect)(PermanentPredicate, CardEffect base, CardEffect upgraded)` — target permanent predicate
 
 Other wrappers:
 - `ChooseOneEffect(List<ChooseOneOption>)` — modal spell
 - `FlipCoinWinEffect(CardEffect)` — coin flip
 - `NthSpellCastTriggerEffect(int, List<CardEffect>)` — Nth spell trigger
-- `NoSpellsCastLastTurnConditionalEffect(CardEffect)` — werewolf front
-- `TwoOrMoreSpellsCastLastTurnConditionalEffect(CardEffect)` — werewolf back
-- `CastFromZoneConditionalEffect(Zone, CardEffect)` — resolves wrapped effect only if cast from that zone (`Zone.HAND` / `Zone.GRAVEYARD`)
-- `CastNotFromHandConditionalEffect(CardEffect)` — resolves wrapped effect only if cast from anywhere other than hand (e.g. flashback)
-- `KickedConditionalEffect(CardEffect)` — kicked adds effect
+- `ConditionalEffect(new NoSpellsCastLastTurn(), CardEffect)` — werewolf front
+- `ConditionalEffect(new TwoOrMoreSpellsCastLastTurn(), CardEffect)` — werewolf back
+- `ConditionalEffect(new CastFromZone(sourceZone), wrapped)` — resolves wrapped effect only if cast from that zone (`Zone.HAND` / `Zone.GRAVEYARD`)
+- `ConditionalEffect(new CastNotFromHand(), CardEffect)` — resolves wrapped effect only if cast from anywhere other than hand (e.g. flashback)
+- `ConditionalEffect(new Kicked(), CardEffect)` — kicked adds effect
 
 See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker count, etc.)
 
@@ -435,7 +435,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Copy / clone
 
 - `CopyPermanentOnEnterEffect(PermanentPredicate, String)` + overloads — Clone-style
-- `CopySpellEffect()` or `(StackEntryPredicate)` — copy target spell; for "copy twice if cast from a graveyard" add `CastFromZoneConditionalEffect(Zone.GRAVEYARD, new CopySpellEffect())` (Increasing Vengeance)
+- `CopySpellEffect()` or `(StackEntryPredicate)` — copy target spell; for "copy twice if cast from a graveyard" add `ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new CopySpellEffect())` (Increasing Vengeance)
 - `CopyControllerCastSpellOnSpellCastEffect(CardPredicate, TapMultiplePermanentsCost)` — ON_CONTROLLER_CASTS_SPELL: copy cast instant/sorcery; optional tap cost wraps `MayPayTapPermanentsEffect` + `CopyControllerCastSpellEffect` (Aziza, Mage Tower Captain)
 - `ChangeTargetOfTargetSpellWithSingleTargetEffect()` — redirect spell
 - `ChooseNewTargetsForTargetSpellEffect()` — choose new targets

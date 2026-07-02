@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,17 +29,17 @@ class DroverOfTheMightyTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC ControlsPermanentConditionalEffect(DINOSAUR) wrapping StaticBoostEffect(2, 2, SELF)")
+    @DisplayName("Has STATIC ConditionalEffect(DINOSAUR) wrapping StaticBoostEffect(2, 2, SELF)")
     void hasCorrectStaticEffect() {
         DroverOfTheMighty card = new DroverOfTheMighty();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlsPermanentConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        ControlsPermanentConditionalEffect conditional =
-                (ControlsPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(((ControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
         assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
 
         StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();

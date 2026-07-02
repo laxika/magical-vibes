@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTarg
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
@@ -404,7 +404,7 @@ class AiTargetSelector {
         }
         for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
             CardEffect effectToCheck = e;
-            if (e instanceof ReplacementConditionalEffect replacement) {
+            if (e instanceof ConditionalReplacementEffect replacement) {
                 effectToCheck = replacement.baseEffect();
             }
             if (effectToCheck.canTargetPlayer()) result.add(TargetType.PLAYER);
@@ -632,14 +632,14 @@ class AiTargetSelector {
 
     /**
      * Searches for a DealDividedDamageAmongAnyTargetsEffect in the card's spell effects,
-     * including inside KickerReplacementEffect wrappers.
+     * including inside kicker replacement wrappers.
      */
     private DealDividedDamageAmongAnyTargetsEffect findDividedDamageAnyTargetsEffect(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof DealDividedDamageAmongAnyTargetsEffect anyTarget) {
                 return anyTarget;
             }
-            if (effect instanceof ReplacementConditionalEffect replacement
+            if (effect instanceof ConditionalReplacementEffect replacement
                     && replacement.upgradedEffect() instanceof DealDividedDamageAmongAnyTargetsEffect anyTarget) {
                 return anyTarget;
             }

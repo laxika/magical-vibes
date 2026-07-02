@@ -16,12 +16,24 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
+import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.condition.NotKicked;
+import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DidntAttackConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
@@ -31,18 +43,9 @@ import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffe
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentCountConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NoOtherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.NotKickedConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetFilter;
@@ -87,6 +90,7 @@ public class StepTriggerService {
 
     private final DrawService drawService;
     private final GameQueryService gameQueryService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final PermanentRemovalService permanentRemovalService;
@@ -174,12 +178,12 @@ public class StepTriggerService {
                     // so this always triggers as long as it's on the battlefield.
                     gameData.pendingCapriciousEfreetTargets.add(new PermanentChoiceContext.CapriciousEfreetOwnTarget(
                             perm.getCard(), activePlayerId, perm.getId()));
-                } else if (effect instanceof NoOtherPermanentConditionalEffect noOtherPermanent) {
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof NoOtherPermanent) {
                     // Intervening-if: only trigger if controller has no other matching permanents
-                    boolean hasOtherWithSubtype = battlefield.stream()
-                            .anyMatch(p -> !p.getId().equals(perm.getId())
-                                    && gameQueryService.matchesPermanentPredicate(gameData, p, noOtherPermanent.filter()));
-                    if (!hasOtherWithSubtype) {
+                    boolean conditionMet = conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, activePlayerId));
+                    if (conditionMet) {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -195,10 +199,12 @@ public class StepTriggerService {
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: no other matching permanents)",
                                 gameData.id, perm.getCard().getName());
                     }
-                } else if (effect instanceof ControllerLifeAtOrBelowThresholdConditionalEffect lifeCheck) {
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof ControllerLifeAtMost lifeCheck) {
                     // Intervening-if: only trigger if controller's life total <= threshold
                     int lifeTotal = gameData.playerLifeTotals.getOrDefault(activePlayerId, 20);
-                    if (lifeTotal <= lifeCheck.lifeThreshold()) {
+                    if (conditionEvaluationService.isMet(gameData, lifeCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -212,15 +218,17 @@ public class StepTriggerService {
                         String logEntry = perm.getCard().getName() + "'s upkeep ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} upkeep trigger pushed onto stack (intervening-if met: life {} <= {})",
-                                gameData.id, perm.getCard().getName(), lifeTotal, lifeCheck.lifeThreshold());
+                                gameData.id, perm.getCard().getName(), lifeTotal, lifeCheck.threshold());
                     }
-                } else if (effect instanceof ControlsPermanentCountConditionalEffect countCheck) {
+                } else if (effect instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof ControlsPermanentCount countCheck) {
                     // Intervening-if: only trigger if controller has enough matching permanents
                     List<Permanent> controllerBf = gameData.playerBattlefields.get(activePlayerId);
                     long matchCount = controllerBf == null ? 0 : controllerBf.stream()
                             .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
                             .count();
-                    if (matchCount >= countCheck.minCount()) {
+                    if (conditionEvaluationService.isMet(gameData, countCheck,
+                            ConditionContext.forPermanent(perm, activePlayerId))) {
                         gameData.stack.add(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -304,9 +312,11 @@ public class StepTriggerService {
                 for (CardEffect effect : upkeepEffects) {
                     CardEffect innerEffect = effect;
 
-                    // Unwrap MetalcraftConditionalEffect — check metalcraft before offering the ability
-                    if (innerEffect instanceof MetalcraftConditionalEffect metalcraft) {
-                        if (!gameQueryService.isMetalcraftMet(gameData, activePlayerId)) {
+                    // Unwrap metalcraft conditional — check metalcraft before offering the ability
+                    if (innerEffect instanceof ConditionalEffect metalcraft
+                            && metalcraft.condition() instanceof Metalcraft) {
+                        if (!conditionEvaluationService.isMet(gameData, metalcraft.condition(),
+                                new ConditionContext(activePlayerId, null, null, card, false, null, 0, null, null, false))) {
                             log.info("Game {} - {} graveyard metalcraft ability skipped (fewer than three artifacts)",
                                     gameData.id, card.getName());
                             continue;
@@ -342,14 +352,13 @@ public class StepTriggerService {
 
             for (CardEffect effect : eachUpkeepEffects) {
                 // Intervening-if: werewolf transform conditions checked at trigger time
-                if (effect instanceof NoSpellsCastLastTurnConditionalEffect) {
-                    int totalSpells = gameData.spellsCastLastTurn.values().stream()
-                            .mapToInt(Integer::intValue).sum();
-                    if (totalSpells > 0) continue;
-                } else if (effect instanceof TwoOrMoreSpellsCastLastTurnConditionalEffect) {
-                    boolean anyPlayerCastTwo = gameData.spellsCastLastTurn.values().stream()
-                            .anyMatch(count -> count >= 2);
-                    if (!anyPlayerCastTwo) continue;
+                if (effect instanceof ConditionalEffect conditional
+                        && (conditional.condition() instanceof NoSpellsCastLastTurn
+                                || conditional.condition() instanceof TwoOrMoreSpellsCastLastTurn)) {
+                    if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                            ConditionContext.forPermanent(perm, playerId))) {
+                        continue;
+                    }
                 }
 
                 if (effect instanceof MayEffect may) {
@@ -1206,9 +1215,11 @@ public class StepTriggerService {
                 for (CardEffect effect : endStepEffects) {
                     if (effect instanceof MayEffect may) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may);
-                    } else if (effect instanceof NotKickedConditionalEffect notKicked) {
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof NotKicked) {
                         // Intervening-if: only trigger if the permanent was NOT kicked (CR 603.4)
-                        if (perm.isKicked()) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
                             log.info("Game {} - {} end-step trigger skipped (was kicked)",
                                     gameData.id, perm.getCard().getName());
                             continue;
@@ -1225,9 +1236,11 @@ public class StepTriggerService {
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} end-step not-kicked trigger pushed onto stack", gameData.id, perm.getCard().getName());
-                    } else if (effect instanceof MorbidConditionalEffect morbid) {
+                    } else if (effect instanceof ConditionalEffect morbid
+                            && morbid.condition() instanceof Morbid) {
                         // Intervening-if: only trigger if morbid condition is met (CR 603.4)
-                        if (!gameQueryService.isMorbidMet(gameData)) {
+                        if (!conditionEvaluationService.isMet(gameData, morbid.condition(),
+                                ConditionContext.forPermanent(perm, playerId))) {
                             log.info("Game {} - {} end-step morbid trigger skipped (no creature died this turn)",
                                     gameData.id, perm.getCard().getName());
                             continue;
@@ -1278,9 +1291,11 @@ public class StepTriggerService {
                 if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : controllerEndStepEffects) {
-                    if (effect instanceof RaidConditionalEffect raidEffect) {
+                    if (effect instanceof ConditionalEffect raidEffect
+                            && raidEffect.condition() instanceof Raid) {
                         // Intervening-if: only trigger if the controller attacked this turn
-                        if (!gameData.playersDeclaredAttackersThisTurn.contains(activePlayerId)) {
+                        if (!conditionEvaluationService.isMet(gameData, raidEffect.condition(),
+                                ConditionContext.forPermanent(perm, activePlayerId))) {
                             log.info("Game {} - {} end-step raid trigger skipped (didn't attack this turn)",
                                     gameData.id, perm.getCard().getName());
                             continue;
@@ -1344,13 +1359,15 @@ public class StepTriggerService {
                         String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, logEntry);
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
-                    } else if (effect instanceof ControlsPermanentCountConditionalEffect countCheck) {
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof ControlsPermanentCount countCheck) {
                         // Intervening-if: only trigger if controller has enough matching permanents
                         List<Permanent> controllerBf = gameData.playerBattlefields.get(activePlayerId);
                         long matchCount = controllerBf == null ? 0 : controllerBf.stream()
                                 .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
                                 .count();
-                        if (matchCount < countCheck.minCount()) {
+                        if (!conditionEvaluationService.isMet(gameData, countCheck,
+                                ConditionContext.forPermanent(perm, activePlayerId))) {
                             log.info("Game {} - {} end-step trigger skipped (only {} matching permanents, need {})",
                                     gameData.id, perm.getCard().getName(), matchCount, countCheck.minCount());
                             continue;
@@ -1368,9 +1385,11 @@ public class StepTriggerService {
                         String countLogEntry = perm.getCard().getName() + "'s end step ability triggers.";
                         gameBroadcastService.logAndBroadcast(gameData, countLogEntry);
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
-                    } else if (effect instanceof DidntAttackConditionalEffect didntAttack) {
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof DidntAttack) {
                         // Intervening-if: only trigger if the creature didn't attack this turn
-                        if (perm.isAttackedThisTurn()) {
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, activePlayerId))) {
                             log.info("Game {} - {} end-step trigger skipped (attacked this turn)",
                                     gameData.id, perm.getCard().getName());
                             continue;

@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -31,9 +32,9 @@ class EtchedChampionTest extends BaseCardTest {
         EtchedChampion card = new EtchedChampion();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MetalcraftConditionalEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ConditionalEffect.class);
 
-        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(metalcraft.wrapped()).isInstanceOf(ProtectionFromColorsEffect.class);
 
         ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) metalcraft.wrapped();

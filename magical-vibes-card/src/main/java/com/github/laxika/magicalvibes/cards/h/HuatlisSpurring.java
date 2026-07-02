@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -19,10 +20,6 @@ public class HuatlisSpurring extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addEffect(EffectSlot.SPELL, new ControlsPermanentReplacementEffect(
-                new PermanentHasSubtypePredicate(CardSubtype.HUATLI),
-                new BoostTargetCreatureEffect(2, 0),
-                new BoostTargetCreatureEffect(4, 0)
-        ));
+        )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUATLI)), new BoostTargetCreatureEffect(2, 0), new BoostTargetCreatureEffect(4, 0)));
     }
 }

@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -29,14 +30,14 @@ class KuldothaPhoenixTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has GRAVEYARD_UPKEEP_TRIGGERED effect with MetalcraftConditionalEffect wrapping MayPayManaEffect")
+    @DisplayName("Has GRAVEYARD_UPKEEP_TRIGGERED effect with ConditionalEffect wrapping MayPayManaEffect")
     void hasCorrectEffects() {
         KuldothaPhoenix card = new KuldothaPhoenix();
 
         assertThat(card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
-        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst();
         assertThat(metalcraft.wrapped()).isInstanceOf(MayPayManaEffect.class);
         MayPayManaEffect mayPay = (MayPayManaEffect) metalcraft.wrapped();
         assertThat(mayPay.manaCost()).isEqualTo("{4}");

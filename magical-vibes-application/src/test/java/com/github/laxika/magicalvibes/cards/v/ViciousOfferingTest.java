@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,7 @@ class ViciousOfferingTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has sacrifice kicker and KickerReplacementEffect with -2/-2 base and -5/-5 kicked")
+    @DisplayName("Has sacrifice kicker and ConditionalReplacementEffect with -2/-2 base and -5/-5 kicked")
     void hasCorrectEffects() {
         ViciousOffering card = new ViciousOffering();
 
@@ -32,12 +33,12 @@ class ViciousOfferingTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL))
                 .hasSize(1)
                 .first()
-                .isInstanceOfSatisfying(KickerReplacementEffect.class, kre -> {
+                .isInstanceOfSatisfying(ConditionalReplacementEffect.class, kre -> {
                     assertThat(kre.baseEffect()).isInstanceOfSatisfying(BoostTargetCreatureEffect.class, base -> {
                         assertThat(base.powerBoost()).isEqualTo(-2);
                         assertThat(base.toughnessBoost()).isEqualTo(-2);
                     });
-                    assertThat(kre.kickedEffect()).isInstanceOfSatisfying(BoostTargetCreatureEffect.class, kicked -> {
+                    assertThat(kre.upgradedEffect()).isInstanceOfSatisfying(BoostTargetCreatureEffect.class, kicked -> {
                         assertThat(kicked.powerBoost()).isEqualTo(-5);
                         assertThat(kicked.toughnessBoost()).isEqualTo(-5);
                     });

@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,16 +24,16 @@ class FesterhideBoarTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has MorbidConditionalEffect wrapping PutCountersOnSourceEffect in ON_ENTER_BATTLEFIELD")
+    @DisplayName("Has ConditionalEffect wrapping PutCountersOnSourceEffect in ON_ENTER_BATTLEFIELD")
     void hasCorrectStructure() {
         FesterhideBoar card = new FesterhideBoar();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MorbidConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        MorbidConditionalEffect morbid =
-                (MorbidConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        ConditionalEffect morbid =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(morbid.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
 
         PutCountersOnSourceEffect counters = (PutCountersOnSourceEffect) morbid.wrapped();

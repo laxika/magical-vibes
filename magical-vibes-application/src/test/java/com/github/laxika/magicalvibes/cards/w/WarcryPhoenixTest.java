@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,16 +29,16 @@ class WarcryPhoenixTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has GRAVEYARD_ON_ALLY_CREATURES_ATTACK effect with MinimumAttackersConditionalEffect wrapping MayPayManaEffect")
+    @DisplayName("Has GRAVEYARD_ON_ALLY_CREATURES_ATTACK effect with ConditionalEffect wrapping MayPayManaEffect")
     void hasCorrectEffects() {
         WarcryPhoenix card = new WarcryPhoenix();
 
         assertThat(card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(MinimumAttackersConditionalEffect.class);
-        MinimumAttackersConditionalEffect mac = (MinimumAttackersConditionalEffect)
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect mac = (ConditionalEffect)
                 card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(mac.minimumAttackers()).isEqualTo(3);
+        assertThat(((MinimumAttackers) mac.condition()).minimumAttackers()).isEqualTo(3);
         assertThat(mac.wrapped()).isInstanceOf(MayPayManaEffect.class);
         MayPayManaEffect mayPay = (MayPayManaEffect) mac.wrapped();
         assertThat(mayPay.manaCost()).isEqualTo("{2}{R}");

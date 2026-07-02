@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
@@ -45,8 +46,8 @@ class BlinkOfAnEyeTest extends BaseCardTest {
                 .hasSize(2)
                 .anySatisfy(e -> assertThat(e).isInstanceOf(ReturnTargetPermanentToHandEffect.class))
                 .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(KickedConditionalEffect.class);
-                    assertThat(((KickedConditionalEffect) e).wrapped()).isInstanceOf(DrawCardEffect.class);
+                    assertThat(e).isInstanceOf(ConditionalEffect.class);
+                    assertThat(((ConditionalEffect) e).wrapped()).isInstanceOf(DrawCardEffect.class);
                 });
     }
 

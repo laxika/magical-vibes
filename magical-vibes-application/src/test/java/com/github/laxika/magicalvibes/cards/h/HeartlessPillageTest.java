@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -43,9 +44,9 @@ class HeartlessPillageTest extends BaseCardTest {
         assertThat(discard.amount()).isEqualTo(2);
 
         assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(RaidConditionalEffect.class);
-        RaidConditionalEffect raid =
-                (RaidConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect raid =
+                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(raid.wrapped()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect treasure = (CreateTokenEffect) raid.wrapped();
         assertThat(treasure.primaryType()).isEqualTo(CardType.ARTIFACT);

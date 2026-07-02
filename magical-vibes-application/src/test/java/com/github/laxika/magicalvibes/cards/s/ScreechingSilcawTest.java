@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -51,10 +52,10 @@ class ScreechingSilcawTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MetalcraftConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
 
-        MetalcraftConditionalEffect metalcraft =
-                (MetalcraftConditionalEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
+        ConditionalEffect metalcraft =
+                (ConditionalEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
         assertThat(metalcraft.wrapped()).isInstanceOf(MillTargetPlayerEffect.class);
 
         MillTargetPlayerEffect mill = (MillTargetPlayerEffect) metalcraft.wrapped();

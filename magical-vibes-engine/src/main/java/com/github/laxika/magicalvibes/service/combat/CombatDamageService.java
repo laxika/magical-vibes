@@ -34,7 +34,10 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnDamageDealerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
@@ -80,6 +83,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class CombatDamageService {
 
     private final GameQueryService gameQueryService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final GameOutcomeService gameOutcomeService;
     private final DamagePreventionService damagePreventionService;
@@ -643,8 +647,9 @@ public class CombatDamageService {
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER));
             allDamageEffects.addAll(creature.getCard().getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER));
             for (CardEffect effect : allDamageEffects) {
-                if (effect instanceof MetalcraftConditionalEffect metalcraft) {
-                    if (!gameQueryService.isMetalcraftMet(gameData, attackerId)) {
+                if (effect instanceof ConditionalEffect metalcraft && metalcraft.condition() instanceof Metalcraft) {
+                    if (!conditionEvaluationService.isMet(gameData, metalcraft.condition(),
+                            ConditionContext.forPermanent(creature, attackerId))) {
                         log.info("Game {} - {}'s metalcraft combat damage trigger does not fire",
                                 gameData.id, creature.getCard().getName());
                         continue;

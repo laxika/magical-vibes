@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ActivationCountConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ActivationCount;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -29,11 +30,11 @@ class DragonWhelpTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ActivationCountConditionalEffect.class);
-        ActivationCountConditionalEffect conditional = (ActivationCountConditionalEffect)
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional = (ConditionalEffect)
                 card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst();
-        assertThat(conditional.threshold()).isEqualTo(4);
-        assertThat(conditional.abilityIndex()).isEqualTo(0);
+        assertThat(((ActivationCount) conditional.condition()).threshold()).isEqualTo(4);
+        assertThat(((ActivationCount) conditional.condition()).abilityIndex()).isEqualTo(0);
         assertThat(conditional.wrapped()).isInstanceOf(SacrificeSelfEffect.class);
     }
 

@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerGraveyardCardThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
@@ -38,11 +39,11 @@ class SearchForAzcantaTest extends BaseCardTest {
         assertThat(surveil.count()).isEqualTo(1);
 
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(1))
-                .isInstanceOf(ControllerGraveyardCardThresholdConditionalEffect.class);
-        var conditional = (ControllerGraveyardCardThresholdConditionalEffect)
+                .isInstanceOf(ConditionalEffect.class);
+        var conditional = (ConditionalEffect)
                 card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(1);
-        assertThat(conditional.threshold()).isEqualTo(7);
-        assertThat(conditional.filter()).isNull(); // counts all cards
+        assertThat(((GraveyardCardThreshold) conditional.condition()).threshold()).isEqualTo(7);
+        assertThat(((GraveyardCardThreshold) conditional.condition()).filter()).isNull(); // counts all cards
         assertThat(conditional.wrapped()).isInstanceOf(MayEffect.class);
         MayEffect may = (MayEffect) conditional.wrapped();
         assertThat(may.wrapped()).isInstanceOf(TransformSelfEffect.class);

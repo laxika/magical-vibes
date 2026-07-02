@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypesToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -29,7 +30,7 @@ public class GrowFromTheAshes extends Card {
         // Search your library for a basic land card, put it onto the battlefield, then shuffle.
         // If this spell was kicked, instead search your library for two basic land cards,
         // put them onto the battlefield, then shuffle.
-        addEffect(EffectSlot.SPELL, new KickerReplacementEffect(
+        addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                 new SearchLibraryForCardTypesToBattlefieldEffect(basicLandFilter, false, 1),
                 new SearchLibraryForCardTypesToBattlefieldEffect(basicLandFilter, false, 2)
         ));

@@ -4,20 +4,24 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.condition.Morbid;
+import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -48,7 +52,7 @@ class EtbEffectResolverTest {
 
     @BeforeEach
     void setUp() {
-        resolver = new EtbEffectResolver(gameQueryService);
+        resolver = new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService)));
         controllerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test", controllerId, "Player1");
         card = new Card();
@@ -106,7 +110,7 @@ class EtbEffectResolverTest {
     @DisplayName("KickedConditional: unwraps when kicked, dropped otherwise")
     void kickedConditional() {
         DrawCardEffect wrapped = new DrawCardEffect(1);
-        KickedConditionalEffect kicked = new KickedConditionalEffect(wrapped);
+        ConditionalEffect kicked = new ConditionalEffect(new Kicked(), wrapped);
 
         assertThat(resolver.resolve(ctx(true, 0, true), kicked)).isSameAs(wrapped);
         assertThat(resolver.resolve(ctx(true, 0, false), kicked)).isNull();
@@ -116,7 +120,7 @@ class EtbEffectResolverTest {
     @DisplayName("CastFromZoneConditional(HAND): unwraps only when cast from hand")
     void castFromHandConditional() {
         DrawCardEffect wrapped = new DrawCardEffect(1);
-        CastFromZoneConditionalEffect fromHand = new CastFromZoneConditionalEffect(Zone.HAND, wrapped);
+        ConditionalEffect fromHand = new ConditionalEffect(new CastFromZone(Zone.HAND), wrapped);
 
         assertThat(resolver.resolve(ctx(true, 0, false), fromHand)).isSameAs(wrapped);
         assertThat(resolver.resolve(ctx(false, 0, false), fromHand)).isNull();
@@ -134,7 +138,7 @@ class EtbEffectResolverTest {
     @Test
     @DisplayName("Metalcraft gate: keeps the conditional effect when met, drops it otherwise")
     void metalcraftGate() {
-        MetalcraftConditionalEffect effect = new MetalcraftConditionalEffect(new DrawCardEffect(1));
+        ConditionalEffect effect = new ConditionalEffect(new Metalcraft(), new DrawCardEffect(1));
 
         when(gameQueryService.isMetalcraftMet(gameData, controllerId)).thenReturn(true);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
@@ -146,7 +150,7 @@ class EtbEffectResolverTest {
     @Test
     @DisplayName("Morbid gate: keeps the conditional effect when met, drops it otherwise")
     void morbidGate() {
-        MorbidConditionalEffect effect = new MorbidConditionalEffect(new DrawCardEffect(1));
+        ConditionalEffect effect = new ConditionalEffect(new Morbid(), new DrawCardEffect(1));
 
         when(gameQueryService.isMorbidMet(gameData)).thenReturn(true);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
@@ -159,20 +163,22 @@ class EtbEffectResolverTest {
     @DisplayName("ControlsAnotherPermanent gate: keeps when met, drops otherwise")
     void controlsAnotherGate() {
         PermanentPredicate filter = new PermanentPredicate() {};
-        ControlsAnotherPermanentConditionalEffect effect =
-                new ControlsAnotherPermanentConditionalEffect(filter, new DrawCardEffect(1));
+        ConditionalEffect effect =
+                new ConditionalEffect(new ControlsAnotherPermanent(filter), new DrawCardEffect(1));
+        Permanent other = new Permanent(new Card());
+        gameData.playerBattlefields.put(controllerId, List.of(other));
 
-        when(gameQueryService.controlsAnotherPermanent(gameData, controllerId, card, filter)).thenReturn(true);
+        when(gameQueryService.matchesPermanentPredicate(gameData, other, filter)).thenReturn(true);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
 
-        when(gameQueryService.controlsAnotherPermanent(gameData, controllerId, card, filter)).thenReturn(false);
+        when(gameQueryService.matchesPermanentPredicate(gameData, other, filter)).thenReturn(false);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isNull();
     }
 
     @Test
     @DisplayName("Raid gate: keeps the conditional effect when controller attacked, drops otherwise")
     void raidGate() {
-        RaidConditionalEffect effect = new RaidConditionalEffect(new DrawCardEffect(1));
+        ConditionalEffect effect = new ConditionalEffect(new Raid(), new DrawCardEffect(1));
 
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isNull();
 

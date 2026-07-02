@@ -9,24 +9,25 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +35,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -64,7 +64,6 @@ class EffectResolutionServiceTest {
     @Mock
     private PermanentRemovalService permanentRemovalService;
 
-    @InjectMocks
     private EffectResolutionService effectResolutionService;
 
     private GameData gd;
@@ -73,6 +72,9 @@ class EffectResolutionServiceTest {
 
     @BeforeEach
     void setUp() {
+        effectResolutionService = new EffectResolutionService(
+                new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService)),
+                registry, gameBroadcastService, permanentRemovalService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -113,8 +115,8 @@ class EffectResolutionServiceTest {
     }
 
     // =========================================================================
-    // MetalcraftConditionalEffect
-    // (ConcussiveBolt: DealDamageToTargetPlayerEffect(4) + MetalcraftConditionalEffect(TargetPlayerCreaturesCantBlockThisTurnEffect))
+    // ConditionalEffect
+    // (ConcussiveBolt: DealDamageToTargetPlayerEffect(4) + ConditionalEffect(TargetPlayerCreaturesCantBlockThisTurnEffect))
     // =========================================================================
 
     @Nested
@@ -125,7 +127,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Skips wrapped effect when metalcraft is not met")
         void skipsWrappedEffectWhenMetalcraftNotMet() {
             CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
-            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -139,7 +141,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Logs skip message when metalcraft is not met")
         void logsSkipMessageWhenMetalcraftNotMet() {
             CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
-            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -155,7 +157,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Resolves wrapped effect when metalcraft is met")
         void resolvesWrappedEffectWhenMetalcraftMet() {
             CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
-            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
@@ -170,7 +172,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Re-checks metalcraft condition at resolution time (intervening-if)")
         void rechecksMetalcraftConditionAtResolutionTime() {
             CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
-            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
             // Metalcraft lost before resolution — condition re-evaluated and fails
@@ -186,7 +188,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Logs skip message when metalcraft lost before resolution")
         void logsSkipMessageWhenMetalcraftLostBeforeResolution() {
             CardEffect wrapped = new TargetPlayerCreaturesCantBlockThisTurnEffect();
-            CardEffect conditional = new MetalcraftConditionalEffect(wrapped);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
             // Metalcraft lost before resolution
@@ -201,8 +203,8 @@ class EffectResolutionServiceTest {
     }
 
     // =========================================================================
-    // MetalcraftReplacementEffect
-    // (GalvanicBlast: MetalcraftReplacementEffect(DealDamageToAnyTargetEffect(2), DealDamageToAnyTargetEffect(4)))
+    // ConditionalReplacementEffect
+    // (GalvanicBlast: ConditionalReplacementEffect(DealDamageToAnyTargetEffect(2), DealDamageToAnyTargetEffect(4)))
     // =========================================================================
 
     @Nested
@@ -214,7 +216,7 @@ class EffectResolutionServiceTest {
         void resolvesBaseEffectWhenMetalcraftNotMet() {
             CardEffect base = new DealDamageToAnyTargetEffect(2);
             CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
-            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -230,7 +232,7 @@ class EffectResolutionServiceTest {
         void resolvesMetalcraftEffectWhenMetalcraftMet() {
             CardEffect base = new DealDamageToAnyTargetEffect(2);
             CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
-            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
@@ -246,7 +248,7 @@ class EffectResolutionServiceTest {
         void rechecksConditionAtResolutionTime() {
             CardEffect base = new DealDamageToAnyTargetEffect(2);
             CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
-            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             // Metalcraft lost at resolution time — falls back to base
@@ -273,7 +275,7 @@ class EffectResolutionServiceTest {
         void twoArtifactsDoNotMeetThreshold() {
             CardEffect base = new DealDamageToAnyTargetEffect(2);
             CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
-            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -289,7 +291,7 @@ class EffectResolutionServiceTest {
         void exactlyThreeArtifactsMeetsThreshold() {
             CardEffect base = new DealDamageToAnyTargetEffect(2);
             CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
-            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
@@ -305,7 +307,7 @@ class EffectResolutionServiceTest {
         void artifactCreaturesCountForMetalcraft() {
             CardEffect base = new DealDamageToAnyTargetEffect(2);
             CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
-            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
@@ -323,7 +325,7 @@ class EffectResolutionServiceTest {
         void moreThanThreeArtifactsMeetsThreshold() {
             CardEffect base = new DealDamageToAnyTargetEffect(2);
             CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
-            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(true);
@@ -341,7 +343,7 @@ class EffectResolutionServiceTest {
         void zeroArtifactsDoesNotMeetThreshold() {
             CardEffect base = new DealDamageToAnyTargetEffect(2);
             CardEffect upgraded = new DealDamageToAnyTargetEffect(4);
-            CardEffect replacement = new MetalcraftReplacementEffect(base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), base, upgraded);
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -368,7 +370,7 @@ class EffectResolutionServiceTest {
         void allEffectsOnStackEntryResolveInSequence() {
             CardEffect damageEffect = new DealDamageToTargetPlayerEffect(4);
             CardEffect cantBlockEffect = new TargetPlayerCreaturesCantBlockThisTurnEffect();
-            CardEffect conditional = new MetalcraftConditionalEffect(cantBlockEffect);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
                     List.of(damageEffect, conditional));
 
@@ -388,7 +390,7 @@ class EffectResolutionServiceTest {
         void nonMetalcraftEffectsStillResolveWhenMetalcraftSkips() {
             CardEffect damageEffect = new DealDamageToTargetPlayerEffect(4);
             CardEffect cantBlockEffect = new TargetPlayerCreaturesCantBlockThisTurnEffect();
-            CardEffect conditional = new MetalcraftConditionalEffect(cantBlockEffect);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
                     List.of(damageEffect, conditional));
 
@@ -406,7 +408,7 @@ class EffectResolutionServiceTest {
     }
 
     // =========================================================================
-    // ControlsPermanentConditionalEffect
+    // ConditionalEffect
     // =========================================================================
 
     @Nested
@@ -417,7 +419,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Skips wrapped effect when controller has no matching permanent")
         void skipsWrappedEffectWhenNoMatchingPermanent() {
             CardEffect wrapped = new DrawCardEffect(1);
-            CardEffect conditional = new ControlsPermanentConditionalEffect(new PermanentIsArtifactPredicate(), wrapped);
+            CardEffect conditional = new ConditionalEffect(new ControlsPermanent(new PermanentIsArtifactPredicate()), wrapped);
             StackEntry entry = createEntry(createCard("Temporal Machinations"), player1Id, List.of(conditional));
 
             // No permanents on battlefield — condition not met
@@ -430,7 +432,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Resolves wrapped effect when controller has a matching permanent")
         void resolvesWrappedEffectWhenMatchingPermanent() {
             CardEffect wrapped = new DrawCardEffect(1);
-            CardEffect conditional = new ControlsPermanentConditionalEffect(new PermanentIsArtifactPredicate(), wrapped);
+            CardEffect conditional = new ConditionalEffect(new ControlsPermanent(new PermanentIsArtifactPredicate()), wrapped);
             StackEntry entry = createEntry(createCard("Temporal Machinations"), player1Id, List.of(conditional));
 
             // Add an artifact to controller's battlefield
@@ -449,7 +451,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Logs skip message when condition not met")
         void logsSkipMessageWhenConditionNotMet() {
             CardEffect wrapped = new DrawCardEffect(1);
-            CardEffect conditional = new ControlsPermanentConditionalEffect(new PermanentIsArtifactPredicate(), wrapped);
+            CardEffect conditional = new ConditionalEffect(new ControlsPermanent(new PermanentIsArtifactPredicate()), wrapped);
             StackEntry entry = createEntry(createCard("Temporal Machinations"), player1Id, List.of(conditional));
 
             effectResolutionService.resolveEffects(gd, entry);
@@ -471,7 +473,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Clears pendingEffectResolutionEntry after all effects resolve")
         void clearsPendingEffectResolutionEntryAfterResolution() {
             CardEffect effect = new DealDamageToAnyTargetEffect(2);
-            CardEffect replacement = new MetalcraftReplacementEffect(effect, new DealDamageToAnyTargetEffect(4));
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), effect, new DealDamageToAnyTargetEffect(4));
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -486,7 +488,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Clears pendingEffectResolutionIndex after all effects resolve")
         void clearsPendingEffectResolutionIndexAfterResolution() {
             CardEffect effect = new DealDamageToAnyTargetEffect(2);
-            CardEffect replacement = new MetalcraftReplacementEffect(effect, new DealDamageToAnyTargetEffect(4));
+            CardEffect replacement = new ConditionalReplacementEffect(new Metalcraft(), effect, new DealDamageToAnyTargetEffect(4));
             StackEntry entry = createEntry(createCard("Galvanic Blast"), player1Id, List.of(replacement));
 
             when(gameQueryService.isMetalcraftMet(gd, player1Id)).thenReturn(false);
@@ -502,7 +504,7 @@ class EffectResolutionServiceTest {
         void clearsPendingStateAfterMultiEffectSpellResolves() {
             CardEffect damageEffect = new DealDamageToTargetPlayerEffect(4);
             CardEffect cantBlockEffect = new TargetPlayerCreaturesCantBlockThisTurnEffect();
-            CardEffect conditional = new MetalcraftConditionalEffect(cantBlockEffect);
+            CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
                     List.of(damageEffect, conditional));
 
@@ -518,7 +520,7 @@ class EffectResolutionServiceTest {
     }
 
     // =========================================================================
-    // ControlsAnotherPermanentConditionalEffect (nontoken predicate composition)
+    // ConditionalEffect (nontoken predicate composition)
     // =========================================================================
 
     @Nested
@@ -542,7 +544,7 @@ class EffectResolutionServiceTest {
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())
                 ));
             }
-            return new ControlsAnotherPermanentConditionalEffect(predicate, wrapped);
+            return new ConditionalEffect(new ControlsAnotherPermanent(predicate), wrapped);
         }
 
         private void stubPredicateEvaluation() {
@@ -676,8 +678,8 @@ class EffectResolutionServiceTest {
     }
 
     // =========================================================================
-    // ControlsPermanentReplacementEffect
-    // (HuatlisSpurring: ControlsPermanentReplacementEffect(PermanentHasSubtypePredicate(HUATLI), BoostTargetCreatureEffect(2,0), BoostTargetCreatureEffect(4,0)))
+    // ConditionalReplacementEffect
+    // (HuatlisSpurring: ConditionalReplacementEffect(PermanentHasSubtypePredicate(HUATLI), BoostTargetCreatureEffect(2,0), BoostTargetCreatureEffect(4,0)))
     // =========================================================================
 
     @Nested
@@ -689,7 +691,7 @@ class EffectResolutionServiceTest {
         void resolvesBaseEffectWhenSubtypeNotControlled() {
             CardEffect base = new BoostTargetCreatureEffect(2, 0);
             CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
-            CardEffect replacement = new ControlsPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUATLI), base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUATLI)), base, upgraded);
             StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
 
             // No permanents with HUATLI subtype on battlefield
@@ -705,7 +707,7 @@ class EffectResolutionServiceTest {
         void resolvesUpgradedEffectWhenSubtypeControlled() {
             CardEffect base = new BoostTargetCreatureEffect(2, 0);
             CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
-            CardEffect replacement = new ControlsPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUATLI), base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUATLI)), base, upgraded);
             StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
 
             // Add a permanent with HUATLI subtype
@@ -727,7 +729,7 @@ class EffectResolutionServiceTest {
         void opponentSubtypeDoesNotCount() {
             CardEffect base = new BoostTargetCreatureEffect(2, 0);
             CardEffect upgraded = new BoostTargetCreatureEffect(4, 0);
-            CardEffect replacement = new ControlsPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUATLI), base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUATLI)), base, upgraded);
             StackEntry entry = createEntry(createCard("Huatli's Spurring"), player1Id, List.of(replacement));
 
             // Huatli on opponent's battlefield only
@@ -745,8 +747,8 @@ class EffectResolutionServiceTest {
     }
 
     // =========================================================================
-    // TargetPermanentReplacementEffect
-    // (ElderCathar: TargetPermanentReplacementEffect(PermanentHasSubtypePredicate(HUMAN), PutPlusOnePlusOneCounterOnTargetCreatureEffect(1), PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)))
+    // ConditionalReplacementEffect
+    // (ElderCathar: ConditionalReplacementEffect(PermanentHasSubtypePredicate(HUMAN), PutPlusOnePlusOneCounterOnTargetCreatureEffect(1), PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)))
     // =========================================================================
 
     @Nested
@@ -759,7 +761,7 @@ class EffectResolutionServiceTest {
             CardEffect base = new BoostTargetCreatureEffect(1, 0);
             CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
             UUID targetId = UUID.randomUUID();
-            CardEffect replacement = new TargetPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUMAN), base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), base, upgraded);
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
             Permanent target = new Permanent(createCard("Grizzly Bears"));
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(target);
@@ -777,7 +779,7 @@ class EffectResolutionServiceTest {
             CardEffect base = new BoostTargetCreatureEffect(1, 0);
             CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
             UUID targetId = UUID.randomUUID();
-            CardEffect replacement = new TargetPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUMAN), base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), base, upgraded);
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
             Permanent target = new Permanent(createCard("Champion of the Parish"));
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(target);
@@ -795,7 +797,7 @@ class EffectResolutionServiceTest {
             CardEffect base = new BoostTargetCreatureEffect(1, 0);
             CardEffect upgraded = new BoostTargetCreatureEffect(2, 0);
             UUID targetId = UUID.randomUUID();
-            CardEffect replacement = new TargetPermanentReplacementEffect(new PermanentHasSubtypePredicate(CardSubtype.HUMAN), base, upgraded);
+            CardEffect replacement = new ConditionalReplacementEffect(new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), base, upgraded);
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(null);
             EffectHandler handler = stubHandler(base);

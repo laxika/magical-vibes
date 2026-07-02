@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,14 +33,14 @@ class SlinnVodaTheRisingDeepTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has KickedConditionalEffect wrapping ReturnCreaturesToOwnersHandEffect on ETB")
+    @DisplayName("Has ConditionalEffect wrapping ReturnCreaturesToOwnersHandEffect on ETB")
     void hasKickedConditionalETBEffect() {
         SlinnVodaTheRisingDeep card = new SlinnVodaTheRisingDeep();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(KickedConditionalEffect.class);
-        var conditional = (KickedConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        var conditional = (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(ReturnCreaturesToOwnersHandEffect.class);
     }
 

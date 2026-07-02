@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCastAnotherSpellThisTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerCastAnotherSpellThisTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,10 +30,7 @@ public class BurrogBarrage extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new ControllerCastAnotherSpellThisTurnConditionalEffect(
-                INSTANT_OR_SORCERY,
-                new BoostFirstTargetCreatureEffect(1, 0)
-        ));
+        )).addEffect(EffectSlot.SPELL, new ConditionalEffect(new ControllerCastAnotherSpellThisTurn(INSTANT_OR_SORCERY), new BoostFirstTargetCreatureEffect(1, 0)));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

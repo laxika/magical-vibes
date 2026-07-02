@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -47,14 +48,14 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has ON_ATTACK trigger with AttacksAloneConditionalEffect wrapping DoubleSelfPowerToughnessEffect")
+    @DisplayName("Has ON_ATTACK trigger with ConditionalEffect wrapping DoubleSelfPowerToughnessEffect")
     void hasAttacksAloneTrigger() {
         GrunnTheLonelyKing card = new GrunnTheLonelyKing();
 
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(AttacksAloneConditionalEffect.class);
-        var conditional = (AttacksAloneConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        var conditional = (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(DoubleSelfPowerToughnessEffect.class);
     }
 

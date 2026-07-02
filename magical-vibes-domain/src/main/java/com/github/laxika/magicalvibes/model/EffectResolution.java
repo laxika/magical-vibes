@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTarg
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.KickerReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 
 import java.util.ArrayList;
@@ -29,11 +30,11 @@ public final class EffectResolution {
     /**
      * Resolves a raw effect list by unwrapping conditional wrappers based on casting choices.
      * <ul>
-     *   <li>{@link KickerReplacementEffect}: resolves to {@code baseEffect} or {@code kickedEffect}</li>
+     *   <li>Kicker {@link ConditionalReplacementEffect}: resolves to the base or upgraded effect</li>
      *   <li>{@link ChooseOneEffect}: resolves to the chosen mode's effect</li>
-     *   <li>Other {@link com.github.laxika.magicalvibes.model.effect.ReplacementConditionalEffect}
-     *       types (metalcraft, morbid, etc.): kept as-is because their condition depends on
-     *       game state at resolution time, not casting time</li>
+     *   <li>Other {@link ConditionalReplacementEffect} conditions (metalcraft, morbid, etc.):
+     *       kept as-is because their condition depends on game state at resolution time,
+     *       not casting time</li>
      * </ul>
      *
      * @param rawEffects the unresolved effect list from the card
@@ -44,8 +45,9 @@ public final class EffectResolution {
     public static List<CardEffect> resolveEffects(List<CardEffect> rawEffects, Boolean kicked, Integer modeIndex) {
         List<CardEffect> resolved = new ArrayList<>(rawEffects.size());
         for (CardEffect effect : rawEffects) {
-            if (effect instanceof KickerReplacementEffect kre && kicked != null) {
-                resolved.add(kicked ? kre.kickedEffect() : kre.baseEffect());
+            if (effect instanceof ConditionalReplacementEffect cre
+                    && cre.condition() instanceof Kicked && kicked != null) {
+                resolved.add(kicked ? cre.upgradedEffect() : cre.baseEffect());
             } else if (effect instanceof ChooseOneEffect coe && modeIndex != null) {
                 List<ChooseOneEffect.ChooseOneOption> options = coe.options();
                 if (modeIndex >= 0 && modeIndex < options.size()) {

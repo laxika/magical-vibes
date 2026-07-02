@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidReplacementEffect;
+import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,20 +21,20 @@ class FirecannonBlastTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has RaidReplacementEffect wrapping 3-damage base and 6-damage raid")
+    @DisplayName("Has ConditionalReplacementEffect wrapping 3-damage base and 6-damage raid")
     void hasCorrectStructure() {
         FirecannonBlast card = new FirecannonBlast();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(RaidReplacementEffect.class);
+                .isInstanceOf(ConditionalReplacementEffect.class);
 
-        RaidReplacementEffect effect =
-                (RaidReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        ConditionalReplacementEffect effect =
+                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(effect.raidEffect()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
+        assertThat(effect.upgradedEffect()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
         assertThat(((DealDamageToTargetCreatureEffect) effect.baseEffect()).damage()).isEqualTo(3);
-        assertThat(((DealDamageToTargetCreatureEffect) effect.raidEffect()).damage()).isEqualTo(6);
+        assertThat(((DealDamageToTargetCreatureEffect) effect.upgradedEffect()).damage()).isEqualTo(6);
     }
 
     // ===== Without raid =====

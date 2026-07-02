@@ -13,11 +13,14 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AttacksAloneConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.HasAttackerConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MinimumAttackersConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
+import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.condition.HasAttacker;
+import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
@@ -61,6 +64,7 @@ import java.util.List;
 public class CombatAttackService {
 
     private final GameQueryService gameQueryService;
+    private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final TriggerCollectionService triggerCollectionService;
@@ -269,32 +273,23 @@ public class CombatAttackService {
             if (!attacker.getCard().getEffects(EffectSlot.ON_ATTACK).isEmpty()) {
                 List<CardEffect> allEffects = new ArrayList<>(attacker.getCard().getEffects(EffectSlot.ON_ATTACK));
 
-                // Filter out AttacksAloneConditionalEffect when not attacking alone (CR 506.5)
-                if (attackerIndices.size() != 1) {
-                    allEffects.removeIf(e -> e instanceof AttacksAloneConditionalEffect);
-                }
+                // Filter out attacks-alone conditionals when not attacking alone (CR 506.5)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof AttacksAlone
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
 
-                // Filter out ControlsPermanentConditionalEffect when condition not met (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> {
-                    if (e instanceof ControlsPermanentConditionalEffect cpc) {
-                        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-                        return bf == null || bf.stream().noneMatch(
-                                p -> gameQueryService.matchesPermanentPredicate(gameData, p, cpc.filter()));
-                    }
-                    return false;
-                });
+                // Filter out controls-permanent conditionals when condition not met (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ControlsPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
 
-                // Filter out ControlsAnotherPermanentConditionalEffect when condition not met (intervening-if, CR 603.4)
-                allEffects.removeIf(e -> {
-                    if (e instanceof ControlsAnotherPermanentConditionalEffect capc) {
-                        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-                        if (bf == null) return true;
-                        return bf.stream().noneMatch(
-                                p -> !p.getId().equals(attacker.getId())
-                                        && gameQueryService.matchesPermanentPredicate(gameData, p, capc.filter()));
-                    }
-                    return false;
-                });
+                // Filter out controls-another-permanent conditionals when condition not met (intervening-if, CR 603.4)
+                allEffects.removeIf(e -> e instanceof ConditionalEffect ce
+                        && ce.condition() instanceof ControlsAnotherPermanent
+                        && !conditionEvaluationService.isMet(gameData, ce.condition(),
+                                ConditionContext.forPermanent(attacker, playerId)));
 
                 if (!allEffects.isEmpty()) {
                     // Separate non-targeting "you may" effects (e.g. Primeval Titan's may-search) from
@@ -379,11 +374,9 @@ public class CombatAttackService {
             // Pre-filter attacker-group conditional effects — skip if no matching attacker exists.
             List<CardEffect> filteredEffects = new ArrayList<>();
             for (CardEffect effect : allyAttackEffects) {
-                if (effect instanceof HasAttackerConditionalEffect hasAttacker) {
-                    boolean hasMatch = battlefield.stream()
-                            .filter(Permanent::isAttacking)
-                            .anyMatch(p -> gameQueryService.matchesPermanentPredicate(
-                                    gameData, p, hasAttacker.predicate()));
+                if (effect instanceof ConditionalEffect ce && ce.condition() instanceof HasAttacker) {
+                    boolean hasMatch = conditionEvaluationService.isMet(gameData, ce.condition(),
+                            ConditionContext.forPermanent(perm, playerId));
                     if (!hasMatch) {
                         log.info("Game {} - {} attack trigger skipped (no matching attacker)",
                                 gameData.id, perm.getCard().getName());
@@ -466,14 +459,17 @@ public class CombatAttackService {
                 for (CardEffect effect : gyAttackEffects) {
                     CardEffect innerEffect = effect;
 
-                    // Unwrap MinimumAttackersConditionalEffect — check minimum before offering the trigger
-                    if (innerEffect instanceof MinimumAttackersConditionalEffect mac) {
-                        if (attackerIndices.size() < mac.minimumAttackers()) {
+                    // Unwrap minimum-attackers conditionals — check minimum before offering the trigger
+                    if (innerEffect instanceof ConditionalEffect ce
+                            && ce.condition() instanceof MinimumAttackers mac) {
+                        ConditionContext ctx = new ConditionContext(playerId, null, null, card,
+                                false, null, attackerIndices.size(), null, null, false);
+                        if (!conditionEvaluationService.isMet(gameData, mac, ctx)) {
                             log.info("Game {} - {} graveyard attack trigger skipped ({} attackers, need {})",
                                     gameData.id, card.getName(), attackerIndices.size(), mac.minimumAttackers());
                             continue;
                         }
-                        innerEffect = mac.wrapped();
+                        innerEffect = ce.wrapped();
                     }
 
                     gameData.stack.add(new StackEntry(

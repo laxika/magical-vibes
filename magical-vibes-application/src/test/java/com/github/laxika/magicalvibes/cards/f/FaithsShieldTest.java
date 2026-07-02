@@ -10,8 +10,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeAtOrBelowThresholdConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerLifeThresholdConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -36,17 +37,17 @@ class FaithsShieldTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
 
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ControllerLifeThresholdConditionalEffect.class);
-        ControllerLifeThresholdConditionalEffect normal =
-                (ControllerLifeThresholdConditionalEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(normal.lifeThreshold()).isEqualTo(6);
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect normal =
+                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(0);
+        assertThat(((ControllerLifeAtLeast) normal.condition()).threshold()).isEqualTo(6);
         assertThat(normal.wrapped()).isInstanceOf(GrantProtectionChoiceUntilEndOfTurnEffect.class);
 
         assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ControllerLifeAtOrBelowThresholdConditionalEffect.class);
-        ControllerLifeAtOrBelowThresholdConditionalEffect fateful =
-                (ControllerLifeAtOrBelowThresholdConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(fateful.lifeThreshold()).isEqualTo(5);
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect fateful =
+                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
+        assertThat(((ControllerLifeAtMost) fateful.condition()).threshold()).isEqualTo(5);
         assertThat(fateful.wrapped())
                 .isInstanceOf(GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect.class);
     }

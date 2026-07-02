@@ -9,9 +9,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.NoSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TwoOrMoreSpellsCastLastTurnConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,9 +30,9 @@ class MondronenShamanTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(NoSpellsCastLastTurnConditionalEffect.class);
-        NoSpellsCastLastTurnConditionalEffect conditional =
-                (NoSpellsCastLastTurnConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
+                .isInstanceOf(ConditionalEffect.class);
+        ConditionalEffect conditional =
+                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
 
         assertThat(card.getBackFaceCard()).isInstanceOf(TovolarsMagehunter.class);
@@ -53,7 +54,7 @@ class MondronenShamanTest extends BaseCardTest {
 
         assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(TwoOrMoreSpellsCastLastTurnConditionalEffect.class);
+                .isInstanceOf(ConditionalEffect.class);
     }
 
     @Test

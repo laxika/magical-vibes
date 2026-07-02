@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,9 +25,9 @@ class SpiralingDuelistTest extends BaseCardTest {
         SpiralingDuelist card = new SpiralingDuelist();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MetalcraftConditionalEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ConditionalEffect.class);
 
-        MetalcraftConditionalEffect metalcraft = (MetalcraftConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
         assertThat(metalcraft.wrapped()).isInstanceOf(GrantKeywordEffect.class);
 
         GrantKeywordEffect grant = (GrantKeywordEffect) metalcraft.wrapped();

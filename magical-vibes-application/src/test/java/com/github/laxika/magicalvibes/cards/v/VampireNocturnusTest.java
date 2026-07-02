@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
-import com.github.laxika.magicalvibes.model.effect.TopCardOfLibraryColorConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -30,7 +31,7 @@ class VampireNocturnusTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(PlayWithTopCardRevealedEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(TopCardOfLibraryColorConditionalEffect.class);
+        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(ConditionalEffect.class);
     }
 
     // ===== Casting and resolving =====
