@@ -13,15 +13,12 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetFilter;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CastFromZoneConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlsAnotherPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
@@ -32,20 +29,14 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPer
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessManyLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.KickedConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MetalcraftConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MorbidConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.RaidConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectContext;
+import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +62,7 @@ public class BattlefieldEntryService {
     private final TriggerCollectionService triggerCollectionService;
     private final GraveyardTargetingService graveyardTargetingService;
     private final ETBTokenTargetService etbTokenTargetService;
+    private final EtbEffectResolver etbEffectResolver;
 
     // @Lazy on triggerCollectionService breaks the constructor cycle:
     // BattlefieldEntryService → TriggerCollectionService → PlayerInputService/queue services →
@@ -81,7 +73,8 @@ public class BattlefieldEntryService {
                                    PermanentCopierService permanentCopierService,
                                    @Lazy TriggerCollectionService triggerCollectionService,
                                    GraveyardTargetingService graveyardTargetingService,
-                                   ETBTokenTargetService etbTokenTargetService) {
+                                   ETBTokenTargetService etbTokenTargetService,
+                                   EtbEffectResolver etbEffectResolver) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.playerInputService = playerInputService;
@@ -89,6 +82,7 @@ public class BattlefieldEntryService {
         this.triggerCollectionService = triggerCollectionService;
         this.graveyardTargetingService = graveyardTargetingService;
         this.etbTokenTargetService = etbTokenTargetService;
+        this.etbEffectResolver = etbEffectResolver;
     }
 
 
@@ -473,52 +467,13 @@ public class BattlefieldEntryService {
             }
 
             List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
+            // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
+            // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
+            EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode, kicked);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
-                    .map(e -> {
-                        if (e instanceof LoseGameIfNotCastFromHandEffect) {
-                            return wasCastFromHand ? null : new TargetPlayerLosesGameEffect(controllerId);
-                        }
-                        // Unwrap modal ETB choice (choose one) using the mode index from cast time
-                        if (e instanceof ChooseOneEffect coe) {
-                            if (etbMode >= 0 && etbMode < coe.options().size()) {
-                                return coe.options().get(etbMode).effect();
-                            }
-                            return coe.options().getFirst().effect();
-                        }
-                        // Unwrap kicked conditional: if kicked, use inner effect; otherwise filter out
-                        // (intervening-if — MTG Rule 603.4: ability doesn't trigger if condition not met)
-                        if (e instanceof KickedConditionalEffect kce) {
-                            return kicked ? kce.wrapped() : null;
-                        }
-                        // Unwrap cast-from-hand conditional: only fire if cast from hand
-                        // (intervening-if — MTG Rule 603.4: e.g. "When this enters, if you cast it from your hand, [effect]")
-                        if (e instanceof CastFromZoneConditionalEffect cfhce) {
-                            return wasCastFromHand && cfhce.sourceZone() == Zone.HAND ? cfhce.wrapped() : null;
-                        }
-                        // "Gain life equal to that creature's toughness" — resolve toughness at trigger time
-                        if (e instanceof GainLifeEqualToToughnessEffect) {
-                            return new GainLifeEffect(card.getToughness());
-                        }
-                        return e;
-                    })
+                    .map(e -> etbEffectResolver.resolve(etbCtx, e))
                     .filter(Objects::nonNull)
-                    // Conditional intervening-if: only trigger if condition is met
-                    .filter(e -> {
-                        if (e instanceof MetalcraftConditionalEffect) {
-                            return gameQueryService.isMetalcraftMet(gameData, controllerId);
-                        }
-                        if (e instanceof MorbidConditionalEffect) {
-                            return gameQueryService.isMorbidMet(gameData);
-                        }
-                        if (e instanceof ControlsAnotherPermanentConditionalEffect capc) {
-                            return gameQueryService.controlsAnotherPermanent(gameData, controllerId, card, capc.filter());
-                        }
-                        if (e instanceof RaidConditionalEffect) {
-                            return gameData.playersDeclaredAttackersThisTurn.contains(controllerId);
-                        }
-                        return true;
-                    })
                     .toList();
 
             for (CardEffect effect : mayEffects) {
@@ -533,173 +488,8 @@ public class BattlefieldEntryService {
             }
 
             if (!mandatoryEffects.isEmpty()) {
-                // Separate graveyard exile effects (need multi-target selection at trigger time)
-                List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
-                        .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
-                // Separate graveyard cast effects (need single-target selection at trigger time)
-                List<CardEffect> graveyardCastEffects = mandatoryEffects.stream()
-                        .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect).toList();
-                // Separate graveyard flashback-grant effects (need single-target selection at trigger time)
-                List<CardEffect> graveyardFlashbackEffects = mandatoryEffects.stream()
-                        .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect).toList();
-                List<CardEffect> otherEffects = mandatoryEffects.stream()
-                        .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
-                        .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
-                        .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
-                        .filter(e -> !e.canTargetSpell()).toList();
-                // Separate spell-targeting effects (need stack-target selection at trigger time)
-                List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
-                        .filter(CardEffect::canTargetSpell).toList();
-
-                // Put non-special effects on the stack as before
-                if (!otherEffects.isEmpty()) {
-                    boolean cardNeedsTarget = EffectResolution.needsTarget(card);
-                    boolean hasTarget = targetId != null || !targetIds.isEmpty();
-
-                    // A permanent that entered without a target chosen at cast time — a token copy,
-                    // or a creature put onto the battlefield from a graveyard via undying,
-                    // reanimation, etc. — must still choose targets for its mandatory ETB as the
-                    // ability is put on the stack (CR 603.3b). Cast spells with "up to" targets that
-                    // chose 0 targets are excluded; they passed through cast-time target selection.
-                    List<Permanent> enteredBf = gameData.playerBattlefields.get(controllerId);
-                    Permanent justEnteredPermanent = enteredBf != null && !enteredBf.isEmpty()
-                            ? enteredBf.getLast() : null;
-                    boolean enteredFromGraveyard = justEnteredPermanent != null
-                            && justEnteredPermanent.getEnteredFromGraveyardOwnerId() != null;
-                    boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard;
-
-                    if (!cardNeedsTarget || hasTarget) {
-                        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                        UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
-
-                        StackEntry etbEntry = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                controllerId,
-                                card.getName() + "'s ETB ability",
-                                new ArrayList<>(otherEffects),
-                                0,
-                                targetId,
-                                sourcePermanentId,
-                                Map.of(),
-                                null,
-                                List.of(),
-                                targetIds != null ? targetIds : List.of()
-                        );
-                        if (modeTargetFilter != null) {
-                            etbEntry.setTargetFilter(modeTargetFilter);
-                        }
-                        gameData.stack.add(etbEntry);
-                        String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
-                        gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                        log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
-                        // Naban: extra triggers for Wizard ETB
-                        for (int i = 0; i < extraWizardTriggers; i++) {
-                            StackEntry extraEtbEntry = new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    card,
-                                    controllerId,
-                                    card.getName() + "'s ETB ability",
-                                    new ArrayList<>(otherEffects),
-                                    0,
-                                    targetId,
-                                    sourcePermanentId,
-                                    Map.of(),
-                                    null,
-                                    List.of(),
-                                    targetIds != null ? targetIds : List.of()
-                            );
-                            if (modeTargetFilter != null) {
-                                extraEtbEntry.setTargetFilter(modeTargetFilter);
-                            }
-                            gameData.stack.add(extraEtbEntry);
-                            gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                            log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
-                        }
-                    } else if (choosesTargetAtTriggerTime) {
-                        // CR 603.3: no target was chosen at cast time because the permanent
-                        // wasn't cast (token copy, or returned from a graveyard via undying /
-                        // reanimation). The controller must choose a target as the triggered
-                        // ability is put on the stack.
-                        // For non-token casts with "up to N" abilities where 0 was chosen,
-                        // the ETB still triggers but has no effect — we skip queueing it.
-                        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-                        UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
-
-                        if (card.getSpellTargets().size() > 1 || etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(card)) {
-                            // Multi-target ETB on a token copy (e.g. Burning Sun's Avatar, or a
-                            // single group with "up to N" targets): choose slot-by-slot at
-                            // trigger time, accumulating into targetIds.
-                            gameData.pendingETBTokenMultiTargetTriggers.add(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                    card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
-                            for (int i = 0; i < extraWizardTriggers; i++) {
-                                gameData.pendingETBTokenMultiTargetTriggers.add(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                        card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
-                            }
-                            String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
-                            gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                            log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
-                                    gameData.id, card.getName());
-                        } else {
-                            TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
-
-                            gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                                    card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
-                            for (int i = 0; i < extraWizardTriggers; i++) {
-                                gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                                        card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
-                            }
-                            String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
-                            gameBroadcastService.logAndBroadcast(gameData, etbLog);
-                            log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
-                                    gameData.id, card.getName());
-                        }
-                    }
-                }
-
-                // Handle graveyard exile effects: targets must be chosen at trigger time
-                for (CardEffect effect : graveyardExileEffects) {
-                    ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
-                    for (int t = 0; t < 1 + extraWizardTriggers; t++) {
-                        graveyardTargetingService.handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
-                    }
-                }
-
-                // Handle graveyard cast effects: target instant/sorcery in opponent's graveyard
-                for (CardEffect effect : graveyardCastEffects) {
-                    for (int t = 0; t < 1 + extraWizardTriggers; t++) {
-                        graveyardTargetingService.handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
-                    }
-                }
-
-                // Handle graveyard flashback-grant effects: target instant/sorcery in controller's graveyard
-                for (CardEffect effect : graveyardFlashbackEffects) {
-                    for (int t = 0; t < 1 + extraWizardTriggers; t++) {
-                        graveyardTargetingService.handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
-                    }
-                }
-
-                // Handle spell-targeting ETB effects: target must be chosen from spells on the stack
-                for (CardEffect effect : spellTargetEffects) {
-                    StackEntryPredicate spellFilter = null;
-                    if (effect instanceof CopySpellEffect cse) {
-                        spellFilter = cse.spellFilter();
-                    }
-                    gameData.pendingETBSpellTargetTriggers.add(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                            card, controllerId, List.of(effect), spellFilter));
-                }
-                if (!gameData.pendingETBSpellTargetTriggers.isEmpty()
-                        && !gameData.interaction.isAwaitingInput()) {
-                    etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
-                }
-                if (!gameData.pendingETBTokenTargetTriggers.isEmpty()
-                        && !gameData.interaction.isAwaitingInput()) {
-                    etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
-                }
-                if (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()
-                        && !gameData.interaction.isAwaitingInput()) {
-                    etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
-                }
+                queueMandatoryETBEffects(gameData, controllerId, card, targetId, targetIds,
+                        mandatoryEffects, modeTargetFilter, extraWizardTriggers);
             }
         }
 
@@ -713,6 +503,190 @@ public class BattlefieldEntryService {
         if (card.hasType(CardType.LAND)) {
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
+        }
+    }
+
+    /**
+     * Routes the already-resolved mandatory ETB effects to the stack or to the appropriate
+     * interactive target-selection queue, and processes any pending queue that isn't already
+     * awaiting input. The effects have already been unwrapped/gated by {@link EtbEffectResolver}.
+     *
+     * <p>Effects are partitioned by the kind of target selection they need at trigger time:
+     * graveyard-exile (multi-target), graveyard-cast and grant-flashback (single graveyard target),
+     * spell-targeting (choose a spell on the stack), and everything else ("other"), which either
+     * goes straight onto the stack (target already chosen at cast time) or, for token copies and
+     * permanents that entered from a graveyard, is queued to choose targets as the ability goes on
+     * the stack (CR 603.3b). Naban doubling applies to every path via {@code extraWizardTriggers}.
+     */
+    private void queueMandatoryETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                          List<UUID> targetIds, List<CardEffect> mandatoryEffects,
+                                          TargetFilter modeTargetFilter, int extraWizardTriggers) {
+        // Separate graveyard exile effects (need multi-target selection at trigger time)
+        List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
+        // Separate graveyard cast effects (need single-target selection at trigger time)
+        List<CardEffect> graveyardCastEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect).toList();
+        // Separate graveyard flashback-grant effects (need single-target selection at trigger time)
+        List<CardEffect> graveyardFlashbackEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect).toList();
+        List<CardEffect> otherEffects = mandatoryEffects.stream()
+                .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
+                .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
+                .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
+                .filter(e -> !e.canTargetSpell()).toList();
+        // Separate spell-targeting effects (need stack-target selection at trigger time)
+        List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
+                .filter(CardEffect::canTargetSpell).toList();
+
+        // Put non-special effects on the stack as before
+        if (!otherEffects.isEmpty()) {
+            boolean cardNeedsTarget = EffectResolution.needsTarget(card);
+            boolean hasTarget = targetId != null || !targetIds.isEmpty();
+
+            // A permanent that entered without a target chosen at cast time — a token copy,
+            // or a creature put onto the battlefield from a graveyard via undying,
+            // reanimation, etc. — must still choose targets for its mandatory ETB as the
+            // ability is put on the stack (CR 603.3b). Cast spells with "up to" targets that
+            // chose 0 targets are excluded; they passed through cast-time target selection.
+            List<Permanent> enteredBf = gameData.playerBattlefields.get(controllerId);
+            Permanent justEnteredPermanent = enteredBf != null && !enteredBf.isEmpty()
+                    ? enteredBf.getLast() : null;
+            boolean enteredFromGraveyard = justEnteredPermanent != null
+                    && justEnteredPermanent.getEnteredFromGraveyardOwnerId() != null;
+            boolean choosesTargetAtTriggerTime = card.isToken() || enteredFromGraveyard;
+
+            if (!cardNeedsTarget || hasTarget) {
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+
+                StackEntry etbEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s ETB ability",
+                        new ArrayList<>(otherEffects),
+                        0,
+                        targetId,
+                        sourcePermanentId,
+                        Map.of(),
+                        null,
+                        List.of(),
+                        targetIds != null ? targetIds : List.of()
+                );
+                if (modeTargetFilter != null) {
+                    etbEntry.setTargetFilter(modeTargetFilter);
+                }
+                gameData.stack.add(etbEntry);
+                String etbLog = card.getName() + "'s enter-the-battlefield ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                log.info("Game {} - {} ETB ability pushed onto stack", gameData.id, card.getName());
+                // Naban: extra triggers for Wizard ETB
+                for (int i = 0; i < extraWizardTriggers; i++) {
+                    StackEntry extraEtbEntry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            controllerId,
+                            card.getName() + "'s ETB ability",
+                            new ArrayList<>(otherEffects),
+                            0,
+                            targetId,
+                            sourcePermanentId,
+                            Map.of(),
+                            null,
+                            List.of(),
+                            targetIds != null ? targetIds : List.of()
+                    );
+                    if (modeTargetFilter != null) {
+                        extraEtbEntry.setTargetFilter(modeTargetFilter);
+                    }
+                    gameData.stack.add(extraEtbEntry);
+                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    log.info("Game {} - {} ETB ability pushed onto stack (Wizard ETB extra trigger)", gameData.id, card.getName());
+                }
+            } else if (choosesTargetAtTriggerTime) {
+                // CR 603.3: no target was chosen at cast time because the permanent
+                // wasn't cast (token copy, or returned from a graveyard via undying /
+                // reanimation). The controller must choose a target as the triggered
+                // ability is put on the stack.
+                // For non-token casts with "up to N" abilities where 0 was chosen,
+                // the ETB still triggers but has no effect — we skip queueing it.
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
+
+                if (card.getSpellTargets().size() > 1 || etbTokenTargetService.hasGroupWithMaxTargetsGreaterThanOne(card)) {
+                    // Multi-target ETB on a token copy (e.g. Burning Sun's Avatar, or a
+                    // single group with "up to N" targets): choose slot-by-slot at
+                    // trigger time, accumulating into targetIds.
+                    gameData.pendingETBTokenMultiTargetTriggers.add(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
+                    for (int i = 0; i < extraWizardTriggers; i++) {
+                        gameData.pendingETBTokenMultiTargetTriggers.add(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
+                    }
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
+                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    log.info("Game {} - {} ETB multi-target trigger queued (no target chosen at cast time)",
+                            gameData.id, card.getName());
+                } else {
+                    TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
+
+                    gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                            card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                    for (int i = 0; i < extraWizardTriggers; i++) {
+                        gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                                card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
+                    }
+                    String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
+                    gameBroadcastService.logAndBroadcast(gameData, etbLog);
+                    log.info("Game {} - {} ETB trigger queued for target selection (no target chosen at cast time)",
+                            gameData.id, card.getName());
+                }
+            }
+        }
+
+        // Handle graveyard exile effects: targets must be chosen at trigger time
+        for (CardEffect effect : graveyardExileEffects) {
+            ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handleGraveyardExileETBTargeting(gameData, controllerId, card, mandatoryEffects, exile);
+            }
+        }
+
+        // Handle graveyard cast effects: target instant/sorcery in opponent's graveyard
+        for (CardEffect effect : graveyardCastEffects) {
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
+            }
+        }
+
+        // Handle graveyard flashback-grant effects: target instant/sorcery in controller's graveyard
+        for (CardEffect effect : graveyardFlashbackEffects) {
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
+            }
+        }
+
+        // Handle spell-targeting ETB effects: target must be chosen from spells on the stack
+        for (CardEffect effect : spellTargetEffects) {
+            StackEntryPredicate spellFilter = null;
+            if (effect instanceof CopySpellEffect cse) {
+                spellFilter = cse.spellFilter();
+            }
+            gameData.pendingETBSpellTargetTriggers.add(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                    card, controllerId, List.of(effect), spellFilter));
+        }
+        if (!gameData.pendingETBSpellTargetTriggers.isEmpty()
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
+        }
+        if (!gameData.pendingETBTokenTargetTriggers.isEmpty()
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
+        }
+        if (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
     }
 }

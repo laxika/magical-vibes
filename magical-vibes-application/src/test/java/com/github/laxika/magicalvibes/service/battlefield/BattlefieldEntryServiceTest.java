@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +48,8 @@ class BattlefieldEntryServiceTest {
         service = new BattlefieldEntryService(
                 gameQueryService, gameBroadcastService, playerInputService,
                 permanentCopierService, triggerCollectionService,
-                graveyardTargetingService, etbTokenTargetService);
+                graveyardTargetingService, etbTokenTargetService,
+                new EtbEffectResolver(gameQueryService));
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
