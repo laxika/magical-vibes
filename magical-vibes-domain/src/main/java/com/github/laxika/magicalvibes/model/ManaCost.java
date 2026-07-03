@@ -209,8 +209,23 @@ public class ManaCost {
         if (!assignHybrids(available, extraGeneric)) {
             return false;
         }
-        int remaining = totalOf(available);
+        int remaining = totalOf(available) - residualFlexibleOvercount(pool);
         return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
+    }
+
+    /**
+     * Portion of a pool's {@code flexibleOvercount} not already reflected in its per-color
+     * amounts (which {@link ManaPool#get} corrects for). Summing per-color availability
+     * double-counts mutually-exclusive taps (e.g. a dual land counted as both R and G), so
+     * this must be subtracted from a per-color reconstruction of the generic-payable total.
+     * Always 0 for a plain {@link ManaPool}.
+     */
+    private static int residualFlexibleOvercount(ManaPool pool) {
+        int residual = pool.getFlexibleOvercount();
+        for (ManaColor color : ManaColor.values()) {
+            residual -= pool.getPerColorOvercount(color);
+        }
+        return Math.max(0, residual);
     }
 
     // ── Hybrid mana support (shared by the core canPay/pay path) ───────

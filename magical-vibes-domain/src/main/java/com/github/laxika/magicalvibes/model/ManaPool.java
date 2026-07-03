@@ -93,6 +93,24 @@ public class ManaPool {
     }
 
     /**
+     * Inflation of {@link #getTotal()} from sources whose mana abilities are mutually
+     * exclusive (only one ability activates per tap). Always 0 for a plain pool;
+     * overridden by {@link VirtualManaPool}.
+     */
+    public int getFlexibleOvercount() {
+        return 0;
+    }
+
+    /**
+     * Inflation of {@link #get(ManaColor)} for the given color from a single source
+     * with multiple abilities producing that color. Always 0 for a plain pool;
+     * overridden by {@link VirtualManaPool}.
+     */
+    public int getPerColorOvercount(ManaColor color) {
+        return 0;
+    }
+
+    /**
      * Total mana available across all pool buckets (regular, restricted, flashback-only, etc.).
      * Used to snapshot mana before/after spell payment to compute mana spent.
      */
