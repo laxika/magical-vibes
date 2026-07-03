@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DarksteelAxe;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -68,7 +69,7 @@ class PuresteelPaladinTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve equipment spell, equipment enters, trigger goes on stack
             harness.passBothPriorities(); // resolve trigger (MayEffect -> prompt)
 
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
         @Test
@@ -117,7 +118,7 @@ class PuresteelPaladinTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve artifact spell
 
             // No may ability prompt since PristineTalisman is not equipment
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         }
 
         @Test
@@ -132,7 +133,7 @@ class PuresteelPaladinTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve equipment spell
 
             // Paladin only triggers for equipment under your control
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         }
     }
 

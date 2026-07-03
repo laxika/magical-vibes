@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -54,7 +55,7 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Manually begin the may ability interaction
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginMayAbilityChoice(pending.controllerId(), pending.description());
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -85,7 +86,7 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginMayAbilityChoice(pending.controllerId(), pending.description());
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
         harness.handleMayAbilityChosen(player1, true);
 
         // Stack entry created, pass priorities to resolve
@@ -131,7 +132,7 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginMayAbilityChoice(pending.controllerId(), pending.description());
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
         harness.handleMayAbilityChosen(player1, true);
 
         // Pass priorities to resolve
@@ -175,7 +176,7 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginMayAbilityChoice(pending.controllerId(), pending.description());
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
         harness.handleMayAbilityChosen(player1, true);
 
         // Pass priorities to resolve — should handle empty library gracefully
@@ -205,7 +206,7 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginMayAbilityChoice(pending.controllerId(), pending.description());
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
         harness.handleMayAbilityChosen(player1, true);
 
         // Pass priorities to resolve

@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
@@ -325,19 +324,9 @@ class AiChoiceHandler {
 
     // ===== May Ability Choice =====
 
+    /** Baseline may-ability answer via {@code MayAbilityChoiceAiStrategy}; Hard AI's override falls back here. */
     void handleMayAbilityChoice(GameData gameData) {
-        InteractionContext.MayAbilityChoice mayAbilityChoice = gameData.interaction.mayAbilityChoiceContext();
-        if (mayAbilityChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = mayAbilityChoice.playerId();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        log.info("AI: Accepting may ability in game {}", gameId);
-        send(() -> gameActions.handleMayAbilityChosen(selfConnection, new MayAbilityChosenRequest(null, true)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Registry-managed interactions (per-kind strategies) =====

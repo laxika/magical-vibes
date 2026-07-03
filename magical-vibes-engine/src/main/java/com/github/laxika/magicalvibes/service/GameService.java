@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -53,7 +52,6 @@ public class GameService {
     private final CardChoiceHandlerService cardChoiceHandlerService;
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
-    private final MayAbilityHandlerService mayAbilityHandlerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
     private final SpellCastingService spellCastingService;
@@ -136,7 +134,6 @@ public class GameService {
             case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
             case InteractionContext.GraveyardChoice gc -> controlledId.equals(gc.playerId());
             case InteractionContext.ColorChoice cc -> controlledId.equals(cc.playerId());
-            case InteractionContext.MayAbilityChoice mc -> controlledId.equals(mc.playerId());
             case InteractionContext.MultiPermanentChoice mpc -> controlledId.equals(mpc.playerId());
             case InteractionContext.MultiGraveyardChoice mgc -> controlledId.equals(mgc.playerId());
             case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
@@ -516,7 +513,10 @@ public class GameService {
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            mayAbilityHandlerService.handleMayAbilityChosen(gameData, player, accepted);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.MayAbilityChosen(accepted))) {
+                throw new IllegalStateException("Not awaiting may ability choice");
+            }
         }
     }
 

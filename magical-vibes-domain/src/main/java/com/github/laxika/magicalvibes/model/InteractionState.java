@@ -42,7 +42,6 @@ public class InteractionState {
     private UUID pendingAuraOwnerId;
     private UUID pendingEquipmentAttachEquipmentId;
     private UUID pendingEquipmentAttachTargetId;
-    private UUID awaitingMayAbilityPlayerId;
 
     /**
      * Creates a deep copy of this interaction state for AI simulation.
@@ -69,7 +68,6 @@ public class InteractionState {
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
         copy.pendingEquipmentAttachEquipmentId = this.pendingEquipmentAttachEquipmentId;
         copy.pendingEquipmentAttachTargetId = this.pendingEquipmentAttachTargetId;
-        copy.awaitingMayAbilityPlayerId = this.awaitingMayAbilityPlayerId;
         return copy;
     }
 
@@ -402,30 +400,6 @@ public class InteractionState {
         if (colorChoice == null) return null;
         return new InteractionContext.ColorChoice(colorChoice.playerId(), colorChoice.permanentId(),
                 colorChoice.etbTargetId(), colorChoice.choiceContext());
-    }
-
-    // ========================================================================
-    // May ability choice
-    // ========================================================================
-
-    public void beginMayAbilityChoice(UUID playerId, String description) {
-        this.awaitingInput = AwaitingInput.MAY_ABILITY_CHOICE;
-        this.awaitingMayAbilityPlayerId = playerId;
-        this.context = new InteractionContext.MayAbilityChoice(playerId, description);
-    }
-
-    public void clearMayAbilityChoice() {
-        this.awaitingMayAbilityPlayerId = null;
-    }
-
-    public UUID awaitingMayAbilityPlayerId() {
-        return this.awaitingMayAbilityPlayerId;
-    }
-
-    public InteractionContext.MayAbilityChoice mayAbilityChoiceContext() {
-        if (context instanceof InteractionContext.MayAbilityChoice mc) return mc;
-        if (awaitingMayAbilityPlayerId == null) return null;
-        return new InteractionContext.MayAbilityChoice(awaitingMayAbilityPlayerId, "");
     }
 
     // ========================================================================

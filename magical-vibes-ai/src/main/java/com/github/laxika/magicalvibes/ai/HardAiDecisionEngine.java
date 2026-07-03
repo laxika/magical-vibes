@@ -2875,7 +2875,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     @Override
     protected void handleMayAbilityChoice(GameData gameData) {
-        InteractionContext.MayAbilityChoice mayChoice = gameData.interaction.mayAbilityChoiceContext();
+        PendingInteraction.MayAbilityChoice mayChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         if (mayChoice == null || !aiPlayer.getId().equals(mayChoice.playerId())) {
             choiceHandler.handleMayAbilityChoice(gameData);
             return;

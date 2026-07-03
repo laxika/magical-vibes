@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -98,14 +98,14 @@ public class MayAbilityHandlerService {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
             throw new IllegalStateException("Not awaiting may ability choice");
         }
-        InteractionContext.MayAbilityChoice mayAbilityChoice = gameData.interaction.mayAbilityChoiceContext();
+        PendingInteraction.MayAbilityChoice mayAbilityChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
         if (mayAbilityChoice == null || !player.getId().equals(mayAbilityChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         PendingMayAbility ability = gameData.pendingMayAbilities.removeFirst();
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMayAbilityChoice();
 
         // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley)
         if (gameData.pendingPileSeparation) {

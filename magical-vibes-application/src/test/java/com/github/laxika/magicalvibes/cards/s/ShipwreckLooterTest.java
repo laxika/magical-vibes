@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -61,7 +62,7 @@ class ShipwreckLooterTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // MayEffect prompts controller
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         harness.handleMayAbilityChosen(player1, true);

@@ -4056,7 +4056,7 @@ class HardAiDecisionEngineTest {
                             List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1)),
                             "You may draw a card");
             gd.pendingMayAbilities.add(pending);
-            gd.interaction.beginMayAbilityChoice(player1.getId(), pending.description());
+            gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
 
             ai.handleMessage("MAY_ABILITY_CHOICE", "");
 
@@ -4081,7 +4081,7 @@ class HardAiDecisionEngineTest {
                             List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect(5)),
                             "You may have this deal 5 damage to you");
             gd.pendingMayAbilities.add(pending);
-            gd.interaction.beginMayAbilityChoice(player1.getId(), pending.description());
+            gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
 
             ai.handleMessage("MAY_ABILITY_CHOICE", "");
 

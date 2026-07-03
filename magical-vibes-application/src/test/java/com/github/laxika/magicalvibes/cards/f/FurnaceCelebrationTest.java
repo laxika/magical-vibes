@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.DrossHopper;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SuntailHawk;
@@ -56,7 +57,7 @@ class FurnaceCelebrationTest extends BaseCardTest {
         // Resolve Furnace Celebration MayPayManaEffect — shows may prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     // ===== Accept, pay, target creature =====
@@ -179,7 +180,7 @@ class FurnaceCelebrationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // May prompt fires
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept, but cannot pay — auto-treated as decline
         harness.handleMayAbilityChosen(player1, true);
@@ -202,7 +203,7 @@ class FurnaceCelebrationTest extends BaseCardTest {
         harness.handlePermanentChosen(player2, bears.getId());
 
         // No may ability should fire for player1
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     // ===== Helper methods =====

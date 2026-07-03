@@ -666,6 +666,7 @@ public class GameSimulator {
                 case PendingInteraction.Scry s -> s.playerId();
                 case PendingInteraction.HandTopBottomChoice htbc -> htbc.playerId();
                 case PendingInteraction.LibraryReorder lr -> lr.playerId();
+                case PendingInteraction.MayAbilityChoice mc -> mc.playerId();
                 default -> null;
             };
         }
@@ -678,7 +679,6 @@ public class GameSimulator {
             case InteractionContext.PermanentChoice pc -> pc.playerId();
             case InteractionContext.GraveyardChoice gc -> gc.playerId();
             case InteractionContext.ColorChoice cc -> cc.playerId();
-            case InteractionContext.MayAbilityChoice mc -> mc.playerId();
             case InteractionContext.MultiPermanentChoice mpc -> mpc.playerId();
             case InteractionContext.MultiGraveyardChoice mgc -> mgc.playerId();
             case InteractionContext.LibrarySearch ls -> ls.playerId();

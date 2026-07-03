@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AzureDrake;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -73,7 +74,7 @@ class FeedThePackTest extends BaseCardTest {
 
         // Resolve the triggered ability — MayEffect presents the may choice
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Accept — now must choose a creature to sacrifice
         harness.handleMayAbilityChosen(player1, true);
@@ -117,7 +118,7 @@ class FeedThePackTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to end step → trigger queued
         harness.passBothPriorities(); // resolve trigger → may choice
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -144,7 +145,7 @@ class FeedThePackTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to end step → trigger queued
         harness.passBothPriorities(); // resolve trigger → may choice
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 

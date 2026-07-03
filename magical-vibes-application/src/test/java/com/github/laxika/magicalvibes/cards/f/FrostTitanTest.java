@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -231,7 +232,7 @@ class FrostTitanTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve counter trigger
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
-            assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player2.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player2.getId());
         }
 
         @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PriestOfUrabrask;
 import com.github.laxika.magicalvibes.cards.s.SuturePriest;
@@ -69,7 +70,7 @@ class TocatliHonorGuardTest extends BaseCardTest {
         // Resolve creature spell — Grizzly Bears enters, but Suture Priest does NOT trigger
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 20);
     }
@@ -92,7 +93,7 @@ class TocatliHonorGuardTest extends BaseCardTest {
         // Resolve creature spell — Grizzly Bears enters under player2, Suture Priest does NOT trigger
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player2, 20);
     }

@@ -8,9 +8,6 @@ import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
@@ -27,7 +24,6 @@ import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMess
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -120,18 +116,6 @@ public class ReconnectionService {
                 InteractionContext.ColorChoice cc = gameData.interaction.colorChoiceContextView();
                 if (cc != null) {
                     resendFromContext(gameData, playerId, cc);
-                }
-            }
-            case MAY_ABILITY_CHOICE -> {
-                InteractionContext.MayAbilityChoice mc = gameData.interaction.mayAbilityChoiceContext();
-                if (mc != null) {
-                    // keep legacy description when context was not populated
-                    if (mc.description().isBlank() && !gameData.pendingMayAbilities.isEmpty()) {
-                        resendFromContext(gameData, playerId, new InteractionContext.MayAbilityChoice(mc.playerId(),
-                                gameData.pendingMayAbilities.getFirst().description()));
-                    } else {
-                        resendFromContext(gameData, playerId, mc);
-                    }
                 }
             }
             case MULTI_PERMANENT_CHOICE -> {
@@ -305,22 +289,6 @@ public class ReconnectionService {
                     prompt = "Choose a color.";
                 }
                 sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(options, prompt));
-            }
-            case InteractionContext.MayAbilityChoice mc -> {
-                if (playerId.equals(mc.playerId())) {
-                    boolean canPay = true;
-                    String manaCost = null;
-                    if (!gameData.pendingMayAbilities.isEmpty()) {
-                        PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
-                        manaCost = next.manaCost();
-                        if (manaCost != null) {
-                            ManaCost cost = new ManaCost(manaCost);
-                            ManaPool pool = gameData.playerManaPools.get(next.controllerId());
-                            canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
-                        }
-                    }
-                    sessionManager.sendToPlayer(playerId, new MayAbilityMessage(mc.description(), canPay, manaCost));
-                }
             }
             case InteractionContext.MultiPermanentChoice mpc -> {
                 if (playerId.equals(mpc.playerId())) {

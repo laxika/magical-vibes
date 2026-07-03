@@ -24,4 +24,8 @@ public sealed interface InteractionAnswer {
     /** A full ordering of the viewed cards (indices into the viewed list). */
     record CardOrder(java.util.List<Integer> cardOrder) implements InteractionAnswer {
     }
+
+    /** Accept or decline a may ability. */
+    record MayAbilityChosen(boolean accepted) implements InteractionAnswer {
+    }
 }

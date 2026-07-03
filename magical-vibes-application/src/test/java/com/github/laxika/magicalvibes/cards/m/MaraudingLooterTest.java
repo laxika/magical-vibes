@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -62,7 +63,7 @@ class MaraudingLooterTest extends BaseCardTest {
         // Resolve the triggered ability — MayEffect presents the may choice
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -97,7 +98,7 @@ class MaraudingLooterTest extends BaseCardTest {
         // Resolve the triggered ability — MayEffect presents the may choice
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Decline the may ability
         harness.handleMayAbilityChosen(player1, false);
@@ -124,7 +125,7 @@ class MaraudingLooterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No may ability prompt — raid condition not met
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Hand size unchanged
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
@@ -147,7 +148,7 @@ class MaraudingLooterTest extends BaseCardTest {
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         // No trigger for player1's Marauding Looter on player2's end step
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     // ===== Helpers =====

@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandM
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
-import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -39,6 +38,7 @@ public class PlayerInputService {
 
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * When mind control is active, redirect messages intended for the controlled player
@@ -392,19 +392,8 @@ public class PlayerInputService {
         }
 
         PendingMayAbility next = gameData.pendingMayAbilities.getFirst();
-        gameData.interaction.beginMayAbilityChoice(next.controllerId(), next.description());
-
-        boolean canPay = true;
-        if (next.manaCost() != null) {
-            ManaCost cost = new ManaCost(next.manaCost());
-            ManaPool pool = gameData.playerManaPools.get(next.controllerId());
-            canPay = cost.hasX() ? cost.calculateMaxX(pool) > 0 : cost.canPay(pool);
-        }
-
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, next.controllerId()), new MayAbilityMessage(next.description(), canPay, next.manaCost()));
-
-        String playerName = gameData.playerIdToName.get(next.controllerId());
-        log.info("Game {} - Awaiting {} to decide on may ability: {}", gameData.id, playerName, next.description());
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MayAbilityChoice(
+                next.controllerId(), next.description(), next.manaCost()));
     }
 }
 

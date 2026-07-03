@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PriestOfUrabrask;
 import com.github.laxika.magicalvibes.cards.s.SurgeNode;
@@ -72,7 +73,7 @@ class TorporOrbTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No may prompt — trigger was suppressed
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         // Life unchanged
         harness.assertLife(player1, 20);
@@ -97,7 +98,7 @@ class TorporOrbTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No may prompt — trigger was suppressed
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
         // Player 2 life unchanged
         harness.assertLife(player2, 20);

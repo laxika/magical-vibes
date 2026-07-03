@@ -27,6 +27,8 @@ import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.interaction.MayAbilityChoiceInteractionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -58,7 +60,6 @@ class PlayerInputServiceTest {
     @Mock private SessionManager sessionManager;
     @Mock private CardViewFactory cardViewFactory;
 
-    @InjectMocks
     private PlayerInputService svc;
 
     @Captor private ArgumentCaptor<Object> messageCaptor;
@@ -70,6 +71,11 @@ class PlayerInputServiceTest {
 
     @BeforeEach
     void setUp() {
+        InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
+        registry.register(new MayAbilityChoiceInteractionHandler(
+                sessionManager, mock(MayAbilityHandlerService.class)));
+        svc = new PlayerInputService(sessionManager, cardViewFactory, registry);
+
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));

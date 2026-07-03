@@ -18,7 +18,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingKarnRestart, PendingKnowledgePoolCast,
         PendingInteraction.XValueChoice, PendingInteraction.Scry,
-        PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder {
+        PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
+        PendingInteraction.MayAbilityChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -47,5 +48,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                           UUID deckOwnerId, String prompt) implements PendingInteraction {
+    }
+
+    /**
+     * Accept/decline prompt for the head of {@link GameData#pendingMayAbilities}.
+     * {@code description} and {@code manaCost} mirror that head entry; whether the player
+     * can currently pay {@code manaCost} is computed at prompt time from their mana pool.
+     */
+    record MayAbilityChoice(UUID playerId, String description, String manaCost)
+            implements PendingInteraction {
     }
 }

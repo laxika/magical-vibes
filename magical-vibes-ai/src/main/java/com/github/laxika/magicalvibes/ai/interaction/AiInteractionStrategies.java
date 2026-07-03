@@ -20,6 +20,7 @@ public final class AiInteractionStrategies {
         register(new ScryAiStrategy());
         register(new HandTopBottomChoiceAiStrategy());
         register(new LibraryReorderAiStrategy());
+        register(new MayAbilityChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

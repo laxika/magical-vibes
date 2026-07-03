@@ -140,6 +140,29 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   Unit tests that construct effect handlers directly use the new
   `InteractionRegistryTestSupport.registryFor(...)` helper (real prompt/answer handlers over
   mocked continuation services).
+- `PendingInteraction.MayAbilityChoice` (MAY_ABILITY_CHOICE). The record carries
+  `(playerId, description, manaCost)` mirroring the head of `GameData.pendingMayAbilities`;
+  `canPay` is computed at prompt time from the pool (as both the legacy begin and reconnect
+  replay did). The single begin site stays `PlayerInputService.processNextMayAbility` (its
+  ~60 callers unchanged) — its body now builds the record from the queue head and calls
+  `registry.begin`. **`MayAbilityHandlerService` keeps the entire 900-line answer dispatch**
+  (cast-from-zone, penalty choices, copy effects, targeted triggers, resolution-time CR 603.5
+  flow, …); `MayAbilityChoiceInteractionHandler.handleAnswer` just delegates to it, and its
+  entry validation reads the active record instead of the deleted context (the redundant
+  `clearMayAbilityChoice` call went away — `clearAwaitingInput` clears the record).
+  Removed: `InteractionContext.MayAbilityChoice` + all switch cases,
+  `InteractionState.beginMayAbilityChoice/clearMayAbilityChoice/awaitingMayAbilityPlayerId/
+  mayAbilityChoiceContext` (incl. the blank-description fabricated-context fallback and
+  ReconnectionService's re-derivation of it — unreachable now that the record always carries
+  the begin-time description). AI: `MayAbilityChoiceAiStrategy` (always accept); **Hard AI
+  keeps its SpellEvaluator-based override** via the protected
+  `AiDecisionEngine.handleMayAbilityChoice` seam, reading the active record.
+  `GameSimulator`'s enum-keyed MAY_ABILITY_CHOICE cases still work (answers go through the
+  `GameService` entry, which dispatches via the registry); only its decider lookup moved to
+  the record. Test side: 106 files' `awaitingMayAbilityPlayerId()` assertions rewritten to
+  the typed record accessor; `PlayerInputServiceTest` constructs the service with a real
+  registry + `MayAbilityChoiceInteractionHandler` so its `processNextMayAbility`
+  message-send tests still exercise the real prompt path.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -162,9 +185,11 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 
 ### Stage 3 continuation — migrate the remaining kinds
 
-Suggested order: MAY_ABILITY_CHOICE, the card/graveyard/permanent choice families, LIBRARY_SEARCH /
-LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat declarations
-(ATTACKER/BLOCKER) which are entangled with `CombatService`.
+Suggested order: the card/graveyard/permanent choice families (CARD_CHOICE, DISCARD_CHOICE,
+PERMANENT_CHOICE, GRAVEYARD_CHOICE, COLOR_CHOICE, the MULTI_* selections, REVEALED_HAND_CHOICE,
+KNOWLEDGE_POOL_CAST_CHOICE, MIRROR_OF_FATE_CHOICE), LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE,
+COMBAT_DAMAGE_ASSIGNMENT, and last the combat declarations (ATTACKER/BLOCKER) which are
+entangled with `CombatService`.
 
 ### Stage 4 — Generic `AwaitingInput` kinds → interaction records
 

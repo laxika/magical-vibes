@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.SpitfireBastion;
 import com.github.laxika.magicalvibes.model.Card;
@@ -184,19 +185,19 @@ class VancesBlastingCannonsTest extends BaseCardTest {
 
         // Cast first spell — no may prompt
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Resolve first bolt, then cast second
         harness.passBothPriorities();
         harness.castInstant(player1, 0, player2.getId());
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         // Resolve second bolt, then cast third
         harness.passBothPriorities();
         harness.castInstant(player1, 0, player2.getId());
 
         // Third spell should trigger may ability prompt
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -122,7 +123,7 @@ class ThrabenSentryTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // No trigger on the stack — ON_ALLY_CREATURE_DIES only fires for controller's creatures
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     // ===== Does not trigger when Thraben Sentry itself dies =====
@@ -144,7 +145,7 @@ class ThrabenSentryTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // No trigger — Sentry is no longer on the battlefield
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Thraben Sentry"));
     }
