@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -33,6 +34,7 @@ public class LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler implements 
     private final LibraryRevealSupport libraryRevealSupport;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -99,23 +101,13 @@ public class LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler implements 
             return;
         }
 
-        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
-        for (Card card : eligibleCards) {
-            validCardIds.add(card.getId());
-        }
-
-        gameData.interaction.beginLibraryRevealChoice(controllerId, topCards, validCardIds,
-                true, true, false);
-
         String handWord = toHandCount == 1 ? "one" : String.valueOf(toHandCount);
-        List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
         String actionVerb = e.reveal() ? "Reveal" : "Look at";
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
-                cardIds, cardViews, toHandCount,
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, topCards, cardIds, true, true, false, false, 0, null, toHandCount,
                 actionVerb + " the top " + count + " cards of your library. Put " + handWord
-                        + " into your hand. The rest are put into your graveyard."
-        ));
+                        + " into your hand. The rest are put into your graveyard."));
 
         if (!e.reveal()) {
             gameBroadcastService.logAndBroadcast(gameData,
@@ -139,22 +131,12 @@ public class LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler implements 
             return;
         }
 
-        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
-        for (Card card : topCards) {
-            validCardIds.add(card.getId());
-        }
-
-        gameData.interaction.beginLibraryRevealChoice(controllerId, topCards, validCardIds,
-                true, true, false);
-
         String handWord = toHandCount == 1 ? "one" : String.valueOf(toHandCount);
-        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
-                cardIds, cardViews, toHandCount,
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, topCards, cardIds, true, true, false, false, 0, null, toHandCount,
                 "Look at the top " + count + " cards of your library. Put " + handWord
-                        + " into your hand. The rest are put into your graveyard."
-        ));
+                        + " into your hand. The rest are put into your graveyard."));
 
         gameBroadcastService.logAndBroadcast(gameData,
                 playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library.");

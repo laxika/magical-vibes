@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -31,6 +32,7 @@ public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -75,19 +77,11 @@ public class GenesisWaveEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
-        for (Card card : eligibleCards) {
-            validCardIds.add(card.getId());
-        }
-
-        gameData.interaction.beginLibraryRevealChoice(controllerId, revealedCards, validCardIds, true);
-
-        List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
-                cardIds, cardViews, eligibleCards.size(),
-                "Choose any number of permanent cards with mana value " + xValue + " or less to put onto the battlefield."
-        ));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, revealedCards, cardIds, true, false, false, false, 0, null,
+                eligibleCards.size(),
+                "Choose any number of permanent cards with mana value " + xValue + " or less to put onto the battlefield."));
 
         log.info("Game {} - {} resolving Genesis Wave with X={}, {} revealed, {} eligible",
                 gameData.id, playerName, xValue, count, eligibleCards.size());

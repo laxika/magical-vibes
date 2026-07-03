@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -69,6 +70,7 @@ public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -119,19 +121,11 @@ public class AjaniUltimateEffectHandler implements NormalEffectHandlerBean {
         }
 
         // Set up player choice for selecting cards to put onto battlefield
-        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
-        for (Card card : eligibleCards) {
-            validCardIds.add(card.getId());
-        }
-
-        gameData.interaction.beginLibraryRevealChoice(controllerId, revealedCards, validCardIds);
-
-        List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
-                cardIds, cardViews, eligibleCards.size(),
-                "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."
-        ));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, revealedCards, cardIds, false, false, false, false, 0, null,
+                eligibleCards.size(),
+                "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."));
 
         log.info("Game {} - {} resolving Ajani ultimate with {} revealed, {} eligible", gameData.id, playerName, count, eligibleCards.size());
     

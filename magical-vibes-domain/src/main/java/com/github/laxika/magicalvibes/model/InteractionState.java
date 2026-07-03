@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.interaction.LibrarySearchState;
-import com.github.laxika.magicalvibes.model.interaction.LibraryViewState;
 import com.github.laxika.magicalvibes.model.interaction.PermanentChoiceState;
 
 import java.util.ArrayList;
@@ -24,7 +23,6 @@ public class InteractionState {
     // --- Grouped sub-states ---
     private PermanentChoiceState permanentChoice;
     private LibrarySearchState librarySearch;
-    private final LibraryViewState libraryView = new LibraryViewState();
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
@@ -43,8 +41,6 @@ public class InteractionState {
         copy.activeInteraction = this.activeInteraction;
         copy.permanentChoice = this.permanentChoice != null ? this.permanentChoice.deepCopy() : null;
         copy.librarySearch = this.librarySearch != null ? this.librarySearch.deepCopy() : null;
-        LibraryViewState lvCopy = this.libraryView.deepCopy();
-        copy.libraryView.setReveal(lvCopy.revealPlayerId(), lvCopy.revealAllCards(), lvCopy.revealValidCardIds());
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
@@ -113,11 +109,6 @@ public class InteractionState {
     public LibrarySearchState librarySearch() {
         return librarySearch;
     }
-
-    public LibraryViewState libraryView() {
-        return libraryView;
-    }
-
     // ========================================================================
     // Combat
     // ========================================================================
@@ -274,60 +265,6 @@ public class InteractionState {
                 librarySearch.filterCardTypes(), librarySearch.accumulatedCards(),
                 librarySearch.filterCardName(), librarySearch.attachToPlayerId(),
                 librarySearch.filterPredicate());
-    }
-
-    // ========================================================================
-    // Library reveal choice
-    // ========================================================================
-
-    public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds) {
-        beginLibraryRevealChoice(playerId, allCards, validCardIds, false);
-    }
-
-    public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
-                                         boolean remainingToGraveyard) {
-        this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
-        this.libraryView.setReveal(playerId, allCards, validCardIds);
-        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds, remainingToGraveyard);
-    }
-
-    public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
-                                          boolean remainingToGraveyard, boolean selectedToHand,
-                                          boolean reorderRemainingToBottom) {
-        this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
-        this.libraryView.setReveal(playerId, allCards, validCardIds);
-        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds,
-                remainingToGraveyard, selectedToHand, reorderRemainingToBottom);
-    }
-
-    public void beginLibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
-                                          boolean remainingToGraveyard, boolean selectedToHand,
-                                          boolean reorderRemainingToBottom,
-                                          int lifeCostPerSelection, UUID beneficiaryPlayerId) {
-        this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
-        this.libraryView.setReveal(playerId, allCards, validCardIds);
-        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds,
-                remainingToGraveyard, selectedToHand, reorderRemainingToBottom, false,
-                lifeCostPerSelection, beneficiaryPlayerId);
-    }
-
-    public void beginLibraryRevealChoiceRandomBottom(UUID playerId, List<Card> allCards, Set<UUID> validCardIds) {
-        this.awaitingInput = AwaitingInput.LIBRARY_REVEAL_CHOICE;
-        this.libraryView.setReveal(playerId, allCards, validCardIds);
-        this.context = new InteractionContext.LibraryRevealChoice(playerId, allCards, validCardIds,
-                false, false, false, true, 0, null);
-    }
-
-    public void clearLibraryRevealChoice() {
-        this.libraryView.clearReveal();
-    }
-
-    public InteractionContext.LibraryRevealChoice libraryRevealChoiceContext() {
-        if (context instanceof InteractionContext.LibraryRevealChoice lrc) return lrc;
-        if (libraryView.revealPlayerId() == null || libraryView.revealAllCards() == null
-                || libraryView.revealValidCardIds() == null) return null;
-        return new InteractionContext.LibraryRevealChoice(libraryView.revealPlayerId(),
-                libraryView.revealAllCards(), libraryView.revealValidCardIds(), false);
     }
 
 }

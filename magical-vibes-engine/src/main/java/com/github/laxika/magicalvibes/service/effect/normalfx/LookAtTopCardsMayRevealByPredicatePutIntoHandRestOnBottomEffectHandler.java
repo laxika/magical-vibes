@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -73,6 +74,7 @@ public class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHand
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
     private final LibraryRevealSupport libraryRevealSupport;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -100,20 +102,11 @@ public class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHand
         String description = CardPredicateUtils.describeFilter(e.predicate());
 
         if (e.anyNumber()) {
-            Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
-            for (Card card : matchingCards) {
-                validCardIds.add(card.getId());
-            }
-
-            gameData.interaction.beginLibraryRevealChoice(controllerId, topCards, validCardIds,
-                    false, true, true);
-
-            List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
-            sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
-                    cardIds, cardViews, matchingCards.size(),
-                    "You may reveal any number of " + description + "s and put them into your hand."
-            ));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                    controllerId, topCards, cardIds, false, true, true, false, 0, null,
+                    matchingCards.size(),
+                    "You may reveal any number of " + description + "s and put them into your hand."));
             return;
         }
 

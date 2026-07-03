@@ -312,7 +312,10 @@ class LibraryChoiceHandlerServiceTest {
             List<Card> allCards = List.of(dino, land, instant);
             Set<UUID> validIds = Set.of(dino.getId());
 
-            gd.interaction.beginLibraryRevealChoiceRandomBottom(player1Id, new ArrayList<>(allCards), new java.util.HashSet<>(validIds));
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                    player1Id, new ArrayList<>(allCards), new ArrayList<>(validIds),
+                    false, false, false, true, 0, null, validIds.size(), "Choose."),
+                    com.github.laxika.magicalvibes.model.AwaitingInput.LIBRARY_REVEAL_CHOICE);
             when(battlefieldEntryService.snapshotEnterTappedTypes(gd)).thenReturn(Set.of());
 
             service.handleLibraryRevealChoice(gd, player1, List.of(dino.getId()));
@@ -334,7 +337,10 @@ class LibraryChoiceHandlerServiceTest {
             List<Card> allCards = List.of(dino, land);
             Set<UUID> validIds = Set.of(dino.getId());
 
-            gd.interaction.beginLibraryRevealChoiceRandomBottom(player1Id, new ArrayList<>(allCards), new java.util.HashSet<>(validIds));
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                    player1Id, new ArrayList<>(allCards), new ArrayList<>(validIds),
+                    false, false, false, true, 0, null, validIds.size(), "Choose."),
+                    com.github.laxika.magicalvibes.model.AwaitingInput.LIBRARY_REVEAL_CHOICE);
 
             service.handleLibraryRevealChoice(gd, player1, List.of());
 

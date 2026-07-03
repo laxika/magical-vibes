@@ -51,6 +51,33 @@ public class InteractionHandlerRegistry {
     }
 
     /**
+     * Marks the interaction active without prompting, for begin sites that must interleave
+     * other sends (e.g. a game-state broadcast) between the state change and the prompt.
+     * Follow with {@link #promptActive}.
+     */
+    public void beginWithoutPrompt(GameData gameData, PendingInteraction interaction) {
+        InteractionHandler<PendingInteraction> handler = handlerFor(interaction);
+        if (handler == null) {
+            throw new IllegalArgumentException("No interaction handler registered for " + interaction.getClass().getName());
+        }
+        gameData.interaction.beginInteraction(interaction, handler.legacyInputType());
+    }
+
+    /** Prompts the active interaction's deciding player (mind-control recipient resolved). */
+    public void promptActive(GameData gameData) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (active == null) {
+            return;
+        }
+        InteractionHandler<PendingInteraction> handler = handlerFor(active);
+        if (handler == null) {
+            return;
+        }
+        UUID decider = handler.decidingPlayerId(active);
+        handler.prompt(gameData, active, resolveMessageRecipient(gameData, decider));
+    }
+
+    /**
      * Routes a wire answer to the active interaction's handler. Returns {@code false} when no
      * registry-managed interaction is active or the answer shape does not match — the caller
      * then continues down the legacy dispatch path (which supplies the legacy error message).

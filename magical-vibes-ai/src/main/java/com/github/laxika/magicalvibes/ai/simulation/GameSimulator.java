@@ -653,7 +653,7 @@ public class GameSimulator {
             }
             case HAND_TOP_BOTTOM_CHOICE -> gameService.handleHandTopBottomChosen(gd, player, 0, 1);
             case LIBRARY_REVEAL_CHOICE -> {
-                var lrc = gd.interaction.libraryRevealChoiceContext();
+                var lrc = gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
                 if (lrc != null && lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
                     if (lrc.lifeCostPerSelection() > 0) {
                         // Punisher reveal (e.g. Sword-Point Diplomacy): deny nothing (don't pay life)
@@ -690,6 +690,7 @@ public class GameSimulator {
                 case PendingInteraction.GraveyardChoice gc -> gc.playerId();
                 case PendingInteraction.GraveyardExileCostChoice gec -> gec.playerId();
                 case PendingInteraction.HandChoice hc -> hc.playerId();
+                case PendingInteraction.LibraryRevealChoice lrc -> lrc.playerId();
                 default -> null;
             };
         }
@@ -700,7 +701,6 @@ public class GameSimulator {
             case InteractionContext.BlockerDeclaration bd -> bd.defenderId();
             case InteractionContext.PermanentChoice pc -> pc.playerId();
             case InteractionContext.LibrarySearch ls -> ls.playerId();
-            case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
         };
     }

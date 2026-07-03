@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,9 +63,10 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
 
         // Multiple cards — let the controller choose
         gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn());
-        Set<UUID> validIds = silverCards.stream().map(Card::getId).collect(Collectors.toSet());
-        gameData.interaction.beginLibraryRevealChoice(controllerId, new ArrayList<>(silverCards), validIds,
-                false, true, false);
+        List<UUID> validIds = silverCards.stream().map(Card::getId).toList();
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                controllerId, new ArrayList<>(silverCards), validIds,
+                false, true, false, false, 0, null, silverCards.size(), null));
 
         gameBroadcastService.broadcastGameState(gameData);
 

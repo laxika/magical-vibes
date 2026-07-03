@@ -126,7 +126,6 @@ public class GameService {
             case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
             case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
             case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
-            case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
         };
     }
@@ -493,11 +492,7 @@ public class GameService {
                     new InteractionAnswer.CardsChosen(cardIds))) {
                 return;
             }
-            if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
-                libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
-            } else {
-                throw new IllegalStateException("Not awaiting multi-graveyard choice");
-            }
+            throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }
     }
 

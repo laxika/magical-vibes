@@ -1071,24 +1071,6 @@ public class GameData {
                             .destination(ls.destination())
                             .filterCardTypes(ls.filterCardTypes())
                             .build());
-            case InteractionContext.LibraryRevealChoice lrc -> {
-                    if (lrc.randomRemainingToBottom()) {
-                        targetInteraction.beginLibraryRevealChoiceRandomBottom(lrc.playerId(),
-                                lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
-                                lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null);
-                    } else if (lrc.lifeCostPerSelection() > 0) {
-                        targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
-                                lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
-                                lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null,
-                                lrc.remainingToGraveyard(), lrc.selectedToHand(), lrc.reorderRemainingToBottom(),
-                                lrc.lifeCostPerSelection(), lrc.beneficiaryPlayerId());
-                    } else {
-                        targetInteraction.beginLibraryRevealChoice(lrc.playerId(),
-                                lrc.allCards() != null ? new ArrayList<>(lrc.allCards()) : null,
-                                lrc.validCardIds() != null ? new HashSet<>(lrc.validCardIds()) : null,
-                                lrc.remainingToGraveyard(), lrc.selectedToHand(), lrc.reorderRemainingToBottom());
-                    }
-                }
             case InteractionContext.CombatDamageAssignment cda ->
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),

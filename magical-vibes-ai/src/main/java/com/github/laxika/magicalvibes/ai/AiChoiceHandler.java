@@ -227,34 +227,9 @@ class AiChoiceHandler {
 
     // ===== Multi-Graveyard Choice =====
 
+    /** All multi-card wire answers are registry-managed (KP / MoF / multi-zone exile / multi-graveyard / library reveal). */
     void handleMultiCardChoice(GameData gameData) {
-        // Knowledge Pool / Mirror of Fate / multi-zone exile / multi-graveyard choices (registry-managed)
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE
-                || gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE
-                || gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE
-                || gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_GRAVEYARD_CHOICE) {
-            handleActiveInteraction(gameData);
-            return;
-        }
-
-        // Library reveal choice (Lead the Stampede, Commune with Nature, Sword-Point Diplomacy, etc.)
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
-            InteractionContext.LibraryRevealChoice lrc = gameData.interaction.libraryRevealChoiceContext();
-            if (lrc != null && aiPlayerId.equals(lrc.playerId())) {
-                List<UUID> chosen;
-                if (lrc.lifeCostPerSelection() > 0) {
-                    // Punisher reveal (e.g. Sword-Point Diplomacy): selecting cards costs life.
-                    // AI denies nothing to avoid paying life.
-                    chosen = List.of();
-                    log.info("AI: Denying 0 revealed cards (punisher reveal, {} life each) in game {}",
-                            lrc.lifeCostPerSelection(), gameId);
-                } else {
-                    chosen = new ArrayList<>(lrc.validCardIds());
-                    log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), gameId);
-                }
-                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-            }
-        }
+        handleActiveInteraction(gameData);
     }
 
     // ===== Revealed Hand Choice =====

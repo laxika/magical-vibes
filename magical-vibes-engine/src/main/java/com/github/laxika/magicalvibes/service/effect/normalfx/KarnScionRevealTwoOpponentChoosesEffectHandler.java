@@ -21,6 +21,7 @@ import java.util.UUID;
 public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,9 +69,10 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
         gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice(controllerId));
 
         // Present both cards to the opponent for selection
-        Set<UUID> validIds = Set.of(card1.getId(), card2.getId());
-        gameData.interaction.beginLibraryRevealChoice(opponentId, new ArrayList<>(revealedCards), validIds,
-                false, true, false);
+        List<UUID> validIds = List.of(card1.getId(), card2.getId());
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
+                opponentId, new ArrayList<>(revealedCards), validIds,
+                false, true, false, false, 0, null, 2, null));
 
         gameBroadcastService.broadcastGameState(gameData);
 

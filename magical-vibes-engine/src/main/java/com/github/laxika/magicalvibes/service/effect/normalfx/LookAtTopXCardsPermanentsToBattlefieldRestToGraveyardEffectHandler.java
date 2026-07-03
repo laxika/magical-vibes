@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -72,6 +73,7 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -136,25 +138,13 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
         }
 
         // Set up player choice for selecting cards to put onto battlefield
-        Set<UUID> validCardIds = ConcurrentHashMap.newKeySet();
-        for (Card card : eligibleCards) {
-            validCardIds.add(card.getId());
-        }
-
-        if (toBottomRandom) {
-            gameData.interaction.beginLibraryRevealChoiceRandomBottom(controllerId, revealedCards, validCardIds);
-        } else {
-            gameData.interaction.beginLibraryRevealChoice(controllerId, revealedCards, validCardIds, true);
-        }
-
         String prompt = toBottomRandom
                 ? "Choose any number of eligible cards to put onto the battlefield. The rest go to the bottom of your library in a random order."
                 : "Choose any number of eligible cards to put onto the battlefield. The rest go to your graveyard.";
-        List<CardView> cardViews = eligibleCards.stream().map(cardViewFactory::create).toList();
         List<UUID> cardIds = eligibleCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseMultipleCardsMessage(
-                cardIds, cardViews, eligibleCards.size(), prompt
-        ));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
+                controllerId, revealedCards, cardIds, !toBottomRandom, false, false, toBottomRandom, 0, null,
+                eligibleCards.size(), prompt));
 
         log.info("Game {} - {} resolving {} with X={}, {} revealed, {} eligible",
                 gameData.id, playerName, entry.getCard().getName(), xValue, count, eligibleCards.size());

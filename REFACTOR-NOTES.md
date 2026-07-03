@@ -418,6 +418,45 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   flows), begin-helper verify signatures gained the count arg, and
   `PlayerInputServiceTest` registers the six handlers; new focused
   `HandCardChoiceInteractionHandlersTest` covers all six kinds.
+- `PendingInteraction.LibraryRevealChoice` (LIBRARY_REVEAL_CHOICE) — Lead the Stampede /
+  Genesis Wave battlefield picks, choose-N-to-hand looks, punisher reveals (Sword-Point
+  Diplomacy), Gishath random-bottom, Karn Scion picks. The record carries the legacy context's
+  nine components plus the begin-time ordered `validCardIds`, `maxCount`, and `prompt`; card
+  views derive from `validCardIds` against the held-out `allCards` at prompt time, reproducing
+  each begin site's exact message. **A null `prompt` means "no choice message"**: the two Karn
+  Scion begin sites never sent one (the client prompts off the game-state broadcast), so the
+  handler sends nothing at begin — and, as a replay-fidelity correction, nothing on reconnect
+  either (the legacy replay sent them a spurious message). The other **replay corrections**:
+  the legacy replay hardcoded the Ajani/Genesis-Wave prompt ("Choose any number of nonland
+  permanent cards with mana value 3 or less…") and `maxCount = validCardIds.size()` for every
+  variant (wrong prompt for all others; wrong maxCount for the choose-N-to-hand looks) with
+  hash-scrambled ID order — replay now re-sends the begin-time prompt/maxCount/order.
+  The registry gained a **two-phase begin** (`beginWithoutPrompt` + `promptActive`) for
+  `RevealTopCardsOpponentPaysLifeOrToHandEffectHandler`, whose legacy sequence interleaves a
+  game-state broadcast (whose payload depends on the awaiting flag) between the state change
+  and the choice message — the two-phase API preserves that wire order byte-for-byte (the
+  prompt also gains the uniform mind-control redirect, as at every migrated begin). Fifth user
+  of `InteractionAnswer.CardsChosen`; with it, `GameService.handleMultipleCardsChosen`'s whole
+  legacy population (KP, MoF, multi-zone exile, multi-graveyard, library reveal) is
+  registry-managed, so the entry collapsed to dispatch-or-throw — keeping the CURRENT miss
+  text "Not awaiting multi-graveyard choice", since that is what a stray message already hit
+  (the reveal branch was checked first and a miss fell through to the multi-graveyard error).
+  Answer logic stays in `LibraryChoiceHandlerService.handleLibraryRevealChoice` (reads the
+  active record; Karn/punisher branches and all log/error texts unchanged; the redundant
+  `clearLibraryRevealChoice` went away). Removed: the `InteractionContext.LibraryRevealChoice`
+  record (+ its two convenience constructors) and all cases incl.
+  `GameData.copyInteractionInto`'s three-variant begin reconstruction, the four
+  `InteractionState.beginLibraryRevealChoice*` overloads + clear + context accessor, and
+  **`LibraryViewState` deleted entirely** (reveal was its last resident).
+  AI: `LibraryRevealChoiceAiStrategy` (punisher → deny nothing, else choose all; identical
+  logs); `AiChoiceHandler.handleMultiCardChoice` collapsed to a thin
+  `handleActiveInteraction` alias (its whole population is registry-managed);
+  `GameSimulator`'s LIBRARY_REVEAL_CHOICE resolve case reads the record (same punisher split)
+  and the decider lookup gained the record case. Tests: `LookAtTopXCards…Test` +
+  `LibraryChoiceHandlerServiceTest` accessor/begin rewrites, four effect-handler tests'
+  manual constructions gained the shared test registry (which now registers the real reveal
+  handler), and the new focused `LibraryRevealChoiceInteractionHandlerTest` covers begin
+  content, the null-prompt no-send rule, dispatch delegation, and replay gating.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -441,7 +480,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 ### Stage 3 continuation — migrate the remaining kinds
 
 Suggested order: PERMANENT_CHOICE,
-LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
+LIBRARY_SEARCH, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
 declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 
 ### Stage 4 — Generic `AwaitingInput` kinds → interaction records

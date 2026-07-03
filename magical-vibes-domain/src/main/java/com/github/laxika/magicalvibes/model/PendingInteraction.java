@@ -28,7 +28,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
-        PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice {
+        PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
+        PendingInteraction.LibraryRevealChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -340,5 +341,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record DiscardCostChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
             implements PendingInteraction, HandChoice {
+    }
+
+    /**
+     * Select zero or more of the revealed/looked-at library cards (Lead the Stampede /
+     * Genesis Wave battlefield picks, choose-N-to-hand looks, punisher reveals, Karn Scion
+     * picks, ...). {@code allCards} are held out of the library; {@code validCardIds} keeps the
+     * begin-time order (card views derive from it against {@code allCards} at prompt time).
+     * {@code maxCount} and {@code prompt} are the exact begin-time message fields; a null
+     * {@code prompt} means the begin site sent no choice message (the Karn Scion flows, which
+     * prompt via the game-state broadcast alone) - nothing is sent on reconnect replay either,
+     * matching begin. The boolean/punisher components drive the answer handling exactly as the
+     * legacy context did.
+     */
+    record LibraryRevealChoice(UUID playerId, java.util.List<Card> allCards,
+                               java.util.List<UUID> validCardIds, boolean remainingToGraveyard,
+                               boolean selectedToHand, boolean reorderRemainingToBottom,
+                               boolean randomRemainingToBottom, int lifeCostPerSelection,
+                               UUID beneficiaryPlayerId, int maxCount, String prompt)
+            implements PendingInteraction {
     }
 }

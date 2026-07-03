@@ -82,7 +82,8 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler = new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler(gameQueryService, predicateEvaluationService, sessionManager, cardViewFactory, libraryRevealSupport);
+        lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler = new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler(gameQueryService, predicateEvaluationService, sessionManager, cardViewFactory, libraryRevealSupport,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 

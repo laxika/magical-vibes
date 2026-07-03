@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentN
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -89,12 +88,6 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, ls);
                 }
             }
-            case LIBRARY_REVEAL_CHOICE -> {
-                InteractionContext.LibraryRevealChoice lrc = gameData.interaction.libraryRevealChoiceContext();
-                if (lrc != null) {
-                    resendFromContext(gameData, playerId, lrc);
-                }
-            }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
                 InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
@@ -146,20 +139,6 @@ public class ReconnectionService {
                             : "Search your library for a card to put into your hand.";
                 sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
                         cardViews, prompt, ls.canFailToFind()));
-            }
-            case InteractionContext.LibraryRevealChoice lrc -> {
-                if (!playerId.equals(lrc.playerId()) || lrc.validCardIds() == null) {
-                    return;
-                }
-                List<CardView> cardViews = lrc.allCards().stream()
-                        .filter(c -> lrc.validCardIds().contains(c.getId()))
-                        .map(cardViewFactory::create)
-                        .toList();
-                List<UUID> cardIds = new ArrayList<>(lrc.validCardIds());
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
-                        cardIds, cardViews, cardIds.size(),
-                        "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."
-                ));
             }
             case InteractionContext.CombatDamageAssignment cda -> {
                 if (!playerId.equals(cda.playerId())) {

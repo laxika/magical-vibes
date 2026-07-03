@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -71,6 +72,7 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
     private final LibraryRevealSupport libraryRevealSupport;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -114,20 +116,15 @@ public class RevealTopCardsOpponentPaysLifeOrToHandEffectHandler implements Norm
         }
 
         // Present all revealed cards to the opponent — they select which ones to exile (paying life each)
-        Set<UUID> validIds = new HashSet<>();
-        for (Card card : topCards) {
-            validIds.add(card.getId());
-        }
-        gameData.interaction.beginLibraryRevealChoice(opponentId, new ArrayList<>(topCards), validIds,
-                false, true, false, e.lifeCost(), controllerId);
+        List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
+        interactionHandlerRegistry.beginWithoutPrompt(gameData, new PendingInteraction.LibraryRevealChoice(
+                opponentId, new ArrayList<>(topCards), cardIds,
+                false, true, false, false, e.lifeCost(), controllerId, topCards.size(),
+                "Choose cards to deny (you pay " + e.lifeCost() + " life for each). Unselected cards go to opponent's hand."));
 
         gameBroadcastService.broadcastGameState(gameData);
 
-        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-        List<UUID> cardIds = topCards.stream().map(Card::getId).toList();
-        sessionManager.sendToPlayer(opponentId, new ChooseMultipleCardsMessage(
-                cardIds, cardViews, topCards.size(),
-                "Choose cards to deny (you pay " + e.lifeCost() + " life for each). Unselected cards go to opponent's hand."));
+        interactionHandlerRegistry.promptActive(gameData);
 
         log.info("Game {} - {} reveals {} cards for {}, opponent must choose which to deny",
                 gameData.id, playerName, topCards.size(), cardName);

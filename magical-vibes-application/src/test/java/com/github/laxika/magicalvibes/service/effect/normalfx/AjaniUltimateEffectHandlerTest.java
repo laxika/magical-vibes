@@ -78,7 +78,8 @@ class AjaniUltimateEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        ajaniUltimateEffectHandler = new AjaniUltimateEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        ajaniUltimateEffectHandler = new AjaniUltimateEffectHandler(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 

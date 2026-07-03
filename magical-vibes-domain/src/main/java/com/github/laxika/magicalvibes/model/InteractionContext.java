@@ -11,7 +11,6 @@ public sealed interface InteractionContext permits
         InteractionContext.BlockerDeclaration,
         InteractionContext.PermanentChoice,
         InteractionContext.LibrarySearch,
-        InteractionContext.LibraryRevealChoice,
         InteractionContext.CombatDamageAssignment {
 
     record AttackerDeclaration(UUID activePlayerId) implements InteractionContext {}
@@ -34,24 +33,6 @@ public sealed interface InteractionContext permits
                              String prompt, LibrarySearchDestination destination) {
             this(playerId, cards, reveals, canFailToFind, targetPlayerId, remainingCount, sourceCards,
                     reorderRemainingToBottom, false, shuffleAfterSelection, prompt, destination, null, List.of(), null, null, null);
-        }
-    }
-
-    record LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
-                               boolean remainingToGraveyard, boolean selectedToHand,
-                               boolean reorderRemainingToBottom,
-                               boolean randomRemainingToBottom,
-                               int lifeCostPerSelection,
-                               UUID beneficiaryPlayerId) implements InteractionContext {
-
-        public LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds, boolean remainingToGraveyard) {
-            this(playerId, allCards, validCardIds, remainingToGraveyard, false, false, false, 0, null);
-        }
-
-        public LibraryRevealChoice(UUID playerId, List<Card> allCards, Set<UUID> validCardIds,
-                                   boolean remainingToGraveyard, boolean selectedToHand,
-                                   boolean reorderRemainingToBottom) {
-            this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand, reorderRemainingToBottom, false, 0, null);
         }
     }
 

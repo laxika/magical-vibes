@@ -717,12 +717,13 @@ public class LibraryChoiceHandlerService {
     }
 
     public void handleLibraryRevealChoice(GameData gameData, Player player, List<UUID> cardIds) {
-        InteractionContext.LibraryRevealChoice libraryRevealChoice = gameData.interaction.libraryRevealChoiceContext();
+        PendingInteraction.LibraryRevealChoice libraryRevealChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
         if (libraryRevealChoice == null || !player.getId().equals(libraryRevealChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        Set<UUID> validIds = libraryRevealChoice.validCardIds();
+        List<UUID> validIds = libraryRevealChoice.validCardIds();
         if (cardIds == null) {
             cardIds = List.of();
         }
@@ -744,7 +745,6 @@ public class LibraryChoiceHandlerService {
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearLibraryRevealChoice();
 
         // Karn, Scion of Urza +1: opponent chose which card goes to controller's hand
         if (gameData.hasPendingInteraction(PendingKarnScionRevealChoice.class)) {
