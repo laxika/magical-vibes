@@ -1093,9 +1093,6 @@ public class GameData {
                                 lrc.remainingToGraveyard(), lrc.selectedToHand(), lrc.reorderRemainingToBottom());
                     }
                 }
-            case InteractionContext.RevealedHandChoice rhc ->
-                    targetInteraction.beginRevealedHandChoice(rhc.choosingPlayerId(), rhc.targetPlayerId(),
-                            rhc.validIndices(), rhc.remainingCount(), rhc.discardMode(), rhc.exileMode(), rhc.chosenCards());
             case InteractionContext.CombatDamageAssignment cda ->
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
@@ -1103,8 +1100,8 @@ public class GameData {
         }
 
         // Copy discard remaining count (not part of context reconstruction)
-        if (source.revealedHandChoice() != null && source.revealedHandChoice().discardRemainingCount() > 0) {
-            targetInteraction.setDiscardRemainingCount(source.revealedHandChoice().discardRemainingCount());
+        if (source.discardRemainingCount() > 0) {
+            targetInteraction.setDiscardRemainingCount(source.discardRemainingCount());
         }
     }
 }

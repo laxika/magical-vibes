@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
@@ -58,6 +60,7 @@ public class PlayerInteractionSupport {
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void applyOpponentMayPlayCreature(GameData gameData, UUID controllerId) {
 
@@ -212,9 +215,6 @@ public class PlayerInteractionSupport {
 
         int cardsToChoose = Math.min(count, validIndices.size());
 
-        gameData.interaction.beginRevealedHandChoice(casterId, targetPlayerId, Set.copyOf(validIndices),
-                cardsToChoose, discardMode, exileMode, List.of());
-
         String choicePrompt;
         if (!includedTypes.isEmpty()) {
             String typeNames = includedTypes.stream()
@@ -225,14 +225,10 @@ public class PlayerInteractionSupport {
         } else {
             choicePrompt = "Choose a nonland card to " + actionVerb + ".";
         }
-        playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
-                choicePrompt);
-
-        // Track source permanent for exile-until-source-leaves effects (must be set after
-        // playerInputService.beginRevealedHandChoice which recreates the state)
-        if (sourcePermanentId != null) {
-            gameData.interaction.revealedHandChoice().setSourcePermanentId(sourcePermanentId);
-        }
+        // sourcePermanentId tracks exile-until-source-leaves effects (e.g. Kitesail Freebooter)
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                casterId, targetPlayerId, validIndices, cardsToChoose, discardMode, exileMode,
+                List.of(), sourcePermanentId, choicePrompt));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to {}",
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);

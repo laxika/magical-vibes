@@ -22,7 +22,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
-        PendingInteraction.ColorChoice {
+        PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -128,5 +128,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId, ChoiceContext context,
                        java.util.List<String> options, String prompt) implements PendingInteraction {
+    }
+
+    /**
+     * {@code choosingPlayerId} picks a card from {@code targetPlayerId}'s revealed hand
+     * (Duress-style hand disruption; also multi-pick discard/exile/top-of-library flows).
+     * Card views are re-derived from the target's current hand at prompt time (as both the
+     * legacy begin and replay did). {@code validIndices} keeps the begin-time order and
+     * {@code prompt} the exact begin-time text (also re-sent on reconnect). Each answered
+     * pick begins a fresh record with the decremented {@code remainingCount} and the
+     * accumulated {@code chosenCards}; the batch action (discard / exile / put on library)
+     * applies when the countdown ends. {@code sourcePermanentId} tracks
+     * exile-until-source-leaves effects (e.g. Kitesail Freebooter); matching the legacy
+     * re-begin, it is not carried across picks.
+     */
+    record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                              java.util.List<Integer> validIndices, int remainingCount,
+                              boolean discardMode, boolean exileMode,
+                              java.util.List<Card> chosenCards, UUID sourcePermanentId,
+                              String prompt) implements PendingInteraction {
     }
 }

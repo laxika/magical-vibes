@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.interaction.GraveyardChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.LibrarySearchState;
 import com.github.laxika.magicalvibes.model.interaction.LibraryViewState;
 import com.github.laxika.magicalvibes.model.interaction.PermanentChoiceState;
-import com.github.laxika.magicalvibes.model.interaction.RevealedHandChoiceState;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,7 +29,8 @@ public class InteractionState {
     private GraveyardChoiceState graveyardChoice;
     private LibrarySearchState librarySearch;
     private final LibraryViewState libraryView = new LibraryViewState();
-    private RevealedHandChoiceState revealedHandChoice;
+    /** Countdown for multi-card discard / exile-from-hand flows (DISCARD_CHOICE, EXILE_FROM_HAND_CHOICE). */
+    private int discardRemainingCount;
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
@@ -53,7 +53,7 @@ public class InteractionState {
         copy.librarySearch = this.librarySearch != null ? this.librarySearch.deepCopy() : null;
         LibraryViewState lvCopy = this.libraryView.deepCopy();
         copy.libraryView.setReveal(lvCopy.revealPlayerId(), lvCopy.revealAllCards(), lvCopy.revealValidCardIds());
-        copy.revealedHandChoice = this.revealedHandChoice != null ? this.revealedHandChoice.deepCopy() : null;
+        copy.discardRemainingCount = this.discardRemainingCount;
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
@@ -134,10 +134,6 @@ public class InteractionState {
 
     public LibraryViewState libraryView() {
         return libraryView;
-    }
-
-    public RevealedHandChoiceState revealedHandChoice() {
-        return revealedHandChoice;
     }
 
     // ========================================================================
@@ -455,86 +451,22 @@ public class InteractionState {
     }
 
     // ========================================================================
-    // Revealed hand choice
-    // ========================================================================
-
-    public void beginRevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
-                                        int remainingCount, boolean discardMode, List<Card> chosenCards) {
-        beginRevealedHandChoice(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, false, chosenCards);
-    }
-
-    public void beginRevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
-                                        int remainingCount, boolean discardMode, boolean exileMode, List<Card> chosenCards) {
-        this.awaitingInput = AwaitingInput.REVEALED_HAND_CHOICE;
-        this.revealedHandChoice = new RevealedHandChoiceState(
-                choosingPlayerId, new HashSet<>(validIndices), targetPlayerId,
-                remainingCount, discardMode, exileMode, chosenCards
-        );
-        // Also update cardChoice for backwards compatibility (shared fields)
-        this.cardChoice = new CardChoiceState(choosingPlayerId, new HashSet<>(validIndices), null);
-        this.context = new InteractionContext.RevealedHandChoice(
-                choosingPlayerId, targetPlayerId, new HashSet<>(validIndices),
-                remainingCount, discardMode, exileMode,
-                new ArrayList<>(revealedHandChoice.chosenCardsSnapshot())
-        );
-    }
-
-    public void beginRevealedHandChoiceFromCurrentState(UUID choosingPlayerId, UUID targetPlayerId,
-                                                        Set<Integer> validIndices) {
-        if (revealedHandChoice == null) return;
-        List<Card> chosenCardsSnapshot = revealedHandChoice.chosenCardsSnapshot();
-        beginRevealedHandChoice(
-                choosingPlayerId, targetPlayerId, validIndices,
-                revealedHandChoice.remainingCount(),
-                revealedHandChoice.discardMode(),
-                revealedHandChoice.exileMode(),
-                chosenCardsSnapshot
-        );
-    }
-
-    public void addRevealedHandChosenCard(Card card) {
-        if (revealedHandChoice != null) {
-            revealedHandChoice.addChosenCard(card);
-        }
-    }
-
-    public int decrementRevealedHandChoiceRemainingCount() {
-        return revealedHandChoice != null ? revealedHandChoice.decrementRemainingCount() : 0;
-    }
-
-    public void clearRevealedHandChoiceProgress() {
-        if (revealedHandChoice != null) {
-            revealedHandChoice.clearProgress();
-        }
-    }
-
-    public InteractionContext.RevealedHandChoice revealedHandChoiceContext() {
-        if (context instanceof InteractionContext.RevealedHandChoice rhc) return rhc;
-        if (revealedHandChoice == null || cardChoice == null) return null;
-        return new InteractionContext.RevealedHandChoice(
-                revealedHandChoice.choosingPlayerId(), revealedHandChoice.targetPlayerId(),
-                revealedHandChoice.validIndices(), revealedHandChoice.remainingCount(),
-                revealedHandChoice.discardMode(), revealedHandChoice.exileMode(),
-                revealedHandChoice.chosenCardsSnapshot());
-    }
-
-    // ========================================================================
     // Discard
     // ========================================================================
 
+    public int discardRemainingCount() {
+        return discardRemainingCount;
+    }
+
     public void setDiscardRemainingCount(int remainingCount) {
-        ensureRevealedHandChoice().setDiscardRemainingCount(remainingCount);
+        this.discardRemainingCount = Math.max(remainingCount, 0);
     }
 
     public int decrementDiscardRemainingCount() {
-        return revealedHandChoice != null ? revealedHandChoice.decrementDiscardRemainingCount() : 0;
-    }
-
-    private RevealedHandChoiceState ensureRevealedHandChoice() {
-        if (this.revealedHandChoice == null) {
-            this.revealedHandChoice = new RevealedHandChoiceState(null, null, null, 0, false, null);
+        if (this.discardRemainingCount > 0) {
+            this.discardRemainingCount--;
         }
-        return this.revealedHandChoice;
+        return this.discardRemainingCount;
     }
 
 }

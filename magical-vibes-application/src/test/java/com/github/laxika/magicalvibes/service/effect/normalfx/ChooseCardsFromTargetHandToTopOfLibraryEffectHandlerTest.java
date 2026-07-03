@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +27,10 @@ class ChooseCardsFromTargetHandToTopOfLibraryEffectHandlerTest extends AbstractP
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("looks at") && msg.contains("Player2")));
-                verify(playerInputService).beginRevealedHandChoice(eq(gd), eq(player1Id), eq(player2Id), any(), any());
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.RevealedHandChoice rhc
+                                && rhc.choosingPlayerId().equals(player1Id)
+                                && rhc.targetPlayerId().equals(player2Id)));
             }
 
             @Test
@@ -38,7 +42,7 @@ class ChooseCardsFromTargetHandToTopOfLibraryEffectHandlerTest extends AbstractP
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginRevealedHandChoice(any(), any(), any(), any(), any());
+                verify(interactionHandlerRegistry, never()).begin(any(), any());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("empty")));
             }

@@ -318,10 +318,18 @@ public class GameSimulator {
                     }
                 }
             }
-            case CARD_CHOICE, DISCARD_CHOICE, REVEALED_HAND_CHOICE -> {
+            case CARD_CHOICE, DISCARD_CHOICE -> {
                 var cardChoice = gd.interaction.cardChoiceContext();
                 if (cardChoice != null && cardChoice.validIndices() != null) {
                     for (int idx : cardChoice.validIndices()) {
+                        actions.add(new SimulationAction.ChooseCard(idx));
+                    }
+                }
+            }
+            case REVEALED_HAND_CHOICE -> {
+                var rhc = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+                if (rhc != null && rhc.validIndices() != null) {
+                    for (int idx : rhc.validIndices()) {
                         actions.add(new SimulationAction.ChooseCard(idx));
                     }
                 }
@@ -633,7 +641,7 @@ public class GameSimulator {
                 }
             }
             case REVEALED_HAND_CHOICE -> {
-                var rhc = gd.interaction.revealedHandChoiceContext();
+                var rhc = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
                 if (rhc != null && rhc.validIndices() != null && !rhc.validIndices().isEmpty()) {
                     gameService.handleCardChosen(gd, player, rhc.validIndices().iterator().next());
                 }
@@ -673,6 +681,7 @@ public class GameSimulator {
                 case PendingInteraction.MultiPermanentChoice mpc -> mpc.playerId();
                 case PendingInteraction.MultiGraveyardChoice mgc -> mgc.playerId();
                 case PendingInteraction.ColorChoice cc -> cc.playerId();
+                case PendingInteraction.RevealedHandChoice rhc -> rhc.choosingPlayerId();
                 default -> null;
             };
         }
@@ -686,7 +695,6 @@ public class GameSimulator {
             case InteractionContext.GraveyardChoice gc -> gc.playerId();
             case InteractionContext.LibrarySearch ls -> ls.playerId();
             case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
-            case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
         };
     }

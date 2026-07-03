@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
@@ -110,12 +109,6 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, lrc);
                 }
             }
-            case REVEALED_HAND_CHOICE -> {
-                InteractionContext.RevealedHandChoice rhc = gameData.interaction.revealedHandChoiceContext();
-                if (rhc != null) {
-                    resendFromContext(gameData, playerId, rhc);
-                }
-            }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
                 InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
@@ -204,18 +197,6 @@ public class ReconnectionService {
                         cardIds, cardViews, cardIds.size(),
                         "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."
                 ));
-            }
-            case InteractionContext.RevealedHandChoice rhc -> {
-                if (!playerId.equals(rhc.choosingPlayerId()) || rhc.targetPlayerId() == null) {
-                    return;
-                }
-                UUID targetPlayerId = rhc.targetPlayerId();
-                List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-                String targetName = gameData.playerIdToName.get(targetPlayerId);
-                List<CardView> cardViews = targetHand.stream().map(cardViewFactory::create).toList();
-                List<Integer> validIndices = new ArrayList<>(rhc.validIndices());
-                sessionManager.sendToPlayer(playerId, new ChooseFromRevealedHandMessage(
-                        cardViews, validIndices, "Choose a card to put on top of " + targetName + "'s library."));
             }
             case InteractionContext.CombatDamageAssignment cda -> {
                 if (!playerId.equals(cda.playerId())) {

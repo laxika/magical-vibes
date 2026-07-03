@@ -14,7 +14,6 @@ public sealed interface InteractionContext permits
         InteractionContext.GraveyardChoice,
         InteractionContext.LibrarySearch,
         InteractionContext.LibraryRevealChoice,
-        InteractionContext.RevealedHandChoice,
         InteractionContext.CombatDamageAssignment {
 
     record AttackerDeclaration(UUID activePlayerId) implements InteractionContext {}
@@ -62,9 +61,6 @@ public sealed interface InteractionContext permits
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand, reorderRemainingToBottom, false, 0, null);
         }
     }
-
-    record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
-                              int remainingCount, boolean discardMode, boolean exileMode, List<Card> chosenCards) implements InteractionContext {}
 
     record CombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
                                    String attackerName, int totalDamage, List<CombatDamageTarget> validTargets,

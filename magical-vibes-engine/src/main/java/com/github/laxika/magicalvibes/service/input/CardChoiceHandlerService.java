@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,6 +52,7 @@ public class CardChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final ExileService exileService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         AwaitingInput awaitingInput = gameData.interaction.awaitingInputType();
@@ -67,10 +69,6 @@ public class CardChoiceHandlerService {
             return;
         }
 
-        if (awaitingInput == AwaitingInput.REVEALED_HAND_CHOICE) {
-            handleRevealedHandCardChosen(gameData, player, cardIndex);
-            return;
-        }
         if (awaitingInput == AwaitingInput.IMPRINT_FROM_HAND_CHOICE) {
             handleImprintFromHandCardChosen(gameData, player, cardIndex);
             return;
@@ -300,13 +298,14 @@ public class CardChoiceHandlerService {
         }
     }
 
-    private void handleRevealedHandCardChosen(GameData gameData, Player player, int cardIndex) {
-        InteractionContext.RevealedHandChoice revealedHandChoice = gameData.interaction.revealedHandChoiceContext();
+    public void handleRevealedHandCardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.RevealedHandChoice revealedHandChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
         if (revealedHandChoice == null || !player.getId().equals(revealedHandChoice.choosingPlayerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        Set<Integer> validIndices = revealedHandChoice.validIndices();
+        List<Integer> validIndices = revealedHandChoice.validIndices();
         if (!validIndices.contains(cardIndex)) {
             throw new IllegalStateException("Invalid card index: " + cardIndex);
         }
@@ -316,15 +315,16 @@ public class CardChoiceHandlerService {
         String targetName = gameData.playerIdToName.get(targetPlayerId);
 
         Card chosenCard = targetHand.remove(cardIndex);
-        gameData.interaction.addRevealedHandChosenCard(chosenCard);
+        List<Card> chosenCards = new ArrayList<>(revealedHandChoice.chosenCards());
+        chosenCards.add(chosenCard);
 
         String logEntry = player.getUsername() + " chooses " + chosenCard.getName() + " from " + targetName + "'s hand.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
 
-        int remainingChoices = gameData.interaction.decrementRevealedHandChoiceRemainingCount();
-        boolean discardMode = gameData.interaction.revealedHandChoice().discardMode();
-        boolean exileMode = gameData.interaction.revealedHandChoice().exileMode();
+        int remainingChoices = Math.max(revealedHandChoice.remainingCount() - 1, 0);
+        boolean discardMode = revealedHandChoice.discardMode();
+        boolean exileMode = revealedHandChoice.exileMode();
 
         if (remainingChoices > 0 && !targetHand.isEmpty()) {
             // More cards to choose — update valid indices and prompt again
@@ -341,13 +341,14 @@ public class CardChoiceHandlerService {
             } else {
                 prompt = "Choose another card to put on top of " + targetName + "'s library.";
             }
-            playerInputService.beginRevealedHandChoice(gameData, player.getId(), targetPlayerId, newValidIndices, prompt);
+            // Matching the legacy mid-flow re-begin, sourcePermanentId is not carried across picks.
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                    player.getId(), targetPlayerId, newValidIndices, remainingChoices,
+                    discardMode, exileMode, chosenCards, null, prompt));
         } else {
             // All cards chosen
             gameData.interaction.clearAwaitingInput();
             gameData.interaction.clearCardChoice();
-
-            List<Card> chosenCards = gameData.interaction.revealedHandChoice().chosenCardsSnapshot();
 
             if (discardMode) {
                 // Discard chosen cards to graveyard (or battlefield if replacement effect applies)
@@ -397,7 +398,7 @@ public class CardChoiceHandlerService {
                 log.info("Game {} - {} exiles {} from {}'s hand", gameData.id, player.getUsername(), cardNames, targetName);
 
                 // Track return-on-source-leave for exile-until-leaves effects (e.g. Kitesail Freebooter)
-                UUID sourcePermanentId = gameData.interaction.revealedHandChoice().sourcePermanentId();
+                UUID sourcePermanentId = revealedHandChoice.sourcePermanentId();
                 if (sourcePermanentId != null) {
                     for (Card exiled : chosenCards) {
                         gameData.exileReturnOnPermanentLeave.put(sourcePermanentId,
@@ -418,8 +419,6 @@ public class CardChoiceHandlerService {
                 gameBroadcastService.logAndBroadcast(gameData, putLog);
                 log.info("Game {} - {} puts {} on top of {}'s library", gameData.id, player.getUsername(), cardNames, targetName);
             }
-
-            gameData.interaction.clearRevealedHandChoiceProgress();
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
             if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {

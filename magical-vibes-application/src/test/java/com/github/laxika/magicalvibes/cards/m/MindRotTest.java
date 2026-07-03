@@ -81,7 +81,7 @@ class MindRotTest extends BaseCardTest {
         // Target player (player2) should be prompted to discard, NOT the caster
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
         assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
     }
 
     @Test

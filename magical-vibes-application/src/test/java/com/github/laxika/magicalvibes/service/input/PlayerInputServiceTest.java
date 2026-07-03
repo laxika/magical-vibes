@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
@@ -953,51 +952,6 @@ class PlayerInputServiceTest {
             ChooseCardFromHandMessage msg = (ChooseCardFromHandMessage) messageCaptor.getValue();
             assertThat(msg.cardIndices()).containsExactly(1, 3);
             assertThat(msg.prompt()).isEqualTo("Discard a land");
-        }
-    }
-
-    // ========================================================================
-    // beginRevealedHandChoice
-    // ========================================================================
-
-    @Nested
-    @DisplayName("beginRevealedHandChoice")
-    class BeginRevealedHandChoice {
-
-        @Test
-        @DisplayName("Sets interaction state to REVEALED_HAND_CHOICE")
-        void setsInteractionState() {
-            Card handCard = createCreature("Bear");
-            gd.playerHands.get(PLAYER2_ID).add(handCard);
-            CardView cardView = mock(CardView.class);
-            when(cardViewFactory.create(handCard)).thenReturn(cardView);
-            // Need to pre-initialize revealedHandChoice state
-            gd.interaction.beginRevealedHandChoice(PLAYER1_ID, PLAYER2_ID, Set.of(0), 1, false, List.of());
-
-            svc.beginRevealedHandChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(0), "Choose one");
-
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        }
-
-        @Test
-        @DisplayName("Creates card views for target player's hand and sends message")
-        void sendsMessageWithCardViews() {
-            Card card1 = createCreature("Bear");
-            Card card2 = createCreature("Wolf");
-            gd.playerHands.get(PLAYER2_ID).addAll(List.of(card1, card2));
-            CardView view1 = mock(CardView.class);
-            CardView view2 = mock(CardView.class);
-            when(cardViewFactory.create(card1)).thenReturn(view1);
-            when(cardViewFactory.create(card2)).thenReturn(view2);
-            gd.interaction.beginRevealedHandChoice(PLAYER1_ID, PLAYER2_ID, Set.of(0, 1), 1, false, List.of());
-
-            svc.beginRevealedHandChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(0, 1), "Pick one");
-
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseFromRevealedHandMessage msg = (ChooseFromRevealedHandMessage) messageCaptor.getValue();
-            assertThat(msg.cards()).containsExactly(view1, view2);
-            assertThat(msg.validIndices()).containsExactly(0, 1);
-            assertThat(msg.prompt()).isEqualTo("Pick one");
         }
     }
 

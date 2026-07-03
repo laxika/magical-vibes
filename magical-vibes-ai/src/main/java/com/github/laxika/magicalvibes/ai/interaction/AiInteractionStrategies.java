@@ -27,6 +27,7 @@ public final class AiInteractionStrategies {
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());
         register(new ColorChoiceAiStrategy());
+        register(new RevealedHandChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

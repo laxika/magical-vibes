@@ -40,4 +40,8 @@ public sealed interface InteractionAnswer {
     /** A single value chosen from a presented list (the "choose from list" wire payload). */
     record ListChoiceMade(String choice) implements InteractionAnswer {
     }
+
+    /** A single card picked by hand index (the shared "card chosen" wire payload). */
+    record CardIndexChosen(int cardIndex) implements InteractionAnswer {
+    }
 }

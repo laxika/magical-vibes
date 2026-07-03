@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -74,8 +76,8 @@ class KitesailFreebooterTest extends BaseCardTest {
         castAndResolveETB();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoice().exileMode()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).exileMode()).isTrue();
     }
 
     @Test
@@ -109,7 +111,7 @@ class KitesailFreebooterTest extends BaseCardTest {
         castAndResolveETB();
 
         // Only index 2 (Peek) should be valid — creature at 0 and land at 1 are excluded
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(2);
     }
 
     @Test

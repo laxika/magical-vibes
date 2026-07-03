@@ -2,14 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +21,7 @@ import org.springframework.stereotype.Component;
 public class ChooseCardsFromTargetHandToTopOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final PlayerInputService playerInputService;
-    private final PlayerInteractionSupport playerInteractionSupport;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,11 +58,9 @@ public class ChooseCardsFromTargetHandToTopOfLibraryEffectHandler implements Nor
             validIndices.add(i);
         }
 
-        gameData.interaction.beginRevealedHandChoice(casterId, targetPlayerId, Set.copyOf(validIndices),
-                cardsToChoose, false, List.of());
-
-        playerInputService.beginRevealedHandChoice(gameData, casterId, targetPlayerId, validIndices,
-                "Choose a card to put on top of " + targetName + "'s library.");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
+                casterId, targetPlayerId, validIndices, cardsToChoose, false, false, List.of(), null,
+                "Choose a card to put on top of " + targetName + "'s library."));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand to put on top of library",
                 gameData.id, casterName, cardsToChoose, targetName);

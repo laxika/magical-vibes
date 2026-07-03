@@ -273,6 +273,48 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   ~25 test files' `colorChoice()` / `colorChoiceContext()` reads rewritten to the typed accessor
   (scratchpad `fix_color_tests.pl`); the five color effect-handler tests now verify
   `interactionHandlerRegistry.begin(…, ColorChoice)` instead of the send.
+- `PendingInteraction.RevealedHandChoice` (REVEALED_HAND_CHOICE) — Duress-style "choose a card
+  from the target's revealed hand" incl. the multi-pick discard/exile/top-of-library countdown.
+  The record carries `(choosingPlayerId, targetPlayerId, validIndices, remainingCount,
+  discardMode, exileMode, chosenCards, sourcePermanentId, prompt)`; the mutable-state countdown
+  (`addRevealedHandChosenCard` / `decrementRevealedHandChoiceRemainingCount`) became "each
+  answered pick begins a fresh record with the decremented count and accumulated cards" — the
+  legacy mid-flow re-begin did NOT carry `sourcePermanentId` across picks, and the record
+  re-begin passes null to preserve that byte-for-byte. Card views are re-derived from the
+  target's current full hand at prompt time (identical to legacy begin AND replay, since any
+  hand change begins a fresh record). Answered via the new `InteractionAnswer.CardIndexChosen`;
+  `GameService.handleCardChosen` dispatches through the registry FIRST and keeps the full legacy
+  fallback (`CardChoiceHandlerService.handleCardChosen` still serves CARD_CHOICE /
+  TARGETED_CARD_CHOICE / DISCARD_CHOICE / EXILE_FROM_HAND / IMPRINT / activated-ability discard
+  cost — only its REVEALED_HAND_CHOICE branch was deleted). The answer logic stays in
+  `CardChoiceHandlerService.handleRevealedHandCardChosen` (now public; reads the active record;
+  log/error texts unchanged; the redundant `clearRevealedHandChoiceProgress` went away). Begin
+  sites: `PlayerInputService.beginRevealedHandChoice` deleted — the legacy two-step begin
+  (full-state `interaction.beginRevealedHandChoice(...)` + helper re-begin-from-current-state
+  + post-hoc `setSourcePermanentId`) collapses to one `registry.begin` at each of the three
+  sites (`ChooseCardsFromTargetHandToTopOfLibraryEffectHandler`,
+  `PlayerInteractionSupport.resolveHandRevealAndChoose`, the mid-flow re-begin); the uniform
+  "Awaiting {} to choose a card from revealed hand" log moved into the handler's prompt
+  (multi-zone-exile precedent). **Two deliberate replay-fidelity corrections**: the legacy
+  replay always sent "Choose a card to put on top of X's library." — wrong for discard/exile
+  modes ("…to discard.", "…to exile.") and for the "Choose another card…" follow-up picks —
+  and hash-scrambled the index order; replay now re-sends the begin-time prompt and ordered
+  indices. **`RevealedHandChoiceState` is deleted entirely**, along with its
+  "backwards-compatibility" `cardChoice` sub-state mirror (set at every begin); its
+  piggybacking `discardRemainingCount` — which belongs to the separate DISCARD_CHOICE /
+  EXILE_FROM_HAND countdown, not this kind — became a plain int field on `InteractionState`
+  (`discardRemainingCount()` getter added; deepCopy + `copyInteractionInto` preserved; the
+  lazy `ensureRevealedHandChoice` hack is gone). AI: `RevealedHandChoiceAiStrategy` (highest
+  mana value) — no difficulty overrides existed; `GameSimulator` reads the record in the
+  REVEALED_HAND_CHOICE action-gen case (split out of the shared `cardChoiceContext()` case,
+  which the deleted mirror had been feeding) and the resolve case, plus a
+  `getInteractionPlayer` decider case (`choosingPlayerId`). ~23 test files rewritten:
+  `revealedHandChoice().remainingCount()/discardMode()/exileMode()` → the typed record
+  accessor, `revealedHandChoice().discardRemainingCount()` →
+  `interaction.discardRemainingCount()`, and the RH-context `cardChoice().playerId()/
+  validIndices()` mirror reads → record accessors (discard-flow `cardChoice()` reads stay
+  legacy); `PlayerInputServiceTest`'s begin-helper block moved into the new focused
+  `RevealedHandChoiceInteractionHandlerTest`.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -296,7 +338,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 ### Stage 3 continuation — migrate the remaining kinds
 
 Suggested order: the card/graveyard/permanent choice families (CARD_CHOICE, DISCARD_CHOICE,
-PERMANENT_CHOICE, GRAVEYARD_CHOICE, REVEALED_HAND_CHOICE),
+PERMANENT_CHOICE, GRAVEYARD_CHOICE),
 LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
 declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 

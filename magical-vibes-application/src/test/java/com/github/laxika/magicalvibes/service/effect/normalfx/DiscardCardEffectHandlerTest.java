@@ -39,7 +39,7 @@ class DiscardCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
 
                 resolveEffect(gd, entry, effect);
 
-                assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(2);
+                assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
             }
 
             @Test

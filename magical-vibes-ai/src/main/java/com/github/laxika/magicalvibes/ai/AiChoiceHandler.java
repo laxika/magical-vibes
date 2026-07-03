@@ -285,34 +285,9 @@ class AiChoiceHandler {
 
     // ===== Revealed Hand Choice =====
 
+    /** Baseline revealed-hand answer via {@code RevealedHandChoiceAiStrategy}. */
     void handleRevealedHandChoice(GameData gameData) {
-        InteractionContext.RevealedHandChoice revealedHandChoice = gameData.interaction.revealedHandChoiceContext();
-        if (revealedHandChoice == null) {
-            return;
-        }
-        UUID choosingPlayerId = revealedHandChoice.choosingPlayerId();
-
-        if (!aiPlayerId.equals(choosingPlayerId)) {
-            return;
-        }
-
-        UUID targetPlayerId = revealedHandChoice.targetPlayerId();
-        if (targetPlayerId == null) {
-            return;
-        }
-
-        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-        Set<Integer> validIndices = revealedHandChoice.validIndices();
-        if (targetHand == null || validIndices == null || validIndices.isEmpty()) {
-            return;
-        }
-
-        int bestIndex = validIndices.stream()
-                .max(Comparator.comparingInt(i -> targetHand.get(i).getManaValue()))
-                .orElse(validIndices.iterator().next());
-
-        log.info("AI: Choosing card {} from revealed hand in game {}", bestIndex, gameId);
-        send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(bestIndex)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Bottom Cards (mulligan) =====

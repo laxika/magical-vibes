@@ -67,7 +67,7 @@ class RavenousRatsTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
         assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(1);
 
         harness.handleCardChosen(player2, 0);
 

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -68,10 +70,10 @@ class NightTerrorsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoice().remainingCount()).isEqualTo(1);
-        assertThat(gd.interaction.revealedHandChoice().exileMode()).isTrue();
-        assertThat(gd.interaction.revealedHandChoice().discardMode()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).exileMode()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).discardMode()).isFalse();
     }
 
     @Test
@@ -120,7 +122,7 @@ class NightTerrorsTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
 
         // Only index 0 (Grizzly Bears) should be valid, index 1 (Forest) is a land
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(0);
     }
 
     @Test
@@ -195,7 +197,7 @@ class NightTerrorsTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
         // Only index 1 (Grizzly Bears) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(1);
 
         // Choose the only nonland card
         harness.handleCardChosen(player1, 1);

@@ -133,7 +133,6 @@ public class GameService {
             case InteractionContext.GraveyardChoice gc -> controlledId.equals(gc.playerId());
             case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
             case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
-            case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
         };
     }
@@ -459,6 +458,10 @@ public class GameService {
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.CardIndexChosen(cardIndex))) {
+                return;
+            }
             cardChoiceHandlerService.handleCardChosen(gameData, player, cardIndex);
         }
     }

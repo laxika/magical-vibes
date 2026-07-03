@@ -81,7 +81,7 @@ class SerumRakerTest extends BaseCardTest {
         // Active player (player1) should be prompted to discard first
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
         assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(1);
     }
 
     @Test
@@ -101,7 +101,7 @@ class SerumRakerTest extends BaseCardTest {
         // Non-active player should now be prompted
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
         assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.revealedHandChoice().discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(1);
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToExileEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,11 @@ class ChooseCardFromTargetHandToExileEffectHandlerTest extends AbstractPlayerInt
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("reveals their hand")));
-                verify(playerInputService).beginRevealedHandChoice(eq(gd), eq(player1Id), eq(player2Id), any(), any());
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.RevealedHandChoice rhc
+                                && rhc.choosingPlayerId().equals(player1Id)
+                                && rhc.targetPlayerId().equals(player2Id)
+                                && rhc.exileMode()));
             }
 
             @Test

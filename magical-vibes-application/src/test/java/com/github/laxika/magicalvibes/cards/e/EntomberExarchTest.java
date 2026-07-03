@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -121,9 +123,9 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-            assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
             // Only instant (index 0) should be valid, creature (index 1) should not
-            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(0);
 
             harness.handleCardChosen(player1, 0);
 
@@ -145,7 +147,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only instant (index 1) should be valid
-            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(1);
         }
 
         @Test
@@ -160,7 +162,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only land (index 0) should be valid
-            assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(0);
         }
 
         @Test

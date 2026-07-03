@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.e.ElspethTirel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -49,9 +51,9 @@ class DespiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
         // Only creature (index 0) should be valid, instant (index 1) is not
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(0);
     }
 
     @Test
@@ -90,7 +92,7 @@ class DespiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only planeswalker (index 0) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(0);
 
         harness.handleCardChosen(player1, 0);
 
@@ -113,7 +115,7 @@ class DespiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only index 1 (creature) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(1);
     }
 
     @Test
@@ -130,7 +132,7 @@ class DespiseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only index 1 (creature) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(1);
     }
 
     @Test

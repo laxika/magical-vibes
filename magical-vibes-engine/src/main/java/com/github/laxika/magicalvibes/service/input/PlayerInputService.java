@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -330,21 +329,6 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
-    }
-
-    public void beginRevealedHandChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<Integer> validIndices, String prompt) {
-        gameData.interaction.beginRevealedHandChoiceFromCurrentState(
-                choosingPlayerId,
-                targetPlayerId,
-                new HashSet<>(validIndices)
-        );
-
-        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
-        List<CardView> cardViews = targetHand.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseFromRevealedHandMessage(cardViews, validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(choosingPlayerId);
-        log.info("Game {} - Awaiting {} to choose a card from revealed hand", gameData.id, playerName);
     }
 
     public void processNextMayAbility(GameData gameData) {
