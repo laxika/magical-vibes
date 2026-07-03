@@ -12,7 +12,10 @@ Targeting for triggered abilities happens in two layers:
 
 1. **The collector** that notices the trigger fires and decides whether the resulting ability should:
    - Go straight onto the stack with no user choice (non-targeting), **or**
-   - Be parked in a `pendingXxxTriggerTargets` deque in `GameData` and then processed by a target-choice step.
+   - Be parked in the unified `GameData.pendingInteractions` queue as a `PermanentChoiceContext.XxxTriggerTarget`
+     record (queued via `gameData.queueInteraction(...)`) and then processed by a target-choice step. Each
+     pipeline services only its own record type via the type-filtered helpers
+     (`hasPendingInteraction` / `peekPendingInteraction` / `pollPendingInteraction`), so per-kind FIFO order is preserved.
 
 2. **The target-choice step** that turns a pending entry into a concrete target:
    - For the three central pipelines — death, attack, end-step — target collection runs through the shared
@@ -35,16 +38,16 @@ target selection — this invariant is guarded by `CardEffectTargetingConsistenc
 
 | Pipeline                   | `Options` constant | Player target | Permanent target | `PlayerRelationPredicate.OPPONENT` (via `PlayerPredicateTargetFilter`) | `PermanentPredicateTargetFilter` | `ControlledPermanentPredicateTargetFilter` | Effect-level `targetPredicate()` |
 |----------------------------|--------------------|:-------------:|:----------------:|:------:|:---:|:---:|:---:|
-| Death (`pendingDeathTriggerTargets`)        | `Options.DEATH`    | ✅ | ✅ creatures only | ✅ | ✅ | ✅ | ❌ (ignored) |
-| Attack (`pendingAttackTriggerTargets`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ❌ (ignored) |
-| End step (`pendingEndStepTriggerTargets`)   | `Options.END_STEP` | ✅ | ✅ any permanent  | ✅ | ✅ | ❌ | ✅ (unwraps `ConditionalEffect`) |
-| Discard-self (`pendingDiscardSelfTriggers`) | —                  | ✅ all players | ✅ creatures + planeswalkers only | ❌ | ❌ | ❌ | ❌ |
-| Spell-target (`pendingSpellTargetTriggers`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via `PredicateEvaluationService.matchesFilters`) | ❌ | ❌ |
-| Life-gain (`pendingLifeGainTriggerTargets`) | —                  | ✅ all players | ✅ creatures only | ❌ | ❌ | ❌ | ❌ |
-| Enters-from-graveyard (`pendingEntersFromGraveyardTriggerTargets`) | — | ✅ all players | ✅ creatures + planeswalkers (any target) | ❌ | ❌ | ❌ | ❌ |
-| Explore (`pendingExploreTriggerTargets`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |
-| Emblem (`pendingEmblemTriggerTargets`)      | —                  | ❌            | ✅ any permanent  | via bespoke `opponentControlledOnly` boolean | ❌ | ❌ | ❌ |
-| Saga chapter (`pendingSagaChapterTargets`)  | —                  | "up to one" skip via self-target | ✅ creatures only | ❌ | ✅ (via chapter-level `Set<TargetFilter>`) | ❌ | ✅ first effect's `targetPredicate()` |
+| Death (`DeathTriggerTarget`)        | `Options.DEATH`    | ✅ | ✅ creatures only | ✅ | ✅ | ✅ | ❌ (ignored) |
+| Attack (`AttackTriggerTarget`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ❌ (ignored) |
+| End step (`EndStepTriggerTarget`)   | `Options.END_STEP` | ✅ | ✅ any permanent  | ✅ | ✅ | ❌ | ✅ (unwraps `ConditionalEffect`) |
+| Discard-self (`DiscardTriggerAnyTarget`) | —                  | ✅ all players | ✅ creatures + planeswalkers only | ❌ | ❌ | ❌ | ❌ |
+| Spell-target (`SpellTargetTriggerAnyTarget`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via `PredicateEvaluationService.matchesFilters`) | ❌ | ❌ |
+| Life-gain (`LifeGainTriggerAnyTarget`) | —                  | ✅ all players | ✅ creatures only | ❌ | ❌ | ❌ | ❌ |
+| Enters-from-graveyard (`EntersFromGraveyardTriggerTarget`) | — | ✅ all players | ✅ creatures + planeswalkers (any target) | ❌ | ❌ | ❌ | ❌ |
+| Explore (`ExploreTriggerTarget`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |
+| Emblem (`EmblemTriggerTarget`)      | —                  | ❌            | ✅ any permanent  | via bespoke `opponentControlledOnly` boolean | ❌ | ❌ | ❌ |
+| Saga chapter (`SagaChapterTarget`)  | —                  | "up to one" skip via self-target | ✅ creatures only | ❌ | ✅ (via chapter-level `Set<TargetFilter>`) | ❌ | ✅ first effect's `targetPredicate()` |
 
 Legend: ✅ = supported, ❌ = not supported, — = no shared Options entry.
 
@@ -116,8 +119,8 @@ Pierce Strider, Geralf's Messenger) normally has its target chosen **at cast tim
 is pushed directly onto the stack with that target. When the permanent enters **without a cast** —
 a token copy, or a creature put onto the battlefield from a graveyard via undying / reanimation /
 flicker — there is no cast-time target, so `BattlefieldEntryService.processCreatureETBEffects`
-routes the trigger through `pendingETBTokenTargetTriggers` (single target) or
-`pendingETBTokenMultiTargetTriggers` (multi-target), letting the controller choose the target as the
+routes the trigger through `ETBTokenTargetTrigger` (single target) or
+`ETBTokenMultiTargetTrigger` (multi-target), letting the controller choose the target as the
 ability is put on the stack (CR 603.3b / 603.6c). The entering permanent's
 `getEnteredFromGraveyardOwnerId()` distinguishes a graveyard return from a cast; "up to N" cast
 spells that chose 0 targets are unaffected because they passed through cast-time selection.
@@ -126,9 +129,10 @@ If the card you are implementing needs one of these slots **and** a user target 
 or permanent), **that is an engine change**. The work required is:
 
 1. Add a new `PermanentChoiceContext.XxxTriggerTarget` record (or reuse an existing one).
-2. Add a `pendingXxxTriggerTargets` deque on `GameData` (plus copy-on-fork in `GameData.deepCopy`).
-3. In the collector that notices the trigger, route targeting effects into the new deque.
-4. In the step that drains the queue, call
+2. Queue it on the unified `GameData.pendingInteractions` queue via `gameData.queueInteraction(...)`
+   (no new field needed; `simulationCopy` already copies the queue).
+3. In the collector that notices the trigger, route targeting effects into the queue.
+4. In the step that drains it (via `peekPendingInteraction` / `pollPendingInteraction` on the record class), call
    `TriggerTargetCollector.collect(...)` with an appropriate `Options` — or extend `Options` if none of
    `DEATH` / `ATTACK` / `END_STEP` match the semantics you need.
 5. Handle the empty-target case (log + skip) and the prompt wording.

@@ -64,12 +64,12 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} spell-target trigger targets {}", gameData.id, stt.sourceCard().getName(), targetName);
 
-        if (!gameData.pendingSpellTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
             return;
         }
 
-        if (!gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
         }
@@ -99,12 +99,12 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} discard trigger targets {}", gameData.id, dtt.discardedCard().getName(), targetName);
 
-        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
             return;
         }
 
-        if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
             return;
         }
@@ -134,7 +134,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} death trigger targets {}", gameData.id, dtt.dyingCard().getName(), targetName);
 
-        if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
             return;
         }
@@ -165,7 +165,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} explore trigger targets {}", gameData.id, ett.sourceCard().getName(), targetName);
 
-        if (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
             return;
         }
@@ -403,7 +403,7 @@ public class PermanentChoiceTriggerHandlerService {
             log.info("Game {} - {} attack trigger target no longer exists", gameData.id, att.sourceCard().getName());
         }
 
-        if (!gameData.pendingAttackTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);
             return;
         }
@@ -434,7 +434,7 @@ public class PermanentChoiceTriggerHandlerService {
             log.info("Game {} - {} emblem trigger target no longer exists", gameData.id, ett.emblemDescription());
         }
 
-        if (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             triggerCollectionService.processNextEmblemTriggerTarget(gameData);
             return;
         }
@@ -465,17 +465,17 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} upkeep player-target trigger targets {}", gameData.id, upt.sourceCard().getName(), playerName);
 
-        if (!gameData.pendingUpkeepPlayerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
             turnProgressionService.processNextUpkeepPlayerTarget(gameData);
             return;
         }
 
-        if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)) {
             turnProgressionService.processNextUpkeepCopyTarget(gameData);
             return;
         }
 
-        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
             return;
         }
@@ -525,22 +525,22 @@ public class PermanentChoiceTriggerHandlerService {
         log.info("Game {} - {} upkeep multi-player trigger targets {} and {}",
                 gameData.id, uspt.sourceCard().getName(), firstName, secondName);
 
-        if (!gameData.pendingUpkeepMultiPlayerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class)) {
             turnProgressionService.processNextUpkeepMultiPlayerTarget(gameData);
             return;
         }
 
-        if (!gameData.pendingUpkeepPlayerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
             turnProgressionService.processNextUpkeepPlayerTarget(gameData);
             return;
         }
 
-        if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)) {
             turnProgressionService.processNextUpkeepCopyTarget(gameData);
             return;
         }
 
-        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
             return;
         }
@@ -579,12 +579,12 @@ public class PermanentChoiceTriggerHandlerService {
             log.info("Game {} - {} upkeep copy trigger target no longer exists", gameData.id, uct.sourceCard().getName());
         }
 
-        if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)) {
             turnProgressionService.processNextUpkeepCopyTarget(gameData);
             return;
         }
 
-        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
             return;
         }
@@ -653,7 +653,7 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     void continueAfterCapriciousEfreet(GameData gameData) {
-        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
             return;
         }
@@ -686,7 +686,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} life gain trigger targets {}", gameData.id, lgt.sourceCard().getName(), targetName);
 
-        if (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
             return;
         }
@@ -718,7 +718,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} enters-from-graveyard trigger targets {}", gameData.id, efg.sourceCard().getName(), targetName);
 
-        if (!gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
             triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
             return;
         }
@@ -757,7 +757,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} ETB spell-target trigger targets {}", gameData.id, etbStt.sourceCard().getName(), targetName);
 
-        if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
             etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
             return;
         }
@@ -807,8 +807,8 @@ public class PermanentChoiceTriggerHandlerService {
 
         // Replace head of the queue with the advanced state; then let the processor decide
         // whether to prompt again (more slots / next group) or push the final ETB.
-        gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
-        gameData.pendingETBTokenMultiTargetTriggers.addFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+        gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+        gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
                 updatedChosen, nextGroupIdx, nextChosenInGroup));
 
@@ -818,12 +818,12 @@ public class PermanentChoiceTriggerHandlerService {
             return;
         }
 
-        if (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
             etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
             return;
         }
 
-        if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
             etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
             return;
         }
@@ -857,17 +857,17 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} ETB token-target trigger targets {}", gameData.id, etbTtt.sourceCard().getName(), targetName);
 
-        if (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
             etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
             return;
         }
 
-        if (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
             return;
         }
 
-        if (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
             etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
             return;
         }
@@ -898,7 +898,7 @@ public class PermanentChoiceTriggerHandlerService {
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} end-step trigger targets {}", gameData.id, est.sourceCard().getName(), targetName);
 
-        if (!gameData.pendingEndStepTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             turnProgressionService.processNextEndStepTriggerTarget(gameData);
             return;
         }
@@ -932,7 +932,7 @@ public class PermanentChoiceTriggerHandlerService {
         log.info("Game {} - {} beginning-of-combat trigger targets {}",
                 gameData.id, boct.sourceCard().getName(), targetName);
 
-        if (!gameData.pendingBeginningOfCombatTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class)) {
             turnProgressionService.processNextBeginningOfCombatTriggerTarget(gameData);
             return;
         }
@@ -1000,7 +1000,7 @@ public class PermanentChoiceTriggerHandlerService {
             }
         }
 
-        if (!gameData.pendingSagaChapterTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
             return;
         }

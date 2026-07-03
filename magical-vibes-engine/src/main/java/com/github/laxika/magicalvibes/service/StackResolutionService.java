@@ -97,42 +97,42 @@ public class StackResolutionService {
         // Check SBA after resolution — creatures may have 0 toughness from effects (e.g. -1/-1)
         stateBasedActionService.performStateBasedActions(gameData);
 
-        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingLifeGainTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
             triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }
         }
 
-        if (!gameData.pendingSagaChapterTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
@@ -623,7 +623,7 @@ public class StackResolutionService {
         boolean needsPermanentTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
         boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
         if (needsPermanentTarget) {
-            gameData.pendingSagaChapterTargets.add(
+            gameData.queueInteraction(
                     new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName,
                             card.getSagaChapterTargetFilters(chapterSlot)));
@@ -632,7 +632,7 @@ public class StackResolutionService {
             log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         } else if (needsGraveyardTarget) {
-            gameData.pendingSagaChapterGraveyardTargets.add(
+            gameData.queueInteraction(
                     new PermanentChoiceContext.SagaChapterGraveyardTarget(card, controllerId,
                             new ArrayList<>(chapterEffects), sagaPerm.getId(), chapterName));
             String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";

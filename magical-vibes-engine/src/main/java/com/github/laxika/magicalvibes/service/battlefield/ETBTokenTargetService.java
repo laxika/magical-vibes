@@ -38,8 +38,8 @@ public class ETBTokenTargetService {
     private final TargetLegalityService targetLegalityService;
 
     public void processNextETBSpellTargetTrigger(GameData gameData) {
-        while (!gameData.pendingETBSpellTargetTriggers.isEmpty()) {
-            PermanentChoiceContext.ETBSpellTargetTrigger pending = gameData.pendingETBSpellTargetTriggers.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
+            PermanentChoiceContext.ETBSpellTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class);
 
             List<UUID> validSpellCardIds = new ArrayList<>();
             for (StackEntry se : gameData.stack) {
@@ -57,14 +57,14 @@ public class ETBTokenTargetService {
             }
 
             if (validSpellCardIds.isEmpty()) {
-                gameData.pendingETBSpellTargetTriggers.removeFirst();
+                gameData.pollPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class);
                 String etbLog = pending.sourceCard().getName() + "'s enter-the-battlefield ability has no valid spell targets.";
                 gameBroadcastService.logAndBroadcast(gameData, etbLog);
                 log.info("Game {} - {} ETB spell-target trigger skipped (no valid targets)", gameData.id, pending.sourceCard().getName());
                 continue;
             }
 
-            gameData.pendingETBSpellTargetTriggers.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validSpellCardIds, List.of(),
@@ -78,8 +78,8 @@ public class ETBTokenTargetService {
     }
 
     public void processNextETBTokenTargetTrigger(GameData gameData) {
-        while (!gameData.pendingETBTokenTargetTriggers.isEmpty()) {
-            PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.pendingETBTokenTargetTriggers.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)) {
+            PermanentChoiceContext.ETBTokenTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
 
             boolean canTargetPlayer = pending.effects().stream().anyMatch(CardEffect::canTargetPlayer);
             boolean canTargetPermanent = pending.effects().stream().anyMatch(CardEffect::canTargetPermanent);
@@ -107,7 +107,7 @@ public class ETBTokenTargetService {
             }
 
             if (validPlayerTargets.isEmpty() && validPermanentTargets.isEmpty()) {
-                gameData.pendingETBTokenTargetTriggers.removeFirst();
+                gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
                 String etbLog = pending.sourceCard().getName() + "'s enter-the-battlefield ability has no valid targets.";
                 gameBroadcastService.logAndBroadcast(gameData, etbLog);
                 log.info("Game {} - {} ETB token-target trigger skipped (no valid targets)",
@@ -115,7 +115,7 @@ public class ETBTokenTargetService {
                 continue;
             }
 
-            gameData.pendingETBTokenTargetTriggers.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class);
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
                     validPermanentTargets, validPlayerTargets,
@@ -128,15 +128,15 @@ public class ETBTokenTargetService {
     }
 
     public void processNextETBTokenMultiTargetTrigger(GameData gameData) {
-        while (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()) {
-            PermanentChoiceContext.ETBTokenMultiTargetTrigger pending = gameData.pendingETBTokenMultiTargetTriggers.peekFirst();
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+            PermanentChoiceContext.ETBTokenMultiTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
             Card card = pending.sourceCard();
             List<SpellTarget> groups = card.getSpellTargets();
             int idx = pending.currentGroupIndex();
             int chosenInGroup = pending.chosenInCurrentGroup();
 
             if (idx >= groups.size()) {
-                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
+                gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                 pushMultiTargetETBStackEntry(gameData, pending);
                 continue;
             }
@@ -144,8 +144,8 @@ public class ETBTokenTargetService {
             SpellTarget group = groups.get(idx);
 
             if (chosenInGroup >= group.getMaxTargets()) {
-                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
-                gameData.pendingETBTokenMultiTargetTriggers.addFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0));
                 continue;
@@ -183,15 +183,15 @@ public class ETBTokenTargetService {
 
             if (noLegalTargets) {
                 if (chosenInGroup < group.getMinTargets()) {
-                    gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
+                    gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
                     String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
                     gameBroadcastService.logAndBroadcast(gameData, etbLog);
                     log.info("Game {} - {} ETB multi-target trigger skipped (no valid targets for mandatory group {} at slot {})",
                             gameData.id, card.getName(), idx, chosenInGroup);
                     continue;
                 }
-                gameData.pendingETBTokenMultiTargetTriggers.removeFirst();
-                gameData.pendingETBTokenMultiTargetTriggers.addFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                         pending.chosenTargetsSoFar(), idx + 1, 0));
                 continue;

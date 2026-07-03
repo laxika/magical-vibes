@@ -292,7 +292,7 @@ public class MiscTriggerCollectorService {
         if (lg.sourceCard() == null || !lg.sourceCard().getColors().contains(effect.triggeringColor())) return false;
 
         // Queue for target selection (creature or player)
-        gameData.pendingLifeGainTriggerTargets.add(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+        gameData.queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
                 match.permanent().getCard(),
                 match.controllerId(),
                 List.of(new DealDamageToAnyTargetEffect(effect.damage())),

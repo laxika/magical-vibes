@@ -127,7 +127,7 @@ public class DeathTriggerCollectorService {
         int power = dyingPermanent != null ? dyingPermanent.getEffectivePower()
                 : (sd.dyingCard().getPower() != null ? sd.dyingCard().getPower() : 0);
         CardEffect resolved = new TargetPlayerLosesLifeEffect(Math.max(0, power));
-        match.gameData().pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+        match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(resolved))
         ));
         return true;
@@ -139,7 +139,7 @@ public class DeathTriggerCollectorService {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         // CR 603.3d: targeted "may" abilities need the target chosen when stacking
         if (may.canTargetPermanent() || may.canTargetPlayer()) {
-            match.gameData().pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(may))
             ));
         } else {
@@ -174,7 +174,7 @@ public class DeathTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
         if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
-            match.gameData().pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+            match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(effect))
             ));
         } else {
@@ -214,7 +214,7 @@ public class DeathTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
         if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
-            gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+            gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect))
             ));
         } else {
@@ -429,7 +429,7 @@ public class DeathTriggerCollectorService {
             CardEffect effect, TriggerContext ctx) {
         GameData gameData = match.gameData();
         if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
-            gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+            gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect))
             ));
         } else {

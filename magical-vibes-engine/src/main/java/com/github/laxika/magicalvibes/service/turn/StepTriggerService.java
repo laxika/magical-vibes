@@ -134,10 +134,10 @@ public class StepTriggerService {
                         .mapToInt(CardEffect::requiredPlayerTargetCount)
                         .max().orElse(1);
                 if (maxPlayerTargets >= 2) {
-                    gameData.pendingUpkeepMultiPlayerTargets.add(new PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger(
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger(
                             perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
                 } else {
-                    gameData.pendingUpkeepPlayerTargets.add(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
+                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
                             perm.getCard(), activePlayerId, new ArrayList<>(upkeepEffects), perm.getId()));
                 }
                 continue;
@@ -171,14 +171,14 @@ public class StepTriggerService {
                         if (hasValidTargets) break;
                     }
                     if (hasValidTargets) {
-                        gameData.pendingUpkeepCopyTargets.add(new PermanentChoiceContext.UpkeepCopyTriggerTarget(
+                        gameData.queueInteraction(new PermanentChoiceContext.UpkeepCopyTriggerTarget(
                                 perm.getCard(), activePlayerId, perm.getId()));
                     }
                 } else if (effect instanceof DestroyOneOfTargetsAtRandomEffect) {
                     // Targeted upkeep trigger: targets chosen at trigger time (CR 603.3d).
                     // The Efreet itself is a valid "nonland permanent you control" target,
                     // so this always triggers as long as it's on the battlefield.
-                    gameData.pendingCapriciousEfreetTargets.add(new PermanentChoiceContext.CapriciousEfreetOwnTarget(
+                    gameData.queueInteraction(new PermanentChoiceContext.CapriciousEfreetOwnTarget(
                             perm.getCard(), activePlayerId, perm.getId()));
                 } else if (effect instanceof ConditionalEffect conditional
                         && conditional.condition() instanceof NoOtherPermanent) {
@@ -514,24 +514,24 @@ public class StepTriggerService {
         }
 
         // Process upkeep multi-player-targeted triggers first (e.g. Axis of Mortality, CR 603.3d)
-        if (!gameData.pendingUpkeepMultiPlayerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class)) {
             processNextUpkeepMultiPlayerTarget(gameData);
             return;
         }
 
         // Process upkeep player-targeted triggers (mandatory targeting at trigger time, CR 603.3d)
-        if (!gameData.pendingUpkeepPlayerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
             processNextUpkeepPlayerTarget(gameData);
             return;
         }
 
         // Process upkeep copy trigger target selection (mandatory targeting at trigger time)
-        if (!gameData.pendingUpkeepCopyTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)) {
             processNextUpkeepCopyTarget(gameData);
             return;
         }
 
-        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             processNextCapriciousEfreetTarget(gameData);
             return;
         }
@@ -547,12 +547,12 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void processNextUpkeepPlayerTarget(GameData gameData) {
-        if (gameData.pendingUpkeepPlayerTargets.isEmpty()) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
             processNextUpkeepCopyTarget(gameData);
             return;
         }
 
-        PermanentChoiceContext.UpkeepPlayerTargetTrigger trigger = gameData.pendingUpkeepPlayerTargets.removeFirst();
+        PermanentChoiceContext.UpkeepPlayerTargetTrigger trigger = gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
 
         List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
 
@@ -572,12 +572,12 @@ public class StepTriggerService {
      * a second target selection is initiated via {@code UpkeepSecondPlayerTargetTrigger}.
      */
     public void processNextUpkeepMultiPlayerTarget(GameData gameData) {
-        if (gameData.pendingUpkeepMultiPlayerTargets.isEmpty()) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class)) {
             processNextUpkeepPlayerTarget(gameData);
             return;
         }
 
-        PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger trigger = gameData.pendingUpkeepMultiPlayerTargets.removeFirst();
+        PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger trigger = gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class);
 
         List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
 
@@ -616,13 +616,13 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void processNextUpkeepCopyTarget(GameData gameData) {
-        if (gameData.pendingUpkeepCopyTargets.isEmpty()) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)) {
             // All copy triggers targeted, continue with Capricious Efreet targets then may abilities
             processNextCapriciousEfreetTarget(gameData);
             return;
         }
 
-        PermanentChoiceContext.UpkeepCopyTriggerTarget trigger = gameData.pendingUpkeepCopyTargets.peekFirst();
+        PermanentChoiceContext.UpkeepCopyTriggerTarget trigger = gameData.peekPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
 
         // Collect valid creature targets (excluding source permanent)
         List<UUID> validTargets = new ArrayList<>();
@@ -639,12 +639,12 @@ public class StepTriggerService {
 
         if (validTargets.isEmpty()) {
             // No valid targets remaining — skip
-            gameData.pendingUpkeepCopyTargets.removeFirst();
+            gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
             processNextUpkeepCopyTarget(gameData);
             return;
         }
 
-        gameData.pendingUpkeepCopyTargets.removeFirst();
+        gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
         gameData.interaction.setPermanentChoiceContext(trigger);
         playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
                 trigger.sourceCard().getName() + " — Choose a creature to target.");
@@ -659,12 +659,12 @@ public class StepTriggerService {
      * Step 1: controller chooses one nonland permanent they control.
      */
     public void processNextCapriciousEfreetTarget(GameData gameData) {
-        if (gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             playerInputService.processNextMayAbility(gameData);
             return;
         }
 
-        PermanentChoiceContext.CapriciousEfreetOwnTarget trigger = gameData.pendingCapriciousEfreetTargets.removeFirst();
+        PermanentChoiceContext.CapriciousEfreetOwnTarget trigger = gameData.pollPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class);
 
         // Collect valid own nonland permanents (Efreet itself is a valid target)
         List<UUID> validOwnTargets = new ArrayList<>();
@@ -941,7 +941,7 @@ public class StepTriggerService {
             boolean needsPermanentTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetPermanent);
             boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(CardEffect::canTargetGraveyard);
             if (needsPermanentTarget) {
-                gameData.pendingSagaChapterTargets.add(
+                gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName,
                                 card.getSagaChapterTargetFilters(chapterSlot)));
@@ -949,7 +949,7 @@ public class StepTriggerService {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
             } else if (needsGraveyardTarget) {
-                gameData.pendingSagaChapterGraveyardTargets.add(
+                gameData.queueInteraction(
                         new PermanentChoiceContext.SagaChapterGraveyardTarget(card, activePlayerId,
                                 new ArrayList<>(chapterEffects), saga.getId(), chapterName));
                 String logEntry = card.getName() + "'s chapter " + chapterName + " ability triggers.";
@@ -973,10 +973,10 @@ public class StepTriggerService {
         }
 
         // Process any queued saga chapter target selections
-        if (!gameData.pendingSagaChapterTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         }
-        if (!gameData.pendingSagaChapterGraveyardTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
             triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
         }
     }
@@ -1250,7 +1250,7 @@ public class StepTriggerService {
                         CardEffect wrapped = morbid.wrapped();
                         if (wrapped.canTargetPermanent() || wrapped.canTargetPlayer()) {
                             // Targeting triggered ability — queue for target selection
-                            gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                     perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
                         } else {
                             gameData.stack.add(new StackEntry(
@@ -1307,7 +1307,7 @@ public class StepTriggerService {
                             gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                         } else if (wrapped.canTargetPermanent() || wrapped.canTargetPlayer()) {
                             // Raid condition met, targeting required — queue for target selection
-                            gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
                         } else {
                             gameData.stack.add(new StackEntry(
@@ -1439,13 +1439,13 @@ public class StepTriggerService {
                         }
                         // Condition met — queue for targeting with GainControlOfTargetPermanentEffect.
                         // The card's targetFilter restricts to nonland opponent permanents.
-                        gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                        gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                 perm.getCard(), activePlayerId,
                                 new ArrayList<>(List.of(new GainControlOfTargetPermanentEffect())),
                                 perm.getId()));
                     } else if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
                         // Targeting triggered ability — queue for target selection
-                        gameData.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+                        gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                 perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
                     } else {
                         gameData.stack.add(new StackEntry(
@@ -1467,7 +1467,7 @@ public class StepTriggerService {
         }
 
         // Process pending end-step targeted triggers (e.g. Reaper from the Abyss morbid, Voltaic Servant)
-        if (!gameData.pendingEndStepTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             processNextEndStepTriggerTarget(gameData);
             return;
         }
@@ -1483,12 +1483,12 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void processNextEndStepTriggerTarget(GameData gameData) {
-        if (gameData.pendingEndStepTriggerTargets.isEmpty()) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             playerInputService.processNextMayAbility(gameData);
             return;
         }
 
-        PermanentChoiceContext.EndStepTriggerTarget trigger = gameData.pendingEndStepTriggerTargets.removeFirst();
+        PermanentChoiceContext.EndStepTriggerTarget trigger = gameData.pollPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class);
 
         TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
         TriggerTargetCollector.Result result = triggerTargetCollector.collect(
@@ -1583,7 +1583,7 @@ public class StepTriggerService {
                     graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(
                             gameData, activePlayerId, perm.getCard(), mandatoryEffects, perm.getId(), exileEffect);
                 } else if (needsPermanentTarget) {
-                    gameData.pendingBeginningOfCombatTriggerTargets.add(
+                    gameData.queueInteraction(
                             new PermanentChoiceContext.BeginningOfCombatTriggerTarget(
                                     perm.getCard(), activePlayerId,
                                     new ArrayList<>(mandatoryEffects), perm.getId()));
@@ -1610,7 +1610,7 @@ public class StepTriggerService {
             }
         }
 
-        if (!gameData.pendingBeginningOfCombatTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class)) {
             processNextBeginningOfCombatTriggerTarget(gameData);
             return;
         }
@@ -1628,13 +1628,13 @@ public class StepTriggerService {
      * pushed onto the stack with the chosen target.
      */
     public void processNextBeginningOfCombatTriggerTarget(GameData gameData) {
-        if (gameData.pendingBeginningOfCombatTriggerTargets.isEmpty()) {
+        if (!gameData.hasPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class)) {
             playerInputService.processNextMayAbility(gameData);
             return;
         }
 
         PermanentChoiceContext.BeginningOfCombatTriggerTarget trigger =
-                gameData.pendingBeginningOfCombatTriggerTargets.removeFirst();
+                gameData.pollPendingInteraction(PermanentChoiceContext.BeginningOfCombatTriggerTarget.class);
 
         TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
         TriggerTargetCollector.Result result = triggerTargetCollector.collect(

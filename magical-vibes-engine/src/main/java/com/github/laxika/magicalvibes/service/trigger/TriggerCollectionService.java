@@ -163,7 +163,7 @@ public class TriggerCollectionService {
             if (!emblem.controllerId().equals(castingPlayerId)) continue;
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof ExileTargetOnControllerSpellCastEffect) {
-                    gameData.pendingEmblemTriggerTargets.add(new PermanentChoiceContext.EmblemTriggerTarget(
+                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
                             "Venser's emblem",
                             emblem.controllerId(),
                             List.of(new ExileTargetPermanentEffect()),
@@ -173,7 +173,7 @@ public class TriggerCollectionService {
             }
         }
 
-        if (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
                 return;
@@ -284,7 +284,7 @@ public class TriggerCollectionService {
                     .filter(e -> !(e instanceof EnterBattlefieldOnDiscardEffect))
                     .toList();
             if (!selfTriggers.isEmpty()) {
-                gameData.pendingDiscardSelfTriggers.add(new PermanentChoiceContext.DiscardTriggerAnyTarget(
+                gameData.queueInteraction(new PermanentChoiceContext.DiscardTriggerAnyTarget(
                         discardedCard, discardingPlayerId, new ArrayList<>(selfTriggers)
                 ));
                 String logEntry = discardedCard.getName() + " was discarded by an opponent's effect — its ability triggers!";
@@ -422,7 +422,7 @@ public class TriggerCollectionService {
             }
         }
 
-        if (!gameData.pendingSpellTargetTriggers.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class) && !gameData.interaction.isAwaitingInput()) {
             processNextSpellTargetTrigger(gameData);
         }
     }
@@ -481,7 +481,7 @@ public class TriggerCollectionService {
         List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL);
         if (effects.isEmpty()) return;
 
-        gameData.pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 targetedCreature.getCard(), controllerId, new ArrayList<>(effects)
         ));
 
@@ -840,7 +840,7 @@ public class TriggerCollectionService {
 
             boolean anyTargeting = effects.stream().anyMatch(CardEffect::canTargetPermanent);
             if (anyTargeting) {
-                gameData.pendingExploreTriggerTargets.add(
+                gameData.queueInteraction(
                         new PermanentChoiceContext.ExploreTriggerTarget(
                                 perm.getCard(), controllerId, new ArrayList<>(effects), perm.getId()));
             } else {
@@ -921,7 +921,7 @@ public class TriggerCollectionService {
                     // route through the death target pipeline so the controller picks a target as the
                     // ability is put on the stack (CR 603.3d). The source card here is the watching
                     // permanent, so its own target filter (e.g. opponent-only) is honoured.
-                    gameData.pendingDeathTriggerTargets.add(new PermanentChoiceContext.DeathTriggerTarget(
+                    gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                             perm.getCard(), dyingCreatureControllerId, new ArrayList<>(List.of(resolvedEffect))
                     ));
                     anyEffectFired = true;
@@ -1402,7 +1402,7 @@ public class TriggerCollectionService {
             if (effects == null || effects.isEmpty()) return;
 
             for (CardEffect effect : effects) {
-                gameData.pendingEntersFromGraveyardTriggerTargets.add(
+                gameData.queueInteraction(
                         new PermanentChoiceContext.EntersFromGraveyardTriggerTarget(
                                 perm.getCard(), playerId, new ArrayList<>(List.of(effect)), enteringPermanentId));
                 gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers ("

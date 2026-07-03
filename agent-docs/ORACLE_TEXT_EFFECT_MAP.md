@@ -214,7 +214,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "return target creature card from your graveyard to the battlefield" | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(CardTypePredicate(CREATURE)).targetGraveyard(true).build()` | SPELL | |
 | "return target card from your graveyard to the top of your library" | `ReturnCardFromGraveyardEffect.builder().destination(TOP_OF_OWNERS_LIBRARY).targetGraveyard(true).build()` | SPELL | |
 | "Undying" (keyword) | none — loaded from Scryfall as `Keyword.UNDYING` | — | Engine handles the return-with-counter in `PermanentRemovalService.collectUndyingTrigger` + `UndyingReturnEffect`. Just register the printing. |
-| "Whenever this creature or another creature enters from your graveyard, that creature deals damage equal to its power to any target" | `DealDamageEqualToSourcePowerToAnyTargetEffect()` | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | Flayer of the Hatebound. The entering creature is the damage source (its power is read at resolution); any-target choice is handled by the `pendingEntersFromGraveyardTriggerTargets` pipeline. |
+| "Whenever this creature or another creature enters from your graveyard, that creature deals damage equal to its power to any target" | `DealDamageEqualToSourcePowerToAnyTargetEffect()` | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | Flayer of the Hatebound. The entering creature is the damage source (its power is read at resolution); any-target choice is handled by the `EntersFromGraveyardTriggerTarget` pipeline. |
 
 ## Counters
 

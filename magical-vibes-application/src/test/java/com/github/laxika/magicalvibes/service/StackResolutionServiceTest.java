@@ -283,7 +283,7 @@ class StackResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
                     PLAYER1_ID, spell.getName(), List.of());
             gd.stack.addLast(entry);
-            gd.pendingDiscardSelfTriggers.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.DiscardTriggerAnyTarget(createCreature("Discard Source"), PLAYER1_ID, List.of()));
 
             svc.resolveTopOfStack(gd);
@@ -298,7 +298,7 @@ class StackResolutionServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
                     PLAYER1_ID, spell.getName(), List.of());
             gd.stack.addLast(entry);
-            gd.pendingDeathTriggerTargets.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.DeathTriggerTarget(createCreature("Dying Source"), PLAYER1_ID, List.of()));
 
             svc.resolveTopOfStack(gd);

@@ -618,10 +618,10 @@ public class BattlefieldEntryService {
                     // Multi-target ETB on a token copy (e.g. Burning Sun's Avatar, or a
                     // single group with "up to N" targets): choose slot-by-slot at
                     // trigger time, accumulating into targetIds.
-                    gameData.pendingETBTokenMultiTargetTriggers.add(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
                     for (int i = 0; i < extraWizardTriggers; i++) {
-                        gameData.pendingETBTokenMultiTargetTriggers.add(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, List.of(), 0, 0));
                     }
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose targets.";
@@ -631,10 +631,10 @@ public class BattlefieldEntryService {
                 } else {
                     TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
 
-                    gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                             card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
                     for (int i = 0; i < extraWizardTriggers; i++) {
-                        gameData.pendingETBTokenTargetTriggers.add(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter));
                     }
                     String etbLog = card.getName() + "'s enter-the-battlefield ability triggers — choose a target.";
@@ -673,18 +673,18 @@ public class BattlefieldEntryService {
             if (effect instanceof CopySpellEffect cse) {
                 spellFilter = cse.spellFilter();
             }
-            gameData.pendingETBSpellTargetTriggers.add(new PermanentChoiceContext.ETBSpellTargetTrigger(
+            gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                     card, controllerId, List.of(effect), spellFilter));
         }
-        if (!gameData.pendingETBSpellTargetTriggers.isEmpty()
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
         }
-        if (!gameData.pendingETBTokenTargetTriggers.isEmpty()
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
         }
-        if (!gameData.pendingETBTokenMultiTargetTriggers.isEmpty()
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }

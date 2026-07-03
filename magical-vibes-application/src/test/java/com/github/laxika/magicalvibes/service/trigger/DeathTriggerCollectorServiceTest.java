@@ -234,7 +234,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
+            var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.amount()).isEqualTo(4);
         }
 
@@ -248,7 +248,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
+            var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.amount()).isEqualTo(3);
         }
 
@@ -263,7 +263,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
+            var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.amount()).isEqualTo(0);
         }
 
@@ -278,7 +278,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.pendingDeathTriggerTargets.peek().effects().get(0);
+            var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.amount()).isEqualTo(0);
         }
     }
@@ -302,7 +302,7 @@ class DeathTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Targeting MayEffect goes to pendingDeathTriggerTargets (CR 603.3d)")
+        @DisplayName("Targeting MayEffect queues a DeathTriggerTarget interaction (CR 603.3d)")
         void targetingGoesToPendingTargets() {
             Card card = createCreature("Targeted May", 2, 2);
             var may = new MayEffect(new TargetPlayerLosesLifeEffect(3), "Drain?");
@@ -311,7 +311,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleDeathMayEffect(match(perm, PLAYER1_ID, may), may, ctx);
 
-            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
             assertThat(gd.stack).isEmpty();
         }
     }
@@ -348,7 +348,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
         }
     }
 
@@ -423,7 +423,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
         }
 
         @Test
@@ -739,7 +739,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingDeathTriggerTargets).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
         }
     }
 

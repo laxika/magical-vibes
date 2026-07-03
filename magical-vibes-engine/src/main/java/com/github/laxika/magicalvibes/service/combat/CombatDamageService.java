@@ -980,7 +980,7 @@ public class CombatDamageService {
                         entry.setTargetId(opponentId);
                         gameData.stack.add(entry);
                     } else {
-                        gameData.pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                                 data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)), false, null
                         ));
                     }

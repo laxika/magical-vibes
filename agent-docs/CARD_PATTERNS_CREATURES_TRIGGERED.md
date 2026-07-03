@@ -90,7 +90,7 @@ All paths relative to `cards/`.
 | Land tap trigger | `m/Manabarbs.java` | ON_ANY_PLAYER_TAPS_LAND DealDamageOnLandTapEffect |
 | Land tap mana doubling + opponent untap lock | `v/VorinclexVoiceOfHunger.java` | ON_ANY_PLAYER_TAPS_LAND AddOneOfEachManaTypeProducedByLandEffect + OpponentTappedLandDoesntUntapEffect — doubles controller's land mana, opponent lands skip next untap step |
 | End step self-destruct | `s/SparkElemental.java` | END_STEP_TRIGGERED SacrificeSelfEffect |
-| End step morbid destroy | `r/ReaperFromTheAbyss.java` | END_STEP_TRIGGERED ConditionalEffect(new Morbid(), DestroyTargetPermanentEffect()) + target(PermanentPredicateTargetFilter(non-Demon creature)) — intervening-if morbid check at trigger time, targeting via `pendingEndStepTriggerTargets` |
+| End step morbid destroy | `r/ReaperFromTheAbyss.java` | END_STEP_TRIGGERED ConditionalEffect(new Morbid(), DestroyTargetPermanentEffect()) + target(PermanentPredicateTargetFilter(non-Demon creature)) — intervening-if morbid check at trigger time, targeting via `EndStepTriggerTarget` |
 | Controller end step draw | `j/JinGitaxiasCoreAugur.java` | CONTROLLER_END_STEP_TRIGGERED DrawCardEffect(7) — "your end step" trigger (only fires on controller's turn) + STATIC ReduceOpponentMaxHandSizeEffect(7) |
 | Controller end step raid loot | `m/MaraudingLooter.java` | CONTROLLER_END_STEP_TRIGGERED ConditionalEffect(new Raid(), MayEffect(DrawAndDiscardCardEffect())) — raid intervening-if at trigger time, may draw-then-discard at resolution |
 | Discarded by opponent | `g/GuerrillaTactics.java` | ON_SELF_DISCARDED_BY_OPPONENT DealDamageToAnyTargetEffect |
@@ -102,4 +102,4 @@ All paths relative to `cards/`.
 | Damage-to-controller bounce | `d/DissipationField.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU ReturnDamageSourcePermanentToHandEffect — bounces any permanent that deals damage to controller |
 | Damage-to-controller steal | `c/ContestedWarZone.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU DamageSourceControllerGainsControlOfThisPermanentEffect(true, true) — combat creature damage causes opponent to gain control of this land |
 | Damage-to-controller destroy matching source | `m/MikaeusTheUnhallowed.java` | ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU DestroyDamageSourcePermanentEffect(filter) — destroys the permanent that dealt damage if it matches the predicate |
-| Upkeep become-copy | `c/Cryptoplasm.java` | UPKEEP_TRIGGERED BecomeCopyOfTargetCreatureEffect — mandatory target at trigger time (CR 603.3d), may choice at resolution. Uses pendingUpkeepCopyTargets queue for target selection, then CopyResolutionService queues pendingMayAbility for the may choice |
+| Upkeep become-copy | `c/Cryptoplasm.java` | UPKEEP_TRIGGERED BecomeCopyOfTargetCreatureEffect — mandatory target at trigger time (CR 603.3d), may choice at resolution. Uses UpkeepCopyTriggerTarget queue for target selection, then CopyResolutionService queues pendingMayAbility for the may choice |

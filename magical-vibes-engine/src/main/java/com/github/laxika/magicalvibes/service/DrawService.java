@@ -217,7 +217,7 @@ public class DrawService {
             if (!emblem.controllerId().equals(drawingPlayerId)) continue;
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
-                    gameData.pendingEmblemTriggerTargets.add(new PermanentChoiceContext.EmblemTriggerTarget(
+                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
                             "Teferi's emblem",
                             emblem.controllerId(),
                             List.of(new ExileTargetPermanentEffect()),
@@ -228,7 +228,7 @@ public class DrawService {
             }
         }
 
-        if (!gameData.pendingEmblemTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
             triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
         }
     }

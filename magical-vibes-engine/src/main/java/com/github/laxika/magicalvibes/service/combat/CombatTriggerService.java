@@ -107,7 +107,7 @@ public class CombatTriggerService {
                         boolean needsTarget = effectsForStack.stream()
                                 .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
                         if (needsTarget) {
-                            gameData.pendingAttackTriggerTargets.add(
+                            gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId()));
                             String triggerLog = perm.getCard().getName() + "'s ability triggers.";

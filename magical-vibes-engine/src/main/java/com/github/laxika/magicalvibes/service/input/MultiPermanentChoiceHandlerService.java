@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -682,7 +683,7 @@ public class MultiPermanentChoiceHandlerService {
         log.info("Game {} - {} upkeep trigger targets: {}", gameData.id, state.sourceCard().getName(), targetNames);
 
         // Continue processing: more Efreet triggers → may abilities → priority
-        if (!gameData.pendingCapriciousEfreetTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
             turnProgressionService.processNextCapriciousEfreetTarget(gameData);
             return;
         }

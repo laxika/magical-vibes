@@ -349,7 +349,7 @@ class StepTriggerServiceTest {
 
             sut.handleUpkeepTriggers(gd);
 
-            assertThat(gd.pendingUpkeepCopyTargets).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)).isFalse();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1070,7 +1070,7 @@ class StepTriggerServiceTest {
 
             // Should not push directly to stack — should queue for target selection
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingEndStepTriggerTargets).isEmpty(); // processed immediately
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)).isFalse(); // processed immediately
             // processNextEndStepTriggerTarget fires and presents choice
             verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
         }
@@ -1090,7 +1090,7 @@ class StepTriggerServiceTest {
             sut.handleEndStepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingEndStepTriggerTargets).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)).isFalse();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
         }
 
@@ -1101,7 +1101,7 @@ class StepTriggerServiceTest {
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
-            gd.pendingEndStepTriggerTargets.add(new PermanentChoiceContext.EndStepTriggerTarget(
+            gd.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                     card, player1Id, new ArrayList<>(List.of(new MillTargetPlayerEffect(4))),
                     UUID.randomUUID()));
 

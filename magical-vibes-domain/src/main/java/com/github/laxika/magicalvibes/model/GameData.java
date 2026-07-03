@@ -153,26 +153,15 @@ public class GameData {
      *  When the source permanent leaves the battlefield or changes controllers, the stolen creature is returned. */
     public final Map<UUID, UUID> sourceDependentStolenCreatures = new ConcurrentHashMap<>();
     public boolean endTurnRequested;
-    public final Deque<PermanentChoiceContext.DeathTriggerTarget> pendingDeathTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.DiscardTriggerAnyTarget> pendingDiscardSelfTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.AttackTriggerTarget> pendingAttackTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.SpellTargetTriggerAnyTarget> pendingSpellTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.ETBSpellTargetTrigger> pendingETBSpellTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.ETBTokenTargetTrigger> pendingETBTokenTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.ETBTokenMultiTargetTrigger> pendingETBTokenMultiTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.EmblemTriggerTarget> pendingEmblemTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.UpkeepPlayerTargetTrigger> pendingUpkeepPlayerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger> pendingUpkeepMultiPlayerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.UpkeepCopyTriggerTarget> pendingUpkeepCopyTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.CapriciousEfreetOwnTarget> pendingCapriciousEfreetTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.EndStepTriggerTarget> pendingEndStepTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.BeginningOfCombatTriggerTarget> pendingBeginningOfCombatTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.LifeGainTriggerAnyTarget> pendingLifeGainTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.EntersFromGraveyardTriggerTarget> pendingEntersFromGraveyardTriggerTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.SagaChapterTarget> pendingSagaChapterTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.SagaChapterGraveyardTarget> pendingSagaChapterGraveyardTargets = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.SpellGraveyardTargetTrigger> pendingSpellGraveyardTargetTriggers = new ArrayDeque<>();
-    public final Deque<PermanentChoiceContext.ExploreTriggerTarget> pendingExploreTriggerTargets = new ArrayDeque<>();
+    /**
+     * Unified queue of pending player interactions (decisions awaiting player input).
+     * Replaces the former per-kind {@code Deque} fields. Consumers service one kind at a
+     * time via the type-filtered helpers below; since every producer appends with
+     * {@link #queueInteraction} and every consumer takes the first entry of its own kind,
+     * the original per-kind FIFO ordering is preserved exactly. Accessed under
+     * {@code synchronized (gameData)} blocks in the engine, like the fields it replaced.
+     */
+    public final Deque<PendingInteraction> pendingInteractions = new ArrayDeque<>();
     public PendingCapriciousEfreetState pendingCapriciousEfreetState;
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
@@ -443,6 +432,66 @@ public class GameData {
         } else {
             stack.add(entry);
         }
+    }
+
+    /**
+     * Appends a pending interaction to the tail of the unified queue.
+     */
+    public void queueInteraction(PendingInteraction interaction) {
+        pendingInteractions.addLast(interaction);
+    }
+
+    /**
+     * Puts a pending interaction at the head of the unified queue. Used when an
+     * in-progress multi-step interaction must be serviced before anything else
+     * (e.g. re-queuing an updated {@code ETBTokenMultiTargetTrigger} between target slots).
+     */
+    public void queueInteractionFirst(PendingInteraction interaction) {
+        pendingInteractions.addFirst(interaction);
+    }
+
+    /**
+     * Returns {@code true} if the queue holds at least one interaction of the given kind.
+     */
+    public boolean hasPendingInteraction(Class<? extends PendingInteraction> type) {
+        for (PendingInteraction interaction : pendingInteractions) {
+            if (type.isInstance(interaction)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns the first queued interaction of the given kind without removing it,
+     * or {@code null} if none is queued.
+     */
+    public <T extends PendingInteraction> T peekPendingInteraction(Class<T> type) {
+        for (PendingInteraction interaction : pendingInteractions) {
+            if (type.isInstance(interaction)) return type.cast(interaction);
+        }
+        return null;
+    }
+
+    /**
+     * Removes and returns the first queued interaction of the given kind,
+     * or {@code null} if none is queued.
+     */
+    public <T extends PendingInteraction> T pollPendingInteraction(Class<T> type) {
+        var it = pendingInteractions.iterator();
+        while (it.hasNext()) {
+            PendingInteraction interaction = it.next();
+            if (type.isInstance(interaction)) {
+                it.remove();
+                return type.cast(interaction);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Removes every queued interaction of the given kind (e.g. Karn restart wiping trigger state).
+     */
+    public void clearPendingInteractions(Class<? extends PendingInteraction> type) {
+        pendingInteractions.removeIf(type::isInstance);
     }
 
     /**
@@ -906,26 +955,7 @@ public class GameData {
                 copy.activatedAbilityUsesThisTurn.put(k, new HashMap<>(v)));
 
         // --- Deques ---
-        copy.pendingDeathTriggerTargets.addAll(this.pendingDeathTriggerTargets);
-        copy.pendingDiscardSelfTriggers.addAll(this.pendingDiscardSelfTriggers);
-        copy.pendingAttackTriggerTargets.addAll(this.pendingAttackTriggerTargets);
-        copy.pendingSpellTargetTriggers.addAll(this.pendingSpellTargetTriggers);
-        copy.pendingETBSpellTargetTriggers.addAll(this.pendingETBSpellTargetTriggers);
-        copy.pendingETBTokenTargetTriggers.addAll(this.pendingETBTokenTargetTriggers);
-        copy.pendingETBTokenMultiTargetTriggers.addAll(this.pendingETBTokenMultiTargetTriggers);
-        copy.pendingEmblemTriggerTargets.addAll(this.pendingEmblemTriggerTargets);
-        copy.pendingUpkeepPlayerTargets.addAll(this.pendingUpkeepPlayerTargets);
-        copy.pendingUpkeepMultiPlayerTargets.addAll(this.pendingUpkeepMultiPlayerTargets);
-        copy.pendingUpkeepCopyTargets.addAll(this.pendingUpkeepCopyTargets);
-        copy.pendingCapriciousEfreetTargets.addAll(this.pendingCapriciousEfreetTargets);
-        copy.pendingEndStepTriggerTargets.addAll(this.pendingEndStepTriggerTargets);
-        copy.pendingBeginningOfCombatTriggerTargets.addAll(this.pendingBeginningOfCombatTriggerTargets);
-        copy.pendingLifeGainTriggerTargets.addAll(this.pendingLifeGainTriggerTargets);
-        copy.pendingEntersFromGraveyardTriggerTargets.addAll(this.pendingEntersFromGraveyardTriggerTargets);
-        copy.pendingSagaChapterTargets.addAll(this.pendingSagaChapterTargets);
-        copy.pendingSagaChapterGraveyardTargets.addAll(this.pendingSagaChapterGraveyardTargets);
-        copy.pendingSpellGraveyardTargetTriggers.addAll(this.pendingSpellGraveyardTargetTriggers);
-        copy.pendingExploreTriggerTargets.addAll(this.pendingExploreTriggerTargets);
+        copy.pendingInteractions.addAll(this.pendingInteractions);
         copy.pendingCapriciousEfreetState = this.pendingCapriciousEfreetState;
         copy.extraTurns.addAll(this.extraTurns);
         copy.pendingEachPlayerDiscardQueue.addAll(this.pendingEachPlayerDiscardQueue);

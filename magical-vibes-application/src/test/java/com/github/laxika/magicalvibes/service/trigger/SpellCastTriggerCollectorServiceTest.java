@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -702,7 +703,7 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("puts targeting triggered ability into pendingSpellTargetTriggers")
+        @DisplayName("queues targeting triggered ability as a SpellTargetTriggerAnyTarget interaction")
         void putsTargetingTriggeredAbilityIntoPendingQueue() {
             Permanent perm = createPermanent("Guttersnipe");
             var innerEffect = new DealDamageToAnyTargetEffect(2);
@@ -718,7 +719,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
         }
 
         @Test
@@ -798,7 +799,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
         }
 
         @Test
@@ -841,7 +842,7 @@ class SpellCastTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
         }
 
         @Test
@@ -860,7 +861,7 @@ class SpellCastTriggerCollectorServiceTest {
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
-            var resolved = (DealDamageToAnyTargetEffect) gd.pendingSpellTargetTriggers.getFirst().effects().getFirst();
+            var resolved = (DealDamageToAnyTargetEffect) gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class).effects().getFirst();
             assertThat(resolved.damage()).isEqualTo(2);
         }
 
@@ -880,7 +881,7 @@ class SpellCastTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isFalse();
-            assertThat(gd.pendingSpellTargetTriggers).isEmpty();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isFalse();
         }
 
         @Test
@@ -926,8 +927,8 @@ class SpellCastTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.pendingSpellTargetTriggers).hasSize(1);
-            assertThat(gd.pendingSpellTargetTriggers.getFirst().playerTargetOnly()).isTrue();
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class).playerTargetOnly()).isTrue();
         }
 
         @Test

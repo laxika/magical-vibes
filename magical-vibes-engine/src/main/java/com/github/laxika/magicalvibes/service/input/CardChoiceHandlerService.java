@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -184,7 +185,7 @@ public class CardChoiceHandlerService {
             }
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-            if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
                 triggerCollectionService.processNextDiscardSelfTrigger(gameData);
                 return;
             }
@@ -421,7 +422,7 @@ public class CardChoiceHandlerService {
             gameData.interaction.clearRevealedHandChoiceProgress();
 
             // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-            if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
                 triggerCollectionService.processNextDiscardSelfTrigger(gameData);
                 return;
             }

@@ -79,7 +79,7 @@ class ETBTokenTargetServiceTest {
     @Test
     @DisplayName("processNextETBSpellTargetTrigger does nothing when queue is empty")
     void processNextETBSpellTargetTrigger_doesNothingWhenQueueEmpty() {
-        assertThat(gd.pendingETBSpellTargetTriggers).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)).isFalse();
 
         service.processNextETBSpellTargetTrigger(gd);
 
@@ -93,11 +93,11 @@ class ETBTokenTargetServiceTest {
         sourceCard.setName("Snapcaster Mage");
         var trigger = new PermanentChoiceContext.ETBSpellTargetTrigger(
                 sourceCard, player1Id, List.of(new GainLifeEffect(1)), null);
-        gd.pendingETBSpellTargetTriggers.add(trigger);
+        gd.queueInteraction(trigger);
 
         service.processNextETBSpellTargetTrigger(gd);
 
-        assertThat(gd.pendingETBSpellTargetTriggers).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         verify(gameBroadcastService).logAndBroadcast(
                 gd, "Snapcaster Mage's enter-the-battlefield ability has no valid spell targets.");
@@ -106,7 +106,7 @@ class ETBTokenTargetServiceTest {
     @Test
     @DisplayName("processNextETBTokenTargetTrigger does nothing when queue is empty")
     void processNextETBTokenTargetTrigger_doesNothingWhenQueueEmpty() {
-        assertThat(gd.pendingETBTokenTargetTriggers).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)).isFalse();
 
         service.processNextETBTokenTargetTrigger(gd);
 

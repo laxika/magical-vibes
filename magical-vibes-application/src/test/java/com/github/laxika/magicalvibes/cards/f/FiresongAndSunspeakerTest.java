@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WhitesunsPassage;
@@ -141,7 +142,7 @@ class FiresongAndSunspeakerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
 
         // No pending trigger targets — ability 2 should not have triggered
-        assertThat(gd.pendingLifeGainTriggerTargets).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)).isFalse();
         // Stack should be empty (no triggered ability was queued)
         assertThat(gd.stack).isEmpty();
     }

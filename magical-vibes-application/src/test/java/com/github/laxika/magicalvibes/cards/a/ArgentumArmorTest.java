@@ -196,7 +196,7 @@ class ArgentumArmorTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
 
         // No targeted trigger should be queued
-        assertThat(gd.pendingAttackTriggerTargets).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         // No permanent choice should be requested
         assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
     }

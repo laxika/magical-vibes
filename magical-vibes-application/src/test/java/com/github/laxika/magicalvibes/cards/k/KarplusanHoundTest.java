@@ -116,7 +116,7 @@ class KarplusanHoundTest extends BaseCardTest {
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         && e.getCard().getName().equals("Karplusan Hound"));
         // No pending target selection
-        assertThat(gd.pendingAttackTriggerTargets).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
     }
 
     // ===== Helper methods =====

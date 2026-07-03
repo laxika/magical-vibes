@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -429,13 +430,13 @@ public class GraveyardChoiceHandlerService {
         }
 
         // Process any remaining pending saga chapter graveyard targets before auto-pass
-        if (!gameData.pendingSagaChapterGraveyardTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
             triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
             return;
         }
 
         // Process any remaining pending graveyard-target triggers before auto-pass
-        if (!gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
         }

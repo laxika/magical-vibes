@@ -295,7 +295,7 @@ public class MayMiscHandlerService {
         // Explore is complete — check for "whenever a creature you control explores" triggers
         triggerCollectionService.checkExploreTriggers(gameData, controllerId);
 
-        if (!gameData.pendingExploreTriggerTargets.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
             return;
         }

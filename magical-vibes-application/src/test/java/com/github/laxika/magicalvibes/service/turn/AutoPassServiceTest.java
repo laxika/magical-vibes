@@ -196,13 +196,13 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Processes pending spell-target triggers before loop")
         void processesSpellTargetTriggers() {
-            gd.pendingSpellTargetTriggers.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1)), false));
             // After trigger processing, stop via finished status
             gd.status = GameStatus.RUNNING;
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.pendingSpellTargetTriggers.clear();
+                gd.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
             }).when(triggerCollectionService).processNextSpellTargetTrigger(gd);
@@ -215,11 +215,11 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Processes pending discard self-triggers before loop")
         void processesDiscardSelfTriggers() {
-            gd.pendingDiscardSelfTriggers.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.DiscardTriggerAnyTarget(
                             new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1))));
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.pendingDiscardSelfTriggers.clear();
+                gd.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
             }).when(triggerCollectionService).processNextDiscardSelfTrigger(gd);
@@ -232,11 +232,11 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Processes pending attack trigger targets before loop")
         void processesAttackTriggerTargets() {
-            gd.pendingAttackTriggerTargets.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.AttackTriggerTarget(
                             new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1)), UUID.randomUUID()));
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.pendingAttackTriggerTargets.clear();
+                gd.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
             }).when(triggerCollectionService).processNextAttackTriggerTarget(gd);
@@ -249,11 +249,11 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Processes pending death trigger targets before loop")
         void processesDeathTriggerTargets() {
-            gd.pendingDeathTriggerTargets.add(
+            gd.queueInteraction(
                     new PermanentChoiceContext.DeathTriggerTarget(
                             new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1))));
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.pendingDeathTriggerTargets.clear();
+                gd.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
                 gd.status = GameStatus.FINISHED;
                 return null;
             }).when(triggerCollectionService).processNextDeathTriggerTarget(gd);

@@ -183,7 +183,7 @@ public class DamageTriggerCollectorService {
             gameData.stack.add(entry);
         } else {
             // Planeswalkers present — need player choice between opponent and planeswalkers
-            gameData.pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     dc.damagedCreature().getCard(), controllerId, new ArrayList<>(List.of(trigger)), false, null
             ));
         }

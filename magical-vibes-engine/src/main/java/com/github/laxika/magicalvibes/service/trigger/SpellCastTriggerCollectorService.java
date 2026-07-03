@@ -351,7 +351,7 @@ public class SpellCastTriggerCollectorService {
                 .anyMatch(e -> e.canTargetPlayer() || e.canTargetPermanent());
 
         if (needsAnyTarget) {
-            match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), new ArrayList<>(trigger.resolvedEffects())
             ));
             String logEntry = match.permanent().getCard().getName()
@@ -401,7 +401,7 @@ public class SpellCastTriggerCollectorService {
 
         int manaValue = sc.spellCard().getManaValue();
         List<CardEffect> resolvedEffects = List.of(new DealDamageToAnyTargetEffect(manaValue));
-        match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects)
         ));
         String logEntry = match.permanent().getCard().getName()
@@ -421,7 +421,7 @@ public class SpellCastTriggerCollectorService {
                 match.gameData(), sc.castingPlayerId())) return false;
 
         List<CardEffect> resolvedEffects = List.of(new GiveTargetPlayerPoisonCountersEffect(trigger.amount()));
-        match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(), match.controllerId(), new ArrayList<>(resolvedEffects), true
         ));
         String logEntry = match.permanent().getCard().getName()
@@ -554,13 +554,13 @@ public class SpellCastTriggerCollectorService {
                     trigger.manaCost(),
                     match.permanent().getId()));
         } else if (needsGraveyardTarget) {
-            match.gameData().pendingSpellGraveyardTargetTriggers.add(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     match.permanent().getCard(), match.controllerId(), resolved
             ));
             log.info("Game {} - {} spell-cast graveyard-target trigger queued",
                     match.gameData().id, match.permanent().getCard().getName());
         } else if (needsTargeting) {
-            match.gameData().pendingSpellTargetTriggers.add(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter()
             ));
             String logEntry = match.permanent().getCard().getName()

@@ -11,7 +11,7 @@ import java.util.UUID;
 
 
 
-public sealed interface PermanentChoiceContext {
+public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record CloneCopy() implements PermanentChoiceContext {}
 

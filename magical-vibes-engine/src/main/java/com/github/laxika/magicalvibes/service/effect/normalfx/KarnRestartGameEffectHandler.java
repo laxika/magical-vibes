@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -150,14 +151,14 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.sourceLinkedAnimations.clear();
         gameData.pendingTokenExilesAtEndStep.clear();
         gameData.pendingMayAbilities.clear();
-        gameData.pendingDeathTriggerTargets.clear();
-        gameData.pendingDiscardSelfTriggers.clear();
-        gameData.pendingAttackTriggerTargets.clear();
-        gameData.pendingSpellTargetTriggers.clear();
-        gameData.pendingEmblemTriggerTargets.clear();
-        gameData.pendingUpkeepPlayerTargets.clear();
-        gameData.pendingUpkeepMultiPlayerTargets.clear();
-        gameData.pendingUpkeepCopyTargets.clear();
+        gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.EmblemTriggerTarget.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class);
+        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
         gameData.pendingEachPlayerDiscardQueue.clear();
         gameData.emblems.clear();
         gameData.extraTurns.clear();

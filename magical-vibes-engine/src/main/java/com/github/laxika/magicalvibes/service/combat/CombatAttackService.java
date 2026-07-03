@@ -314,7 +314,7 @@ public class CombatAttackService {
                         boolean needsTarget = otherEffects.stream()
                                 .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
                         if (needsTarget) {
-                            gameData.pendingAttackTriggerTargets.add(
+                            gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackTriggerTarget(
                                             attacker.getCard(), playerId, otherEffects, attacker.getId()));
                         } else {

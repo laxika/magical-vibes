@@ -159,7 +159,7 @@ public class PlayerInteractionSupport {
         }
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-        if (!gameData.pendingDiscardSelfTriggers.isEmpty()) {
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
     

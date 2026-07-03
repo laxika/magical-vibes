@@ -83,7 +83,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             stateBasedActionService.performStateBasedActions(gameData);
 
-            if (!gameData.pendingDeathTriggerTargets.isEmpty()) {
+            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
                 triggerCollectionService.processNextDeathTriggerTarget(gameData);
                 if (gameData.interaction.isAwaitingInput()) {
                     return;

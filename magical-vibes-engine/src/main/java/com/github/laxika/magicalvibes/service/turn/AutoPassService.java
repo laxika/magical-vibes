@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -78,52 +79,52 @@ public class AutoPassService {
         }
 
         // Process any pending spell-target triggers (e.g. Livewire Lash)
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSpellTargetTriggers.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
         }
 
         // Process any pending spell-cast graveyard-target triggers (e.g. Teshar, Ancestor's Apostle)
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSpellGraveyardTargetTriggers.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
 
         // Process any pending discard self-triggers before death triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDiscardSelfTriggers.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
             triggerCollectionService.processNextDiscardSelfTrigger(gameData);
         }
 
         // Process any pending targeted attack triggers before death triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingAttackTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);
         }
 
         // Process any pending targeted death triggers before auto-passing
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingDeathTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
             triggerCollectionService.processNextDeathTriggerTarget(gameData);
         }
 
         // Process any pending explore targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingExploreTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
         }
 
         // Process any pending life-gain targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingLifeGainTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
         }
 
         // Process any pending enters-from-graveyard targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingEntersFromGraveyardTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EntersFromGraveyardTriggerTarget.class)) {
             triggerCollectionService.processNextEntersFromGraveyardTriggerTarget(gameData);
         }
 
         // Process any pending saga chapter targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingSagaChapterTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);
         }
 
         // Process any pending end-step targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingEndStepTriggerTargets.isEmpty()) {
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             stepTriggerService.processNextEndStepTriggerTarget(gameData);
         }
 
