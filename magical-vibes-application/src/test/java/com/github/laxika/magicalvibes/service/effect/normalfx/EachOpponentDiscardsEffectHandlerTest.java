@@ -27,7 +27,7 @@ class EachOpponentDiscardsEffectHandlerTest extends AbstractPlayerInteractionHan
                 resolveEffect(gd, entry, effect);
 
                 // Player2 (opponent) should be first since they're active player and not controller
-                verify(playerInputService).beginDiscardChoice(gd, player2Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt());
                 assertThat(gd.pendingEachPlayerDiscardAmount).isEqualTo(2);
             }
 
@@ -44,6 +44,6 @@ class EachOpponentDiscardsEffectHandlerTest extends AbstractPlayerInteractionHan
 
                 // player2 is the only opponent; active player is controller, so they start
                 // with player2 from queue
-                verify(playerInputService).beginDiscardChoice(gd, player2Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt());
             }
 }

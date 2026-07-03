@@ -1054,8 +1054,6 @@ public class GameData {
                     targetInteraction.beginAttackerDeclaration(ad.activePlayerId());
             case InteractionContext.BlockerDeclaration bd ->
                     targetInteraction.beginBlockerDeclaration(bd.defenderId());
-            case InteractionContext.CardChoice cc ->
-                    targetInteraction.beginCardChoice(cc.type(), cc.playerId(), cc.validIndices(), cc.targetId());
             case InteractionContext.PermanentChoice pc ->
                     targetInteraction.beginPermanentChoice(pc.playerId(), pc.validIds(), pc.context());
             case InteractionContext.LibrarySearch ls ->
@@ -1095,11 +1093,6 @@ public class GameData {
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
                             cda.validTargets(), cda.isTrample(), cda.isDeathtouch());
-        }
-
-        // Copy discard remaining count (not part of context reconstruction)
-        if (source.discardRemainingCount() > 0) {
-            targetInteraction.setDiscardRemainingCount(source.discardRemainingCount());
         }
     }
 }

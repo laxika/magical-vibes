@@ -31,7 +31,7 @@ class DrawDiscardTransformIfCreatureDiscardedEffectHandlerTest extends AbstractP
                 assertThat(gd.pendingTransformOnCreatureDiscard).isNotNull();
                 assertThat(gd.pendingTransformOnCreatureDiscard.sourcePermanentId()).isEqualTo(sourcePermanentId);
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(gd, player1Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
             }
 
             @Test

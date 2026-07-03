@@ -9,7 +9,6 @@ import java.util.UUID;
 public sealed interface InteractionContext permits
         InteractionContext.AttackerDeclaration,
         InteractionContext.BlockerDeclaration,
-        InteractionContext.CardChoice,
         InteractionContext.PermanentChoice,
         InteractionContext.LibrarySearch,
         InteractionContext.LibraryRevealChoice,
@@ -18,9 +17,6 @@ public sealed interface InteractionContext permits
     record AttackerDeclaration(UUID activePlayerId) implements InteractionContext {}
 
     record BlockerDeclaration(UUID defenderId) implements InteractionContext {}
-
-    record CardChoice(AwaitingInput type, UUID playerId, Set<Integer> validIndices, UUID targetId) implements InteractionContext {}
-
     record PermanentChoice(UUID playerId, Set<UUID> validIds, PermanentChoiceContext context) implements InteractionContext {}
 
     record LibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,

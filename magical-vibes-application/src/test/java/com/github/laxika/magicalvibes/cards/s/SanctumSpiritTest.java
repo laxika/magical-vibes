@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MirriCatWarrior;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -89,7 +91,7 @@ class SanctumSpiritTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
         assertThat(gd.stack).isEmpty();
         // Only index 1 (Ornithopter, an artifact) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
     @Test
@@ -102,7 +104,7 @@ class SanctumSpiritTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
         // Only index 1 (Mirri, legendary) should be valid
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactly(1);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactly(1);
     }
 
     @Test

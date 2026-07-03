@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.interaction.CardChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.LibrarySearchState;
 import com.github.laxika.magicalvibes.model.interaction.LibraryViewState;
 import com.github.laxika.magicalvibes.model.interaction.PermanentChoiceState;
@@ -23,12 +22,9 @@ public class InteractionState {
     private PendingInteraction activeInteraction;
 
     // --- Grouped sub-states ---
-    private CardChoiceState cardChoice;
     private PermanentChoiceState permanentChoice;
     private LibrarySearchState librarySearch;
     private final LibraryViewState libraryView = new LibraryViewState();
-    /** Countdown for multi-card discard / exile-from-hand flows (DISCARD_CHOICE, EXILE_FROM_HAND_CHOICE). */
-    private int discardRemainingCount;
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
@@ -45,12 +41,10 @@ public class InteractionState {
         copy.awaitingInput = this.awaitingInput;
         copy.context = this.context;
         copy.activeInteraction = this.activeInteraction;
-        copy.cardChoice = this.cardChoice != null ? this.cardChoice.deepCopy() : null;
         copy.permanentChoice = this.permanentChoice != null ? this.permanentChoice.deepCopy() : null;
         copy.librarySearch = this.librarySearch != null ? this.librarySearch.deepCopy() : null;
         LibraryViewState lvCopy = this.libraryView.deepCopy();
         copy.libraryView.setReveal(lvCopy.revealPlayerId(), lvCopy.revealAllCards(), lvCopy.revealValidCardIds());
-        copy.discardRemainingCount = this.discardRemainingCount;
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
@@ -113,10 +107,6 @@ public class InteractionState {
     // Sub-state accessors
     // ========================================================================
 
-    public CardChoiceState cardChoice() {
-        return cardChoice;
-    }
-
     public PermanentChoiceState permanentChoice() {
         return permanentChoice;
     }
@@ -158,27 +148,6 @@ public class InteractionState {
     public InteractionContext.CombatDamageAssignment combatDamageAssignmentContext() {
         if (context instanceof InteractionContext.CombatDamageAssignment cda) return cda;
         return null;
-    }
-
-    // ========================================================================
-    // Card choice
-    // ========================================================================
-
-    public void beginCardChoice(AwaitingInput type, UUID playerId, Set<Integer> validIndices, UUID targetId) {
-        this.awaitingInput = type;
-        this.cardChoice = new CardChoiceState(playerId, new HashSet<>(validIndices), targetId);
-        this.context = new InteractionContext.CardChoice(type, playerId, new HashSet<>(validIndices), targetId);
-    }
-
-    public void clearCardChoice() {
-        this.cardChoice = null;
-    }
-
-    public InteractionContext.CardChoice cardChoiceContext() {
-        if (context instanceof InteractionContext.CardChoice cc) return cc;
-        if (cardChoice == null || awaitingInput == null) return null;
-        return new InteractionContext.CardChoice(awaitingInput, cardChoice.playerId(),
-                cardChoice.validIndices(), cardChoice.targetId());
     }
 
     // ========================================================================
@@ -359,25 +328,6 @@ public class InteractionState {
                 || libraryView.revealValidCardIds() == null) return null;
         return new InteractionContext.LibraryRevealChoice(libraryView.revealPlayerId(),
                 libraryView.revealAllCards(), libraryView.revealValidCardIds(), false);
-    }
-
-    // ========================================================================
-    // Discard
-    // ========================================================================
-
-    public int discardRemainingCount() {
-        return discardRemainingCount;
-    }
-
-    public void setDiscardRemainingCount(int remainingCount) {
-        this.discardRemainingCount = Math.max(remainingCount, 0);
-    }
-
-    public int decrementDiscardRemainingCount() {
-        if (this.discardRemainingCount > 0) {
-            this.discardRemainingCount--;
-        }
-        return this.discardRemainingCount;
     }
 
 }

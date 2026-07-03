@@ -25,7 +25,7 @@ class DiscardCardUnlessAttackedThisTurnEffectHandlerTest extends AbstractPlayerI
 
                 resolveEffect(gd, entry, new DiscardCardUnlessAttackedThisTurnEffect());
 
-                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+                verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("attacked this turn")));
             }
@@ -41,6 +41,6 @@ class DiscardCardUnlessAttackedThisTurnEffectHandlerTest extends AbstractPlayerI
                 resolveEffect(gd, entry, new DiscardCardUnlessAttackedThisTurnEffect());
 
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(gd, player1Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
             }
 }

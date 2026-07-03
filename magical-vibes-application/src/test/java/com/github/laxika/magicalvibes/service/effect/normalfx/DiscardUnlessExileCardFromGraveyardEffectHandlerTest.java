@@ -30,7 +30,7 @@ class DiscardUnlessExileCardFromGraveyardEffectHandlerTest extends AbstractPlaye
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id));
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
             }
 
             @Test

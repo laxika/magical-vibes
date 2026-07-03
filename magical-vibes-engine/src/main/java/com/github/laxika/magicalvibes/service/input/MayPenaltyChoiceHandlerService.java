@@ -171,9 +171,8 @@ public class MayPenaltyChoiceHandlerService {
             if (!validIndices.isEmpty()) {
                 String typeName = effect.requiredType() == null ? "card" : effect.requiredType().name().toLowerCase() + " card";
                 gameData.discardCausedByOpponent = false;
-                gameData.interaction.setDiscardRemainingCount(1);
                 playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a " + typeName + " to discard.");
+                        "Choose a " + typeName + " to discard.", 1);
 
                 String logEntry = player.getUsername() + " chooses to discard a " + typeName + ".";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -218,9 +217,8 @@ public class MayPenaltyChoiceHandlerService {
 
             if (!validIndices.isEmpty()) {
                 gameData.discardCausedByOpponent = false;
-                gameData.interaction.setDiscardRemainingCount(1);
                 playerInputService.beginDiscardChoice(gameData, targetPlayerId, validIndices,
-                        "Choose a card to discard.");
+                        "Choose a card to discard.", 1);
 
                 String logEntry = player.getUsername() + " chooses to discard a card.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -451,8 +449,7 @@ public class MayPenaltyChoiceHandlerService {
         List<Card> hand = gameData.playerHands.get(controllerId);
         if (hand != null && !hand.isEmpty()) {
             gameData.discardCausedByOpponent = false;
-            gameData.interaction.setDiscardRemainingCount(1);
-            playerInputService.beginDiscardChoice(gameData, controllerId);
+            playerInputService.beginDiscardChoice(gameData, controllerId, 1);
 
             String logEntry = player.getUsername() + " must discard a card. (" + ability.sourceCard().getName() + ")";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

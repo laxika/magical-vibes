@@ -27,6 +27,6 @@ class DrawAndDiscardCardEffectHandlerTest extends AbstractPlayerInteractionHandl
 
                 verify(drawService, times(2)).resolveDrawCard(gd, player1Id);
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(gd, player1Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
             }
 }

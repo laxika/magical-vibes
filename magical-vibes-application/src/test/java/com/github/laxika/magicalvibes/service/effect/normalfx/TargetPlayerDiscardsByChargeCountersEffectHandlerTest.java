@@ -26,7 +26,7 @@ class TargetPlayerDiscardsByChargeCountersEffectHandlerTest extends AbstractPlay
                 resolveEffect(gd, entry, new TargetPlayerDiscardsByChargeCountersEffect());
 
                 assertThat(gd.discardCausedByOpponent).isTrue();
-                verify(playerInputService).beginDiscardChoice(gd, player2Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt());
             }
 
             @Test
@@ -38,7 +38,7 @@ class TargetPlayerDiscardsByChargeCountersEffectHandlerTest extends AbstractPlay
 
                 resolveEffect(gd, entry, new TargetPlayerDiscardsByChargeCountersEffect());
 
-                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+                verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("discards 0 cards")));
             }

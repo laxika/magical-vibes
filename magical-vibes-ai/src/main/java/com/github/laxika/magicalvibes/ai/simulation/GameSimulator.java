@@ -318,8 +318,8 @@ public class GameSimulator {
                 }
             }
             case CARD_CHOICE, DISCARD_CHOICE -> {
-                var cardChoice = gd.interaction.cardChoiceContext();
-                if (cardChoice != null && cardChoice.validIndices() != null) {
+                if (gd.interaction.activeInteraction() instanceof PendingInteraction.HandChoice cardChoice
+                        && cardChoice.validIndices() != null) {
                     for (int idx : cardChoice.validIndices()) {
                         actions.add(new SimulationAction.ChooseCard(idx));
                     }
@@ -546,8 +546,8 @@ public class GameSimulator {
                 gameService.declareBlockers(gd, player, assignments);
             }
             case CARD_CHOICE, DISCARD_CHOICE -> {
-                var cc = gd.interaction.cardChoiceContext();
-                if (cc != null && cc.validIndices() != null && !cc.validIndices().isEmpty()) {
+                if (gd.interaction.activeInteraction() instanceof PendingInteraction.HandChoice cc
+                        && cc.validIndices() != null && !cc.validIndices().isEmpty()) {
                     // Pick lowest value card
                     List<Card> hand = gd.playerHands.get(player.getId());
                     int bestIdx = cc.validIndices().iterator().next();
@@ -689,6 +689,7 @@ public class GameSimulator {
                 case PendingInteraction.RevealedHandChoice rhc -> rhc.choosingPlayerId();
                 case PendingInteraction.GraveyardChoice gc -> gc.playerId();
                 case PendingInteraction.GraveyardExileCostChoice gec -> gec.playerId();
+                case PendingInteraction.HandChoice hc -> hc.playerId();
                 default -> null;
             };
         }
@@ -697,7 +698,6 @@ public class GameSimulator {
         return switch (ctx) {
             case InteractionContext.AttackerDeclaration ad -> ad.activePlayerId();
             case InteractionContext.BlockerDeclaration bd -> bd.defenderId();
-            case InteractionContext.CardChoice cc -> cc.playerId();
             case InteractionContext.PermanentChoice pc -> pc.playerId();
             case InteractionContext.LibrarySearch ls -> ls.playerId();
             case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();

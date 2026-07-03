@@ -2457,11 +2457,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     @Override
     protected void handleCardChoice(GameData gameData) {
-        var cardChoice = gameData.interaction.cardChoiceContext();
-        if (cardChoice == null) return;
+        if (!(gameData.interaction.activeInteraction() instanceof PendingInteraction.HandChoice cardChoice)) return;
 
         UUID choicePlayerId = cardChoice.playerId();
-        Set<Integer> validIndices = cardChoice.validIndices();
+        List<Integer> validIndices = cardChoice.validIndices();
 
         if (!aiPlayer.getId().equals(choicePlayerId)) return;
 

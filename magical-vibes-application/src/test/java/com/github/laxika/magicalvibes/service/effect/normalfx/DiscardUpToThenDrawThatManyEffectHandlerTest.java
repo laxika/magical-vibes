@@ -59,7 +59,7 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
 
                 assertThat(gd.pendingRummageDrawCount).isEqualTo(2);
                 assertThat(gd.chosenXValue).isNull();
-                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id));
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
             }
 
             @Test
@@ -73,7 +73,7 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.chosenXValue).isNull();
-                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+                verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             }
 
             @Test
@@ -88,7 +88,7 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.chosenXValue).isNull();
-                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+                verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             }
 
             @Test

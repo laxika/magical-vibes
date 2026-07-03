@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -80,8 +82,8 @@ class MindRotTest extends BaseCardTest {
 
         // Target player (player2) should be prompted to discard, NOT the caster
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(2);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(2);
     }
 
     @Test
@@ -99,7 +101,7 @@ class MindRotTest extends BaseCardTest {
 
         // Still awaiting second discard
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         // Target player chooses second discard
         harness.handleCardChosen(player2, 0); // discard Peek (now at index 0)
@@ -125,7 +127,7 @@ class MindRotTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // All indices should be valid — Mind Rot doesn't restrict card types
-        assertThat(gd.interaction.cardChoice().validIndices()).containsExactlyInAnyOrder(0, 1, 2);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).validIndices()).containsExactlyInAnyOrder(0, 1, 2);
 
         harness.handleCardChosen(player2, 0); // discard Forest
         harness.handleCardChosen(player2, 0); // discard GrizzlyBears (now index 0)
@@ -205,7 +207,7 @@ class MindRotTest extends BaseCardTest {
 
         // Player1 is prompted to discard from their own hand
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
 
         harness.handleCardChosen(player1, 0); // discard GrizzlyBears
         harness.handleCardChosen(player1, 0); // discard Peek

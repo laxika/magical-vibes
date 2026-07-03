@@ -25,7 +25,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
-        PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice {
+        PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
+        PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
+        PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
+        PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -273,5 +276,69 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record GraveyardExileCostChoice(UUID playerId, java.util.List<Integer> validIndices,
                                     String prompt) implements PendingInteraction {
+    }
+
+    /**
+     * Common surface of the six hand-card choice kinds (the legacy shared
+     * {@code InteractionContext.CardChoice} family): the deciding player, the selectable hand
+     * indices in begin-time order, and the exact begin-time prompt (also re-sent on
+     * reconnect). Implemented by the records below so generic consumers (AI heuristics, the
+     * simulator) can read them uniformly.
+     */
+    interface HandChoice {
+        UUID playerId();
+
+        java.util.List<Integer> validIndices();
+
+        String prompt();
+    }
+
+    /** Put a card from hand onto the battlefield, declinable (CARD_CHOICE). */
+    record HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction, HandChoice {
+    }
+
+    /**
+     * Put an Aura card from hand onto the battlefield attached to {@code targetId},
+     * declinable (TARGETED_CARD_CHOICE).
+     */
+    record TargetedHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                  UUID targetId, String prompt)
+            implements PendingInteraction, HandChoice {
+    }
+
+    /**
+     * Discard a card from hand (DISCARD_CHOICE). {@code remainingCount} is the multi-pick
+     * countdown including the upcoming pick; each answered pick begins a fresh record with
+     * the decremented count (this replaces the old {@code InteractionState}
+     * {@code discardRemainingCount} field for discards).
+     */
+    record DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                         int remainingCount, String prompt)
+            implements PendingInteraction, HandChoice {
+    }
+
+    /**
+     * Exile a card from hand (EXILE_FROM_HAND_CHOICE), tracked with
+     * {@code sourcePermanentId} when non-null (e.g. Karn Liberated). {@code remainingCount}
+     * works as in {@link DiscardChoice}.
+     */
+    record ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                               UUID sourcePermanentId, int remainingCount, String prompt)
+            implements PendingInteraction, HandChoice {
+    }
+
+    /** Exile a card from hand and imprint it on {@code sourcePermanentId} (IMPRINT_FROM_HAND_CHOICE). */
+    record ImprintFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                 UUID sourcePermanentId, String prompt)
+            implements PendingInteraction, HandChoice {
+    }
+
+    /**
+     * Discard a card as an activation cost (ACTIVATED_ABILITY_DISCARD_COST_CHOICE). The
+     * pending activation itself lives in {@link GameData#pendingAbilityActivation}.
+     */
+    record DiscardCostChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
+            implements PendingInteraction, HandChoice {
     }
 }

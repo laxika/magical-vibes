@@ -27,7 +27,7 @@ class DiscardAndDrawCardEffectHandlerTest extends AbstractPlayerInteractionHandl
 
                 assertThat(gd.pendingRummageDrawCount).isEqualTo(2);
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(gd, player1Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
             }
 
             @Test
@@ -41,6 +41,6 @@ class DiscardAndDrawCardEffectHandlerTest extends AbstractPlayerInteractionHandl
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no cards to discard")));
-                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+                verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             }
 }

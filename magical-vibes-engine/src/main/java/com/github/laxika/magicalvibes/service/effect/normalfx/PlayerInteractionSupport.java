@@ -134,9 +134,8 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        gameData.interaction.setDiscardRemainingCount(amount);
-        playerInputService.beginDiscardChoice(gameData, playerId);
-    
+        playerInputService.beginDiscardChoice(gameData, playerId, amount);
+
     }
     public void resolveRandomDiscardCards(GameData gameData, UUID playerId, String sourceName, int amount) {
 
@@ -274,8 +273,7 @@ public class PlayerInteractionSupport {
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 continue;
             }
-            gameData.interaction.setDiscardRemainingCount(amount);
-            playerInputService.beginDiscardChoice(gameData, nextPlayerId);
+            playerInputService.beginDiscardChoice(gameData, nextPlayerId, amount);
             return;
         }
         // All players done — clear controller tracking

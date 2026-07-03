@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -400,7 +401,7 @@ class TurnProgressionServiceTest {
             assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
             assertThat(gd.cleanupDiscardPending).isTrue();
             assertThat(gd.discardCausedByOpponent).isFalse();
-            verify(playerInputService).beginDiscardChoice(gd, player1Id);
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
         }
 
         @Test
@@ -414,7 +415,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.cleanupDiscardPending).isFalse();
-            verify(playerInputService, never()).beginDiscardChoice(any(), any());
+            verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             verify(turnCleanupService).applyCleanupResets(gd);
         }
 
@@ -429,7 +430,7 @@ class TurnProgressionServiceTest {
             turnProgressionService.advanceStep(gd);
 
             assertThat(gd.cleanupDiscardPending).isFalse();
-            verify(playerInputService, never()).beginDiscardChoice(any(), any());
+            verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             verify(turnCleanupService).applyCleanupResets(gd);
         }
 
@@ -458,7 +459,7 @@ class TurnProgressionServiceTest {
 
             // With 1 card and max 0, discard count = 1
             assertThat(gd.cleanupDiscardPending).isTrue();
-            verify(playerInputService).beginDiscardChoice(gd, player1Id);
+            verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
         }
     }
 

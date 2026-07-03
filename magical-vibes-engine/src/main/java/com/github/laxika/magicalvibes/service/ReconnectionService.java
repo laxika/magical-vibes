@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
@@ -78,12 +77,6 @@ public class ReconnectionService {
                             gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId));
                 }
             }
-            case CARD_CHOICE, TARGETED_CARD_CHOICE, DISCARD_CHOICE, ACTIVATED_ABILITY_DISCARD_COST_CHOICE -> {
-                InteractionContext.CardChoice cc = gameData.interaction.cardChoiceContext();
-                if (cc != null) {
-                    resendFromContext(gameData, playerId, cc);
-                }
-            }
             case PERMANENT_CHOICE -> {
                 InteractionContext.PermanentChoice pc = gameData.interaction.permanentChoiceContextView();
                 if (pc != null) {
@@ -134,23 +127,6 @@ public class ReconnectionService {
                     sessionManager.sendToPlayer(defenderId, combatService.buildAvailableBlockersMessage(
                             gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId));
                 }
-            }
-            case InteractionContext.CardChoice cc -> {
-                if (!playerId.equals(cc.playerId())) {
-                    return;
-                }
-                String prompt = switch (cc.type()) {
-                    case DISCARD_CHOICE -> "Choose a card to discard.";
-                    case ACTIVATED_ABILITY_DISCARD_COST_CHOICE -> gameData.pendingAbilityActivation != null
-                            ? "Choose a " + (gameData.pendingAbilityActivation.discardCostLabel() != null
-                                    ? gameData.pendingAbilityActivation.discardCostLabel() + " " : "")
-                            + "card to discard as an activation cost."
-                            : "Choose a card from your hand.";
-                    default -> "Choose a card from your hand.";
-                };
-                boolean canDecline = cc.type() == AwaitingInput.CARD_CHOICE || cc.type() == AwaitingInput.TARGETED_CARD_CHOICE;
-                sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
-                        new ArrayList<>(cc.validIndices()), prompt, canDecline));
             }
             case InteractionContext.PermanentChoice pc -> {
                 if (playerId.equals(pc.playerId())) {

@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -513,7 +512,8 @@ public class AbilityActivationService {
      *                               who should be choosing, or the card index is invalid
      */
     public void handleActivatedAbilityDiscardCostChosen(GameData gameData, Player player, int cardIndex) {
-        InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
+        com.github.laxika.magicalvibes.model.PendingInteraction.DiscardCostChoice cardChoice =
+                gameData.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.DiscardCostChoice.class);
         if (cardChoice == null || !player.getId().equals(cardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -1358,12 +1358,10 @@ public class AbilityActivationService {
                 targetZone,
                 costLabel
         );
-        gameData.interaction.beginCardChoice(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE, playerId, new HashSet<>(validDiscardIndices), null);
         String labelText = costLabel != null ? costLabel + " " : "";
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromHandMessage(
-                validDiscardIndices,
-                "Choose a " + labelText + "card to discard as an activation cost."
-        ));
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.DiscardCostChoice(
+                playerId, validDiscardIndices,
+                "Choose a " + labelText + "card to discard as an activation cost."));
     }
 
     private void payDiscardCost(GameData gameData, Player player, DiscardCardTypeCost cost, Integer discardCardIndex) {
@@ -1444,7 +1442,6 @@ public class AbilityActivationService {
     private void clearPendingAbilityActivation(GameData gameData) {
         gameData.pendingAbilityActivation = null;
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearCardChoice();
     }
 
     private void validateActivationLimitPerTurn(GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex) {

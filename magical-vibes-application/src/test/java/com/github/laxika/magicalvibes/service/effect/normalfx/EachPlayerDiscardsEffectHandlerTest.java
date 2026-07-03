@@ -27,7 +27,7 @@ class EachPlayerDiscardsEffectHandlerTest extends AbstractPlayerInteractionHandl
                 resolveEffect(gd, entry, effect);
 
                 // Active player starts the discard
-                verify(playerInputService).beginDiscardChoice(gd, player1Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
                 assertThat(gd.pendingEachPlayerDiscardAmount).isEqualTo(1);
             }
 
@@ -71,7 +71,7 @@ class EachPlayerDiscardsEffectHandlerTest extends AbstractPlayerInteractionHandl
 
                 support.startNextEachPlayerDiscard(gd);
 
-                verify(playerInputService).beginDiscardChoice(gd, player2Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt());
                 assertThat(gd.discardCausedByOpponent).isTrue();
             }
 
@@ -88,7 +88,7 @@ class EachPlayerDiscardsEffectHandlerTest extends AbstractPlayerInteractionHandl
                 support.startNextEachPlayerDiscard(gd);
 
                 // player1 skipped, player2 gets the discard prompt
-                verify(playerInputService).beginDiscardChoice(gd, player2Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("Player1") && msg.contains("no cards to discard")));
             }
@@ -102,7 +102,7 @@ class EachPlayerDiscardsEffectHandlerTest extends AbstractPlayerInteractionHandl
                 support.startNextEachPlayerDiscard(gd);
 
                 assertThat(gd.pendingEachPlayerDiscardControllerId).isNull();
-                verify(playerInputService, never()).beginDiscardChoice(any(), any());
+                verify(playerInputService, never()).beginDiscardChoice(any(), any(), anyInt());
             }
 
             @Test

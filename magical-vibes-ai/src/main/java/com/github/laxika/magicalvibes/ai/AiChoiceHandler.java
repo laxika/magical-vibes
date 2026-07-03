@@ -61,12 +61,11 @@ class AiChoiceHandler {
     // ===== Card Choice (discard) =====
 
     void handleCardChoice(GameData gameData) {
-        InteractionContext.CardChoice cardChoice = gameData.interaction.cardChoiceContext();
-        if (cardChoice == null) {
+        if (!(gameData.interaction.activeInteraction() instanceof PendingInteraction.HandChoice cardChoice)) {
             return;
         }
         UUID choicePlayerId = cardChoice.playerId();
-        Set<Integer> validIndices = cardChoice.validIndices();
+        List<Integer> validIndices = cardChoice.validIndices();
 
         if (!aiPlayerId.equals(choicePlayerId)) {
             return;

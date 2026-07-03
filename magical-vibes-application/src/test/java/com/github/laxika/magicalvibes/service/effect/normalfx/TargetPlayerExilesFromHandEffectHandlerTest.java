@@ -28,7 +28,7 @@ class TargetPlayerExilesFromHandEffectHandlerTest extends AbstractPlayerInteract
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService).beginExileFromHandChoice(eq(gd), eq(player2Id), any());
+                verify(playerInputService).beginExileFromHandChoice(eq(gd), eq(player2Id), any(), anyInt());
             }
 
             @Test
@@ -40,7 +40,7 @@ class TargetPlayerExilesFromHandEffectHandlerTest extends AbstractPlayerInteract
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginExileFromHandChoice(any(), any(), any());
+                verify(playerInputService, never()).beginExileFromHandChoice(any(), any(), any(), anyInt());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no cards to exile")));
             }

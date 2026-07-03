@@ -361,6 +361,63 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   `ReturnCardFromGraveyardEffectHandlerTest` verifies `registry.begin` (mocked registry added
   to its `@InjectMocks` support); `PlayerInputServiceTest`'s begin-helper block moved into the
   new focused `GraveyardChoiceInteractionHandlersTest` (both kinds).
+- The **hand-card choice family** — six records for the six kinds the legacy shared
+  `InteractionContext.CardChoice(type, playerId, validIndices, targetId)` served:
+  `PendingInteraction.HandCardChoice` (CARD_CHOICE), `TargetedHandCardChoice`
+  (TARGETED_CARD_CHOICE, carries `targetId`), `DiscardChoice` (DISCARD_CHOICE),
+  `ExileFromHandChoice` (EXILE_FROM_HAND_CHOICE, carries `sourcePermanentId`),
+  `ImprintFromHandChoice` (IMPRINT_FROM_HAND_CHOICE, carries `sourcePermanentId`), and
+  `DiscardCostChoice` (ACTIVATED_ABILITY_DISCARD_COST_CHOICE). **Per-kind records** because
+  the legacy answer dispatch branched into genuinely different handler methods (and each kind
+  needs its own legacy enum via `beginInteraction`); CARD/TARGETED share one answer method.
+  All six implement the new `PendingInteraction.HandChoice` accessor interface
+  (playerId/validIndices/prompt) so generic consumers — the base AI heuristic, the Hard/Medium
+  `handleCardChoice` overrides, the `RandomAiDecisionEngine` test engine, and
+  `GameSimulator`'s CARD_CHOICE/DISCARD_CHOICE action-gen + resolve cases and decider lookup —
+  read the family uniformly. Handlers live in one file
+  (`HandCardChoiceInteractionHandlers`, six nested `@Component` classes over a shared base:
+  same `ChooseCardFromHandMessage(validIndices, prompt, canDecline)` send; canDecline=true only
+  for CARD/TARGETED; per-kind "Awaiting …" log; no log for the discard cost, matching its
+  legacy begin). Answered via `InteractionAnswer.CardIndexChosen` (shared with the already
+  migrated revealed-hand kind) — with the whole `handleCardChosen` wire entry now
+  registry-managed, `GameService.handleCardChosen` collapsed to dispatch-or-throw with the
+  legacy "Not awaiting card choice" text, and `CardChoiceHandlerService` lost its enum
+  dispatch (the per-kind answer methods are now public, read their active record, keep all
+  log/error texts, and keep the legacy invalid-index re-prompt quirks: the discard/exile
+  re-prompts still reset to full-hand indices + default prompt via the same helper, imprint
+  still re-prompts with "Choose a card from your hand.", and the discard cost still re-sends
+  its message without re-beginning). **`discardRemainingCount` (the int this refactor had
+  parked on `InteractionState` during the revealed-hand migration) is gone** — the
+  discard/exile multi-pick countdown rides on `DiscardChoice.remainingCount()` /
+  `ExileFromHandChoice.remainingCount()` with the fresh-record-per-pick pattern; the six
+  pre-seed sites (`PlayerInteractionSupport.resolveDiscardCards` / `startNextEachPlayerDiscard`,
+  `TargetPlayerExilesFromHandEffectHandler`, `MayPenaltyChoiceHandlerService` ×3,
+  `TurnProgressionService` cleanup discard) now pass the count into
+  `beginDiscardChoice(gameData, playerId[, indices, prompt], remainingCount)` /
+  `beginExileFromHandChoice(gameData, playerId, sourcePermanentId, remainingCount)`, and its
+  `InteractionState` deepCopy/`copyInteractionInto` lines are deleted. **`CardChoiceState` is
+  deleted entirely** (no other piggybackers — the revealed-hand mirror was already gone), as
+  is `InteractionState.beginCardChoice/clearCardChoice/cardChoiceContext` and the
+  `InteractionContext.CardChoice` record + all cases;
+  `AbilityActivationService.beginDiscardCostChoice` drops its `setAwaitingInput` enum-override
+  hack and `clearPendingAbilityActivation` its redundant `clearCardChoice()`.
+  **Replay-fidelity corrections**: the legacy replay re-derived prompts ("Choose a card to
+  discard." / "Choose a card from your hand.") — wrong for every per-site prompt
+  (MayPenalty's "Choose a land card to discard.", "Choose a creature card from your hand to
+  put onto the battlefield.", imprint's and exile's prompts, …) — with hash-scrambled index
+  order, and **EXILE_FROM_HAND_CHOICE / IMPRINT_FROM_HAND_CHOICE were entirely absent from
+  the replay switch** (reconnecting players got no prompt re-send at all); replay now re-sends
+  the begin-time prompt and ordered indices for all six kinds. The discard-cost begin and its
+  invalid-index re-send also gain the mind-control redirect / ordered indices respectively.
+  AI: no strategy-table entries — the family keeps the overridable
+  `AiDecisionEngine.handleCardChoice` seam (Hard/Medium discard evaluators), all three
+  implementations now reading the active record via `HandChoice`. ~45 test files' mechanical
+  rewrites: `cardChoice().playerId()/validIndices()` → `((PendingInteraction.HandChoice)
+  activeInteraction())` casts, `interaction.discardRemainingCount()` →
+  `activeInteraction(DiscardChoice.class).remainingCount()` (all 15 such files were discard
+  flows), begin-helper verify signatures gained the count arg, and
+  `PlayerInputServiceTest` registers the six handlers; new focused
+  `HandCardChoiceInteractionHandlersTest` covers all six kinds.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -383,8 +440,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 
 ### Stage 3 continuation — migrate the remaining kinds
 
-Suggested order: the card/permanent choice families (CARD_CHOICE, DISCARD_CHOICE,
-PERMANENT_CHOICE),
+Suggested order: PERMANENT_CHOICE,
 LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
 declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 

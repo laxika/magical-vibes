@@ -55,10 +55,9 @@ public class TargetPlayerExilesFromHandEffectHandler implements NormalEffectHand
             }
         }
 
-        gameData.interaction.setDiscardRemainingCount(e.amount());
         gameData.pendingExileFromHandPlayPermissionController =
                 e.controllerMayPlay() ? entry.getControllerId() : null;
-        playerInputService.beginExileFromHandChoice(gameData, targetPlayerId, sourcePermanentId);
+        playerInputService.beginExileFromHandChoice(gameData, targetPlayerId, sourcePermanentId, e.amount());
     
     }
 }

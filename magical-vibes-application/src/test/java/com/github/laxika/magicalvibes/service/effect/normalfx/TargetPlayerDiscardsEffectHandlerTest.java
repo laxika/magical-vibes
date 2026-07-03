@@ -26,7 +26,7 @@ class TargetPlayerDiscardsEffectHandlerTest extends AbstractPlayerInteractionHan
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.discardCausedByOpponent).isTrue();
-                verify(playerInputService).beginDiscardChoice(gd, player2Id);
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt());
             }
 
             @Test

@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMess
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.interaction.ColorChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.HandCardChoiceInteractionHandlers;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.MayAbilityChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.MultiGraveyardChoiceInteractionHandler;
@@ -86,6 +87,17 @@ class PlayerInputServiceTest {
                 sessionManager, cardViewFactory, mock(GraveyardChoiceHandlerService.class)));
         registry.register(new ColorChoiceInteractionHandler(
                 sessionManager, mock(ChoiceHandlerService.class)));
+        CardChoiceHandlerService cardChoiceHandlerService = mock(CardChoiceHandlerService.class);
+        registry.register(new HandCardChoiceInteractionHandlers.HandCardChoiceInteractionHandler(
+                sessionManager, cardChoiceHandlerService));
+        registry.register(new HandCardChoiceInteractionHandlers.TargetedHandCardChoiceInteractionHandler(
+                sessionManager, cardChoiceHandlerService));
+        registry.register(new HandCardChoiceInteractionHandlers.DiscardChoiceInteractionHandler(
+                sessionManager, cardChoiceHandlerService));
+        registry.register(new HandCardChoiceInteractionHandlers.ExileFromHandChoiceInteractionHandler(
+                sessionManager, cardChoiceHandlerService));
+        registry.register(new HandCardChoiceInteractionHandlers.ImprintFromHandChoiceInteractionHandler(
+                sessionManager, cardChoiceHandlerService));
         svc = new PlayerInputService(sessionManager, cardViewFactory, registry);
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
@@ -855,7 +867,7 @@ class PlayerInputServiceTest {
             gd.playerHands.get(PLAYER1_ID).addAll(List.of(createCreature("A"), createCreature("B")));
             UUID sourcePermId = UUID.randomUUID();
 
-            svc.beginExileFromHandChoice(gd, PLAYER1_ID, sourcePermId);
+            svc.beginExileFromHandChoice(gd, PLAYER1_ID, sourcePermId, 1);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
         }
@@ -866,7 +878,7 @@ class PlayerInputServiceTest {
             gd.playerHands.get(PLAYER1_ID).addAll(List.of(createCreature("A"), createCreature("B"), createCreature("C")));
             UUID sourcePermId = UUID.randomUUID();
 
-            svc.beginExileFromHandChoice(gd, PLAYER1_ID, sourcePermId);
+            svc.beginExileFromHandChoice(gd, PLAYER1_ID, sourcePermId, 1);
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseCardFromHandMessage msg = (ChooseCardFromHandMessage) messageCaptor.getValue();
@@ -888,7 +900,7 @@ class PlayerInputServiceTest {
         void noArgsGeneratesIndices() {
             gd.playerHands.get(PLAYER1_ID).addAll(List.of(createCreature("A"), createCreature("B")));
 
-            svc.beginDiscardChoice(gd, PLAYER1_ID);
+            svc.beginDiscardChoice(gd, PLAYER1_ID, 1);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
@@ -900,7 +912,7 @@ class PlayerInputServiceTest {
         @Test
         @DisplayName("Parameterized version uses provided indices and prompt")
         void parameterizedVersionUsesProvidedArgs() {
-            svc.beginDiscardChoice(gd, PLAYER1_ID, List.of(1, 3), "Discard a land");
+            svc.beginDiscardChoice(gd, PLAYER1_ID, List.of(1, 3), "Discard a land", 1);
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());

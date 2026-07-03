@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -49,19 +48,13 @@ public class PlayerInputService {
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.interaction.beginCardChoice(AwaitingInput.CARD_CHOICE, playerId, new HashSet<>(validIndices), null);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt, true));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from hand", gameData.id, playerName);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
+                playerId, new ArrayList<>(validIndices), prompt));
     }
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {
-        gameData.interaction.beginCardChoice(AwaitingInput.TARGETED_CARD_CHOICE, playerId, new HashSet<>(validIndices), targetId);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt, true));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card from hand (targeted)", gameData.id, playerName);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandCardChoice(
+                playerId, new ArrayList<>(validIndices), targetId, prompt));
     }
 
     public void beginPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, String prompt) {
@@ -289,35 +282,26 @@ public class PlayerInputService {
     }
 
     public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID sourcePermanentId) {
-        gameData.interaction.beginCardChoice(AwaitingInput.IMPRINT_FROM_HAND_CHOICE, playerId, new HashSet<>(validIndices), sourcePermanentId);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose an artifact from hand to imprint", gameData.id, playerName);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ImprintFromHandChoice(
+                playerId, new ArrayList<>(validIndices), sourcePermanentId, prompt));
     }
 
-    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId, int remainingCount) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
-        gameData.interaction.beginCardChoice(AwaitingInput.EXILE_FROM_HAND_CHOICE, playerId, new HashSet<>(validIndices), sourcePermanentId);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, "Choose a card to exile."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card to exile from hand", gameData.id, playerName);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandChoice(
+                playerId, validIndices, sourcePermanentId, remainingCount, "Choose a card to exile."));
     }
 
-    public void beginDiscardChoice(GameData gameData, UUID playerId) {
+    public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {
         List<Card> hand = gameData.playerHands.get(playerId);
-        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.");
+        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount);
     }
 
-    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
-        gameData.interaction.beginCardChoice(AwaitingInput.DISCARD_CHOICE, playerId, new HashSet<>(validIndices), null);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseCardFromHandMessage(validIndices, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose a card to discard", gameData.id, playerName);
+    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, int remainingCount) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardChoice(
+                playerId, new ArrayList<>(validIndices), remainingCount, prompt));
     }
 
     public void processNextMayAbility(GameData gameData) {

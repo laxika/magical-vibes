@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -101,8 +103,8 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         // Opponent should be prompted to discard all 3 cards (max hand size = 7 - 7 = 0)
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.cardChoice().playerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(3);
+        assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(3);
     }
 
     @Test
@@ -125,7 +127,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         // Controller should discard down to 7 (normal hand size, not reduced)
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
-        assertThat(gd.interaction.discardRemainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
     }
 
     @Test

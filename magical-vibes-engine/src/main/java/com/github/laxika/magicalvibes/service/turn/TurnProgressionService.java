@@ -111,8 +111,7 @@ public class TurnProgressionService {
                     int discardCount = hand.size() - maxHandSize;
                     gameData.cleanupDiscardPending = true;
                     gameData.discardCausedByOpponent = false;
-                    gameData.interaction.setDiscardRemainingCount(discardCount);
-                    playerInputService.beginDiscardChoice(gameData, activePlayerId);
+                    playerInputService.beginDiscardChoice(gameData, activePlayerId, discardCount);
                     return;
                 }
                 // CR 514.2: Remove damage and end "until end of turn" effects

@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -46,7 +45,6 @@ public class GameService {
     private final GameBroadcastService gameBroadcastService;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
-    private final CardChoiceHandlerService cardChoiceHandlerService;
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -126,7 +124,6 @@ public class GameService {
         return switch (ctx) {
             case InteractionContext.AttackerDeclaration ad -> controlledId.equals(ad.activePlayerId());
             case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
-            case InteractionContext.CardChoice cc -> controlledId.equals(cc.playerId());
             case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
             case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
             case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
@@ -455,11 +452,10 @@ public class GameService {
     public void handleCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
                     new InteractionAnswer.CardIndexChosen(cardIndex))) {
-                return;
+                throw new IllegalStateException("Not awaiting card choice");
             }
-            cardChoiceHandlerService.handleCardChosen(gameData, player, cardIndex);
         }
     }
 
