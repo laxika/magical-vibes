@@ -64,6 +64,7 @@ function makePermanent(id: string, card: Card, overrides?: Partial<Permanent>): 
     attackTargetId: null,
     markedDamage: 0,
     transformed: false,
+    prepared: false,
     ...overrides
   };
 }
