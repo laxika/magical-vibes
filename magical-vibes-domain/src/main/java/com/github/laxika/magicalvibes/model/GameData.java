@@ -1035,6 +1035,12 @@ public class GameData {
             return; // default state, nothing to copy
         }
 
+        // Registry-managed interactions carry everything in the active record (immutable)
+        if (source.activeInteraction() != null) {
+            target.interaction.beginInteraction(source.activeInteraction(), source.awaitingInputType());
+            return;
+        }
+
         // Copy context through reflection-free approach: re-read the source's context
         // and call the appropriate begin* method on the target's interaction.
         InteractionState targetInteraction = target.interaction;
@@ -1111,8 +1117,6 @@ public class GameData {
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
                             cda.validTargets(), cda.isTrample(), cda.isDeathtouch());
-            case InteractionContext.XValueChoice xvc ->
-                    targetInteraction.beginXValueChoice(xvc.playerId(), xvc.maxValue(), xvc.prompt(), xvc.cardName());
             case InteractionContext.Scry s ->
                     targetInteraction.beginScry(s.playerId(),
                             s.cards() != null ? new ArrayList<>(s.cards()) : null);

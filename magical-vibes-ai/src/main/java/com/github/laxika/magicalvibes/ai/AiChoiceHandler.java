@@ -1,7 +1,11 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.ai.interaction.AiInteractionContext;
+import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategies;
+import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategy;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -24,7 +28,6 @@ import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChose
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
-import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -339,22 +342,24 @@ class AiChoiceHandler {
         send(() -> gameActions.handleMayAbilityChosen(selfConnection, new MayAbilityChosenRequest(null, true)));
     }
 
-    // ===== X Value Choice =====
+    // ===== Registry-managed interactions (per-kind strategies) =====
 
-    void handleXValueChoice(GameData gameData) {
-        InteractionContext.XValueChoice xValueChoice = gameData.interaction.xValueChoiceContext();
-        if (xValueChoice == null) {
+    /**
+     * Answers the active registry-managed interaction via its per-kind
+     * {@link AiInteractionStrategy}. No-ops when no strategy matches (e.g. the
+     * interaction kind has not been migrated yet).
+     */
+    void handleActiveInteraction(GameData gameData) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        if (active == null) {
             return;
         }
-        UUID choicePlayerId = xValueChoice.playerId();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
+        AiInteractionStrategy<PendingInteraction> strategy = AiInteractionStrategies.forInteraction(active);
+        if (strategy == null) {
             return;
         }
-
-        int chosenValue = xValueChoice.maxValue();
-        log.info("AI: Choosing X={} for {} in game {}", chosenValue, xValueChoice.cardName(), gameId);
-        send(() -> gameActions.handleXValueChosen(selfConnection, new XValueChosenRequest(null, chosenValue)));
+        send(() -> strategy.answer(active, new AiInteractionContext(
+                gameData, gameId, aiPlayerId, gameQueryService, gameActions, selfConnection)));
     }
 
     // ===== Scry =====

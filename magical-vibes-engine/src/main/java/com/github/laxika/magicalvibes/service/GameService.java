@@ -25,7 +25,8 @@ import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerServic
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +54,7 @@ public class GameService {
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
     private final MayAbilityHandlerService mayAbilityHandlerService;
-    private final XValueChoiceHandlerService xValueChoiceHandlerService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
     private final SpellCastingService spellCastingService;
     private final StackResolutionService stackResolutionService;
@@ -108,6 +109,10 @@ public class GameService {
 
         // Check if the controlled player is the expected respondent for an interaction
         if (gameData.interaction.isAwaitingInput()) {
+            UUID activeDecider = interactionHandlerRegistry.activeDecidingPlayerId(gameData);
+            if (controlledId.equals(activeDecider)) {
+                return new Player(controlledId, gameData.playerIdToName.get(controlledId));
+            }
             InteractionContext ctx = gameData.interaction.currentContext();
             if (ctx != null && controlledPlayerMatchesContext(ctx, controlledId)) {
                 return new Player(controlledId, gameData.playerIdToName.get(controlledId));
@@ -141,7 +146,6 @@ public class GameService {
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
             case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
-            case InteractionContext.XValueChoice xvc -> controlledId.equals(xvc.playerId());
             case InteractionContext.Scry sc -> controlledId.equals(sc.playerId());
             case InteractionContext.KnowledgePoolCastChoice kpc -> controlledId.equals(kpc.playerId());
             case InteractionContext.MirrorOfFateChoice mfc -> controlledId.equals(mfc.playerId());
@@ -522,7 +526,10 @@ public class GameService {
     public void handleXValueChosen(GameData gameData, Player player, int chosenValue) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            xValueChoiceHandlerService.handleXValueChosen(gameData, player, chosenValue);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.NumberChosen(chosenValue))) {
+                throw new IllegalStateException("Not awaiting X value choice");
+            }
         }
     }
 

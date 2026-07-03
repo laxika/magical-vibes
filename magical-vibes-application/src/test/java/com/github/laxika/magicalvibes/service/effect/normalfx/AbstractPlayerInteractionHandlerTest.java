@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,6 +43,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
     @Mock protected PermanentRemovalService permanentRemovalService;
     @Mock protected BattlefieldEntryService battlefieldEntryService;
     @Mock protected TriggerCollectionService triggerCollectionService;
+    @Mock protected InteractionHandlerRegistry interactionHandlerRegistry;
 
     protected EffectHandlerRegistry registry;
     protected PlayerInteractionSupport support;
@@ -64,7 +66,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
         NormalEffectHandlerBean handler = PlayerInteractionHandlerTestSupport.createHandler(
                 handlerName, support, registry, gameBroadcastService, drawService, sessionManager, cardViewFactory,
                 gameQueryService, predicateEvaluationService, playerInputService, triggerCollectionService, battlefieldEntryService,
-                permanentRemovalService, graveyardService);
+                permanentRemovalService, graveyardService, interactionHandlerRegistry);
         PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);
         setUpHandler();
     }

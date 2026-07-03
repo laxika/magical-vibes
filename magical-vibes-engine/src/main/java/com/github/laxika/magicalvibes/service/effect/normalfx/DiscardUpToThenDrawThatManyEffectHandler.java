@@ -2,11 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final PlayerInputService playerInputService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
@@ -83,7 +84,8 @@ public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHan
                 ? hand.size()
                 : Math.min(e.maxDiscard(), hand.size());
         String prompt = buildPrompt(e, cardName);
-        playerInputService.beginXValueChoice(gameData, controllerId, maxDiscard, prompt, cardName);
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.XValueChoice(controllerId, maxDiscard, prompt, cardName));
     }
 
     private static String buildPrompt(DiscardUpToThenDrawThatManyEffect e, String cardName) {

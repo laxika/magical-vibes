@@ -30,11 +30,11 @@ import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ScryMessage;
-import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -61,8 +61,13 @@ public class ReconnectionService {
     private final CombatService combatService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void resendAwaitingInput(GameData gameData, UUID playerId) {
+        // Registry-managed interactions replay their own prompt
+        if (interactionHandlerRegistry.replayPrompt(gameData, playerId)) {
+            return;
+        }
         InteractionContext context = gameData.interaction.currentContext();
         if (context != null) {
             resendFromContext(gameData, playerId, context);
@@ -182,12 +187,6 @@ public class ReconnectionService {
                 InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
                     resendFromContext(gameData, playerId, cda);
-                }
-            }
-            case X_VALUE_CHOICE -> {
-                InteractionContext.XValueChoice xvc = gameData.interaction.xValueChoiceContext();
-                if (xvc != null) {
-                    resendFromContext(gameData, playerId, xvc);
                 }
             }
             case KNOWLEDGE_POOL_CAST_CHOICE -> {
@@ -457,12 +456,6 @@ public class ReconnectionService {
                 sessionManager.sendToPlayer(playerId, new CombatDamageAssignmentNotification(
                         cda.attackerIndex(), cda.attackerPermanentId().toString(),
                         cda.attackerName(), cda.totalDamage(), targetViews, cda.isTrample(), cda.isDeathtouch()));
-            }
-            case InteractionContext.XValueChoice xvc -> {
-                if (playerId.equals(xvc.playerId())) {
-                    sessionManager.sendToPlayer(playerId, new XValueChoiceMessage(
-                            xvc.prompt(), xvc.maxValue(), xvc.cardName()));
-                }
             }
             case InteractionContext.Scry s -> {
                 if (!playerId.equals(s.playerId()) || s.cards() == null) {

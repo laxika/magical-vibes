@@ -20,6 +20,11 @@ public class InteractionState {
     // --- Core state ---
     private AwaitingInput awaitingInput;
     private InteractionContext context;
+    /** The currently active interaction for kinds migrated to the InteractionHandlerRegistry.
+     *  While set, {@link #awaitingInput} still carries the legacy enum value (kept until the
+     *  enum teardown stage) but {@link #context} stays null — the registry handler owns
+     *  prompting, answer handling, and reconnect replay. */
+    private PendingInteraction activeInteraction;
 
     // --- Grouped sub-states ---
     private CardChoiceState cardChoice;
@@ -46,6 +51,7 @@ public class InteractionState {
         InteractionState copy = new InteractionState();
         copy.awaitingInput = this.awaitingInput;
         copy.context = this.context;
+        copy.activeInteraction = this.activeInteraction;
         copy.cardChoice = this.cardChoice != null ? this.cardChoice.deepCopy() : null;
         copy.permanentChoice = this.permanentChoice != null ? this.permanentChoice.deepCopy() : null;
         copy.graveyardChoice = this.graveyardChoice != null ? this.graveyardChoice.deepCopy() : null;
@@ -94,9 +100,25 @@ public class InteractionState {
         return this.context;
     }
 
+    /**
+     * Marks the given registry-managed interaction as the currently active one. The legacy
+     * {@link AwaitingInput} value is set alongside it so enum-based awaiting checks keep
+     * working until the enum is removed.
+     */
+    public void beginInteraction(PendingInteraction interaction, AwaitingInput legacyType) {
+        this.activeInteraction = interaction;
+        this.awaitingInput = legacyType;
+    }
+
+    /** The active registry-managed interaction, or {@code null} when none (or a legacy kind) is active. */
+    public PendingInteraction activeInteraction() {
+        return this.activeInteraction;
+    }
+
     public void clearAwaitingInput() {
         this.awaitingInput = null;
         this.context = null;
+        this.activeInteraction = null;
     }
 
     // ========================================================================
@@ -712,20 +734,6 @@ public class InteractionState {
         return new InteractionContext.MultiZoneExileChoice(multiSelection.multiZoneExilePlayerId(),
                 multiSelection.multiZoneExileValidCardIds(), multiSelection.multiZoneExileMaxCount(),
                 null, null, null);
-    }
-
-    // ========================================================================
-    // X value choice
-    // ========================================================================
-
-    public void beginXValueChoice(UUID playerId, int maxValue, String prompt, String cardName) {
-        this.awaitingInput = AwaitingInput.X_VALUE_CHOICE;
-        this.context = new InteractionContext.XValueChoice(playerId, maxValue, prompt, cardName);
-    }
-
-    public InteractionContext.XValueChoice xValueChoiceContext() {
-        if (context instanceof InteractionContext.XValueChoice xvc) return xvc;
-        return null;
     }
 
     // ========================================================================

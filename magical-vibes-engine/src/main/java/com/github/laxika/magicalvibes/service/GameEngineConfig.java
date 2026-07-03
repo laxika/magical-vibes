@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBean;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
@@ -49,6 +51,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     private final StaticEffectHandlerRegistry staticEffectHandlerRegistry;
     private final TargetValidatorRegistry targetValidatorRegistry;
     private final TriggerCollectorRegistry triggerCollectorRegistry;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     public GameEngineConfig(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -56,6 +59,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
         this.staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         this.targetValidatorRegistry = new TargetValidatorRegistry();
         this.triggerCollectorRegistry = new TriggerCollectorRegistry();
+        this.interactionHandlerRegistry = new InteractionHandlerRegistry();
     }
 
     @Bean
@@ -76,6 +80,11 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     @Bean
     public TriggerCollectorRegistry triggerCollectorRegistry() {
         return triggerCollectorRegistry;
+    }
+
+    @Bean
+    public InteractionHandlerRegistry interactionHandlerRegistry() {
+        return interactionHandlerRegistry;
     }
 
     @Override
@@ -101,6 +110,10 @@ public class GameEngineConfig implements SmartInitializingSingleton {
 
         for (NormalEffectHandlerBean bean : normalEffectHandlerBeans) {
             effectHandlerRegistry.register(bean.handledEffect(), bean);
+        }
+
+        for (InteractionHandler<?> bean : applicationContext.getBeansOfType(InteractionHandler.class).values()) {
+            interactionHandlerRegistry.register(bean);
         }
 
         int triggerCount = registerTriggerCollectors();

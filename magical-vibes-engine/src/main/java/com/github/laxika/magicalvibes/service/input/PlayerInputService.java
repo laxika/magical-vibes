@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanent
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
-import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import lombok.RequiredArgsConstructor;
@@ -363,14 +362,6 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(choosingPlayerId);
         log.info("Game {} - Awaiting {} to choose a card from revealed hand", gameData.id, playerName);
-    }
-
-    public void beginXValueChoice(GameData gameData, UUID playerId, int maxValue, String prompt, String cardName) {
-        gameData.interaction.beginXValueChoice(playerId, maxValue, prompt, cardName);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new XValueChoiceMessage(prompt, maxValue, cardName));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose X value (max {})", gameData.id, playerName, maxValue);
     }
 
     public void sendKnowledgePoolCastChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews) {

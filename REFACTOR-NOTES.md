@@ -76,16 +76,64 @@ records — they are part of the active-interaction (`InteractionState`) machine
 fields, and fall together with the rest of the enum dispatch. Mirror of Fate keeps no auxiliary
 `GameData` state at all, so stage 2 required no change for it.
 
+### 🔶 Stage 3 — IN PROGRESS: InteractionHandlerRegistry (engine)
+
+Scaffolding is in place and the first kind (X value choice) is migrated end to end.
+
+**The scaffolding** (mirrors `EffectHandlerRegistry`'s `SmartInitializingSingleton` wiring in
+`GameEngineConfig`, so handler beans can never form Spring cycles with dispatching services):
+
+- `engine service/interaction/`: `InteractionHandler<T>` (handledType, legacyInputType,
+  answerType, decidingPlayerId, prompt, handleAnswer), `InteractionAnswer` (sealed; one record
+  per wire-payload shape, grown per migrated kind), `InteractionHandlerRegistry`
+  (begin / dispatchAnswer / replayPrompt / activeDecidingPlayerId; owns the mind-control
+  recipient redirect).
+- `InteractionState.activeInteraction` — the active registry-managed interaction.
+  `beginInteraction(record, legacyEnum)` sets BOTH the record and the legacy `AwaitingInput`
+  value, so every `isAwaitingInput(...)` check (incl. `EffectResolutionService`'s re-run
+  check) and existing test assertions keep working until the stage-4 enum teardown. The
+  legacy `InteractionContext` is NOT set for migrated kinds — its per-kind record and all
+  switch cases get deleted with each migration.
+- Hook points, all falling back to the legacy path when no registry handler matches:
+  `GameService` answer entry points (`dispatchAnswer`), `GameService.resolveActingPlayer`
+  (mind-control decider via `activeDecidingPlayerId`), `ReconnectionService.resendAwaitingInput`
+  (`replayPrompt` at the top), `GameData.copyInteractionInto` (copies the active record).
+- AI side (`ai/interaction/`): `AiInteractionStrategy<T>` + static `AiInteractionStrategies`
+  lookup + `AiInteractionContext`; `AiChoiceHandler.handleActiveInteraction` dispatches by the
+  active record's class. The AI's outer dispatch stays keyed on wire message type (that's the
+  protocol, unchanged); `GameSimulator.getInteractionPlayer` reads the decider off the active
+  record (grow this per kind, or inject the registry once construction plumbing is touched).
+
+**Migrated kinds so far:** `PendingInteraction.XValueChoice` (X_VALUE_CHOICE). Removed with
+it: `InteractionContext.XValueChoice` + all switch cases, `InteractionState.beginXValueChoice`
+/ `xValueChoiceContext`, `PlayerInputService.beginXValueChoice`, `XValueChoiceHandlerService`
+(the `GameService` entry throws the same "Not awaiting X value choice" when dispatch misses).
+
+**Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
+1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
+   `InteractionAnswer` if new.
+2. Write the `*InteractionHandler` bean: prompt = the old `PlayerInputService.begin*` message
+   send; handleAnswer = the old `*HandlerService` logic (keep log/error text identical).
+3. Switch begin sites to `interactionHandlerRegistry.begin(...)`; delete the old begin method.
+4. Route the `GameService` entry point through `dispatchAnswer` (keep the legacy fallback for
+   entry points shared by several kinds until all of them are migrated).
+5. Delete the legacy context record + its cases (GameService.controlledPlayerMatchesContext,
+   ReconnectionService both switches, GameSimulator.getInteractionPlayer,
+   GameData.copyInteractionInto, InteractionState methods).
+6. AI: add the `AiInteractionStrategy`, point the wire-message case at
+   `handleActiveInteraction`, extend `GameSimulator.getInteractionPlayer` (and its
+   `resolveInteraction` case if the simulator answers that kind).
+7. Update tests that read the old context (`interaction.*Context()`) to read
+   `interaction.activeInteraction()`.
+
 ## Remaining stages (in suggested order)
 
-### Stage 3 (next) — InteractionHandlerRegistry (engine)
+### Stage 3 continuation — migrate the remaining kinds
 
-Same shape as `EffectHandlerRegistry`: keyed by interaction record class. Each handler:
-(a) renders/broadcasts the prompt (also used by `ReconnectionService` for replay),
-(b) validates + applies the answer, then advances the queue / chains continuations,
-(c) optionally exposes AI hooks. AI side: per-type strategy beans in `magical-vibes-ai`
-replacing the `AiChoiceHandler` switch on `AwaitingInput`.
-Migrate the 18 `service/input/*HandlerService` dispatch sites kind-by-kind.
+Suggested order (smallest surface first): SCRY, HAND_TOP_BOTTOM_CHOICE, LIBRARY_REORDER,
+MAY_ABILITY_CHOICE, the card/graveyard/permanent choice families, LIBRARY_SEARCH /
+LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat declarations
+(ATTACKER/BLOCKER) which are entangled with `CombatService`.
 
 ### Stage 4 — Generic `AwaitingInput` kinds → interaction records
 

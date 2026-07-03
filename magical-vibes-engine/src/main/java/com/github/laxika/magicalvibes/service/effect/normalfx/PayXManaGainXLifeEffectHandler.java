@@ -3,11 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaGainXLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,7 +22,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final LifeSupport lifeSupport;
     private final GameBroadcastService gameBroadcastService;
-    private final PlayerInputService playerInputService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,6 +69,7 @@ public class PayXManaGainXLifeEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         String prompt = "Pay {X} for " + entry.getCard().getName() + "? You gain X life.";
-        playerInputService.beginXValueChoice(gameData, controllerId, maxX, prompt, entry.getCard().getName());
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.XValueChoice(controllerId, maxX, prompt, entry.getCard().getName()));
     }
 }

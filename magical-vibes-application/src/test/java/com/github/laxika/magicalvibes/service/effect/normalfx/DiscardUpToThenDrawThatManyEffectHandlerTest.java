@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +26,10 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService).beginXValueChoice(eq(gd), eq(player1Id), eq(2), any(), any());
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.XValueChoice x
+                                && x.playerId().equals(player1Id)
+                                && x.maxValue() == 2));
             }
 
             @Test
@@ -37,7 +41,7 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginXValueChoice(any(), any(), any(int.class), any(), any());
+                verify(interactionHandlerRegistry, never()).begin(any(), any());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no cards to discard")));
             }
@@ -112,6 +116,6 @@ class DiscardUpToThenDrawThatManyEffectHandlerTest extends AbstractPlayerInterac
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginXValueChoice(any(), any(), any(int.class), any(), any());
+                verify(interactionHandlerRegistry, never()).begin(any(), any());
             }
 }

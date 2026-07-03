@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TargetType;
@@ -127,7 +128,6 @@ import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayCopyHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayMiscHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayPenaltyChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.XValueChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MultiPermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceBattlefieldHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
@@ -658,6 +658,10 @@ public class GameSimulator {
     }
 
     private UUID getInteractionPlayer(GameData gd, AwaitingInput awaiting) {
+        // Registry-managed interactions carry the decider on the active record
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.XValueChoice xvc) {
+            return xvc.playerId();
+        }
         var ctx = gd.interaction.currentContext();
         if (ctx == null) return null;
         return switch (ctx) {
@@ -677,7 +681,6 @@ public class GameSimulator {
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
             case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
-            case InteractionContext.XValueChoice xvc -> xvc.playerId();
             case InteractionContext.Scry sc -> sc.playerId();
             case InteractionContext.KnowledgePoolCastChoice kpc -> kpc.playerId();
             case InteractionContext.MirrorOfFateChoice mfc -> mfc.playerId();

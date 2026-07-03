@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 
 import java.lang.reflect.Constructor;
@@ -39,7 +40,8 @@ final class PlayerInteractionHandlerTestSupport {
                                                  TriggerCollectionService triggerCollectionService,
                                                  BattlefieldEntryService battlefieldEntryService,
                                                  PermanentRemovalService permanentRemovalService,
-                                                 GraveyardService graveyardService) {
+                                                 GraveyardService graveyardService,
+                                                 InteractionHandlerRegistry interactionHandlerRegistry) {
         try {
             Class<?> handlerClass = Class.forName(
                     PlayerInteractionHandlerTestSupport.class.getPackageName() + "." + handlerSimpleName);
@@ -57,6 +59,7 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(BattlefieldEntryService.class, battlefieldEntryService);
             deps.put(PermanentRemovalService.class, permanentRemovalService);
             deps.put(GraveyardService.class, graveyardService);
+            deps.put(InteractionHandlerRegistry.class, interactionHandlerRegistry);
 
             Constructor<?> chosen = null;
             Object[] chosenArgs = null;

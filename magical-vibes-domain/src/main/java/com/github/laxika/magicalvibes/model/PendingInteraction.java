@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import java.util.UUID;
+
 /**
  * A queued player decision: everything the engine needs to prompt the deciding player and
  * apply their answer later. Instances wait in {@link GameData#pendingInteractions} until
@@ -14,5 +16,18 @@ package com.github.laxika.magicalvibes.model;
 public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
-        PendingKarnRestart, PendingKnowledgePoolCast {
+        PendingKarnRestart, PendingKnowledgePoolCast,
+        PendingInteraction.XValueChoice {
+
+    // ------------------------------------------------------------------
+    // Generic interaction kinds, migrated one at a time from the legacy
+    // AwaitingInput / InteractionContext machinery. Each record carries
+    // everything needed to prompt the deciding player and apply the answer
+    // (dispatched via the engine's InteractionHandlerRegistry).
+    // ------------------------------------------------------------------
+
+    /** "Choose a value for X" (e.g. Vigil for the Lost's ETB payment, Jaya's rummage count). */
+    record XValueChoice(UUID playerId, int maxValue, String prompt, String cardName)
+            implements PendingInteraction {
+    }
 }

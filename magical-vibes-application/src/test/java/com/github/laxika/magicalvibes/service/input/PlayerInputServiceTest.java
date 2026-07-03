@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanent
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
-import com.github.laxika.magicalvibes.networking.message.XValueChoiceMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -978,35 +977,6 @@ class PlayerInputServiceTest {
             assertThat(msg.cards()).containsExactly(view1, view2);
             assertThat(msg.validIndices()).containsExactly(0, 1);
             assertThat(msg.prompt()).isEqualTo("Pick one");
-        }
-    }
-
-    // ========================================================================
-    // beginXValueChoice
-    // ========================================================================
-
-    @Nested
-    @DisplayName("beginXValueChoice")
-    class BeginXValueChoice {
-
-        @Test
-        @DisplayName("Sets interaction state to X_VALUE_CHOICE")
-        void setsInteractionState() {
-            svc.beginXValueChoice(gd, PLAYER1_ID, 5, "Choose X", "Fireball");
-
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.X_VALUE_CHOICE);
-        }
-
-        @Test
-        @DisplayName("Sends XValueChoiceMessage with correct parameters")
-        void sendsMessage() {
-            svc.beginXValueChoice(gd, PLAYER1_ID, 10, "Choose X value", "Blaze");
-
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            XValueChoiceMessage msg = (XValueChoiceMessage) messageCaptor.getValue();
-            assertThat(msg.maxValue()).isEqualTo(10);
-            assertThat(msg.prompt()).isEqualTo("Choose X value");
-            assertThat(msg.cardName()).isEqualTo("Blaze");
         }
     }
 
