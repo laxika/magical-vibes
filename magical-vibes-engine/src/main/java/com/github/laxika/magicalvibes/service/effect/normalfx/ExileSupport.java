@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -92,12 +93,12 @@ public class ExileSupport {
      */
     public void handleKnowledgePoolCastChoice(GameData gameData, Player player, List<UUID> cardIds) {
         UUID playerId = player.getId();
-        UUID kpPermanentId = gameData.knowledgePoolSourcePermanentId;
+        PendingKnowledgePoolCast pendingCast = gameData.pollPendingInteraction(PendingKnowledgePoolCast.class);
+        UUID kpPermanentId = pendingCast != null ? pendingCast.sourcePermanentId() : null;
 
         // Clear interaction state
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearKnowledgePoolCastChoice();
-        gameData.knowledgePoolSourcePermanentId = null;
 
         if (cardIds == null || cardIds.isEmpty()) {
             // Player declined

@@ -52,8 +52,8 @@ public class SphinxAmbassadorEffectHandler implements NormalEffectHandlerBean {
         List<Card> allCards = new ArrayList<>(deck);
 
         // Store the source card for the may ability description later
-        gameData.pendingSphinxAmbassadorChoice = new com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice(
-                null, controllerId, targetPlayerId, entry.getCard());
+        gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice(
+                null, controllerId, targetPlayerId, entry.getCard()));
 
         String prompt = "Search " + targetName + "'s library for a card.";
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, allCards)

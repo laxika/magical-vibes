@@ -11,5 +11,8 @@ package com.github.laxika.magicalvibes.model;
  * {@code Pending*} / {@code ChoiceContext} shapes migrate here incrementally
  * (see {@code REFACTOR-NOTES.md} at the repository root).
  */
-public sealed interface PendingInteraction permits PermanentChoiceContext {
+public sealed interface PendingInteraction permits PermanentChoiceContext,
+        PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
+        PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
+        PendingKarnRestart, PendingKnowledgePoolCast {
 }

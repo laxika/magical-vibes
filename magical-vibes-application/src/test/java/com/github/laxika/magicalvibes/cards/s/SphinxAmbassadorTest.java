@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -106,7 +107,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Pending choice should be cleared
-        assertThat(gd.pendingSphinxAmbassadorChoice).isNull();
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
     }
 
     // ===== Creature selected, correct name guessed =====
@@ -137,7 +138,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Pending choice should be cleared
-        assertThat(gd.pendingSphinxAmbassadorChoice).isNull();
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should indicate conditions not met (card not revealed per rules)
         assertThat(gd.gameLog).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
@@ -171,7 +172,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Shock"));
 
         // Pending choice should be cleared
-        assertThat(gd.pendingSphinxAmbassadorChoice).isNull();
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should indicate conditions not met (card not revealed per rules)
         assertThat(gd.gameLog).anyMatch(log -> log.contains("conditions") && log.contains("not met"));
@@ -228,7 +229,7 @@ class SphinxAmbassadorTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Pending choice should be cleared
-        assertThat(gd.pendingSphinxAmbassadorChoice).isNull();
+        assertThat(gd.peekPendingInteraction(PendingSphinxAmbassadorChoice.class)).isNull();
 
         // Log should mention decline
         assertThat(gd.gameLog).anyMatch(log -> log.contains("declines"));

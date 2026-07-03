@@ -93,7 +93,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
         }
 
         // Step 5: Present choice to the player
-        gameData.knowledgePoolSourcePermanentId = kpPermanentId;
+        gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast(kpPermanentId));
 
         List<UUID> validCardIds = eligible.stream().map(Card::getId).toList();
         List<CardView> cardViews = eligible.stream().map(cardViewFactory::create).toList();

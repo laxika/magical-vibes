@@ -640,8 +640,8 @@ public class PermanentChoiceTriggerHandlerService {
         }
 
         // Store state for step 2 and present opponent target selection
-        gameData.pendingCapriciousEfreetState = new PendingCapriciousEfreetState(
-                ceo.sourceCard(), controllerId, ceo.sourcePermanentId(), permanentId);
+        gameData.queueInteraction(new PendingCapriciousEfreetState(
+                ceo.sourceCard(), controllerId, ceo.sourcePermanentId(), permanentId));
 
         int maxOpponentTargets = Math.min(2, validOpponentTargets.size());
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, validOpponentTargets,

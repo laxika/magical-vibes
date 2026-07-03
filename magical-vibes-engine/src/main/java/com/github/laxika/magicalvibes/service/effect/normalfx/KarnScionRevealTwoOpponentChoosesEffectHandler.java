@@ -65,7 +65,7 @@ public class KarnScionRevealTwoOpponentChoosesEffectHandler implements NormalEff
 
         // Store the controller ID so the library reveal choice handler knows
         // to redirect the selected card to the controller's hand
-        gameData.pendingKarnScionControllerId = controllerId;
+        gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice(controllerId));
 
         // Present both cards to the opponent for selection
         Set<UUID> validIds = Set.of(card1.getId(), card2.getId());

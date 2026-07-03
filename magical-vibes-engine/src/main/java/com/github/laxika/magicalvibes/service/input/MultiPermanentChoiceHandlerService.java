@@ -123,7 +123,7 @@ public class MultiPermanentChoiceHandlerService {
             handleProliferate(gameData, playerId, permanentIds);
         } else if (gameData.pendingTapSubtypeBoostSourcePermanentId != null) {
             handleTapSubtypeBoost(gameData, playerId, permanentIds);
-        } else if (gameData.pendingCapriciousEfreetState != null) {
+        } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.pendingPileSeparation) {
             handlePileSeparation(gameData, permanentIds);
@@ -654,8 +654,7 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handleCapriciousEfreetOpponentTargets(GameData gameData, List<UUID> permanentIds) {
-        PendingCapriciousEfreetState state = gameData.pendingCapriciousEfreetState;
-        gameData.pendingCapriciousEfreetState = null;
+        PendingCapriciousEfreetState state = gameData.pollPendingInteraction(PendingCapriciousEfreetState.class);
 
         // Combine own target + opponent targets
         List<UUID> allTargets = new ArrayList<>();

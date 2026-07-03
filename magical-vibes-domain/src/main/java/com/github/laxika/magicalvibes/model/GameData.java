@@ -97,10 +97,6 @@ public class GameData {
     public final Map<UUID, Integer> exiledCardEggCounters = new ConcurrentHashMap<>();
     /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
-    /** Tracks the controller ID during a pending Karn Scion +1 opponent reveal choice. */
-    public UUID pendingKarnScionControllerId;
-    /** Tracks whether a LIBRARY_REVEAL_CHOICE is for Karn Scion -1 (return from exile). */
-    public boolean pendingKarnScionReturnFromExile;
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
@@ -118,10 +114,7 @@ public class GameData {
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public UUID imprintSourcePermanentId;
-    public List<Card> pendingKarnRestartCards;
-    public UUID karnRestartControllerId;
     public PendingOpponentExileChoice pendingOpponentExileChoice;
-    public PendingSphinxAmbassadorChoice pendingSphinxAmbassadorChoice;
     public UUID pendingCombatDamageBounceTargetPlayerId;
     public UUID pendingSacrificeSelfToDestroySourceId;
     public UUID pendingTransformAndAttachSourceId;
@@ -162,7 +155,6 @@ public class GameData {
      * {@code synchronized (gameData)} blocks in the engine, like the fields it replaced.
      */
     public final Deque<PendingInteraction> pendingInteractions = new ArrayDeque<>();
-    public PendingCapriciousEfreetState pendingCapriciousEfreetState;
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
@@ -325,8 +317,6 @@ public class GameData {
     public int graveyardLeaveNotificationDepth = 0;
     /** Owners whose graveyards had cards leave during a suppressed batch; triggers fire when depth returns to 0. */
     public final Set<UUID> graveyardLeaveNotificationPendingOwners = ConcurrentHashMap.newKeySet();
-    /** Transient field: tracks which Knowledge Pool permanent is currently resolving a cast choice. */
-    public UUID knowledgePoolSourcePermanentId;
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
      *  the exiling effect does not grant play permission to a controller. */
@@ -862,8 +852,6 @@ public class GameData {
         copy.exiledCards.addAll(this.exiledCards);
         copy.exiledCardEggCounters.putAll(this.exiledCardEggCounters);
         copy.exiledCardsWithSilverCounters.addAll(this.exiledCardsWithSilverCounters);
-        copy.pendingKarnScionControllerId = this.pendingKarnScionControllerId;
-        copy.pendingKarnScionReturnFromExile = this.pendingKarnScionReturnFromExile;
 
         // --- Map<UUID, List<Permanent>> (deep copy each Permanent) ---
         this.playerBattlefields.forEach((k, v) ->
@@ -924,13 +912,8 @@ public class GameData {
         // --- Imprint ---
         copy.imprintSourcePermanentId = this.imprintSourcePermanentId;
 
-        // --- Karn restart ---
-        copy.pendingKarnRestartCards = this.pendingKarnRestartCards != null ? new ArrayList<>(this.pendingKarnRestartCards) : null;
-        copy.karnRestartControllerId = this.karnRestartControllerId;
-
         // --- Post-exile search ---
         copy.pendingOpponentExileChoice = this.pendingOpponentExileChoice; // record — immutable
-        copy.pendingSphinxAmbassadorChoice = this.pendingSphinxAmbassadorChoice; // record — immutable
 
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
@@ -956,7 +939,6 @@ public class GameData {
 
         // --- Deques ---
         copy.pendingInteractions.addAll(this.pendingInteractions);
-        copy.pendingCapriciousEfreetState = this.pendingCapriciousEfreetState;
         copy.extraTurns.addAll(this.extraTurns);
         copy.pendingEachPlayerDiscardQueue.addAll(this.pendingEachPlayerDiscardQueue);
         copy.pendingEachPlayerDiscardControllerId = this.pendingEachPlayerDiscardControllerId;
@@ -1014,7 +996,6 @@ public class GameData {
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
-        copy.knowledgePoolSourcePermanentId = this.knowledgePoolSourcePermanentId;
         copy.pendingExileFromHandPlayPermissionController = this.pendingExileFromHandPlayPermissionController;
 
         // --- Search tax payments (Leonin Arbiter) ---

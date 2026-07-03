@@ -61,7 +61,7 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
         }
 
         // Multiple cards — let the controller choose
-        gameData.pendingKarnScionReturnFromExile = true;
+        gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn());
         Set<UUID> validIds = silverCards.stream().map(Card::getId).collect(Collectors.toSet());
         gameData.interaction.beginLibraryRevealChoice(controllerId, new ArrayList<>(silverCards), validIds,
                 false, true, false);

@@ -817,7 +817,7 @@ public class ChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearColorChoice();
 
-        PendingSphinxAmbassadorChoice pending = gameData.pendingSphinxAmbassadorChoice;
+        PendingSphinxAmbassadorChoice pending = gameData.peekPendingInteraction(PendingSphinxAmbassadorChoice.class);
         if (pending == null || pending.selectedCard() == null) {
             throw new IllegalStateException("No pending Sphinx Ambassador choice");
         }
@@ -855,7 +855,7 @@ public class ChoiceHandlerService {
 
             gameData.playerDecks.get(targetPlayerId).add(selectedCard);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameData.pendingSphinxAmbassadorChoice = null;
+            gameData.clearPendingInteractions(PendingSphinxAmbassadorChoice.class);
 
             gameData.priorityPassedBy.clear();
             gameBroadcastService.broadcastGameState(gameData);

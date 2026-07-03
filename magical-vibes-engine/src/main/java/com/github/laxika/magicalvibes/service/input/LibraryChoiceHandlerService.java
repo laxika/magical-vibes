@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
+import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingOpponentExileChoice;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
@@ -567,9 +569,9 @@ public class LibraryChoiceHandlerService {
         if (destination == LibrarySearchDestination.SPHINX_AMBASSADOR) {
             // Card is "set aside" (already removed from deck above).
             // Update the pending choice with the selected card, then prompt the opponent to name a card.
-            PendingSphinxAmbassadorChoice pending = gameData.pendingSphinxAmbassadorChoice;
-            gameData.pendingSphinxAmbassadorChoice = new PendingSphinxAmbassadorChoice(
-                    chosenCard, pending.controllerId(), pending.targetPlayerId(), pending.sourceCard());
+            PendingSphinxAmbassadorChoice pending = gameData.pollPendingInteraction(PendingSphinxAmbassadorChoice.class);
+            gameData.queueInteraction(new PendingSphinxAmbassadorChoice(
+                    chosenCard, pending.controllerId(), pending.targetPlayerId(), pending.sourceCard()));
 
             UUID opponentId = pending.targetPlayerId();
             String controllerName = gameData.playerIdToName.get(pending.controllerId());
@@ -964,13 +966,13 @@ public class LibraryChoiceHandlerService {
         gameData.interaction.clearLibraryRevealChoice();
 
         // Karn, Scion of Urza +1: opponent chose which card goes to controller's hand
-        if (gameData.pendingKarnScionControllerId != null) {
+        if (gameData.hasPendingInteraction(PendingKarnScionRevealChoice.class)) {
             handleKarnScionRevealChoice(gameData, allRevealedCards, cardIds);
             return;
         }
 
         // Karn, Scion of Urza -1: controller chose which silver-counter card to return
-        if (gameData.pendingKarnScionReturnFromExile) {
+        if (gameData.hasPendingInteraction(PendingKarnScionExileReturn.class)) {
             handleKarnScionReturnFromExile(gameData, allRevealedCards, cardIds, controllerId);
             return;
         }
@@ -1143,8 +1145,7 @@ public class LibraryChoiceHandlerService {
     }
 
     private void handleKarnScionRevealChoice(GameData gameData, List<Card> allRevealedCards, List<UUID> selectedCardIds) {
-        UUID controllerId = gameData.pendingKarnScionControllerId;
-        gameData.pendingKarnScionControllerId = null;
+        UUID controllerId = gameData.pollPendingInteraction(PendingKarnScionRevealChoice.class).controllerId();
 
         String controllerName = gameData.playerIdToName.get(controllerId);
 
@@ -1184,7 +1185,7 @@ public class LibraryChoiceHandlerService {
 
     private void handleKarnScionReturnFromExile(GameData gameData, List<Card> allRevealedCards,
                                                  List<UUID> selectedCardIds, UUID controllerId) {
-        gameData.pendingKarnScionReturnFromExile = false;
+        gameData.clearPendingInteractions(PendingKarnScionExileReturn.class);
 
         String controllerName = gameData.playerIdToName.get(controllerId);
 

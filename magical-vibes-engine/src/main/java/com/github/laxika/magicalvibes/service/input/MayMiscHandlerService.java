@@ -354,7 +354,7 @@ public class MayMiscHandlerService {
     }
 
     public void handleSphinxAmbassadorChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        PendingSphinxAmbassadorChoice pending = gameData.pendingSphinxAmbassadorChoice;
+        PendingSphinxAmbassadorChoice pending = gameData.peekPendingInteraction(PendingSphinxAmbassadorChoice.class);
         if (pending == null || pending.selectedCard() == null) {
             throw new IllegalStateException("No pending Sphinx Ambassador choice");
         }
@@ -387,7 +387,7 @@ public class MayMiscHandlerService {
         }
 
         LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-        gameData.pendingSphinxAmbassadorChoice = null;
+        gameData.clearPendingInteractions(PendingSphinxAmbassadorChoice.class);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

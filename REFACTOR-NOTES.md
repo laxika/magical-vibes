@@ -51,24 +51,34 @@ sites, NOT in the queue. Preserve these chains when migrating further:
 - `PermanentChoiceTriggerHandlerService` chains the same continuations after each answered
   choice (per-kind `processNext*` then fall through to the next kind / may abilities).
 
+### ✅ Stage 2 — DONE: card-specific single-value pending fields → interaction records
+
+`GameData` no longer carries any card-named fields. Migrated onto the unified queue:
+
+- `pendingSphinxAmbassadorChoice` → queued `PendingSphinxAmbassadorChoice` (now `implements PendingInteraction`).
+  Set in `SphinxAmbassadorEffectHandler`, updated (poll + re-queue with `selectedCard`) in
+  `LibraryChoiceHandlerService`, read in `ChoiceHandlerService`/`MayMiscHandlerService`, cleared on completion.
+- `pendingCapriciousEfreetState` → queued `PendingCapriciousEfreetState` (now `implements PendingInteraction`).
+  The `MultiPermanentChoiceHandlerService` dispatch chain checks `hasPendingInteraction(...)` at the same
+  position in the if/else chain the null-check occupied.
+- `pendingKarnScionControllerId` → new `PendingKarnScionRevealChoice(controllerId)` record.
+- `pendingKarnScionReturnFromExile` (boolean) → new `PendingKarnScionExileReturn()` record
+  (presence in queue = the old `true`).
+- `pendingKarnRestartCards` + `karnRestartControllerId` → new `PendingKarnRestart(cards, controllerId)`,
+  consumed by `MulliganService.continueStartGame`.
+- `knowledgePoolSourcePermanentId` → new `PendingKnowledgePoolCast(sourcePermanentId)`,
+  set by `KnowledgePoolExileAndCastEffectHandler`, polled by `ExileSupport.handleKnowledgePoolCastChoice`,
+  peeked by `ReconnectionService` for prompt replay, cleared by Karn restart.
+
+Deferred to stage 4: removing `KNOWLEDGE_POOL_CAST_CHOICE` / `MIRROR_OF_FATE_CHOICE` from
+`AwaitingInput` and the `InteractionContext.KnowledgePoolCastChoice` / `MirrorOfFateChoice`
+records — they are part of the active-interaction (`InteractionState`) machinery, not `GameData`
+fields, and fall together with the rest of the enum dispatch. Mirror of Fate keeps no auxiliary
+`GameData` state at all, so stage 2 required no change for it.
+
 ## Remaining stages (in suggested order)
 
-### Stage 2 — Card-specific single-value pending fields → interaction records
-
-Migrate these `GameData` fields into `PendingInteraction` records on the queue (each is a
-single value paired with an `AwaitingInput` value today):
-
-- `pendingSphinxAmbassadorChoice` (`PendingSphinxAmbassadorChoice`)
-- `pendingKarnScionControllerId` + `pendingKarnScionReturnFromExile` (Karn Scion +1/−1 reveal)
-- `pendingKarnRestartCards` + `karnRestartControllerId` (Karn Liberated restart)
-- `pendingCapriciousEfreetState` (`PendingCapriciousEfreetState`)
-- `knowledgePoolSourcePermanentId` + `InteractionContext.KnowledgePoolCastChoice`
-- `InteractionContext.MirrorOfFateChoice`
-- Then remove `KNOWLEDGE_POOL_CAST_CHOICE` / `MIRROR_OF_FATE_CHOICE` from `AwaitingInput`.
-
-No card names may remain in `GameData` or shared enums afterwards.
-
-### Stage 3 — InteractionHandlerRegistry (engine)
+### Stage 3 (next) — InteractionHandlerRegistry (engine)
 
 Same shape as `EffectHandlerRegistry`: keyed by interaction record class. Each handler:
 (a) renders/broadcasts the prompt (also used by `ReconnectionService` for replay),

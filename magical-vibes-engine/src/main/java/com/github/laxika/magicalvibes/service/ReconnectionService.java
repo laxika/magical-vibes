@@ -481,7 +481,9 @@ public class ReconnectionService {
                 List<UUID> validCardIds = new ArrayList<>(kpc.validCardIds());
                 List<CardView> cardViews = new ArrayList<>();
                 // Collect CardViews from the KP pool
-                UUID kpPermanentId = gameData.knowledgePoolSourcePermanentId;
+                var pendingCast = gameData.peekPendingInteraction(
+                        com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast.class);
+                UUID kpPermanentId = pendingCast != null ? pendingCast.sourcePermanentId() : null;
                 if (kpPermanentId != null) {
                     List<Card> pool = gameData.getCardsExiledByPermanent(kpPermanentId);
                     for (Card card : pool) {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.PendingKarnRestart;
+import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -190,7 +192,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.pendingEffectResolutionIndex = 0;
         gameData.chosenXValue = null;
         gameData.pendingAbilityActivation = null;
-        gameData.knowledgePoolSourcePermanentId = null;
+        gameData.clearPendingInteractions(PendingKnowledgePoolCast.class);
         gameData.imprintSourcePermanentId = null;
         gameData.pendingOpponentExileChoice = null;
         gameData.pendingCombatDamageBounceTargetPlayerId = null;
@@ -264,8 +266,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
         // Step 6: Enter mulligan phase. After mulligans complete, Karn's exiled cards
         // will be put onto the battlefield (handled by MulliganService.startGame).
-        gameData.pendingKarnRestartCards = karnExiledCards;
-        gameData.karnRestartControllerId = controllerId;
+        gameData.queueInteraction(new PendingKarnRestart(karnExiledCards, controllerId));
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             gameData.mulliganCounts.put(playerId, 0);
