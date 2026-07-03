@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -81,8 +82,8 @@ class CloudreaderSphinxTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
-        assertThat(gd.interaction.scryContext().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
     }
 
     // ===== Scry 2 functionality =====
@@ -168,6 +169,6 @@ class CloudreaderSphinxTest extends BaseCardTest {
         harness.getGameService().handleScryCompleted(gd, player1, List.of(0, 1), List.of());
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.scryContext()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 }

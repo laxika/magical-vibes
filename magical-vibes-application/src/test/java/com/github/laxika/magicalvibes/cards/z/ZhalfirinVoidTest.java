@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -62,8 +63,8 @@ class ZhalfirinVoidTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
-        assertThat(gd.interaction.scryContext().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
     }
 
     // ===== Scry 1 functionality =====
@@ -108,7 +109,7 @@ class ZhalfirinVoidTest extends BaseCardTest {
         harness.getGameService().handleScryCompleted(gd, player1, List.of(0), List.of());
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.scryContext()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 
     // ===== Land enters battlefield =====

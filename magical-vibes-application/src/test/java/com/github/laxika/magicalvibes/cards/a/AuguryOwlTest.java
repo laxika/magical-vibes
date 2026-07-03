@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -83,8 +84,8 @@ class AuguryOwlTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
-        assertThat(gd.interaction.scryContext().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(3);
     }
 
     // ===== Scry puts cards on top =====
@@ -215,7 +216,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.getGameService().handleScryCompleted(gd, player1, List.of(0, 1, 2), List.of());
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.scryContext()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
     }
 
     // ===== Library edge cases =====
@@ -239,7 +240,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(2);
 
         harness.getGameService().handleScryCompleted(gd, player1, List.of(1, 0), List.of());
 
@@ -263,7 +264,7 @@ class AuguryOwlTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards()).hasSize(1);
 
         // Player can keep on top or put on bottom
         harness.getGameService().handleScryCompleted(gd, player1, List.of(), List.of(0));

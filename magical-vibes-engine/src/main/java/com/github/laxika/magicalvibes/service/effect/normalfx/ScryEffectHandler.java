@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -67,8 +68,7 @@ import org.springframework.stereotype.Component;
 public class ScryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -97,39 +97,13 @@ public class ScryEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (count == 1) {
-            // Scry 1: show single card, player chooses top or bottom
-            List<Card> topCards = new ArrayList<>(deck.subList(0, 1));
-            deck.subList(0, 1).clear();
-
-            gameData.interaction.beginScry(controllerId, topCards);
-
-            List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-            sessionManager.sendToPlayer(controllerId, new ScryMessage(
-                    cardViews,
-                    "Scry 1: Keep on top or put on the bottom of your library."
-            ));
-
-            String logMsg = gameData.playerIdToName.get(controllerId) + " scries 1.";
-            gameBroadcastService.logAndBroadcast(gameData, logMsg);
-            log.info("Game {} - {} scries 1", gameData.id, gameData.playerIdToName.get(controllerId));
-            return;
-        }
-
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
         deck.subList(0, count).clear();
 
-        gameData.interaction.beginScry(controllerId, topCards);
-
-        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ScryMessage(
-                cardViews,
-                "Scry " + count + ": Put cards on the top or bottom of your library."
-        ));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.Scry(controllerId, topCards));
 
         String logMsg = gameData.playerIdToName.get(controllerId) + " scries " + count + ".";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} scries {}", gameData.id, gameData.playerIdToName.get(controllerId), count);
-    
     }
 }

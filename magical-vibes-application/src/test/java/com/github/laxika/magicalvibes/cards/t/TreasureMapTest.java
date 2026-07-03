@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -115,7 +116,7 @@ class TreasureMapTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.SCRY);
-        assertThat(gd.interaction.scryContext()).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNotNull();
     }
 
     // ===== Landmark counters =====

@@ -617,7 +617,7 @@ public class GameSimulator {
                 }
             }
             case SCRY -> {
-                var sc = gd.interaction.scryContext();
+                var sc = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
                 if (sc != null && sc.cards() != null) {
                     List<Integer> topOrder = new ArrayList<>();
                     for (int k = 0; k < sc.cards().size(); k++) topOrder.add(k);
@@ -659,8 +659,13 @@ public class GameSimulator {
 
     private UUID getInteractionPlayer(GameData gd, AwaitingInput awaiting) {
         // Registry-managed interactions carry the decider on the active record
-        if (gd.interaction.activeInteraction() instanceof PendingInteraction.XValueChoice xvc) {
-            return xvc.playerId();
+        PendingInteraction active = gd.interaction.activeInteraction();
+        if (active != null) {
+            return switch (active) {
+                case PendingInteraction.XValueChoice xvc -> xvc.playerId();
+                case PendingInteraction.Scry s -> s.playerId();
+                default -> null;
+            };
         }
         var ctx = gd.interaction.currentContext();
         if (ctx == null) return null;
@@ -681,7 +686,6 @@ public class GameSimulator {
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
             case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
-            case InteractionContext.Scry sc -> sc.playerId();
             case InteractionContext.KnowledgePoolCastChoice kpc -> kpc.playerId();
             case InteractionContext.MirrorOfFateChoice mfc -> mfc.playerId();
         };

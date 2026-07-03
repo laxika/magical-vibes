@@ -10,6 +10,7 @@ import java.util.UUID;
 
 /**
  * Groups library reorder, library reveal, and hand top/bottom interaction state.
+ * (Scry has migrated to {@code PendingInteraction.Scry} + the InteractionHandlerRegistry.)
  */
 public class LibraryViewState {
 
@@ -22,10 +23,6 @@ public class LibraryViewState {
     private UUID revealPlayerId;
     private List<Card> revealAllCards;
     private Set<UUID> revealValidCardIds;
-
-    // Scry
-    private UUID scryPlayerId;
-    private List<Card> scryCards;
 
     // Hand top/bottom choice
     private UUID handTopBottomPlayerId;
@@ -58,26 +55,6 @@ public class LibraryViewState {
 
     public boolean reorderToBottom() {
         return reorderToBottom;
-    }
-
-    // --- Scry ---
-
-    public void setScry(UUID playerId, List<Card> cards) {
-        this.scryPlayerId = playerId;
-        this.scryCards = cards;
-    }
-
-    public void clearScry() {
-        this.scryPlayerId = null;
-        this.scryCards = null;
-    }
-
-    public UUID scryPlayerId() {
-        return scryPlayerId;
-    }
-
-    public List<Card> scryCards() {
-        return scryCards;
     }
 
     // --- Library reveal choice ---
@@ -131,8 +108,6 @@ public class LibraryViewState {
         copy.reorderPlayerId = this.reorderPlayerId;
         copy.reorderCards = this.reorderCards != null ? new ArrayList<>(this.reorderCards) : null;
         copy.reorderToBottom = this.reorderToBottom;
-        copy.scryPlayerId = this.scryPlayerId;
-        copy.scryCards = this.scryCards != null ? new ArrayList<>(this.scryCards) : null;
         copy.revealPlayerId = this.revealPlayerId;
         copy.revealAllCards = this.revealAllCards != null ? new ArrayList<>(this.revealAllCards) : null;
         copy.revealValidCardIds = this.revealValidCardIds != null ? new HashSet<>(this.revealValidCardIds) : null;

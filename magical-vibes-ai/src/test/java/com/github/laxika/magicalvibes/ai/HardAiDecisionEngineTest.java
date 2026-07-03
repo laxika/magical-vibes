@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -4115,7 +4116,8 @@ class HardAiDecisionEngineTest {
             // Set up scry with a land card
             Card landCard = new Island();
             Card spellCard = new GrizzlyBears();
-            gd.interaction.beginScry(player1.getId(), List.of(landCard, spellCard));
+            gd.interaction.beginInteraction(
+                    new PendingInteraction.Scry(player1.getId(), List.of(landCard, spellCard)), AwaitingInput.SCRY);
 
             ai.handleMessage("SCRY", "");
 
@@ -4144,7 +4146,8 @@ class HardAiDecisionEngineTest {
             // Set up scry with a land card
             Card landCard = new Island();
             Card spellCard = new EliteVanguard();
-            gd.interaction.beginScry(player1.getId(), List.of(landCard, spellCard));
+            gd.interaction.beginInteraction(
+                    new PendingInteraction.Scry(player1.getId(), List.of(landCard, spellCard)), AwaitingInput.SCRY);
 
             ai.handleMessage("SCRY", "");
 

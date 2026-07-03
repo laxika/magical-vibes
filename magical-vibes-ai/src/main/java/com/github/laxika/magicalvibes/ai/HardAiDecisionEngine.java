@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.Player;
@@ -2924,7 +2925,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     @Override
     protected void handleScry(GameData gameData) {
-        InteractionContext.Scry scryContext = gameData.interaction.scryContext();
+        PendingInteraction.Scry scryContext = gameData.interaction.activeInteraction(PendingInteraction.Scry.class);
         if (scryContext == null || !aiPlayer.getId().equals(scryContext.playerId())) {
             choiceHandler.handleScry(gameData);
             return;

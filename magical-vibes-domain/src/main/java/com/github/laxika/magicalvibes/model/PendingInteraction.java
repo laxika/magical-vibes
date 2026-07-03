@@ -17,7 +17,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingKarnRestart, PendingKnowledgePoolCast,
-        PendingInteraction.XValueChoice {
+        PendingInteraction.XValueChoice, PendingInteraction.Scry {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -29,5 +29,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** "Choose a value for X" (e.g. Vigil for the Lost's ETB payment, Jaya's rummage count). */
     record XValueChoice(UUID playerId, int maxValue, String prompt, String cardName)
             implements PendingInteraction {
+    }
+
+    /** Scry N: {@code cards} are held out of the library while the player splits them top/bottom. */
+    record Scry(UUID playerId, java.util.List<Card> cards) implements PendingInteraction {
     }
 }

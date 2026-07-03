@@ -14,8 +14,13 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ScryEffectHandler;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.interaction.ScryInteractionHandler;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -77,7 +82,12 @@ class ScryEffectHandlerTest {
         gd.activePlayerId = player1Id;
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        scryEffectHandler = new ScryEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
+        interactionHandlerRegistry.register(new ScryInteractionHandler(
+                sessionManager, cardViewFactory, gameBroadcastService,
+                mock(PlayerInputService.class), mock(TurnProgressionService.class),
+                mock(EffectResolutionService.class)));
+        scryEffectHandler = new ScryEffectHandler(gameBroadcastService, interactionHandlerRegistry);
 
     }
 

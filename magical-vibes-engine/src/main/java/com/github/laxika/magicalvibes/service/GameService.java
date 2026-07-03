@@ -146,7 +146,6 @@ public class GameService {
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
             case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
-            case InteractionContext.Scry sc -> controlledId.equals(sc.playerId());
             case InteractionContext.KnowledgePoolCastChoice kpc -> controlledId.equals(kpc.playerId());
             case InteractionContext.MirrorOfFateChoice mfc -> controlledId.equals(mfc.playerId());
         };
@@ -536,7 +535,10 @@ public class GameService {
     public void handleScryCompleted(GameData gameData, Player player, List<Integer> topCardOrder, List<Integer> bottomCardOrder) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            libraryChoiceHandlerService.handleScryCompleted(gameData, player, topCardOrder, bottomCardOrder);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.ScryOrder(topCardOrder, bottomCardOrder))) {
+                throw new IllegalStateException("Not awaiting scry");
+            }
         }
     }
 

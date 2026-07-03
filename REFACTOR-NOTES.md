@@ -104,10 +104,23 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   protocol, unchanged); `GameSimulator.getInteractionPlayer` reads the decider off the active
   record (grow this per kind, or inject the registry once construction plumbing is touched).
 
-**Migrated kinds so far:** `PendingInteraction.XValueChoice` (X_VALUE_CHOICE). Removed with
-it: `InteractionContext.XValueChoice` + all switch cases, `InteractionState.beginXValueChoice`
-/ `xValueChoiceContext`, `PlayerInputService.beginXValueChoice`, `XValueChoiceHandlerService`
-(the `GameService` entry throws the same "Not awaiting X value choice" when dispatch misses).
+**Migrated kinds so far:**
+
+- `PendingInteraction.XValueChoice` (X_VALUE_CHOICE). Removed with it:
+  `InteractionContext.XValueChoice` + all switch cases, `InteractionState.beginXValueChoice`
+  / `xValueChoiceContext`, `PlayerInputService.beginXValueChoice`, `XValueChoiceHandlerService`
+  (the `GameService` entry throws the same "Not awaiting X value choice" when dispatch misses).
+- `PendingInteraction.Scry` (SCRY). `ScryInteractionHandler` owns the prompt (text derived
+  from card count, identical to both old begin sites and the reconnect replay) and the
+  answer (ported verbatim from `LibraryChoiceHandlerService.handleScryCompleted`, now
+  deleted). Removed: `InteractionContext.Scry`, `InteractionState.beginScry/clearScry/
+  scryContext`, the scry fields of `LibraryViewState`, and every switch case. AI: base
+  heuristic became `ScryAiStrategy`; **Hard AI keeps its board-aware override** via the
+  protected `AiDecisionEngine.handleScry` seam (reads the active record, falls back to
+  `choiceHandler.handleScry` → strategy) — kinds with difficulty-specific behavior keep the
+  overridable-method seam rather than forcing everything into the static strategy table.
+  Tests read the record via the new typed accessor
+  `interaction.activeInteraction(PendingInteraction.Scry.class)`.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to

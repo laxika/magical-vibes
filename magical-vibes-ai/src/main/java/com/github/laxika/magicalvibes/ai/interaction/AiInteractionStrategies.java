@@ -17,6 +17,7 @@ public final class AiInteractionStrategies {
 
     static {
         register(new XValueChoiceAiStrategy());
+        register(new ScryAiStrategy());
     }
 
     private AiInteractionStrategies() {

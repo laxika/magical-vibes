@@ -23,7 +23,6 @@ public sealed interface InteractionContext permits
         InteractionContext.RevealedHandChoice,
         InteractionContext.MultiZoneExileChoice,
         InteractionContext.CombatDamageAssignment,
-        InteractionContext.Scry,
         InteractionContext.KnowledgePoolCastChoice,
         InteractionContext.MirrorOfFateChoice {
 
@@ -99,8 +98,6 @@ public sealed interface InteractionContext permits
                                    String attackerName, int totalDamage, List<CombatDamageTarget> validTargets,
                                    boolean isTrample, boolean isDeathtouch) implements InteractionContext {}
 
-
-    record Scry(UUID playerId, List<Card> cards) implements InteractionContext {}
 
     record KnowledgePoolCastChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
 
