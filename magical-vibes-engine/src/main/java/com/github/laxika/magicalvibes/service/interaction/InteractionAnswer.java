@@ -28,4 +28,8 @@ public sealed interface InteractionAnswer {
     /** Accept or decline a may ability. */
     record MayAbilityChosen(boolean accepted) implements InteractionAnswer {
     }
+
+    /** A selection of zero or more cards by ID (the shared multiple-cards wire payload). */
+    record CardsChosen(java.util.List<java.util.UUID> cardIds) implements InteractionAnswer {
+    }
 }

@@ -160,18 +160,6 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, cda);
                 }
             }
-            case KNOWLEDGE_POOL_CAST_CHOICE -> {
-                InteractionContext.KnowledgePoolCastChoice kpc = gameData.interaction.knowledgePoolCastChoiceContext();
-                if (kpc != null) {
-                    resendFromContext(gameData, playerId, kpc);
-                }
-            }
-            case MIRROR_OF_FATE_CHOICE -> {
-                InteractionContext.MirrorOfFateChoice mfc = gameData.interaction.mirrorOfFateChoiceContext();
-                if (mfc != null) {
-                    resendFromContext(gameData, playerId, mfc);
-                }
-            }
         }
     }
 
@@ -392,42 +380,6 @@ public class ReconnectionService {
                 sessionManager.sendToPlayer(playerId, new CombatDamageAssignmentNotification(
                         cda.attackerIndex(), cda.attackerPermanentId().toString(),
                         cda.attackerName(), cda.totalDamage(), targetViews, cda.isTrample(), cda.isDeathtouch()));
-            }
-            case InteractionContext.KnowledgePoolCastChoice kpc -> {
-                if (!playerId.equals(kpc.playerId())) {
-                    return;
-                }
-                List<UUID> validCardIds = new ArrayList<>(kpc.validCardIds());
-                List<CardView> cardViews = new ArrayList<>();
-                // Collect CardViews from the KP pool
-                var pendingCast = gameData.peekPendingInteraction(
-                        com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast.class);
-                UUID kpPermanentId = pendingCast != null ? pendingCast.sourcePermanentId() : null;
-                if (kpPermanentId != null) {
-                    List<Card> pool = gameData.getCardsExiledByPermanent(kpPermanentId);
-                    for (Card card : pool) {
-                        if (kpc.validCardIds().contains(card.getId())) {
-                            cardViews.add(cardViewFactory.create(card));
-                        }
-                    }
-                }
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
-                        validCardIds, cardViews, 1,
-                        "Knowledge Pool — you may cast a nonland card without paying its mana cost."));
-            }
-            case InteractionContext.MirrorOfFateChoice mfc -> {
-                if (!playerId.equals(mfc.playerId())) {
-                    return;
-                }
-                List<Card> exiledCards = gameData.getPlayerExiledCards(playerId);
-                List<UUID> validCardIds = new ArrayList<>(mfc.validCardIds());
-                List<CardView> cardViews = exiledCards.stream()
-                        .filter(c -> mfc.validCardIds().contains(c.getId()))
-                        .map(cardViewFactory::create)
-                        .toList();
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
-                        validCardIds, cardViews, mfc.maxCount(),
-                        "Choose up to seven face-up exiled cards you own to put on top of your library."));
             }
         }
     }

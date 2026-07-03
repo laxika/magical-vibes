@@ -293,7 +293,8 @@ class KnowledgePoolTest extends BaseCardTest {
         // Player should be offered only the Shock (not the just-exiled Counsel)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE);
 
-        var validIds = gd.interaction.knowledgePoolCastChoiceContext().validCardIds();
+        var validIds = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.KnowledgePoolCastChoice.class).validCardIds();
         assertThat(validIds).contains(shockInPool.getId());
 
         UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");

@@ -163,6 +163,27 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   the typed record accessor; `PlayerInputServiceTest` constructs the service with a real
   registry + `MayAbilityChoiceInteractionHandler` so its `processNextMayAbility`
   message-send tests still exercise the real prompt path.
+- `PendingInteraction.KnowledgePoolCastChoice` + `PendingInteraction.MirrorOfFateChoice`
+  (KNOWLEDGE_POOL_CAST_CHOICE / MIRROR_OF_FATE_CHOICE), answered via the new shared
+  `InteractionAnswer.CardsChosen` shape. `GameService.handleMultipleCardsChosen` now
+  tries `dispatchAnswer` first and falls through to the legacy LIBRARY_REVEAL /
+  MULTI_ZONE_EXILE / multi-graveyard chain (those kinds migrate later onto the same
+  answer record — the wire entry point is genuinely shared, and the active interaction
+  disambiguates exactly as the legacy enum checks did). The records carry
+  `validCardIds` as an ordered List — the legacy contexts held a `HashSet`, so the
+  reconnect replay used to send the IDs in scrambled order relative to the card views;
+  replay now re-sends the begin-time order (same replay-fidelity correction precedent
+  as the Mirror of Fate reorder prompt). Card views are re-derived at prompt time
+  (KP via the queued `PendingKnowledgePoolCast` → pool; MoF from the player's exile
+  zone), identical to both the legacy begin sites and the legacy replay. Answer logic
+  stays in `ExileSupport` (handlers delegate); KP keeps its legacy no-decider-check
+  behavior, MoF keeps its full validation with identical error texts. Removed:
+  both `InteractionContext` records + all cases, the six `InteractionState` methods
+  (their piggybacking on the `multiSelection` multi-graveyard / multi-zone-exile
+  sub-states ends — those sub-states remain for the real MULTI_* kinds), and
+  `PlayerInputService.sendKnowledgePoolCastChoice` / `sendMirrorOfFateChoice`.
+  AI: `KnowledgePoolCastChoiceAiStrategy` (first card) + `MirrorOfFateChoiceAiStrategy`
+  (keep max) replace the enum blocks at the top of `AiChoiceHandler.handleMultiCardChoice`.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -186,10 +207,9 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 ### Stage 3 continuation — migrate the remaining kinds
 
 Suggested order: the card/graveyard/permanent choice families (CARD_CHOICE, DISCARD_CHOICE,
-PERMANENT_CHOICE, GRAVEYARD_CHOICE, COLOR_CHOICE, the MULTI_* selections, REVEALED_HAND_CHOICE,
-KNOWLEDGE_POOL_CAST_CHOICE, MIRROR_OF_FATE_CHOICE), LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE,
-COMBAT_DAMAGE_ASSIGNMENT, and last the combat declarations (ATTACKER/BLOCKER) which are
-entangled with `CombatService`.
+PERMANENT_CHOICE, GRAVEYARD_CHOICE, COLOR_CHOICE, the MULTI_* selections, REVEALED_HAND_CHOICE),
+LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
+declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 
 ### Stage 4 — Generic `AwaitingInput` kinds → interaction records
 

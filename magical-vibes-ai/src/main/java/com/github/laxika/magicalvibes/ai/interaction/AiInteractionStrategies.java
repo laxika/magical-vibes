@@ -21,6 +21,8 @@ public final class AiInteractionStrategies {
         register(new HandTopBottomChoiceAiStrategy());
         register(new LibraryReorderAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
+        register(new KnowledgePoolCastChoiceAiStrategy());
+        register(new MirrorOfFateChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

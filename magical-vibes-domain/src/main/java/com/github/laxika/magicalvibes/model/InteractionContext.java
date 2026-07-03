@@ -19,9 +19,7 @@ public sealed interface InteractionContext permits
         InteractionContext.LibraryRevealChoice,
         InteractionContext.RevealedHandChoice,
         InteractionContext.MultiZoneExileChoice,
-        InteractionContext.CombatDamageAssignment,
-        InteractionContext.KnowledgePoolCastChoice,
-        InteractionContext.MirrorOfFateChoice {
+        InteractionContext.CombatDamageAssignment {
 
     record AttackerDeclaration(UUID activePlayerId) implements InteractionContext {}
 
@@ -83,9 +81,4 @@ public sealed interface InteractionContext permits
     record CombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
                                    String attackerName, int totalDamage, List<CombatDamageTarget> validTargets,
                                    boolean isTrample, boolean isDeathtouch) implements InteractionContext {}
-
-
-    record KnowledgePoolCastChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
-
-    record MirrorOfFateChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
 }

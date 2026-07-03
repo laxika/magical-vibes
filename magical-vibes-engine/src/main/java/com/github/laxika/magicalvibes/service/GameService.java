@@ -141,8 +141,6 @@ public class GameService {
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
             case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
-            case InteractionContext.KnowledgePoolCastChoice kpc -> controlledId.equals(kpc.playerId());
-            case InteractionContext.MirrorOfFateChoice mfc -> controlledId.equals(mfc.playerId());
         };
     }
 
@@ -496,14 +494,14 @@ public class GameService {
     public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.CardsChosen(cardIds))) {
+                return;
+            }
             if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
                 libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
             } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
                 listChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
-            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
-                exileSupport.handleKnowledgePoolCastChoice(gameData, player, cardIds);
-            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
-                exileSupport.handleMirrorOfFateChoice(gameData, player, cardIds);
             } else {
                 graveyardChoiceHandlerService.handleMultipleCardsChosen(gameData, player, cardIds);
             }

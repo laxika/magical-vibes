@@ -597,7 +597,7 @@ public class GameSimulator {
                 }
             }
             case MIRROR_OF_FATE_CHOICE -> {
-                var mfc = gd.interaction.mirrorOfFateChoiceContext();
+                var mfc = gd.interaction.activeInteraction(PendingInteraction.MirrorOfFateChoice.class);
                 if (mfc != null && mfc.validCardIds() != null && !mfc.validCardIds().isEmpty()) {
                     List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
@@ -667,6 +667,8 @@ public class GameSimulator {
                 case PendingInteraction.HandTopBottomChoice htbc -> htbc.playerId();
                 case PendingInteraction.LibraryReorder lr -> lr.playerId();
                 case PendingInteraction.MayAbilityChoice mc -> mc.playerId();
+                case PendingInteraction.KnowledgePoolCastChoice kpc -> kpc.playerId();
+                case PendingInteraction.MirrorOfFateChoice mfc -> mfc.playerId();
                 default -> null;
             };
         }
@@ -686,8 +688,6 @@ public class GameSimulator {
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
             case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
-            case InteractionContext.KnowledgePoolCastChoice kpc -> kpc.playerId();
-            case InteractionContext.MirrorOfFateChoice mfc -> mfc.playerId();
         };
     }
 

@@ -987,52 +987,6 @@ class PlayerInputServiceTest {
     }
 
     // ========================================================================
-    // sendKnowledgePoolCastChoice
-    // ========================================================================
-
-    @Nested
-    @DisplayName("sendKnowledgePoolCastChoice")
-    class SendKnowledgePoolCastChoice {
-
-        @Test
-        @DisplayName("Sends message with maxCount 1 and correct prompt")
-        void sendsMessage() {
-            UUID cardId = UUID.randomUUID();
-            CardView cardView = mock(CardView.class);
-
-            svc.sendKnowledgePoolCastChoice(gd, PLAYER1_ID, List.of(cardId), List.of(cardView));
-
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
-            assertThat(msg.maxCount()).isEqualTo(1);
-            assertThat(msg.prompt()).contains("Knowledge Pool");
-        }
-    }
-
-    // ========================================================================
-    // sendMirrorOfFateChoice
-    // ========================================================================
-
-    @Nested
-    @DisplayName("sendMirrorOfFateChoice")
-    class SendMirrorOfFateChoice {
-
-        @Test
-        @DisplayName("Sends message with correct maxCount and prompt")
-        void sendsMessage() {
-            UUID cardId = UUID.randomUUID();
-            CardView cardView = mock(CardView.class);
-
-            svc.sendMirrorOfFateChoice(gd, PLAYER1_ID, List.of(cardId), List.of(cardView), 7);
-
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
-            assertThat(msg.maxCount()).isEqualTo(7);
-            assertThat(msg.prompt()).contains("seven");
-        }
-    }
-
-    // ========================================================================
     // processNextMayAbility
     // ========================================================================
 

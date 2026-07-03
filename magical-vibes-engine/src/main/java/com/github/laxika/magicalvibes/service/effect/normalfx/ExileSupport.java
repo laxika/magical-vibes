@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
@@ -100,7 +99,6 @@ public class ExileSupport {
 
         // Clear interaction state
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearKnowledgePoolCastChoice();
 
         if (cardIds == null || cardIds.isEmpty()) {
             // Player declined
@@ -217,13 +215,14 @@ public class ExileSupport {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MIRROR_OF_FATE_CHOICE)) {
             throw new IllegalStateException("Not awaiting Mirror of Fate choice");
         }
-        InteractionContext.MirrorOfFateChoice ctx = gameData.interaction.mirrorOfFateChoiceContext();
+        PendingInteraction.MirrorOfFateChoice ctx =
+                gameData.interaction.activeInteraction(PendingInteraction.MirrorOfFateChoice.class);
         if (ctx == null || !player.getId().equals(ctx.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         // Validate selected card IDs against valid set
-        Set<UUID> validIds = ctx.validCardIds();
+        List<UUID> validIds = ctx.validCardIds();
         for (UUID id : cardIds) {
             if (!validIds.contains(id)) {
                 throw new IllegalStateException("Invalid card ID: " + id);
@@ -234,7 +233,6 @@ public class ExileSupport {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMirrorOfFateChoice();
 
         exileLibraryAndPutChosenOnTop(gameData, player.getId(), cardIds);
     }

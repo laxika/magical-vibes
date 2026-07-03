@@ -19,7 +19,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingKarnRestart, PendingKnowledgePoolCast,
         PendingInteraction.XValueChoice, PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
-        PendingInteraction.MayAbilityChoice {
+        PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
+        PendingInteraction.MirrorOfFateChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -56,6 +57,25 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * can currently pay {@code manaCost} is computed at prompt time from their mana pool.
      */
     record MayAbilityChoice(UUID playerId, String description, String manaCost)
+            implements PendingInteraction {
+    }
+
+    /**
+     * Knowledge Pool: the caster may cast one of the pool's other nonland exiled cards without
+     * paying its cost (or decline with an empty selection). {@code validCardIds} keeps the
+     * begin-time order; the card views are re-derived from the pool at prompt time (the pool
+     * permanent is found via the queued {@link PendingKnowledgePoolCast}).
+     */
+    record KnowledgePoolCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
+            implements PendingInteraction {
+    }
+
+    /**
+     * Mirror of Fate: choose up to seven face-up exiled cards to put on top of the library.
+     * {@code validCardIds} keeps the begin-time order; views are re-derived from the player's
+     * exile zone at prompt time.
+     */
+    record MirrorOfFateChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
     }
 }

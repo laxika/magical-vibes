@@ -646,45 +646,4 @@ public class InteractionState {
                 null, null, null);
     }
 
-    // ========================================================================
-    // Knowledge pool cast choice
-    // ========================================================================
-
-    public void beginKnowledgePoolCastChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) {
-        this.awaitingInput = AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE;
-        this.multiSelection.setMultiGraveyard(playerId, new HashSet<>(validCardIds), maxCount);
-        this.context = new InteractionContext.KnowledgePoolCastChoice(playerId, new HashSet<>(validCardIds), maxCount);
-    }
-
-    public void clearKnowledgePoolCastChoice() {
-        this.multiSelection.clearMultiGraveyard();
-    }
-
-    public InteractionContext.KnowledgePoolCastChoice knowledgePoolCastChoiceContext() {
-        if (context instanceof InteractionContext.KnowledgePoolCastChoice kpc) return kpc;
-        if (multiSelection.multiGraveyardPlayerId() == null || multiSelection.multiGraveyardValidCardIds() == null) return null;
-        return new InteractionContext.KnowledgePoolCastChoice(multiSelection.multiGraveyardPlayerId(),
-                multiSelection.multiGraveyardValidCardIds(), multiSelection.multiGraveyardMaxCount());
-    }
-
-    // ========================================================================
-    // Mirror of Fate choice
-    // ========================================================================
-
-    public void beginMirrorOfFateChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) {
-        this.awaitingInput = AwaitingInput.MIRROR_OF_FATE_CHOICE;
-        this.multiSelection.setMultiZoneExile(playerId, new HashSet<>(validCardIds), maxCount);
-        this.context = new InteractionContext.MirrorOfFateChoice(playerId, new HashSet<>(validCardIds), maxCount);
-    }
-
-    public void clearMirrorOfFateChoice() {
-        this.multiSelection.clearMultiZoneExile();
-    }
-
-    public InteractionContext.MirrorOfFateChoice mirrorOfFateChoiceContext() {
-        if (context instanceof InteractionContext.MirrorOfFateChoice mfc) return mfc;
-        if (multiSelection.multiZoneExilePlayerId() == null || multiSelection.multiZoneExileValidCardIds() == null) return null;
-        return new InteractionContext.MirrorOfFateChoice(multiSelection.multiZoneExilePlayerId(),
-                multiSelection.multiZoneExileValidCardIds(), multiSelection.multiZoneExileMaxCount());
-    }
 }

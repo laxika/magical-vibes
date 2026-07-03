@@ -426,25 +426,10 @@ class AiChoiceHandler {
     // ===== Multi-Graveyard Choice =====
 
     void handleMultiCardChoice(GameData gameData) {
-        // Knowledge Pool cast choice
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE) {
-            InteractionContext.KnowledgePoolCastChoice kpc = gameData.interaction.knowledgePoolCastChoiceContext();
-            if (kpc != null && aiPlayerId.equals(kpc.playerId())) {
-                List<UUID> chosen = kpc.validCardIds().stream().limit(1).toList();
-                log.info("AI: Choosing card from Knowledge Pool in game {}", gameId);
-                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-            }
-            return;
-        }
-
-        // Mirror of Fate choice
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
-            InteractionContext.MirrorOfFateChoice mfc = gameData.interaction.mirrorOfFateChoiceContext();
-            if (mfc != null && aiPlayerId.equals(mfc.playerId())) {
-                List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
-                log.info("AI: Choosing {} exiled cards for Mirror of Fate in game {}", chosen.size(), gameId);
-                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-            }
+        // Knowledge Pool cast choice / Mirror of Fate choice (registry-managed)
+        if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE
+                || gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
+            handleActiveInteraction(gameData);
             return;
         }
 
