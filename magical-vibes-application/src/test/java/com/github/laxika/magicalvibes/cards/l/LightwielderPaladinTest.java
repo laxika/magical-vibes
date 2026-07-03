@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -73,7 +74,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.interaction.multiPermanentChoiceContext().validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(blackKnight.getId());
 
         harness.handleMultiplePermanentsChosen(player1, List.of(blackKnight.getId()));
@@ -155,7 +156,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept -> inner effect resolves inline
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
-        assertThat(gd.interaction.multiPermanentChoiceContext().validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(enemyBlack.getId())
                 .doesNotContain(ownBlack.getId())
                 .doesNotContain(enemyGreen.getId());

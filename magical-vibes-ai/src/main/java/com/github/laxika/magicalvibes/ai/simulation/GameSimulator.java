@@ -576,15 +576,15 @@ public class GameSimulator {
                 }
             }
             case MULTI_PERMANENT_CHOICE -> {
-                var mpc = gd.interaction.multiPermanentChoiceContext();
+                var mpc = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
                 if (mpc != null && mpc.validIds() != null && !mpc.validIds().isEmpty()) {
                     List<UUID> chosen = mpc.validIds().stream().limit(mpc.maxCount()).toList();
                     gameService.handleMultiplePermanentsChosen(gd, player, chosen);
                 }
             }
             case MULTI_GRAVEYARD_CHOICE -> {
-                var mgc = gd.interaction.multiGraveyardChoiceContext();
-                if (mgc != null && mgc.validCardIds() != null && !mgc.validCardIds().isEmpty()) {
+                var mgc = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+                if (mgc != null && !mgc.validCardIds().isEmpty()) {
                     List<UUID> chosen = mgc.validCardIds().stream().limit(mgc.maxCount()).toList();
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
@@ -670,6 +670,8 @@ public class GameSimulator {
                 case PendingInteraction.KnowledgePoolCastChoice kpc -> kpc.playerId();
                 case PendingInteraction.MirrorOfFateChoice mfc -> mfc.playerId();
                 case PendingInteraction.MultiZoneExileChoice mzec -> mzec.playerId();
+                case PendingInteraction.MultiPermanentChoice mpc -> mpc.playerId();
+                case PendingInteraction.MultiGraveyardChoice mgc -> mgc.playerId();
                 default -> null;
             };
         }
@@ -682,8 +684,6 @@ public class GameSimulator {
             case InteractionContext.PermanentChoice pc -> pc.playerId();
             case InteractionContext.GraveyardChoice gc -> gc.playerId();
             case InteractionContext.ColorChoice cc -> cc.playerId();
-            case InteractionContext.MultiPermanentChoice mpc -> mpc.playerId();
-            case InteractionContext.MultiGraveyardChoice mgc -> mgc.playerId();
             case InteractionContext.LibrarySearch ls -> ls.playerId();
             case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();

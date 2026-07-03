@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -51,9 +52,9 @@ class MorbidPlunderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
 
         // Spell is NOT yet on the stack (waiting for target selection)
         assertThat(gd.stack).isEmpty();
@@ -71,7 +72,7 @@ class MorbidPlunderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Select both creatures
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, validIds);
 
         // Spell should be on the stack
@@ -110,7 +111,7 @@ class MorbidPlunderTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Select only one creature
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
 
         harness.passBothPriorities();
@@ -207,8 +208,8 @@ class MorbidPlunderTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
         // Only the creature should be valid
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(1);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).contains(creature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(creature.getId());
     }
 
     // ===== Max targets capped at 2 =====
@@ -227,8 +228,8 @@ class MorbidPlunderTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
         // All 3 creatures should be valid choices
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(3);
         // But max selectable is 2
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
     }
 }

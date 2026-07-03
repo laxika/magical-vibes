@@ -13,8 +13,6 @@ public sealed interface InteractionContext permits
         InteractionContext.PermanentChoice,
         InteractionContext.GraveyardChoice,
         InteractionContext.ColorChoice,
-        InteractionContext.MultiPermanentChoice,
-        InteractionContext.MultiGraveyardChoice,
         InteractionContext.LibrarySearch,
         InteractionContext.LibraryRevealChoice,
         InteractionContext.RevealedHandChoice,
@@ -31,10 +29,6 @@ public sealed interface InteractionContext permits
     record GraveyardChoice(UUID playerId, Set<Integer> validIndices, GraveyardChoiceDestination destination, List<Card> cardPool) implements InteractionContext {}
 
     record ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId, ChoiceContext context) implements InteractionContext {}
-
-    record MultiPermanentChoice(UUID playerId, Set<UUID> validIds, int maxCount) implements InteractionContext {}
-
-    record MultiGraveyardChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
 
     record LibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                          UUID targetPlayerId, int remainingCount, List<Card> sourceCards,

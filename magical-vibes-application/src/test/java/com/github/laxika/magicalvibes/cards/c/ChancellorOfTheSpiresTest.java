@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -188,7 +189,7 @@ class ChancellorOfTheSpiresTest {
         harness.passBothPriorities();
 
         // Only Shock should be selectable (instant), not Grizzly Bears (creature)
-        Set<UUID> validIds = gd.interaction.multiSelection().multiGraveyardValidCardIds();
+        List<UUID> validIds = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds();
         assertThat(validIds).hasSize(1);
         assertThat(validIds).contains(shock.getId());
     }

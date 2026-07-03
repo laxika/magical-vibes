@@ -25,7 +25,6 @@ public class PermanentChoiceHandlerService {
     private final PermanentChoiceTriggerHandlerService triggerHandler;
     private final PermanentChoiceSpellHandlerService spellHandler;
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
-    private final MultiPermanentChoiceHandlerService multiPermanentHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)) {
@@ -150,7 +149,4 @@ public class PermanentChoiceHandlerService {
         }
     }
 
-    public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
-        multiPermanentHandler.handleMultiplePermanentsChosen(gameData, player, permanentIds);
-    }
 }

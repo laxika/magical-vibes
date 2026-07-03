@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.interaction.ChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.GraveyardChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.LibrarySearchState;
 import com.github.laxika.magicalvibes.model.interaction.LibraryViewState;
-import com.github.laxika.magicalvibes.model.interaction.MultiSelectionState;
 import com.github.laxika.magicalvibes.model.interaction.PermanentChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.RevealedHandChoiceState;
 
@@ -34,7 +33,6 @@ public class InteractionState {
     private LibrarySearchState librarySearch;
     private final LibraryViewState libraryView = new LibraryViewState();
     private RevealedHandChoiceState revealedHandChoice;
-    private final MultiSelectionState multiSelection = new MultiSelectionState();
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
@@ -59,9 +57,6 @@ public class InteractionState {
         LibraryViewState lvCopy = this.libraryView.deepCopy();
         copy.libraryView.setReveal(lvCopy.revealPlayerId(), lvCopy.revealAllCards(), lvCopy.revealValidCardIds());
         copy.revealedHandChoice = this.revealedHandChoice != null ? this.revealedHandChoice.deepCopy() : null;
-        MultiSelectionState msCopy = this.multiSelection.deepCopy();
-        copy.multiSelection.setMultiPermanent(msCopy.multiPermanentPlayerId(), msCopy.multiPermanentValidIds(), msCopy.multiPermanentMaxCount());
-        copy.multiSelection.setMultiGraveyard(msCopy.multiGraveyardPlayerId(), msCopy.multiGraveyardValidCardIds(), msCopy.multiGraveyardMaxCount());
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
@@ -150,10 +145,6 @@ public class InteractionState {
 
     public RevealedHandChoiceState revealedHandChoice() {
         return revealedHandChoice;
-    }
-
-    public MultiSelectionState multiSelection() {
-        return multiSelection;
     }
 
     // ========================================================================
@@ -399,48 +390,6 @@ public class InteractionState {
         if (colorChoice == null) return null;
         return new InteractionContext.ColorChoice(colorChoice.playerId(), colorChoice.permanentId(),
                 colorChoice.etbTargetId(), colorChoice.choiceContext());
-    }
-
-    // ========================================================================
-    // Multi-permanent choice
-    // ========================================================================
-
-    public void beginMultiPermanentChoice(UUID playerId, Set<UUID> validIds, int maxCount) {
-        this.awaitingInput = AwaitingInput.MULTI_PERMANENT_CHOICE;
-        this.multiSelection.setMultiPermanent(playerId, new HashSet<>(validIds), maxCount);
-        this.context = new InteractionContext.MultiPermanentChoice(playerId, new HashSet<>(validIds), maxCount);
-    }
-
-    public void clearMultiPermanentChoice() {
-        this.multiSelection.clearMultiPermanent();
-    }
-
-    public InteractionContext.MultiPermanentChoice multiPermanentChoiceContext() {
-        if (context instanceof InteractionContext.MultiPermanentChoice mpc) return mpc;
-        if (multiSelection.multiPermanentPlayerId() == null || multiSelection.multiPermanentValidIds() == null) return null;
-        return new InteractionContext.MultiPermanentChoice(multiSelection.multiPermanentPlayerId(),
-                multiSelection.multiPermanentValidIds(), multiSelection.multiPermanentMaxCount());
-    }
-
-    // ========================================================================
-    // Multi-graveyard choice
-    // ========================================================================
-
-    public void beginMultiGraveyardChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) {
-        this.awaitingInput = AwaitingInput.MULTI_GRAVEYARD_CHOICE;
-        this.multiSelection.setMultiGraveyard(playerId, new HashSet<>(validCardIds), maxCount);
-        this.context = new InteractionContext.MultiGraveyardChoice(playerId, new HashSet<>(validCardIds), maxCount);
-    }
-
-    public void clearMultiGraveyardChoice() {
-        this.multiSelection.clearMultiGraveyard();
-    }
-
-    public InteractionContext.MultiGraveyardChoice multiGraveyardChoiceContext() {
-        if (context instanceof InteractionContext.MultiGraveyardChoice mgc) return mgc;
-        if (multiSelection.multiGraveyardPlayerId() == null || multiSelection.multiGraveyardValidCardIds() == null) return null;
-        return new InteractionContext.MultiGraveyardChoice(multiSelection.multiGraveyardPlayerId(),
-                multiSelection.multiGraveyardValidCardIds(), multiSelection.multiGraveyardMaxCount());
     }
 
     // ========================================================================

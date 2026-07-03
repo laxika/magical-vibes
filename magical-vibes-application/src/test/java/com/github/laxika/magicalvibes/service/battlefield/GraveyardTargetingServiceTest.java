@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +32,6 @@ class GraveyardTargetingServiceTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private CardViewFactory cardViewFactory;
 
     private GraveyardTargetingService service;
     private GameData gd;
@@ -41,7 +39,7 @@ class GraveyardTargetingServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GraveyardTargetingService(predicateEvaluationService, gameBroadcastService, playerInputService, cardViewFactory);
+        service = new GraveyardTargetingService(predicateEvaluationService, gameBroadcastService, playerInputService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

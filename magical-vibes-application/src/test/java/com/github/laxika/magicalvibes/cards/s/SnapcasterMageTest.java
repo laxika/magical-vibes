@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AncientGrudge;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -61,7 +62,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        Set<UUID> validIds = gd.interaction.multiSelection().multiGraveyardValidCardIds();
+        List<UUID> validIds = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds();
         assertThat(validIds).hasSize(1);
         assertThat(validIds).contains(shock.getId());
     }
@@ -222,7 +223,7 @@ class SnapcasterMageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Cards with native flashback should still be targetable
-        Set<UUID> validIds = gd.interaction.multiSelection().multiGraveyardValidCardIds();
+        List<UUID> validIds = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds();
         assertThat(validIds).contains(grudge.getId());
     }
 

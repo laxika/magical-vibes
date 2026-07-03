@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -279,12 +280,13 @@ public class GraveyardChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_GRAVEYARD_CHOICE)) {
             throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }
-        InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
+        PendingInteraction.MultiGraveyardChoice multiGraveyardChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         if (multiGraveyardChoice == null || !player.getId().equals(multiGraveyardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
-        Set<UUID> validIds = multiGraveyardChoice.validCardIds();
+        List<UUID> validIds = multiGraveyardChoice.validCardIds();
         int maxCount = multiGraveyardChoice.maxCount();
 
         if (cardIds == null) {
@@ -318,7 +320,6 @@ public class GraveyardChoiceHandlerService {
         // Card pile separation (Boneyard Parley): opponent assigns exiled cards to piles
         if (gameData.pendingPileSeparation && !gameData.pendingPileSeparationCards.isEmpty()) {
             gameData.interaction.clearAwaitingInput();
-            gameData.interaction.clearMultiGraveyardChoice();
             graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);
             return;
         }
@@ -336,7 +337,6 @@ public class GraveyardChoiceHandlerService {
 
         // Clear awaiting state
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMultiGraveyardChoice();
         gameData.graveyardTargetOperation.card = null;
         gameData.graveyardTargetOperation.controllerId = null;
         gameData.graveyardTargetOperation.effects = null;

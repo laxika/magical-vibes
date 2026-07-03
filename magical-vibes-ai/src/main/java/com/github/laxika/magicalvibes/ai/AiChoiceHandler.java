@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedReq
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -141,39 +140,7 @@ class AiChoiceHandler {
     // ===== Multiple Permanent Choice =====
 
     void handleMultiPermanentChoice(GameData gameData) {
-        InteractionContext.MultiPermanentChoice multiPermanentChoice = gameData.interaction.multiPermanentChoiceContext();
-        if (multiPermanentChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = multiPermanentChoice.playerId();
-        Set<UUID> validIds = multiPermanentChoice.validIds();
-        int maxCount = multiPermanentChoice.maxCount();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (validIds == null || validIds.isEmpty()) {
-            return;
-        }
-
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
-        List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-
-        List<UUID> chosen = opponentField.stream()
-                .filter(p -> validIds.contains(p.getId()))
-                .sorted(Comparator.comparingInt((Permanent p) -> gameQueryService.getEffectivePower(gameData, p)).reversed())
-                .limit(maxCount)
-                .map(Permanent::getId)
-                .toList();
-
-        if (chosen.isEmpty()) {
-            chosen = validIds.stream().limit(maxCount).toList();
-        }
-
-        log.info("AI: Choosing {} permanents in game {}", chosen.size(), gameId);
-        final List<UUID> finalChosen = chosen;
-        send(() -> gameActions.handleMultiplePermanentsChosen(selfConnection, new MultiplePermanentsChosenRequest(finalChosen)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Color Choice =====
@@ -426,10 +393,11 @@ class AiChoiceHandler {
     // ===== Multi-Graveyard Choice =====
 
     void handleMultiCardChoice(GameData gameData) {
-        // Knowledge Pool / Mirror of Fate / multi-zone exile choices (registry-managed)
+        // Knowledge Pool / Mirror of Fate / multi-zone exile / multi-graveyard choices (registry-managed)
         if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE
                 || gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE
-                || gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
+                || gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE
+                || gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_GRAVEYARD_CHOICE) {
             handleActiveInteraction(gameData);
             return;
         }
@@ -451,29 +419,7 @@ class AiChoiceHandler {
                 }
                 send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
             }
-            return;
         }
-
-        InteractionContext.MultiGraveyardChoice multiGraveyardChoice = gameData.interaction.multiGraveyardChoiceContext();
-        if (multiGraveyardChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = multiGraveyardChoice.playerId();
-        Set<UUID> validIds = multiGraveyardChoice.validCardIds();
-        int maxCount = multiGraveyardChoice.maxCount();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (validIds == null || validIds.isEmpty()) {
-            return;
-        }
-
-        List<UUID> chosen = validIds.stream().limit(maxCount).toList();
-
-        log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), gameId);
-        send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
     }
 
     // ===== Revealed Hand Choice =====

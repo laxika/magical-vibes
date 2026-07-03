@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -77,8 +78,8 @@ class RooftopPercherTest extends BaseCardTest {
 
         // Graveyard target selection is pending (at trigger time, before ability goes on stack)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
 
         // ETB ability is NOT yet on the stack (waiting for target selection)
         assertThat(gd.stack).isEmpty();
@@ -98,7 +99,7 @@ class RooftopPercherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → target prompt
 
         // Pick two card IDs from the valid set
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         List<UUID> chosenIds = validIds.subList(0, 2);
 
         int totalGraveyardBefore = gd.playerGraveyards.get(player1.getId()).size()
@@ -144,7 +145,7 @@ class RooftopPercherTest extends BaseCardTest {
         // All valid IDs should be from player2's graveyard
         List<UUID> p2GraveyardIds = gd.playerGraveyards.get(player2.getId()).stream()
                 .map(Card::getId).toList();
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).containsAll(p2GraveyardIds);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).containsAll(p2GraveyardIds);
 
         // Exile both → ability goes on stack
         harness.handleMultipleCardsChosen(player1, p2GraveyardIds);
@@ -165,7 +166,7 @@ class RooftopPercherTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        List<UUID> validIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> validIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
 
         // Choose only one card → ability goes on stack
         harness.handleMultipleCardsChosen(player1, List.of(validIds.getFirst()));
@@ -238,8 +239,8 @@ class RooftopPercherTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → target prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(1);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
     }
 
     // ===== Fizzle: all targets removed before resolution =====
@@ -291,7 +292,7 @@ class RooftopPercherTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        List<UUID> allIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> allIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         assertThat(allIds).hasSize(3);
 
         // Try to select all 3 (max is 2)

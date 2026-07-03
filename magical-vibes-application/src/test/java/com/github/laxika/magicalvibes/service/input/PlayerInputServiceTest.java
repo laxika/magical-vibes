@@ -29,6 +29,8 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.MayAbilityChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.MultiGraveyardChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.MultiPermanentChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.MultiZoneExileChoiceInteractionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -77,6 +79,10 @@ class PlayerInputServiceTest {
                 sessionManager, mock(MayAbilityHandlerService.class)));
         registry.register(new MultiZoneExileChoiceInteractionHandler(
                 sessionManager, cardViewFactory, mock(ChoiceHandlerService.class)));
+        registry.register(new MultiPermanentChoiceInteractionHandler(
+                sessionManager, mock(MultiPermanentChoiceHandlerService.class)));
+        registry.register(new MultiGraveyardChoiceInteractionHandler(
+                sessionManager, cardViewFactory, mock(GraveyardChoiceHandlerService.class)));
         svc = new PlayerInputService(sessionManager, cardViewFactory, registry);
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
@@ -376,10 +382,9 @@ class PlayerInputServiceTest {
         @Test
         @DisplayName("Sets interaction state to MULTI_GRAVEYARD_CHOICE")
         void setsInteractionState() {
-            UUID cardId = UUID.randomUUID();
-            CardView cardView = mock(CardView.class);
+            Card card = createCreature("Grave Creature");
 
-            svc.beginMultiGraveyardChoice(gd, PLAYER1_ID, List.of(cardId), List.of(cardView), 2, "Choose cards");
+            svc.beginMultiGraveyardChoice(gd, PLAYER1_ID, List.of(card), 2, "Choose cards");
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
         }
@@ -387,14 +392,13 @@ class PlayerInputServiceTest {
         @Test
         @DisplayName("Sends ChooseMultipleCardsMessage")
         void sendsMessage() {
-            UUID cardId = UUID.randomUUID();
-            CardView cardView = mock(CardView.class);
+            Card card = createCreature("Grave Creature");
 
-            svc.beginMultiGraveyardChoice(gd, PLAYER1_ID, List.of(cardId), List.of(cardView), 5, "Choose");
+            svc.beginMultiGraveyardChoice(gd, PLAYER1_ID, List.of(card), 5, "Choose");
 
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
-            assertThat(msg.cardIds()).containsExactly(cardId);
+            assertThat(msg.cardIds()).containsExactly(card.getId());
             assertThat(msg.maxCount()).isEqualTo(5);
         }
     }

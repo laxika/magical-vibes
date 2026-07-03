@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -55,8 +56,8 @@ class BoneyardParleyTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
         // Both creatures from both graveyards should be valid targets
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .contains(creature1.getId(), creature2.getId());
         // Spell is NOT yet on the stack (waiting for target selection)
         assertThat(gd.stack).isEmpty();
@@ -86,8 +87,8 @@ class BoneyardParleyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
 
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(1);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).contains(creature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(creature.getId());
     }
 
     @Test
@@ -103,8 +104,8 @@ class BoneyardParleyTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
 
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(6);
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(5);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(6);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(5);
     }
 
     // ===== Full resolution flow =====
@@ -124,7 +125,7 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // Step 2: Select all 3 creatures as targets
-        List<UUID> allTargets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> allTargets = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, allTargets);
 
         // Spell should be on the stack
@@ -177,7 +178,7 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 7);
 
         harness.castSorcery(player1, 0, 0);
-        List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> targets = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
@@ -208,7 +209,7 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 7);
 
         harness.castSorcery(player1, 0, 0);
-        List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> targets = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
@@ -234,7 +235,7 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 7);
 
         harness.castSorcery(player1, 0, 0);
-        List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> targets = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
@@ -318,7 +319,7 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 7);
 
         harness.castSorcery(player1, 0, 0);
-        List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> targets = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 
@@ -345,7 +346,7 @@ class BoneyardParleyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 7);
 
         harness.castSorcery(player1, 0, 0);
-        List<UUID> targets = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> targets = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         harness.handleMultipleCardsChosen(player1, targets);
         harness.passBothPriorities();
 

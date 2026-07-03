@@ -18,8 +18,6 @@ import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyard
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -98,19 +96,13 @@ public class PlayerInputService {
     }
 
     public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
-        gameData.interaction.beginMultiPermanentChoice(playerId, new HashSet<>(validIds), maxCount);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultiplePermanentsMessage(validIds, maxCount, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose up to {} permanents", gameData.id, playerName, maxCount);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
+                playerId, new ArrayList<>(validIds), maxCount, prompt));
     }
 
-    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<UUID> validCardIds, List<CardView> cardViews, int maxCount, String prompt) {
-        gameData.interaction.beginMultiGraveyardChoice(playerId, new HashSet<>(validCardIds), maxCount);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId), new ChooseMultipleCardsMessage(validCardIds, cardViews, maxCount, prompt));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to choose up to {} cards from graveyards", gameData.id, playerName, maxCount);
+    public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
+                playerId, new ArrayList<>(cards), maxCount, prompt));
     }
 
     public void beginColorChoice(GameData gameData, UUID playerId, UUID permanentId, UUID etbTargetId) {

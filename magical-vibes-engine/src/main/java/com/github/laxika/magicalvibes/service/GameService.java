@@ -134,8 +134,6 @@ public class GameService {
             case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
             case InteractionContext.GraveyardChoice gc -> controlledId.equals(gc.playerId());
             case InteractionContext.ColorChoice cc -> controlledId.equals(cc.playerId());
-            case InteractionContext.MultiPermanentChoice mpc -> controlledId.equals(mpc.playerId());
-            case InteractionContext.MultiGraveyardChoice mgc -> controlledId.equals(mgc.playerId());
             case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
             case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
@@ -486,7 +484,10 @@ public class GameService {
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            permanentChoiceHandlerService.handleMultiplePermanentsChosen(gameData, player, permanentIds);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.PermanentsChosen(permanentIds))) {
+                throw new IllegalStateException("Not awaiting multi-permanent choice");
+            }
         }
     }
 
@@ -500,7 +501,7 @@ public class GameService {
             if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
                 libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
             } else {
-                graveyardChoiceHandlerService.handleMultipleCardsChosen(gameData, player, cardIds);
+                throw new IllegalStateException("Not awaiting multi-graveyard choice");
             }
         }
     }

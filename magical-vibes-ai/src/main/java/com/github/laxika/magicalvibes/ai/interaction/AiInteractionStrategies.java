@@ -24,6 +24,8 @@ public final class AiInteractionStrategies {
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
         register(new MultiZoneExileChoiceAiStrategy());
+        register(new MultiPermanentChoiceAiStrategy());
+        register(new MultiGraveyardChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

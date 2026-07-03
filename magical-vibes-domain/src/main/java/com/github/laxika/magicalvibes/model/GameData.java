@@ -1062,10 +1062,6 @@ public class GameData {
                     targetInteraction.beginGraveyardChoice(gc.playerId(), gc.validIndices(), gc.destination(), gc.cardPool());
             case InteractionContext.ColorChoice cc ->
                     targetInteraction.beginColorChoice(cc.playerId(), cc.permanentId(), cc.etbTargetId(), cc.context());
-            case InteractionContext.MultiPermanentChoice mpc ->
-                    targetInteraction.beginMultiPermanentChoice(mpc.playerId(), mpc.validIds(), mpc.maxCount());
-            case InteractionContext.MultiGraveyardChoice mgc ->
-                    targetInteraction.beginMultiGraveyardChoice(mgc.playerId(), mgc.validCardIds(), mgc.maxCount());
             case InteractionContext.LibrarySearch ls ->
                     targetInteraction.beginLibrarySearch(LibrarySearchParams.builder(ls.playerId(),
                                     ls.cards() != null ? new ArrayList<>(ls.cards()) : null)

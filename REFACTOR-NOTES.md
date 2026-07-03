@@ -195,6 +195,39 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   cases, the `InteractionState` begin/clear/context trio, and the multi-zone-exile fields
   of `MultiSelectionState` (now holds only multi-permanent + multi-graveyard).
   AI: `MultiZoneExileChoiceAiStrategy` (exile all).
+- `PendingInteraction.MultiPermanentChoice` + `PendingInteraction.MultiGraveyardChoice`
+  (MULTI_PERMANENT_CHOICE / MULTI_GRAVEYARD_CHOICE). Both records carry the exact begin-time
+  `prompt` — **two deliberate replay-fidelity corrections**: the legacy reconnect replay sent
+  a generic "Choose permanents." / "Exile up to N cards from graveyards." instead of the
+  original prompt (and hash-scrambled ID order); replay now re-sends the begin-time prompt
+  and order. `MultiGraveyardChoice` carries `List<Card> cards` (not IDs — same precedent as
+  `Scry`/`LibraryReorder`) because the Boneyard Parley pile-separation begin site prompts over
+  just-**exiled** cards that no graveyard scan can rebuild; IDs/views derive from the card
+  list (`validCardIds()` is a derived accessor), and the legacy replay's graveyard re-scan
+  (which silently sent an empty list for pile separation) is gone. The 11 graveyard begin
+  sites (`GraveyardTargetingService` ×8, `TriggeredAbilityQueueService` ×2, the pile-separation
+  effect handler) now pass their matched `Card` list; `PlayerInputService.beginMultiGraveyardChoice`
+  dropped its redundant `cardViews` param (the sites' pairwise id+view building collapsed to
+  one list; `GraveyardTargetingService`/`TriggeredAbilityQueueService` lost their
+  `CardViewFactory` deps). `beginMultiPermanentChoice` keeps its ~20 callers unchanged.
+  Answers: new `InteractionAnswer.PermanentsChosen` for the `handleMultiplePermanentsChosen`
+  entry (sole consumer — dispatch miss now throws the same "Not awaiting multi-permanent
+  choice"; the `PermanentChoiceHandlerService` pass-through delegate was deleted);
+  multi-graveyard joins the shared `CardsChosen` dispatch, and the legacy tail of
+  `GameService.handleMultipleCardsChosen` shrank to LIBRARY_REVEAL_CHOICE → else the same
+  "Not awaiting multi-graveyard choice" error. The big answer services keep their full
+  dispatch logic (`MultiPermanentChoiceHandlerService`'s 13-branch pending-operation chain,
+  `GraveyardChoiceHandlerService.handleMultipleCardsChosen`'s exact-X/pile-separation flow);
+  only their entry validation reads the active record. Removed: both `InteractionContext`
+  records + all cases, both `InteractionState` begin/clear/context trios, and
+  **`MultiSelectionState` entirely** (these were its last two sub-states; the `multiSelection`
+  field/accessor and its deepCopy lines are gone). AI: `MultiPermanentChoiceAiStrategy`
+  (opponent's strongest by effective power, fall back to first valid) +
+  `MultiGraveyardChoiceAiStrategy` (first maxCount); `AiChoiceHandler.handleMultiPermanentChoice`
+  is a thin alias to `handleActiveInteraction`, and MULTI_GRAVEYARD_CHOICE joined the
+  registry-managed head check of `handleMultiCardChoice` (its legacy tail block deleted).
+  ~20 test files' `multiSelection()` / `multiPermanentChoiceContext()` reads rewritten to the
+  typed active-record accessors (scratchpad perl script `fix_multi_tests.pl`).
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -218,7 +251,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 ### Stage 3 continuation — migrate the remaining kinds
 
 Suggested order: the card/graveyard/permanent choice families (CARD_CHOICE, DISCARD_CHOICE,
-PERMANENT_CHOICE, GRAVEYARD_CHOICE, COLOR_CHOICE, the MULTI_* selections, REVEALED_HAND_CHOICE),
+PERMANENT_CHOICE, GRAVEYARD_CHOICE, COLOR_CHOICE, REVEALED_HAND_CHOICE),
 LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
 declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 

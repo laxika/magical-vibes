@@ -32,4 +32,8 @@ public sealed interface InteractionAnswer {
     /** A selection of zero or more cards by ID (the shared multiple-cards wire payload). */
     record CardsChosen(java.util.List<java.util.UUID> cardIds) implements InteractionAnswer {
     }
+
+    /** A selection of zero or more permanents by ID. */
+    record PermanentsChosen(java.util.List<java.util.UUID> permanentIds) implements InteractionAnswer {
+    }
 }

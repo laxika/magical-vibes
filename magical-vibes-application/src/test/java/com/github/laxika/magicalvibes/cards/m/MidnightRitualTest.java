@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -55,8 +56,8 @@ class MidnightRitualTest extends BaseCardTest {
 
         // Should be awaiting multi-graveyard choice
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
-        assertThat(gd.interaction.multiSelection().multiGraveyardPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardMaxCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
 
         // Spell is NOT yet on the stack (targets must be chosen first)
         assertThat(gd.stack).isEmpty();
@@ -79,9 +80,9 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 1);
 
         // Only player1's creature card should be valid (not Plains, not opponent's card)
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).containsExactly(bears.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).doesNotContain(plains.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).doesNotContain(opponentBears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).containsExactly(bears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).doesNotContain(plains.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).doesNotContain(opponentBears.getId());
     }
 
     // ===== Target selection puts spell on stack =====
@@ -276,7 +277,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 6); // X=3, costs 6
 
         harness.castSorcery(player1, 0, 3);
-        List<UUID> allIds = new ArrayList<>(gd.interaction.multiSelection().multiGraveyardValidCardIds());
+        List<UUID> allIds = new ArrayList<>(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds());
         assertThat(allIds).hasSize(3);
 
         harness.handleMultipleCardsChosen(player1, allIds);
@@ -448,9 +449,9 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
 
         // Only the 2 creatures should be valid
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).hasSize(2);
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).contains(bears.getId(), angel.getId());
-        assertThat(gd.interaction.multiSelection().multiGraveyardValidCardIds()).doesNotContain(plains1.getId(), plains2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).contains(bears.getId(), angel.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).doesNotContain(plains1.getId(), plains2.getId());
     }
 
     // ===== Sorcery goes to graveyard after resolution =====

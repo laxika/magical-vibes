@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseMultiplePermanentsMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -116,18 +115,6 @@ public class ReconnectionService {
                 InteractionContext.ColorChoice cc = gameData.interaction.colorChoiceContextView();
                 if (cc != null) {
                     resendFromContext(gameData, playerId, cc);
-                }
-            }
-            case MULTI_PERMANENT_CHOICE -> {
-                InteractionContext.MultiPermanentChoice mpc = gameData.interaction.multiPermanentChoiceContext();
-                if (mpc != null) {
-                    resendFromContext(gameData, playerId, mpc);
-                }
-            }
-            case MULTI_GRAVEYARD_CHOICE -> {
-                InteractionContext.MultiGraveyardChoice mgc = gameData.interaction.multiGraveyardChoiceContext();
-                if (mgc != null) {
-                    resendFromContext(gameData, playerId, mgc);
                 }
             }
             case LIBRARY_SEARCH -> {
@@ -271,31 +258,6 @@ public class ReconnectionService {
                     prompt = "Choose a color.";
                 }
                 sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(options, prompt));
-            }
-            case InteractionContext.MultiPermanentChoice mpc -> {
-                if (playerId.equals(mpc.playerId())) {
-                    sessionManager.sendToPlayer(playerId, new ChooseMultiplePermanentsMessage(
-                            new ArrayList<>(mpc.validIds()), mpc.maxCount(), "Choose permanents."));
-                }
-            }
-            case InteractionContext.MultiGraveyardChoice mgc -> {
-                if (!playerId.equals(mgc.playerId())) {
-                    return;
-                }
-                List<UUID> validCardIds = new ArrayList<>(mgc.validCardIds());
-                List<CardView> cardViews = new ArrayList<>();
-                for (UUID pid : gameData.orderedPlayerIds) {
-                    List<Card> graveyard = gameData.playerGraveyards.get(pid);
-                    if (graveyard == null) continue;
-                    for (Card card : graveyard) {
-                        if (mgc.validCardIds().contains(card.getId())) {
-                            cardViews.add(cardViewFactory.create(card));
-                        }
-                    }
-                }
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
-                        validCardIds, cardViews, mgc.maxCount(),
-                        "Exile up to " + mgc.maxCount() + " cards from graveyards."));
             }
             case InteractionContext.LibrarySearch ls -> {
                 if (!playerId.equals(ls.playerId()) || ls.cards() == null) {

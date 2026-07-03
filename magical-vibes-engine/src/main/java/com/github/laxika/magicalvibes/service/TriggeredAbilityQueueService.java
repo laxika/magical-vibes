@@ -19,8 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
-import com.github.laxika.magicalvibes.networking.model.CardView;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,7 +37,6 @@ public class TriggeredAbilityQueueService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final CardViewFactory cardViewFactory;
     private final TriggerTargetCollector triggerTargetCollector;
 
     public void processNextDeathTriggerTarget(GameData gameData) {
@@ -372,21 +369,19 @@ public class TriggeredAbilityQueueService {
             }
 
             // Collect valid graveyard targets from the controller's graveyard
-            List<UUID> validCardIds = new ArrayList<>();
-            List<CardView> cardViews = new ArrayList<>();
+            List<Card> matchingCards = new ArrayList<>();
             List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
                     if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
-                        validCardIds.add(graveyardCard.getId());
-                        cardViews.add(cardViewFactory.create(graveyardCard));
+                        matchingCards.add(graveyardCard);
                     }
                 }
             }
 
             gameData.pollPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class);
 
-            if (validCardIds.isEmpty()) {
+            if (matchingCards.isEmpty()) {
                 log.info("Game {} - {} chapter {} graveyard-target skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName(), pending.chapterName());
                 continue;
@@ -400,7 +395,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.chapterName = pending.chapterName();
 
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), validCardIds, cardViews, 1,
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
                     pending.sourceCard().getName() + "'s chapter " + pending.chapterName()
                             + " — Choose target " + filterLabel + " from your graveyard.");
 
@@ -428,21 +423,19 @@ public class TriggeredAbilityQueueService {
             }
 
             // Collect valid graveyard targets from the controller's graveyard
-            List<UUID> validCardIds = new ArrayList<>();
-            List<CardView> cardViews = new ArrayList<>();
+            List<Card> matchingCards = new ArrayList<>();
             List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
                     if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
-                        validCardIds.add(graveyardCard.getId());
-                        cardViews.add(cardViewFactory.create(graveyardCard));
+                        matchingCards.add(graveyardCard);
                     }
                 }
             }
 
             gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
-            if (validCardIds.isEmpty()) {
+            if (matchingCards.isEmpty()) {
                 log.info("Game {} - {} spell-cast graveyard-target trigger skipped (no valid targets)",
                         gameData.id, pending.sourceCard().getName());
                 continue;
@@ -454,7 +447,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(pending.effects());
 
             String filterLabel = CardPredicateUtils.describeFilter(filter);
-            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), validCardIds, cardViews, 1,
+            playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards, 1,
                     pending.sourceCard().getName() + "'s ability — Choose target " + filterLabel + " from your graveyard.");
 
             String logEntry = pending.sourceCard().getName()

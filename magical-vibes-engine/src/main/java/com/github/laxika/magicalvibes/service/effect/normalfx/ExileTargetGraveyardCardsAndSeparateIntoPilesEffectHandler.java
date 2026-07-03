@@ -5,8 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -27,7 +25,6 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final CardViewFactory cardViewFactory;
     private final GraveyardService graveyardService;
 
     @Override
@@ -98,9 +95,7 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
         gameData.pendingPileSeparationPile2Ids.clear();
 
         // Prompt opponent to separate into two piles
-        List<UUID> cardIds = exiledCards.stream().map(Card::getId).toList();
-        List<CardView> cardViews = exiledCards.stream().map(cardViewFactory::create).toList();
-        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, cardIds, cardViews, cardIds.size(),
+        playerInputService.beginMultiGraveyardChoice(gameData, opponentId, exiledCards, exiledCards.size(),
                 "Separate the exiled cards into two piles. Select cards for Pile 1 (unselected form Pile 2).");
     }
 }

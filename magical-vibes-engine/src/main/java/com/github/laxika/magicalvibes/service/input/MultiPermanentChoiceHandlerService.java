@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
-import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -68,17 +68,17 @@ public class MultiPermanentChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_PERMANENT_CHOICE)) {
             throw new IllegalStateException("Not awaiting multi-permanent choice");
         }
-        InteractionContext.MultiPermanentChoice multiPermanentChoice = gameData.interaction.multiPermanentChoiceContext();
+        PendingInteraction.MultiPermanentChoice multiPermanentChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         if (multiPermanentChoice == null || !player.getId().equals(multiPermanentChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         UUID playerId = player.getId();
-        Set<UUID> validIds = multiPermanentChoice.validIds();
+        List<UUID> validIds = multiPermanentChoice.validIds();
         int maxCount = multiPermanentChoice.maxCount();
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMultiPermanentChoice();
 
         if (permanentIds == null) {
             permanentIds = List.of();

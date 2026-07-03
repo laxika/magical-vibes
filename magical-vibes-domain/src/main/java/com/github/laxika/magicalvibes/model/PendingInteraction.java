@@ -20,7 +20,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.XValueChoice, PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
-        PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice {
+        PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice,
+        PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -88,5 +89,29 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                 UUID targetPlayerId, UUID controllerId, String cardName)
             implements PendingInteraction {
+    }
+
+    /**
+     * Select zero or more permanents from a list (sacrifice picks, proliferate targets,
+     * combat-damage bounce, counter placement, …). {@code validIds} keeps the begin-time
+     * order and {@code prompt} the exact begin-time text (also re-sent on reconnect).
+     */
+    record MultiPermanentChoice(UUID playerId, java.util.List<UUID> validIds, int maxCount,
+                                String prompt) implements PendingInteraction {
+    }
+
+    /**
+     * Select zero or more cards from a graveyard-sourced list (graveyard-targeting spells and
+     * triggers, plus pile separation over just-exiled cards). {@code cards} keeps the begin-time
+     * order — IDs and card views are derived from it at prompt time. {@code prompt} is the
+     * exact begin-time text.
+     */
+    record MultiGraveyardChoice(UUID playerId, java.util.List<Card> cards, int maxCount,
+                                String prompt) implements PendingInteraction {
+
+        /** The selectable card IDs, in begin-time order (derived from {@link #cards}). */
+        public java.util.List<UUID> validCardIds() {
+            return cards.stream().map(Card::getId).toList();
+        }
     }
 }
