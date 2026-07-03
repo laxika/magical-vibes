@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -96,7 +97,7 @@ class MitoticManipulationTest extends BaseCardTest {
 
         // Should be reordering the remaining 6 cards
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(6);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(6);
     }
 
     @Test
@@ -127,7 +128,7 @@ class MitoticManipulationTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
         // All 7 cards should be reordered to bottom
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(7);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(7);
     }
 
     @Test
@@ -154,7 +155,7 @@ class MitoticManipulationTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         // No matching cards — go directly to reorder
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(7);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(7);
     }
 
     @Test
@@ -277,7 +278,7 @@ class MitoticManipulationTest extends BaseCardTest {
 
         // Now reorder the remaining 6 cards
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        List<Card> remaining = gd.interaction.libraryView().reorderCards();
+        List<Card> remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         assertThat(remaining).hasSize(6);
 
         // Reorder in original order (0,1,2,3,4,5)

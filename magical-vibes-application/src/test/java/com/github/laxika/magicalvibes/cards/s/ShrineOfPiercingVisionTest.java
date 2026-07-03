@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -137,8 +138,8 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ability from stack
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(3);
     }
 
     @Test
@@ -255,7 +256,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
 
         // Should use all available cards (capped at deck size)
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(deckSize);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(deckSize);
     }
 
     // ===== Helper methods =====

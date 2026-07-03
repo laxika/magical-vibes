@@ -625,7 +625,7 @@ public class GameSimulator {
                 }
             }
             case LIBRARY_REORDER -> {
-                var lr = gd.interaction.libraryReorderContext();
+                var lr = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
                 if (lr != null && lr.cards() != null) {
                     List<Integer> order = new ArrayList<>();
                     for (int k = 0; k < lr.cards().size(); k++) order.add(k);
@@ -664,6 +664,8 @@ public class GameSimulator {
             return switch (active) {
                 case PendingInteraction.XValueChoice xvc -> xvc.playerId();
                 case PendingInteraction.Scry s -> s.playerId();
+                case PendingInteraction.HandTopBottomChoice htbc -> htbc.playerId();
+                case PendingInteraction.LibraryReorder lr -> lr.playerId();
                 default -> null;
             };
         }
@@ -679,10 +681,8 @@ public class GameSimulator {
             case InteractionContext.MayAbilityChoice mc -> mc.playerId();
             case InteractionContext.MultiPermanentChoice mpc -> mpc.playerId();
             case InteractionContext.MultiGraveyardChoice mgc -> mgc.playerId();
-            case InteractionContext.LibraryReorder lr -> lr.playerId();
             case InteractionContext.LibrarySearch ls -> ls.playerId();
             case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
-            case InteractionContext.HandTopBottomChoice htbc -> htbc.playerId();
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
             case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();

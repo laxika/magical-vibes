@@ -20,13 +20,11 @@ import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.HandTopBottomChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MayAbilityChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultiplePermanentsChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.Setter;
@@ -369,39 +367,6 @@ class AiChoiceHandler {
         handleActiveInteraction(gameData);
     }
 
-    // ===== Reorder Cards =====
-
-    void handleReorderCards(GameData gameData) {
-        InteractionContext.LibraryReorder libraryReorder = gameData.interaction.libraryReorderContext();
-        if (libraryReorder == null) {
-            return;
-        }
-        UUID choicePlayerId = libraryReorder.playerId();
-        List<Card> cards = libraryReorder.cards();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (cards == null || cards.isEmpty()) {
-            return;
-        }
-
-        // Put spells on top, lands on bottom; sort by mana value ascending
-        List<int[]> indexedCards = new ArrayList<>();
-        for (int i = 0; i < cards.size(); i++) {
-            Card card = cards.get(i);
-            int priority = card.hasType(CardType.LAND) ? 1000 + i : card.getManaValue();
-            indexedCards.add(new int[]{i, priority});
-        }
-        indexedCards.sort(Comparator.comparingInt(a -> a[1]));
-
-        List<Integer> order = indexedCards.stream().map(a -> a[0]).toList();
-
-        log.info("AI: Reordering {} library cards in game {}", order.size(), gameId);
-        send(() -> gameActions.handleLibraryCardsReordered(selfConnection, new ReorderLibraryCardsRequest(order)));
-    }
-
     // ===== Library Search =====
 
     void handleLibrarySearch(GameData gameData) {
@@ -545,52 +510,6 @@ class AiChoiceHandler {
 
         log.info("AI: Choosing {} graveyard cards in game {}", chosen.size(), gameId);
         send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-    }
-
-    // ===== Hand Top/Bottom Choice =====
-
-    void handleHandTopBottom(GameData gameData) {
-        InteractionContext.HandTopBottomChoice handTopBottomChoice = gameData.interaction.handTopBottomChoiceContext();
-        if (handTopBottomChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = handTopBottomChoice.playerId();
-        List<Card> cards = handTopBottomChoice.cards();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (cards == null || cards.size() < 2) {
-            return;
-        }
-
-        int handCardIndex = 0;
-        int topCardIndex = 1;
-
-        Card card0 = cards.get(0);
-        Card card1 = cards.get(1);
-
-        boolean card0IsLand = card0.hasType(CardType.LAND);
-        boolean card1IsLand = card1.hasType(CardType.LAND);
-
-        if (card0IsLand && !card1IsLand) {
-            handCardIndex = 1;
-            topCardIndex = 0;
-        } else if (!card0IsLand && card1IsLand) {
-            handCardIndex = 0;
-            topCardIndex = 1;
-        } else {
-            if (card1.getManaValue() > card0.getManaValue()) {
-                handCardIndex = 1;
-                topCardIndex = 0;
-            }
-        }
-
-        log.info("AI: Choosing hand={} top={} in game {}", handCardIndex, topCardIndex, gameId);
-        final int h = handCardIndex;
-        final int t = topCardIndex;
-        send(() -> gameActions.handleHandTopBottomChosen(selfConnection, new HandTopBottomChosenRequest(h, t)));
     }
 
     // ===== Revealed Hand Choice =====

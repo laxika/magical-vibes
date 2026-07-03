@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -106,8 +107,8 @@ class DiscombobulateTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player2.getId());
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(4);
     }
 
     @Test
@@ -183,8 +184,8 @@ class DiscombobulateTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(0, 1, 2, 3));
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isNull();
-        assertThat(gd.interaction.libraryView().reorderCards()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
     }
 
     // ===== Fizzle =====
@@ -243,7 +244,7 @@ class DiscombobulateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
         // Swap the 2 cards
         harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(1, 0));

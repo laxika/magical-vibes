@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -32,6 +33,7 @@ public class LibraryRevealSupport {
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public record TopCardsResult(UUID controllerId, List<Card> topCards, String playerName) {}
 
@@ -66,12 +68,9 @@ public class LibraryRevealSupport {
             gameData.playerDecks.get(controllerId).add(topCards.getFirst());
             return;
         }
-        gameData.interaction.beginLibraryReorder(controllerId, topCards, true);
-        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
-                cardViews,
-                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
-        ));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                controllerId, topCards, true, controllerId,
+                "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
     }
 
     public List<String> collectAllCardNamesInGame(GameData gameData) {

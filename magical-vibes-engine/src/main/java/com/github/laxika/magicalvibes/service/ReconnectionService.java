@@ -146,12 +146,6 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, mgc);
                 }
             }
-            case LIBRARY_REORDER -> {
-                InteractionContext.LibraryReorder lr = gameData.interaction.libraryReorderContext();
-                if (lr != null) {
-                    resendFromContext(gameData, playerId, lr);
-                }
-            }
             case LIBRARY_SEARCH -> {
                 InteractionContext.LibrarySearch ls = gameData.interaction.librarySearchContext();
                 if (ls != null) {
@@ -162,12 +156,6 @@ public class ReconnectionService {
                 InteractionContext.LibraryRevealChoice lrc = gameData.interaction.libraryRevealChoiceContext();
                 if (lrc != null) {
                     resendFromContext(gameData, playerId, lrc);
-                }
-            }
-            case HAND_TOP_BOTTOM_CHOICE -> {
-                InteractionContext.HandTopBottomChoice htbc = gameData.interaction.handTopBottomChoiceContext();
-                if (htbc != null) {
-                    resendFromContext(gameData, playerId, htbc);
                 }
             }
             case REVEALED_HAND_CHOICE -> {
@@ -359,16 +347,6 @@ public class ReconnectionService {
                         validCardIds, cardViews, mgc.maxCount(),
                         "Exile up to " + mgc.maxCount() + " cards from graveyards."));
             }
-            case InteractionContext.LibraryReorder lr -> {
-                if (!playerId.equals(lr.playerId()) || lr.cards() == null) {
-                    return;
-                }
-                List<CardView> cardViews = lr.cards().stream().map(cardViewFactory::create).toList();
-                String prompt = lr.toBottom()
-                        ? "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
-                        : "Put these cards back on top of your library in any order (top to bottom).";
-                sessionManager.sendToPlayer(playerId, new ReorderLibraryCardsMessage(cardViews, prompt));
-            }
             case InteractionContext.LibrarySearch ls -> {
                 if (!playerId.equals(ls.playerId()) || ls.cards() == null) {
                     return;
@@ -395,15 +373,6 @@ public class ReconnectionService {
                         cardIds, cardViews, cardIds.size(),
                         "Choose any number of nonland permanent cards with mana value 3 or less to put onto the battlefield."
                 ));
-            }
-            case InteractionContext.HandTopBottomChoice htbc -> {
-                if (!playerId.equals(htbc.playerId()) || htbc.cards() == null) {
-                    return;
-                }
-                List<CardView> cardViews = htbc.cards().stream().map(cardViewFactory::create).toList();
-                int count = htbc.cards().size();
-                sessionManager.sendToPlayer(playerId, new ChooseHandTopBottomMessage(
-                        cardViews, "Look at the top " + count + " cards of your library. Choose one to put into your hand."));
             }
             case InteractionContext.RevealedHandChoice rhc -> {
                 if (!playerId.equals(rhc.choosingPlayerId()) || rhc.targetPlayerId() == null) {

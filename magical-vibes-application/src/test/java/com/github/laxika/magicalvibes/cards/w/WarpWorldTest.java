@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.d.Dehydration;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
@@ -313,11 +314,11 @@ class WarpWorldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.libraryView().reorderToBottom()).isTrue();
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).toBottom()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(2);
 
-        List<UUID> beforeOrderIds = gd.interaction.libraryView().reorderCards().stream().map(Card::getId).toList();
+        List<UUID> beforeOrderIds = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards().stream().map(Card::getId).toList();
         harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
@@ -345,14 +346,14 @@ class WarpWorldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderToBottom()).isTrue();
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).toBottom()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player2.getId());
 
         harness.getGameService().handleLibraryCardsReordered(gd, player2, List.of(1, 0));
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderToBottom()).isTrue();
-        assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).toBottom()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player1.getId());
 
         harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(1, 0));
 

@@ -16,10 +16,8 @@ public sealed interface InteractionContext permits
         InteractionContext.MayAbilityChoice,
         InteractionContext.MultiPermanentChoice,
         InteractionContext.MultiGraveyardChoice,
-        InteractionContext.LibraryReorder,
         InteractionContext.LibrarySearch,
         InteractionContext.LibraryRevealChoice,
-        InteractionContext.HandTopBottomChoice,
         InteractionContext.RevealedHandChoice,
         InteractionContext.MultiZoneExileChoice,
         InteractionContext.CombatDamageAssignment,
@@ -43,13 +41,6 @@ public sealed interface InteractionContext permits
     record MultiPermanentChoice(UUID playerId, Set<UUID> validIds, int maxCount) implements InteractionContext {}
 
     record MultiGraveyardChoice(UUID playerId, Set<UUID> validCardIds, int maxCount) implements InteractionContext {}
-
-    record LibraryReorder(UUID playerId, List<Card> cards, boolean toBottom, UUID deckOwnerId) implements InteractionContext {
-
-        public LibraryReorder(UUID playerId, List<Card> cards, boolean toBottom) {
-            this(playerId, cards, toBottom, playerId);
-        }
-    }
 
     record LibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                          UUID targetPlayerId, int remainingCount, List<Card> sourceCards,
@@ -86,8 +77,6 @@ public sealed interface InteractionContext permits
             this(playerId, allCards, validCardIds, remainingToGraveyard, selectedToHand, reorderRemainingToBottom, false, 0, null);
         }
     }
-
-    record HandTopBottomChoice(UUID playerId, List<Card> cards) implements InteractionContext {}
 
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId, Set<Integer> validIndices,
                               int remainingCount, boolean discardMode, boolean exileMode, List<Card> chosenCards) implements InteractionContext {}

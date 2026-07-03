@@ -18,6 +18,8 @@ public final class AiInteractionStrategies {
     static {
         register(new XValueChoiceAiStrategy());
         register(new ScryAiStrategy());
+        register(new HandTopBottomChoiceAiStrategy());
+        register(new LibraryReorderAiStrategy());
     }
 
     private AiInteractionStrategies() {

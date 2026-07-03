@@ -141,11 +141,11 @@ public abstract class AiDecisionEngine {
             case "MAY_ABILITY_CHOICE" -> handleMayAbilityChoice(gameData);
             case "X_VALUE_CHOICE" -> choiceHandler.handleActiveInteraction(gameData);
             case "SCRY" -> handleScry(gameData);
-            case "REORDER_LIBRARY_CARDS" -> choiceHandler.handleReorderCards(gameData);
+            case "REORDER_LIBRARY_CARDS" -> choiceHandler.handleActiveInteraction(gameData);
             case "CHOOSE_CARD_FROM_LIBRARY" -> choiceHandler.handleLibrarySearch(gameData);
             case "CHOOSE_CARD_FROM_GRAVEYARD" -> choiceHandler.handleGraveyardChoice(gameData);
             case "CHOOSE_MULTIPLE_CARDS" -> choiceHandler.handleMultiCardChoice(gameData);
-            case "CHOOSE_HAND_TOP_BOTTOM" -> choiceHandler.handleHandTopBottom(gameData);
+            case "CHOOSE_HAND_TOP_BOTTOM" -> choiceHandler.handleActiveInteraction(gameData);
             case "CHOOSE_FROM_REVEALED_HAND" -> choiceHandler.handleRevealedHandChoice(gameData);
             case "COMBAT_DAMAGE_ASSIGNMENT" -> choiceHandler.handleCombatDamageAssignment(gameData);
             case "GAME_OVER" -> log.info("AI: Game {} is over", gameId);

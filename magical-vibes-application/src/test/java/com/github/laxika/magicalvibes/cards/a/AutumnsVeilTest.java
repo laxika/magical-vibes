@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.Discombobulate;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
@@ -167,7 +168,7 @@ class AutumnsVeilTest extends BaseCardTest {
 
             // Library reorder should still trigger (counter failed but other effects work)
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-            assertThat(gd.interaction.libraryView().reorderPlayerId()).isEqualTo(player2.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).playerId()).isEqualTo(player2.getId());
 
             // Complete the library reorder so game can continue
             gs.handleLibraryCardsReordered(gd, player2, List.of(0, 1, 2, 3));

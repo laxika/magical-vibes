@@ -121,6 +121,25 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   overridable-method seam rather than forcing everything into the static strategy table.
   Tests read the record via the new typed accessor
   `interaction.activeInteraction(PendingInteraction.Scry.class)`.
+- `PendingInteraction.HandTopBottomChoice` (HAND_TOP_BOTTOM_CHOICE).
+  `HandTopBottomChoiceInteractionHandler`; prompt derived from card count (matches both
+  effect-handler begin sites and the old replay). Removed the legacy context/state/case
+  set and `LibraryChoiceHandlerService.handleHandTopBottomChosen`. AI:
+  `HandTopBottomChoiceAiStrategy` (no difficulty overrides existed).
+- `PendingInteraction.LibraryReorder` (LIBRARY_REORDER). The record carries the exact
+  begin-time `prompt` string because the six begin sites word it differently (top vs
+  "back on top" vs bottom). **One deliberate replay-text correction**: the legacy reconnect
+  replay re-derived the prompt from `toBottom` and therefore showed "back on top" for the
+  Mirror of Fate exile reorder whose original prompt said "on top" — replay now re-sends
+  the original prompt verbatim. Answer handler ported from
+  `LibraryChoiceHandlerService.handleLibraryCardsReordered` (deleted), including the
+  Warp World `pendingLibraryBottomReorders` continuation; `WarpWorldService`'s own begin
+  site now goes through the registry too. `PlayerInputService.beginLibraryReorderFromExile`
+  deleted (ExileSupport begins directly). `LibraryViewState` now holds only the library
+  reveal fields. AI: `LibraryReorderAiStrategy` (no difficulty overrides existed).
+  Unit tests that construct effect handlers directly use the new
+  `InteractionRegistryTestSupport.registryFor(...)` helper (real prompt/answer handlers over
+  mocked continuation services).
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -143,8 +162,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 
 ### Stage 3 continuation — migrate the remaining kinds
 
-Suggested order (smallest surface first): SCRY, HAND_TOP_BOTTOM_CHOICE, LIBRARY_REORDER,
-MAY_ABILITY_CHOICE, the card/graveyard/permanent choice families, LIBRARY_SEARCH /
+Suggested order: MAY_ABILITY_CHOICE, the card/graveyard/permanent choice families, LIBRARY_SEARCH /
 LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat declarations
 (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 

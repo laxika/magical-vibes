@@ -139,10 +139,8 @@ public class GameService {
             case InteractionContext.MayAbilityChoice mc -> controlledId.equals(mc.playerId());
             case InteractionContext.MultiPermanentChoice mpc -> controlledId.equals(mpc.playerId());
             case InteractionContext.MultiGraveyardChoice mgc -> controlledId.equals(mgc.playerId());
-            case InteractionContext.LibraryReorder lr -> controlledId.equals(lr.playerId());
             case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
             case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
-            case InteractionContext.HandTopBottomChoice htbc -> controlledId.equals(htbc.playerId());
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
             case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
@@ -545,14 +543,20 @@ public class GameService {
     public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            libraryChoiceHandlerService.handleLibraryCardsReordered(gameData, player, cardOrder);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.CardOrder(cardOrder))) {
+                throw new IllegalStateException("Not awaiting library reorder");
+            }
         }
     }
 
     public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            libraryChoiceHandlerService.handleHandTopBottomChosen(gameData, player, handCardIndex, topCardIndex);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.HandTopBottom(handCardIndex, topCardIndex))) {
+                throw new IllegalStateException("Not awaiting hand/top/bottom choice");
+            }
         }
     }
 

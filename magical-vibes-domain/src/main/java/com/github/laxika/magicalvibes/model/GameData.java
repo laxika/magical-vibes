@@ -1068,8 +1068,6 @@ public class GameData {
                     targetInteraction.beginMultiPermanentChoice(mpc.playerId(), mpc.validIds(), mpc.maxCount());
             case InteractionContext.MultiGraveyardChoice mgc ->
                     targetInteraction.beginMultiGraveyardChoice(mgc.playerId(), mgc.validCardIds(), mgc.maxCount());
-            case InteractionContext.LibraryReorder lr ->
-                    targetInteraction.beginLibraryReorder(lr.playerId(), lr.cards() != null ? new ArrayList<>(lr.cards()) : null, lr.toBottom(), lr.deckOwnerId());
             case InteractionContext.LibrarySearch ls ->
                     targetInteraction.beginLibrarySearch(LibrarySearchParams.builder(ls.playerId(),
                                     ls.cards() != null ? new ArrayList<>(ls.cards()) : null)
@@ -1103,9 +1101,6 @@ public class GameData {
                                 lrc.remainingToGraveyard(), lrc.selectedToHand(), lrc.reorderRemainingToBottom());
                     }
                 }
-            case InteractionContext.HandTopBottomChoice htbc ->
-                    targetInteraction.beginHandTopBottomChoice(htbc.playerId(),
-                            htbc.cards() != null ? new ArrayList<>(htbc.cards()) : null);
             case InteractionContext.RevealedHandChoice rhc ->
                     targetInteraction.beginRevealedHandChoice(rhc.choosingPlayerId(), rhc.targetPlayerId(),
                             rhc.validIndices(), rhc.remainingCount(), rhc.discardMode(), rhc.exileMode(), rhc.chosenCards());

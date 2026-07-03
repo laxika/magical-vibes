@@ -58,9 +58,7 @@ public class InteractionState {
         copy.colorChoice = this.colorChoice != null ? this.colorChoice.deepCopy() : null;
         copy.librarySearch = this.librarySearch != null ? this.librarySearch.deepCopy() : null;
         LibraryViewState lvCopy = this.libraryView.deepCopy();
-        copy.libraryView.setReorder(lvCopy.reorderPlayerId(), lvCopy.reorderCards(), lvCopy.reorderToBottom());
         copy.libraryView.setReveal(lvCopy.revealPlayerId(), lvCopy.revealAllCards(), lvCopy.revealValidCardIds());
-        copy.libraryView.setHandTopBottom(lvCopy.handTopBottomPlayerId(), lvCopy.handTopBottomCards());
         copy.revealedHandChoice = this.revealedHandChoice != null ? this.revealedHandChoice.deepCopy() : null;
         MultiSelectionState msCopy = this.multiSelection.deepCopy();
         copy.multiSelection.setMultiPermanent(msCopy.multiPermanentPlayerId(), msCopy.multiPermanentValidIds(), msCopy.multiPermanentMaxCount());
@@ -473,31 +471,6 @@ public class InteractionState {
     }
 
     // ========================================================================
-    // Library reorder
-    // ========================================================================
-
-    public void beginLibraryReorder(UUID playerId, List<Card> cards, boolean toBottom) {
-        beginLibraryReorder(playerId, cards, toBottom, playerId);
-    }
-
-    public void beginLibraryReorder(UUID playerId, List<Card> cards, boolean toBottom, UUID deckOwnerId) {
-        this.awaitingInput = AwaitingInput.LIBRARY_REORDER;
-        this.libraryView.setReorder(playerId, cards, toBottom);
-        this.context = new InteractionContext.LibraryReorder(playerId, cards, toBottom, deckOwnerId);
-    }
-
-    public void clearLibraryReorder() {
-        this.libraryView.clearReorder();
-    }
-
-    public InteractionContext.LibraryReorder libraryReorderContext() {
-        if (context instanceof InteractionContext.LibraryReorder lr) return lr;
-        if (libraryView.reorderPlayerId() == null || libraryView.reorderCards() == null) return null;
-        return new InteractionContext.LibraryReorder(libraryView.reorderPlayerId(),
-                libraryView.reorderCards(), libraryView.reorderToBottom());
-    }
-
-    // ========================================================================
     // Library search
     // ========================================================================
 
@@ -590,27 +563,6 @@ public class InteractionState {
                 || libraryView.revealValidCardIds() == null) return null;
         return new InteractionContext.LibraryRevealChoice(libraryView.revealPlayerId(),
                 libraryView.revealAllCards(), libraryView.revealValidCardIds(), false);
-    }
-
-    // ========================================================================
-    // Hand top/bottom choice
-    // ========================================================================
-
-    public void beginHandTopBottomChoice(UUID playerId, List<Card> cards) {
-        this.awaitingInput = AwaitingInput.HAND_TOP_BOTTOM_CHOICE;
-        this.libraryView.setHandTopBottom(playerId, cards);
-        this.context = new InteractionContext.HandTopBottomChoice(playerId, cards);
-    }
-
-    public void clearHandTopBottomChoice() {
-        this.libraryView.clearHandTopBottom();
-    }
-
-    public InteractionContext.HandTopBottomChoice handTopBottomChoiceContext() {
-        if (context instanceof InteractionContext.HandTopBottomChoice htbc) return htbc;
-        if (libraryView.handTopBottomPlayerId() == null || libraryView.handTopBottomCards() == null) return null;
-        return new InteractionContext.HandTopBottomChoice(libraryView.handTopBottomPlayerId(),
-                libraryView.handTopBottomCards());
     }
 
     // ========================================================================

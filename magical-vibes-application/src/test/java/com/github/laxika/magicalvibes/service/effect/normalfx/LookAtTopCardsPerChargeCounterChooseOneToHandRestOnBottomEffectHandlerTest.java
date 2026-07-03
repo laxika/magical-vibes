@@ -8,6 +8,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.service.interaction.HandTopBottomChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -76,8 +79,13 @@ class LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandlerTest
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler = new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
+        InteractionHandlerRegistry interactionHandlerRegistry = new InteractionHandlerRegistry();
+        interactionHandlerRegistry.register(new HandTopBottomChoiceInteractionHandler(
+                sessionManager, cardViewFactory, gameBroadcastService, mock(TurnProgressionService.class)));
+        lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler =
+                new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler(gameBroadcastService, interactionHandlerRegistry);
 
     }
 

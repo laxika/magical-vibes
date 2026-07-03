@@ -16,4 +16,12 @@ public sealed interface InteractionAnswer {
     record ScryOrder(java.util.List<Integer> topCardOrder, java.util.List<Integer> bottomCardOrder)
             implements InteractionAnswer {
     }
+
+    /** One viewed card to hand and one on top of the library (the rest go to the bottom). */
+    record HandTopBottom(int handCardIndex, int topCardIndex) implements InteractionAnswer {
+    }
+
+    /** A full ordering of the viewed cards (indices into the viewed list). */
+    record CardOrder(java.util.List<Integer> cardOrder) implements InteractionAnswer {
+    }
 }

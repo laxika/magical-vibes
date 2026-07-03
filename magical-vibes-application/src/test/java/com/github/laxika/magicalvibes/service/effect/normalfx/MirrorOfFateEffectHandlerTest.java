@@ -38,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -56,6 +57,7 @@ class MirrorOfFateEffectHandlerTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
+    @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -268,6 +270,8 @@ class MirrorOfFateEffectHandlerTest {
                 exileSupport.handleMirrorOfFateChoice(gd, player,
                         List.of(card1.getId(), card2.getId()));
 
-                verify(playerInputService).beginLibraryReorderFromExile(eq(gd), eq(player1Id), anyList());
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof com.github.laxika.magicalvibes.model.PendingInteraction.LibraryReorder lr
+                                && lr.playerId().equals(player1Id)));
             }
 }

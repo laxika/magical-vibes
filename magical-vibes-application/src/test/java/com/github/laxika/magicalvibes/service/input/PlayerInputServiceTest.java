@@ -1027,45 +1027,6 @@ class PlayerInputServiceTest {
     }
 
     // ========================================================================
-    // beginLibraryReorderFromExile
-    // ========================================================================
-
-    @Nested
-    @DisplayName("beginLibraryReorderFromExile")
-    class BeginLibraryReorderFromExile {
-
-        @Test
-        @DisplayName("Sets interaction state to LIBRARY_REORDER")
-        void setsInteractionState() {
-            Card card = createCreature("Bear");
-            CardView cardView = mock(CardView.class);
-            when(cardViewFactory.create(card)).thenReturn(cardView);
-
-            svc.beginLibraryReorderFromExile(gd, PLAYER1_ID, List.of(card));
-
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        }
-
-        @Test
-        @DisplayName("Sends ReorderLibraryCardsMessage with card views")
-        void sendsMessage() {
-            Card card1 = createCreature("Alpha");
-            Card card2 = createCreature("Beta");
-            CardView view1 = mock(CardView.class);
-            CardView view2 = mock(CardView.class);
-            when(cardViewFactory.create(card1)).thenReturn(view1);
-            when(cardViewFactory.create(card2)).thenReturn(view2);
-
-            svc.beginLibraryReorderFromExile(gd, PLAYER1_ID, List.of(card1, card2));
-
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ReorderLibraryCardsMessage msg = (ReorderLibraryCardsMessage) messageCaptor.getValue();
-            assertThat(msg.cards()).containsExactly(view1, view2);
-            assertThat(msg.prompt()).contains("top of your library");
-        }
-    }
-
-    // ========================================================================
     // processNextMayAbility
     // ========================================================================
 

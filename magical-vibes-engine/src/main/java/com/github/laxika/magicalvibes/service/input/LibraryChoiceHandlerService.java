@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKarnScionRevealChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -77,145 +78,9 @@ public class LibraryChoiceHandlerService {
     private final PlayerInputService playerInputService;
     private final EffectResolutionService effectResolutionService;
     private final ExileService exileService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
 
-    public void handleLibraryCardsReordered(GameData gameData, Player player, List<Integer> cardOrder) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.LIBRARY_REORDER)) {
-            throw new IllegalStateException("Not awaiting library reorder");
-        }
-        InteractionContext.LibraryReorder libraryReorder = gameData.interaction.libraryReorderContext();
-        if (libraryReorder == null || !player.getId().equals(libraryReorder.playerId())) {
-            throw new IllegalStateException("Not your turn to reorder");
-        }
-
-        List<Card> reorderCards = libraryReorder.cards();
-        int count = reorderCards.size();
-
-        if (cardOrder.size() != count) {
-            throw new IllegalStateException("Must specify order for all " + count + " cards");
-        }
-
-        // Validate that cardOrder is a permutation of 0..count-1
-        Set<Integer> seen = new HashSet<>();
-        for (int idx : cardOrder) {
-            if (idx < 0 || idx >= count) {
-                throw new IllegalStateException("Invalid card index: " + idx);
-            }
-            if (!seen.add(idx)) {
-                throw new IllegalStateException("Duplicate card index: " + idx);
-            }
-        }
-
-        // Apply the reorder: replace top N cards of deck with the reordered ones
-        UUID reorderDeckOwnerId = libraryReorder.deckOwnerId() != null ? libraryReorder.deckOwnerId() : player.getId();
-        List<Card> deck = gameData.playerDecks.get(reorderDeckOwnerId);
-
-        if (libraryReorder.toBottom()) {
-            for (int i = 0; i < count; i++) {
-                deck.add(reorderCards.get(cardOrder.get(i)));
-            }
-        } else {
-            for (int i = 0; i < count; i++) {
-                deck.add(i, reorderCards.get(cardOrder.get(i)));
-            }
-        }
-
-        // Clear awaiting state
-        gameData.interaction.clearAwaitingInput();
-        boolean reorderedToBottom = libraryReorder.toBottom();
-        gameData.interaction.clearLibraryReorder();
-
-        String logMsg = reorderedToBottom
-                ? player.getUsername() + " puts " + count + " cards on the bottom of their library."
-                : player.getUsername() + " puts " + count + " cards back on top of their library.";
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} reordered {} {} cards", gameData.id, player.getUsername(), count,
-                reorderedToBottom ? "bottom" : "top");
-
-        if (reorderedToBottom && !gameData.pendingLibraryBottomReorders.isEmpty()) {
-            warpWorldService.beginNextPendingLibraryBottomReorder(gameData);
-            return;
-        }
-        if (reorderedToBottom && gameData.warpWorldOperation.sourceName != null) {
-            warpWorldService.finalizePendingWarpWorld(gameData);
-        }
-
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        // Resume resolving remaining effects on the same spell/ability
-        // (e.g. Ponder: "Look at top 3, reorder, you may shuffle, then draw a card.")
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        turnProgressionService.resolveAutoPass(gameData);
-    }
-
-    public void handleHandTopBottomChosen(GameData gameData, Player player, int handCardIndex, int topCardIndex) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.HAND_TOP_BOTTOM_CHOICE)) {
-            throw new IllegalStateException("Not awaiting hand/top/bottom choice");
-        }
-        InteractionContext.HandTopBottomChoice handTopBottomChoice = gameData.interaction.handTopBottomChoiceContext();
-        if (handTopBottomChoice == null || !player.getId().equals(handTopBottomChoice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-
-        List<Card> handTopBottomCards = handTopBottomChoice.cards();
-        int count = handTopBottomCards.size();
-
-        if (handCardIndex < 0 || handCardIndex >= count) {
-            throw new IllegalStateException("Invalid hand card index: " + handCardIndex);
-        }
-        if (topCardIndex < 0 || topCardIndex >= count) {
-            throw new IllegalStateException("Invalid top card index: " + topCardIndex);
-        }
-        if (handCardIndex == topCardIndex) {
-            throw new IllegalStateException("Hand and top card indices must be different");
-        }
-
-        UUID playerId = player.getId();
-        List<Card> deck = gameData.playerDecks.get(playerId);
-
-        // Put the chosen card into hand
-        Card handCard = handTopBottomCards.get(handCardIndex);
-        gameData.addCardToHand(playerId, handCard);
-
-        // Put the chosen card on top of library
-        Card topCard = handTopBottomCards.get(topCardIndex);
-        deck.add(0, topCard);
-
-        // Put the remaining card on the bottom of library
-        for (int i = 0; i < count; i++) {
-            if (i != handCardIndex && i != topCardIndex) {
-                deck.add(handTopBottomCards.get(i));
-            }
-        }
-
-        // Clear awaiting state
-        gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearHandTopBottomChoice();
-
-        String logMsg;
-        if (count == 2) {
-            logMsg = player.getUsername() + " puts one card into their hand and one on top of their library.";
-        } else {
-            logMsg = player.getUsername() + " puts one card into their hand, one on top of their library, and one on the bottom.";
-        }
-        gameBroadcastService.logAndBroadcast(gameData, logMsg);
-        log.info("Game {} - {} completed hand/top/bottom choice", gameData.id, player.getUsername());
-
-        turnProgressionService.resolveAutoPass(gameData);
-    }
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.LIBRARY_SEARCH)) {
@@ -353,15 +218,11 @@ public class LibraryChoiceHandlerService {
             if (sourceCards.size() > 1) {
                 boolean toBottom = !reorderRemainingToTop;
                 UUID reorderPlayerId = reorderRemainingToTop ? playerId : deckOwnerId;
-                gameData.interaction.beginLibraryReorder(reorderPlayerId, sourceCards, toBottom, deckOwnerId);
-                List<CardView> cardViews = sourceCards.stream().map(cardViewFactory::create).toList();
                 String reorderPrompt = toBottom
                         ? "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
                         : "Put these cards back on top of your library in any order (top to bottom).";
-                sessionManager.sendToPlayer(reorderPlayerId, new ReorderLibraryCardsMessage(
-                        cardViews,
-                        reorderPrompt
-                ));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                        reorderPlayerId, sourceCards, toBottom, deckOwnerId, reorderPrompt));
                 return;
             } else if (sourceCards.size() == 1) {
                 if (reorderRemainingToTop) {
@@ -1044,12 +905,9 @@ public class LibraryChoiceHandlerService {
         }
 
         if (reorderRemainingToBottom && remainingCards.size() > 1) {
-            gameData.interaction.beginLibraryReorder(controllerId, remainingCards, true);
-            List<CardView> cardViews = remainingCards.stream().map(cardViewFactory::create).toList();
-            sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
-                    cardViews,
-                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."
-            ));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    controllerId, remainingCards, true, controllerId,
+                    "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
             log.info("Game {} - {} reveals {} creature cards to hand, reordering {} remaining",
                     gameData.id, playerName, selectedCards.size(), remainingCards.size());
             return;

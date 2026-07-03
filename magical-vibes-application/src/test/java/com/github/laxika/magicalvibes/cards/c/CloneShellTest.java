@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -95,7 +96,7 @@ class CloneShellTest extends BaseCardTest {
 
         // Remaining 3 cards should be awaiting reorder
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
-        assertThat(gd.interaction.libraryView().reorderCards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards()).hasSize(3);
     }
 
     @Test
@@ -118,7 +119,7 @@ class CloneShellTest extends BaseCardTest {
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0); // exile Grizzly Bears
 
         // Reorder remaining: Shock(0), Plains(1), Llanowar Elves(2)
-        List<Card> remaining = gd.interaction.libraryView().reorderCards();
+        List<Card> remaining = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class).cards();
         int iShock = indexOf(remaining, "Shock");
         int iPlains = indexOf(remaining, "Plains");
         int iElves = indexOf(remaining, "Llanowar Elves");

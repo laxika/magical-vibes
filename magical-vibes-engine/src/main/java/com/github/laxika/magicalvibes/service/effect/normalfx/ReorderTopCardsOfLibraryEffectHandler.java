@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -67,8 +68,7 @@ import org.springframework.stereotype.Component;
 public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -98,13 +98,9 @@ public class ReorderTopCardsOfLibraryEffectHandler implements NormalEffectHandle
         List<Card> topCards = new ArrayList<>(deck.subList(0, count));
         deck.subList(0, count).clear();
 
-        gameData.interaction.beginLibraryReorder(controllerId, topCards, false);
-
-        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ReorderLibraryCardsMessage(
-                cardViews,
-                "Put these cards back on top of your library in any order (top to bottom)."
-        ));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                controllerId, topCards, false, controllerId,
+                "Put these cards back on top of your library in any order (top to bottom)."));
 
         String logMsg = gameData.playerIdToName.get(controllerId) + " looks at the top " + count + " cards of their library.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);

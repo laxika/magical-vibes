@@ -17,7 +17,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingKarnRestart, PendingKnowledgePoolCast,
-        PendingInteraction.XValueChoice, PendingInteraction.Scry {
+        PendingInteraction.XValueChoice, PendingInteraction.Scry,
+        PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -33,5 +34,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
     /** Scry N: {@code cards} are held out of the library while the player splits them top/bottom. */
     record Scry(UUID playerId, java.util.List<Card> cards) implements PendingInteraction {
+    }
+
+    /** "Look at the top N cards: one to hand, one on top, rest on the bottom" (e.g. Anticipate-style picks). */
+    record HandTopBottomChoice(UUID playerId, java.util.List<Card> cards) implements PendingInteraction {
+    }
+
+    /**
+     * Put the given cards on the top (or bottom) of {@code deckOwnerId}'s library in an order
+     * of the deciding player's choosing. {@code prompt} is the exact text shown at begin time
+     * (also re-sent on reconnect).
+     */
+    record LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
+                          UUID deckOwnerId, String prompt) implements PendingInteraction {
     }
 }

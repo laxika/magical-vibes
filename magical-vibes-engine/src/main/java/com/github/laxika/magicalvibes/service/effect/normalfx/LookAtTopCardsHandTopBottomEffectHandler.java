@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -68,8 +69,7 @@ import org.springframework.stereotype.Component;
 public class LookAtTopCardsHandTopBottomEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final LibraryRevealSupport libraryRevealSupport;
 
     @Override
@@ -96,13 +96,8 @@ public class LookAtTopCardsHandTopBottomEffectHandler implements NormalEffectHan
             return;
         }
 
-        gameData.interaction.beginHandTopBottomChoice(controllerId, topCards);
-
-        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseHandTopBottomMessage(
-                cardViews,
-                "Look at the top " + count + " cards of your library. Choose one to put into your hand."
-        ));
+        interactionHandlerRegistry.begin(gameData,
+                new PendingInteraction.HandTopBottomChoice(controllerId, topCards));
 
         gameBroadcastService.logAndBroadcast(gameData,
                 playerName + " looks at the top " + LibraryRevealSupport.pluralCards(count) + " of their library.");

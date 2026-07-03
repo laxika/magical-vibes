@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -52,6 +53,7 @@ public class ExileSupport {
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void exileAndScheduleReturn(GameData gameData, StackEntry entry,
                                         Permanent permanent, UUID ownerId, boolean returnTapped) {
@@ -294,7 +296,9 @@ public class ExileSupport {
             gameBroadcastService.logAndBroadcast(gameData, putLog);
             log.info("Game {} - {} puts {} exiled cards on top of library, awaiting order (Mirror of Fate)",
                     gameData.id, controllerName, chosenCards.size());
-            playerInputService.beginLibraryReorderFromExile(gameData, controllerId, chosenCards);
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
+                    controllerId, chosenCards, false, controllerId,
+                    "Put these cards on top of your library in any order (top to bottom)."));
             gameBroadcastService.broadcastGameState(gameData);
         }
     }

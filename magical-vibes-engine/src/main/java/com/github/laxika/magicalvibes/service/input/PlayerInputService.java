@@ -382,17 +382,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose exiled cards for Mirror of Fate (up to {})", gameData.id, playerName, maxCount);
     }
 
-    public void beginLibraryReorderFromExile(GameData gameData, UUID playerId, List<Card> cards) {
-        gameData.interaction.beginLibraryReorder(playerId, cards, false);
-        List<CardView> cardViews = cards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, playerId),
-                new ReorderLibraryCardsMessage(cardViews,
-                        "Put these cards on top of your library in any order (top to bottom)."));
-
-        String playerName = gameData.playerIdToName.get(playerId);
-        log.info("Game {} - Awaiting {} to order {} cards on top of library", gameData.id, playerName, cards.size());
-    }
-
     public void processNextMayAbility(GameData gameData) {
         if (gameData.pendingMayAbilities.isEmpty()) {
             return;

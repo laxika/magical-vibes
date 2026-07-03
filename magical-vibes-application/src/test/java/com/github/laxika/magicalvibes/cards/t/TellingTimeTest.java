@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -67,8 +68,8 @@ class TellingTimeTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(3);
     }
 
     @Test
@@ -156,8 +157,8 @@ class TellingTimeTest extends BaseCardTest {
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
 
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.libraryView().handTopBottomPlayerId()).isNull();
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class)).isNull();
     }
 
     // ===== Library edge cases =====
@@ -180,7 +181,7 @@ class TellingTimeTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
-        assertThat(gd.interaction.libraryView().handTopBottomCards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(2);
 
         // Choose cardA for hand, cardB for top
         harness.getGameService().handleHandTopBottomChosen(gd, player1, 0, 1);
