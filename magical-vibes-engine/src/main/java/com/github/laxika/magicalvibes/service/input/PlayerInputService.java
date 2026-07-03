@@ -305,16 +305,9 @@ public class PlayerInputService {
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards, UUID targetPlayerId, String cardName) {
         List<UUID> validCardIds = matchingCards.stream().map(Card::getId).toList();
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        int maxCount = matchingCards.size();
 
-        gameData.interaction.beginMultiZoneExileChoice(choosingPlayerId, new HashSet<>(validCardIds), maxCount, targetPlayerId, choosingPlayerId, cardName);
-        sessionManager.sendToPlayer(resolveMessageRecipient(gameData, choosingPlayerId), new ChooseMultipleCardsMessage(
-                validCardIds, cardViews, maxCount,
-                "Choose any number of cards named \"" + cardName + "\" to exile."));
-
-        String playerName = gameData.playerIdToName.get(choosingPlayerId);
-        log.info("Game {} - Awaiting {} to choose cards to exile (up to {})", gameData.id, playerName, maxCount);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
+                choosingPlayerId, validCardIds, matchingCards.size(), targetPlayerId, choosingPlayerId, cardName));
     }
 
     public void beginImprintFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID sourcePermanentId) {

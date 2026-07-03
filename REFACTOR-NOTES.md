@@ -184,6 +184,17 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   `PlayerInputService.sendKnowledgePoolCastChoice` / `sendMirrorOfFateChoice`.
   AI: `KnowledgePoolCastChoiceAiStrategy` (first card) + `MirrorOfFateChoiceAiStrategy`
   (keep max) replace the enum blocks at the top of `AiChoiceHandler.handleMultiCardChoice`.
+- `PendingInteraction.MultiZoneExileChoice` (MULTI_ZONE_EXILE_CHOICE, e.g. Memoricide /
+  Surgical Extraction), third user of `InteractionAnswer.CardsChosen`. The begin helper
+  `PlayerInputService.beginMultiZoneExileChoice(gameData, playerId, matchingCards, target,
+  name)` keeps its two callers and now builds the record; the handler's prompt re-derives
+  card views by the same hand → graveyard → library scan both begin sites use to build
+  `matchingCards` (and that the legacy replay used), so begin and replay are identical.
+  Answer stays in `ChoiceHandlerService.handleMultiZoneExileCardsChosen` (reads the active
+  record; validation/error texts unchanged). Removed: the `InteractionContext` record +
+  cases, the `InteractionState` begin/clear/context trio, and the multi-zone-exile fields
+  of `MultiSelectionState` (now holds only multi-permanent + multi-graveyard).
+  AI: `MultiZoneExileChoiceAiStrategy` (exile all).
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to

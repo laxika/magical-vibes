@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.MayAbilityChoiceInteractionHandler;
+import com.github.laxika.magicalvibes.service.interaction.MultiZoneExileChoiceInteractionHandler;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -74,6 +75,8 @@ class PlayerInputServiceTest {
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry();
         registry.register(new MayAbilityChoiceInteractionHandler(
                 sessionManager, mock(MayAbilityHandlerService.class)));
+        registry.register(new MultiZoneExileChoiceInteractionHandler(
+                sessionManager, cardViewFactory, mock(ChoiceHandlerService.class)));
         svc = new PlayerInputService(sessionManager, cardViewFactory, registry);
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
@@ -811,6 +814,7 @@ class PlayerInputServiceTest {
         @DisplayName("Sets interaction state to MULTI_ZONE_EXILE_CHOICE")
         void setsInteractionState() {
             Card card = createCreature("Bear");
+            gd.playerHands.get(PLAYER2_ID).add(card);
             CardView cardView = mock(CardView.class);
             when(cardViewFactory.create(card)).thenReturn(cardView);
 
@@ -824,6 +828,8 @@ class PlayerInputServiceTest {
         void sendsMessage() {
             Card card1 = createCreature("Bear");
             Card card2 = createCreature("Bear");
+            gd.playerHands.get(PLAYER2_ID).add(card1);
+            gd.playerGraveyards.get(PLAYER2_ID).add(card2);
             CardView view1 = mock(CardView.class);
             CardView view2 = mock(CardView.class);
             when(cardViewFactory.create(card1)).thenReturn(view1);

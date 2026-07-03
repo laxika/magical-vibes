@@ -62,7 +62,6 @@ public class InteractionState {
         MultiSelectionState msCopy = this.multiSelection.deepCopy();
         copy.multiSelection.setMultiPermanent(msCopy.multiPermanentPlayerId(), msCopy.multiPermanentValidIds(), msCopy.multiPermanentMaxCount());
         copy.multiSelection.setMultiGraveyard(msCopy.multiGraveyardPlayerId(), msCopy.multiGraveyardValidCardIds(), msCopy.multiGraveyardMaxCount());
-        copy.multiSelection.setMultiZoneExile(msCopy.multiZoneExilePlayerId(), msCopy.multiZoneExileValidCardIds(), msCopy.multiZoneExileMaxCount());
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
@@ -620,30 +619,6 @@ public class InteractionState {
             this.revealedHandChoice = new RevealedHandChoiceState(null, null, null, 0, false, null);
         }
         return this.revealedHandChoice;
-    }
-
-    // ========================================================================
-    // Multi-zone exile choice
-    // ========================================================================
-
-    public void beginMultiZoneExileChoice(UUID playerId, Set<UUID> validCardIds, int maxCount,
-                                          UUID targetPlayerId, UUID controllerId, String cardName) {
-        this.awaitingInput = AwaitingInput.MULTI_ZONE_EXILE_CHOICE;
-        this.multiSelection.setMultiZoneExile(playerId, new HashSet<>(validCardIds), maxCount);
-        this.context = new InteractionContext.MultiZoneExileChoice(playerId, new HashSet<>(validCardIds),
-                maxCount, targetPlayerId, controllerId, cardName);
-    }
-
-    public void clearMultiZoneExileChoice() {
-        this.multiSelection.clearMultiZoneExile();
-    }
-
-    public InteractionContext.MultiZoneExileChoice multiZoneExileChoiceContext() {
-        if (context instanceof InteractionContext.MultiZoneExileChoice mzec) return mzec;
-        if (multiSelection.multiZoneExilePlayerId() == null || multiSelection.multiZoneExileValidCardIds() == null) return null;
-        return new InteractionContext.MultiZoneExileChoice(multiSelection.multiZoneExilePlayerId(),
-                multiSelection.multiZoneExileValidCardIds(), multiSelection.multiZoneExileMaxCount(),
-                null, null, null);
     }
 
 }

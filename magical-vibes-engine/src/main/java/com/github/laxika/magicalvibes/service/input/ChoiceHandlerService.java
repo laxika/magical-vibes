@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -867,13 +868,14 @@ public class ChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_ZONE_EXILE_CHOICE)) {
             throw new IllegalStateException("Not awaiting multi-zone exile choice");
         }
-        InteractionContext.MultiZoneExileChoice ctx = gameData.interaction.multiZoneExileChoiceContext();
+        PendingInteraction.MultiZoneExileChoice ctx =
+                gameData.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
         if (ctx == null || !player.getId().equals(ctx.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         // Validate selected card IDs against valid set
-        Set<UUID> validIds = ctx.validCardIds();
+        List<UUID> validIds = ctx.validCardIds();
         for (UUID id : cardIds) {
             if (!validIds.contains(id)) {
                 throw new IllegalStateException("Invalid card ID: " + id);
@@ -881,7 +883,6 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearMultiZoneExileChoice();
 
         UUID targetPlayerId = ctx.targetPlayerId();
         UUID controllerId = ctx.controllerId();

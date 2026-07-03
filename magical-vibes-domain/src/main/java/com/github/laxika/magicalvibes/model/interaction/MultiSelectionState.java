@@ -5,7 +5,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Groups multi-permanent choice, multi-graveyard choice, and multi-zone exile choice state.
+ * Groups multi-permanent choice and multi-graveyard choice state.
  */
 public class MultiSelectionState {
 
@@ -14,15 +14,10 @@ public class MultiSelectionState {
     private Set<UUID> multiPermanentValidIds;
     private int multiPermanentMaxCount;
 
-    // Multi-graveyard choice (also used for knowledge pool cast choice)
+    // Multi-graveyard choice
     private UUID multiGraveyardPlayerId;
     private Set<UUID> multiGraveyardValidCardIds;
     private int multiGraveyardMaxCount;
-
-    // Multi-zone exile choice
-    private UUID multiZoneExilePlayerId;
-    private Set<UUID> multiZoneExileValidCardIds;
-    private int multiZoneExileMaxCount;
 
     public MultiSelectionState() {
     }
@@ -79,32 +74,6 @@ public class MultiSelectionState {
         return multiGraveyardMaxCount;
     }
 
-    // --- Multi-zone exile choice ---
-
-    public void setMultiZoneExile(UUID playerId, Set<UUID> validCardIds, int maxCount) {
-        this.multiZoneExilePlayerId = playerId;
-        this.multiZoneExileValidCardIds = validCardIds;
-        this.multiZoneExileMaxCount = maxCount;
-    }
-
-    public void clearMultiZoneExile() {
-        this.multiZoneExilePlayerId = null;
-        this.multiZoneExileValidCardIds = null;
-        this.multiZoneExileMaxCount = 0;
-    }
-
-    public UUID multiZoneExilePlayerId() {
-        return multiZoneExilePlayerId;
-    }
-
-    public Set<UUID> multiZoneExileValidCardIds() {
-        return multiZoneExileValidCardIds;
-    }
-
-    public int multiZoneExileMaxCount() {
-        return multiZoneExileMaxCount;
-    }
-
     public MultiSelectionState deepCopy() {
         MultiSelectionState copy = new MultiSelectionState();
         copy.multiPermanentPlayerId = this.multiPermanentPlayerId;
@@ -113,9 +82,6 @@ public class MultiSelectionState {
         copy.multiGraveyardPlayerId = this.multiGraveyardPlayerId;
         copy.multiGraveyardValidCardIds = this.multiGraveyardValidCardIds != null ? new HashSet<>(this.multiGraveyardValidCardIds) : null;
         copy.multiGraveyardMaxCount = this.multiGraveyardMaxCount;
-        copy.multiZoneExilePlayerId = this.multiZoneExilePlayerId;
-        copy.multiZoneExileValidCardIds = this.multiZoneExileValidCardIds != null ? new HashSet<>(this.multiZoneExileValidCardIds) : null;
-        copy.multiZoneExileMaxCount = this.multiZoneExileMaxCount;
         return copy;
     }
 }

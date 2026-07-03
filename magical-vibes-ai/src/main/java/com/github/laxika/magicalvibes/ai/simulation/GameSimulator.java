@@ -590,7 +590,7 @@ public class GameSimulator {
                 }
             }
             case MULTI_ZONE_EXILE_CHOICE -> {
-                var mzec = gd.interaction.multiZoneExileChoiceContext();
+                var mzec = gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
                 if (mzec != null && mzec.validCardIds() != null && !mzec.validCardIds().isEmpty()) {
                     List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
@@ -669,6 +669,7 @@ public class GameSimulator {
                 case PendingInteraction.MayAbilityChoice mc -> mc.playerId();
                 case PendingInteraction.KnowledgePoolCastChoice kpc -> kpc.playerId();
                 case PendingInteraction.MirrorOfFateChoice mfc -> mfc.playerId();
+                case PendingInteraction.MultiZoneExileChoice mzec -> mzec.playerId();
                 default -> null;
             };
         }
@@ -686,7 +687,6 @@ public class GameSimulator {
             case InteractionContext.LibrarySearch ls -> ls.playerId();
             case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();
-            case InteractionContext.MultiZoneExileChoice mzec -> mzec.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
         };
     }

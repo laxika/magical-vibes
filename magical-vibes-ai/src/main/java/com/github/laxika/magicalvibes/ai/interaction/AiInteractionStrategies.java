@@ -23,6 +23,7 @@ public final class AiInteractionStrategies {
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
+        register(new MultiZoneExileChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

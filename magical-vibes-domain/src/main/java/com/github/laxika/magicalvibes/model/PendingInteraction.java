@@ -20,7 +20,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.XValueChoice, PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
-        PendingInteraction.MirrorOfFateChoice {
+        PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -76,6 +76,17 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * exile zone at prompt time.
      */
     record MirrorOfFateChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
+            implements PendingInteraction {
+    }
+
+    /**
+     * "Exile any number of cards named X" from {@code targetPlayerId}'s hand, graveyard, and
+     * library (e.g. Memoricide-style effects). {@code validCardIds} keeps the begin-time
+     * hand → graveyard → library scan order; views are re-derived by the same scan at prompt
+     * time. {@code controllerId} is the effect's controller (same as the deciding player).
+     */
+    record MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
+                                UUID targetPlayerId, UUID controllerId, String cardName)
             implements PendingInteraction {
     }
 }

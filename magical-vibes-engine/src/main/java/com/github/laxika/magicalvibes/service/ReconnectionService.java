@@ -148,12 +148,6 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, rhc);
                 }
             }
-            case MULTI_ZONE_EXILE_CHOICE -> {
-                InteractionContext.MultiZoneExileChoice mzec = gameData.interaction.multiZoneExileChoiceContext();
-                if (mzec != null) {
-                    resendFromContext(gameData, playerId, mzec);
-                }
-            }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
                 InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
@@ -341,33 +335,6 @@ public class ReconnectionService {
                 List<Integer> validIndices = new ArrayList<>(rhc.validIndices());
                 sessionManager.sendToPlayer(playerId, new ChooseFromRevealedHandMessage(
                         cardViews, validIndices, "Choose a card to put on top of " + targetName + "'s library."));
-            }
-            case InteractionContext.MultiZoneExileChoice mzec -> {
-                if (!playerId.equals(mzec.playerId())) {
-                    return;
-                }
-                List<UUID> validCardIds = new ArrayList<>(mzec.validCardIds());
-                List<CardView> cardViews = new ArrayList<>();
-                // Collect CardViews from hand, graveyard, and library of target player
-                UUID targetPid = mzec.targetPlayerId();
-                for (Card card : gameData.playerHands.getOrDefault(targetPid, List.of())) {
-                    if (mzec.validCardIds().contains(card.getId())) {
-                        cardViews.add(cardViewFactory.create(card));
-                    }
-                }
-                for (Card card : gameData.playerGraveyards.getOrDefault(targetPid, List.of())) {
-                    if (mzec.validCardIds().contains(card.getId())) {
-                        cardViews.add(cardViewFactory.create(card));
-                    }
-                }
-                for (Card card : gameData.playerDecks.getOrDefault(targetPid, List.of())) {
-                    if (mzec.validCardIds().contains(card.getId())) {
-                        cardViews.add(cardViewFactory.create(card));
-                    }
-                }
-                sessionManager.sendToPlayer(playerId, new ChooseMultipleCardsMessage(
-                        validCardIds, cardViews, mzec.maxCount(),
-                        "Choose any number of cards named \"" + mzec.cardName() + "\" to exile."));
             }
             case InteractionContext.CombatDamageAssignment cda -> {
                 if (!playerId.equals(cda.playerId())) {

@@ -140,7 +140,6 @@ public class GameService {
             case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
-            case InteractionContext.MultiZoneExileChoice mzec -> controlledId.equals(mzec.playerId());
         };
     }
 
@@ -500,8 +499,6 @@ public class GameService {
             }
             if (gameData.interaction.awaitingInputType() == AwaitingInput.LIBRARY_REVEAL_CHOICE) {
                 libraryChoiceHandlerService.handleLibraryRevealChoice(gameData, player, cardIds);
-            } else if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
-                listChoiceHandlerService.handleMultiZoneExileCardsChosen(gameData, player, cardIds);
             } else {
                 graveyardChoiceHandlerService.handleMultipleCardsChosen(gameData, player, cardIds);
             }

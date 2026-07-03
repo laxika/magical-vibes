@@ -426,21 +426,11 @@ class AiChoiceHandler {
     // ===== Multi-Graveyard Choice =====
 
     void handleMultiCardChoice(GameData gameData) {
-        // Knowledge Pool cast choice / Mirror of Fate choice (registry-managed)
+        // Knowledge Pool / Mirror of Fate / multi-zone exile choices (registry-managed)
         if (gameData.interaction.awaitingInputType() == AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE
-                || gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE) {
+                || gameData.interaction.awaitingInputType() == AwaitingInput.MIRROR_OF_FATE_CHOICE
+                || gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
             handleActiveInteraction(gameData);
-            return;
-        }
-
-        // Multi-zone exile choice (Memoricide, etc.)
-        if (gameData.interaction.awaitingInputType() == AwaitingInput.MULTI_ZONE_EXILE_CHOICE) {
-            InteractionContext.MultiZoneExileChoice mzec = gameData.interaction.multiZoneExileChoiceContext();
-            if (mzec != null && aiPlayerId.equals(mzec.playerId())) {
-                List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
-                log.info("AI: Exiling {} cards named \"{}\" in game {}", chosen.size(), mzec.cardName(), gameId);
-                send(() -> gameActions.handleMultipleCardsChosen(selfConnection, new MultipleCardsChosenRequest(chosen)));
-            }
             return;
         }
 
