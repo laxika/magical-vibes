@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -49,7 +48,6 @@ public class GameService {
     private final TurnProgressionService turnProgressionService;
     private final CardChoiceHandlerService cardChoiceHandlerService;
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
-    private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
     private final SpellCastingService spellCastingService;
@@ -130,7 +128,6 @@ public class GameService {
             case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
             case InteractionContext.CardChoice cc -> controlledId.equals(cc.playerId());
             case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
-            case InteractionContext.GraveyardChoice gc -> controlledId.equals(gc.playerId());
             case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
             case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
@@ -476,10 +473,9 @@ public class GameService {
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            if (gameData.interaction.awaitingInputType() == AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE) {
-                abilityActivationService.handleActivatedAbilityGraveyardExileCostChosen(gameData, player, cardIndex);
-            } else {
-                graveyardChoiceHandlerService.handleGraveyardCardChosen(gameData, player, cardIndex);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.GraveyardCardChosen(cardIndex))) {
+                throw new IllegalStateException("Not awaiting graveyard choice");
             }
         }
     }

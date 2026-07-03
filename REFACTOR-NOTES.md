@@ -315,6 +315,52 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   validIndices()` mirror reads → record accessors (discard-flow `cardChoice()` reads stay
   legacy); `PlayerInputServiceTest`'s begin-helper block moved into the new focused
   `RevealedHandChoiceInteractionHandlerTest`.
+- `PendingInteraction.GraveyardChoice` + `PendingInteraction.GraveyardExileCostChoice`
+  (GRAVEYARD_CHOICE / ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE), migrated together as
+  **two records** because the code separates them cleanly: different answer services
+  (`GraveyardChoiceHandlerService.handleGraveyardCardChosen` vs
+  `AbilityActivationService.handleActivatedAbilityGraveyardExileCostChosen`), different begin
+  shapes (the exile-cost begin was a direct `interaction.beginGraveyardChoice(...,null,null)` +
+  `setAwaitingInput` enum-override hack + its own send with no log line — the new handler
+  likewise emits no prompt log), and only shared plumbing at the wire entry. Both answered via
+  the new `InteractionAnswer.GraveyardCardChosen`; `GameService.handleGraveyardCardChosen` was
+  single-family, so it now dispatches through the registry and a miss throws the same
+  "Not awaiting graveyard choice" (the per-kind enum branch is gone; GameService lost its
+  `GraveyardChoiceHandlerService` dep). `GraveyardChoice` carries all twelve auxiliary fields
+  of the deleted `GraveyardChoiceState` (destination, cardPool — non-null drives the message's
+  all-graveyards flag —, gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor,
+  grantSubtype, exileRemainingCount, gainLifeIfCreature amount+player,
+  trackWithSourcePermanentId, the four-part may-ability context) plus the begin-time `prompt`
+  and ordered `validIndices`; a nested `Builder` (LibrarySearchParams precedent) mirrors the
+  legacy pre-seed setters, so the two-step `prepareGraveyardChoice` + `setGraveyardChoice*` +
+  `beginGraveyardChoice`-with-aux-preserving-merge dance collapses to one `registry.begin` at
+  all eight begin sites (`GraveyardReturnSupport` ×4 incl. the return-queue continuation,
+  `TargetPlayerExilesCardFromGraveyardEffectHandler`, `MayAbilityHandlerService` ×2 may-ability
+  targeting, `MayPenaltyChoiceHandlerService`) and the mid-flow exile-countdown re-begin in the
+  answer handler; `PlayerInputService.beginGraveyardChoice` deleted (its "Awaiting {} to choose
+  a card from graveyard" log moved into the GRAVEYARD_CHOICE handler's prompt). The dead
+  `setGraveyardChoiceTrackWithSourcePermanentId` setter (no callers) is gone; the record keeps
+  the field for the answer's exile-tracking branch (still always null, as legacy).
+  **Replay-fidelity corrections**: the legacy replay sent a generic "Choose a card from the
+  graveyard." for BOTH kinds — wrong for every varied begin prompt ("Return a creature card
+  from your graveyard to your hand.", "Choose a card to exile from your graveyard.", the
+  exile-cost prompt, …) — and hash-scrambled the index order; replay now re-sends the
+  begin-time prompt and ordered indices. The exile-cost begin also previously sent to the
+  deciding player without the mind-control recipient redirect; `registry.begin` applies it
+  uniformly (COLOR_CHOICE precedent). `AbilityActivationService.clearPendingAbilityActivation`
+  lost its redundant `clearGraveyardChoice()`. Removed: the `InteractionContext.GraveyardChoice`
+  record + all cases, the `InteractionState` begin/clear/prepare/8-setter/context/accessor set
+  + the lazy `ensureGraveyardChoice`, and **`GraveyardChoiceState` deleted entirely**.
+  AI: `GraveyardChoiceAiStrategy` + `GraveyardExileCostChoiceAiStrategy` (both the legacy
+  highest-mana-value heuristic; the choice strategy reads the record's card pool for
+  cross-graveyard picks) — no difficulty overrides existed; `AiChoiceHandler.handleGraveyardChoice`
+  is a thin alias to `handleActiveInteraction`; `GameSimulator`'s combined resolve case split
+  per record type and `getInteractionPlayer` gained both decider cases. Tests: only two
+  accessor rewrites were needed (`BeaconOfUnrestTest` cardPool, `EntomberExarchTest`
+  validIndices — the ~50 other graveyard tests assert only the enum);
+  `ReturnCardFromGraveyardEffectHandlerTest` verifies `registry.begin` (mocked registry added
+  to its `@InjectMocks` support); `PlayerInputServiceTest`'s begin-helper block moved into the
+  new focused `GraveyardChoiceInteractionHandlersTest` (both kinds).
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -337,8 +383,8 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 
 ### Stage 3 continuation — migrate the remaining kinds
 
-Suggested order: the card/graveyard/permanent choice families (CARD_CHOICE, DISCARD_CHOICE,
-PERMANENT_CHOICE, GRAVEYARD_CHOICE),
+Suggested order: the card/permanent choice families (CARD_CHOICE, DISCARD_CHOICE,
+PERMANENT_CHOICE),
 LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
 declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 

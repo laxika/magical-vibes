@@ -1058,8 +1058,6 @@ public class GameData {
                     targetInteraction.beginCardChoice(cc.type(), cc.playerId(), cc.validIndices(), cc.targetId());
             case InteractionContext.PermanentChoice pc ->
                     targetInteraction.beginPermanentChoice(pc.playerId(), pc.validIds(), pc.context());
-            case InteractionContext.GraveyardChoice gc ->
-                    targetInteraction.beginGraveyardChoice(gc.playerId(), gc.validIndices(), gc.destination(), gc.cardPool());
             case InteractionContext.LibrarySearch ls ->
                     targetInteraction.beginLibrarySearch(LibrarySearchParams.builder(ls.playerId(),
                                     ls.cards() != null ? new ArrayList<>(ls.cards()) : null)

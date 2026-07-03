@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
@@ -295,50 +294,6 @@ class PlayerInputServiceTest {
             svc.beginAnyTargetChoice(gd, PLAYER1_ID, List.of(permId), List.of(PLAYER2_ID), "Choose any");
 
             assertThat(gd.interaction.permanentChoice().validIds()).containsExactlyInAnyOrder(permId, PLAYER2_ID);
-        }
-    }
-
-    // ========================================================================
-    // beginGraveyardChoice
-    // ========================================================================
-
-    @Nested
-    @DisplayName("beginGraveyardChoice")
-    class BeginGraveyardChoice {
-
-        @Test
-        @DisplayName("Sets interaction state to GRAVEYARD_CHOICE")
-        void setsInteractionState() {
-            gd.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.HAND, null);
-
-            svc.beginGraveyardChoice(gd, PLAYER1_ID, List.of(0, 1), "Choose from graveyard");
-
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
-        }
-
-        @Test
-        @DisplayName("Sends allGraveyards=true when cardPool is non-null")
-        void sendsAllGraveyardsTrueWhenCardPoolPresent() {
-            Card card = createCreature("Test Card");
-            gd.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.BATTLEFIELD, List.of(card));
-
-            svc.beginGraveyardChoice(gd, PLAYER1_ID, List.of(0), "Choose");
-
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseCardFromGraveyardMessage msg = (ChooseCardFromGraveyardMessage) messageCaptor.getValue();
-            assertThat(msg.allGraveyards()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Sends allGraveyards=false when cardPool is null")
-        void sendsAllGraveyardsFalseWhenNoCardPool() {
-            gd.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.HAND, null);
-
-            svc.beginGraveyardChoice(gd, PLAYER1_ID, List.of(0, 1), "Choose");
-
-            verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
-            ChooseCardFromGraveyardMessage msg = (ChooseCardFromGraveyardMessage) messageCaptor.getValue();
-            assertThat(msg.allGraveyards()).isFalse();
         }
     }
 

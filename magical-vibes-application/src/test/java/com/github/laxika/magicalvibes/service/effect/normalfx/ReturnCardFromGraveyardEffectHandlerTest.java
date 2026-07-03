@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -31,6 +32,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardEffectHandler;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -73,6 +75,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
     private ExileService exileService;
     @Mock
     private GraveyardService graveyardService;
+    @Mock
+    private InteractionHandlerRegistry interactionHandlerRegistry;
     @InjectMocks
     private GraveyardReturnSupport support;
     private GameData gd;
@@ -291,7 +295,9 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService).beginGraveyardChoice(eq(gd), eq(player1Id), any(), any());
+                verify(interactionHandlerRegistry).begin(eq(gd), argThat(i ->
+                        i instanceof PendingInteraction.GraveyardChoice gc
+                                && gc.playerId().equals(player1Id)));
             }
 
             @Test
@@ -337,7 +343,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginGraveyardChoice(any(), any(), any(), any());
+                verify(interactionHandlerRegistry, never()).begin(any(), any());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no ") && msg.contains("in any graveyard")));
             }

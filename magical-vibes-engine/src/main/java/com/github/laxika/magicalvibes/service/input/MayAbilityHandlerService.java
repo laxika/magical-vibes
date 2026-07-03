@@ -93,6 +93,7 @@ public class MayAbilityHandlerService {
     private final DestructionSupport destructionSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
@@ -708,11 +709,12 @@ public class MayAbilityHandlerService {
 
         // Multiple matches — prompt player to choose
         String filterLabel = CardPredicateUtils.describeFilter(filter);
-        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.MAY_ABILITY_TARGET, null);
-        gameData.interaction.graveyardChoice().setMayAbilityContext(
-                ability.sourceCard(), controllerId, new ArrayList<>(ability.effects()), ability.sourcePermanentId());
-        playerInputService.beginGraveyardChoice(gameData, graveyardOwnerId, matchingIndices,
-                "Choose a " + filterLabel + " from your graveyard to target.");
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(graveyardOwnerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                        "Choose a " + filterLabel + " from your graveyard to target.")
+                .mayAbilityContext(ability.sourceCard(), controllerId,
+                        new ArrayList<>(ability.effects()), ability.sourcePermanentId())
+                .build());
 
         String logEntry = player.getUsername() + " accepts — choosing a graveyard target for " + ability.sourceCard().getName() + "'s ability.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -872,11 +874,12 @@ public class MayAbilityHandlerService {
         // Multiple matches — prompt player to choose via graveyard choice
         String filterLabel = CardPredicateUtils.describeFilter(filter);
         gameData.resolvedMayTargetingEntry = pendingEntry;
-        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.MAY_ABILITY_TARGET, null);
-        gameData.interaction.graveyardChoice().setMayAbilityContext(
-                ability.sourceCard(), controllerId, new ArrayList<>(ability.effects()), ability.sourcePermanentId());
-        playerInputService.beginGraveyardChoice(gameData, graveyardOwnerId, matchingIndices,
-                "Choose a " + filterLabel + " from your graveyard to target.");
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(graveyardOwnerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                        "Choose a " + filterLabel + " from your graveyard to target.")
+                .mayAbilityContext(ability.sourceCard(), controllerId,
+                        new ArrayList<>(ability.effects()), ability.sourcePermanentId())
+                .build());
     }
 
     private void handleResolutionTimeTargetSelection(GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry, boolean canTargetPermanent, boolean canTargetPlayer) {

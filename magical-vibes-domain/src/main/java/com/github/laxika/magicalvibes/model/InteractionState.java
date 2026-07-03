@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.interaction.CardChoiceState;
-import com.github.laxika.magicalvibes.model.interaction.GraveyardChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.LibrarySearchState;
 import com.github.laxika.magicalvibes.model.interaction.LibraryViewState;
 import com.github.laxika.magicalvibes.model.interaction.PermanentChoiceState;
@@ -26,7 +25,6 @@ public class InteractionState {
     // --- Grouped sub-states ---
     private CardChoiceState cardChoice;
     private PermanentChoiceState permanentChoice;
-    private GraveyardChoiceState graveyardChoice;
     private LibrarySearchState librarySearch;
     private final LibraryViewState libraryView = new LibraryViewState();
     /** Countdown for multi-card discard / exile-from-hand flows (DISCARD_CHOICE, EXILE_FROM_HAND_CHOICE). */
@@ -49,7 +47,6 @@ public class InteractionState {
         copy.activeInteraction = this.activeInteraction;
         copy.cardChoice = this.cardChoice != null ? this.cardChoice.deepCopy() : null;
         copy.permanentChoice = this.permanentChoice != null ? this.permanentChoice.deepCopy() : null;
-        copy.graveyardChoice = this.graveyardChoice != null ? this.graveyardChoice.deepCopy() : null;
         copy.librarySearch = this.librarySearch != null ? this.librarySearch.deepCopy() : null;
         LibraryViewState lvCopy = this.libraryView.deepCopy();
         copy.libraryView.setReveal(lvCopy.revealPlayerId(), lvCopy.revealAllCards(), lvCopy.revealValidCardIds());
@@ -123,11 +120,6 @@ public class InteractionState {
     public PermanentChoiceState permanentChoice() {
         return permanentChoice;
     }
-
-    public GraveyardChoiceState graveyardChoice() {
-        return graveyardChoice;
-    }
-
     public LibrarySearchState librarySearch() {
         return librarySearch;
     }
@@ -250,87 +242,6 @@ public class InteractionState {
         UUID ownerId = this.pendingAuraOwnerId;
         this.pendingAuraOwnerId = null;
         return ownerId;
-    }
-
-    // ========================================================================
-    // Graveyard choice
-    // ========================================================================
-
-    public void beginGraveyardChoice(UUID playerId, Set<Integer> validIndices,
-                                     GraveyardChoiceDestination destination, List<Card> cardPool) {
-        this.awaitingInput = AwaitingInput.GRAVEYARD_CHOICE;
-        if (this.graveyardChoice == null) {
-            this.graveyardChoice = new GraveyardChoiceState(playerId, new HashSet<>(validIndices), destination, cardPool);
-        } else {
-            // Preserve independently-set fields (gainLife, attachToSource, grantColor, grantSubtype, mayAbility)
-            GraveyardChoiceState prev = this.graveyardChoice;
-            this.graveyardChoice = new GraveyardChoiceState(playerId, new HashSet<>(validIndices), destination, cardPool);
-            this.graveyardChoice.setGainLifeEqualToManaValue(prev.gainLifeEqualToManaValue());
-            this.graveyardChoice.setAttachToSourcePermanentId(prev.attachToSourcePermanentId());
-            this.graveyardChoice.setGrantColor(prev.grantColor());
-            this.graveyardChoice.setGrantSubtype(prev.grantSubtype());
-            this.graveyardChoice.setExileRemainingCount(prev.exileRemainingCount());
-            this.graveyardChoice.setGainLifeIfCreatureAmount(prev.gainLifeIfCreatureAmount());
-            this.graveyardChoice.setGainLifeIfCreaturePlayerId(prev.gainLifeIfCreaturePlayerId());
-            if (prev.mayAbilitySourceCard() != null) {
-                this.graveyardChoice.setMayAbilityContext(
-                        prev.mayAbilitySourceCard(), prev.mayAbilityControllerId(),
-                        prev.mayAbilityEffects(), prev.mayAbilitySourcePermanentId());
-            }
-        }
-        this.context = new InteractionContext.GraveyardChoice(playerId, new HashSet<>(validIndices), destination, cardPool);
-    }
-
-    public void clearGraveyardChoice() {
-        this.graveyardChoice = null;
-    }
-
-    public void prepareGraveyardChoice(GraveyardChoiceDestination destination, List<Card> cardPool) {
-        ensureGraveyardChoice().setDestination(destination);
-        ensureGraveyardChoice().setCardPool(cardPool);
-    }
-
-    public void setGraveyardChoiceGainLifeEqualToManaValue(boolean value) {
-        ensureGraveyardChoice().setGainLifeEqualToManaValue(value);
-    }
-
-    public void setGraveyardChoiceAttachToSourcePermanentId(UUID permanentId) {
-        ensureGraveyardChoice().setAttachToSourcePermanentId(permanentId);
-    }
-
-    public void setGraveyardChoiceGrantColor(CardColor color) {
-        ensureGraveyardChoice().setGrantColor(color);
-    }
-
-    public void setGraveyardChoiceGrantSubtype(CardSubtype subtype) {
-        ensureGraveyardChoice().setGrantSubtype(subtype);
-    }
-
-    public void setGraveyardChoiceExileRemainingCount(int count) {
-        ensureGraveyardChoice().setExileRemainingCount(count);
-    }
-
-    public void setGraveyardChoiceGainLifeIfCreature(int amount, UUID playerId) {
-        ensureGraveyardChoice().setGainLifeIfCreatureAmount(amount);
-        ensureGraveyardChoice().setGainLifeIfCreaturePlayerId(playerId);
-    }
-
-    public void setGraveyardChoiceTrackWithSourcePermanentId(UUID permanentId) {
-        ensureGraveyardChoice().setTrackWithSourcePermanentId(permanentId);
-    }
-
-    public InteractionContext.GraveyardChoice graveyardChoiceContext() {
-        if (context instanceof InteractionContext.GraveyardChoice gc) return gc;
-        if (graveyardChoice == null || graveyardChoice.playerId() == null) return null;
-        return new InteractionContext.GraveyardChoice(graveyardChoice.playerId(),
-                graveyardChoice.validIndices(), graveyardChoice.destination(), graveyardChoice.cardPool());
-    }
-
-    private GraveyardChoiceState ensureGraveyardChoice() {
-        if (this.graveyardChoice == null) {
-            this.graveyardChoice = new GraveyardChoiceState();
-        }
-        return this.graveyardChoice;
     }
 
     // ========================================================================

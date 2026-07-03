@@ -72,7 +72,6 @@ import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -116,6 +115,7 @@ public class AbilityActivationService {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final ExileService exileService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * Taps a permanent for its mana ability (ON_TAP effects), adding the produced mana to the player's pool.
@@ -1412,14 +1412,10 @@ public class AbilityActivationService {
                 targetZone,
                 null
         );
-        gameData.interaction.beginGraveyardChoice(playerId, new HashSet<>(validExileIndices), null, null);
-        gameData.interaction.setAwaitingInput(AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE);
         String typeName = requiredType != null ? requiredType.name().toLowerCase() + " " : "";
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(
-                validExileIndices,
-                "Choose a " + typeName + "card from your graveyard to exile as an activation cost.",
-                false
-        ));
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.GraveyardExileCostChoice(
+                playerId, validExileIndices,
+                "Choose a " + typeName + "card from your graveyard to exile as an activation cost."));
     }
 
     private void payGraveyardExileCost(GameData gameData, Player player, CardType requiredType, Integer exileCardIndex) {
@@ -1449,7 +1445,6 @@ public class AbilityActivationService {
         gameData.pendingAbilityActivation = null;
         gameData.interaction.clearAwaitingInput();
         gameData.interaction.clearCardChoice();
-        gameData.interaction.clearGraveyardChoice();
     }
 
     private void validateActivationLimitPerTurn(GameData gameData, Permanent permanent, ActivatedAbility ability, int abilityIndex) {

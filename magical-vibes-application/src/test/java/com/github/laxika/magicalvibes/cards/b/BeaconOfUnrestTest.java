@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
@@ -206,7 +208,7 @@ class BeaconOfUnrestTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
         // Pool should have 2 cards (Grizzly Bears from player1 + Angel's Feather from player2)
-        assertThat(gd.interaction.graveyardChoice().cardPool()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).cardPool()).hasSize(2);
 
         // Choose the artifact from opponent's graveyard (index 1)
         harness.handleGraveyardCardChosen(player1, 1);

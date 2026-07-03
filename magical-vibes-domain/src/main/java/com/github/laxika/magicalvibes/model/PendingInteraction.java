@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+
 import java.util.UUID;
 
 /**
@@ -22,7 +24,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
-        PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice {
+        PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
+        PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -147,5 +150,128 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               boolean discardMode, boolean exileMode,
                               java.util.List<Card> chosenCards, UUID sourcePermanentId,
                               String prompt) implements PendingInteraction {
+    }
+
+    /**
+     * Pick one card from a graveyard (return to hand/battlefield, exile, or may-ability
+     * targeting). {@code validIndices} keeps the begin-time order — indices into the player's
+     * own graveyard, or into {@code cardPool} when non-null (cross-graveyard choices; it also
+     * drives the message's all-graveyards flag). {@code prompt} is the exact begin-time text
+     * (also re-sent on reconnect). The remaining components mirror the auxiliary fields of the
+     * deleted {@code GraveyardChoiceState}, all pre-seeded by the begin sites and consumed by
+     * the answer handler; build instances via {@link #builder}.
+     */
+    record GraveyardChoice(UUID playerId, java.util.List<Integer> validIndices,
+                           GraveyardChoiceDestination destination, java.util.List<Card> cardPool,
+                           boolean gainLifeEqualToManaValue, UUID attachToSourcePermanentId,
+                           CardColor grantColor, CardSubtype grantSubtype, int exileRemainingCount,
+                           int gainLifeIfCreatureAmount, UUID gainLifeIfCreaturePlayerId,
+                           UUID trackWithSourcePermanentId, Card mayAbilitySourceCard,
+                           UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
+                           UUID mayAbilitySourcePermanentId, String prompt)
+            implements PendingInteraction {
+
+        public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
+                                      GraveyardChoiceDestination destination, String prompt) {
+            return new Builder(playerId, validIndices, destination, prompt);
+        }
+
+        /** Staged construction mirroring the legacy pre-seed setters. */
+        public static final class Builder {
+            private final UUID playerId;
+            private final java.util.List<Integer> validIndices;
+            private final GraveyardChoiceDestination destination;
+            private final String prompt;
+            private java.util.List<Card> cardPool;
+            private boolean gainLifeEqualToManaValue;
+            private UUID attachToSourcePermanentId;
+            private CardColor grantColor;
+            private CardSubtype grantSubtype;
+            private int exileRemainingCount;
+            private int gainLifeIfCreatureAmount;
+            private UUID gainLifeIfCreaturePlayerId;
+            private UUID trackWithSourcePermanentId;
+            private Card mayAbilitySourceCard;
+            private UUID mayAbilityControllerId;
+            private java.util.List<CardEffect> mayAbilityEffects;
+            private UUID mayAbilitySourcePermanentId;
+
+            private Builder(UUID playerId, java.util.List<Integer> validIndices,
+                            GraveyardChoiceDestination destination, String prompt) {
+                this.playerId = playerId;
+                this.validIndices = validIndices;
+                this.destination = destination;
+                this.prompt = prompt;
+            }
+
+            public Builder cardPool(java.util.List<Card> cardPool) {
+                this.cardPool = cardPool;
+                return this;
+            }
+
+            public Builder gainLifeEqualToManaValue(boolean value) {
+                this.gainLifeEqualToManaValue = value;
+                return this;
+            }
+
+            public Builder attachToSourcePermanentId(UUID permanentId) {
+                this.attachToSourcePermanentId = permanentId;
+                return this;
+            }
+
+            public Builder grantColor(CardColor grantColor) {
+                this.grantColor = grantColor;
+                return this;
+            }
+
+            public Builder grantSubtype(CardSubtype grantSubtype) {
+                this.grantSubtype = grantSubtype;
+                return this;
+            }
+
+            public Builder exileRemainingCount(int count) {
+                this.exileRemainingCount = count;
+                return this;
+            }
+
+            public Builder gainLifeIfCreature(int amount, UUID playerId) {
+                this.gainLifeIfCreatureAmount = amount;
+                this.gainLifeIfCreaturePlayerId = playerId;
+                return this;
+            }
+
+            public Builder trackWithSourcePermanentId(UUID permanentId) {
+                this.trackWithSourcePermanentId = permanentId;
+                return this;
+            }
+
+            public Builder mayAbilityContext(Card sourceCard, UUID controllerId,
+                                             java.util.List<CardEffect> effects, UUID sourcePermanentId) {
+                this.mayAbilitySourceCard = sourceCard;
+                this.mayAbilityControllerId = controllerId;
+                this.mayAbilityEffects = effects;
+                this.mayAbilitySourcePermanentId = sourcePermanentId;
+                return this;
+            }
+
+            public GraveyardChoice build() {
+                return new GraveyardChoice(playerId, validIndices, destination, cardPool,
+                        gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor, grantSubtype,
+                        exileRemainingCount, gainLifeIfCreatureAmount, gainLifeIfCreaturePlayerId,
+                        trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId,
+                        mayAbilityEffects, mayAbilitySourcePermanentId, prompt);
+            }
+        }
+    }
+
+    /**
+     * "Exile a card from your graveyard" paid as an activation cost
+     * (ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE). The pending activation itself lives in
+     * {@link GameData#pendingAbilityActivation}; this record carries only the choice surface.
+     * {@code validIndices} keeps the begin-time order and {@code prompt} the exact begin-time
+     * text (also re-sent on reconnect).
+     */
+    record GraveyardExileCostChoice(UUID playerId, java.util.List<Integer> validIndices,
+                                    String prompt) implements PendingInteraction {
     }
 }

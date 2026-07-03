@@ -120,7 +120,6 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.MayAbilityHandlerService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -577,10 +576,16 @@ public class GameSimulator {
                 }
             }
             case MAY_ABILITY_CHOICE -> gameService.handleMayAbilityChosen(gd, player, true);
-            case GRAVEYARD_CHOICE, ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE -> {
-                var gc = gd.interaction.graveyardChoiceContext();
+            case GRAVEYARD_CHOICE -> {
+                var gc = gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
                 if (gc != null && gc.validIndices() != null && !gc.validIndices().isEmpty()) {
                     gameService.handleGraveyardCardChosen(gd, player, gc.validIndices().iterator().next());
+                }
+            }
+            case ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE -> {
+                var gec = gd.interaction.activeInteraction(PendingInteraction.GraveyardExileCostChoice.class);
+                if (gec != null && gec.validIndices() != null && !gec.validIndices().isEmpty()) {
+                    gameService.handleGraveyardCardChosen(gd, player, gec.validIndices().iterator().next());
                 }
             }
             case MULTI_PERMANENT_CHOICE -> {
@@ -682,6 +687,8 @@ public class GameSimulator {
                 case PendingInteraction.MultiGraveyardChoice mgc -> mgc.playerId();
                 case PendingInteraction.ColorChoice cc -> cc.playerId();
                 case PendingInteraction.RevealedHandChoice rhc -> rhc.choosingPlayerId();
+                case PendingInteraction.GraveyardChoice gc -> gc.playerId();
+                case PendingInteraction.GraveyardExileCostChoice gec -> gec.playerId();
                 default -> null;
             };
         }
@@ -692,7 +699,6 @@ public class GameSimulator {
             case InteractionContext.BlockerDeclaration bd -> bd.defenderId();
             case InteractionContext.CardChoice cc -> cc.playerId();
             case InteractionContext.PermanentChoice pc -> pc.playerId();
-            case InteractionContext.GraveyardChoice gc -> gc.playerId();
             case InteractionContext.LibrarySearch ls -> ls.playerId();
             case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();

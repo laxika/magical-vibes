@@ -221,34 +221,9 @@ class AiChoiceHandler {
 
     // ===== Graveyard Choice =====
 
+    /** Baseline graveyard answer via {@code GraveyardChoiceAiStrategy} / {@code GraveyardExileCostChoiceAiStrategy}. */
     void handleGraveyardChoice(GameData gameData) {
-        InteractionContext.GraveyardChoice graveyardChoice = gameData.interaction.graveyardChoiceContext();
-        if (graveyardChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = graveyardChoice.playerId();
-        Set<Integer> validIndices = graveyardChoice.validIndices();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (validIndices == null || validIndices.isEmpty()) {
-            return;
-        }
-
-        List<Card> graveyard = graveyardChoice.cardPool();
-        if (graveyard == null) {
-            graveyard = gameData.playerGraveyards.getOrDefault(aiPlayerId, List.of());
-        }
-
-        final List<Card> gy = graveyard;
-        int bestIndex = validIndices.stream()
-                .max(Comparator.comparingInt(i -> i < gy.size() ? gy.get(i).getManaValue() : 0))
-                .orElse(validIndices.iterator().next());
-
-        log.info("AI: Choosing graveyard card at index {} in game {}", bestIndex, gameId);
-        send(() -> gameActions.handleGraveyardCardChosen(selfConnection, new GraveyardCardChosenRequest(bestIndex)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Multi-Graveyard Choice =====

@@ -44,4 +44,8 @@ public sealed interface InteractionAnswer {
     /** A single card picked by hand index (the shared "card chosen" wire payload). */
     record CardIndexChosen(int cardIndex) implements InteractionAnswer {
     }
+
+    /** A single card picked by graveyard index (the shared "graveyard card chosen" wire payload). */
+    record GraveyardCardChosen(int cardIndex) implements InteractionAnswer {
+    }
 }

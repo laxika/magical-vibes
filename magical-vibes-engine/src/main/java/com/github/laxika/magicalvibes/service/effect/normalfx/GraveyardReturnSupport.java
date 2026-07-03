@@ -28,6 +28,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
@@ -99,6 +101,7 @@ public class GraveyardReturnSupport {
     private final ExileService exileService;
     private final CardViewFactory cardViewFactory;
     private final GraveyardService graveyardService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * Resolves a {@link ReturnCardFromGraveyardEffect} by returning one or more cards from a graveyard
@@ -394,13 +397,14 @@ public class GraveyardReturnSupport {
         String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield";
         String prompt = "Return a " + filterLabel + " from your graveyard to " + destText + ".";
 
-        gameData.interaction.prepareGraveyardChoice(effect.destination(), null);
-        gameData.interaction.setGraveyardChoiceGainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
+        PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
+                .builder(controllerId, matchingIndices, effect.destination(), prompt)
+                .gainLifeEqualToManaValue(effect.gainLifeEqualToManaValue());
         if (effect.grantColor() != null) {
-            gameData.interaction.setGraveyardChoiceGrantColor(effect.grantColor());
+            choice.grantColor(effect.grantColor());
         }
         if (effect.grantSubtype() != null) {
-            gameData.interaction.setGraveyardChoiceGrantSubtype(effect.grantSubtype());
+            choice.grantSubtype(effect.grantSubtype());
         }
 
         if (effect.attachToSource()) {
@@ -408,14 +412,14 @@ public class GraveyardReturnSupport {
             if (bf != null) {
                 for (Permanent p : bf) {
                     if (p.getCard().getId().equals(sourceCardId)) {
-                        gameData.interaction.setGraveyardChoiceAttachToSourcePermanentId(p.getId());
+                        choice.attachToSourcePermanentId(p.getId());
                         break;
                     }
                 }
             }
         }
 
-        playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices, prompt);
+        interactionHandlerRegistry.begin(gameData, choice.build());
     }
 
     public void resolveFromAllGraveyards(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
@@ -446,14 +450,16 @@ public class GraveyardReturnSupport {
         String destText = effect.destination() == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield under your control";
         String prompt = "Choose a " + filterLabel + " from a graveyard to put onto " + destText + ".";
 
-        gameData.interaction.prepareGraveyardChoice(effect.destination(), cardPool);
+        PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
+                .builder(controllerId, indices, effect.destination(), prompt)
+                .cardPool(cardPool);
         if (effect.grantColor() != null) {
-            gameData.interaction.setGraveyardChoiceGrantColor(effect.grantColor());
+            choice.grantColor(effect.grantColor());
         }
         if (effect.grantSubtype() != null) {
-            gameData.interaction.setGraveyardChoiceGrantSubtype(effect.grantSubtype());
+            choice.grantSubtype(effect.grantSubtype());
         }
-        playerInputService.beginGraveyardChoice(gameData, controllerId, indices, prompt);
+        interactionHandlerRegistry.begin(gameData, choice.build());
     }
 
     /**
@@ -935,10 +941,11 @@ public class GraveyardReturnSupport {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
         List<Integer> validIndices = IntStream.range(0, graveyard.size()).boxed().toList();
 
-        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
-        gameData.interaction.setGraveyardChoiceExileRemainingCount(remainingCount);
-
-        playerInputService.beginGraveyardChoice(gameData, playerId, validIndices, "Choose a card to exile from your graveyard.");
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(playerId, validIndices, GraveyardChoiceDestination.EXILE,
+                        "Choose a card to exile from your graveyard.")
+                .exileRemainingCount(remainingCount)
+                .build());
     }
 
     /**
@@ -995,10 +1002,11 @@ public class GraveyardReturnSupport {
 
         GraveyardChoiceDestination destination = next.destination();
         String filterLabel = CardPredicateUtils.describeFilter(next.filter());
-        gameData.interaction.prepareGraveyardChoice(destination, null);
         String destText = destination == GraveyardChoiceDestination.HAND ? "your hand" : "the battlefield";
-        playerInputService.beginGraveyardChoice(gameData, next.playerId(), matchingIndices,
-                "Return a " + filterLabel + " from your graveyard to " + destText + ".");
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(next.playerId(), matchingIndices, destination,
+                        "Return a " + filterLabel + " from your graveyard to " + destText + ".")
+                .build());
     }
 
     /**

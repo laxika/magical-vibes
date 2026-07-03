@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -59,36 +58,37 @@ public class GraveyardChoiceHandlerService {
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final InputCompletionService inputCompletionService;
     private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
             throw new IllegalStateException("Not awaiting graveyard choice");
         }
-        InteractionContext.GraveyardChoice graveyardChoice = gameData.interaction.graveyardChoiceContext();
+        PendingInteraction.GraveyardChoice graveyardChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
         if (graveyardChoice == null || !player.getId().equals(graveyardChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
 
         UUID playerId = player.getId();
-        Set<Integer> validIndices = graveyardChoice.validIndices();
+        List<Integer> validIndices = graveyardChoice.validIndices();
         List<Card> cardPool = graveyardChoice.cardPool();
 
         gameData.interaction.clearAwaitingInput();
         GraveyardChoiceDestination destination = graveyardChoice.destination();
-        boolean gainLifeEqualToManaValue = gameData.interaction.graveyardChoice().gainLifeEqualToManaValue();
-        UUID attachToSourcePermanentId = gameData.interaction.graveyardChoice().attachToSourcePermanentId();
-        CardColor grantColor = gameData.interaction.graveyardChoice().grantColor();
-        CardSubtype grantSubtype = gameData.interaction.graveyardChoice().grantSubtype();
-        int exileRemainingCount = gameData.interaction.graveyardChoice().exileRemainingCount();
-        int gainLifeIfCreatureAmount = gameData.interaction.graveyardChoice().gainLifeIfCreatureAmount();
-        UUID gainLifeIfCreaturePlayerId = gameData.interaction.graveyardChoice().gainLifeIfCreaturePlayerId();
-        UUID trackWithSourcePermanentId = gameData.interaction.graveyardChoice().trackWithSourcePermanentId();
-        // May ability graveyard targeting context (read before clearing)
-        Card mayAbilitySourceCard = gameData.interaction.graveyardChoice().mayAbilitySourceCard();
-        UUID mayAbilityControllerId = gameData.interaction.graveyardChoice().mayAbilityControllerId();
-        java.util.List<CardEffect> mayAbilityEffects = gameData.interaction.graveyardChoice().mayAbilityEffects();
-        UUID mayAbilitySourcePermanentId = gameData.interaction.graveyardChoice().mayAbilitySourcePermanentId();
-        gameData.interaction.clearGraveyardChoice();
+        boolean gainLifeEqualToManaValue = graveyardChoice.gainLifeEqualToManaValue();
+        UUID attachToSourcePermanentId = graveyardChoice.attachToSourcePermanentId();
+        CardColor grantColor = graveyardChoice.grantColor();
+        CardSubtype grantSubtype = graveyardChoice.grantSubtype();
+        int exileRemainingCount = graveyardChoice.exileRemainingCount();
+        int gainLifeIfCreatureAmount = graveyardChoice.gainLifeIfCreatureAmount();
+        UUID gainLifeIfCreaturePlayerId = graveyardChoice.gainLifeIfCreaturePlayerId();
+        UUID trackWithSourcePermanentId = graveyardChoice.trackWithSourcePermanentId();
+        // May ability graveyard targeting context
+        Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
+        UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
+        java.util.List<CardEffect> mayAbilityEffects = graveyardChoice.mayAbilityEffects();
+        UUID mayAbilitySourcePermanentId = graveyardChoice.mayAbilitySourcePermanentId();
 
         if (cardIndex == -1) {
             if (destination == GraveyardChoiceDestination.EXILE
@@ -220,10 +220,11 @@ public class GraveyardChoiceHandlerService {
                         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
                         if (graveyard != null && !graveyard.isEmpty()) {
                             List<Integer> newValidIndices = IntStream.range(0, graveyard.size()).boxed().toList();
-                            gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
-                            gameData.interaction.setGraveyardChoiceExileRemainingCount(remaining);
-                            playerInputService.beginGraveyardChoice(gameData, playerId, newValidIndices,
-                                    "Choose a card to exile from your graveyard.");
+                            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                                    .builder(playerId, newValidIndices, GraveyardChoiceDestination.EXILE,
+                                            "Choose a card to exile from your graveyard.")
+                                    .exileRemainingCount(remaining)
+                                    .build());
                             return;
                         }
                     }

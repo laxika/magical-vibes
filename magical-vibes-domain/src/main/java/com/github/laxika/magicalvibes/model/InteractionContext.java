@@ -11,7 +11,6 @@ public sealed interface InteractionContext permits
         InteractionContext.BlockerDeclaration,
         InteractionContext.CardChoice,
         InteractionContext.PermanentChoice,
-        InteractionContext.GraveyardChoice,
         InteractionContext.LibrarySearch,
         InteractionContext.LibraryRevealChoice,
         InteractionContext.CombatDamageAssignment {
@@ -23,8 +22,6 @@ public sealed interface InteractionContext permits
     record CardChoice(AwaitingInput type, UUID playerId, Set<Integer> validIndices, UUID targetId) implements InteractionContext {}
 
     record PermanentChoice(UUID playerId, Set<UUID> validIds, PermanentChoiceContext context) implements InteractionContext {}
-
-    record GraveyardChoice(UUID playerId, Set<Integer> validIndices, GraveyardChoiceDestination destination, List<Card> cardPool) implements InteractionContext {}
 
     record LibrarySearch(UUID playerId, List<Card> cards, boolean reveals, boolean canFailToFind,
                          UUID targetPlayerId, int remainingCount, List<Card> sourceCards,

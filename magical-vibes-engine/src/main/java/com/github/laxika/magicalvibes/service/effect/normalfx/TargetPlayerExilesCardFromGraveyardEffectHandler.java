@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGraveyardEffect;
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
@@ -26,7 +27,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final PlayerInputService playerInputService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
     private final ExileService exileService;
     private final GraveyardService graveyardService;
@@ -69,14 +70,14 @@ public class TargetPlayerExilesCardFromGraveyardEffectHandler implements NormalE
         }
 
         // Multiple cards — target player must choose
-        gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
-        gameData.interaction.setGraveyardChoiceExileRemainingCount(1);
-        if (e.lifeGainIfCreature() > 0) {
-            gameData.interaction.setGraveyardChoiceGainLifeIfCreature(e.lifeGainIfCreature(), controllerId);
-        }
-
         List<Integer> validIndices = IntStream.range(0, graveyard.size()).boxed().toList();
-        playerInputService.beginGraveyardChoice(gameData, targetPlayerId, validIndices,
-                "Choose a card to exile from your graveyard.");
+        PendingInteraction.GraveyardChoice.Builder choice = PendingInteraction.GraveyardChoice
+                .builder(targetPlayerId, validIndices, GraveyardChoiceDestination.EXILE,
+                        "Choose a card to exile from your graveyard.")
+                .exileRemainingCount(1);
+        if (e.lifeGainIfCreature() > 0) {
+            choice.gainLifeIfCreature(e.lifeGainIfCreature(), controllerId);
+        }
+        interactionHandlerRegistry.begin(gameData, choice.build());
     }
 }

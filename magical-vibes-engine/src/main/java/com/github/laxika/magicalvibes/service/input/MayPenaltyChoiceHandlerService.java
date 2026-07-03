@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGra
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
@@ -55,6 +56,7 @@ public class MayPenaltyChoiceHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final StateBasedActionService stateBasedActionService;
     private final PermanentRemovalService permanentRemovalService;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleCounterUnlessPaysChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         CounterUnlessPaysEffect effect = ability.effects().stream()
@@ -429,10 +431,11 @@ public class MayPenaltyChoiceHandlerService {
                 gameData.pendingEffectResolutionIndex = 0;
 
                 String filterLabel = CardPredicateUtils.describeFilter(effect.predicate());
-                gameData.interaction.prepareGraveyardChoice(GraveyardChoiceDestination.EXILE, null);
-                gameData.interaction.setGraveyardChoiceExileRemainingCount(1);
-                playerInputService.beginGraveyardChoice(gameData, controllerId, matchingIndices,
-                        "Choose a " + filterLabel + " to exile from your graveyard.");
+                interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                        .builder(controllerId, matchingIndices, GraveyardChoiceDestination.EXILE,
+                                "Choose a " + filterLabel + " to exile from your graveyard.")
+                        .exileRemainingCount(1)
+                        .build());
 
                 String logEntry = player.getUsername() + " chooses to exile a " + filterLabel
                         + " from their graveyard. (" + ability.sourceCard().getName() + ")";

@@ -74,7 +74,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only creature (index 1) should be valid, instant (index 0) should not
-            assertThat(gd.interaction.graveyardChoiceContext().validIndices()).containsExactly(1);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices()).containsExactly(1);
         }
 
         @Test

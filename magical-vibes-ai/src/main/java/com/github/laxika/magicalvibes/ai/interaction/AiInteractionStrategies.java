@@ -28,6 +28,8 @@ public final class AiInteractionStrategies {
         register(new MultiGraveyardChoiceAiStrategy());
         register(new ColorChoiceAiStrategy());
         register(new RevealedHandChoiceAiStrategy());
+        register(new GraveyardChoiceAiStrategy());
+        register(new GraveyardExileCostChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

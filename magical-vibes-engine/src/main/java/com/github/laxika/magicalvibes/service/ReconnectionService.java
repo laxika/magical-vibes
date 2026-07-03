@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
@@ -91,12 +90,6 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, pc);
                 }
             }
-            case GRAVEYARD_CHOICE, ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE -> {
-                InteractionContext.GraveyardChoice gc = gameData.interaction.graveyardChoiceContext();
-                if (gc != null) {
-                    resendFromContext(gameData, playerId, gc);
-                }
-            }
             case LIBRARY_SEARCH -> {
                 InteractionContext.LibrarySearch ls = gameData.interaction.librarySearchContext();
                 if (ls != null) {
@@ -163,12 +156,6 @@ public class ReconnectionService {
                 if (playerId.equals(pc.playerId())) {
                     sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(
                             new ArrayList<>(pc.validIds()), "Choose a permanent."));
-                }
-            }
-            case InteractionContext.GraveyardChoice gc -> {
-                if (playerId.equals(gc.playerId())) {
-                    sessionManager.sendToPlayer(playerId, new ChooseCardFromGraveyardMessage(
-                            new ArrayList<>(gc.validIndices()), "Choose a card from the graveyard.", gc.cardPool() != null));
                 }
             }
             case InteractionContext.LibrarySearch ls -> {
