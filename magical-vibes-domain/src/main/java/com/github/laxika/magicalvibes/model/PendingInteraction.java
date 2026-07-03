@@ -21,7 +21,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice,
-        PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice {
+        PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
+        PendingInteraction.ColorChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -113,5 +114,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public java.util.List<UUID> validCardIds() {
             return cards.stream().map(Card::getId).toList();
         }
+    }
+
+    /**
+     * A single-value "choose from a list" decision covering the whole legacy COLOR_CHOICE
+     * family (mana color, protection color, keyword/subtype/permanent-type/basic-land-type,
+     * card name, text-change word, Abundance land/nonland, …). The specific variant is carried
+     * in {@code context} (a {@link ChoiceContext}) and drives answer handling. {@code options}
+     * and {@code prompt} are the exact begin-time list options and prompt text — they are
+     * carried so reconnect replay re-sends byte-identical content (the legacy replay re-derived
+     * them from {@code context} and diverged for several variants). {@code permanentId} /
+     * {@code etbTargetId} carry the plain ETB color-choice permanent context.
+     */
+    record ColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId, ChoiceContext context,
+                       java.util.List<String> options, String prompt) implements PendingInteraction {
     }
 }

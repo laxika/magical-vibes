@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.interaction.CardChoiceState;
-import com.github.laxika.magicalvibes.model.interaction.ChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.GraveyardChoiceState;
 import com.github.laxika.magicalvibes.model.interaction.LibrarySearchState;
 import com.github.laxika.magicalvibes.model.interaction.LibraryViewState;
@@ -29,7 +28,6 @@ public class InteractionState {
     private CardChoiceState cardChoice;
     private PermanentChoiceState permanentChoice;
     private GraveyardChoiceState graveyardChoice;
-    private ChoiceState colorChoice;
     private LibrarySearchState librarySearch;
     private final LibraryViewState libraryView = new LibraryViewState();
     private RevealedHandChoiceState revealedHandChoice;
@@ -52,7 +50,6 @@ public class InteractionState {
         copy.cardChoice = this.cardChoice != null ? this.cardChoice.deepCopy() : null;
         copy.permanentChoice = this.permanentChoice != null ? this.permanentChoice.deepCopy() : null;
         copy.graveyardChoice = this.graveyardChoice != null ? this.graveyardChoice.deepCopy() : null;
-        copy.colorChoice = this.colorChoice != null ? this.colorChoice.deepCopy() : null;
         copy.librarySearch = this.librarySearch != null ? this.librarySearch.deepCopy() : null;
         LibraryViewState lvCopy = this.libraryView.deepCopy();
         copy.libraryView.setReveal(lvCopy.revealPlayerId(), lvCopy.revealAllCards(), lvCopy.revealValidCardIds());
@@ -129,10 +126,6 @@ public class InteractionState {
 
     public GraveyardChoiceState graveyardChoice() {
         return graveyardChoice;
-    }
-
-    public ChoiceState colorChoice() {
-        return colorChoice;
     }
 
     public LibrarySearchState librarySearch() {
@@ -364,32 +357,6 @@ public class InteractionState {
     public void clearPendingEquipmentAttach() {
         this.pendingEquipmentAttachEquipmentId = null;
         this.pendingEquipmentAttachTargetId = null;
-    }
-
-    // ========================================================================
-    // Color choice
-    // ========================================================================
-
-    public void beginColorChoice(UUID playerId, UUID permanentId, UUID etbTargetId,
-                                 ChoiceContext choiceContext) {
-        this.awaitingInput = AwaitingInput.COLOR_CHOICE;
-        this.colorChoice = new ChoiceState(playerId, permanentId, etbTargetId, choiceContext);
-        this.context = new InteractionContext.ColorChoice(playerId, permanentId, etbTargetId, choiceContext);
-    }
-
-    public void clearColorChoice() {
-        this.colorChoice = null;
-    }
-
-    public ChoiceContext colorChoiceContext() {
-        return colorChoice != null ? colorChoice.choiceContext() : null;
-    }
-
-    public InteractionContext.ColorChoice colorChoiceContextView() {
-        if (context instanceof InteractionContext.ColorChoice cc) return cc;
-        if (colorChoice == null) return null;
-        return new InteractionContext.ColorChoice(colorChoice.playerId(), colorChoice.permanentId(),
-                colorChoice.etbTargetId(), colorChoice.choiceContext());
     }
 
     // ========================================================================

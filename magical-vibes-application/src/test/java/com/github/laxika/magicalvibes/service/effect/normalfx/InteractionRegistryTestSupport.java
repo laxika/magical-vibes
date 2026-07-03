@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
+import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.interaction.ColorChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.HandTopBottomChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.LibraryReorderInteractionHandler;
@@ -38,6 +40,7 @@ final class InteractionRegistryTestSupport {
                 sessionManager, cardViewFactory, gameBroadcastService,
                 mock(PlayerInputService.class), mock(TurnProgressionService.class),
                 mock(EffectResolutionService.class)));
+        registry.register(new ColorChoiceInteractionHandler(sessionManager, mock(ChoiceHandlerService.class)));
         return registry;
     }
 }

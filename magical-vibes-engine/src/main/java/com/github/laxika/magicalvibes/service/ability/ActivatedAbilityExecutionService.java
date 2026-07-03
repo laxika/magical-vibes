@@ -55,8 +55,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -91,7 +90,7 @@ public class ActivatedAbilityExecutionService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
-    private final SessionManager sessionManager;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final LifeSupport lifeSupport;
 
     /**
@@ -375,30 +374,30 @@ public class ActivatedAbilityExecutionService {
                 CardSubtype chosenSubtype = permanent.getChosenSubtype();
                 if (chosenSubtype != null) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, false, 1, chosenSubtype);
-                    gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                     List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-                    sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} creatures)", gameData.id, player.getUsername(), chosenSubtype);
                 }
             } else if (effect instanceof AwardAnyColorManaWithInstantSorceryCopyEffect aacse) {
                 ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aacse.amount());
-                gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-                sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                 // Register delayed trigger: copy next instant/sorcery spell cast with this mana
                 gameData.pendingNextInstantSorceryCopyCount.merge(playerId, 1, Integer::sum);
                 log.info("Game {} - Awaiting {} to choose a mana color (with spell copy trigger)", gameData.id, player.getUsername());
             } else if (effect instanceof AwardAnyColorManaEffect aace) {
                 ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aace.amount());
-                gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-                sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                 log.info("Game {} - Awaiting {} to choose a mana color", gameData.id, player.getUsername());
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
                 ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, fba.amount(), null, true);
-                gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-                sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add (flashback only)."));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors, "Choose a color of mana to add (flashback only)."));
                 log.info("Game {} - Awaiting {} to choose a flashback-only mana color", gameData.id, player.getUsername());
             } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
                 gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
@@ -439,12 +438,12 @@ public class ActivatedAbilityExecutionService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 } else if (availableColors.size() > 1) {
                     ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource);
-                    gameData.interaction.beginColorChoice(playerId, null, null, choiceContext);
                     List<String> colors = availableColors.stream()
                             .map(Enum::name)
                             .sorted()
                             .toList();
-                    sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(colors, "Choose a color of mana to add."));
+                    interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                            playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color from legendary colors", gameData.id, player.getUsername());
                 } else {
                     String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()

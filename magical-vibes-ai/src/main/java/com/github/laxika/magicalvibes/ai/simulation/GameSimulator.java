@@ -335,7 +335,7 @@ public class GameSimulator {
                 }
             }
             case COLOR_CHOICE -> {
-                var cc = gd.interaction.colorChoiceContextView();
+                var cc = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
                 if (cc != null && cc.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     for (var kw : kgc.options()) {
                         actions.add(new SimulationAction.ChooseColor(kw.name()));
@@ -561,7 +561,7 @@ public class GameSimulator {
                 }
             }
             case COLOR_CHOICE -> {
-                var ccCtx = gd.interaction.colorChoiceContextView();
+                var ccCtx = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
                 if (ccCtx != null && ccCtx.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     gameService.handleListChoice(gd, player, kgc.options().getFirst().name());
                 } else {
@@ -672,6 +672,7 @@ public class GameSimulator {
                 case PendingInteraction.MultiZoneExileChoice mzec -> mzec.playerId();
                 case PendingInteraction.MultiPermanentChoice mpc -> mpc.playerId();
                 case PendingInteraction.MultiGraveyardChoice mgc -> mgc.playerId();
+                case PendingInteraction.ColorChoice cc -> cc.playerId();
                 default -> null;
             };
         }
@@ -683,7 +684,6 @@ public class GameSimulator {
             case InteractionContext.CardChoice cc -> cc.playerId();
             case InteractionContext.PermanentChoice pc -> pc.playerId();
             case InteractionContext.GraveyardChoice gc -> gc.playerId();
-            case InteractionContext.ColorChoice cc -> cc.playerId();
             case InteractionContext.LibrarySearch ls -> ls.playerId();
             case InteractionContext.LibraryRevealChoice lrc -> lrc.playerId();
             case InteractionContext.RevealedHandChoice rhc -> rhc.choosingPlayerId();

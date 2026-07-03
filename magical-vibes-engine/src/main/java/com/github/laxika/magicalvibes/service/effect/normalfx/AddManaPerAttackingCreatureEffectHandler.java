@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaPerAttackingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class AddManaPerAttackingCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final PlayerInteractionSupport playerInteractionSupport;
-    private final SessionManager sessionManager;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,10 +42,10 @@ public class AddManaPerAttackingCreatureEffectHandler implements NormalEffectHan
         // Present color choice: player picks one of the two offered colors, all mana is added as that color
         ChoiceContext.AttackManaSplitChoice choiceContext =
                 new ChoiceContext.AttackManaSplitChoice(controllerId, attackerCount);
-        gameData.interaction.beginColorChoice(controllerId, null, null, choiceContext);
         List<String> colors = List.of(e.color1().name(), e.color2().name());
-        sessionManager.sendToPlayer(controllerId,
-                new ChooseFromListMessage(colors, "Choose a color of mana to add (" + attackerCount + " mana)."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                controllerId, null, null, choiceContext, colors,
+                "Choose a color of mana to add (" + attackerCount + " mana)."));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - Awaiting {} to choose mana color for {} attacking creatures",

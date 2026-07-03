@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.MulliganService;
@@ -50,7 +50,7 @@ public class MayMiscHandlerService {
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
     private final BattlefieldEntryService battlefieldEntryService;
-    private final SessionManager sessionManager;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     // @Lazy to break circular dependency:
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
@@ -181,16 +181,10 @@ public class MayMiscHandlerService {
         }
 
         if (effect.kind() == DrawReplacementKind.ABUNDANCE) {
-            gameData.interaction.beginColorChoice(
-                    drawingPlayerId,
-                    null,
-                    null,
-                    new ChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind())
-            );
-            sessionManager.sendToPlayer(drawingPlayerId, new ChooseFromListMessage(
-                    List.of("LAND", "NONLAND"),
-                    "Choose land or nonland for Abundance."
-            ));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                    drawingPlayerId, null, null,
+                    new ChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind()),
+                    List.of("LAND", "NONLAND"), "Choose land or nonland for Abundance."));
             log.info("Game {} - Awaiting {} to choose land or nonland for Abundance", gameData.id, playerName);
             return;
         }

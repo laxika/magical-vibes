@@ -228,6 +228,51 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   registry-managed head check of `handleMultiCardChoice` (its legacy tail block deleted).
   ~20 test files' `multiSelection()` / `multiPermanentChoiceContext()` reads rewritten to the
   typed active-record accessors (scratchpad perl script `fix_multi_tests.pl`).
+- `PendingInteraction.ColorChoice` (COLOR_CHOICE) — the whole single-value "choose from a list"
+  family (mana color, protection color, keyword / creature-type / permanent-type /
+  basic-land-type, card name, text-change word, Abundance land/nonland, Conundrum-Sphinx
+  name-and-reveal, …). The specific variant stays in the record's `context` (a `ChoiceContext`,
+  a domain type) and drives answer handling, exactly as the legacy `InteractionContext.ColorChoice`
+  did. The record also carries the exact begin-time `options` (`List<String>`) and `prompt`, so
+  reconnect replay re-sends byte-identical content. `ColorChoiceInteractionHandler.prompt` just
+  sends `ChooseFromListMessage(options, prompt)` — the per-begin-site log lines stay at the begin
+  sites (there are ~15 distinct ones), so replay does not re-log, matching the legacy
+  `ReconnectionService.resendFromContext` (which never logged). Answered via the new single-String
+  `InteractionAnswer.ListChoiceMade`; `GameService.handleListChoice` (COLOR_CHOICE's sole entry
+  point) now routes through `dispatchAnswer` and throws the same "Not awaiting color choice" on a
+  miss. The entire variant dispatch stays in `ChoiceHandlerService.handleListChoice` (now reading
+  the active record; its ~17 redundant `clearColorChoice()` calls removed — `clearAwaitingInput()`
+  clears the record; its three internal re-begins — flashback-mana continuation, text-change
+  second step, each-player next-player — go through the registry too). Begin sites converted:
+  `PlayerInputService`'s 11 `begin*` helpers (signatures unchanged), the five
+  `ActivatedAbilityExecutionService` mana-color sites, `AwardAnyColorManaEffectHandler` /
+  `AwardAnyColorManaWithInstantSorceryCopyEffectHandler` / `AddManaPerAttackingCreatureEffectHandler`
+  / `ChangeColorTextEffectHandler` / `EachPlayerNameCardRevealTopEffectHandler`, and
+  `MayMiscHandlerService` (Abundance) — each dropped its now-unused `SessionManager` /
+  `ChooseFromListMessage` in favor of the registry. **Two deliberate replay-fidelity corrections**
+  (same precedent as the Mirror-of-Fate / multi-permanent prompt corrections): the legacy replay
+  re-derived options+prompt from the context and *diverged* from the begin-time message — (1) every
+  `ManaColorChoice`, `ProtectionColorChoice`, `MassProtectionColorChoice`, `PermanentTypeChoice`,
+  `SphinxAmbassadorNameChoice`, `AttackManaSplitChoice`, and `TextChangeToWord` fell through to a
+  generic `["WHITE","BLUE","BLACK","RED","GREEN"]` / "Choose a color." (e.g. a mana choice replayed
+  as "Choose a color." instead of "Choose a color of mana to add.", protection-with-artifacts
+  dropped its `ARTIFACT` option, a permanent-type choice replayed the wrong five options entirely);
+  (2) replay now re-sends the exact begin-time options+prompt carried on the record. A related
+  consequence: the direct (non-helper) begin sites previously sent to the deciding player *without*
+  the mind-control recipient redirect; routing them through `registry.begin` applies
+  `resolveMessageRecipient` uniformly (rules-correct, and consistent with every other migrated kind).
+  AI: `ColorChoiceAiStrategy` ports `AiChoiceHandler.handleColorChoice` verbatim (inlining
+  `AiUtils.getOpponentId`, which is package-private to `…ai`); `handleColorChoice` is now a thin
+  alias to `handleActiveInteraction`; **Hard AI keeps its creature-type / basic-land-type override**
+  via the protected `AiDecisionEngine.handleListChoice` seam, reading the active record.
+  `GameSimulator` reads the record in both COLOR_CHOICE action-gen and resolution branches and gains
+  a `getInteractionPlayer` decider case. Removed: `InteractionContext.ColorChoice` + all switch
+  cases (GameService, ReconnectionService ×2, GameSimulator, GameData.copyInteractionInto),
+  `InteractionState.beginColorChoice/clearColorChoice/colorChoiceContext/colorChoiceContextView` +
+  the `ChoiceState colorChoice` sub-state field, and the now-empty `interaction/ChoiceState` class.
+  ~25 test files' `colorChoice()` / `colorChoiceContext()` reads rewritten to the typed accessor
+  (scratchpad `fix_color_tests.pl`); the five color effect-handler tests now verify
+  `interactionHandlerRegistry.begin(…, ColorChoice)` instead of the send.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -251,7 +296,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 ### Stage 3 continuation — migrate the remaining kinds
 
 Suggested order: the card/graveyard/permanent choice families (CARD_CHOICE, DISCARD_CHOICE,
-PERMANENT_CHOICE, GRAVEYARD_CHOICE, COLOR_CHOICE, REVEALED_HAND_CHOICE),
+PERMANENT_CHOICE, GRAVEYARD_CHOICE, REVEALED_HAND_CHOICE),
 LIBRARY_SEARCH / LIBRARY_REVEAL_CHOICE, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
 declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 

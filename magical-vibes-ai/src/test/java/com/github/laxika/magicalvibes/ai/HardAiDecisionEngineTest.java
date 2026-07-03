@@ -4178,8 +4178,11 @@ class HardAiDecisionEngineTest {
             gd.playerBattlefields.get(player1.getId()).add(human);
 
             // Set up a SubtypeChoice
-            gd.interaction.beginColorChoice(player1.getId(), null, null,
-                    new com.github.laxika.magicalvibes.model.ChoiceContext.SubtypeChoice(null));
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                            player1.getId(), null, null,
+                            new com.github.laxika.magicalvibes.model.ChoiceContext.SubtypeChoice(null),
+                            java.util.List.of(), "Choose a creature type."),
+                    com.github.laxika.magicalvibes.model.AwaitingInput.COLOR_CHOICE);
 
             ai.handleMessage("CHOOSE_FROM_LIST", "");
 
@@ -4211,8 +4214,11 @@ class HardAiDecisionEngineTest {
             harness.setHand(player1, List.of(new SerraAngel()));
 
             // Set up a BasicLandTypeChoice
-            gd.interaction.beginColorChoice(player1.getId(), null, null,
-                    new com.github.laxika.magicalvibes.model.ChoiceContext.BasicLandTypeChoice(null));
+            gd.interaction.beginInteraction(new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
+                            player1.getId(), null, null,
+                            new com.github.laxika.magicalvibes.model.ChoiceContext.BasicLandTypeChoice(null),
+                            java.util.List.of(), "Choose a basic land type."),
+                    com.github.laxika.magicalvibes.model.AwaitingInput.COLOR_CHOICE);
 
             ai.handleMessage("CHOOSE_FROM_LIST", "");
 

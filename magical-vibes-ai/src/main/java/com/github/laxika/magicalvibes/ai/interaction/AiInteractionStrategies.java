@@ -26,6 +26,7 @@ public final class AiInteractionStrategies {
         register(new MultiZoneExileChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());
+        register(new ColorChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

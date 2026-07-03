@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -25,7 +25,7 @@ class AwardAnyColorManaWithInstantSorceryCopyEffectHandlerTest extends AbstractP
 
                 resolveEffect(gd, entry, effect);
 
-                verify(sessionManager).sendToPlayer(eq(player1Id), any(ChooseFromListMessage.class));
+                verify(interactionHandlerRegistry).begin(eq(gd), any(PendingInteraction.ColorChoice.class));
                 assertThat(gd.pendingNextInstantSorceryCopyCount.get(player1Id)).isEqualTo(1);
             }
 }

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
 import com.github.laxika.magicalvibes.service.input.CardChoiceHandlerService;
-import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.GraveyardChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
@@ -48,7 +47,6 @@ public class GameService {
     private final GameBroadcastService gameBroadcastService;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
-    private final ChoiceHandlerService listChoiceHandlerService;
     private final CardChoiceHandlerService cardChoiceHandlerService;
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final GraveyardChoiceHandlerService graveyardChoiceHandlerService;
@@ -133,7 +131,6 @@ public class GameService {
             case InteractionContext.CardChoice cc -> controlledId.equals(cc.playerId());
             case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
             case InteractionContext.GraveyardChoice gc -> controlledId.equals(gc.playerId());
-            case InteractionContext.ColorChoice cc -> controlledId.equals(cc.playerId());
             case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
             case InteractionContext.LibraryRevealChoice lrc -> controlledId.equals(lrc.playerId());
             case InteractionContext.RevealedHandChoice rhc -> controlledId.equals(rhc.choosingPlayerId());
@@ -452,7 +449,10 @@ public class GameService {
     public void handleListChoice(GameData gameData, Player player, String choiceName) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            listChoiceHandlerService.handleListChoice(gameData, player, choiceName);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.ListChoiceMade(choiceName))) {
+                throw new IllegalStateException("Not awaiting color choice");
+            }
         }
     }
 

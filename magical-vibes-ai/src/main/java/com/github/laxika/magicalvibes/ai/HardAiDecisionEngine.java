@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -2984,7 +2983,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
      */
     @Override
     protected void handleListChoice(GameData gameData) {
-        InteractionContext.ColorChoice colorChoice = gameData.interaction.colorChoiceContextView();
+        PendingInteraction.ColorChoice colorChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         if (colorChoice == null || !aiPlayer.getId().equals(colorChoice.playerId())) {
             choiceHandler.handleColorChoice(gameData);
             return;

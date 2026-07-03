@@ -39,9 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
@@ -53,8 +51,10 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +67,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class EachPlayerNameCardRevealTopEffectHandler implements NormalEffectHandlerBean {
 
-    private final SessionManager sessionManager;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final LibraryRevealSupport libraryRevealSupport;
 
     @Override
@@ -93,10 +93,10 @@ public class EachPlayerNameCardRevealTopEffectHandler implements NormalEffectHan
         UUID firstPlayerId = playerOrder.getFirst();
         var choiceContext = new ChoiceContext.EachPlayerCardNameRevealChoice(
                 playerOrder, new LinkedHashMap<>());
-        gameData.interaction.beginColorChoice(firstPlayerId, null, null, choiceContext);
 
         List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
-        sessionManager.sendToPlayer(firstPlayerId, new ChooseFromListMessage(cardNames, "Choose a card name."));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                firstPlayerId, null, null, choiceContext, cardNames, "Choose a card name."));
 
         String playerName = gameData.playerIdToName.get(firstPlayerId);
         log.info("Game {} - Awaiting {} to choose a card name (Conundrum Sphinx)", gameData.id, playerName);

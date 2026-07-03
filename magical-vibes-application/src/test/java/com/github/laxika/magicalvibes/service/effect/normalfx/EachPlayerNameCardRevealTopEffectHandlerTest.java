@@ -77,7 +77,9 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        eachPlayerNameCardRevealTopEffectHandler = new EachPlayerNameCardRevealTopEffectHandler(sessionManager, libraryRevealSupport);
+        eachPlayerNameCardRevealTopEffectHandler = new EachPlayerNameCardRevealTopEffectHandler(
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService),
+                libraryRevealSupport);
 
     }
 

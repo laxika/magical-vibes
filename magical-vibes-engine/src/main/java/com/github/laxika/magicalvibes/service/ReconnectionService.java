@@ -2,12 +2,8 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
-import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
@@ -18,7 +14,6 @@ import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromGraveyardMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromRevealedHandMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
@@ -34,21 +29,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReconnectionService {
-
-    private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
-            CardSubtype.FOREST, CardSubtype.MOUNTAIN, CardSubtype.ISLAND,
-            CardSubtype.PLAINS, CardSubtype.SWAMP, CardSubtype.AURA,
-            CardSubtype.EQUIPMENT, CardSubtype.LOCUS
-    );
 
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
@@ -109,12 +96,6 @@ public class ReconnectionService {
                 InteractionContext.GraveyardChoice gc = gameData.interaction.graveyardChoiceContext();
                 if (gc != null) {
                     resendFromContext(gameData, playerId, gc);
-                }
-            }
-            case COLOR_CHOICE -> {
-                InteractionContext.ColorChoice cc = gameData.interaction.colorChoiceContextView();
-                if (cc != null) {
-                    resendFromContext(gameData, playerId, cc);
                 }
             }
             case LIBRARY_SEARCH -> {
@@ -197,68 +178,6 @@ public class ReconnectionService {
                             new ArrayList<>(gc.validIndices()), "Choose a card from the graveyard.", gc.cardPool() != null));
                 }
             }
-            case InteractionContext.ColorChoice cc -> {
-                if (!playerId.equals(cc.playerId())) {
-                    return;
-                }
-                List<String> options;
-                String prompt;
-                if (cc.context() instanceof ChoiceContext.TextChangeFromWord) {
-                    options = new ArrayList<>();
-                    options.addAll(GameQueryService.TEXT_CHANGE_COLOR_WORDS);
-                    options.addAll(GameQueryService.TEXT_CHANGE_LAND_TYPES);
-                    prompt = "Choose a color word or basic land type to replace.";
-                } else if (cc.context() instanceof ChoiceContext.TextChangeToWord tc) {
-                    if (tc.isColor()) {
-                        options = GameQueryService.TEXT_CHANGE_COLOR_WORDS.stream().filter(c -> !c.equals(tc.fromWord())).toList();
-                        prompt = "Choose the replacement color word.";
-                    } else {
-                        options = GameQueryService.TEXT_CHANGE_LAND_TYPES.stream().filter(t -> !t.equals(tc.fromWord())).toList();
-                        prompt = "Choose the replacement basic land type.";
-                    }
-                } else if (cc.context() instanceof ChoiceContext.DrawReplacementChoice drc
-                        && drc.kind() == DrawReplacementKind.ABUNDANCE) {
-                    options = List.of("LAND", "NONLAND");
-                    prompt = "Choose land or nonland for Abundance.";
-                } else if (cc.context() instanceof ChoiceContext.CardNameChoice cnc) {
-                    if (cnc.excludedTypes().isEmpty()) {
-                        options = collectAllCardNamesInGame(gameData);
-                        prompt = "Choose a card name.";
-                    } else {
-                        options = collectCardNamesInGameExcluding(gameData, cnc.excludedTypes());
-                        String excludedLabel = cnc.excludedTypes().stream()
-                                .map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
-                        prompt = "Choose a non" + excludedLabel + " card name.";
-                    }
-                } else if (cc.context() instanceof ChoiceContext.ExileByNameChoice ebn) {
-                    options = collectCardNamesInGameExcluding(gameData, ebn.excludedTypes());
-                    String excludedLabel = ebn.excludedTypes().stream()
-                            .map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
-                    prompt = "Choose a non" + excludedLabel + " card name.";
-                } else if (cc.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
-                    options = kgc.options().stream().map(Keyword::name).toList();
-                    prompt = "Choose a keyword to grant.";
-                } else if (cc.context() instanceof ChoiceContext.SubtypeChoice) {
-                    options = java.util.Arrays.stream(CardSubtype.values())
-                            .filter(s -> !NON_CREATURE_SUBTYPES.contains(s))
-                            .map(CardSubtype::name)
-                            .toList();
-                    prompt = "Choose a creature type.";
-                } else if (cc.context() instanceof ChoiceContext.BasicLandTypeChoice) {
-                    options = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
-                    prompt = "Choose a basic land type.";
-                } else if (cc.context() instanceof ChoiceContext.AddBasicLandTypeChoice) {
-                    options = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
-                    prompt = "Choose a basic land type.";
-                } else if (cc.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice) {
-                    options = collectAllCardNamesInGame(gameData);
-                    prompt = "Choose a card name.";
-                } else {
-                    options = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-                    prompt = "Choose a color.";
-                }
-                sessionManager.sendToPlayer(playerId, new ChooseFromListMessage(options, prompt));
-            }
             case InteractionContext.LibrarySearch ls -> {
                 if (!playerId.equals(ls.playerId()) || ls.cards() == null) {
                     return;
@@ -311,60 +230,5 @@ public class ReconnectionService {
                         cda.attackerName(), cda.totalDamage(), targetViews, cda.isTrample(), cda.isDeathtouch()));
             }
         }
-    }
-
-    private List<String> collectAllCardNamesInGame(GameData gameData) {
-        java.util.Set<String> names = new java.util.TreeSet<>();
-        for (java.util.UUID pid : gameData.playerIds) {
-            gameData.playerBattlefields.getOrDefault(pid, List.of())
-                    .forEach(p -> names.add(p.getCard().getName()));
-            gameData.playerHands.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerGraveyards.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerDecks.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.getPlayerExiledCards(pid)
-                    .forEach(c -> names.add(c.getName()));
-        }
-        gameData.stack.forEach(se -> names.add(se.getCard().getName()));
-        return new java.util.ArrayList<>(names);
-    }
-
-    private List<String> collectCardNamesInGameExcluding(GameData gameData, java.util.List<com.github.laxika.magicalvibes.model.CardType> excludedTypes) {
-        java.util.Set<String> names = new java.util.TreeSet<>();
-        for (java.util.UUID pid : gameData.playerIds) {
-            gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
-                    .filter(p -> !hasExcludedType(p.getCard(), excludedTypes))
-                    .forEach(p -> names.add(p.getCard().getName()));
-            gameData.playerHands.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> !hasExcludedType(c, excludedTypes))
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> !hasExcludedType(c, excludedTypes))
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerDecks.getOrDefault(pid, List.of()).stream()
-                    .filter(c -> !hasExcludedType(c, excludedTypes))
-                    .forEach(c -> names.add(c.getName()));
-            gameData.getPlayerExiledCards(pid).stream()
-                    .filter(c -> !hasExcludedType(c, excludedTypes))
-                    .forEach(c -> names.add(c.getName()));
-        }
-        gameData.stack.stream()
-                .filter(se -> !hasExcludedType(se.getCard(), excludedTypes))
-                .forEach(se -> names.add(se.getCard().getName()));
-        return new java.util.ArrayList<>(names);
-    }
-
-    private boolean hasExcludedType(com.github.laxika.magicalvibes.model.Card card, java.util.List<com.github.laxika.magicalvibes.model.CardType> excludedTypes) {
-        if (excludedTypes.contains(card.getType())) {
-            return true;
-        }
-        for (com.github.laxika.magicalvibes.model.CardType excluded : excludedTypes) {
-            if (card.getAdditionalTypes().contains(excluded)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

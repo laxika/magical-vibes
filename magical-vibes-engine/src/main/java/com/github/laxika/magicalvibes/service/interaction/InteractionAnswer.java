@@ -36,4 +36,8 @@ public sealed interface InteractionAnswer {
     /** A selection of zero or more permanents by ID. */
     record PermanentsChosen(java.util.List<java.util.UUID> permanentIds) implements InteractionAnswer {
     }
+
+    /** A single value chosen from a presented list (the "choose from list" wire payload). */
+    record ListChoiceMade(String choice) implements InteractionAnswer {
+    }
 }

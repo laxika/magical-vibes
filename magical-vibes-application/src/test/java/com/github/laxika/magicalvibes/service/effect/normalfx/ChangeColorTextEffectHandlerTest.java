@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.ChangeColorTextEffect;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -29,7 +29,7 @@ class ChangeColorTextEffectHandlerTest extends AbstractPlayerInteractionHandlerT
 
                 resolveEffect(gd, entry, new ChangeColorTextEffect());
 
-                verify(sessionManager).sendToPlayer(eq(player1Id), any(ChooseFromListMessage.class));
+                verify(interactionHandlerRegistry).begin(eq(gd), any(PendingInteraction.ColorChoice.class));
             }
 
             @Test
@@ -44,6 +44,6 @@ class ChangeColorTextEffectHandlerTest extends AbstractPlayerInteractionHandlerT
 
                 resolveEffect(gd, entry, new ChangeColorTextEffect());
 
-                verify(sessionManager, never()).sendToPlayer(any(), any(ChooseFromListMessage.class));
+                verify(interactionHandlerRegistry, never()).begin(any(), any());
             }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -27,6 +29,7 @@ import com.github.laxika.magicalvibes.networking.message.MayAbilityMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.interaction.ColorChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.interaction.MayAbilityChoiceInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.MultiGraveyardChoiceInteractionHandler;
@@ -83,6 +86,8 @@ class PlayerInputServiceTest {
                 sessionManager, mock(MultiPermanentChoiceHandlerService.class)));
         registry.register(new MultiGraveyardChoiceInteractionHandler(
                 sessionManager, cardViewFactory, mock(GraveyardChoiceHandlerService.class)));
+        registry.register(new ColorChoiceInteractionHandler(
+                sessionManager, mock(ChoiceHandlerService.class)));
         svc = new PlayerInputService(sessionManager, cardViewFactory, registry);
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
@@ -474,8 +479,8 @@ class PlayerInputServiceTest {
 
             svc.beginProtectionColorChoice(gd, PLAYER1_ID, targetId, true);
 
-            assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.ProtectionColorChoice.class);
-            ChoiceContext.ProtectionColorChoice ctx = (ChoiceContext.ProtectionColorChoice) gd.interaction.colorChoiceContext();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.ProtectionColorChoice.class);
+            ChoiceContext.ProtectionColorChoice ctx = (ChoiceContext.ProtectionColorChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.targetId()).isEqualTo(targetId);
             assertThat(ctx.includeArtifacts()).isTrue();
         }
@@ -511,8 +516,8 @@ class PlayerInputServiceTest {
 
             svc.beginKeywordChoice(gd, PLAYER1_ID, targetId, options);
 
-            assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.KeywordGrantChoice.class);
-            ChoiceContext.KeywordGrantChoice ctx = (ChoiceContext.KeywordGrantChoice) gd.interaction.colorChoiceContext();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.KeywordGrantChoice.class);
+            ChoiceContext.KeywordGrantChoice ctx = (ChoiceContext.KeywordGrantChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.targetId()).isEqualTo(targetId);
             assertThat(ctx.options()).containsExactly(Keyword.FLYING, Keyword.FIRST_STRIKE);
         }
@@ -546,8 +551,8 @@ class PlayerInputServiceTest {
 
             svc.beginSubtypeChoice(gd, PLAYER1_ID, permId);
 
-            assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.SubtypeChoice.class);
-            ChoiceContext.SubtypeChoice ctx = (ChoiceContext.SubtypeChoice) gd.interaction.colorChoiceContext();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.SubtypeChoice.class);
+            ChoiceContext.SubtypeChoice ctx = (ChoiceContext.SubtypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.permanentId()).isEqualTo(permId);
         }
     }
@@ -576,8 +581,8 @@ class PlayerInputServiceTest {
         void storesContext() {
             svc.beginPermanentTypeChoice(gd, PLAYER1_ID, GraveyardChoiceDestination.HAND, "entry desc");
 
-            assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.PermanentTypeChoice.class);
-            ChoiceContext.PermanentTypeChoice ctx = (ChoiceContext.PermanentTypeChoice) gd.interaction.colorChoiceContext();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.PermanentTypeChoice.class);
+            ChoiceContext.PermanentTypeChoice ctx = (ChoiceContext.PermanentTypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.controllerId()).isEqualTo(PLAYER1_ID);
             assertThat(ctx.destination()).isEqualTo(GraveyardChoiceDestination.HAND);
             assertThat(ctx.entryDescription()).isEqualTo("entry desc");
@@ -612,8 +617,8 @@ class PlayerInputServiceTest {
 
             svc.beginBasicLandTypeChoice(gd, PLAYER1_ID, permId);
 
-            assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.BasicLandTypeChoice.class);
-            ChoiceContext.BasicLandTypeChoice ctx = (ChoiceContext.BasicLandTypeChoice) gd.interaction.colorChoiceContext();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.BasicLandTypeChoice.class);
+            ChoiceContext.BasicLandTypeChoice ctx = (ChoiceContext.BasicLandTypeChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.permanentId()).isEqualTo(permId);
         }
     }
@@ -733,8 +738,8 @@ class PlayerInputServiceTest {
 
             svc.beginCardNameChoice(gd, PLAYER1_ID, sourceCard, excluded);
 
-            assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.CardNameChoice.class);
-            ChoiceContext.CardNameChoice ctx = (ChoiceContext.CardNameChoice) gd.interaction.colorChoiceContext();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.CardNameChoice.class);
+            ChoiceContext.CardNameChoice ctx = (ChoiceContext.CardNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.card()).isEqualTo(sourceCard);
             assertThat(ctx.controllerId()).isEqualTo(PLAYER1_ID);
             assertThat(ctx.excludedTypes()).containsExactly(CardType.LAND);
@@ -765,8 +770,8 @@ class PlayerInputServiceTest {
         void storesContext() {
             svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND));
 
-            assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.ExileByNameChoice.class);
-            ChoiceContext.ExileByNameChoice ctx = (ChoiceContext.ExileByNameChoice) gd.interaction.colorChoiceContext();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.ExileByNameChoice.class);
+            ChoiceContext.ExileByNameChoice ctx = (ChoiceContext.ExileByNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.targetPlayerId()).isEqualTo(PLAYER2_ID);
             assertThat(ctx.controllerId()).isEqualTo(PLAYER1_ID);
         }
@@ -799,8 +804,8 @@ class PlayerInputServiceTest {
         void storesContext() {
             svc.beginSphinxAmbassadorCardNameChoice(gd, PLAYER2_ID, PLAYER1_ID);
 
-            assertThat(gd.interaction.colorChoiceContext()).isInstanceOf(ChoiceContext.SphinxAmbassadorNameChoice.class);
-            ChoiceContext.SphinxAmbassadorNameChoice ctx = (ChoiceContext.SphinxAmbassadorNameChoice) gd.interaction.colorChoiceContext();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.SphinxAmbassadorNameChoice.class);
+            ChoiceContext.SphinxAmbassadorNameChoice ctx = (ChoiceContext.SphinxAmbassadorNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
             assertThat(ctx.namingPlayerId()).isEqualTo(PLAYER2_ID);
             assertThat(ctx.controllerId()).isEqualTo(PLAYER1_ID);
         }
