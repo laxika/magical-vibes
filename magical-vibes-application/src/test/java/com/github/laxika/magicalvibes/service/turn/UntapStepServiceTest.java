@@ -31,12 +31,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @ExtendWith(MockitoExtension.class)
 class UntapStepServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private GameBroadcastService gameBroadcastService;
@@ -293,7 +297,7 @@ class UntapStepServiceTest {
         @DisplayName("Filtered untap effect only untaps matching permanents")
         void filteredEffectOnlyUntapsMatchingPermanents() {
             // Player 2 controls a permanent with a filtered untap effect
-            PermanentPredicate filter = new PermanentPredicate() {};
+            PermanentPredicate filter = new PermanentTruePredicate();
             Card effectCard = createCardWithName("Filtered Untapper");
             effectCard.addEffect(EffectSlot.STATIC,
                     new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
@@ -306,9 +310,9 @@ class UntapStepServiceTest {
             nonMatchingPerm.tap();
 
             // Default: permanents don't match the filter
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), any(), eq(filter))).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(), eq(filter))).thenReturn(false);
             // Only the matching permanent passes the filter
-            when(gameQueryService.matchesPermanentPredicate(gd, matchingPerm, filter)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, matchingPerm, filter)).thenReturn(true);
 
             sut.untapPermanents(gd, player1Id);
 

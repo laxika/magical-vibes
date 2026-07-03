@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class ExilePermanentDamagedPlayerControlsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
@@ -41,7 +43,7 @@ public class ExilePermanentDamagedPlayerControlsEffectHandler implements NormalE
         if (defenderBattlefield != null) {
             for (Permanent perm : defenderBattlefield) {
                 if (e.predicate() == null
-                        || gameQueryService.matchesPermanentPredicate(gameData, perm, e.predicate())) {
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.predicate())) {
                     validIds.add(perm.getId());
                 }
             }

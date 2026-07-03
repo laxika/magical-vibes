@@ -2,6 +2,8 @@
 
 Complete reference for all `TargetFilter`, `PermanentPredicate`, `StackEntryPredicate`, and `PlayerPredicate` types. Extracted from ACTIVATED_ABILITY_GUIDE.md for standalone readability.
 
+All of these base interfaces are **sealed**: a new predicate/filter must be added to the interface's `permits` clause, and the exhaustive switch in the engine's `PredicateEvaluationService` (`magical-vibes-engine/.../service/filter/`) must gain a matching case — the compiler enforces both. `StackEntryPredicate` types used for *targeting* are evaluated by `TargetLegalityService` instead.
+
 ## TargetFilter types
 
 | Filter class | Constructor | Use when |
@@ -90,7 +92,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryIsSingleTargetPredicate` | `()` | spells with exactly one target |
 | `StackEntryHasTargetPredicate` | `()` | matches any spell or ability on the stack (always true). Signals to include triggered/activated abilities, not just spells. Used by Spellskite |
 | `StackEntryControlledByPredicate` | `()` | spells controlled by the evaluating player (the source's own controller) |
-| `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The enchanted player's ID is supplied externally by the evaluating service (`GameQueryService.matchesStackEntryPredicate(entry, predicate, enchantedPlayerId)`). Used by Curse of Echoes |
+| `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The enchanted player's ID is supplied externally by the evaluating service (`PredicateEvaluationService.matchesStackEntryPredicate(entry, predicate, enchantedPlayerId)`). Used by Curse of Echoes |
 | `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
 | `StackEntryTargetsYouOrCreatureYouControlPredicate` | `()` | spells/abilities targeting you or a creature you control |
 | `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |

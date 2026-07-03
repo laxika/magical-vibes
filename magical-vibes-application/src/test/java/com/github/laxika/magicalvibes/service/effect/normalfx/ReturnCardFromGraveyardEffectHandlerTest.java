@@ -48,6 +48,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ReturnCardFromGraveyardEffectHandlerTest {
@@ -60,6 +61,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
     private LegendRuleService legendRuleService;
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private GameBroadcastService gameBroadcastService;
     @Mock
@@ -283,8 +286,8 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
                         player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
 
-                when(gameQueryService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(true);
-                when(gameQueryService.matchesCardPredicate(eq(artifact), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(artifact), eq(filter), any())).thenReturn(true);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 
@@ -330,7 +333,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Beacon of Unrest"),
                         player1Id, "Beacon of Unrest", new ArrayList<>(List.of(effect)));
 
-                when(gameQueryService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(eq(creature), eq(filter), any())).thenReturn(false);
 
                 returnCardFromGraveyardHandler.resolve(gd, entry, effect);
 

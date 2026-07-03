@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifePerMatchingPermanentO
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +17,7 @@ public class GainLifePerMatchingPermanentOnBattlefieldEffectHandler implements N
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -30,7 +32,7 @@ public class GainLifePerMatchingPermanentOnBattlefieldEffectHandler implements N
         for (PermanentPredicate predicate : e.predicates()) {
             int[] count = {0};
             gameData.forEachPermanent((playerId, permanent) -> {
-                if (gameQueryService.matchesPermanentPredicate(gameData, permanent, predicate)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, predicate)) {
                     count[0]++;
                 }
             });

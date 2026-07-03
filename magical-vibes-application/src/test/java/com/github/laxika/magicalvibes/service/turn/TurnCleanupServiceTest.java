@@ -338,7 +338,7 @@ class TurnCleanupServiceTest {
         @Test
         @DisplayName("Clears combatDamageExemptPredicate")
         void clearsCombatDamageExemptPredicate() {
-            gd.combatDamageExemptPredicate = new com.github.laxika.magicalvibes.model.filter.PermanentPredicate() {};
+            gd.combatDamageExemptPredicate = new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate();
 
             sut.resetEndOfTurnModifiers(gd);
 

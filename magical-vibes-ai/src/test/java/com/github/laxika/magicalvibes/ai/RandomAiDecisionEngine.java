@@ -358,7 +358,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                 return artifacts.isEmpty() ? null : artifacts.get(rng.nextInt(artifacts.size())).getId();
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 List<Permanent> matching = battlefield.stream()
-                        .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
                         .toList();
                 return matching.isEmpty() ? null : matching.get(rng.nextInt(matching.size())).getId();
             }

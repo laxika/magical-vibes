@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class BoostTargetCreaturePerControlledPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -42,7 +44,7 @@ public class BoostTargetCreaturePerControlledPermanentEffectHandler implements N
         if (battlefield != null) {
             FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(controllerId);
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.matchesPermanentPredicate(permanent, boost.filter(), filterContext)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext)) {
                     count++;
                 }
             }

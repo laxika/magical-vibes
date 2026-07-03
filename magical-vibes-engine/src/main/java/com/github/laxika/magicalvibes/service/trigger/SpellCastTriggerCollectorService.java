@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCa
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -62,6 +63,7 @@ import java.util.UUID;
 public class SpellCastTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     // ── ON_ANY_PLAYER_CASTS_SPELL ──────────────────────────────────────
@@ -171,7 +173,7 @@ public class SpellCastTriggerCollectorService {
         // (for Curse of Echoes) controlled-by-the-enchanted-player. Evaluated against the cast
         // spell's stack entry, with the source aura's attachedTo as the enchanted-player context.
         if (trigger.spellFilter() != null
-                && !gameQueryService.matchesStackEntryPredicate(spellEntry, trigger.spellFilter(),
+                && !predicateEvaluationService.matchesStackEntryPredicate(spellEntry, trigger.spellFilter(),
                         match.permanent().getAttachedTo())) {
             return false;
         }
@@ -212,7 +214,7 @@ public class SpellCastTriggerCollectorService {
             CopyControllerCastSpellOnSpellCastEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
 
-        if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
                 match.gameData(), sc.castingPlayerId())) {
             return false;
         }
@@ -258,7 +260,7 @@ public class SpellCastTriggerCollectorService {
         if (chosenSubtype == null) return false;
 
         // Must be a creature spell of the chosen type
-        if (!gameQueryService.matchesCardPredicate(sc.spellCard(),
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(),
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(chosenSubtype)
@@ -394,7 +396,7 @@ public class SpellCastTriggerCollectorService {
     private boolean handleManaValueDamage(TriggerMatchContext match,
             DealDamageEqualToSpellManaValueToAnyTargetEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
                 match.gameData(), sc.castingPlayerId())) return false;
 
         int manaValue = sc.spellCard().getManaValue();
@@ -415,7 +417,7 @@ public class SpellCastTriggerCollectorService {
             GiveTargetPlayerPoisonCountersEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (trigger.spellFilter() == null) return false;
-        if (!gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
                 match.gameData(), sc.castingPlayerId())) return false;
 
         List<CardEffect> resolvedEffects = List.of(new GiveTargetPlayerPoisonCountersEffect(trigger.amount()));
@@ -499,7 +501,7 @@ public class SpellCastTriggerCollectorService {
             LoseLifeUnlessPaysEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         if (trigger.spellFilter() != null
-                && !gameQueryService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
+                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
                         match.gameData(), sc.castingPlayerId())) {
             return false;
         }
@@ -528,7 +530,7 @@ public class SpellCastTriggerCollectorService {
 
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger,
                                                     Card spellCard, UUID castingPlayerId) {
-        if (!gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
+        if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
                 match.gameData(), castingPlayerId)) return false;
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());

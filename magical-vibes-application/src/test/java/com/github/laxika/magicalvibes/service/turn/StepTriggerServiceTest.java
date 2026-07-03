@@ -70,6 +70,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class StepTriggerServiceTest {
@@ -79,6 +80,8 @@ class StepTriggerServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private GameBroadcastService gameBroadcastService;
@@ -109,11 +112,12 @@ class StepTriggerServiceTest {
         // Build the SUT manually so we can pass a REAL TriggerTargetCollector. The collector's
         // opponent-filter / valid-target logic is exercised by several tests in this class, so a
         // mock would silently return nulls and break them.
-        TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(gameQueryService);
+        TriggerTargetCollector triggerTargetCollector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService);
         sut = new StepTriggerService(
                 drawService,
                 gameQueryService,
-                new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService)),
+                predicateEvaluationService,
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
                 gameBroadcastService,
                 playerInputService,
                 permanentRemovalService,
@@ -392,7 +396,7 @@ class StepTriggerServiceTest {
             Permanent otherPerm = new Permanent(otherCard);
             gd.playerBattlefields.get(player1Id).add(otherPerm);
 
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(otherPerm), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(otherPerm), any())).thenReturn(true);
 
             sut.handleUpkeepTriggers(gd);
 

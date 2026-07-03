@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -54,7 +55,7 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
             @DisplayName("Filters by predicate when filter is set")
             void filtersByPredicate() {
                 Card card = createCard("Scalpelexis");
-                PermanentPredicate filter = mock(PermanentPredicate.class);
+                PermanentPredicate filter = new PermanentTruePredicate();
                 ReturnPermanentsOnCombatDamageToPlayerEffect effect = new ReturnPermanentsOnCombatDamageToPlayerEffect(filter);
                 StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 2, player2Id);
 
@@ -63,8 +64,8 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
                 gd.playerBattlefields.get(player2Id).add(matching);
                 gd.playerBattlefields.get(player2Id).add(nonMatching);
 
-                when(gameQueryService.matchesPermanentPredicate(gd, matching, filter)).thenReturn(true);
-                when(gameQueryService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
+                when(predicateEvaluationService.matchesPermanentPredicate(gd, matching, filter)).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(gd, nonMatching, filter)).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 

@@ -46,12 +46,14 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class MayCastHandlerServiceTest {
 
     @Mock private InputCompletionService inputCompletionService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GraveyardService graveyardService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
@@ -202,9 +204,9 @@ class MayCastHandlerServiceTest {
             gd.playerBattlefields.get(PLAYER1_ID).add(artifact);
             gd.playerBattlefields.get(PLAYER1_ID).add(creature);
 
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                     .thenReturn(true);
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(creature), any()))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(creature), any()))
                     .thenReturn(false);
 
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);
@@ -264,7 +266,7 @@ class MayCastHandlerServiceTest {
             Permanent artifact = new Permanent(createArtifact("Sol Ring"));
             gd.playerBattlefields.get(PLAYER1_ID).add(artifact);
 
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any()))
                     .thenReturn(true);
 
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);

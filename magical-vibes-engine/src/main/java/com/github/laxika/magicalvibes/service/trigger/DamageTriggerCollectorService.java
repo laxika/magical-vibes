@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ import java.util.UUID;
 public class DamageTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final CreatureControlService creatureControlService;
@@ -101,7 +103,7 @@ public class DamageTriggerCollectorService {
         Permanent currentSource = gameQueryService.findPermanentById(gameData, dc.sourcePermanentId());
         if (currentSource == null) return false;
         if (destroyEffect.filter() != null
-                && !gameQueryService.matchesPermanentPredicate(gameData, currentSource, destroyEffect.filter())) {
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, currentSource, destroyEffect.filter())) {
             return false;
         }
 

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -37,7 +39,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             for (Permanent p : battlefield) {
                 if (gameQueryService.isCreature(gameData, p)
                         && (e.filter() == null
-                            || gameQueryService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                            || predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
                     p.setCantBlockThisTurn(true);
                     count++;
                 }

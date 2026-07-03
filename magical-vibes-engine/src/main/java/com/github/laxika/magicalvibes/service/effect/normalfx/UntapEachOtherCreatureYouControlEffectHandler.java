@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapEachOtherCreatureYouCont
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class UntapEachOtherCreatureYouControlEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -45,7 +47,7 @@ public class UntapEachOtherCreatureYouControlEffectHandler implements NormalEffe
             if (p.getId().equals(sourceId)) continue;
             if (!gameQueryService.isCreature(gameData, p)) continue;
             if (e.filter() != null
-                    && !gameQueryService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
+                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
             if (!p.isTapped()) continue;
 
             p.untap();

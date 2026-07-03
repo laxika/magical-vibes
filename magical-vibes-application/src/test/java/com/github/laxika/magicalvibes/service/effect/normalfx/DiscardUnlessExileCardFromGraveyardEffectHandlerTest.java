@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 class DiscardUnlessExileCardFromGraveyardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -20,7 +21,7 @@ class DiscardUnlessExileCardFromGraveyardEffectHandlerTest extends AbstractPlaye
             @DisplayName("Forces discard when no matching graveyard cards")
             void forcesDiscardWhenNoMatch() {
                 Card card = createCard("Rotting Fensnake");
-                CardPredicate predicate = mock(CardPredicate.class);
+                CardPredicate predicate = new CardNamedPredicate("Test Filter");
                 DiscardUnlessExileCardFromGraveyardEffect effect = new DiscardUnlessExileCardFromGraveyardEffect(predicate);
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
                 gd.playerHands.get(player1Id).add(createCard("Mountain"));
@@ -36,13 +37,13 @@ class DiscardUnlessExileCardFromGraveyardEffectHandlerTest extends AbstractPlaye
             @DisplayName("Offers may ability when matching graveyard cards exist")
             void offersMayAbilityWhenMatchExists() {
                 Card card = createCard("Rotting Fensnake");
-                CardPredicate predicate = mock(CardPredicate.class);
+                CardPredicate predicate = new CardNamedPredicate("Test Filter");
                 DiscardUnlessExileCardFromGraveyardEffect effect = new DiscardUnlessExileCardFromGraveyardEffect(predicate);
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
                 Card graveyardCard = createCard("Zombie");
                 gd.playerGraveyards.get(player1Id).add(graveyardCard);
 
-                when(gameQueryService.matchesCardPredicate(eq(graveyardCard), eq(predicate), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(graveyardCard), eq(predicate), any())).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 

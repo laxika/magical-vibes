@@ -33,12 +33,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private GameBroadcastService gameBroadcastService;
     @Mock
@@ -78,7 +81,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
         gd.activePlayerId = player1Id;
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler = new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler(gameQueryService, sessionManager, cardViewFactory, libraryRevealSupport);
+        lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler = new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler(gameQueryService, predicateEvaluationService, sessionManager, cardViewFactory, libraryRevealSupport);
 
     }
 
@@ -165,8 +168,8 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
                 gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
                 gd.playerDecks.get(player1Id).add(createCard("Giant Growth", CardType.INSTANT));
 
-                when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
-                when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
 
                 LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
                         new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE));
@@ -187,8 +190,8 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
                 gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves", CardType.CREATURE));
                 gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt", CardType.INSTANT));
 
-                when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
-                when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenCallRealMethod();
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenCallRealMethod();
 
                 LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
                         new LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(3, new CardTypePredicate(CardType.CREATURE), true);

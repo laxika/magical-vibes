@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +39,7 @@ import java.util.UUID;
 public class TriggerTargetCollector {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     /**
      * Result of a target-collection pass.
@@ -64,7 +66,7 @@ public class TriggerTargetCollector {
      *                                 creatures. Used by death triggers such as Black Cat.
      * @param supportControlledFilter  when {@code true}, a target filter of type
      *                                 {@link ControlledPermanentPredicateTargetFilter} is consulted
-     *                                 via {@link GameQueryService#matchesFilters}. Death and attack
+     *                                 via {@link com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService#matchesFilters}. Death and attack
      *                                 trigger pipelines support this; end-step does not.
      * @param unwrapConditional        when {@code true}, {@link ConditionalEffect} wrappers are
      *                                 unwrapped before inspecting {@code canTarget*} /
@@ -154,13 +156,13 @@ public class TriggerTargetCollector {
 
                     if (options.supportControlledFilter()
                             && targetFilter instanceof ControlledPermanentPredicateTargetFilter cpf) {
-                        if (!gameQueryService.matchesFilters(p, Set.of(cpf), filterCtx)) continue;
+                        if (!predicateEvaluationService.matchesFilters(p, Set.of(cpf), filterCtx)) continue;
                     } else if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
-                        if (!gameQueryService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) continue;
+                        if (!predicateEvaluationService.matchesPermanentPredicate(p, ppf.predicate(), filterCtx)) continue;
                     }
 
                     if (effectPredicate != null
-                            && !gameQueryService.matchesPermanentPredicate(p, effectPredicate, effectFilterCtx)) {
+                            && !predicateEvaluationService.matchesPermanentPredicate(p, effectPredicate, effectFilterCtx)) {
                         continue;
                     }
 

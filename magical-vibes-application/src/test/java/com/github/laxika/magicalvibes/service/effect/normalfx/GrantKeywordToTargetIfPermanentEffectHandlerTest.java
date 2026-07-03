@@ -33,11 +33,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class GrantKeywordToTargetIfPermanentEffectHandlerTest {
 
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
 
     private GrantKeywordToTargetIfPermanentEffectHandler handler;
@@ -47,7 +49,7 @@ class GrantKeywordToTargetIfPermanentEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new GrantKeywordToTargetIfPermanentEffectHandler(gameQueryService, gameBroadcastService);
+        handler = new GrantKeywordToTargetIfPermanentEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService);
         registry = new EffectHandlerRegistry();
         registry.register(handler.handledEffect(), handler);
 
@@ -76,7 +78,7 @@ class GrantKeywordToTargetIfPermanentEffectHandlerTest {
                 StackEntryType.INSTANT_SPELL, spell, player1Id, spell.getName(), List.of(effect), 0, target.getId(), null);
 
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-        when(gameQueryService.matchesPermanentPredicate(gd, target, predicate)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gd, target, predicate)).thenReturn(true);
 
         registry.getHandler(effect).resolve(gd, entry, effect);
 
@@ -102,7 +104,7 @@ class GrantKeywordToTargetIfPermanentEffectHandlerTest {
                 StackEntryType.INSTANT_SPELL, spell, player1Id, spell.getName(), List.of(effect), 0, target.getId(), null);
 
         when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
-        when(gameQueryService.matchesPermanentPredicate(gd, target, predicate)).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(gd, target, predicate)).thenReturn(false);
 
         registry.getHandler(effect).resolve(gd, entry, effect);
 

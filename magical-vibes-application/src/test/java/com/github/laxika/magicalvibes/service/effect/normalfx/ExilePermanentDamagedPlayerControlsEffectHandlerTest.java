@@ -42,12 +42,14 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
@@ -82,7 +84,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exilePermanentDamagedPlayerControlsHandler = new ExilePermanentDamagedPlayerControlsEffectHandler(gameQueryService, gameBroadcastService, playerInputService);
+        exilePermanentDamagedPlayerControlsHandler = new ExilePermanentDamagedPlayerControlsEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, playerInputService);
 
     }
 
@@ -190,7 +192,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
                 );
 
                 // Creature matches, artifact does not
-                when(gameQueryService.matchesPermanentPredicate(eq(gd), any(), any()))
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(), any()))
                         .thenAnswer(inv -> {
                             Permanent p = inv.getArgument(1);
                             return p.getCard().getType() == CardType.CREATURE;

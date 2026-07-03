@@ -48,7 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.UntapUpToControlledPermanents
 import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameIfCreaturesInGraveyardEffect;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +91,7 @@ public class StepTriggerService {
 
     private final DrawService drawService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -225,7 +227,7 @@ public class StepTriggerService {
                     // Intervening-if: only trigger if controller has enough matching permanents
                     List<Permanent> controllerBf = gameData.playerBattlefields.get(activePlayerId);
                     long matchCount = controllerBf == null ? 0 : controllerBf.stream()
-                            .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
+                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
                             .count();
                     if (conditionEvaluationService.isMet(gameData, countCheck,
                             ConditionContext.forPermanent(perm, activePlayerId))) {
@@ -1364,7 +1366,7 @@ public class StepTriggerService {
                         // Intervening-if: only trigger if controller has enough matching permanents
                         List<Permanent> controllerBf = gameData.playerBattlefields.get(activePlayerId);
                         long matchCount = controllerBf == null ? 0 : controllerBf.stream()
-                                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
+                                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, countCheck.filter()))
                                 .count();
                         if (!conditionEvaluationService.isMet(gameData, countCheck,
                                 ConditionContext.forPermanent(perm, activePlayerId))) {

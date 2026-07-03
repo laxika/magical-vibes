@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +32,7 @@ public class LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler implements 
     private final CardViewFactory cardViewFactory;
     private final LibraryRevealSupport libraryRevealSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -163,7 +165,7 @@ public class LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler implements 
             GameData gameData, UUID controllerId) {
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : topCards) {
-            if (gameQueryService.matchesCardPredicate(card, predicate, null, gameData, controllerId)) {
+            if (predicateEvaluationService.matchesCardPredicate(card, predicate, null, gameData, controllerId)) {
                 eligibleCards.add(card);
             }
         }

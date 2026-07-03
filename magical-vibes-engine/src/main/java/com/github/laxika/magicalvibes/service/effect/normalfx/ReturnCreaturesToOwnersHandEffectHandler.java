@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEf
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class ReturnCreaturesToOwnersHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -36,7 +38,7 @@ public class ReturnCreaturesToOwnersHandEffectHandler implements NormalEffectHan
         gameData.forEachBattlefield((playerId, battlefield) ->
                 creaturesToReturn.addAll(battlefield.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p))
-                        .filter(p -> gameQueryService.matchesFilters(
+                        .filter(p -> predicateEvaluationService.matchesFilters(
                                 p,
                                 bounce.filters(),
                                 FilterContext.of(gameData)

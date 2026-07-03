@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCast
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
 import java.util.UUID;
@@ -27,14 +28,14 @@ final class CombatHelper {
                 && !gameQueryService.isEquipped(gameData, creature);
     }
 
-    static boolean isCantBeBlockedDueToDefenderCondition(GameQueryService gameQueryService,
+    static boolean isCantBeBlockedDueToDefenderCondition(PredicateEvaluationService predicateEvaluationService,
                                                           GameData gameData,
                                                           Permanent attacker,
                                                           List<Permanent> defenderBattlefield) {
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CantBeBlockedIfDefenderControlsMatchingPermanentEffect restriction) {
                 boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
                 if (defenderMatches) {
                     return true;
                 }

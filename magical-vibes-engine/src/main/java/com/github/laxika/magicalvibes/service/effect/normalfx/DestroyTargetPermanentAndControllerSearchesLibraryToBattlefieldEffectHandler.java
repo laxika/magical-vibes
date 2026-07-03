@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,7 @@ public class DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffe
 
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final LibrarySearchSupport librarySearchSupport;
 
@@ -67,7 +69,7 @@ public class DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffe
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 targetControllerId,
-                card -> gameQueryService.matchesCardPredicate(card, effect.searchFilter(), null),
+                card -> predicateEvaluationService.matchesCardPredicate(card, effect.searchFilter(), null),
                 descPlural,
                 prompt,
                 false,

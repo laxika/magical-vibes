@@ -40,6 +40,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @ExtendWith(MockitoExtension.class)
 class SearchLibraryForCardTypesToBattlefieldEffectHandlerTest {
@@ -54,6 +56,8 @@ class SearchLibraryForCardTypesToBattlefieldEffectHandlerTest {
     private CardViewFactory cardViewFactory;
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private PermanentRemovalService permanentRemovalService;
     @Mock
@@ -86,7 +90,7 @@ class SearchLibraryForCardTypesToBattlefieldEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        searchLibraryForCardTypesToBattlefieldHandler = new SearchLibraryForCardTypesToBattlefieldEffectHandler(gameQueryService, gameBroadcastService, support);
+        searchLibraryForCardTypesToBattlefieldHandler = new SearchLibraryForCardTypesToBattlefieldEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, support);
 
     }
 
@@ -132,8 +136,8 @@ class SearchLibraryForCardTypesToBattlefieldEffectHandlerTest {
                 Card swamp = createCard("Swamp", CardType.LAND);
                 gd.playerDecks.get(player1Id).addAll(List.of(plains, forest, swamp));
 
-                CardPredicate filter = mock(CardPredicate.class);
-                when(gameQueryService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(true);
+                CardPredicate filter = new CardNamedPredicate("Test Filter");
+                when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(true);
                 stubCardViewFactory();
 
                 SearchLibraryForCardTypesToBattlefieldEffect effect =
@@ -158,8 +162,8 @@ class SearchLibraryForCardTypesToBattlefieldEffectHandlerTest {
                 Card bears3 = createCard("Grizzly Bears", CardType.CREATURE);
                 gd.playerDecks.get(player1Id).addAll(List.of(bears1, bears2, bears3));
 
-                CardPredicate filter = mock(CardPredicate.class);
-                when(gameQueryService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(false);
+                CardPredicate filter = new CardNamedPredicate("Test Filter");
+                when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(false);
 
                 SearchLibraryForCardTypesToBattlefieldEffect effect =
                         new SearchLibraryForCardTypesToBattlefieldEffect(filter, true);

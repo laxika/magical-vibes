@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -70,6 +71,7 @@ public abstract class AiDecisionEngine {
     protected final GameRegistry gameRegistry;
     protected final AiGameActions gameActions;
     protected final GameQueryService gameQueryService;
+    protected final PredicateEvaluationService predicateEvaluationService;
     protected final CombatAttackService combatAttackService;
     protected final GameBroadcastService gameBroadcastService;
 
@@ -102,6 +104,7 @@ public abstract class AiDecisionEngine {
         this.gameRegistry = gameRegistry;
         this.gameActions = gameActions;
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.combatAttackService = combatAttackService;
         this.gameBroadcastService = gameBroadcastService;
 
@@ -500,7 +503,7 @@ public abstract class AiDecisionEngine {
                 if (!hasCreature) return false;
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 boolean hasMatch = battlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
                 if (!hasMatch) return false;
             }
         }
@@ -595,7 +598,7 @@ public abstract class AiDecisionEngine {
                         .orElse(null);
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 return battlefield.stream()
-                        .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
                         .findFirst()
                         .map(Permanent::getId)
                         .orElse(null);

@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Component;
 public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
@@ -58,7 +60,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                     if (p.getId().equals(aura.getId())) return;
                     if (p.getId().equals(aura.getAttachedTo())) return;
                     if (auraFilter != null) {
-                        if (gameQueryService.checkTargetFilter(auraFilter, p, filterContext).isPresent()) return;
+                        if (predicateEvaluationService.checkTargetFilter(auraFilter, p, filterContext).isPresent()) return;
                     } else if (!gameQueryService.isCreature(gameData, p)) {
                         return;
                     }

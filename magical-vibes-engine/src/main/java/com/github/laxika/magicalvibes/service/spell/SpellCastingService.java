@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -85,6 +86,7 @@ public class SpellCastingService {
     private final BattlefieldEntryService battlefieldEntryService;
     private final GraveyardTargetingService graveyardTargetingService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final TurnProgressionService turnProgressionService;
     private final TargetLegalityService targetLegalityService;
@@ -339,7 +341,7 @@ public class SpellCastingService {
                     if (toSacrifice == null) {
                         throw new IllegalStateException("Sacrifice target not found on your battlefield");
                     }
-                    if (!gameQueryService.matchesPermanentPredicate(gameData, toSacrifice, sacCost.get().filter())) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toSacrifice, sacCost.get().filter())) {
                         throw new IllegalStateException("Sacrifice target does not match the required filter");
                     }
                 }
@@ -376,7 +378,7 @@ public class SpellCastingService {
                     if (toTap.isTapped()) {
                         throw new IllegalStateException("Permanent is already tapped");
                     }
-                    if (!gameQueryService.matchesPermanentPredicate(gameData, toTap, tapCost.get().filter())) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toTap, tapCost.get().filter())) {
                         throw new IllegalStateException("Tap target does not match the required filter");
                     }
                 }
@@ -749,7 +751,7 @@ public class SpellCastingService {
                 long matchingCount = 0;
                 for (UUID pid : gameData.orderedPlayerIds) {
                     matchingCount += gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
-                            .filter(c -> gameQueryService.matchesCardPredicate(c, pileSeparationEffect.filter(), card.getId()))
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, pileSeparationEffect.filter(), card.getId()))
                             .count();
                 }
                 if (matchingCount > 0) {
@@ -771,7 +773,7 @@ public class SpellCastingService {
                     throw new IllegalStateException("Must target a player");
                 }
                 long matchingCount = gameData.playerGraveyards.getOrDefault(targetGraveyardOwner, List.of()).stream()
-                        .filter(c -> gameQueryService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
+                        .filter(c -> predicateEvaluationService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
                     graveyardTargetingService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
@@ -787,7 +789,7 @@ public class SpellCastingService {
                 ));
             } else if (graveyardToHandEffect != null) {
                 long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                        .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToHandEffect.filter(), card.getId()))
+                        .filter(c -> predicateEvaluationService.matchesCardPredicate(c, graveyardToHandEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
                     graveyardTargetingService.handleUpToNGraveyardSpellTargeting(gameData, playerId, card,
@@ -803,7 +805,7 @@ public class SpellCastingService {
                 ));
             } else if (graveyardToTopEffect != null) {
                 long matchingCount = gameData.playerGraveyards.getOrDefault(playerId, List.of()).stream()
-                        .filter(c -> gameQueryService.matchesCardPredicate(c, graveyardToTopEffect.filter(), card.getId()))
+                        .filter(c -> predicateEvaluationService.matchesCardPredicate(c, graveyardToTopEffect.filter(), card.getId()))
                         .count();
                 if (matchingCount > 0) {
                     graveyardTargetingService.handleAnyNumberGraveyardSpellTargeting(gameData, playerId, card,
@@ -880,7 +882,7 @@ public class SpellCastingService {
                             throw new IllegalStateException("All targets must be creatures");
                         }
                         if (card.getTargetFilter() != null) {
-                            gameQueryService.validateTargetFilter(gameData, card.getTargetFilter(), target);
+                            predicateEvaluationService.validateTargetFilter(gameData, card.getTargetFilter(), target);
                         }
                         if (assignment.getValue() <= 0) {
                             throw new IllegalStateException("Each damage assignment must be positive");
@@ -1001,7 +1003,7 @@ public class SpellCastingService {
         if (sacFlags.sacrificePermanentCost() != null) {
             paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
                     sacFlags.sacrificePermanentCost().description(),
-                    p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacFlags.sacrificePermanentCost().filter()));
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacFlags.sacrificePermanentCost().filter()));
         }
         if (sacFlags.usesSacrificeAllCreaturesCost()) {
             resolvedXValue = paySacrificeAllCreaturesYouControlCost(gameData, player, card);
@@ -1079,7 +1081,7 @@ public class SpellCastingService {
                     .map(ReduceOwnCastCostIfTargetingPermanentEffect.class::cast)
                     .findFirst().orElse(null);
             if (generalEffect != null
-                    && gameQueryService.matchesPermanentPredicate(gameData, firstTarget, generalEffect.predicate())) {
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, firstTarget, generalEffect.predicate())) {
                 return generalEffect.amount();
             }
 
@@ -1093,7 +1095,7 @@ public class SpellCastingService {
 
             UUID targetController = gameQueryService.findPermanentController(gameData, firstTargetId);
             if (playerId.equals(targetController)
-                    && gameQueryService.matchesPermanentPredicate(gameData, firstTarget, controlledEffect.predicate())) {
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, firstTarget, controlledEffect.predicate())) {
                 return controlledEffect.amount();
             }
             return 0;
@@ -1109,7 +1111,7 @@ public class SpellCastingService {
                 .map(ReduceOwnCastCostIfTargetingStackEntryEffect.class::cast)
                 .findFirst().orElse(null);
         if (stackEffect != null
-                && gameQueryService.matchesStackEntryPredicate(firstTargetSpell, stackEffect.predicate(), null)) {
+                && predicateEvaluationService.matchesStackEntryPredicate(firstTargetSpell, stackEffect.predicate(), null)) {
             return stackEffect.amount();
         }
         return 0;
@@ -1486,7 +1488,7 @@ public class SpellCastingService {
                 throw new IllegalStateException("Must target a player");
             }
             long matchingCount = gameData.playerGraveyards.getOrDefault(targetGraveyardOwner, List.of()).stream()
-                    .filter(c -> gameQueryService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
+                    .filter(c -> predicateEvaluationService.matchesCardPredicate(c, shuffleGraveyardCardsEffect.filter(), card.getId()))
                     .count();
             if (matchingCount > 0) {
                 graveyardTargetingService.handleUpToNTargetPlayerGraveyardSpellTargeting(gameData, playerId,
@@ -1989,7 +1991,7 @@ public class SpellCastingService {
         if (kickerEffect.hasSacrificeCost()) {
             paySingleSacrificeCost(gameData, player, card, sacrificePermanentId,
                     kickerEffect.sacrificeDescription(),
-                    p -> gameQueryService.matchesPermanentPredicate(gameData, p, kickerEffect.sacrificePredicate()));
+                    p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, kickerEffect.sacrificePredicate()));
         }
         return manaSpent;
     }

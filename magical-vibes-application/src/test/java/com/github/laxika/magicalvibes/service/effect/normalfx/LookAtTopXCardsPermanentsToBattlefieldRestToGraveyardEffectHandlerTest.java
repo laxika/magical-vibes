@@ -34,12 +34,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private GameBroadcastService gameBroadcastService;
     @Mock
@@ -79,7 +82,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
         gd.activePlayerId = player1Id;
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
-        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory);
+        lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, sessionManager, cardViewFactory);
 
     }
 
@@ -149,7 +152,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(land);
                 gd.playerDecks.get(player1Id).add(instant);
 
-                when(gameQueryService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
@@ -174,9 +177,9 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(land);
                 gd.playerDecks.get(player1Id).add(instant);
 
-                when(gameQueryService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
-                when(gameQueryService.matchesCardPredicate(eq(land), any(), any(), any(), any())).thenReturn(false);
-                when(gameQueryService.matchesCardPredicate(eq(instant), any(), any(), any(), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(land), any(), any(), any(), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(eq(instant), any(), any(), any(), any())).thenReturn(false);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
@@ -198,7 +201,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 Card dino = createCard("Colossal Dreadmaw", CardType.CREATURE);
                 gd.playerDecks.get(player1Id).add(dino);
 
-                when(gameQueryService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),

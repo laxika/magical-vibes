@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class BounceCreatureOnUpkeepEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
@@ -45,7 +47,7 @@ public class BounceCreatureOnUpkeepEffectHandler implements NormalEffectHandlerB
         if (battlefield != null) {
             for (Permanent p : battlefield) {
                 if (gameQueryService.isCreature(gameData, p)
-                        && gameQueryService.matchesFilters(
+                        && predicateEvaluationService.matchesFilters(
                         p,
                         bounceEffect.filters(),
                         FilterContext.of(gameData)

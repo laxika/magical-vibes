@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -39,7 +41,7 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
 
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : battlefield) {
-                if (gameQueryService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     toExile.add(perm);
                 }
             }

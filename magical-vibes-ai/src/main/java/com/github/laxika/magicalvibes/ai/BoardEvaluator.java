@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
 import java.util.Set;
@@ -45,8 +46,10 @@ public class BoardEvaluator {
     private static final double GAME_OVER_SCORE = 100000.0;
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public BoardEvaluator(GameQueryService gameQueryService) {
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameQueryService = gameQueryService;
     }
 
@@ -267,7 +270,7 @@ public class BoardEvaluator {
             if (!gameQueryService.isCreature(gameData, p)) continue;
             // OWN_CREATURES excludes the source itself
             if (scope == GrantScope.OWN_CREATURES && p.getId().equals(source.getId())) continue;
-            if (filter != null && !gameQueryService.matchesPermanentPredicate(p, filter, ctx)) continue;
+            if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(p, filter, ctx)) continue;
             count++;
         }
         return count;

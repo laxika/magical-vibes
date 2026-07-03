@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -62,6 +63,7 @@ public class LibraryChoiceHandlerService {
 
     private final SessionManager sessionManager;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final WarpWorldService warpWorldService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -632,7 +634,7 @@ public class LibraryChoiceHandlerService {
                 newSearchCards = deck.stream().filter(c -> filterCardName.equals(c.getName())).toList();
             } else if (filterPredicate != null) {
                 final com.github.laxika.magicalvibes.model.filter.CardPredicate fp = filterPredicate;
-                newSearchCards = deck.stream().filter(c -> gameQueryService.matchesCardPredicate(c, fp, null)).toList();
+                newSearchCards = deck.stream().filter(c -> predicateEvaluationService.matchesCardPredicate(c, fp, null)).toList();
             } else if (filterCardTypes != null) {
                 newSearchCards = deck.stream().filter(c -> filterCardTypes.contains(c.getType()) || c.getAdditionalTypes().stream().anyMatch(filterCardTypes::contains)).toList();
             } else {
@@ -1335,7 +1337,7 @@ public class LibraryChoiceHandlerService {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (chosenCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                            if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
                                 validTargets.add(p.getId());
                             }
                         } else if (gameQueryService.isCreature(gameData, p)) {

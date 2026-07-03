@@ -39,12 +39,14 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class OmenMachineDrawStepEffectHandlerTest {
 
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private PlayerInputService playerInputService;
@@ -79,7 +81,7 @@ class OmenMachineDrawStepEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, gameBroadcastService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService);
+        omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, predicateEvaluationService, gameBroadcastService, battlefieldEntryService, exileService, playerInputService, triggerCollectionService);
 
     }
 

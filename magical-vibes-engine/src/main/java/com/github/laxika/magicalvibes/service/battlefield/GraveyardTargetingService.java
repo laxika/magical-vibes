@@ -26,13 +26,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class GraveyardTargetingService {
 
-    private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final CardViewFactory cardViewFactory;
@@ -238,7 +239,7 @@ public class GraveyardTargetingService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
             for (Card graveyardCard : graveyard) {
-                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
                     matchingCardIds.add(graveyardCard.getId());
                     cardViews.add(cardViewFactory.create(graveyardCard));
                 }
@@ -265,7 +266,7 @@ public class GraveyardTargetingService {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard != null) {
             for (Card graveyardCard : graveyard) {
-                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
                     matchingCardIds.add(graveyardCard.getId());
                     cardViews.add(cardViewFactory.create(graveyardCard));
                 }
@@ -293,7 +294,7 @@ public class GraveyardTargetingService {
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         if (graveyard != null) {
             for (Card graveyardCard : graveyard) {
-                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
                     matchingCardIds.add(graveyardCard.getId());
                     cardViews.add(cardViewFactory.create(graveyardCard));
                 }
@@ -323,7 +324,7 @@ public class GraveyardTargetingService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
-                if (gameQueryService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
                     matchingCardIds.add(graveyardCard.getId());
                     cardViews.add(cardViewFactory.create(graveyardCard));
                 }

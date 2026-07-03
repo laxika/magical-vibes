@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesXEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class BoostAllCreaturesXEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -35,7 +37,7 @@ public class BoostAllCreaturesXEffectHandler implements NormalEffectHandlerBean 
         gameData.forEachPermanent((playerId, permanent) -> {
             if (gameQueryService.isCreature(gameData, permanent)
                     && (e.filter() == null
-                        || gameQueryService.matchesPermanentPredicate(gameData, permanent, e.filter()))) {
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.filter()))) {
                 permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
                 permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
                 count[0]++;

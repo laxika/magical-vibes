@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsAndGainLi
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
@@ -27,6 +28,7 @@ public class DestroyAllPermanentsAndGainLifePerDestroyedEffectHandler implements
     private final DestructionSupport destructionSupport;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final LifeSupport lifeSupport;
     private final PermanentRemovalService permanentRemovalService;
@@ -46,7 +48,7 @@ public class DestroyAllPermanentsAndGainLifePerDestroyedEffectHandler implements
 
                 gameData.forEachBattlefield((playerId, battlefield) -> {
                     for (Permanent perm : battlefield) {
-                        if (gameQueryService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                             toDestroy.add(perm);
                         }
                     }

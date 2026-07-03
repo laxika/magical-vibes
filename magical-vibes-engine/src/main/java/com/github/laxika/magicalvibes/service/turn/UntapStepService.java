@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEff
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ import java.util.UUID;
 public class UntapStepService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     /**
@@ -132,7 +134,7 @@ public class UntapStepService {
 
             for (Permanent p : playerBattlefield) {
                 if (hasUnfilteredEffect || untapEffects.stream().anyMatch(e -> e.filter() != null
-                        && gameQueryService.matchesPermanentPredicate(gameData, p, e.filter()))) {
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))) {
                     p.untap();
                 }
             }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -65,6 +66,7 @@ import java.util.UUID;
 class AiTargetSelector {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
@@ -78,9 +80,10 @@ class AiTargetSelector {
     AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
                      TargetLegalityService targetLegalityService, BoardEvaluator boardEvaluator) {
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
-        this.validTargetService = new ValidTargetService(gameQueryService);
+        this.validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService);
         this.boardEvaluator = boardEvaluator;
     }
 
@@ -480,7 +483,7 @@ class AiTargetSelector {
                 candidates = getGraveyardCandidates(gameData, rge.source(), aiPlayerId, opponentId);
                 if (rge.filter() != null) {
                     candidates = candidates.stream()
-                            .filter(c -> gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId()))
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, rge.filter(), card.getId()))
                             .toList();
                 }
                 if (rge.requiresManaValueEqualsX() && maxAffordableX < Integer.MAX_VALUE) {
@@ -508,7 +511,7 @@ class AiTargetSelector {
                             .filter(c -> e.cardTypes().stream().anyMatch(c::hasType)).toList();
                 } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
                     candidates = candidates.stream()
-                            .filter(c -> gameQueryService.matchesCardPredicate(c, e.filter(), card.getId())).toList();
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.filter(), card.getId())).toList();
                 } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
                     candidates = candidates.stream()
                             .filter(c -> c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE)).toList();
@@ -823,16 +826,16 @@ class AiTargetSelector {
                     .withSourceControllerId(aiPlayerId)
                     .withSourceCardId(source.getCard().getId());
             if (filter instanceof PermanentPredicateTargetFilter ppf) {
-                if (!gameQueryService.matchesPermanentPredicate(target, ppf.predicate(), ctx)) {
+                if (!predicateEvaluationService.matchesPermanentPredicate(target, ppf.predicate(), ctx)) {
                     return false;
                 }
             } else if (filter instanceof ControlledPermanentPredicateTargetFilter cpf) {
                 if (!targetController.equals(aiPlayerId)) return false;
-                if (!gameQueryService.matchesPermanentPredicate(target, cpf.predicate(), ctx)) {
+                if (!predicateEvaluationService.matchesPermanentPredicate(target, cpf.predicate(), ctx)) {
                     return false;
                 }
             } else if (filter instanceof OwnedPermanentPredicateTargetFilter opf) {
-                if (!gameQueryService.matchesPermanentPredicate(target, opf.predicate(), ctx)) {
+                if (!predicateEvaluationService.matchesPermanentPredicate(target, opf.predicate(), ctx)) {
                     return false;
                 }
             }

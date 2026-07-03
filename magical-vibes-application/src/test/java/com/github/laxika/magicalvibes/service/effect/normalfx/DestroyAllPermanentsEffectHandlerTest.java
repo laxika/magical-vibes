@@ -38,6 +38,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class DestroyAllPermanentsEffectHandlerTest {
@@ -48,6 +49,7 @@ class DestroyAllPermanentsEffectHandlerTest {
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PermanentRemovalService permanentRemovalService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
     @Mock private LifeSupport lifeSupport;
@@ -71,7 +73,7 @@ class DestroyAllPermanentsEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport, gameQueryService);
+        destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport, gameQueryService, predicateEvaluationService);
 
     }
 
@@ -149,8 +151,8 @@ class DestroyAllPermanentsEffectHandlerTest {
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
                 DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-                when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
-                when(gameQueryService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
@@ -173,8 +175,8 @@ class DestroyAllPermanentsEffectHandlerTest {
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
                 DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-                when(gameQueryService.matchesPermanentPredicate(eq(spellbook), eq(filter), any())).thenReturn(false);
-                when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(spellbook), eq(filter), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
@@ -194,8 +196,8 @@ class DestroyAllPermanentsEffectHandlerTest {
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
                 DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-                when(gameQueryService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
-                when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
 
@@ -215,7 +217,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
                 DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-                when(gameQueryService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(golem), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, golem, Keyword.INDESTRUCTIBLE)).thenReturn(true);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
@@ -234,8 +236,8 @@ class DestroyAllPermanentsEffectHandlerTest {
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
                 DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, false);
 
-                when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(false);
-                when(gameQueryService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, elves, Keyword.INDESTRUCTIBLE)).thenReturn(false);
                 when(graveyardService.tryRegenerate(gd, elves)).thenReturn(true);
 
@@ -255,7 +257,7 @@ class DestroyAllPermanentsEffectHandlerTest {
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
                 DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-                when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(gd, bears, Keyword.INDESTRUCTIBLE)).thenReturn(false);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
@@ -277,9 +279,9 @@ class DestroyAllPermanentsEffectHandlerTest {
                 DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, false);
 
                 // Filter excludes controller's creatures (Plague Wind behavior)
-                when(gameQueryService.matchesPermanentPredicate(eq(myBears), eq(filter), any())).thenReturn(false);
-                when(gameQueryService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
-                when(gameQueryService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(myBears), eq(filter), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(angel), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);
@@ -300,8 +302,8 @@ class DestroyAllPermanentsEffectHandlerTest {
                 PermanentPredicate filter = new PermanentIsCreaturePredicate();
                 DestroyAllPermanentsEffect effect = new DestroyAllPermanentsEffect(filter, true);
 
-                when(gameQueryService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
-                when(gameQueryService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(bears), eq(filter), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesPermanentPredicate(eq(elves), eq(filter), any())).thenReturn(true);
                 when(gameQueryService.hasKeyword(eq(gd), any(), eq(Keyword.INDESTRUCTIBLE))).thenReturn(false);
 
                 destroyAllPermanentsHandler.resolve(gd, entry, effect);

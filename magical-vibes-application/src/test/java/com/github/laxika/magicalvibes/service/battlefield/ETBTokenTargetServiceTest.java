@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,8 @@ class ETBTokenTargetServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ETBTokenTargetService(gameQueryService, gameBroadcastService, playerInputService, targetLegalityService);
+        service = new ETBTokenTargetService(gameQueryService, new PredicateEvaluationService(gameQueryService),
+                gameBroadcastService, playerInputService, targetLegalityService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

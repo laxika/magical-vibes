@@ -50,10 +50,10 @@ class PowerToughnessEqualToControlledPermanentCountSelfEffectHandlerTest extends
         Permanent opponentSwamp = createPermanent("Swamp", CardType.LAND, List.of(CardSubtype.SWAMP));
         gd.playerBattlefields.get(player2Id).add(opponentSwamp);
 
-        when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(swamp1), eq(filter))).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(swamp2), eq(filter))).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(plains), eq(filter))).thenReturn(false);
-        when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(source), eq(filter))).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(swamp1), eq(filter))).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(swamp2), eq(filter))).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(plains), eq(filter))).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(source), eq(filter))).thenReturn(false);
 
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
         var context = new StaticEffectContext(source, source, true, gd);
@@ -61,7 +61,7 @@ class PowerToughnessEqualToControlledPermanentCountSelfEffectHandlerTest extends
 
         assertThat(accumulator.getPower()).isEqualTo(2);
         assertThat(accumulator.getToughness()).isEqualTo(2);
-        verify(gameQueryService, never()).matchesPermanentPredicate(eq(gd), eq(opponentSwamp), any());
+        verify(predicateEvaluationService, never()).matchesPermanentPredicate(eq(gd), eq(opponentSwamp), any());
     }
 
     @Test
@@ -80,8 +80,8 @@ class PowerToughnessEqualToControlledPermanentCountSelfEffectHandlerTest extends
         Permanent artifact = createPermanent("Spellbook", CardType.ARTIFACT, List.of());
         gd.playerBattlefields.get(player1Id).add(artifact);
 
-        when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(source), eq(filter))).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(artifact), eq(filter))).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(source), eq(filter))).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), eq(filter))).thenReturn(true);
 
         StaticBonusAccumulator accumulator = new StaticBonusAccumulator();
         var context = new StaticEffectContext(source, source, true, gd);
@@ -89,7 +89,7 @@ class PowerToughnessEqualToControlledPermanentCountSelfEffectHandlerTest extends
 
         assertThat(accumulator.getPower()).isEqualTo(2);
         assertThat(accumulator.getToughness()).isEqualTo(2);
-        verify(gameQueryService).matchesPermanentPredicate(gd, source, filter);
-        verify(gameQueryService).matchesPermanentPredicate(gd, artifact, filter);
+        verify(predicateEvaluationService).matchesPermanentPredicate(gd, source, filter);
+        verify(predicateEvaluationService).matchesPermanentPredicate(gd, artifact, filter);
     }
 }

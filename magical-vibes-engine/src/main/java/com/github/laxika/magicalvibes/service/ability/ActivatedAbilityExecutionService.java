@@ -59,6 +59,7 @@ import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
@@ -86,6 +87,7 @@ public class ActivatedAbilityExecutionService {
     private final TriggerCollectionService triggerCollectionService;
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
@@ -411,7 +413,7 @@ public class ActivatedAbilityExecutionService {
                 FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(permanent.getCard().getId());
                 if (battlefield != null) {
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.matchesPermanentPredicate(p, manaPerPermanent.predicate(), filterContext)) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(p, manaPerPermanent.predicate(), filterContext)) {
                             count++;
                         }
                     }
@@ -551,7 +553,7 @@ public class ActivatedAbilityExecutionService {
                 FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(permanent.getCard().getId());
                 if (battlefield != null) {
                     for (Permanent p : battlefield) {
-                        if (gameQueryService.matchesPermanentPredicate(p, manaPerPermanent.predicate(), filterContext)) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(p, manaPerPermanent.predicate(), filterContext)) {
                             total++;
                         }
                     }
@@ -580,7 +582,7 @@ public class ActivatedAbilityExecutionService {
             return colors;
         }
         for (Permanent p : battlefield) {
-            if (!gameQueryService.matchesPermanentPredicate(gameData, p, effect.predicate())) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.predicate())) {
                 continue;
             }
             if (p.isColorOverridden()) {

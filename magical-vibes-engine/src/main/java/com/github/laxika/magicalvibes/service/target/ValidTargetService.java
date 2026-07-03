@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.target;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -45,6 +46,7 @@ import java.util.UUID;
 public class ValidTargetService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds) {
         return computeValidTargetsForSpell(gameData, card, controllerId, alreadySelectedIds, null, null);
@@ -482,7 +484,7 @@ public class ValidTargetService {
 
                 for (UUID playerId : searchPlayerIds) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
-                        if (rge.filter() != null && !gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId())) {
+                        if (rge.filter() != null && !predicateEvaluationService.matchesCardPredicate(c, rge.filter(), card.getId())) {
                             continue;
                         }
                         if (rge.requiresManaValueEqualsX() && c.getManaValue() != effectiveXValue) {
@@ -563,9 +565,9 @@ public class ValidTargetService {
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
             return e.cardTypes().stream().anyMatch(c::hasType);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
-            return gameQueryService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e && e.filter() != null) {
-            return gameQueryService.matchesCardPredicate(c, e.filter(), sourceCardId);
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
             return c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE);
         } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
@@ -631,7 +633,7 @@ public class ValidTargetService {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(sourceCardId)
                     .withSourceControllerId(controllerId);
-            gameQueryService.validateTargetFilter(filter, perm, filterContext);
+            predicateEvaluationService.validateTargetFilter(filter, perm, filterContext);
             return true;
         } catch (IllegalStateException e) {
             return false;

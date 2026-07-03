@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToCardsInControllerGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class PowerToughnessEqualToCardsInControllerGraveyardSelfEffectHandler im
 
     private final StaticEffectSupport support;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -39,7 +41,7 @@ public class PowerToughnessEqualToCardsInControllerGraveyardSelfEffectHandler im
         if (graveyard != null) {
             for (Card card : graveyard) {
                 if (card.isToken()) continue;
-                if (gameQueryService.matchesCardPredicate(card, ptEffect.filter(), null)) {
+                if (predicateEvaluationService.matchesCardPredicate(card, ptEffect.filter(), null)) {
                     count++;
                 }
             }

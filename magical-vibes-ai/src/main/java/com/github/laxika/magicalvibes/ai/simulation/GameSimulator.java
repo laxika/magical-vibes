@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -157,6 +158,7 @@ public class GameSimulator {
 
     private final GameService gameService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final AiManaManager manaManager;
     private final GameRegistry gameRegistry;
@@ -181,6 +183,7 @@ public class GameSimulator {
                   CombatAttackService combatAttackService) {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameBroadcastService = gameBroadcastService;
         this.gameRegistry = gameRegistry;
         this.combatAttackService = combatAttackService;
@@ -784,7 +787,7 @@ public class GameSimulator {
             } else if (effect instanceof SacrificeArtifactCost) {
                 if (battlefield.stream().noneMatch(p -> gameQueryService.isArtifact(gd, p))) return false;
             } else if (effect instanceof SacrificePermanentCost sacCost) {
-                if (battlefield.stream().noneMatch(p -> gameQueryService.matchesPermanentPredicate(gd, p, sacCost.filter()))) return false;
+                if (battlefield.stream().noneMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, sacCost.filter()))) return false;
             }
         }
         return true;
@@ -829,7 +832,7 @@ public class GameSimulator {
                         .findFirst().map(Permanent::getId).orElse(null);
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 return battlefield.stream()
-                        .filter(p -> gameQueryService.matchesPermanentPredicate(gd, p, sacCost.filter()))
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, sacCost.filter()))
                         .findFirst().map(Permanent::getId).orElse(null);
             }
         }
@@ -970,7 +973,7 @@ public class GameSimulator {
                 candidates = getSimGraveyardCandidates(gd, rge.source(), playerId, opponentId);
                 if (rge.filter() != null) {
                     candidates = candidates.stream()
-                            .filter(c -> gameQueryService.matchesCardPredicate(c, rge.filter(), card.getId()))
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, rge.filter(), card.getId()))
                             .toList();
                 }
             } else {
@@ -1012,7 +1015,7 @@ public class GameSimulator {
             return true;
         }
         try {
-            gameQueryService.validateTargetFilter(card.getTargetFilter(), target,
+            predicateEvaluationService.validateTargetFilter(card.getTargetFilter(), target,
                     FilterContext.of(gd)
                             .withSourceCardId(card.getId())
                             .withSourceControllerId(controllerId));

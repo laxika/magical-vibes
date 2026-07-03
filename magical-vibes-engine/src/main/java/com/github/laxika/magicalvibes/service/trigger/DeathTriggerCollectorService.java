@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToP
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ import java.util.UUID;
 public class DeathTriggerCollectorService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     // ── ON_DEATH (dying card's own death triggers) ─────────────────────
@@ -281,7 +283,7 @@ public class DeathTriggerCollectorService {
             EnchantedPermanentLeavesConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentLeaves epl = (TriggerContext.EnchantedPermanentLeaves) ctx;
         if (conditional.permanentFilter() != null
-                && !gameQueryService.matchesCardPredicate(epl.leavingPermanent().getCard(), conditional.permanentFilter(), null)) {
+                && !predicateEvaluationService.matchesCardPredicate(epl.leavingPermanent().getCard(), conditional.permanentFilter(), null)) {
             return false;
         }
         match.gameData().stack.add(new StackEntry(

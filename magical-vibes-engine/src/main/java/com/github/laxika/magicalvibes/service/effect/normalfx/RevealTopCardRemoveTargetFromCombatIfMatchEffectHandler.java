@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -67,6 +68,7 @@ import org.springframework.stereotype.Component;
 public class RevealTopCardRemoveTargetFromCombatIfMatchEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -93,7 +95,7 @@ public class RevealTopCardRemoveTargetFromCombatIfMatchEffectHandler implements 
         gameBroadcastService.logAndBroadcast(gameData,
                 playerName + " reveals " + topCard.getName() + " from the top of their library (" + sourceName + ").");
 
-        if (gameQueryService.matchesCardPredicate(topCard, e.matchPredicate(), null, gameData, controllerId)) {
+        if (predicateEvaluationService.matchesCardPredicate(topCard, e.matchPredicate(), null, gameData, controllerId)) {
             Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (attacker != null && attacker.isAttacking()) {
                 attacker.setAttacking(false);

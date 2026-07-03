@@ -59,11 +59,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ValidTargetServiceTest {
 
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
 
     @InjectMocks
     private ValidTargetService validTargetService;
@@ -299,7 +301,7 @@ class ValidTargetServiceTest {
             Permanent perm = new Permanent(creatureCard);
 
             doThrow(new IllegalStateException("invalid target"))
-                    .when(gameQueryService).validateTargetFilter(eq(filter), eq(perm), any(FilterContext.class));
+                    .when(predicateEvaluationService).validateTargetFilter(eq(filter), eq(perm), any(FilterContext.class));
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
 
@@ -890,7 +892,7 @@ class ValidTargetServiceTest {
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
             doThrow(new IllegalStateException("invalid"))
-                    .when(gameQueryService).validateTargetFilter(eq(filter), eq(creature), any(FilterContext.class));
+                    .when(predicateEvaluationService).validateTargetFilter(eq(filter), eq(creature), any(FilterContext.class));
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);
@@ -1416,7 +1418,7 @@ class ValidTargetServiceTest {
             gameData.playerGraveyards.put(player1Id, new ArrayList<>());
 
             // Stub matchesCardPredicate for ExileTargetCardFromGraveyardAndImprintOnSourceEffect tests
-            lenient().when(gameQueryService.matchesCardPredicate(any(Card.class), any(CardPredicate.class), any()))
+            lenient().when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(CardPredicate.class), any()))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
                         CardPredicate p = inv.getArgument(1);

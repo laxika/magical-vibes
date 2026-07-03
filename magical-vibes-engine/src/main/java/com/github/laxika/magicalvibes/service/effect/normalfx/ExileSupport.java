@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -45,6 +46,7 @@ public class ExileSupport {
 
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
@@ -152,7 +154,7 @@ public class ExileSupport {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (chosenCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                            if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                            if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
                                 validTargets.add(p.getId());
                             }
                         } else if (gameQueryService.isCreature(gameData, p)) {

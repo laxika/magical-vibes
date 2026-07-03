@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ public class DestroyTargetCreatureAndGainLifeEqualToToughnessEffectHandler imple
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final LifeSupport lifeSupport;
 
     @Override
@@ -34,7 +36,7 @@ public class DestroyTargetCreatureAndGainLifeEqualToToughnessEffectHandler imple
 
                 // Capture whether the life-gain condition is met before destruction removes the permanent
                 boolean gainsLife = e.lifeGainCondition() == null
-                        || gameQueryService.matchesPermanentPredicate(gameData, target, e.lifeGainCondition());
+                        || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.lifeGainCondition());
 
                 // Attempt to destroy (life gain, when applicable, happens regardless of destruction result)
                 destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName());

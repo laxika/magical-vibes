@@ -47,6 +47,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @ExtendWith(MockitoExtension.class)
 class SearchLibraryForCardsToHandEffectHandlerTest {
@@ -61,6 +63,8 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
     private CardViewFactory cardViewFactory;
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private PermanentRemovalService permanentRemovalService;
     @Mock
@@ -96,8 +100,8 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        searchLibraryForCardsToHandHandler = new SearchLibraryForCardsToHandEffectHandler(gameQueryService, gameBroadcastService, support);
-        searchLibraryForCardTypesToBattlefieldHandler = new SearchLibraryForCardTypesToBattlefieldEffectHandler(gameQueryService, gameBroadcastService, support);
+        searchLibraryForCardsToHandHandler = new SearchLibraryForCardsToHandEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, support);
+        searchLibraryForCardTypesToBattlefieldHandler = new SearchLibraryForCardTypesToBattlefieldEffectHandler(gameQueryService, predicateEvaluationService, gameBroadcastService, support);
         distantMemoriesHandler = new DistantMemoriesEffectHandler(drawService, gameBroadcastService, support);
         headGamesHandler = new HeadGamesEffectHandler(gameBroadcastService, support);
 
@@ -146,11 +150,11 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
                 Card bears = createCard("Grizzly Bears", CardType.CREATURE);
                 gd.playerDecks.get(player1Id).addAll(List.of(plains, forest, swamp, bears));
 
-                CardPredicate filter = mock(CardPredicate.class);
-                when(gameQueryService.matchesCardPredicate(eq(plains), eq(filter), isNull())).thenReturn(true);
-                when(gameQueryService.matchesCardPredicate(eq(forest), eq(filter), isNull())).thenReturn(true);
-                when(gameQueryService.matchesCardPredicate(eq(swamp), eq(filter), isNull())).thenReturn(true);
-                when(gameQueryService.matchesCardPredicate(eq(bears), eq(filter), isNull())).thenReturn(false);
+                CardPredicate filter = new CardNamedPredicate("Test Filter");
+                when(predicateEvaluationService.matchesCardPredicate(eq(plains), eq(filter), isNull())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(forest), eq(filter), isNull())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(swamp), eq(filter), isNull())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(bears), eq(filter), isNull())).thenReturn(false);
                 stubCardViewFactory();
 
                 SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
@@ -174,8 +178,8 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
                 Card bears3 = createCard("Grizzly Bears", CardType.CREATURE);
                 gd.playerDecks.get(player1Id).addAll(List.of(bears1, bears2, bears3));
 
-                CardPredicate filter = mock(CardPredicate.class);
-                when(gameQueryService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(false);
+                CardPredicate filter = new CardNamedPredicate("Test Filter");
+                when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(false);
 
                 SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
@@ -191,7 +195,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
             @Test
             @DisplayName("Empty library logs without crash")
             void emptyLibraryLogs() {
-                CardPredicate filter = mock(CardPredicate.class);
+                CardPredicate filter = new CardNamedPredicate("Test Filter");
                 SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                         player1Id, "Sylvan Scrying", List.of(effect));
@@ -212,7 +216,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
                 Card plains = createCard("Plains", CardType.LAND);
                 gd.playerDecks.get(player1Id).add(plains);
 
-                CardPredicate filter = mock(CardPredicate.class);
+                CardPredicate filter = new CardNamedPredicate("Test Filter");
                 SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Sylvan Scrying"),
                         player1Id, "Sylvan Scrying", List.of(effect));
@@ -230,8 +234,8 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
                 Card plains = createCard("Plains", CardType.LAND);
                 gd.playerDecks.get(player1Id).add(plains);
 
-                CardPredicate filter = mock(CardPredicate.class);
-                when(gameQueryService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(true);
+                CardPredicate filter = new CardNamedPredicate("Test Filter");
+                when(predicateEvaluationService.matchesCardPredicate(any(Card.class), eq(filter), isNull())).thenReturn(true);
                 stubCardViewFactory();
 
                 SearchLibraryForCardsToHandEffect effect = new SearchLibraryForCardsToHandEffect(filter);
@@ -277,7 +281,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 int deckSize = gd.playerDecks.get(player1Id).size();
 
-                CardPredicate filter = mock(CardPredicate.class);
+                CardPredicate filter = new CardNamedPredicate("Test Filter");
                 SearchLibraryForCardTypesToBattlefieldEffect effect =
                         new SearchLibraryForCardTypesToBattlefieldEffect(filter, true);
                 StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Rampant Growth"),

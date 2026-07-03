@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibraryRevealSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -68,6 +69,7 @@ import org.springframework.stereotype.Component;
 public class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
     private final LibraryRevealSupport libraryRevealSupport;
@@ -87,7 +89,7 @@ public class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHand
         List<Card> topCards = result.topCards();
 
         List<Card> matchingCards = topCards.stream()
-                .filter(card -> gameQueryService.matchesCardPredicate(card, e.predicate(), null))
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, e.predicate(), null))
                 .toList();
 
         if (matchingCards.isEmpty()) {

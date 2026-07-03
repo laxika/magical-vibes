@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
     private final CardViewFactory cardViewFactory;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final SessionManager sessionManager;
@@ -105,7 +107,7 @@ public class RevealRandomHandCardAndPlayEffectHandler implements NormalEffectHan
                         if (battlefield == null) continue;
                         for (Permanent p : battlefield) {
                             if (revealed.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                                if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                                if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
                                     validTargets.add(p.getId());
                                 }
                             } else if (gameQueryService.isCreature(gameData, p)) {

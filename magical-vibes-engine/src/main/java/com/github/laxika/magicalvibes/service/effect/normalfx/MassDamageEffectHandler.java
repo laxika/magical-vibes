@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.UUID;
 import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -22,6 +23,7 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameOutcomeService gameOutcomeService;
 
     @Override
@@ -47,7 +49,7 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
         Predicate<Permanent> creatureFilter = e.filter() == null
                 ? baseFilter
                 : p -> baseFilter.test(p)
-                        && gameQueryService.matchesPermanentPredicate(p, e.filter(), filterContext);
+                        && predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext);
 
         damageSupport.damageAllCreaturesOnBattlefield(gameData, entry, damage, creatureFilter);
 

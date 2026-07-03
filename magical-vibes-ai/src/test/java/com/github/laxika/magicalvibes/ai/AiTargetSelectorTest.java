@@ -932,7 +932,7 @@ class AiTargetSelectorTest {
             gd.stack.add(creatureSpell);
 
             // Use null target filter (like Spiketail Hatchling — targets any spell)
-            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.TargetFilter) null, aiPlayer.getId());
+            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.filter.TargetFilter) null, aiPlayer.getId());
 
             assertThat(target).isEqualTo(bears.getId());
         }
@@ -940,7 +940,7 @@ class AiTargetSelectorTest {
         @Test
         @DisplayName("TargetFilter overload returns null when no opponent spells")
         void targetFilterOverloadReturnsNullForEmptyStack() {
-            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.TargetFilter) null, aiPlayer.getId());
+            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.filter.TargetFilter) null, aiPlayer.getId());
 
             assertThat(target).isNull();
         }
@@ -953,7 +953,7 @@ class AiTargetSelectorTest {
             gd.stack.add(new StackEntry(bears, human.getId()));
             gd.stack.add(new StackEntry(angel, human.getId()));
 
-            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.TargetFilter) null, aiPlayer.getId());
+            UUID target = targetSelector.chooseSpellTarget(gd, (com.github.laxika.magicalvibes.model.filter.TargetFilter) null, aiPlayer.getId());
 
             assertThat(target).isEqualTo(angel.getId());
         }

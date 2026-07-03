@@ -48,12 +48,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class EffectResolutionServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private EffectHandlerRegistry registry;
@@ -73,7 +76,7 @@ class EffectResolutionServiceTest {
     @BeforeEach
     void setUp() {
         effectResolutionService = new EffectResolutionService(
-                new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService)),
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
                 registry, gameBroadcastService, permanentRemovalService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -438,7 +441,7 @@ class EffectResolutionServiceTest {
             // Add an artifact to controller's battlefield
             Permanent artifact = mock(Permanent.class);
             gd.playerBattlefields.get(player1Id).add(artifact);
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(artifact), any(PermanentIsArtifactPredicate.class)))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(artifact), any(PermanentIsArtifactPredicate.class)))
                     .thenReturn(true);
             EffectHandler handler = stubHandler(wrapped);
 
@@ -548,7 +551,7 @@ class EffectResolutionServiceTest {
         }
 
         private void stubPredicateEvaluation() {
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), any(Permanent.class), any(PermanentPredicate.class)))
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), any(Permanent.class), any(PermanentPredicate.class)))
                     .thenAnswer(invocation -> {
                         Permanent permanent = invocation.getArgument(1);
                         PermanentPredicate predicate = invocation.getArgument(2);
@@ -716,7 +719,7 @@ class EffectResolutionServiceTest {
             Permanent huatli = new Permanent(huatliCard);
             gd.playerBattlefields.get(player1Id).add(huatli);
 
-            when(gameQueryService.matchesPermanentPredicate(eq(gd), eq(huatli), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(eq(gd), eq(huatli), any())).thenReturn(true);
             EffectHandler handler = stubHandler(upgraded);
 
             effectResolutionService.resolveEffects(gd, entry);
@@ -765,7 +768,7 @@ class EffectResolutionServiceTest {
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
             Permanent target = new Permanent(createCard("Grizzly Bears"));
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(target);
-            when(gameQueryService.matchesPermanentPredicate(gd, target, new PermanentHasSubtypePredicate(CardSubtype.HUMAN))).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, target, new PermanentHasSubtypePredicate(CardSubtype.HUMAN))).thenReturn(false);
             EffectHandler handler = stubHandler(base);
 
             effectResolutionService.resolveEffects(gd, entry);
@@ -783,7 +786,7 @@ class EffectResolutionServiceTest {
             StackEntry entry = createTargetedEntry(createCard("Test Spell"), player1Id, List.of(replacement), targetId);
             Permanent target = new Permanent(createCard("Champion of the Parish"));
             when(gameQueryService.findPermanentById(gd, targetId)).thenReturn(target);
-            when(gameQueryService.matchesPermanentPredicate(gd, target, new PermanentHasSubtypePredicate(CardSubtype.HUMAN))).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, target, new PermanentHasSubtypePredicate(CardSubtype.HUMAN))).thenReturn(true);
             EffectHandler handler = stubHandler(upgraded);
 
             effectResolutionService.resolveEffects(gd, entry);
@@ -805,7 +808,7 @@ class EffectResolutionServiceTest {
             effectResolutionService.resolveEffects(gd, entry);
 
             verify(handler).resolve(gd, entry, base);
-            verify(gameQueryService, never()).matchesPermanentPredicate(eq(gd), any(), any());
+            verify(predicateEvaluationService, never()).matchesPermanentPredicate(eq(gd), any(), any());
         }
     }
 }

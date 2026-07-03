@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -59,6 +60,7 @@ public class TriggerCollectionService {
     private final PlayerInputService playerInputService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
@@ -127,7 +129,7 @@ public class TriggerCollectionService {
 
                 for (CardEffect effect : graveyardEffects) {
                     if (effect instanceof SpellCastTriggerEffect trigger) {
-                        if (!gameQueryService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) continue;
+                        if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null)) continue;
 
                         if (trigger.manaCost() != null) {
                             // "you may pay {X}" pattern — queue MayPayManaEffect on the stack
@@ -1517,7 +1519,7 @@ public class TriggerCollectionService {
     CardEffect unwrapTriggeringCardConditional(CardEffect effect, Card triggeringCard,
                                                GameData gameData, UUID controllerId) {
         if (effect instanceof TriggeringCardConditionalEffect conditional) {
-            if (!gameQueryService.matchesCardPredicate(triggeringCard, conditional.predicate(), null,
+            if (!predicateEvaluationService.matchesCardPredicate(triggeringCard, conditional.predicate(), null,
                     gameData, controllerId)) {
                 return null;
             }
@@ -1533,7 +1535,7 @@ public class TriggerCollectionService {
     CardEffect unwrapCreatureDeathConditional(CardEffect effect, Card dyingCard, Permanent dyingPermanent,
                                               GameData gameData, UUID controllerId) {
         if (effect instanceof TriggeringCardConditionalEffect conditional) {
-            if (!gameQueryService.matchesCardPredicate(dyingCard, conditional.predicate(), null,
+            if (!predicateEvaluationService.matchesCardPredicate(dyingCard, conditional.predicate(), null,
                     gameData, controllerId)) {
                 return null;
             }
@@ -1541,7 +1543,7 @@ public class TriggerCollectionService {
         }
         if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
             Permanent perm = dyingPermanent != null ? dyingPermanent : new Permanent(dyingCard);
-            if (!gameQueryService.matchesPermanentPredicate(gameData, perm, conditional.predicate())) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, perm, conditional.predicate())) {
                 return null;
             }
             return conditional.wrapped();

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHa
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -43,7 +45,7 @@ public class ReturnTargetCardFromExileToHandEffectHandler implements NormalEffec
             return;
         }
 
-        if (e.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, e.filter(), null)) {
+        if (e.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, e.filter(), null)) {
             String fizzleLog = entry.getDescription() + " fizzles (target is not a " + filterLabel + ").";
             gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             return;

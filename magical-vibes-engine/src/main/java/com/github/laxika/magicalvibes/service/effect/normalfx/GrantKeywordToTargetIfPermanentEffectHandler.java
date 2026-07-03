@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class GrantKeywordToTargetIfPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -32,7 +34,7 @@ public class GrantKeywordToTargetIfPermanentEffectHandler implements NormalEffec
             return;
         }
 
-        if (!gameQueryService.matchesPermanentPredicate(gameData, target, e.predicate())) {
+        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.predicate())) {
             return;
         }
 

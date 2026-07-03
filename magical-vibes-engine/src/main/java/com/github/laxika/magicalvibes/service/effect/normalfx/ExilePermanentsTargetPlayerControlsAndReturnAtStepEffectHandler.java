@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentsTargetPlayerControlsAndReturnAtStepEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class ExilePermanentsTargetPlayerControlsAndReturnAtStepEffectHandler imp
 
     private final ExileSupport exileSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +39,7 @@ public class ExilePermanentsTargetPlayerControlsAndReturnAtStepEffectHandler imp
         }
 
         List<Permanent> toExile = battlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, e.predicate()))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.predicate()))
                 .toList();
 
         for (Permanent permanent : toExile) {

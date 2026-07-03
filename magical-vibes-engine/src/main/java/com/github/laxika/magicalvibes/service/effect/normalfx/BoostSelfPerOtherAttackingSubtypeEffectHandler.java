@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class BoostSelfPerOtherAttackingSubtypeEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -45,7 +47,7 @@ public class BoostSelfPerOtherAttackingSubtypeEffectHandler implements NormalEff
             for (Permanent permanent : battlefield) {
                 if (permanent.getId().equals(selfId)) continue;
                 if (permanent.isAttacking()
-                        && gameQueryService.matchesPermanentPredicate(gameData, permanent, subtypePredicate)) {
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, subtypePredicate)) {
                     count++;
                 }
             }

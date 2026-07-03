@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -83,6 +84,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class CombatDamageService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final GameOutcomeService gameOutcomeService;
@@ -688,7 +690,7 @@ public class CombatDamageService {
                         List<Permanent> defenderBf = gameData.playerBattlefields.get(defenderId);
                         boolean hasValidTargets = defenderBf != null && defenderBf.stream()
                                 .anyMatch(p -> exileEffect.predicate() == null
-                                        || gameQueryService.matchesPermanentPredicate(gameData, p, exileEffect.predicate()));
+                                        || predicateEvaluationService.matchesPermanentPredicate(gameData, p, exileEffect.predicate()));
                         if (!hasValidTargets) {
                             gameBroadcastService.logAndBroadcast(gameData, creature.getCard().getName()
                                     + "'s ability does not trigger — " + gameData.playerIdToName.get(defenderId) + " has no valid targets.");
@@ -816,7 +818,7 @@ public class CombatDamageService {
             for (CardEffect effect : effects) {
                 if (effect instanceof PutCountersOnDamageDealerEffect dealerEffect) {
                     if (dealerEffect.predicate() != null
-                            && !gameQueryService.matchesPermanentPredicate(gameData, creature, dealerEffect.predicate())) {
+                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, dealerEffect.predicate())) {
                         continue;
                     }
                     StackEntry se = new StackEntry(
@@ -1395,7 +1397,7 @@ public class CombatDamageService {
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof ReplaceCombatDamageWithMillEffect replacement
-                        && gameQueryService.matchesPermanentPredicate(gameData, attacker, replacement.attackerPredicate())) {
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, replacement.attackerPredicate())) {
                     return true;
                 }
             }

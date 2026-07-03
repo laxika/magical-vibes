@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import java.util.UUID;
@@ -22,6 +23,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
 
     private final DestructionSupport destructionSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -41,7 +43,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean {
                 UUID controllerId = entry.getControllerId();
 
                 List<UUID> matchingPermanentIds = destructionSupport.collectPermanentIds(gameData, controllerId,
-                        p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacrificePermanent.filter()));
+                        p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacrificePermanent.filter()));
 
                 if (matchingPermanentIds.isEmpty()) {
                     destructionSupport.resolveForcedCostElseEffects(gameData, entry, e);

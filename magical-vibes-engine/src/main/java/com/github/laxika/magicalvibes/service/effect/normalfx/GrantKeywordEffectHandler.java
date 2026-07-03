@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -46,7 +48,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 if (grant.filter() != null
-                        && !gameQueryService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
+                        && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     continue;
                 }
                 bucketFor(permanent, grant.duration()).addAll(grant.keywords());
@@ -70,7 +72,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     return;
                 }
                 if (grant.filter() != null
-                        && !gameQueryService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
+                        && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
                     return;
                 }
                 bucketFor(permanent, grant.duration()).addAll(grant.keywords());

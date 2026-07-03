@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
@@ -19,13 +20,13 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
             @DisplayName("Presents card choice when matching cards exist in hand")
             void presentsChoiceWhenMatchingCards() {
                 Card card = createCard("Elvish Piper");
-                CardPredicate predicate = mock(CardPredicate.class);
+                CardPredicate predicate = new CardNamedPredicate("Test Filter");
                 PutCardToBattlefieldEffect effect = new PutCardToBattlefieldEffect(predicate, "creature");
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
                 Card creatureCard = createCard("Grizzly Bears");
                 gd.playerHands.get(player1Id).add(creatureCard);
 
-                when(gameQueryService.matchesCardPredicate(eq(creatureCard), eq(predicate), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesCardPredicate(eq(creatureCard), eq(predicate), any())).thenReturn(true);
 
                 resolveEffect(gd, entry, effect);
 
@@ -36,13 +37,13 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
             @DisplayName("Logs and does nothing when no matching cards in hand")
             void noMatchingCards() {
                 Card card = createCard("Elvish Piper");
-                CardPredicate predicate = mock(CardPredicate.class);
+                CardPredicate predicate = new CardNamedPredicate("Test Filter");
                 PutCardToBattlefieldEffect effect = new PutCardToBattlefieldEffect(predicate, "creature");
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
                 Card nonMatchingCard = createCard("Mountain");
                 gd.playerHands.get(player1Id).add(nonMatchingCard);
 
-                when(gameQueryService.matchesCardPredicate(eq(nonMatchingCard), eq(predicate), any())).thenReturn(false);
+                when(predicateEvaluationService.matchesCardPredicate(eq(nonMatchingCard), eq(predicate), any())).thenReturn(false);
 
                 resolveEffect(gd, entry, effect);
 
@@ -55,7 +56,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
             @DisplayName("Does nothing when hand is empty")
             void emptyHand() {
                 Card card = createCard("Elvish Piper");
-                CardPredicate predicate = mock(CardPredicate.class);
+                CardPredicate predicate = new CardNamedPredicate("Test Filter");
                 PutCardToBattlefieldEffect effect = new PutCardToBattlefieldEffect(predicate, "creature");
                 StackEntry entry = createEntry(card, player1Id, List.of(effect));
 

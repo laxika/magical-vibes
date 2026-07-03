@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryForCardTypesToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final LibrarySearchSupport librarySearchSupport;
 
@@ -58,7 +60,7 @@ public class SearchLibraryForCardTypesToBattlefieldEffectHandler implements Norm
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 entry.getControllerId(),
-                card -> gameQueryService.matchesCardPredicate(card, effect.filter(), null),
+                card -> predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null),
                 descPlural,
                 prompt,
                 false,
@@ -84,7 +86,7 @@ public class SearchLibraryForCardTypesToBattlefieldEffectHandler implements Norm
         String descPlural = desc.replace(" card", " cards");
 
         List<Card> matchingCards = deck.stream()
-                .filter(card -> gameQueryService.matchesCardPredicate(card, effect.filter(), null))
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null))
                 .toList();
 
         if (matchingCards.isEmpty()) {

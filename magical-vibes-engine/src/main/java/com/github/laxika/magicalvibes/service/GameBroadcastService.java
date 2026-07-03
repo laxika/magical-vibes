@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.ExileCast;
@@ -92,6 +93,7 @@ public class GameBroadcastService {
     private final PermanentViewFactory permanentViewFactory;
     private final StackEntryViewFactory stackEntryViewFactory;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final ValidTargetService validTargetService;
 
     public void broadcastGameState(GameData gameData) {
@@ -950,7 +952,7 @@ public class GameBroadcastService {
         for (Permanent perm : battlefield) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof GrantFlashToCardTypeEffect grant) {
-                    if (gameQueryService.matchesCardPredicate(card, grant.filter(), null)) {
+                    if (predicateEvaluationService.matchesCardPredicate(card, grant.filter(), null)) {
                         return true;
                     }
                 }
@@ -966,7 +968,7 @@ public class GameBroadcastService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
                         && new ManaCost(altCost.manaCost()).getManaValue() == 0
-                        && gameQueryService.matchesCardPredicate(card, altCost.filter(), null)) {
+                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
                     return true;
                 }
             }
@@ -992,7 +994,7 @@ public class GameBroadcastService {
         for (Permanent perm : bf) {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof AlternativeCostForSpellsEffect altCost
-                        && gameQueryService.matchesCardPredicate(card, altCost.filter(), null)) {
+                        && predicateEvaluationService.matchesCardPredicate(card, altCost.filter(), null)) {
                     ManaCost alternativeManaCost = new ManaCost(altCost.manaCost());
                     if (alternativeManaCost.getManaValue() > 0 && alternativeManaCost.canPay(pool, additionalCost)) {
                         return altCost.manaCost();
@@ -1015,7 +1017,7 @@ public class GameBroadcastService {
         if (sacCost.isPresent()) {
             if (battlefield == null) return false;
             long matchingCount = battlefield.stream()
-                    .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
+                    .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.get().filter()))
                     .count();
             if (matchingCount < sacCost.get().count()) return false;
         }
@@ -1024,7 +1026,7 @@ public class GameBroadcastService {
         if (tapCost.isPresent()) {
             if (battlefield == null) return false;
             long matchingCount = battlefield.stream()
-                    .filter(p -> !p.isTapped() && gameQueryService.matchesPermanentPredicate(gameData, p, tapCost.get().filter()))
+                    .filter(p -> !p.isTapped() && predicateEvaluationService.matchesPermanentPredicate(gameData, p, tapCost.get().filter()))
                     .count();
             if (matchingCount < tapCost.get().count()) return false;
         }
@@ -1090,7 +1092,7 @@ public class GameBroadcastService {
             return false;
         }
         return battlefield.stream()
-                .anyMatch(permanent -> gameQueryService.matchesPermanentPredicate(
+                .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         gameData, permanent, graveyardCast.controllerControlsPredicate()));
     }
 
@@ -1310,7 +1312,7 @@ public class GameBroadcastService {
         }
         increase += snapshot.spellCastTax;
         for (IncreaseSpellCostEffect inc : snapshot.predicateIncreases) {
-            if (gameQueryService.matchesCardPredicate(card, inc.predicate(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(card, inc.predicate(), null)) {
                 increase += inc.amount();
             }
         }
@@ -1353,12 +1355,12 @@ public class GameBroadcastService {
             }
         }
         for (ReduceCastCostForMatchingSpellsEffect red : snapshot.selfMatchReductions) {
-            if (gameQueryService.matchesCardPredicate(card, red.predicate(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(card, red.predicate(), null)) {
                 reduction += red.amount();
             }
         }
         for (ReduceCastCostForMatchingSpellsEffect red : snapshot.opponentMatchReductions) {
-            if (gameQueryService.matchesCardPredicate(card, red.predicate(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(card, red.predicate(), null)) {
                 reduction += red.amount();
             }
         }
@@ -1449,7 +1451,7 @@ public class GameBroadcastService {
                             if (targetPerm != null) {
                                 UUID targetController = gameQueryService.findPermanentController(gameData, tid);
                                 if (controllerId.equals(targetController)
-                                        && gameQueryService.matchesPermanentPredicate(
+                                        && predicateEvaluationService.matchesPermanentPredicate(
                                                 gameData, targetPerm, taxEffect.predicate())) {
                                     tax += taxEffect.amount();
                                     break;
@@ -1490,7 +1492,7 @@ public class GameBroadcastService {
                 for (Permanent perm : bf) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof IncreaseSpellCostEffect increase
-                                && gameQueryService.matchesCardPredicate(card, increase.predicate(), null)) {
+                                && predicateEvaluationService.matchesCardPredicate(card, increase.predicate(), null)) {
                             totalIncrease += increase.amount();
                         }
                     }
@@ -1545,7 +1547,7 @@ public class GameBroadcastService {
                     }
                     if (effect instanceof ReduceCastCostForMatchingSpellsEffect matchReduce
                             && matchReduce.scope() == CostModificationScope.SELF
-                            && gameQueryService.matchesCardPredicate(card, matchReduce.predicate(), null)) {
+                            && predicateEvaluationService.matchesCardPredicate(card, matchReduce.predicate(), null)) {
                         reduction += matchReduce.amount();
                     }
                 }
@@ -1561,7 +1563,7 @@ public class GameBroadcastService {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
                         if (effect instanceof ReduceCastCostForMatchingSpellsEffect matchReduce
                                 && matchReduce.scope() == CostModificationScope.OPPONENT
-                                && gameQueryService.matchesCardPredicate(card, matchReduce.predicate(), null)) {
+                                && predicateEvaluationService.matchesCardPredicate(card, matchReduce.predicate(), null)) {
                             reduction += matchReduce.amount();
                         }
                     }
@@ -1576,7 +1578,7 @@ public class GameBroadcastService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent p : battlefield) {
-            if (gameQueryService.matchesPermanentPredicate(gameData, p, predicate)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate)) {
                 return true;
             }
         }
@@ -1590,7 +1592,7 @@ public class GameBroadcastService {
                 continue;
             }
             for (Permanent p : battlefield) {
-                if (gameQueryService.matchesPermanentPredicate(gameData, p, predicate)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate)) {
                     return true;
                 }
             }
@@ -1601,7 +1603,7 @@ public class GameBroadcastService {
     public boolean stackHasMatchingSpell(GameData gameData,
             com.github.laxika.magicalvibes.model.filter.StackEntryPredicate predicate) {
         for (com.github.laxika.magicalvibes.model.StackEntry entry : gameData.stack) {
-            if (gameQueryService.matchesStackEntryPredicate(entry, predicate, null)) {
+            if (predicateEvaluationService.matchesStackEntryPredicate(entry, predicate, null)) {
                 return true;
             }
         }

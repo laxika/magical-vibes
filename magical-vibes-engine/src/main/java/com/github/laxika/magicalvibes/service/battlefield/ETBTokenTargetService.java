@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @Slf4j
 @Component
@@ -31,6 +32,7 @@ import java.util.UUID;
 public class ETBTokenTargetService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TargetLegalityService targetLegalityService;
@@ -275,6 +277,6 @@ public class ETBTokenTargetService {
         if (targetFilter instanceof PlayerPredicateTargetFilter) {
             return false;
         }
-        return gameQueryService.checkTargetFilter(targetFilter, permanent).isEmpty();
+        return predicateEvaluationService.checkTargetFilter(targetFilter, permanent).isEmpty();
     }
 }

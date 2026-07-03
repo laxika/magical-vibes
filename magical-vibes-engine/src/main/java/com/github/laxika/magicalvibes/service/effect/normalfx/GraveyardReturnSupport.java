@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -91,6 +92,7 @@ public class GraveyardReturnSupport {
     private final PermanentRemovalService permanentRemovalService;
     private final LegendRuleService legendRuleService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final LifeSupport lifeSupport;
@@ -124,7 +126,7 @@ public class GraveyardReturnSupport {
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
         String filterLabel = CardPredicateUtils.describeFilter(effect.filter());
 
-        if (targetCard == null || (effect.filter() != null && !gameQueryService.matchesCardPredicate(targetCard, effect.filter(), sourceCardId))) {
+        if (targetCard == null || (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(targetCard, effect.filter(), sourceCardId))) {
             String fizzleLog = entry.getDescription() + " fizzles (target " + filterLabel + " is no longer in a graveyard).";
             gameBroadcastService.logAndBroadcast(gameData, fizzleLog);
             return;
@@ -136,7 +138,7 @@ public class GraveyardReturnSupport {
             List<UUID> attachTargetIds = new ArrayList<>();
             if (controllerBf != null) {
                 for (Permanent p : controllerBf) {
-                    if (gameQueryService.matchesPermanentPredicate(gameData, p, effect.attachmentTarget())) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.attachmentTarget())) {
                         attachTargetIds.add(p.getId());
                     }
                 }
@@ -202,7 +204,7 @@ public class GraveyardReturnSupport {
             for (Card card : graveyard) {
                 if (!card.isToken()
                         && trackedIds.contains(card.getId())
-                        && gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                        && predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
                     toReturn.add(card);
                 }
             }
@@ -261,7 +263,7 @@ public class GraveyardReturnSupport {
                 List<Card> gy = gyEntry.getValue();
                 List<Card> toReturn = new ArrayList<>();
                 for (Card card : gy) {
-                    if (gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                    if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
                         toReturn.add(card);
                     }
                 }
@@ -325,7 +327,7 @@ public class GraveyardReturnSupport {
 
         List<Card> matchingCards = new ArrayList<>();
         for (Card card : graveyard) {
-            if (gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+            if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
                 matchingCards.add(card);
             }
         }
@@ -378,7 +380,7 @@ public class GraveyardReturnSupport {
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < graveyard.size(); i++) {
-            if (gameQueryService.matchesCardPredicate(graveyard.get(i), effect.filter(), sourceCardId)) {
+            if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), effect.filter(), sourceCardId)) {
                 matchingIndices.add(i);
             }
         }
@@ -424,7 +426,7 @@ public class GraveyardReturnSupport {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card card : graveyard) {
-                if (gameQueryService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
+                if (predicateEvaluationService.matchesCardPredicate(card, effect.filter(), sourceCardId)) {
                     cardPool.add(card);
                 }
             }
@@ -973,7 +975,7 @@ public class GraveyardReturnSupport {
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < graveyard.size(); i++) {
-            if (gameQueryService.matchesCardPredicate(graveyard.get(i), next.filter(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), next.filter(), null)) {
                 matchingIndices.add(i);
             }
         }

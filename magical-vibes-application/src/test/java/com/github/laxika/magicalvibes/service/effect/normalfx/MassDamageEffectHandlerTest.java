@@ -22,7 +22,7 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
     @Override
     protected void setUpHandler() {
-        massDamageHandler = new MassDamageEffectHandler(damageSupport, gameQueryService, gameOutcomeService);
+        massDamageHandler = new MassDamageEffectHandler(damageSupport, gameQueryService, predicateEvaluationService, gameOutcomeService);
     }
 
     @Test

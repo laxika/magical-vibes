@@ -63,6 +63,7 @@ import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -494,7 +495,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                     || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
                             for (Permanent attacker : attackers) {
                                 if (boost.filter() == null
-                                        || gameQueryService.matchesPermanentPredicate(
+                                        || predicateEvaluationService.matchesPermanentPredicate(
                                                 gameData, attacker, boost.filter())) {
                                     totalBoost += boost.powerBoost();
                                 }
@@ -651,7 +652,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                             || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
                     for (Permanent attacker : attackers) {
                         if (boost.filter() == null
-                                || gameQueryService.matchesPermanentPredicate(
+                                || predicateEvaluationService.matchesPermanentPredicate(
                                         gameData, attacker, boost.filter())) {
                             totalBoost += boost.powerBoost();
                         }
@@ -2080,7 +2081,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (!hasArtifact) return false;
             } else if (effect instanceof SacrificePermanentCost sacCost) {
                 boolean hasMatch = battlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
                 if (!hasMatch) return false;
             } else if (effect instanceof PayLifeCost lifeCost) {
                 int life = gameData.getLife(aiPlayer.getId());

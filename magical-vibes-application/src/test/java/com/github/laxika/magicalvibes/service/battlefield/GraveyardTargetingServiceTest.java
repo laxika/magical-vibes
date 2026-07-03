@@ -24,11 +24,13 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class GraveyardTargetingServiceTest {
 
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
     @Mock private CardViewFactory cardViewFactory;
@@ -39,7 +41,7 @@ class GraveyardTargetingServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GraveyardTargetingService(gameQueryService, gameBroadcastService, playerInputService, cardViewFactory);
+        service = new GraveyardTargetingService(predicateEvaluationService, gameBroadcastService, playerInputService, cardViewFactory);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentsAndPu
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class ChooseOpponentPermanentsAndPutCountersEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -46,7 +48,7 @@ public class ChooseOpponentPermanentsAndPutCountersEffectHandler implements Norm
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
             for (Permanent perm : battlefield) {
-                if (gameQueryService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
                     eligibleIds.add(perm.getId());
                 }
             }

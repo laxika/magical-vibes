@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,9 @@ class TapCreatureCostHandlerTest {
     private GameQueryService gameQueryService;
 
     @Mock
+    private PredicateEvaluationService predicateEvaluationService;
+
+    @Mock
     private GameBroadcastService gameBroadcastService;
 
     @Mock
@@ -52,7 +56,7 @@ class TapCreatureCostHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new TapCreatureCostHandler(cost, gameQueryService, gameBroadcastService,
+        handler = new TapCreatureCostHandler(cost, gameQueryService, predicateEvaluationService, gameBroadcastService,
                 triggerCollectionService);
         playerId = UUID.randomUUID();
         player = new Player(playerId, "TestPlayer");
@@ -89,7 +93,7 @@ class TapCreatureCostHandlerTest {
         gameData.playerBattlefields.get(playerId).add(redCreature);
 
         when(gameQueryService.isCreature(gameData, redCreature)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, redCreature, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, redCreature, cost.predicate()))
                 .thenReturn(false);
 
         assertThatThrownBy(() -> handler.validateCanPay(gameData, playerId))
@@ -112,7 +116,7 @@ class TapCreatureCostHandlerTest {
         gameData.playerBattlefields.get(playerId).add(blueCreature);
 
         when(gameQueryService.isCreature(gameData, blueCreature)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, blueCreature, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, blueCreature, cost.predicate()))
                 .thenReturn(true);
 
         handler.validateCanPay(gameData, playerId);
@@ -157,7 +161,7 @@ class TapCreatureCostHandlerTest {
         gameData.playerBattlefields.get(playerId).add(redCreature);
 
         when(gameQueryService.isCreature(gameData, redCreature)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, redCreature, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, redCreature, cost.predicate()))
                 .thenReturn(false);
 
         List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
@@ -186,11 +190,11 @@ class TapCreatureCostHandlerTest {
         when(gameQueryService.isCreature(gameData, blueA)).thenReturn(true);
         when(gameQueryService.isCreature(gameData, redCreature)).thenReturn(true);
         when(gameQueryService.isCreature(gameData, blueB)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, blueA, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, blueA, cost.predicate()))
                 .thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, redCreature, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, redCreature, cost.predicate()))
                 .thenReturn(false);
-        when(gameQueryService.matchesPermanentPredicate(gameData, blueB, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, blueB, cost.predicate()))
                 .thenReturn(true);
 
         List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
@@ -208,7 +212,7 @@ class TapCreatureCostHandlerTest {
 
         when(gameQueryService.isCreature(gameData, untapped)).thenReturn(true);
         when(gameQueryService.isCreature(gameData, tapped)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, untapped, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, untapped, cost.predicate()))
                 .thenReturn(true);
 
         List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
@@ -225,7 +229,7 @@ class TapCreatureCostHandlerTest {
 
         when(gameQueryService.isCreature(gameData, creature)).thenReturn(true);
         when(gameQueryService.isCreature(gameData, nonCreature)).thenReturn(false);
-        when(gameQueryService.matchesPermanentPredicate(gameData, creature, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cost.predicate()))
                 .thenReturn(true);
 
         List<UUID> result = handler.getValidChoiceIds(gameData, playerId);
@@ -271,7 +275,7 @@ class TapCreatureCostHandlerTest {
     void validateAndPayThrowsForPredicateMismatch() {
         Permanent redCreature = createCreature("Red Warrior");
         when(gameQueryService.isCreature(gameData, redCreature)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, redCreature, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, redCreature, cost.predicate()))
                 .thenReturn(false);
 
         assertThatThrownBy(() -> handler.validateAndPay(gameData, player, redCreature))
@@ -287,7 +291,7 @@ class TapCreatureCostHandlerTest {
     void validateAndPayTapsMatchingCreature() {
         Permanent blueCreature = createCreature("Blue Wizard");
         when(gameQueryService.isCreature(gameData, blueCreature)).thenReturn(true);
-        when(gameQueryService.matchesPermanentPredicate(gameData, blueCreature, cost.predicate()))
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, blueCreature, cost.predicate()))
                 .thenReturn(true);
 
         handler.validateAndPay(gameData, player, blueCreature);

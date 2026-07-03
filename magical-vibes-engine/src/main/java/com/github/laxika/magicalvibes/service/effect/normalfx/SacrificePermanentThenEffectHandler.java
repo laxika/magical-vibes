@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +25,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
 
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -43,7 +45,7 @@ public class SacrificePermanentThenEffectHandler implements NormalEffectHandlerB
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
-                if (gameQueryService.matchesPermanentPredicate(gameData, p, e.filter())) {
+                if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())) {
                     validIds.add(p.getId());
                 }
             }

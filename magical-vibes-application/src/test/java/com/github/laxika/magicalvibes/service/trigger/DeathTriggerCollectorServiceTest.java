@@ -52,12 +52,15 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class DeathTriggerCollectorServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private GameBroadcastService gameBroadcastService;
@@ -543,7 +546,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent auraPerm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm);
 
-            when(gameQueryService.matchesCardPredicate(creature, filter, null)).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(creature, filter, null)).thenReturn(true);
 
             assertThat(svc.handleEnchantedPermanentLeavesConditional(match(auraPerm, PLAYER1_ID, conditional), conditional, ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -561,7 +564,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent auraPerm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentLeaves(leavingPerm);
 
-            when(gameQueryService.matchesCardPredicate(artifact, filter, null)).thenReturn(false);
+            when(predicateEvaluationService.matchesCardPredicate(artifact, filter, null)).thenReturn(false);
 
             assertThat(svc.handleEnchantedPermanentLeavesConditional(match(auraPerm, PLAYER1_ID, conditional), conditional, ctx)).isFalse();
             assertThat(gd.stack).isEmpty();

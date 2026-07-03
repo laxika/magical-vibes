@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.target;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
@@ -56,6 +57,7 @@ import java.util.function.Predicate;
 public class TargetLegalityService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final TargetValidationService targetValidationService;
 
     public Optional<String> checkSpellTargetOnStack(GameData gameData, UUID targetId, TargetFilter targetFilter, UUID controllerId) {
@@ -152,7 +154,7 @@ public class TargetLegalityService {
 
             // Per-position filter
             if (positionFilter != null) {
-                gameQueryService.validateTargetFilter(positionFilter, target,
+                predicateEvaluationService.validateTargetFilter(positionFilter, target,
                         filterContext(gameData, sourceCard.getId(), playerId));
             }
         }
@@ -177,7 +179,7 @@ public class TargetLegalityService {
         if (ability.getTargetFilter() != null && targetId != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target != null) {
-                gameQueryService.validateTargetFilter(ability.getTargetFilter(),
+                predicateEvaluationService.validateTargetFilter(ability.getTargetFilter(),
                         target,
                         filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
             } else if (gameData.playerIds.contains(targetId)
@@ -290,7 +292,7 @@ public class TargetLegalityService {
         }
 
         if (card.getTargetFilter() != null && target != null) {
-            Optional<String> filterReason = gameQueryService.checkTargetFilter(card.getTargetFilter(),
+            Optional<String> filterReason = predicateEvaluationService.checkTargetFilter(card.getTargetFilter(),
                     target,
                     filterContext(gameData, card.getId(), controllerId).withXValue(xValue));
             if (filterReason.isPresent()) return filterReason;
@@ -355,10 +357,10 @@ public class TargetLegalityService {
             // the card-level targetFilter, or require a creature target as default.
             TargetFilter positionFilter = getPositionFilter(perPositionFilters, i);
             if (positionFilter != null) {
-                gameQueryService.validateTargetFilter(positionFilter, target,
+                predicateEvaluationService.validateTargetFilter(positionFilter, target,
                         filterContext(gameData, card.getId(), controllerId));
             } else if (card.getTargetFilter() != null) {
-                gameQueryService.validateTargetFilter(card.getTargetFilter(), target,
+                predicateEvaluationService.validateTargetFilter(card.getTargetFilter(), target,
                         filterContext(gameData, card.getId(), controllerId));
             } else if (!gameQueryService.isCreature(gameData, target)) {
                 throw new IllegalStateException(target.getCard().getName() + " is not a creature");
@@ -433,7 +435,7 @@ public class TargetLegalityService {
                                         : entry.getCard() != null ? entry.getCard().getTargetFilter() : null;
                         if (effectiveTargetFilter != null) {
                             try {
-                                gameQueryService.validateTargetFilter(effectiveTargetFilter, targetPerm,
+                                predicateEvaluationService.validateTargetFilter(effectiveTargetFilter, targetPerm,
                                         filterContext(gameData,
                                                 entry.getCard() != null ? entry.getCard().getId() : null,
                                                 entry.getControllerId()).withXValue(entry.getXValue()));

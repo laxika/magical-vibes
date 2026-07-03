@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryForCardsToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final LibrarySearchSupport librarySearchSupport;
 
@@ -57,7 +59,7 @@ public class SearchLibraryForCardsToHandEffectHandler implements NormalEffectHan
         }
 
         List<Card> matchingCards = restricted
-                ? deck.stream().filter(card -> gameQueryService.matchesCardPredicate(card, filter, null)).toList()
+                ? deck.stream().filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, null)).toList()
                 : new ArrayList<>(deck);
 
         if (matchingCards.isEmpty()) {

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,9 +41,11 @@ public class CombatSimulator {
     private static final int DEFENSIVE_PENALTY_LIFE_THRESHOLD = 15;
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final BoardEvaluator boardEvaluator;
 
     public CombatSimulator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
+        this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameQueryService = gameQueryService;
         this.boardEvaluator = boardEvaluator;
     }
@@ -1218,7 +1221,7 @@ public class CombatSimulator {
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CantBeBlockedIfDefenderControlsMatchingPermanentEffect restriction) {
                 boolean defenderMatches = defenderBattlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
                 if (defenderMatches) {
                     return true;
                 }

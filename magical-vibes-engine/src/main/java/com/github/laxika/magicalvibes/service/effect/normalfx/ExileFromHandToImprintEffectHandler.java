@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Component;
 public class ExileFromHandToImprintEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -46,7 +48,7 @@ public class ExileFromHandToImprintEffectHandler implements NormalEffectHandlerB
 
         List<Integer> validIndices = new ArrayList<>();
         for (int i = 0; i < hand.size(); i++) {
-            if (gameQueryService.matchesCardPredicate(hand.get(i), e.filter(), null)) {
+            if (predicateEvaluationService.matchesCardPredicate(hand.get(i), e.filter(), null)) {
                 validIndices.add(i);
             }
         }

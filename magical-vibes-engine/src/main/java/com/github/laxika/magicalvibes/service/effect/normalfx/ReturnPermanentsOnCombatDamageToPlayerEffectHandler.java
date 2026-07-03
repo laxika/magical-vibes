@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ public class ReturnPermanentsOnCombatDamageToPlayerEffectHandler implements Norm
 
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
     private final PlayerInteractionSupport playerInteractionSupport;
 
@@ -43,7 +45,7 @@ public class ReturnPermanentsOnCombatDamageToPlayerEffectHandler implements Norm
         List<UUID> validIds = new ArrayList<>();
         if (defenderBattlefield != null) {
             for (Permanent perm : defenderBattlefield) {
-                if (e.filter() == null || gameQueryService.matchesPermanentPredicate(gameData, perm, e.filter())) {
+                if (e.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData, perm, e.filter())) {
                     validIds.add(perm.getId());
                 }
             }

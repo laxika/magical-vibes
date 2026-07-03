@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -67,6 +68,7 @@ import org.springframework.stereotype.Component;
 public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
     private final CardViewFactory cardViewFactory;
@@ -106,11 +108,11 @@ public class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler 
         List<Card> eligibleCards = new ArrayList<>();
         for (Card card : revealedCards) {
             if (e.alwaysEligiblePredicate() != null
-                    && gameQueryService.matchesCardPredicate(card, e.alwaysEligiblePredicate(), null, gameData, controllerId)) {
+                    && predicateEvaluationService.matchesCardPredicate(card, e.alwaysEligiblePredicate(), null, gameData, controllerId)) {
                 eligibleCards.add(card);
             } else if (e.mvCappedEligiblePredicate() != null
                     && card.getManaValue() <= xValue
-                    && gameQueryService.matchesCardPredicate(card, e.mvCappedEligiblePredicate(), null)) {
+                    && predicateEvaluationService.matchesCardPredicate(card, e.mvCappedEligiblePredicate(), null)) {
                 eligibleCards.add(card);
             }
         }

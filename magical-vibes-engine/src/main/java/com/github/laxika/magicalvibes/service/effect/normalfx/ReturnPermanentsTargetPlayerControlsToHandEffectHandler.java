@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsTargetPlayerControlsToHandEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class ReturnPermanentsTargetPlayerControlsToHandEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
 
@@ -42,7 +44,7 @@ public class ReturnPermanentsTargetPlayerControlsToHandEffectHandler implements 
         }
 
         List<Permanent> toReturn = battlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, e.predicate()))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.predicate()))
                 .toList();
 
         for (Permanent permanent : toReturn) {

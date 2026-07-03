@@ -34,6 +34,7 @@ final class PlayerInteractionHandlerTestSupport {
                                                  SessionManager sessionManager,
                                                  CardViewFactory cardViewFactory,
                                                  GameQueryService gameQueryService,
+                                                 com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService,
                                                  PlayerInputService playerInputService,
                                                  TriggerCollectionService triggerCollectionService,
                                                  BattlefieldEntryService battlefieldEntryService,
@@ -50,6 +51,7 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(SessionManager.class, sessionManager);
             deps.put(CardViewFactory.class, cardViewFactory);
             deps.put(GameQueryService.class, gameQueryService);
+            deps.put(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class, predicateEvaluationService);
             deps.put(PlayerInputService.class, playerInputService);
             deps.put(TriggerCollectionService.class, triggerCollectionService);
             deps.put(BattlefieldEntryService.class, battlefieldEntryService);

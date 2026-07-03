@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsOfTargetPlayerEf
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class TapPermanentsOfTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final TapUntapSupport tapUntapSupport;
 
@@ -46,7 +48,7 @@ public class TapPermanentsOfTargetPlayerEffectHandler implements NormalEffectHan
 
         int count = 0;
         for (Permanent p : battlefield) {
-            if (!gameQueryService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
+            if (!predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
 
             if (tapUntapSupport.tapPermanent(gameData, p)) {
                 count++;

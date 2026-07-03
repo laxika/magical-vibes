@@ -46,6 +46,7 @@ import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryColor;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -67,6 +68,7 @@ import java.util.UUID;
 public class ConditionEvaluationService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final StaticEffectSupport staticEffectSupport;
 
     /**
@@ -141,7 +143,7 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null && !ctx.controllerId().equals(gameData.activePlayerId);
             case TargetPermanentMatches c -> {
                 Permanent target = gameQueryService.findPermanentById(gameData, ctx.targetId());
-                yield target != null && gameQueryService.matchesPermanentPredicate(gameData, target, c.filter());
+                yield target != null && predicateEvaluationService.matchesPermanentPredicate(gameData, target, c.filter());
             }
             case SourceHasSubtype c ->
                     sourceHasSubtype(gameData, ctx, c.subtype());
@@ -181,7 +183,7 @@ public class ConditionEvaluationService {
                                      ConditionContext ctx) {
         return ctx.staticEvaluation()
                 ? staticEffectSupport.matchesStaticFilter(permanent, filter)
-                : gameQueryService.matchesPermanentPredicate(gameData, permanent, filter);
+                : predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, filter);
     }
 
     /** Returns {@code true} if the given permanent is the condition's own source. */
@@ -276,8 +278,8 @@ public class ConditionEvaluationService {
         for (Card card : graveyard) {
             if (card.isToken()) continue;
             boolean matches = ctx.staticEvaluation()
-                    ? gameQueryService.matchesCardPredicate(card, c.filter(), null)
-                    : c.filter() == null || gameQueryService.matchesCardPredicate(card, c.filter(),
+                    ? predicateEvaluationService.matchesCardPredicate(card, c.filter(), null)
+                    : c.filter() == null || predicateEvaluationService.matchesCardPredicate(card, c.filter(),
                             null, gameData, ctx.controllerId());
             if (matches) count++;
         }
@@ -337,7 +339,7 @@ public class ConditionEvaluationService {
         List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn
                 .getOrDefault(ctx.controllerId(), List.of());
         return entered.stream()
-                .filter(card -> gameQueryService.matchesCardPredicate(card, c.predicate(), null))
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, c.predicate(), null))
                 .count();
     }
 

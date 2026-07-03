@@ -71,12 +71,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class TargetLegalityServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private TargetValidationService targetValidationService;
@@ -116,7 +119,7 @@ class TargetLegalityServiceTest {
         gd.currentStep = TurnStep.PRECOMBAT_MAIN;
 
         // Default: check methods return valid (empty = no error)
-        lenient().when(gameQueryService.checkTargetFilter(any(), any(), any()))
+        lenient().when(predicateEvaluationService.checkTargetFilter(any(), any(), any()))
                 .thenReturn(Optional.empty());
         lenient().when(targetValidationService.checkEffectTargets(any(), any()))
                 .thenReturn(Optional.empty());
@@ -458,7 +461,7 @@ class TargetLegalityServiceTest {
             Card spell = createTargetingSpell("Artifact Blast", CardColor.RED);
             spell.setCastTimeTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
-            when(gameQueryService.checkTargetFilter(any(), eq(target), any()))
+            when(predicateEvaluationService.checkTargetFilter(any(), eq(target), any()))
                     .thenReturn(Optional.of("Target must be an artifact"));
 
             assertThatThrownBy(() -> sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id))
@@ -704,7 +707,7 @@ class TargetLegalityServiceTest {
             ActivatedAbility ability = new ActivatedAbility(true, "{R}", List.of(), "test",
                     new PermanentPredicateTargetFilter(new PermanentIsArtifactPredicate(), "Target must be an artifact"));
             doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateActivatedAbilityTargeting(gd, player1Id, ability,
                     List.of(), target.getId(), null, sourceCard, 0))
@@ -989,7 +992,7 @@ class TargetLegalityServiceTest {
                             new PermanentIsArtifactPredicate(), "Target must be an artifact")),
                     1, 1);
             doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateMultiTargetAbility(gd, player1Id, ability,
                     List.of(target.getId()), source))
@@ -1230,7 +1233,7 @@ class TargetLegalityServiceTest {
             artifact.setManaCost("{1}");
             Permanent target = addPermanent(player2Id, artifact);
             doThrow(new IllegalStateException("Target must be a creature"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
                     List.of(target.getId()), player1Id))
@@ -1253,7 +1256,7 @@ class TargetLegalityServiceTest {
                     .addEffect(EffectSlot.SPELL, new DealDamageToAnyTargetEffect(2));
             Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
             doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThatThrownBy(() -> sut.validateMultiSpellTargets(gd, spell,
                     List.of(target.getId()), player1Id))
@@ -1378,7 +1381,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell, player1Id, "Destroy",
                     spell.getEffects(EffectSlot.SPELL), 0, target.getId(), Map.of());
             doThrow(new IllegalStateException("Target must be a creature"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1393,7 +1396,7 @@ class TargetLegalityServiceTest {
             entry.setTargetFilter(new PermanentPredicateTargetFilter(
                     new PermanentIsArtifactPredicate(), "Target must be an artifact"));
             doThrow(new IllegalStateException("Target must be an artifact"))
-                    .when(gameQueryService).validateTargetFilter(any(), eq(target), any());
+                    .when(predicateEvaluationService).validateTargetFilter(any(), eq(target), any());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isTrue();
         }
@@ -1912,18 +1915,6 @@ class TargetLegalityServiceTest {
                     .isFalse();
         }
 
-        @Test
-        @DisplayName("returns false for unknown predicate type")
-        void returnsFalseForUnknownPredicate() {
-            Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(card, player1Id);
-
-            assertThat(sut.matchesStackEntryPredicate(gd, entry,
-                    new UnknownPredicate(), player2Id))
-                    .isFalse();
-        }
-
-        private record UnknownPredicate() implements StackEntryPredicate {}
     }
 
     // ===== validateEffectTargetInZone =====

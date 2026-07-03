@@ -1,4 +1,44 @@
 package com.github.laxika.magicalvibes.model.filter;
 
-public interface PermanentPredicate {
+/**
+ * A predicate over a {@link com.github.laxika.magicalvibes.model.Permanent}. Predicates are
+ * pure data — evaluation lives in the engine's {@code PredicateEvaluationService}, which
+ * switches exhaustively over this sealed hierarchy so that a missing predicate is a compile
+ * error rather than a silent runtime fallback.
+ */
+public sealed interface PermanentPredicate permits
+        PermanentAllOfPredicate,
+        PermanentAnyOfPredicate,
+        PermanentAttachedToSourceControllerPredicate,
+        PermanentColorInPredicate,
+        PermanentControlledBySourceControllerPredicate,
+        PermanentDealtDamageThisTurnPredicate,
+        PermanentHasAnySubtypePredicate,
+        PermanentHasCountersPredicate,
+        PermanentHasGreatestPowerAmongControlledCreaturesPredicate,
+        PermanentHasKeywordPredicate,
+        PermanentHasSameNameAsSourcePredicate,
+        PermanentHasSubtypePredicate,
+        PermanentHasSupertypePredicate,
+        PermanentInCombatWithSourcePredicate,
+        PermanentIsArtifactPredicate,
+        PermanentIsAttackingPredicate,
+        PermanentIsBlockingPredicate,
+        PermanentIsCreaturePredicate,
+        PermanentIsEnchantmentPredicate,
+        PermanentIsHistoricPredicate,
+        PermanentIsLandPredicate,
+        PermanentIsPlaneswalkerPredicate,
+        PermanentIsSourceCardPredicate,
+        PermanentIsTappedPredicate,
+        PermanentIsTokenPredicate,
+        PermanentManaValueEqualsXPredicate,
+        PermanentNotPredicate,
+        PermanentPowerAtLeastPredicate,
+        PermanentPowerAtMostControlledCreatureCountPredicate,
+        PermanentPowerAtMostPredicate,
+        PermanentPowerAtMostXPredicate,
+        PermanentToughnessAtMostPredicate,
+        PermanentToughnessLessThanSourcePowerPredicate,
+        PermanentTruePredicate {
 }

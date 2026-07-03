@@ -39,7 +39,7 @@ target selection — this invariant is guarded by `CardEffectTargetingConsistenc
 | Attack (`pendingAttackTriggerTargets`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ❌ (ignored) |
 | End step (`pendingEndStepTriggerTargets`)   | `Options.END_STEP` | ✅ | ✅ any permanent  | ✅ | ✅ | ❌ | ✅ (unwraps `ConditionalEffect`) |
 | Discard-self (`pendingDiscardSelfTriggers`) | —                  | ✅ all players | ✅ creatures + planeswalkers only | ❌ | ❌ | ❌ | ❌ |
-| Spell-target (`pendingSpellTargetTriggers`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via generic `TargetFilter.matchesFilters`) | ❌ | ❌ |
+| Spell-target (`pendingSpellTargetTriggers`) | —                  | ✅ unless filter present | ✅ via `TargetFilter` only | ❌ | ✅ (via `PredicateEvaluationService.matchesFilters`) | ❌ | ❌ |
 | Life-gain (`pendingLifeGainTriggerTargets`) | —                  | ✅ all players | ✅ creatures only | ❌ | ❌ | ❌ | ❌ |
 | Enters-from-graveyard (`pendingEntersFromGraveyardTriggerTargets`) | — | ✅ all players | ✅ creatures + planeswalkers (any target) | ❌ | ❌ | ❌ | ❌ |
 | Explore (`pendingExploreTriggerTargets`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |

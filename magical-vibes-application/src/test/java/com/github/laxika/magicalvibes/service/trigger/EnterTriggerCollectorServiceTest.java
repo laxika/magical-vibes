@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 /**
  * Unit tests for the enter-the-battlefield trigger orchestration ({@link TriggerCollectionService})
@@ -42,6 +43,7 @@ class EnterTriggerCollectorServiceTest {
     @Mock private PlayerInputService playerInputService;
     @Mock private TriggeredAbilityQueueService triggeredAbilityQueueService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
 
     private TriggerCollectionService service;
@@ -54,8 +56,8 @@ class EnterTriggerCollectorServiceTest {
         TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameBroadcastService), registry);
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
-                triggeredAbilityQueueService, gameQueryService,
-                new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService)),
+                triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService, new StaticEffectSupport(gameQueryService, predicateEvaluationService)),
                 gameBroadcastService);
 
         player1Id = UUID.randomUUID();

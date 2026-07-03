@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class TriggerTargetCollectorTest {
     @Mock
     private GameQueryService gameQueryService;
 
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
+
     private TriggerTargetCollector collector;
 
     private GameData gd;
@@ -44,7 +48,7 @@ class TriggerTargetCollectorTest {
 
     @BeforeEach
     void setUp() {
-        collector = new TriggerTargetCollector(gameQueryService);
+        collector = new TriggerTargetCollector(gameQueryService, predicateEvaluationService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

@@ -46,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class GameBroadcastServiceTest {
@@ -55,6 +56,7 @@ class GameBroadcastServiceTest {
     @Mock private PermanentViewFactory permanentViewFactory;
     @Mock private StackEntryViewFactory stackEntryViewFactory;
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ValidTargetService validTargetService;
 
     private GameBroadcastService svc;
@@ -69,7 +71,7 @@ class GameBroadcastServiceTest {
     @BeforeEach
     void setUp() {
         svc = new GameBroadcastService(sessionManager, cardViewFactory, permanentViewFactory,
-                stackEntryViewFactory, gameQueryService, validTargetService);
+                stackEntryViewFactory, gameQueryService, predicateEvaluationService, validTargetService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -464,7 +466,7 @@ class GameBroadcastServiceTest {
             var predicate = new PermanentHasSubtypePredicate(CardSubtype.WIZARD);
             retort.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfControlsPermanentEffect(predicate, 1));
 
-            when(gameQueryService.matchesPermanentPredicate(gd, wizardPermanent, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, wizardPermanent, predicate)).thenReturn(true);
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 
@@ -493,7 +495,7 @@ class GameBroadcastServiceTest {
                             new CardTypePredicate(CardType.INSTANT), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(familiar));
 
-            when(gameQueryService.matchesCardPredicate(any(), any(), any())).thenAnswer(invocation -> {
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(invocation -> {
                 Card card = invocation.getArgument(0);
                 CardTypePredicate pred = invocation.getArgument(1);
                 return card.hasType(pred.cardType());
@@ -523,7 +525,7 @@ class GameBroadcastServiceTest {
                             new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
             gd.playerBattlefields.get(player1Id).add(new Permanent(warchief));
 
-            when(gameQueryService.matchesCardPredicate(any(), any(), any()))
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any()))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
                         CardSubtypePredicate pred = inv.getArgument(1);
@@ -650,7 +652,7 @@ class GameBroadcastServiceTest {
 
             when(gameQueryService.findPermanentById(gd, merfolkPermanent.getId())).thenReturn(merfolkPermanent);
             when(gameQueryService.findPermanentController(gd, merfolkPermanent.getId())).thenReturn(player1Id);
-            when(gameQueryService.matchesPermanentPredicate(gd, merfolkPermanent, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, merfolkPermanent, predicate)).thenReturn(true);
 
             assertThat(svc.getTargetingSubtypeTax(gd, player2Id, merfolkPermanent.getId(), null)).isEqualTo(2);
         }
@@ -675,7 +677,7 @@ class GameBroadcastServiceTest {
 
             when(gameQueryService.findPermanentById(gd, bearPermanent.getId())).thenReturn(bearPermanent);
             when(gameQueryService.findPermanentController(gd, bearPermanent.getId())).thenReturn(player1Id);
-            when(gameQueryService.matchesPermanentPredicate(gd, bearPermanent, predicate)).thenReturn(false);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, bearPermanent, predicate)).thenReturn(false);
 
             assertThat(svc.getTargetingSubtypeTax(gd, player2Id, bearPermanent.getId(), null)).isZero();
         }

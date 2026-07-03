@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +16,7 @@ import java.util.UUID;
  * Handles predicate-based permanent sacrifice costs — both {@link SacrificeMultiplePermanentsCost}
  * (e.g. "Sacrifice three artifacts") and {@link SacrificePermanentCost}
  * (e.g. "Sacrifice an artifact or creature"). Filters the battlefield using
- * {@link GameQueryService#matchesPermanentPredicate} and delegates sacrifice to the provided action.
+ * {@link com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService#matchesPermanentPredicate} and delegates sacrifice to the provided action.
  */
 public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCostHandler {
 
@@ -24,34 +24,34 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
     private final PermanentPredicate filter;
     private final int count;
     private final String description;
-    private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentSacrificeAction sacrificeAction;
     private final UUID sourcePermanentId;
 
     /**
      * Constructor for {@link SacrificeMultiplePermanentsCost} — sacrifice N permanents matching a filter.
      */
-    public MultiplePermanentSacrificeCostHandler(SacrificeMultiplePermanentsCost cost, GameQueryService gameQueryService, PermanentSacrificeAction sacrificeAction) {
-        this(cost, cost.filter(), cost.count(), null, gameQueryService, sacrificeAction, null);
+    public MultiplePermanentSacrificeCostHandler(SacrificeMultiplePermanentsCost cost, PredicateEvaluationService predicateEvaluationService, PermanentSacrificeAction sacrificeAction) {
+        this(cost, cost.filter(), cost.count(), null, predicateEvaluationService, sacrificeAction, null);
     }
 
     /**
      * Constructor for {@link SacrificePermanentCost} — sacrifice one permanent matching a filter.
      */
-    public MultiplePermanentSacrificeCostHandler(SacrificePermanentCost cost, GameQueryService gameQueryService,
+    public MultiplePermanentSacrificeCostHandler(SacrificePermanentCost cost, PredicateEvaluationService predicateEvaluationService,
                                                   PermanentSacrificeAction sacrificeAction, UUID sourcePermanentId) {
-        this(cost, cost.filter(), 1, cost.description(), gameQueryService, sacrificeAction,
+        this(cost, cost.filter(), 1, cost.description(), predicateEvaluationService, sacrificeAction,
                 cost.excludeSource() ? sourcePermanentId : null);
     }
 
     private MultiplePermanentSacrificeCostHandler(CardEffect cost, PermanentPredicate filter, int count, String description,
-                                                   GameQueryService gameQueryService, PermanentSacrificeAction sacrificeAction,
+                                                   PredicateEvaluationService predicateEvaluationService, PermanentSacrificeAction sacrificeAction,
                                                    UUID sourcePermanentId) {
         this.cost = cost;
         this.filter = filter;
         this.count = count;
         this.description = description;
-        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
         this.sacrificeAction = sacrificeAction;
         this.sourcePermanentId = sourcePermanentId;
     }
@@ -75,7 +75,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         return battlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, filter))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter))
                 .filter(p -> sourcePermanentId == null || !p.getId().equals(sourcePermanentId))
                 .map(Permanent::getId)
                 .toList();
@@ -83,7 +83,7 @@ public class MultiplePermanentSacrificeCostHandler implements PermanentChoiceCos
 
     @Override
     public void validateAndPay(GameData gameData, Player player, Permanent chosen) {
-        if (!gameQueryService.matchesPermanentPredicate(gameData, chosen, filter)) {
+        if (!predicateEvaluationService.matchesPermanentPredicate(gameData, chosen, filter)) {
             String message = description != null
                     ? "Must sacrifice a permanent matching: " + description
                     : "Must sacrifice a matching permanent";

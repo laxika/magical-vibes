@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class MayPenaltyChoiceHandlerService {
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final ExileService exileService;
     private final StateTriggerService stateTriggerService;
@@ -413,7 +415,7 @@ public class MayPenaltyChoiceHandlerService {
             List<Integer> matchingIndices = new ArrayList<>();
             if (graveyard != null) {
                 for (int i = 0; i < graveyard.size(); i++) {
-                    if (gameQueryService.matchesCardPredicate(graveyard.get(i), effect.predicate(), null)) {
+                    if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), effect.predicate(), null)) {
                         matchingIndices.add(i);
                     }
                 }

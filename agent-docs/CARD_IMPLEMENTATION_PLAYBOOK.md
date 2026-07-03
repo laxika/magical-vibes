@@ -264,11 +264,13 @@ Then do all of:
    }
    ```
    Add constructor parameters only if the predicate needs static values (e.g. `(int maxPower)`). Dynamic predicates that read game state at evaluation time typically have no parameters.
+   The base interfaces (`PermanentPredicate`, `CardPredicate`, `StackEntryPredicate`, `PlayerPredicate`, `TargetFilter`) are **sealed** — add your new record to the `permits` clause of the interface it implements.
 
-2. **Add evaluation logic** in `GameQueryService.matchesPermanentPredicate()` (in `magical-vibes-engine/.../service/battlefield/GameQueryService.java`):
-   - Find the predicate chain (search for `instanceof PermanentPowerAtMost` to see examples)
-   - Add a new `if (predicate instanceof YourNewPredicate)` block
+2. **Add evaluation logic** in `PredicateEvaluationService.matchesPermanentPredicate()` (in `magical-vibes-engine/.../service/filter/PredicateEvaluationService.java`):
+   - The switch is exhaustive over the sealed hierarchy, so after step 1 the file **fails to compile until you add a case** — a missing evaluation is a compile error, never a silent `false`
+   - Add a new `case YourNewPredicate p ->` arm (search for `case PermanentPowerAtMostPredicate` to see examples)
    - Use `filterContext.gameData()`, `filterContext.sourceControllerId()`, `filterContext.sourceCardId()`, `filterContext.xValue()` as needed
+   - Delegate to `GameQueryService` for engine-computed state (effective power/toughness, changeling-aware keywords, animation-aware `isCreature`)
    - Add the import at the top of the file
 
 3. **Update agent-docs**:

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class EachPlayerSacrificesPermanentsEffectHandler implements NormalEffect
     private final DestructionSupport destructionSupport;
     private final GameBroadcastService gameBroadcastService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -43,7 +45,7 @@ public class EachPlayerSacrificesPermanentsEffectHandler implements NormalEffect
                     }
 
                     List<Permanent> matching = battlefield.stream()
-                            .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, e.filter()))
+                            .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
                             .toList();
 
                     if (matching.isEmpty()) {

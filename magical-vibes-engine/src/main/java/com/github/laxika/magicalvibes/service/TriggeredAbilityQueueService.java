@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -11,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -35,6 +36,7 @@ import java.util.UUID;
 public class TriggeredAbilityQueueService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final CardViewFactory cardViewFactory;
@@ -166,7 +168,7 @@ public class TriggeredAbilityQueueService {
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {
                         if (filter != null) {
-                            if (gameQueryService.matchesFilters(p, Set.of(filter), filterContext)) {
+                            if (predicateEvaluationService.matchesFilters(p, Set.of(filter), filterContext)) {
                                 validPermanentTargets.add(p.getId());
                             }
                         } else if (gameQueryService.isCreature(gameData, p)
@@ -375,7 +377,7 @@ public class TriggeredAbilityQueueService {
             List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
-                    if (gameQueryService.matchesCardPredicate(graveyardCard, filter, null)) {
+                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
                         validCardIds.add(graveyardCard.getId());
                         cardViews.add(cardViewFactory.create(graveyardCard));
                     }
@@ -431,7 +433,7 @@ public class TriggeredAbilityQueueService {
             List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
-                    if (gameQueryService.matchesCardPredicate(graveyardCard, filter, null)) {
+                    if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
                         validCardIds.add(graveyardCard.getId());
                         cardViews.add(cardViewFactory.create(graveyardCard));
                     }
@@ -530,11 +532,11 @@ public class TriggeredAbilityQueueService {
             for (Permanent p : battlefield) {
                 if (!gameQueryService.isCreature(gameData, p)) continue;
                 if (targetPredicate != null
-                        && !gameQueryService.matchesPermanentPredicate(p, targetPredicate, filterContext)) {
+                        && !predicateEvaluationService.matchesPermanentPredicate(p, targetPredicate, filterContext)) {
                     continue;
                 }
                 if (hasChapterFilters
-                        && !gameQueryService.matchesFilters(p, chapterFilters, filterContext)) {
+                        && !predicateEvaluationService.matchesFilters(p, chapterFilters, filterContext)) {
                     continue;
                 }
                 validCreatureTargets.add(p.getId());

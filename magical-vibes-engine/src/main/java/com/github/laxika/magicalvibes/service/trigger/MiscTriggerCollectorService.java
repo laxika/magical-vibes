@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToL
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -52,6 +53,7 @@ public class MiscTriggerCollectorService {
     private final GameBroadcastService gameBroadcastService;
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final ExileService exileService;
     private final DrawService drawService;
     // @Lazy to break indirect circular dependency:
@@ -62,6 +64,7 @@ public class MiscTriggerCollectorService {
     public MiscTriggerCollectorService(GameBroadcastService gameBroadcastService,
                                        @Lazy GraveyardService graveyardService,
                                        GameQueryService gameQueryService,
+                                       PredicateEvaluationService predicateEvaluationService,
                                        ExileService exileService,
                                        @Lazy DrawService drawService,
                                        @Lazy PermanentControlSupport permanentControlSupport,
@@ -69,6 +72,7 @@ public class MiscTriggerCollectorService {
         this.gameBroadcastService = gameBroadcastService;
         this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
         this.exileService = exileService;
         this.drawService = drawService;
         this.permanentControlSupport = permanentControlSupport;
@@ -117,7 +121,7 @@ public class MiscTriggerCollectorService {
             TriggeringPermanentConditionalEffect conditional, TriggerContext ctx) {
         TriggerContext.AllySacrificed as = (TriggerContext.AllySacrificed) ctx;
         if (as.sacrificedCard() == null
-                || !gameQueryService.matchesPermanentPredicate(match.gameData(),
+                || !predicateEvaluationService.matchesPermanentPredicate(match.gameData(),
                         new Permanent(as.sacrificedCard()), conditional.predicate())) {
             return false;
         }

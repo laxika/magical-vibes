@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class MayCopyHandlerService {
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final CloneService cloneService;
     private final PermanentCopierService permanentCopierService;
     private final StateBasedActionService stateBasedActionService;
@@ -55,7 +57,7 @@ public class MayCopyHandlerService {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
-                    if (gameQueryService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
+                    if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, copyEffect.filter())) {
                         validIds.add(p.getId());
                     }
                 }

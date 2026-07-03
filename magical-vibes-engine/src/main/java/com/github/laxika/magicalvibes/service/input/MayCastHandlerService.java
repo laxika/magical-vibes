@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -41,6 +42,7 @@ public class MayCastHandlerService {
 
     private final InputCompletionService inputCompletionService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
@@ -233,7 +235,7 @@ public class MayCastHandlerService {
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                        if (gameQueryService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
                             validTargets.add(p.getId());
                         }
                     } else if (gameQueryService.isCreature(gameData, p)) {

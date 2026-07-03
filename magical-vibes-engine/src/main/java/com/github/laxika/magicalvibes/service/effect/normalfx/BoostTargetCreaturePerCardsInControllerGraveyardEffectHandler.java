@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerCardsIn
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class BoostTargetCreaturePerCardsInControllerGraveyardEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -44,7 +46,7 @@ public class BoostTargetCreaturePerCardsInControllerGraveyardEffectHandler imple
                 if (card.isToken()) {
                     continue;
                 }
-                if (gameQueryService.matchesCardPredicate(card, boost.filter(), null, gameData, controllerId)) {
+                if (predicateEvaluationService.matchesCardPredicate(card, boost.filter(), null, gameData, controllerId)) {
                     count++;
                 }
             }

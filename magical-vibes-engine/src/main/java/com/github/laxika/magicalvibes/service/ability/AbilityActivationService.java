@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -106,6 +107,7 @@ public class AbilityActivationService {
 
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final TargetLegalityService targetLegalityService;
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
@@ -247,7 +249,7 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Invalid target permanent");
                 }
                 if (permanent.getCard().getTargetFilter() != null) {
-                    gameQueryService.validateTargetFilter(permanent.getCard().getTargetFilter(), target);
+                    predicateEvaluationService.validateTargetFilter(permanent.getCard().getTargetFilter(), target);
                 }
                 if (gameQueryService.hasProtectionFrom(gameData, target, permanent.getEffectiveColor())) {
                     throw new IllegalStateException(target.getCard().getName() + " has protection from " + permanent.getEffectiveColor().name().toLowerCase());
@@ -967,12 +969,12 @@ public class AbilityActivationService {
         PermanentBounceAction bounceAction = this::returnPermanentToHandAsCost;
         if (effect instanceof SacrificeCreatureCost c) return new CreatureSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
         if (effect instanceof SacrificeArtifactCost c) return new ArtifactSacrificeCostHandler(c, gameQueryService, sacAction);
-        if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction, sourcePermanentId);
-        if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, gameQueryService, sacAction);
-        if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, gameQueryService, bounceAction);
-        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService);
-        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
-        if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof SacrificePermanentCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction, sourcePermanentId);
+        if (effect instanceof SacrificeMultiplePermanentsCost c) return new MultiplePermanentSacrificeCostHandler(c, predicateEvaluationService, sacAction);
+        if (effect instanceof ReturnMultiplePermanentsToHandCost c) return new MultiplePermanentReturnToHandCostHandler(c, predicateEvaluationService, bounceAction);
+        if (effect instanceof TapCreatureCost c) return new TapCreatureCostHandler(c, gameQueryService, predicateEvaluationService, gameBroadcastService, triggerCollectionService);
+        if (effect instanceof TapMultiplePermanentsCost c) return new MultiplePermanentTapCostHandler(c, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
+        if (effect instanceof TapXPermanentsCost c) return new TapXPermanentsCostHandler(c, xValue, predicateEvaluationService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof CrewCost c) return new CrewCostHandler(c, gameQueryService, gameBroadcastService, triggerCollectionService, sourcePermanentId);
         if (effect instanceof RemoveCounterFromControlledCreatureCost c) return new RemoveCounterFromCreatureCostHandler(c, gameQueryService, gameBroadcastService);
         return null;
@@ -1339,7 +1341,7 @@ public class AbilityActivationService {
             return validIndices;
         }
         for (int i = 0; i < hand.size(); i++) {
-            if (cost.predicate() == null || gameQueryService.matchesCardPredicate(hand.get(i), cost.predicate(), null)) {
+            if (cost.predicate() == null || predicateEvaluationService.matchesCardPredicate(hand.get(i), cost.predicate(), null)) {
                 validIndices.add(i);
             }
         }
@@ -1478,7 +1480,7 @@ public class AbilityActivationService {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock) {
-                        if (gameQueryService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
                             throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
                                     + " can't be activated (" + p.getCard().getName() + ")");
                         }

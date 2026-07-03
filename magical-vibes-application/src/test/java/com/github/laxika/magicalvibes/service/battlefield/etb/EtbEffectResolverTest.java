@@ -18,7 +18,9 @@ import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
@@ -44,6 +46,7 @@ import static org.mockito.Mockito.when;
 class EtbEffectResolverTest {
 
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
 
     private EtbEffectResolver resolver;
     private GameData gameData;
@@ -52,7 +55,8 @@ class EtbEffectResolverTest {
 
     @BeforeEach
     void setUp() {
-        resolver = new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService)));
+        resolver = new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, predicateEvaluationService,
+                new StaticEffectSupport(gameQueryService, predicateEvaluationService)));
         controllerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test", controllerId, "Player1");
         card = new Card();
@@ -162,16 +166,16 @@ class EtbEffectResolverTest {
     @Test
     @DisplayName("ControlsAnotherPermanent gate: keeps when met, drops otherwise")
     void controlsAnotherGate() {
-        PermanentPredicate filter = new PermanentPredicate() {};
+        PermanentPredicate filter = new PermanentIsCreaturePredicate();
         ConditionalEffect effect =
                 new ConditionalEffect(new ControlsAnotherPermanent(filter), new DrawCardEffect(1));
         Permanent other = new Permanent(new Card());
         gameData.playerBattlefields.put(controllerId, List.of(other));
 
-        when(gameQueryService.matchesPermanentPredicate(gameData, other, filter)).thenReturn(true);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, other, filter)).thenReturn(true);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
 
-        when(gameQueryService.matchesPermanentPredicate(gameData, other, filter)).thenReturn(false);
+        when(predicateEvaluationService.matchesPermanentPredicate(gameData, other, filter)).thenReturn(false);
         assertThat(resolver.resolve(ctx(true, 0, false), effect)).isNull();
     }
 

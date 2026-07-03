@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateControlledPermanentsEf
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class AnimateControlledPermanentsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -32,7 +34,7 @@ public class AnimateControlledPermanentsEffectHandler implements NormalEffectHan
         var battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.matchesPermanentPredicate(gameData, permanent, e.filter())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.filter())) {
                 permanent.setAnimatedUntilEndOfTurn(true);
                 permanent.setAnimatedPower(e.power());
                 permanent.setAnimatedToughness(e.toughness());

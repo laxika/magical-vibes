@@ -57,6 +57,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class SpellCastingServiceTest {
@@ -66,6 +67,8 @@ class SpellCastingServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
     private GameBroadcastService gameBroadcastService;
@@ -436,7 +439,7 @@ class SpellCastingServiceTest {
 
             when(gameQueryService.findPermanentById(gd, dinosaur.getId())).thenReturn(dinosaur);
             when(gameQueryService.findPermanentController(gd, dinosaur.getId())).thenReturn(player1Id);
-            when(gameQueryService.matchesPermanentPredicate(gd, dinosaur, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, dinosaur, predicate)).thenReturn(true);
 
             svc.playCard(gd, player1, 0, null, null, null,
                     List.of(dinosaur.getId(), opponentCreature.getId()), null, false, null);
@@ -461,7 +464,7 @@ class SpellCastingServiceTest {
             gd.playerBattlefields.get(player2Id).add(tappedCreature);
 
             when(gameQueryService.findPermanentById(gd, tappedCreature.getId())).thenReturn(tappedCreature);
-            when(gameQueryService.matchesPermanentPredicate(gd, tappedCreature, predicate)).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, tappedCreature, predicate)).thenReturn(true);
 
             svc.playCard(gd, player1, 0, null, null, null,
                     List.of(tappedCreature.getId()), null, false, null);
@@ -488,7 +491,7 @@ class SpellCastingServiceTest {
             gd.stack.add(targetEntry);
 
             when(gameQueryService.findStackEntryByCardId(gd, targetInstant.getId())).thenReturn(targetEntry);
-            when(gameQueryService.matchesStackEntryPredicate(targetEntry, predicate, null)).thenReturn(true);
+            when(predicateEvaluationService.matchesStackEntryPredicate(targetEntry, predicate, null)).thenReturn(true);
 
             svc.playCard(gd, player1, 0, null, null, null,
                     List.of(targetInstant.getId()), null, false, null);

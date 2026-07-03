@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -33,6 +34,7 @@ abstract class AbstractPlayerInteractionHandlerTest {
     @Mock protected DrawService drawService;
     @Mock protected GraveyardService graveyardService;
     @Mock protected GameQueryService gameQueryService;
+    @Mock protected PredicateEvaluationService predicateEvaluationService;
     @Mock protected GameBroadcastService gameBroadcastService;
     @Mock protected PlayerInputService playerInputService;
     @Mock protected SessionManager sessionManager;
@@ -54,14 +56,14 @@ abstract class AbstractPlayerInteractionHandlerTest {
         player2Id = game.player2Id();
         gd = game.gameData();
 
-        support = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService,
+        support = new PlayerInteractionSupport(drawService, graveyardService, gameQueryService, predicateEvaluationService,
                 gameBroadcastService, playerInputService, sessionManager, cardViewFactory,
                 permanentRemovalService, battlefieldEntryService, triggerCollectionService);
         registry = new EffectHandlerRegistry();
         String handlerName = getClass().getSimpleName().replace("Test", "");
         NormalEffectHandlerBean handler = PlayerInteractionHandlerTestSupport.createHandler(
                 handlerName, support, registry, gameBroadcastService, drawService, sessionManager, cardViewFactory,
-                gameQueryService, playerInputService, triggerCollectionService, battlefieldEntryService,
+                gameQueryService, predicateEvaluationService, playerInputService, triggerCollectionService, battlefieldEntryService,
                 permanentRemovalService, graveyardService);
         PlayerInteractionHandlerTestSupport.registerHandler(registry, handler);
         setUpHandler();

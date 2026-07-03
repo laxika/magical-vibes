@@ -47,6 +47,7 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -64,6 +65,7 @@ import java.util.List;
 public class CombatAttackService {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final SessionManager sessionManager;
@@ -419,7 +421,7 @@ public class CombatAttackService {
                 List<CardEffect> matchingEffects = new ArrayList<>();
                 for (CardEffect effect : perCreatureAttackEffects) {
                     if (effect instanceof TriggeringCardConditionalEffect conditional) {
-                        if (!gameQueryService.matchesCardPredicate(attacker.getCard(), conditional.predicate(), null,
+                        if (!predicateEvaluationService.matchesCardPredicate(attacker.getCard(), conditional.predicate(), null,
                                 gameData, playerId)) {
                             continue;
                         }
@@ -612,7 +614,7 @@ public class CombatAttackService {
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CantAttackUnlessDefenderControlsMatchingPermanentEffect restriction) {
                 boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
                 if (!defenderMatches) {
                     return true;
                 }
@@ -627,7 +629,7 @@ public class CombatAttackService {
                 int[] count = {0};
                 gameData.forEachBattlefield((playerId, battlefield) ->
                         count[0] += (int) battlefield.stream()
-                                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.permanentPredicate()))
+                                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.permanentPredicate()))
                                 .count()
                 );
                 if (count[0] < restriction.minimumCount()) {
@@ -644,7 +646,7 @@ public class CombatAttackService {
                 UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
                 List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
                 boolean controllerMatches = controllerBattlefield != null && controllerBattlefield.stream()
-                        .anyMatch(p -> gameQueryService.matchesPermanentPredicate(gameData, p, restriction.controllerPermanentPredicate()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.controllerPermanentPredicate()));
                 if (!controllerMatches) {
                     return true;
                 }
@@ -658,7 +660,7 @@ public class CombatAttackService {
         gameData.forEachPermanent((playerId, permanent) -> {
             for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof CreaturesCantAttackUnlessPredicateEffect restriction) {
-                    if (!gameQueryService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, creature, restriction.exemptionPredicate())) {
                         restricted[0] = true;
                     }
                 }

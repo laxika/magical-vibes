@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardO
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -28,6 +29,7 @@ public class GraveyardTargetValidators {
 
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @ValidatesTarget(ReturnCardFromGraveyardEffect.class)
     public void validateReturnCardFromGraveyard(TargetValidationContext ctx, ReturnCardFromGraveyardEffect effect) {
@@ -44,7 +46,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (effect.filter() != null && !gameQueryService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target card must be a " + label);
         }
@@ -100,7 +102,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (effect.filter() != null && !gameQueryService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target must be a " + label);
         }
@@ -119,7 +121,7 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (effect.filter() != null && !gameQueryService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
             String label = CardPredicateUtils.describeFilter(effect.filter());
             throw new IllegalStateException("Target must be a " + label);
         }

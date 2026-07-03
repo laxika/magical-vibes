@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.Card;
@@ -41,6 +42,7 @@ public class DamageSupport {
     private final DamagePreventionService damagePreventionService;
     private final GameOutcomeService gameOutcomeService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
@@ -557,7 +559,7 @@ public class DamageSupport {
         int[] count = {0};
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isAttached() && playerId.equals(perm.getAttachedTo())
-                    && gameQueryService.matchesPermanentPredicate(gameData, perm, predicate)) {
+                    && predicateEvaluationService.matchesPermanentPredicate(gameData, perm, predicate)) {
                 count[0]++;
             }
         });

@@ -60,6 +60,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -84,6 +85,7 @@ public class MayAbilityHandlerService {
     private final MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService;
     private final MayMiscHandlerService mayMiscHandlerService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
@@ -583,7 +585,7 @@ public class MayAbilityHandlerService {
                 if (battlefield == null) continue;
                 for (Permanent p : battlefield) {
                     if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                        if (gameQueryService.matchesPermanentPredicate(p, filter.predicate(), ctx)) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) {
                             validTargets.add(p.getId());
                         }
                     } else if (gameQueryService.isCreature(gameData, p)) {
@@ -662,7 +664,7 @@ public class MayAbilityHandlerService {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard == null) continue;
             for (int i = 0; i < graveyard.size(); i++) {
-                if (gameQueryService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
                     matchingIndices.add(i);
                     graveyardOwnerId = pid;
                 }
@@ -830,7 +832,7 @@ public class MayAbilityHandlerService {
             List<Card> graveyard = gameData.playerGraveyards.get(pid);
             if (graveyard == null) continue;
             for (int i = 0; i < graveyard.size(); i++) {
-                if (gameQueryService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(graveyard.get(i), filter, ability.sourceCard().getId())) {
                     matchingIndices.add(i);
                     graveyardOwnerId = pid;
                 }
@@ -880,7 +882,7 @@ public class MayAbilityHandlerService {
     private void handleResolutionTimeTargetSelection(GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry, boolean canTargetPermanent, boolean canTargetPlayer) {
         List<UUID> validTargets = new ArrayList<>();
         Card sourceCard = ability.sourceCard();
-        if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) { if (gameQueryService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
+        if (canTargetPermanent) { FilterContext ctx = FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(ability.controllerId()); for (UUID pid : gameData.orderedPlayerIds) { List<Permanent> battlefield = gameData.playerBattlefields.get(pid); if (battlefield == null) continue; for (Permanent p : battlefield) { if (sourceCard.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) { if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) { validTargets.add(p.getId()); } } else if (gameQueryService.isCreature(gameData, p)) { validTargets.add(p.getId()); } } } }
         if (canTargetPlayer) { validTargets.addAll(gameData.orderedPlayerIds); }
         if (validTargets.isEmpty()) {
             gameBroadcastService.logAndBroadcast(gameData, ability.sourceCard().getName() + "'s ability has no valid targets.");

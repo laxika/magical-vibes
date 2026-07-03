@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanent
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ import java.util.UUID;
 public class AddManaPerControlledPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -37,7 +39,7 @@ public class AddManaPerControlledPermanentEffectHandler implements NormalEffectH
 
         int count = 0;
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.matchesPermanentPredicate(gameData, permanent, e.predicate())) {
+            if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, e.predicate())) {
                 count++;
             }
         }

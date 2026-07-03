@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
 
     private final LifeSupport lifeSupport;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -37,7 +39,7 @@ public class DrainLifePerControlledPermanentEffectHandler implements NormalEffec
         // Count matching permanents the controller controls
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         long count = battlefield == null ? 0 : battlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, e.filter()))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
                 .count();
         int drainAmount = (int) count * e.multiplier();
 

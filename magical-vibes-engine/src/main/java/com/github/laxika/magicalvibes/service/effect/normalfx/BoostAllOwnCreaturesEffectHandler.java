@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import java.util.List;
 public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -38,7 +40,7 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)
                     && (boost.filter() == null
-                        || gameQueryService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
+                        || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
                 permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
                 permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
                 count++;

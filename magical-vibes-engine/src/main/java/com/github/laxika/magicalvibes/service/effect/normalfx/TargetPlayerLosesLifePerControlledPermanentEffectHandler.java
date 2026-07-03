@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class TargetPlayerLosesLifePerControlledPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -36,7 +38,7 @@ public class TargetPlayerLosesLifePerControlledPermanentEffectHandler implements
         // Count matching permanents the controller controls
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         long count = battlefield == null ? 0 : battlefield.stream()
-                .filter(p -> gameQueryService.matchesPermanentPredicate(gameData, p, e.filter()))
+                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter()))
                 .count();
         int lossAmount = (int) count * e.multiplier();
 

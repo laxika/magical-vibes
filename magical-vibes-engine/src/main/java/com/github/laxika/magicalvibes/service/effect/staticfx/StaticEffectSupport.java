@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -62,6 +63,7 @@ import java.util.function.Predicate;
 public class StaticEffectSupport {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     private static final Set<CardSubtype> NON_CREATURE_SUBTYPES = EnumSet.of(
             CardSubtype.FOREST,
@@ -316,7 +318,7 @@ public class StaticEffectSupport {
             if (graveyard == null) continue;
             for (Card card : graveyard) {
                 if (card.isToken()) continue;
-                if (gameQueryService.matchesCardPredicate(card, filter, null)) {
+                if (predicateEvaluationService.matchesCardPredicate(card, filter, null)) {
                     count++;
                 }
             }

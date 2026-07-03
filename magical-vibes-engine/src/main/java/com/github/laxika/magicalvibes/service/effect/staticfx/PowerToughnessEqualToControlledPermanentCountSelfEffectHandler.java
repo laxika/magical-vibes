@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControlledPermanentCountEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ public class PowerToughnessEqualToControlledPermanentCountSelfEffectHandler impl
 
     private final StaticEffectSupport support;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,7 +31,7 @@ public class PowerToughnessEqualToControlledPermanentCountSelfEffectHandler impl
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var pt = (PowerToughnessEqualToControlledPermanentCountEffect) effect;
         int count = support.countControlledPermanents(context,
-                p -> gameQueryService.matchesPermanentPredicate(context.gameData(), p, pt.filter()));
+                p -> predicateEvaluationService.matchesPermanentPredicate(context.gameData(), p, pt.filter()));
         accumulator.addPower(count);
         accumulator.addToughness(count);
     }

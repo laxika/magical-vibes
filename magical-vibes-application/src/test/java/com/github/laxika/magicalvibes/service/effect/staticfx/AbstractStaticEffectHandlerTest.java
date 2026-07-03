@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerTestFixtures;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,7 @@ import java.util.UUID;
 abstract class AbstractStaticEffectHandlerTest {
 
     @Mock protected GameQueryService gameQueryService;
+    @Mock protected PredicateEvaluationService predicateEvaluationService;
 
     protected StaticEffectHandlerRegistry registry;
     protected com.github.laxika.magicalvibes.model.GameData gd;
@@ -25,7 +27,7 @@ abstract class AbstractStaticEffectHandlerTest {
 
     @BeforeEach
     void setUpStaticEffectHandlerBase() {
-        StaticEffectSupport support = new StaticEffectSupport(gameQueryService);
+        StaticEffectSupport support = new StaticEffectSupport(gameQueryService, predicateEvaluationService);
         registry = new StaticEffectHandlerRegistry();
         StaticEffectHandlerBean handler = instantiateHandlerUnderTest(support, gameQueryService);
         if (handler.selfOnly()) {
@@ -48,6 +50,7 @@ abstract class AbstractStaticEffectHandlerTest {
             Map<Class<?>, Object> deps = new HashMap<>();
             deps.put(StaticEffectSupport.class, support);
             deps.put(GameQueryService.class, gameQueryService);
+            deps.put(PredicateEvaluationService.class, predicateEvaluationService);
             deps.put(StaticEffectHandlerRegistry.class, registry);
 
             for (Constructor<?> constructor : handlerClass.getConstructors()) {

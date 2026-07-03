@@ -34,11 +34,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class ReturnCreaturesToOwnersHandEffectHandlerTest {
 
     @Mock private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private GameOutcomeService gameOutcomeService;
     @Mock private PlayerInputService playerInputService;
@@ -65,7 +67,7 @@ class ReturnCreaturesToOwnersHandEffectHandlerTest {
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         returnCreaturesToOwnersHandHandler = new ReturnCreaturesToOwnersHandEffectHandler(
-                gameQueryService, gameBroadcastService, permanentRemovalService);
+                gameQueryService, predicateEvaluationService, gameBroadcastService, permanentRemovalService);
 
     }
 
@@ -130,7 +132,7 @@ class ReturnCreaturesToOwnersHandEffectHandlerTest {
                 StackEntry entry = entryWithTarget(card, player1Id, List.of(effect), null);
 
                 when(gameQueryService.isCreature(eq(gd), any())).thenReturn(true);
-                when(gameQueryService.matchesFilters(any(), eq(Set.of()), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesFilters(any(), eq(Set.of()), any())).thenReturn(true);
                 when(permanentRemovalService.removePermanentToHand(eq(gd), any())).thenReturn(true);
 
                 returnCreaturesToOwnersHandHandler.resolve(gd, entry, effect);
@@ -155,7 +157,7 @@ class ReturnCreaturesToOwnersHandEffectHandlerTest {
 
                 when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
                 when(gameQueryService.isCreature(gd, enchantment)).thenReturn(false);
-                when(gameQueryService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
+                when(predicateEvaluationService.matchesFilters(eq(creature), eq(Set.of()), any())).thenReturn(true);
                 when(permanentRemovalService.removePermanentToHand(gd, creature)).thenReturn(true);
 
                 returnCreaturesToOwnersHandHandler.resolve(gd, entry, effect);

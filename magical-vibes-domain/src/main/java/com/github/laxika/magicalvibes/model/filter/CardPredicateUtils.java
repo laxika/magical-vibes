@@ -14,7 +14,7 @@ public final class CardPredicateUtils {
 
     /**
      * A predicate matching basic land cards (a land card with the Basic supertype), composed from
-     * existing predicates so no new dispatch handling is required in {@code matchesCardPredicate}
+     * existing predicates so no new dispatch handling is required in {@code PredicateEvaluationService}
      * or {@link #describeFilter}. Describes as "basic land card".
      */
     public static CardPredicate basicLand() {

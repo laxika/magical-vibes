@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredica
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -47,11 +48,13 @@ class BattlefieldEntryServiceTest {
 
     @BeforeEach
     void setUp() {
+        PredicateEvaluationService predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         service = new BattlefieldEntryService(
                 gameQueryService, gameBroadcastService, playerInputService,
                 permanentCopierService, triggerCollectionService,
                 graveyardTargetingService, etbTokenTargetService,
-                new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, new StaticEffectSupport(gameQueryService))));
+                new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, predicateEvaluationService,
+                        new StaticEffectSupport(gameQueryService, predicateEvaluationService))));
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetFilter;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
@@ -76,74 +75,12 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchan
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
-import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.ManaCost;
-import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PhyrexianManaPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToSourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsHistoricPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentToughnessLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
@@ -193,6 +130,14 @@ public class GameQueryService {
     @Autowired
     @Lazy
     private ConditionEvaluationService conditionEvaluationService;
+
+    /**
+     * Evaluates card/permanent/stack-entry predicates and target filters. Injected lazily
+     * because the evaluation service itself queries game state through this service.
+     */
+    @Autowired
+    @Lazy
+    private PredicateEvaluationService predicateEvaluationService;
 
     /**
      * Aggregated static bonuses from other permanents, auras, emblems, and self-referencing
@@ -251,7 +196,7 @@ public class GameQueryService {
      */
     public boolean playerCastHistoricSpellThisTurn(GameData gameData, UUID playerId) {
         return gameData.getSpellsCastThisTurn(playerId).stream()
-                .anyMatch(card -> matchesCardPredicate(card, new CardIsHistoricPredicate(), card.getId()));
+                .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(card, new CardIsHistoricPredicate(), card.getId()));
     }
 
     private boolean hasCardType(Permanent permanent, CardType type) {
@@ -287,7 +232,7 @@ public class GameQueryService {
         for (Permanent source : battlefield) {
             for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
                 if (effect instanceof PreventTransformEffect prevent
-                        && matchesPermanentPredicate(gameData, permanent, prevent.filter())) {
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, prevent.filter())) {
                     return true;
                 }
             }
@@ -382,87 +327,6 @@ public class GameQueryService {
             }
         }
         return null;
-    }
-
-    // --- Card predicate matching ---
-
-    /**
-     * Tests whether a card satisfies the given {@link CardPredicate}. Supports composite predicates
-     * ({@link CardAllOfPredicate}, {@link CardAnyOfPredicate}, {@link CardNotPredicate}) as well as
-     * leaf predicates for type, subtype, keyword, color, aura status, and self-identity.
-     *
-     * @param card         the card to test
-     * @param predicate    the predicate to evaluate, or {@code null} (always matches)
-     * @param sourceCardId the ID of the source card, used by {@link CardIsSelfPredicate}
-     * @return {@code true} if the card matches the predicate
-     */
-    public boolean matchesCardPredicate(Card card, CardPredicate predicate, UUID sourceCardId) {
-        return matchesCardPredicate(card, predicate, sourceCardId, null, null);
-    }
-
-    /**
-     * Overload that accounts for Arcane Adaptation-style effects: when a {@link GameData} and
-     * card owner are provided, {@link CardSubtypePredicate} checks also include subtypes
-     * granted by {@link GrantChosenSubtypeToOwnCreaturesEffect} with {@code affectsAllZones = true}.
-     */
-    public boolean matchesCardPredicate(Card card, CardPredicate predicate, UUID sourceCardId,
-                                        GameData gameData, UUID cardOwnerId) {
-        if (predicate == null) return true;
-
-        if (predicate instanceof CardTypePredicate p) {
-            return hasCardType(card, p.cardType());
-        }
-        if (predicate instanceof CardSubtypePredicate p) {
-            return cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
-        }
-        if (predicate instanceof CardKeywordPredicate p) {
-            return card.getKeywords().contains(p.keyword());
-        }
-        if (predicate instanceof CardIsSelfPredicate) {
-            return sourceCardId != null && card.getId().equals(sourceCardId);
-        }
-        if (predicate instanceof CardColorPredicate p) {
-            return card.getColor() != null && card.getColor() == p.color();
-        }
-        if (predicate instanceof PhyrexianManaPredicate) {
-            return card.getManaCost() != null && new ManaCost(card.getManaCost()).hasPhyrexianMana();
-        }
-        if (predicate instanceof CardIsAuraPredicate) {
-            return card.isAura();
-        }
-        if (predicate instanceof CardHasFlashbackPredicate) {
-            return card.getCastingOption(FlashbackCast.class).isPresent();
-        }
-        if (predicate instanceof CardIsPermanentPredicate) {
-            return card.getType().isPermanentType();
-        }
-        if (predicate instanceof CardIsHistoricPredicate) {
-            return hasCardType(card, CardType.ARTIFACT)
-                    || card.getSupertypes().contains(CardSupertype.LEGENDARY)
-                    || card.getSubtypes().contains(CardSubtype.SAGA);
-        }
-        if (predicate instanceof CardSupertypePredicate p) {
-            return card.getSupertypes().contains(p.supertype());
-        }
-        if (predicate instanceof CardMaxManaValuePredicate p) {
-            return card.getManaValue() <= p.maxManaValue();
-        }
-        if (predicate instanceof CardMinManaValuePredicate p) {
-            return card.getManaValue() >= p.minManaValue();
-        }
-        if (predicate instanceof CardNamedPredicate p) {
-            return p.cardName().equals(card.getName());
-        }
-        if (predicate instanceof CardNotPredicate p) {
-            return !matchesCardPredicate(card, p.predicate(), sourceCardId, gameData, cardOwnerId);
-        }
-        if (predicate instanceof CardAllOfPredicate p) {
-            return p.predicates().stream().allMatch(sub -> matchesCardPredicate(card, sub, sourceCardId, gameData, cardOwnerId));
-        }
-        if (predicate instanceof CardAnyOfPredicate p) {
-            return p.predicates().stream().anyMatch(sub -> matchesCardPredicate(card, sub, sourceCardId, gameData, cardOwnerId));
-        }
-        return false;
     }
 
     // --- Arcane Adaptation / all-zone subtype grants ---
@@ -592,7 +456,7 @@ public class GameQueryService {
                 p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .filter(CardsCantEnterBattlefieldFromZonesEffect.class::isInstance)
                         .map(CardsCantEnterBattlefieldFromZonesEffect.class::cast)
-                        .anyMatch(e -> e.zones().contains(zone) && matchesCardPredicate(card, e.filter(), null)));
+                        .anyMatch(e -> e.zones().contains(zone) && predicateEvaluationService.matchesCardPredicate(card, e.filter(), null)));
     }
 
     /**
@@ -697,7 +561,7 @@ public class GameQueryService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return false;
         return battlefield.stream()
-                .anyMatch(p -> p.getCard() != sourceCard && matchesPermanentPredicate(gameData, p, predicate));
+                .anyMatch(p -> p.getCard() != sourceCard && predicateEvaluationService.matchesPermanentPredicate(gameData, p, predicate));
     }
 
     /**
@@ -719,7 +583,7 @@ public class GameQueryService {
             if (spell == excludeSpell) {
                 continue;
             }
-            if (matchesCardPredicate(spell, filter, spell.getId())) {
+            if (predicateEvaluationService.matchesCardPredicate(spell, filter, spell.getId())) {
                 return true;
             }
         }
@@ -855,318 +719,6 @@ public class GameQueryService {
                 .anyMatch(e -> e instanceof CantBeBlockedEffect)) return true;
         if (hasAuraWithEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
         return hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class);
-    }
-
-    // --- Permanent predicate matching ---
-
-    /**
-     * Tests whether a permanent satisfies the given {@link PermanentPredicate},
-     * using game data for keyword/stat resolution.
-     *
-     * @see #matchesPermanentPredicate(Permanent, PermanentPredicate, FilterContext)
-     */
-    public boolean matchesPermanentPredicate(GameData gameData, Permanent permanent, PermanentPredicate predicate) {
-        return matchesPermanentPredicate(permanent, predicate, FilterContext.of(gameData));
-    }
-
-    /**
-     * Tests whether a permanent satisfies the given {@link PermanentPredicate}. Supports
-     * composite predicates (all-of, any-of, not) and leaf predicates for card type, subtype,
-     * keyword, color, tapped/attacking/blocking status, token status, power threshold, and
-     * source identity. When a {@link FilterContext} is provided, keyword and power checks
-     * include static bonuses; otherwise they use only intrinsic values.
-     *
-     * @param permanent     the permanent to test
-     * @param predicate     the predicate to evaluate
-     * @param filterContext  context providing game data, source card ID, and source controller ID
-     * @return {@code true} if the permanent matches the predicate
-     */
-    public boolean matchesPermanentPredicate(Permanent permanent,
-                                             PermanentPredicate predicate,
-                                             FilterContext filterContext) {
-        GameData gameData = filterContext != null ? filterContext.gameData() : null;
-        UUID sourceCardId = filterContext != null ? filterContext.sourceCardId() : null;
-        UUID sourceControllerId = filterContext != null ? filterContext.sourceControllerId() : null;
-
-        if (predicate instanceof PermanentHasKeywordPredicate hasKeywordPredicate) {
-            if (gameData == null) {
-                return permanent.hasKeyword(hasKeywordPredicate.keyword());
-            }
-            return hasKeyword(gameData, permanent, hasKeywordPredicate.keyword());
-        }
-        if (predicate instanceof PermanentHasSubtypePredicate hasSubtypePredicate) {
-            boolean creatureSubtype = isCreatureSubtype(hasSubtypePredicate.subtype());
-            return permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
-                    || permanent.getTransientSubtypes().contains(hasSubtypePredicate.subtype())
-                    || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype())
-                    || (creatureSubtype && (gameData == null
-                    ? permanent.hasKeyword(Keyword.CHANGELING)
-                    : hasKeyword(gameData, permanent, Keyword.CHANGELING)));
-        }
-        if (predicate instanceof PermanentHasAnySubtypePredicate hasAnySubtypePredicate) {
-            boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains)
-                    || permanent.getTransientSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains)
-                    || permanent.getGrantedSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains);
-            boolean canUseChangeling = hasAnySubtypePredicate.subtypes().stream().anyMatch(this::isCreatureSubtype);
-            return hasSubtype || (canUseChangeling && (gameData == null
-                    ? permanent.hasKeyword(Keyword.CHANGELING)
-                    : hasKeyword(gameData, permanent, Keyword.CHANGELING)));
-        }
-        if (predicate instanceof PermanentIsCreaturePredicate) {
-            if (gameData == null) {
-                return hasCardType(permanent, CardType.CREATURE)
-                        || permanent.isAnimatedUntilEndOfTurn()
-                        || permanent.isAnimatedUntilNextTurn()
-                        || permanent.isPermanentlyAnimated()
-                        || permanent.getCounterCount(CounterType.AWAKENING) > 0;
-            }
-            return isCreature(gameData, permanent);
-        }
-        if (predicate instanceof PermanentIsLandPredicate) {
-            return hasCardType(permanent, CardType.LAND);
-        }
-        if (predicate instanceof PermanentIsArtifactPredicate) {
-            if (gameData == null) {
-                return isArtifact(permanent);
-            }
-            return isArtifact(gameData, permanent);
-        }
-        if (predicate instanceof PermanentIsHistoricPredicate) {
-            boolean artifact = gameData == null ? isArtifact(permanent) : isArtifact(gameData, permanent);
-            return artifact
-                    || permanent.getCard().getSupertypes().contains(CardSupertype.LEGENDARY)
-                    || permanent.getCard().getSubtypes().contains(CardSubtype.SAGA)
-                    || permanent.getTransientSubtypes().contains(CardSubtype.SAGA);
-        }
-        if (predicate instanceof PermanentIsEnchantmentPredicate) {
-            return hasCardType(permanent, CardType.ENCHANTMENT);
-        }
-        if (predicate instanceof PermanentIsPlaneswalkerPredicate) {
-            return hasCardType(permanent, CardType.PLANESWALKER);
-        }
-        if (predicate instanceof PermanentIsTappedPredicate) {
-            return permanent.isTapped();
-        }
-        if (predicate instanceof PermanentIsTokenPredicate) {
-            return permanent.getCard().isToken();
-        }
-        if (predicate instanceof PermanentIsAttackingPredicate) {
-            return permanent.isAttacking();
-        }
-        if (predicate instanceof PermanentIsBlockingPredicate) {
-            return permanent.isBlocking();
-        }
-        if (predicate instanceof PermanentPowerAtMostPredicate powerAtMostPredicate) {
-            if (gameData == null) {
-                return permanent.getEffectivePower() <= powerAtMostPredicate.maxPower();
-            }
-            return getEffectivePower(gameData, permanent) <= powerAtMostPredicate.maxPower();
-        }
-        if (predicate instanceof PermanentPowerAtMostXPredicate) {
-            int xVal = filterContext != null && filterContext.xValue() != null ? filterContext.xValue() : 0;
-            if (gameData == null) {
-                return permanent.getEffectivePower() <= xVal;
-            }
-            return getEffectivePower(gameData, permanent) <= xVal;
-        }
-        if (predicate instanceof PermanentPowerAtMostControlledCreatureCountPredicate) {
-            if (gameData == null || sourceControllerId == null) {
-                return false;
-            }
-            List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
-            int creatureCount = 0;
-            if (controllerBattlefield != null) {
-                for (Permanent p : controllerBattlefield) {
-                    if (isCreature(gameData, p)) {
-                        creatureCount++;
-                    }
-                }
-            }
-            return getEffectivePower(gameData, permanent) <= creatureCount;
-        }
-        if (predicate instanceof PermanentManaValueEqualsXPredicate) {
-            // When xValue is null (e.g. during valid-target checks before X is chosen),
-            // any creature is potentially valid since X can be any non-negative integer.
-            if (filterContext == null || filterContext.xValue() == null) {
-                return true;
-            }
-            return permanent.getCard().getManaValue() == filterContext.xValue();
-        }
-        if (predicate instanceof PermanentPowerAtLeastPredicate powerAtLeastPredicate) {
-            if (gameData == null) {
-                return permanent.getEffectivePower() >= powerAtLeastPredicate.minPower();
-            }
-            return getEffectivePower(gameData, permanent) >= powerAtLeastPredicate.minPower();
-        }
-        if (predicate instanceof PermanentToughnessAtMostPredicate toughnessAtMostPredicate) {
-            if (gameData == null) {
-                return permanent.getEffectiveToughness() <= toughnessAtMostPredicate.maxToughness();
-            }
-            return getEffectiveToughness(gameData, permanent) <= toughnessAtMostPredicate.maxToughness();
-        }
-        if (predicate instanceof PermanentHasSupertypePredicate hasSupertypePredicate) {
-            return permanent.getCard().getSupertypes().contains(hasSupertypePredicate.supertype());
-        }
-        if (predicate instanceof PermanentColorInPredicate colorInPredicate) {
-            if (permanent.isColorOverridden()) {
-                return permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains);
-            }
-            CardColor effectiveColor = permanent.getEffectiveColor();
-            return (effectiveColor != null && colorInPredicate.colors().contains(effectiveColor))
-                    || permanent.getTransientColors().stream().anyMatch(colorInPredicate.colors()::contains)
-                    || permanent.getGrantedColors().stream().anyMatch(colorInPredicate.colors()::contains);
-        }
-        if (predicate instanceof PermanentAnyOfPredicate anyOfPredicate) {
-            for (PermanentPredicate nested : anyOfPredicate.predicates()) {
-                if (matchesPermanentPredicate(permanent, nested, filterContext)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-        if (predicate instanceof PermanentAllOfPredicate allOfPredicate) {
-            for (PermanentPredicate nested : allOfPredicate.predicates()) {
-                if (!matchesPermanentPredicate(permanent, nested, filterContext)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-        if (predicate instanceof PermanentNotPredicate notPredicate) {
-            return !matchesPermanentPredicate(permanent, notPredicate.predicate(), filterContext);
-        }
-        if (predicate instanceof PermanentIsSourceCardPredicate) {
-            return sourceCardId != null && permanent.getOriginalCard().getId().equals(sourceCardId);
-        }
-        if (predicate instanceof PermanentControlledBySourceControllerPredicate) {
-            if (sourceControllerId == null || gameData == null) {
-                return false;
-            }
-            List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
-            return controllerBattlefield != null && controllerBattlefield.contains(permanent);
-        }
-        if (predicate instanceof PermanentAttachedToSourceControllerPredicate) {
-            return sourceControllerId != null && permanent.isAttached()
-                    && sourceControllerId.equals(permanent.getAttachedTo());
-        }
-        if (predicate instanceof PermanentToughnessLessThanSourcePowerPredicate) {
-            if (gameData == null || sourceCardId == null) {
-                return false;
-            }
-            // Find the source permanent by its card ID
-            Permanent sourcePermanent = null;
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (p.getOriginalCard().getId().equals(sourceCardId)) {
-                            sourcePermanent = p;
-                            break;
-                        }
-                    }
-                }
-                if (sourcePermanent != null) break;
-            }
-            if (sourcePermanent == null) {
-                return false;
-            }
-            int sourcePower = getEffectivePower(gameData, sourcePermanent);
-            int targetToughness = getEffectiveToughness(gameData, permanent);
-            return targetToughness < sourcePower;
-        }
-        if (predicate instanceof PermanentInCombatWithSourcePredicate) {
-            if (gameData == null || sourceCardId == null) {
-                return false;
-            }
-            // Find the source permanent by its card ID
-            Permanent sourcePermanent = null;
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (p.getOriginalCard().getId().equals(sourceCardId)) {
-                            sourcePermanent = p;
-                            break;
-                        }
-                    }
-                }
-                if (sourcePermanent != null) break;
-            }
-            if (sourcePermanent == null) return false;
-            // Target is blocking source
-            if (permanent.isBlocking() && permanent.getBlockingTargetIds().contains(sourcePermanent.getId())) {
-                return true;
-            }
-            // Source is blocking target
-            return sourcePermanent.isBlocking() && sourcePermanent.getBlockingTargetIds().contains(permanent.getId());
-        }
-        if (predicate instanceof PermanentHasSameNameAsSourcePredicate) {
-            if (gameData == null || sourceCardId == null) {
-                return false;
-            }
-            // Find the source permanent by its current card ID (important for clones
-            // where card differs from originalCard)
-            Permanent sourcePermanent = null;
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (p.getCard().getId().equals(sourceCardId)) {
-                            sourcePermanent = p;
-                            break;
-                        }
-                    }
-                }
-                if (sourcePermanent != null) break;
-            }
-            if (sourcePermanent == null) {
-                return false;
-            }
-            return permanent.getCard().getName().equals(sourcePermanent.getCard().getName());
-        }
-        if (predicate instanceof PermanentHasCountersPredicate hasCountersPredicate) {
-            return switch (hasCountersPredicate.counterType()) {
-                case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0;
-                case MINUS_ONE_MINUS_ONE -> permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0;
-                case CHARGE -> permanent.getCounterCount(CounterType.CHARGE) > 0;
-                case LOYALTY -> permanent.getCounterCount(CounterType.LOYALTY) > 0;
-                case HATCHLING -> permanent.getCounterCount(CounterType.HATCHLING) > 0;
-                case SLIME -> permanent.getCounterCount(CounterType.SLIME) > 0;
-                case STUDY -> permanent.getCounterCount(CounterType.STUDY) > 0;
-                case WISH -> permanent.getCounterCount(CounterType.WISH) > 0;
-                case LORE -> permanent.getCounterCount(CounterType.LORE) > 0;
-                case AIM -> permanent.getCounterCount(CounterType.AIM) > 0;
-                case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
-                        || permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0
-                        || permanent.getCounterCount(CounterType.CHARGE) > 0
-                        || permanent.getCounterCount(CounterType.LOYALTY) > 0
-                        || permanent.getCounterCount(CounterType.HATCHLING) > 0
-                        || permanent.getCounterCount(CounterType.SLIME) > 0
-                        || permanent.getCounterCount(CounterType.STUDY) > 0
-                        || permanent.getCounterCount(CounterType.WISH) > 0
-                        || permanent.getCounterCount(CounterType.LORE) > 0
-                        || permanent.getCounterCount(CounterType.AIM) > 0;
-                default -> false;
-            };
-        }
-        if (predicate instanceof PermanentDealtDamageThisTurnPredicate) {
-            return gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
-        }
-        if (predicate instanceof PermanentTruePredicate) {
-            return true;
-        }
-        if (predicate instanceof PermanentHasGreatestPowerAmongControlledCreaturesPredicate) {
-            if (gameData == null || sourceControllerId == null) return false;
-            List<Permanent> controllerBf = gameData.playerBattlefields.get(sourceControllerId);
-            if (controllerBf == null || !controllerBf.contains(permanent)) return false;
-            if (!isCreature(gameData, permanent)) return false;
-            int maxPower = controllerBf.stream()
-                    .filter(p -> isCreature(gameData, p))
-                    .mapToInt(p -> getEffectivePower(gameData, p))
-                    .max().orElse(0);
-            return getEffectivePower(gameData, permanent) == maxPower;
-        }
-        return false;
     }
 
     // --- Stats calculation ---
@@ -1324,12 +876,12 @@ public class GameQueryService {
             for (CardEffect effect : emblem.staticEffects()) {
                 if (effect instanceof GrantActivatedAbilityEffect grant
                         && grant.scope() == GrantScope.OWN_PERMANENTS
-                        && (grant.filter() == null || matchesPermanentPredicate(gameData, target, grant.filter()))) {
+                        && (grant.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.filter()))) {
                     accumulator.addActivatedAbility(grant.ability());
                 } else if (effect instanceof StaticBoostEffect boost
                         && (boost.scope() == GrantScope.OWN_CREATURES || boost.scope() == GrantScope.ALL_OWN_CREATURES)
                         && isCreature(gameData, target)
-                        && (boost.filter() == null || matchesPermanentPredicate(gameData, target, boost.filter()))) {
+                        && (boost.filter() == null || predicateEvaluationService.matchesPermanentPredicate(gameData, target, boost.filter()))) {
                     accumulator.addPower(boost.powerBoost());
                     accumulator.addToughness(boost.toughnessBoost());
                     accumulator.addKeywords(boost.grantedKeywords());
@@ -1840,7 +1392,7 @@ public class GameQueryService {
         for (Permanent perm : bf) {
             for (CardEffect e : perm.getCard().getEffects(EffectSlot.STATIC)) {
                 if (e instanceof ETBDoubleTriggerEffect etb
-                        && matchesCardPredicate(enteringCreature, etb.predicate(), null)) {
+                        && predicateEvaluationService.matchesCardPredicate(enteringCreature, etb.predicate(), null)) {
                     count++;
                 }
             }
@@ -1875,7 +1427,7 @@ public class GameQueryService {
     private boolean isActiveEffect(GameData gameData, Permanent creature, CardEffect effect, Class<? extends CardEffect> effectClass) {
         if (effectClass.isInstance(effect)) return true;
         if (effect instanceof EnchantedPermanentConditionalEffect cond) {
-            CardEffect activeEffect = matchesPermanentPredicate(gameData, creature, cond.filter())
+            CardEffect activeEffect = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
                     ? cond.ifMatch()
                     : cond.ifNotMatch();
             return effectClass.isInstance(activeEffect);
@@ -1942,7 +1494,7 @@ public class GameQueryService {
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CantBeBlockedIfDefenderControlsMatchingPermanentEffect restriction) {
                 boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
-                        .anyMatch(p -> matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
                 if (defenderMatches) {
                     return Optional.of(attacker.getCard().getName() + " can't be blocked");
                 }
@@ -1971,18 +1523,18 @@ public class GameQueryService {
         }
         for (CardEffect blockerStaticEffect : blocker.getCard().getEffects(EffectSlot.STATIC)) {
             if (blockerStaticEffect instanceof CanBlockOnlyIfAttackerMatchesPredicateEffect restriction
-                    && !matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, restriction.attackerPredicate())) {
                 return Optional.of(blocker.getCard().getName() + " can only block " + restriction.allowedAttackersDescription());
             }
         }
         for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof CanBeBlockedOnlyByFilterEffect restriction
-                    && !matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
                 return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
             }
         }
         for (CanBeBlockedOnlyByFilterEffect restriction : getAuraGrantedBlockingRestrictions(gameData, attacker)) {
-            if (!matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
+            if (!predicateEvaluationService.matchesPermanentPredicate(gameData, blocker, restriction.blockerPredicate())) {
                 return Optional.of(attacker.getCard().getName() + " can only be blocked by " + restriction.allowedBlockersDescription());
             }
         }
@@ -2058,117 +1610,9 @@ public class GameQueryService {
         return null;
     }
 
-    // --- Target filtering & validation ---
-
-    /**
-     * Returns {@code true} if the permanent passes all of the given target filters.
-     *
-     * @see #matchesFilters(Permanent, Set, FilterContext)
-     */
-    public boolean matchesFilters(GameData gameData, Permanent permanent, Set<TargetFilter> filters) {
-        return matchesFilters(permanent, filters, FilterContext.of(gameData));
-    }
-
-    /**
-     * Returns {@code true} if the permanent passes all of the given target filters,
-     * using the provided {@link FilterContext} for source-aware checks (e.g. "controlled
-     * by source's controller" or "owned by source's controller").
-     */
-    public boolean matchesFilters(Permanent permanent,
-                                  Set<TargetFilter> filters,
-                                  FilterContext filterContext) {
-        for (TargetFilter filter : filters) {
-            if (!matchesSingleFilter(filter, permanent, filterContext)) return false;
-        }
-        return true;
-    }
-
-    /**
-     * Validates that the target permanent passes the given filter.
-     * Throws {@link IllegalStateException} if it does not.
-     */
-    public Optional<String> checkTargetFilter(TargetFilter filter, Permanent target) {
-        return checkTargetFilter(filter, target, FilterContext.empty());
-    }
-
-    public Optional<String> checkTargetFilter(TargetFilter filter,
-                                              Permanent target,
-                                              FilterContext filterContext) {
-        if (!matchesSingleFilter(filter, target, filterContext)) {
-            return Optional.of(getFilterErrorMessage(filter));
-        }
-        return Optional.empty();
-    }
-
-    public void validateTargetFilter(TargetFilter filter, Permanent target) {
-        checkTargetFilter(filter, target).ifPresent(reason -> { throw new IllegalStateException(reason); });
-    }
-
-    /**
-     * Validates that the target permanent passes the given filter, using game data
-     * for source-aware checks. Throws {@link IllegalStateException} if it does not.
-     */
-    public void validateTargetFilter(GameData gameData, TargetFilter filter, Permanent target) {
-        checkTargetFilter(filter, target, FilterContext.of(gameData))
-                .ifPresent(reason -> { throw new IllegalStateException(reason); });
-    }
-
-    /**
-     * Validates that the target permanent passes the given filter, using the provided
-     * {@link FilterContext}. Throws {@link IllegalStateException} with the filter's
-     * error message if it does not.
-     */
-    public void validateTargetFilter(TargetFilter filter,
-                                     Permanent target,
-                                     FilterContext filterContext) {
-        checkTargetFilter(filter, target, filterContext)
-                .ifPresent(reason -> { throw new IllegalStateException(reason); });
-    }
-
-    private boolean matchesSingleFilter(TargetFilter filter, Permanent target, FilterContext filterContext) {
-        GameData gameData = filterContext != null ? filterContext.gameData() : null;
-        UUID sourceControllerId = filterContext != null ? filterContext.sourceControllerId() : null;
-
-        if (filter instanceof ControlledPermanentPredicateTargetFilter controlledFilter) {
-            if (sourceControllerId == null || gameData == null) return false;
-            List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
-            if (controllerBattlefield == null || !controllerBattlefield.contains(target)) return false;
-            return matchesPermanentPredicate(target, controlledFilter.predicate(), filterContext);
-        }
-        if (filter instanceof OwnedPermanentPredicateTargetFilter ownedFilter) {
-            if (gameData == null || sourceControllerId == null) return false;
-            boolean ownedByController = false;
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield != null && battlefield.contains(target)) {
-                    UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), playerId);
-                    ownedByController = ownerId.equals(sourceControllerId);
-                    break;
-                }
-            }
-            if (!ownedByController) return false;
-            return matchesPermanentPredicate(target, ownedFilter.predicate(), filterContext);
-        }
-        if (filter instanceof PermanentPredicateTargetFilter f) {
-            return matchesPermanentPredicate(target, f.predicate(), filterContext);
-        }
-        if (filter instanceof PlayerPredicateTargetFilter) {
-            return false;
-        }
-        return true;
-    }
-
-    private String getFilterErrorMessage(TargetFilter filter) {
-        if (filter instanceof ControlledPermanentPredicateTargetFilter f) return f.errorMessage();
-        if (filter instanceof OwnedPermanentPredicateTargetFilter f) return f.errorMessage();
-        if (filter instanceof PermanentPredicateTargetFilter f) return f.errorMessage();
-        if (filter instanceof PlayerPredicateTargetFilter f) return f.errorMessage();
-        return "Target does not match filter";
-    }
-
     // --- Other ---
 
-    private boolean isCreatureSubtype(CardSubtype subtype) {
+    public boolean isCreatureSubtype(CardSubtype subtype) {
         return !NON_CREATURE_SUBTYPES.contains(subtype);
     }
 
@@ -2281,7 +1725,7 @@ public class GameQueryService {
                             multiplier[0] *= 2;
                         }
                     } else if (entry != null) {
-                        if (dcde.stackFilter() == null || matchesStackEntryPredicate(entry, dcde.stackFilter())) {
+                        if (dcde.stackFilter() == null || predicateEvaluationService.matchesStackEntryPredicate(entry, dcde.stackFilter(), null)) {
                             multiplier[0] *= 2;
                         }
                     }
@@ -2289,53 +1733,6 @@ public class GameQueryService {
             }
         });
         return multiplier[0];
-    }
-
-    /**
-     * Evaluates a {@link StackEntryPredicate} against a stack entry for damage multiplier purposes.
-     */
-    private boolean matchesStackEntryPredicate(StackEntry entry, StackEntryPredicate predicate) {
-        return matchesStackEntryPredicate(entry, predicate, null);
-    }
-
-    /**
-     * Evaluates a {@link StackEntryPredicate} against a stack entry, supporting predicates that
-     * reference the "enchanted player" — the player the evaluating source permanent is attached to.
-     *
-     * @param enchantedPlayerId the player the source aura is attached to, or {@code null} when no
-     *                          such context applies (e.g. damage-multiplier evaluation)
-     */
-    public boolean matchesStackEntryPredicate(StackEntry entry, StackEntryPredicate predicate, UUID enchantedPlayerId) {
-        if (predicate instanceof StackEntryControlledByEnchantedPlayerPredicate) {
-            return enchantedPlayerId != null && enchantedPlayerId.equals(entry.getControllerId());
-        }
-        if (predicate instanceof StackEntryTypeInPredicate typeIn) {
-            return typeIn.spellTypes().contains(entry.getEntryType());
-        }
-        if (predicate instanceof StackEntryColorInPredicate colorIn) {
-            List<CardColor> colors = entry.getCard().getColors();
-            if (colors == null) return false;
-            for (CardColor color : colors) {
-                if (colorIn.colors().contains(color)) return true;
-            }
-            return false;
-        }
-        if (predicate instanceof StackEntryAllOfPredicate allOf) {
-            for (StackEntryPredicate nested : allOf.predicates()) {
-                if (!matchesStackEntryPredicate(entry, nested, enchantedPlayerId)) return false;
-            }
-            return true;
-        }
-        if (predicate instanceof StackEntryAnyOfPredicate anyOf) {
-            for (StackEntryPredicate nested : anyOf.predicates()) {
-                if (matchesStackEntryPredicate(entry, nested, enchantedPlayerId)) return true;
-            }
-            return false;
-        }
-        if (predicate instanceof StackEntryNotPredicate not) {
-            return !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId);
-        }
-        return false;
     }
 
     /**
@@ -2451,7 +1848,7 @@ public class GameQueryService {
             return true;
         }
         if (isCombatDamage && gameData.combatDamageExemptPredicate != null
-                && !matchesPermanentPredicate(gameData, creature, gameData.combatDamageExemptPredicate)) {
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, gameData.combatDamageExemptPredicate)) {
             return true;
         }
         return false;
@@ -2517,7 +1914,7 @@ public class GameQueryService {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
                     if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock) {
-                        if (matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
+                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
                             return false;
                         }
                     }

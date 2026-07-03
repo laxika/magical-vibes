@@ -32,12 +32,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 @ExtendWith(MockitoExtension.class)
 class LookAtTopCardsChooseNToHandRestToGraveyardEffectHandlerTest {
 
     @Mock
     private GameQueryService gameQueryService;
+    @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private GameBroadcastService gameBroadcastService;
     @Mock
@@ -78,7 +80,7 @@ class LookAtTopCardsChooseNToHandRestToGraveyardEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory);
         lookAtTopCardsChooseNToHandRestToGraveyardEffectHandler = new LookAtTopCardsChooseNToHandRestToGraveyardEffectHandler(
-                gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport, gameQueryService);
+                gameBroadcastService, sessionManager, cardViewFactory, libraryRevealSupport, gameQueryService, predicateEvaluationService);
 
     }
 

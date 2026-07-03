@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class PutCounterOnEachControlledPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentCounterSupport permanentCounterSupport;
 
@@ -37,7 +39,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         int count = 0;
         for (Permanent p : battlefield) {
-            if (!gameQueryService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
+            if (!predicateEvaluationService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
             if (e.counterType() == CounterType.MINUS_ONE_MINUS_ONE
                     && gameQueryService.cantHaveMinusOneMinusOneCounters(gameData, p)) continue;

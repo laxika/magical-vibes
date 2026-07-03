@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import java.util.UUID;
 public class PermanentCounterSupport {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
 
@@ -127,7 +129,7 @@ public class PermanentCounterSupport {
 
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent p : battlefield) {
-            if (gameQueryService.matchesPermanentPredicate(p, effect.predicate(), filterContext)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(p, effect.predicate(), filterContext)) {
                 eligibleIds.add(p.getId());
             }
         }

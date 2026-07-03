@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -49,6 +50,7 @@ public class PlayerInteractionSupport {
     private final DrawService drawService;
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final SessionManager sessionManager;
@@ -70,7 +72,7 @@ public class PlayerInteractionSupport {
         if (hand != null) {
             for (int i = 0; i < hand.size(); i++) {
                 Card handCard = hand.get(i);
-                if (gameQueryService.matchesCardPredicate(handCard, effect.predicate(), handCard.getId())) {
+                if (predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), handCard.getId())) {
                     validIndices.add(i);
                 }
             }

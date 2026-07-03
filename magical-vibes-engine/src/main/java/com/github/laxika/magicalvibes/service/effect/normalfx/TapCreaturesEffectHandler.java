@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.TapCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class TapCreaturesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final TapUntapSupport tapUntapSupport;
 
@@ -30,7 +32,7 @@ public class TapCreaturesEffectHandler implements NormalEffectHandlerBean {
         var tap = (TapCreaturesEffect) effect;
         gameData.forEachPermanent((playerId, p) -> {
             if (!gameQueryService.isCreature(gameData, p)) return;
-            if (!gameQueryService.matchesFilters(
+            if (!predicateEvaluationService.matchesFilters(
                     p,
                     tap.filters(),
                     FilterContext.of(gameData)
