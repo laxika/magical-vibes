@@ -274,6 +274,10 @@ public class GameData {
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
 
+    /** Tracks how much life each player has gained so far this turn (for "if you gained life this turn"
+     *  conditions, e.g. Streets of New Capenna's Infusion cards). Cleared at the start of each turn. */
+    public final Map<UUID, Integer> lifeGainedThisTurn = new ConcurrentHashMap<>();
+
     /** Delayed trigger: permanent ID → total +1/+1 counters to put on it at the beginning of the next end step.
      *  Used by Protean Hydra's regrowth ability: "Whenever a +1/+1 counter is removed from this creature,
      *  put two +1/+1 counters on it at the beginning of the next end step." */
@@ -497,6 +501,20 @@ public class GameData {
      */
     public int getLife(UUID playerId) {
         return playerLifeTotals.getOrDefault(playerId, STARTING_LIFE_TOTAL);
+    }
+
+    /**
+     * Returns how much life the given player has gained so far this turn (0 if none).
+     */
+    public int getLifeGainedThisTurn(UUID playerId) {
+        return lifeGainedThisTurn.getOrDefault(playerId, 0);
+    }
+
+    /**
+     * Returns whether the given player has gained life this turn (for Infusion-style conditions).
+     */
+    public boolean hasGainedLifeThisTurn(UUID playerId) {
+        return getLifeGainedThisTurn(playerId) > 0;
     }
 
     /**
@@ -753,6 +771,7 @@ public class GameData {
         copy.sourceDependentStolenCreatures.putAll(this.sourceDependentStolenCreatures);
         copy.drawReplacementTargetToController.putAll(this.drawReplacementTargetToController);
         copy.cardsDrawnThisTurn.putAll(this.cardsDrawnThisTurn);
+        copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);

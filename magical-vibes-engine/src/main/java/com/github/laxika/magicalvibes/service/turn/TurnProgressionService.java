@@ -164,6 +164,7 @@ public class TurnProgressionService {
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();
         gameData.cardsDrawnThisTurn.clear();
+        gameData.lifeGainedThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
         gameData.pendingDelayedCombatDamageLoots.clear();
         gameData.combatDamageSourceSubtypesThisTurn.clear();

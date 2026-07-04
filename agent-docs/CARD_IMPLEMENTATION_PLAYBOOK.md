@@ -486,6 +486,7 @@ Which engine layers support each ConditionalEffect. Check this before using a co
 |---|---|---|---|
 | `ConditionalEffect(new ControllerLifeAtLeast(threshold), wrapped)` | yes | yes | - |
 | `ConditionalEffect(new ControllerLifeAtMost(threshold), wrapped)` | - | yes | yes (upkeep) |
+| `ConditionalEffect(new GainedLifeThisTurn(), wrapped)` | yes | yes | yes (end step) |
 | `ConditionalEffect(new Metalcraft(), wrapped)` | yes | yes | yes (graveyard upkeep) |
 | `ConditionalEffect(new Morbid(), wrapped)` | - | yes | yes (end step) |
 | `ConditionalEffect(new Kicked(), wrapped)` | - | yes | - |

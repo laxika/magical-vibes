@@ -23,6 +23,7 @@ public sealed interface Condition permits
         DefendingPlayerPoisoned,
         DidntAttack,
         Equipped,
+        GainedLifeThisTurn,
         GraveyardCardThreshold,
         HasAttacker,
         ImprintedCardNameMatchesEnteringPermanent,

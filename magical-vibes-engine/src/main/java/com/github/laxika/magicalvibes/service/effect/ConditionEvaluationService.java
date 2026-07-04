@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
+import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
@@ -88,6 +89,8 @@ public class ConditionEvaluationService {
                     gameData.playersDeclaredAttackersThisTurn.contains(ctx.controllerId());
             case Equipped ignored ->
                     isSourceEquipped(gameData, ctx);
+            case GainedLifeThisTurn ignored ->
+                    ctx.controllerId() != null && gameData.hasGainedLifeThisTurn(ctx.controllerId());
             case ControlsPermanent c ->
                     controlsMatchingPermanent(gameData, ctx, c.filter());
             case ControlsAnotherPermanent c ->

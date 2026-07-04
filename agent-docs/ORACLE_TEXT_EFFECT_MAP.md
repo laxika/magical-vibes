@@ -285,6 +285,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "if you control a [matching permanent], [effect]" | `ConditionalEffect(new ControlsPermanent(predicate), innerEffect)` | Permanent check |
 | "if you control a [subtype], [upgraded effect] instead" | `ConditionalReplacementEffect(new ControlsPermanent(filter), baseEffect, upgradedEffect)(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Resolution-time replacement |
 | "if that/target creature is a [subtype], [upgraded effect] instead" | `ConditionalReplacementEffect(new TargetPermanentMatches(filter), baseEffect, upgradedEffect)(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Target permanent checked at resolution; falls back to base if missing or nonmatching |
+| "Infusion — if you gained life this turn, [additional effect]" | `ConditionalEffect(new GainedLifeThisTurn(), innerEffect)` | Life gained tracked in `GameData.lifeGainedThisTurn` (via `LifeSupport`), cleared each turn; also valid as a static self-buff (`StaticBoostEffect(...GrantScope.SELF)`) e.g. Ulna Alley Shopkeep |
+| "[base effect]. Infusion — if you gained life this turn, [upgraded effect] instead" | `ConditionalReplacementEffect(new GainedLifeThisTurn(), baseEffect, upgradedEffect)` | Resolution-time replacement, e.g. Withering Curse (mass -2/-2 upgraded to destroy all creatures) |
 | "choose one —" | `ChooseOneEffect(List<ChooseOneOption>)` | Modal |
 
 ## Turn / phase
