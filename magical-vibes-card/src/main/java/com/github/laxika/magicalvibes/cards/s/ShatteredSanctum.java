@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.cards.d;
+package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -10,12 +10,20 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessManyLandsEf
 
 import java.util.List;
 
-@CardRegistration(set = "SOS", collectorNumber = "253")
-@CardRegistration(set = "SOS", collectorNumber = "301")
-public class DeathcapGlade extends Card {
+@CardRegistration(set = "SOS", collectorNumber = "260")
+@CardRegistration(set = "SOS", collectorNumber = "303")
+public class ShatteredSanctum extends Card {
 
-    public DeathcapGlade() {
+    public ShatteredSanctum() {
         addEffect(EffectSlot.STATIC, new EntersTappedUnlessManyLandsEffect(2));
+
+        // {T}: Add {W}.
+        addActivatedAbility(new ActivatedAbility(
+                true,
+                null,
+                List.of(new AwardManaEffect(ManaColor.WHITE)),
+                "{T}: Add {W}."
+        ));
 
         // {T}: Add {B}.
         addActivatedAbility(new ActivatedAbility(
@@ -23,14 +31,6 @@ public class DeathcapGlade extends Card {
                 null,
                 List.of(new AwardManaEffect(ManaColor.BLACK)),
                 "{T}: Add {B}."
-        ));
-
-        // {T}: Add {G}.
-        addActivatedAbility(new ActivatedAbility(
-                true,
-                null,
-                List.of(new AwardManaEffect(ManaColor.GREEN)),
-                "{T}: Add {G}."
         ));
     }
 }
