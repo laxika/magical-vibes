@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfBySpellManaSpentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -571,7 +572,8 @@ public class SpellCastTriggerCollectorService {
                     match.gameData().id, match.permanent().getCard().getName());
         } else if (needsTargeting) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter()
+                    match.permanent().getCard(), match.controllerId(), resolved, playerTargetOnly, trigger.targetFilter(),
+                    spellManaSpentX
             ));
             String logEntry = match.permanent().getCard().getName()
                     + "'s triggered ability triggers — choose a target.";
@@ -613,6 +615,11 @@ public class SpellCastTriggerCollectorService {
         if (effect instanceof ConditionalEffect conditional) {
             return conditional.condition() instanceof SpellManaSpentAtLeast
                     || effectNeedsSpellManaSpentX(conditional.wrapped());
+        }
+        if (effect instanceof ConditionalReplacementEffect replacement) {
+            return replacement.condition() instanceof SpellManaSpentAtLeast
+                    || effectNeedsSpellManaSpentX(replacement.baseEffect())
+                    || effectNeedsSpellManaSpentX(replacement.upgradedEffect());
         }
         return false;
     }
