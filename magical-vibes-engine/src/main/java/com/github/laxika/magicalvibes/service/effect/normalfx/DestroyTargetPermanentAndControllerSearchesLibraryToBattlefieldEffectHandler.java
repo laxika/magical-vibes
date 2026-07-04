@@ -62,9 +62,10 @@ public class DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffe
         // The target's controller searches their library
         String desc = CardPredicateUtils.describeFilter(effect.searchFilter());
         String descPlural = desc.replace(" card", " cards");
+        String tappedSuffix = effect.tapped() ? " tapped" : "";
         String prompt = effect.may()
-                ? "You may search your library for a " + desc + " and put it onto the battlefield."
-                : "Search your library for a " + desc + " and put it onto the battlefield.";
+                ? "You may search your library for a " + desc + " and put it onto the battlefield" + tappedSuffix + "."
+                : "Search your library for a " + desc + " and put it onto the battlefield" + tappedSuffix + ".";
 
         librarySearchSupport.performLibrarySearch(
                 gameData,
@@ -74,7 +75,9 @@ public class DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffe
                 prompt,
                 false,
                 effect.may(),
-                LibrarySearchDestination.BATTLEFIELD
+                effect.tapped()
+                        ? LibrarySearchDestination.BATTLEFIELD_TAPPED
+                        : LibrarySearchDestination.BATTLEFIELD
         );
     }
 }

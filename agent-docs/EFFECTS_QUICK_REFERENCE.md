@@ -138,7 +138,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `DestroyAllPermanentsAndGainLifePerDestroyedEffect(PermanentPredicate, int)` — wipe + life
 - `EachPlayerChoosesCreatureDestroyRestEffect()` — choose one, destroy rest
 - `DestroyAllCreaturesAndCreateTokenFromDestroyedCountEffect(String, List, Set)` — wipe + X/X token
-- `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect(CardPredicate, boolean)` — destroy + search
+- `DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect(CardPredicate, boolean may[, boolean tapped])` — destroy + controller searches to battlefield (tapped optional, e.g. Erode)
 - `DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect()` — destroy + each searches
 - `EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect()` — opponents search
 - `DestroyTargetLandAndDamageControllerEffect(int)` — destroy land + damage
