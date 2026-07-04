@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEf
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
+import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
@@ -1473,6 +1474,39 @@ public class StepTriggerService {
                                 perm.getCard(), activePlayerId,
                                 new ArrayList<>(List.of(new GainControlOfTargetPermanentEffect())),
                                 perm.getId()));
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && conditional.condition() instanceof GainedLifeThisTurn) {
+                        // Intervening-if: only trigger if the controller gained life this turn (CR 603.4)
+                        if (gameData.getLifeGainedThisTurn(activePlayerId) <= 0) {
+                            log.info("Game {} - {} end-step trigger skipped (didn't gain life this turn)",
+                                    gameData.id, perm.getCard().getName());
+                            continue;
+                        }
+                        CardEffect wrapped = conditional.wrapped();
+                        if (wrapped.canTargetGraveyard()) {
+                            // Graveyard-targeting trigger (e.g. Moseo) — queue for graveyard target selection
+                            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped))));
+                            String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} controller end-step graveyard-target trigger queued", gameData.id, perm.getCard().getName());
+                        } else if (wrapped.canTargetPermanent() || wrapped.canTargetPlayer()) {
+                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    activePlayerId,
+                                    perm.getCard().getName() + "'s end step ability",
+                                    new ArrayList<>(List.of(wrapped)),
+                                    null,
+                                    perm.getId()
+                            ));
+                            String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                        }
                     } else if (effect.canTargetPermanent() || effect.canTargetPlayer()) {
                         // Targeting triggered ability — queue for target selection
                         gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
@@ -1499,6 +1533,12 @@ public class StepTriggerService {
         // Process pending end-step targeted triggers (e.g. Reaper from the Abyss morbid, Voltaic Servant)
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
             processNextEndStepTriggerTarget(gameData);
+            return;
+        }
+
+        // Process pending end-step graveyard-target triggers (e.g. Moseo, Vein's New Dean)
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
         }
 

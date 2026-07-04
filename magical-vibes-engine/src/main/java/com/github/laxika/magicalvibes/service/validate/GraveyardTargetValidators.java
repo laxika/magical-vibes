@@ -55,6 +55,14 @@ public class GraveyardTargetValidators {
         if (effect.requiresManaValueEqualsX() && graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
+        if (effect.maxManaValueEqualsLifeGainedThisTurn()) {
+            UUID controllerId = tvs.findSourcePermanentController(ctx);
+            int lifeGained = controllerId == null ? 0 : ctx.gameData().getLifeGainedThisTurn(controllerId);
+            if (graveyardCard.getManaValue() > lifeGained) {
+                throw new IllegalStateException(
+                        "Target card's mana value must be " + lifeGained + " or less");
+            }
+        }
     }
 
     @ValidatesTarget(PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect.class)

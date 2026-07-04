@@ -386,6 +386,7 @@ ReturnCardFromGraveyardEffect.builder()
     .grantHaste(boolean)                       // true = grant haste to the returned permanent (default: false)
     .exileAtEndStep(boolean)                   // true = exile at next end step (default: false)
     .requiresManaValueEqualsX(boolean)         // true = restrict to cards with MV = X (default: false)
+    .maxManaValueEqualsLifeGainedThisTurn(boolean) // true = restrict to cards with MV <= life gained this turn (default: false); e.g. Moseo
     .grantColor(CardColor)                     // non-null = permanently grant this color "in addition to" (default: null)
     .grantSubtype(CardSubtype)                 // non-null = permanently grant this subtype "in addition to" (default: null)
     .enterTapped(boolean)                      // true = enters the battlefield tapped (default: false)
@@ -467,6 +468,7 @@ Pass `null` as filter to allow any card.
 | Razor Hippogriff | `ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(new CardTypePredicate(ARTIFACT)).gainLifeEqualToManaValue(true).build()` — artifact to hand + gain life equal to mana value |
 | Noxious Revival | `ReturnCardFromGraveyardEffect.builder().destination(TOP_OF_OWNERS_LIBRARY).source(ALL_GRAVEYARDS).targetGraveyard(true).build()` — any card from any graveyard on top of owner's library |
 | Postmortem Lunge | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).targetGraveyard(true).grantHaste(true).exileAtEndStep(true).requiresManaValueEqualsX(true).build()` — X-cost creature with MV=X from your graveyard to battlefield with haste; exile at next end step |
+| Moseo, Vein's New Dean | `new ConditionalEffect(new GainedLifeThisTurn(), ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).targetGraveyard(true).maxManaValueEqualsLifeGainedThisTurn(true).build())` in `CONTROLLER_END_STEP_TRIGGERED` — end-step "if you gained life this turn, return up to one target creature card with MV X or less, X = life gained this turn". End-step graveyard targeting reuses the `SpellGraveyardTargetTrigger` flow |
 | Rise from the Grave | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardTypePredicate(CREATURE)).source(ALL_GRAVEYARDS).grantColor(CardColor.BLACK).grantSubtype(CardSubtype.ZOMBIE).build()` — creature from any graveyard to battlefield as a black Zombie in addition to other colors/types |
 | Reassembling Skeleton | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardIsSelfPredicate()).returnAll(true).enterTapped(true).build()` — self-return to battlefield tapped (graveyard activated ability) |
 | Warcry Phoenix | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(new CardIsSelfPredicate()).returnAll(true).enterTapped(true).enterAttacking(true).build()` — self-return to battlefield tapped and attacking (graveyard attack trigger) |

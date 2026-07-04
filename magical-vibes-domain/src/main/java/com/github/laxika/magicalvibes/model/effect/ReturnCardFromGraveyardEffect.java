@@ -88,6 +88,10 @@ import lombok.Builder;
  *                             ensures the source cannot be one of the randomly returned cards
  * @param enterAttacking       {@code true} if the returned permanent enters the battlefield attacking
  *                             (e.g. Warcry Phoenix); typically combined with {@link #enterTapped}
+ * @param maxManaValueEqualsLifeGainedThisTurn {@code true} to restrict targeting to graveyard cards
+ *                             whose mana value is less than or equal to the amount of life the
+ *                             controller gained this turn (e.g. Moseo, Vein's New Dean); the cap is
+ *                             read from {@code GameData.getLifeGainedThisTurn} at target-selection time
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -112,7 +116,8 @@ public record ReturnCardFromGraveyardEffect(
         int randomCount,
         boolean choosePermanentType,
         boolean exileSourceFromGraveyard,
-        boolean enterAttacking
+        boolean enterAttacking,
+        boolean maxManaValueEqualsLifeGainedThisTurn
 ) implements CardEffect {
 
     /**

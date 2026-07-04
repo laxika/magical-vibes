@@ -415,18 +415,27 @@ public class TriggeredAbilityQueueService {
 
             // Find the graveyard-targeting effect to extract its filter
             CardPredicate filter = null;
+            boolean lifeGainedCap = false;
             for (CardEffect effect : pending.effects()) {
                 if (effect instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard()) {
                     filter = returnEffect.filter();
+                    lifeGainedCap = returnEffect.maxManaValueEqualsLifeGainedThisTurn();
                     break;
                 }
             }
+
+            // "mana value X or less, where X is the life you gained this turn" (e.g. Moseo)
+            int maxManaValue = lifeGainedCap
+                    ? gameData.getLifeGainedThisTurn(pending.controllerId()) : Integer.MAX_VALUE;
 
             // Collect valid graveyard targets from the controller's graveyard
             List<Card> matchingCards = new ArrayList<>();
             List<Card> graveyard = gameData.playerGraveyards.get(pending.controllerId());
             if (graveyard != null) {
                 for (Card graveyardCard : graveyard) {
+                    if (graveyardCard.getManaValue() > maxManaValue) {
+                        continue;
+                    }
                     if (predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, null)) {
                         matchingCards.add(graveyardCard);
                     }
