@@ -36,8 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -82,7 +80,7 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
-    @Mock private SessionManager sessionManager;
+    @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     @Mock private LifeSupport lifeSupport;
 
     @InjectMocks
@@ -315,7 +313,7 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("AwardAnyColorManaEffect sends color choice message via sessionManager")
+        @DisplayName("AwardAnyColorManaEffect begins a color-choice interaction")
         void awardAnyColorManaSendsChoiceMessage() {
             Card card = createCard("Test Any-Color Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
@@ -327,7 +325,8 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
-            verify(sessionManager).sendToPlayer(eq(player1Id), any(ChooseFromListMessage.class));
+            verify(interactionHandlerRegistry).begin(eq(gameData),
+                    any(com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice.class));
         }
     }
 
