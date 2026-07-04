@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -60,6 +61,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -86,7 +88,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StepTriggerService {
 
     private final DrawService drawService;
@@ -100,6 +101,33 @@ public class StepTriggerService {
     private final GraveyardTargetingService graveyardTargetingService;
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
+    private final ParadigmService paradigmService;
+
+    public StepTriggerService(DrawService drawService,
+                              GameQueryService gameQueryService,
+                              PredicateEvaluationService predicateEvaluationService,
+                              ConditionEvaluationService conditionEvaluationService,
+                              GameBroadcastService gameBroadcastService,
+                              PlayerInputService playerInputService,
+                              PermanentRemovalService permanentRemovalService,
+                              BattlefieldEntryService battlefieldEntryService,
+                              GraveyardTargetingService graveyardTargetingService,
+                              TriggerCollectionService triggerCollectionService,
+                              TriggerTargetCollector triggerTargetCollector,
+                              @Lazy ParadigmService paradigmService) {
+        this.drawService = drawService;
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.conditionEvaluationService = conditionEvaluationService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.playerInputService = playerInputService;
+        this.permanentRemovalService = permanentRemovalService;
+        this.battlefieldEntryService = battlefieldEntryService;
+        this.graveyardTargetingService = graveyardTargetingService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.triggerTargetCollector = triggerTargetCollector;
+        this.paradigmService = paradigmService;
+    }
 
     /**
      * Scans battlefields, graveyards, and (on turn 1) hands for upkeep-triggered
@@ -832,6 +860,8 @@ public class StepTriggerService {
         handleSagaLoreCounters(gameData);
 
         handlePrecombatMainBattlefieldTriggers(gameData);
+
+        paradigmService.firePrecombatMainTriggers(gameData);
 
         // Chancellor-style delayed mana triggers: fire at the beginning of the revealing player's first main phase
         if (!gameData.openingHandManaTriggers.isEmpty()) {

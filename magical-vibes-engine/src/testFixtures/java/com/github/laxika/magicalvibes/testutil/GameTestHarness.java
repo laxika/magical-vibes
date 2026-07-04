@@ -181,6 +181,10 @@ public class GameTestHarness {
         gameData.playerHands.put(player.getId(), new ArrayList<>(cards));
     }
 
+    public void setLibrary(Player player, List<Card> cards) {
+        gameData.playerDecks.put(player.getId(), new ArrayList<>(cards));
+    }
+
     public void addMana(Player player, ManaColor color, int amount) {
         ManaPool pool = gameData.playerManaPools.get(player.getId());
         for (int i = 0; i < amount; i++) {

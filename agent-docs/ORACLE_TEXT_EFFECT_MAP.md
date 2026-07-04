@@ -166,6 +166,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "scry N" | `ScryEffect(N)` | SPELL/trigger | |
 | "surveil N" | `SurveilEffect(N)` | SPELL/trigger | |
 | "shuffle your library" | `ShuffleLibraryEffect()` | SPELL | |
+| "exile cards from the top of your library until you exile cards with total mana value N or greater. You may cast any number of spells from among the exiled cards without paying their mana costs" | `ImprovisationCapstoneEffect(N)` | SPELL | `ImprovisationCapstoneCastChoice` interaction + `ImprovisationCapstoneCastSupport` |
 
 ## Mill
 
@@ -192,6 +193,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
+| "target player creates a token that's a copy of target creature you control" | `CreateTokenCopyOfTargetCreatureForTargetPlayerEffect()` | SPELL | Two targets (player, then creature); token enters under chosen player |
 | "create N 1/1 white Spirit creature tokens with flying" | `CreateTokenEffect.whiteSpirit(N)` | SPELL/trigger | Static factory |
 | "Whenever another non-[Subtype] creature you control dies, create ..." | `EffectSlot.ON_ALLY_CREATURE_DIES` + `TriggeringCardConditionalEffect(new CardNotPredicate(new CardSubtypePredicate(subtype)), CreateTokenEffect...)` | trigger | Requiem Angel-style; use ally creature death, not nontoken, because token non-Spirits count |
 | "create N 2/2 black Zombie creature tokens" | `CreateTokenEffect.blackZombie(N)` | SPELL/trigger | Static factory |

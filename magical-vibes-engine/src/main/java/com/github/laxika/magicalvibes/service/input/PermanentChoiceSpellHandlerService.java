@@ -6,13 +6,14 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ImprovisationCapstoneCastSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -28,7 +29,6 @@ import java.util.UUID;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class PermanentChoiceSpellHandlerService {
 
     private final GameQueryService gameQueryService;
@@ -37,6 +37,26 @@ public class PermanentChoiceSpellHandlerService {
     private final TriggerCollectionService triggerCollectionService;
     private final PlayerInputService playerInputService;
     private final TurnProgressionService turnProgressionService;
+    // @Lazy breaks the cycle: PermanentChoiceSpellHandlerService → ImprovisationCapstoneCastSupport →
+    // PlayerInputService → InteractionHandlerRegistry → ImprovisationCapstoneCastChoiceInteractionHandler
+    // → ImprovisationCapstoneCastSupport.
+    private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
+
+    public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
+                                              GraveyardService graveyardService,
+                                              GameBroadcastService gameBroadcastService,
+                                              TriggerCollectionService triggerCollectionService,
+                                              PlayerInputService playerInputService,
+                                              TurnProgressionService turnProgressionService,
+                                              @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport) {
+        this.gameQueryService = gameQueryService;
+        this.graveyardService = graveyardService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.playerInputService = playerInputService;
+        this.turnProgressionService = turnProgressionService;
+        this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
+    }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
         StackEntry targetSpell = null;
@@ -127,6 +147,7 @@ public class PermanentChoiceSpellHandlerService {
                     permanentId,
                     null
             );
+            entry.setCopy(ect.copy());
             gameData.stack.add(entry);
 
             gameData.recordSpellCast(ect.controllerId(), ect.cardToCast());
@@ -146,6 +167,13 @@ public class PermanentChoiceSpellHandlerService {
             String logEntry = ect.cardToCast().getName() + "'s target is no longer valid. It is put into the graveyard.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} cast-from-exile target no longer exists", gameData.id, ect.cardToCast().getName());
+        }
+
+        // Improvisation Capstone casts a batch of exiled spells; a targeted one pauses here for the
+        // target choice, so resume casting the remainder of the queue before yielding priority.
+        if (!gameData.pendingImprovisationCapstoneCastQueue.isEmpty()) {
+            improvisationCapstoneCastSupport.castNextFromQueue(gameData, ect.controllerId());
+            return;
         }
 
         gameData.priorityPassedBy.clear();

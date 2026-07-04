@@ -281,6 +281,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ShuffleGraveyardIntoLibraryEffect(boolean targetPlayer)` — shuffle graveyard into library (targetPlayer=true targets, false=controller's)
 - `ShuffleTargetCardsFromGraveyardIntoLibraryEffect(CardPredicate, int)` — shuffle N cards from graveyard
 - `CastTopOfLibraryWithoutPayingManaCostEffect(Set<CardType>)` — cast top free
+- `ImprovisationCapstoneEffect(int totalManaValueThreshold)` — exile from library until total MV ≥ threshold; `ImprovisationCapstoneCastChoice` interaction lets controller cast any number of exiled instants/sorceries/etc. without paying (`ImprovisationCapstoneCastSupport`)
 - `RevealTopCardMayPlayFreeOrExileEffect()` — reveal top, play free or exile
 
 ## Mill
@@ -320,6 +321,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CreateTokenForEachOpponentCreatureEffect(...)` — token per opponent creature
 - `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(CardPredicate, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep)` — exile graveyard target, create token copy with optional extra subtypes/haste/end-step exile
 - `CreateTokenCopyOfTargetPermanentEffect()` or `(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, Map<CounterType, Integer> initialCounters)` — create token copy of targeted permanent; optional type/subtype/P/T overrides and post-ETB counters
+- `CreateTokenCopyOfTargetCreatureForTargetPlayerEffect()` — target player creates a token copy of target creature you control (two targets: player + creature); Echocasting Symposium
 
 ## Life
 
@@ -398,6 +400,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `RegenerateEffect()` or `(boolean targetsPermanent)` — regenerate
 - `ProtectionFromColorsEffect(Set<CardColor>)` — protection from colors (static)
 - `ProtectionFromSubtypesEffect(Set<CardSubtype>)` — protection from subtypes (static)
+- **Paradigm** (`Keyword.PARADIGM` on card, not an effect) — engine handled by `ParadigmService`: first resolve exiles spell + registers `GameData.ParadigmDelayedTrigger`; each precombat main fires `ParadigmCastCopyEffect` → copy in exile + `ParadigmMayCastFromExileEffect` may-cast (`ParadigmCastSupport`)
 
 ## Combat restrictions / evasion
 

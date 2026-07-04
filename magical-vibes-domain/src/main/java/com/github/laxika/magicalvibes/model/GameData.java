@@ -239,6 +239,20 @@ public class GameData {
      *  Decremented when an instant/sorcery is cast; cleared when mana pools drain. */
     public final Map<UUID, Integer> pendingNextInstantSorceryCopyCount = new ConcurrentHashMap<>();
 
+    /**
+     * Paradigm (CR 702.192): delayed triggers that fire at the beginning of each of the
+     * controller's precombat main phases for the rest of the game.
+     */
+    public final List<ParadigmDelayedTrigger> paradigmDelayedTriggers = Collections.synchronizedList(new ArrayList<>());
+
+    public record ParadigmDelayedTrigger(UUID controllerId, Card spellPrototype) {}
+
+    /** Spell names a player has already resolved while controlling (for Paradigm's "first time" check). */
+    public final Map<UUID, Set<String>> paradigmResolvedSpellNames = new ConcurrentHashMap<>();
+
+    /** Remaining exiled spells to cast for an in-progress Improvisation Capstone resolution. */
+    public final Deque<UUID> pendingImprovisationCapstoneCastQueue = new ArrayDeque<>();
+
     /** Delayed triggers from Chancellor-style opening hand reveals.
      *  Fires once per opponent when they cast their first spell of the game. */
     public final List<OpeningHandRevealTrigger> openingHandRevealTriggers = Collections.synchronizedList(new ArrayList<>());
@@ -943,6 +957,13 @@ public class GameData {
         copy.openingHandRevealTriggers.addAll(this.openingHandRevealTriggers);
         copy.openingHandManaTriggers.addAll(this.openingHandManaTriggers);
         copy.playersWhoCastFirstSpellInGame.addAll(this.playersWhoCastFirstSpellInGame);
+        copy.paradigmDelayedTriggers.addAll(this.paradigmDelayedTriggers);
+        this.paradigmResolvedSpellNames.forEach((k, v) -> {
+            Set<String> names = ConcurrentHashMap.newKeySet();
+            names.addAll(v);
+            copy.paradigmResolvedSpellNames.put(k, names);
+        });
+        copy.pendingImprovisationCapstoneCastQueue.addAll(this.pendingImprovisationCapstoneCastQueue);
 
         // --- Game log (share reference for simulation — not read during MCTS) ---
         copy.gameLog.addAll(this.gameLog);

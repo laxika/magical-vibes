@@ -145,7 +145,8 @@ public enum CardSubtype {
     LEVIATHAN("Leviathan"),
     TEFERI("Teferi"),
     TREASURE("Treasure"),
-    VEHICLE("Vehicle");
+    VEHICLE("Vehicle"),
+    LESSON("Lesson");
 
     @Getter
     private final String displayName;

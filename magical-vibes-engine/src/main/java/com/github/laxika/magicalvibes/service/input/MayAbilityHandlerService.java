@@ -33,9 +33,10 @@ import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
@@ -67,8 +68,9 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -77,7 +79,6 @@ import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MayAbilityHandlerService {
 
     private final InputCompletionService inputCompletionService;
@@ -95,6 +96,43 @@ public class MayAbilityHandlerService {
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    // @Lazy breaks the circular dependency:
+    // MayAbilityHandlerService → ParadigmService → PlayerInputService → MayAbilityChoiceInteractionHandler → MayAbilityHandlerService
+    private final ParadigmService paradigmService;
+
+    public MayAbilityHandlerService(InputCompletionService inputCompletionService,
+                                    MayCastHandlerService mayCastHandlerService,
+                                    MayCopyHandlerService mayCopyHandlerService,
+                                    MayPenaltyChoiceHandlerService mayPenaltyChoiceHandlerService,
+                                    MayMiscHandlerService mayMiscHandlerService,
+                                    GameQueryService gameQueryService,
+                                    PredicateEvaluationService predicateEvaluationService,
+                                    GameBroadcastService gameBroadcastService,
+                                    PlayerInputService playerInputService,
+                                    TurnProgressionService turnProgressionService,
+                                    EffectResolutionService effectResolutionService,
+                                    DestructionSupport destructionSupport,
+                                    GraveyardReturnSupport graveyardReturnSupport,
+                                    MayAbilityTapCostService mayAbilityTapCostService,
+                                    com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
+                                    @Lazy ParadigmService paradigmService) {
+        this.inputCompletionService = inputCompletionService;
+        this.mayCastHandlerService = mayCastHandlerService;
+        this.mayCopyHandlerService = mayCopyHandlerService;
+        this.mayPenaltyChoiceHandlerService = mayPenaltyChoiceHandlerService;
+        this.mayMiscHandlerService = mayMiscHandlerService;
+        this.gameQueryService = gameQueryService;
+        this.predicateEvaluationService = predicateEvaluationService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.playerInputService = playerInputService;
+        this.turnProgressionService = turnProgressionService;
+        this.effectResolutionService = effectResolutionService;
+        this.destructionSupport = destructionSupport;
+        this.graveyardReturnSupport = graveyardReturnSupport;
+        this.mayAbilityTapCostService = mayAbilityTapCostService;
+        this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.paradigmService = paradigmService;
+    }
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
@@ -140,6 +178,13 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof MayCastFromHandWithoutPayingManaCostEffect);
         if (isMayCastFromHand) {
             mayCastHandlerService.handleMayCastFromHandWithoutPaying(gameData, player, accepted, ability);
+            return;
+        }
+
+        boolean isParadigmCast = ability.effects().stream()
+                .anyMatch(e -> e instanceof ParadigmMayCastFromExileEffect);
+        if (isParadigmCast) {
+            paradigmService.handleMayCastChoice(gameData, player, accepted, ability);
             return;
         }
 

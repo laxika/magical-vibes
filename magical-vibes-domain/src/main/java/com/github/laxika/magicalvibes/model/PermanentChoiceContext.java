@@ -96,7 +96,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record SacrificeArtifactForDividedDamage(UUID controllerId, Card sourceCard, Map<UUID, Integer> damageAssignments) implements PermanentChoiceContext {}
 
-    record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
+    record ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType,
+                                boolean copy) implements PermanentChoiceContext {
+        // {@code copy=true} marks a Paradigm copy that must cease to exist on resolution rather than
+        // being placed in a zone (CR 707.10a). Defaults to false for real cards cast from exile.
+        public ExileCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) {
+            this(cardToCast, controllerId, spellEffects, spellType, false);
+        }
+    }
 
     record GraveyardCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects, StackEntryType spellType) implements PermanentChoiceContext {}
 

@@ -49,6 +49,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import org.junit.jupiter.api.BeforeEach;
@@ -101,6 +102,9 @@ class StepTriggerServiceTest {
     @Mock
     private TriggerCollectionService triggerCollectionService;
 
+    @Mock
+    private ParadigmService paradigmService;
+
     private StepTriggerService sut;
 
     private GameData gd;
@@ -124,7 +128,8 @@ class StepTriggerServiceTest {
                 battlefieldEntryService,
                 graveyardTargetingService,
                 triggerCollectionService,
-                triggerTargetCollector);
+                triggerTargetCollector,
+                paradigmService);
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

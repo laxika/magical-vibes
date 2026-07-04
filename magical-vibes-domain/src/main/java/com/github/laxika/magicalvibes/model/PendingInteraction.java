@@ -22,6 +22,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.XValueChoice, PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
+        PendingInteraction.ImprovisationCapstoneCastChoice,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
@@ -80,6 +81,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * permanent is found via the queued {@link PendingKnowledgePoolCast}).
      */
     record KnowledgePoolCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
+            implements PendingInteraction {
+    }
+
+    /**
+     * Improvisation Capstone: choose any number of exiled spells to cast without paying their mana costs.
+     */
+    record ImprovisationCapstoneCastChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount)
             implements PendingInteraction {
     }
 

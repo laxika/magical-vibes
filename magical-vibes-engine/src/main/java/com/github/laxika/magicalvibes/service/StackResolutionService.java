@@ -35,14 +35,16 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffec
 import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfRaidEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
+import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -52,7 +54,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class StackResolutionService {
 
     private final BattlefieldEntryService battlefieldEntryService;
@@ -69,6 +70,39 @@ public class StackResolutionService {
     private final CreatureControlService creatureControlService;
     private final StateTriggerService stateTriggerService;
     private final ExileService exileService;
+    private final ParadigmService paradigmService;
+
+    public StackResolutionService(BattlefieldEntryService battlefieldEntryService,
+                                  CloneService cloneService,
+                                  GraveyardService graveyardService,
+                                  LegendRuleService legendRuleService,
+                                  StateBasedActionService stateBasedActionService,
+                                  GameQueryService gameQueryService,
+                                  TargetLegalityService targetLegalityService,
+                                  GameBroadcastService gameBroadcastService,
+                                  EffectResolutionService effectResolutionService,
+                                  PlayerInputService playerInputService,
+                                  TriggerCollectionService triggerCollectionService,
+                                  CreatureControlService creatureControlService,
+                                  StateTriggerService stateTriggerService,
+                                  ExileService exileService,
+                                  @Lazy ParadigmService paradigmService) {
+        this.battlefieldEntryService = battlefieldEntryService;
+        this.cloneService = cloneService;
+        this.graveyardService = graveyardService;
+        this.legendRuleService = legendRuleService;
+        this.stateBasedActionService = stateBasedActionService;
+        this.gameQueryService = gameQueryService;
+        this.targetLegalityService = targetLegalityService;
+        this.gameBroadcastService = gameBroadcastService;
+        this.effectResolutionService = effectResolutionService;
+        this.playerInputService = playerInputService;
+        this.triggerCollectionService = triggerCollectionService;
+        this.creatureControlService = creatureControlService;
+        this.stateTriggerService = stateTriggerService;
+        this.exileService = exileService;
+        this.paradigmService = paradigmService;
+    }
 
     public void resolveTopOfStack(GameData gameData) {
         if (gameData.stack.isEmpty()) return;
@@ -559,6 +593,8 @@ public class StackResolutionService {
             deck.add(entry.getCard());
             String bottomLog = entry.getCard().getName() + " is put on the bottom of its owner's library.";
             gameBroadcastService.logAndBroadcast(gameData, bottomLog);
+        } else if (entry.getCard().getKeywords().contains(Keyword.PARADIGM)) {
+            paradigmService.onParadigmSpellResolved(gameData, entry);
         } else {
             graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), entry.getCard());
         }
