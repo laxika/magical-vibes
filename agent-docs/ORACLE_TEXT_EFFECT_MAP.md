@@ -292,6 +292,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "if that/target creature is a [subtype], [upgraded effect] instead" | `ConditionalReplacementEffect(new TargetPermanentMatches(filter), baseEffect, upgradedEffect)(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Target permanent checked at resolution; falls back to base if missing or nonmatching |
 | "Infusion — if you gained life this turn, [additional effect]" | `ConditionalEffect(new GainedLifeThisTurn(), innerEffect)` | Life gained tracked in `GameData.lifeGainedThisTurn` (via `LifeSupport`), cleared each turn; also valid as a static self-buff (`StaticBoostEffect(...GrantScope.SELF)`) e.g. Ulna Alley Shopkeep |
 | "[base effect]. Infusion — if you gained life this turn, [upgraded effect] instead" | `ConditionalReplacementEffect(new GainedLifeThisTurn(), baseEffect, upgradedEffect)` | Resolution-time replacement, e.g. Withering Curse (mass -2/-2 upgraded to destroy all creatures) |
+| "Infusion — At the beginning of your end step, [downside] unless you gained life this turn" | `ConditionalEffect(new DidntGainLifeThisTurn(), downsideEffect)` in `CONTROLLER_END_STEP_TRIGGERED` | `DidntGainLifeThisTurn` is the negation of `GainedLifeThisTurn`; for "sacrifice a permanent" use `SacrificePermanentThenEffect(new PermanentTruePredicate(), null, "a permanent")` (null thenEffect = no follow-up). E.g. Tragedy Feaster |
 | "choose one —" | `ChooseOneEffect(List<ChooseOneOption>)` | Modal |
 
 ## Turn / phase

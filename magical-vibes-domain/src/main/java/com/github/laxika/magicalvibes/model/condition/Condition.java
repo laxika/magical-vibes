@@ -22,6 +22,7 @@ public sealed interface Condition permits
         ControlsPermanentCount,
         DefendingPlayerPoisoned,
         DidntAttack,
+        DidntGainLifeThisTurn,
         Equipped,
         GainedLifeThisTurn,
         GraveyardCardThreshold,

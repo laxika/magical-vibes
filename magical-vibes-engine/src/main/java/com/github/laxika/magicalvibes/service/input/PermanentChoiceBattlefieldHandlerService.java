@@ -442,14 +442,17 @@ public class PermanentChoiceBattlefieldHandlerService {
         log.info("Game {} - {} sacrifices {} for {}", gameData.id, playerName,
                 toSacrifice.getCard().getName(), ctx.sourceCard().getName());
 
-        // Execute the "if you do" effect by pushing it onto the stack as a triggered ability
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ctx.sourceCard(),
-                ctx.controllerId(),
-                ctx.sourceCard().getName() + "'s effect",
-                new ArrayList<>(List.of(ctx.thenEffect()))
-        ));
+        // Execute the "if you do" effect by pushing it onto the stack as a triggered ability.
+        // A null thenEffect means a bare "sacrifice a permanent" with no follow-up.
+        if (ctx.thenEffect() != null) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    ctx.sourceCard(),
+                    ctx.controllerId(),
+                    ctx.sourceCard().getName() + "'s effect",
+                    new ArrayList<>(List.of(ctx.thenEffect()))
+            ));
+        }
 
         stateBasedActionService.performStateBasedActions(gameData);
 
