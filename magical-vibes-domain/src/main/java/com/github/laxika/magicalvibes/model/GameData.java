@@ -753,8 +753,13 @@ public class GameData {
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
         copy.resolvingMayEffectFromStack = this.resolvingMayEffectFromStack;
         copy.resolvedMayAccepted = this.resolvedMayAccepted;
-        copy.resolvedMayTargetingEntry = this.resolvedMayTargetingEntry != null
-                ? new StackEntry(this.resolvedMayTargetingEntry) : null;
+        // resolvedMayTargetingEntry usually aliases pendingEffectResolutionEntry (the CR 603.5
+        // resolution-time targeting flow sets the chosen target through the alias and resumes
+        // through pendingEffectResolutionEntry) — preserve the shared identity in the copy,
+        // otherwise the simulated choice answer would set the target on a dead copy.
+        copy.resolvedMayTargetingEntry = this.resolvedMayTargetingEntry == this.pendingEffectResolutionEntry
+                ? copy.pendingEffectResolutionEntry
+                : (this.resolvedMayTargetingEntry != null ? new StackEntry(this.resolvedMayTargetingEntry) : null);
         copy.chosenXValue = this.chosenXValue;
         copy.pendingAbilityActivation = this.pendingAbilityActivation; // immutable record
         copy.endTurnRequested = this.endTurnRequested;

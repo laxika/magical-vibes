@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
 import org.junit.jupiter.api.BeforeEach;
@@ -167,5 +169,37 @@ class GameDataDeepCopyTest {
         GameData copy = gd.simulationCopy();
         assertThat(copy.stack).isEmpty();
         assertThat(copy.stack).isNotSameAs(gd.stack);
+    }
+
+    @Test
+    @DisplayName("Deep copy preserves the aliasing between the may-targeting entry and the suspended resolution entry")
+    void deepCopyPreservesMayTargetingAliasing() {
+        // CR 603.5 resolution-time targeting: the chosen target is set through
+        // resolvedMayTargetingEntry and resolution resumes through
+        // pendingEffectResolutionEntry — both must reference the same object.
+        StackEntry suspended = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player1.getId(), "Test trigger", List.of());
+        gd.pendingEffectResolutionEntry = suspended;
+        gd.resolvedMayTargetingEntry = suspended;
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.pendingEffectResolutionEntry).isNotSameAs(suspended);
+        assertThat(copy.resolvedMayTargetingEntry).isSameAs(copy.pendingEffectResolutionEntry);
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps distinct may-targeting and suspended resolution entries independent")
+    void deepCopyKeepsDistinctResolutionEntriesIndependent() {
+        gd.pendingEffectResolutionEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player1.getId(), "Suspended", List.of());
+        gd.resolvedMayTargetingEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Targeting", List.of());
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.pendingEffectResolutionEntry).isNotSameAs(gd.pendingEffectResolutionEntry);
+        assertThat(copy.resolvedMayTargetingEntry).isNotSameAs(gd.resolvedMayTargetingEntry);
+        assertThat(copy.resolvedMayTargetingEntry).isNotSameAs(copy.pendingEffectResolutionEntry);
     }
 }

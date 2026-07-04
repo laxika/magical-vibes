@@ -708,12 +708,51 @@ the teardown was purely internal:
   (presence/kind is all those tests exercise). agent-docs snippets updated
   (TEST_RECIPES.md, CARD_IMPLEMENTATION_PLAYBOOK.md).
 
-### Stage 5 — Effect-resolution resumption
+### ✅ Stage 5 — DONE: effect-resolution resumption fields stay (with one simulation-copy fix)
 
-`pendingEffectResolutionEntry` / `pendingEffectResolutionIndex` / `resolvingMayEffectFromStack`
-/ `resolvedMayAccepted` / `resolvedMayTargetingEntry` (see `EffectResolutionService.resolveEffectsFrom`)
-become a queue-driven resumption item — only if provably behavior-preserving; otherwise keep
-the fields and document why here.
+**Decision: the five fields (`pendingEffectResolutionEntry` / `pendingEffectResolutionIndex`
+/ `resolvingMayEffectFromStack` / `resolvedMayAccepted` / `resolvedMayTargetingEntry`) are
+NOT migrated to the queue.** The migration is not provably behavior-preserving, for
+structural reasons — not implementation effort:
+
+1. **They hold mutable continuation state, not an immutable prompt.**
+   `pendingEffectResolutionEntry` / `resolvedMayTargetingEntry` reference a mutable
+   `StackEntry` that the resumption protocol mutates in place (`setTargetId` in
+   `GraveyardChoiceHandlerService.MAY_ABILITY_TARGET`, `PermanentChoiceTriggerHandlerService
+   .handleMayAbilityTrigger`, `MayAbilityHandlerService.setUpSelfTargetIfNeeded` / the
+   single-match graveyard path). The unified queue's invariant since stage 1 is *immutable
+   records, shallow `simulationCopy`* (`copy.pendingInteractions.addAll(...)`), while these
+   fields get per-field deep `StackEntry` copies. Queueing them would either share a mutable
+   `StackEntry` between the live game and MCTS simulation copies (rollout mutations
+   corrupting live state) or force a per-element deep-copy special case that breaks the
+   queue's uniform copy semantics.
+2. **The protocol depends on object identity across two fields.**
+   `resolvedMayTargetingEntry` is assigned the *same object* as
+   `pendingEffectResolutionEntry` (`MayAbilityHandlerService.handleResolutionTimeMayChoice`
+   reads it into `pendingEntry` and parks it). `PermanentChoiceTriggerHandlerService` then
+   sets the chosen target *through the alias* and resumes *through
+   `pendingEffectResolutionEntry`* — correct only because both reference one object. Any
+   record-bundling design that copies or wraps the entry silently drops the target hand-off.
+3. **The index travels separately from the entry.** The `MAY_ABILITY_TARGET` resumptions
+   call `resolveEffectsFrom(gameData, resolvedMayTargetingEntry-alias,
+   gameData.pendingEffectResolutionIndex)` — so `(entry, index)` cannot be sealed into one
+   immutable item without first proving the pairing invariant across every mid-flow
+   re-suspension.
+4. **Nothing here is queue-shaped.** At most one suspended resolution exists at a time
+   (each `resolveEffectsFrom` run either completes — clearing the fields — or re-suspends,
+   overwriting them); `resolvedMayAccepted` is a one-shot answer mailbox consumed by the
+   CR 603.5 re-run of the same effect, and `resolvingMayEffectFromStack` is the mode flag
+   for it. FIFO order and type-filtered scans add nothing; the fields already copy correctly
+   (deep) for simulation.
+
+**One code change landed with this analysis — a simulation-only fidelity fix** (third of its
+kind, after the LIBRARY_SEARCH and PERMANENT_CHOICE `copyInteractionInto` findings):
+`simulationCopy` used to deep-copy `pendingEffectResolutionEntry` and
+`resolvedMayTargetingEntry` **separately**, breaking their aliasing in the copy — an MCTS
+rollout answering a pending CR 603.5 targeting choice set the target on one copy and resumed
+the other, losing the target. The copy now preserves the shared identity when the two fields
+alias (and keeps independent deep copies when they are genuinely distinct). Covered by two
+new `GameDataDeepCopyTest` cases.
 
 ## Constraints (from the task)
 
