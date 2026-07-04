@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -30,7 +31,8 @@ class DiscardUnlessExileCardFromGraveyardEffectHandlerTest extends AbstractPlaye
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt(),
+                        any(DiscardFollowUp.class));
             }
 
             @Test

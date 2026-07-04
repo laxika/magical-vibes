@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +27,8 @@ class TargetPlayerDiscardsByChargeCountersEffectHandlerTest extends AbstractPlay
                 resolveEffect(gd, entry, new TargetPlayerDiscardsByChargeCountersEffect());
 
                 assertThat(gd.discardCausedByOpponent).isTrue();
-                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt());
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player2Id), anyInt(),
+                        any(DiscardFollowUp.class));
             }
 
             @Test

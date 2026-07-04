@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardTransformIfCreatureDiscardedEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,8 @@ class DrawDiscardTransformIfCreatureDiscardedEffectHandlerTest extends AbstractP
                 assertThat(gd.pendingTransformOnCreatureDiscard).isNotNull();
                 assertThat(gd.pendingTransformOnCreatureDiscard.sourcePermanentId()).isEqualTo(sourcePermanentId);
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt(),
+                        any(DiscardFollowUp.class));
             }
 
             @Test

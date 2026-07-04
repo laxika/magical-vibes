@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardEffect;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +29,8 @@ class DiscardCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
                 resolveEffect(gd, entry, effect);
 
                 assertThat(gd.discardCausedByOpponent).isFalse();
-                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt());
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), anyInt(),
+                        any(DiscardFollowUp.class));
             }
 
             @Test
@@ -41,7 +43,8 @@ class DiscardCardEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), eq(2));
+                verify(playerInputService).beginDiscardChoice(eq(gd), eq(player1Id), eq(2),
+                        any(DiscardFollowUp.class));
             }
 
             @Test
