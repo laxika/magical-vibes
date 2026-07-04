@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -82,7 +81,7 @@ class CombatDeclarationInteractionHandlersTest {
 
             registry.begin(gd, new PendingInteraction.AttackerDeclaration(PLAYER1_ID));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.ATTACKER_DECLARATION);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.AttackerDeclaration.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             AvailableAttackersMessage msg = (AvailableAttackersMessage) messageCaptor.getValue();
             assertThat(msg.attackerIndices()).containsExactly(0, 2);
@@ -149,7 +148,7 @@ class CombatDeclarationInteractionHandlersTest {
 
             registry.begin(gd, new PendingInteraction.BlockerDeclaration(PLAYER2_ID));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.BLOCKER_DECLARATION);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.BlockerDeclaration.class);
             verify(sessionManager).sendToPlayer(PLAYER2_ID, message);
         }
 

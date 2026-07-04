@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -85,7 +84,7 @@ class RevealedHandChoiceInteractionHandlerTest {
 
         registry.begin(gd, choice(List.of(0, 1), "Choose a card to put on top of Player2's library."));
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
         ChooseFromRevealedHandMessage msg = (ChooseFromRevealedHandMessage) messageCaptor.getValue();
         assertThat(msg.cards()).containsExactly(view1, view2);

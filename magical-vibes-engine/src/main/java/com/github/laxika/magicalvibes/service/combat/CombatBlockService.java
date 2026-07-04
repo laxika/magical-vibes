@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -142,7 +141,7 @@ public class CombatBlockService {
      * Validates and processes a player's blocker declaration.
      */
     public CombatResult declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.BLOCKER_DECLARATION)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class) == null) {
             throw new IllegalStateException("Not awaiting blocker declaration");
         }
 

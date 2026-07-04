@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -41,11 +40,6 @@ public class ScryInteractionHandler implements InteractionHandler<PendingInterac
     @Override
     public Class<PendingInteraction.Scry> handledType() {
         return PendingInteraction.Scry.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.SCRY;
     }
 
     @Override

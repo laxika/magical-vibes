@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -306,7 +306,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.getDrawService().resolveDrawCard(gd, player1.getId());
 
         // Should be awaiting permanent choice for the emblem trigger target
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
 
         // Choose the opponent's bears
         harness.handlePermanentChosen(player1, bearsId);
@@ -340,7 +340,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.getDrawService().resolveDrawCard(gd, player1.getId());
 
         // No valid targets — emblem trigger should be skipped
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 

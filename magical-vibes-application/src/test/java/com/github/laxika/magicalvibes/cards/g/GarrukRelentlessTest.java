@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -240,7 +240,7 @@ class GarrukRelentlessTest extends BaseCardTest {
                     .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
             // Library search should be awaiting input
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.LIBRARY_SEARCH)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
 
             // Choose the creature from library
             gs.handleLibraryCardChosen(gd, player1, 0);
@@ -267,7 +267,7 @@ class GarrukRelentlessTest extends BaseCardTest {
             assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
 
             // Should be awaiting a permanent choice (sacrifice selection)
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
 
             // Choose creature1 to sacrifice
             harness.handlePermanentChosen(player1, creature1.getId());
@@ -277,7 +277,7 @@ class GarrukRelentlessTest extends BaseCardTest {
                     .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
             // Library search should be awaiting input
-            assertThat(gd.interaction.isAwaitingInput(AwaitingInput.LIBRARY_SEARCH)).isTrue();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null).isTrue();
 
             // Choose the creature from library
             gs.handleLibraryCardChosen(gd, player1, 0);

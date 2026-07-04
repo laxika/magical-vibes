@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -121,7 +121,7 @@ class GeralfsMessengerTest extends BaseCardTest {
 
         // Bolt killed the 3/2 Messenger; undying returned it with a +1/+1 counter and its
         // ETB ability is now asking for an opponent target.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         Permanent messenger = messengerOnBattlefield();
         assertThat(messenger).isNotNull();
@@ -140,7 +140,7 @@ class GeralfsMessengerTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         // Choose the opponent as the target of the returned Messenger's ETB.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveUntilInputOrEmpty();
 

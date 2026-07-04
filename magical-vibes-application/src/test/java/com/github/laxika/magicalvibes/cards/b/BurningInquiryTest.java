@@ -91,7 +91,7 @@ class BurningInquiryTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(3);
 
         // Should NOT be awaiting any input (random discard doesn't prompt)
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test

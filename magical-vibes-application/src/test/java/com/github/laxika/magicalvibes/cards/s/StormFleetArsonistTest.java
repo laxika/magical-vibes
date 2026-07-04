@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -92,7 +92,7 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Opponent should be prompted to choose which permanent to sacrifice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(gd.pendingForcedSacrificeCount).isEqualTo(1);
         assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player2.getId());
 
@@ -116,7 +116,7 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve ETB trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no permanents to sacrifice"));
     }
 

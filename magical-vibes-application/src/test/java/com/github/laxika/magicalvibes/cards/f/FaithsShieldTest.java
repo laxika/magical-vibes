@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -64,7 +64,7 @@ class FaithsShieldTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isTrue();
         harness.handleListChoice(player1, "RED");
 
         List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
@@ -91,7 +91,7 @@ class FaithsShieldTest extends BaseCardTest {
         harness.castInstant(player1, 0, targetId);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isTrue();
         harness.handleListChoice(player1, "WHITE");
 
         // The controller gains protection from the chosen color.
@@ -117,7 +117,7 @@ class FaithsShieldTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, List.of(0));
         harness.passBothPriorities();
 
@@ -163,7 +163,7 @@ class FaithsShieldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.gameLog).anyMatch(log -> log.contains("fizzles"));
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class) != null).isFalse();
         assertThat(gd.playerProtectionFromColorsUntilEndOfTurn.getOrDefault(player1.getId(), new HashSet<>()))
                 .doesNotContain(CardColor.WHITE, CardColor.RED, CardColor.BLUE, CardColor.BLACK, CardColor.GREEN);
     }

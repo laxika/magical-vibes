@@ -37,10 +37,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.BlockerDeclaration {
 
     // ------------------------------------------------------------------
-    // Generic interaction kinds, migrated one at a time from the legacy
-    // AwaitingInput / InteractionContext machinery. Each record carries
-    // everything needed to prompt the deciding player and apply the answer
-    // (dispatched via the engine's InteractionHandlerRegistry).
+    // Generic interaction kinds. Each record carries everything needed to
+    // prompt the deciding player and apply the answer (dispatched via the
+    // engine's InteractionHandlerRegistry).
     // ------------------------------------------------------------------
 
     /** "Choose a value for X" (e.g. Vigil for the Lost's ETB payment, Jaya's rummage count). */

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -88,7 +88,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         // Resolve ETB trigger → may prompt
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -159,7 +159,7 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The may ability should still trigger (the may question is asked regardless)
-        if (gd.interaction.awaitingInputType() == AwaitingInput.MAY_ABILITY_CHOICE) {
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
             // Accept — but inner effect finds no historic cards, so nothing happens
             harness.handleMayAbilityChosen(player1, true);
         }

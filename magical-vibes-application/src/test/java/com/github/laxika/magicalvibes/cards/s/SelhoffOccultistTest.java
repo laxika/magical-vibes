@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -59,7 +59,7 @@ class SelhoffOccultistTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → Occultist dies → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -90,7 +90,7 @@ class SelhoffOccultistTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → Bears die → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -118,7 +118,7 @@ class SelhoffOccultistTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → Bears die → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());

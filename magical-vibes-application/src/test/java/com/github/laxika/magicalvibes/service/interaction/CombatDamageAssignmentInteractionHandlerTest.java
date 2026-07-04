@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CombatDamageTarget;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -77,7 +76,7 @@ class CombatDamageAssignmentInteractionHandlerTest {
 
         registry.begin(gd, assignment(attackerId, blockerId));
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
         CombatDamageAssignmentNotification msg = (CombatDamageAssignmentNotification) messageCaptor.getValue();
         assertThat(msg.attackerIndex()).isEqualTo(2);

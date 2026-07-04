@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -92,7 +91,7 @@ class SettleTheWreckageTest extends BaseCardTest {
         castSettleTheWreckage(player1, player2);
         harness.passBothPriorities(); // resolve Settle
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         // Only basic lands should be offered
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND));
@@ -111,7 +110,7 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         // Pick first land
         gs.handleLibraryCardChosen(gd, player2, 0);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick second land
         gs.handleLibraryCardChosen(gd, player2, 0);
@@ -153,9 +152,9 @@ class SettleTheWreckageTest extends BaseCardTest {
 
         // Should be able to pick 3 lands (one per exiled creature)
         gs.handleLibraryCardChosen(gd, player2, 0); // pick 1
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         gs.handleLibraryCardChosen(gd, player2, 0); // pick 2
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         gs.handleLibraryCardChosen(gd, player2, 0); // pick 3
 
         // All 3 exiled, 3 lands found
@@ -181,7 +180,7 @@ class SettleTheWreckageTest extends BaseCardTest {
         // No creatures exiled
         assertThat(exiledCardsOwnedBy(player2)).isEmpty();
         // No library search initiated
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 
@@ -201,7 +200,7 @@ class SettleTheWreckageTest extends BaseCardTest {
         // Creature is exiled
         assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
         // No search prompt since no basic lands
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no basic land cards"));
     }
 
@@ -219,7 +218,7 @@ class SettleTheWreckageTest extends BaseCardTest {
         // Creature is exiled
         assertThat(exiledCardsOwnedBy(player2)).hasSize(1);
         // No search prompt
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.d.DanithaCapashenParagon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GrunnTheLonelyKing;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -46,7 +45,7 @@ class MoxAmberTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // No legendary creatures or planeswalkers — no mana produced, no color choice
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(whiteBefore);
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(greenBefore);
     }
@@ -62,7 +61,7 @@ class MoxAmberTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Only white legendary creature — auto-adds white mana, no choice needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(whiteBefore + 1);
     }
 
@@ -75,7 +74,7 @@ class MoxAmberTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
@@ -93,7 +92,7 @@ class MoxAmberTest extends BaseCardTest {
         harness.handleListChoice(player1, "GREEN");
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(greenBefore + 1);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -107,7 +106,7 @@ class MoxAmberTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Only red planeswalker — auto-adds red mana
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(redBefore + 1);
     }
 
@@ -120,7 +119,7 @@ class MoxAmberTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Non-legendary creature should not count — no mana produced
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(0);
     }
 
@@ -146,7 +145,7 @@ class MoxAmberTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
 
         // Opponent's legendary creature should not count
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(0);
     }
 }

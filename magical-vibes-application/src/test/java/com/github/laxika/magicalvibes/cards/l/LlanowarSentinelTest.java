@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -41,7 +40,7 @@ class LlanowarSentinelTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Llanowar Sentinel"));
 
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
@@ -55,7 +54,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, false);
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
         assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
     }
@@ -70,7 +69,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (can't pay)
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(countSentinelsOnBattlefield()).isEqualTo(1);
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("can't pay {1}{G}"));
     }
@@ -85,7 +84,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (pays mana, shows search)
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.getName().equals("Llanowar Sentinel"));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();

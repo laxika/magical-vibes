@@ -196,7 +196,7 @@ public class ExampleCard extends Card {
 advanceToUpkeep(player1);
 // 3. Resolve stack → MayEffect prompts
 harness.passBothPriorities();
-assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 // 4. Accept or decline
 harness.handleMayAbilityChosen(player1, true);  // or false to decline
 // 5. Inner effect now resolves (may trigger further interaction)
@@ -399,9 +399,9 @@ public class YourLookAtTopEffectHandler implements NormalEffectHandlerBean {
 **Test flow** for the complete interaction:
 ```java
 harness.passBothPriorities();                                    // effect resolves
-assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 harness.getGameService().handleLibraryCardChosen(gd, player1, 0);  // choose first match (or -1 to decline)
-assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 harness.getGameService().handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, ...));  // order remaining
 ```
 

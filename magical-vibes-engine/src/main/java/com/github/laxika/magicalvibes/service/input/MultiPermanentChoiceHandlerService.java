@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
@@ -65,7 +64,7 @@ public class MultiPermanentChoiceHandlerService {
     private final AnimationSupport animationSupport;
 
     public void handleMultiplePermanentsChosen(GameData gameData, Player player, List<UUID> permanentIds) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_PERMANENT_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class) == null) {
             throw new IllegalStateException("Not awaiting multi-permanent choice");
         }
         PendingInteraction.MultiPermanentChoice multiPermanentChoice =

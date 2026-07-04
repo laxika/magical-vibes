@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -37,11 +36,6 @@ public class MultiZoneExileChoiceInteractionHandler
     @Override
     public Class<PendingInteraction.MultiZoneExileChoice> handledType() {
         return PendingInteraction.MultiZoneExileChoice.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.MULTI_ZONE_EXILE_CHOICE;
     }
 
     @Override

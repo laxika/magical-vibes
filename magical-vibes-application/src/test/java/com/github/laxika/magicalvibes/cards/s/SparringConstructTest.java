@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -68,7 +67,7 @@ class SparringConstructTest extends BaseCardTest {
                     .anyMatch(c -> c.getName().equals("Sparring Construct"));
 
             // Controller should be prompted to choose a target creature
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
@@ -114,7 +113,7 @@ class SparringConstructTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // No valid targets — trigger should be skipped
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
         }
 
@@ -133,7 +132,7 @@ class SparringConstructTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // All creatures dead — no valid targets for "creature you control"
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
         }
     }

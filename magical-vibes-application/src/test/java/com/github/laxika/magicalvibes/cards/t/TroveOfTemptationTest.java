@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -80,7 +80,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Declaring no attackers should fail
         assertThatThrownBy(() -> gs.declareAttackers(gd, player2, List.of()))
@@ -101,7 +101,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gs.declareAttackers(gd, player2, List.of(0));
 
@@ -126,7 +126,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Declaring just one attacker should succeed (unlike Curse of Nightly Hunt which requires ALL)
         gs.declareAttackers(gd, player2, List.of(1));
@@ -147,7 +147,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Controller's creatures should NOT be forced
         gs.declareAttackers(gd, player1, List.of());
@@ -169,7 +169,7 @@ class TroveOfTemptationTest extends BaseCardTest {
 
         // All creatures are tapped — no attackable creatures, so step is skipped
         // (handleDeclareAttackersStep returns without setting ATTACKER_DECLARATION)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.ATTACKER_DECLARATION);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class)).isNull();
     }
 
     @Test
@@ -188,7 +188,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Now opponent can choose not to attack
         gs.declareAttackers(gd, player2, List.of());

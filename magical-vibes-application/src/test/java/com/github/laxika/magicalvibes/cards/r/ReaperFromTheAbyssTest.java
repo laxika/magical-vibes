@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -58,7 +58,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         // Should be awaiting target selection
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the opponent's Grizzly Bears as target
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
@@ -90,7 +90,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No target selection should be prompted
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Bears should still be alive
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -115,7 +115,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No target selection since there are no valid non-Demon creatures
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Both Reapers should still be alive
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -140,7 +140,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         // Advance to end step
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose own Grizzly Bears as target
         UUID bearsId = harness.getPermanentId(player1, "Grizzly Bears");
@@ -171,7 +171,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         // Player 1 (Reaper controller) should be prompted for target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
         harness.handlePermanentChosen(player1, bearsId);
@@ -210,7 +210,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the remaining creature as target
         harness.handlePermanentChosen(player1, elk.getId());

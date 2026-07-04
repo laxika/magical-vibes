@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -173,7 +173,7 @@ class LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandlerTest
 
                 lookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffectHandler.resolve(gd, entry, new LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect());
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

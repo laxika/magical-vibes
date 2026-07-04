@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -62,7 +61,7 @@ public class ChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.COLOR_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class) == null) {
             throw new IllegalStateException("Not awaiting color choice");
         }
         PendingInteraction.ColorChoice colorChoice =
@@ -846,7 +845,7 @@ public class ChoiceHandlerService {
     }
 
     public void handleMultiZoneExileCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_ZONE_EXILE_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class) == null) {
             throw new IllegalStateException("Not awaiting multi-zone exile choice");
         }
         PendingInteraction.MultiZoneExileChoice ctx =

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -37,11 +36,6 @@ public class HandTopBottomChoiceInteractionHandler
     @Override
     public Class<PendingInteraction.HandTopBottomChoice> handledType() {
         return PendingInteraction.HandTopBottomChoice.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.HAND_TOP_BOTTOM_CHOICE;
     }
 
     @Override

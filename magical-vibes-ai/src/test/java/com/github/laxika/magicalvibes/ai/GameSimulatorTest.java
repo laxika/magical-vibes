@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.ai;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
@@ -249,7 +248,7 @@ class GameSimulatorTest {
     private void setUpBlockerDeclaration(Player defender, Player attacker) {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.forceActivePlayer(attacker);
-        gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(defender.getId()), AwaitingInput.BLOCKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(defender.getId()));
     }
 
     @Nested

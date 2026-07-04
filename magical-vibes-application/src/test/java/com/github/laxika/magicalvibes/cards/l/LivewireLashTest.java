@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Shunt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -100,7 +99,7 @@ class LivewireLashTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
 
         // Trigger should prompt player1 (creature controller) to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
@@ -167,7 +166,7 @@ class LivewireLashTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
 
         // No trigger should fire - spell resolves normally without prompting
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Trigger does NOT fire when spell targets a player =====
@@ -188,7 +187,7 @@ class LivewireLashTest extends BaseCardTest {
         harness.castInstant(player1, 0, player2.getId());
 
         // No trigger - player target, not creature target
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Trigger fires when equipped creature is targeted by damage spell =====
@@ -208,7 +207,7 @@ class LivewireLashTest extends BaseCardTest {
         harness.castInstant(player1, 0, creature.getId());
 
         // Trigger should prompt player1 to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Player1 targets player2
@@ -267,7 +266,7 @@ class LivewireLashTest extends BaseCardTest {
         harness.castInstant(player1, 0, otherCreature.getId());
 
         // No Livewire Lash trigger yet - the spell targets otherCreature, not the equipped one
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Player1 passes priority, player2 casts Shunt to redirect Boomerang
         harness.passPriority(player1);
@@ -278,13 +277,13 @@ class LivewireLashTest extends BaseCardTest {
 
         // Resolve Shunt - prompts player2 to choose new target
         harness.passBothPriorities();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Player2 retargets Boomerang onto player1's equipped creature
         harness.handlePermanentChosen(player2, equippedCreature.getId());
 
         // Livewire Lash trigger should now fire - prompts player1 to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
 
         // Player1 targets player2 with the 2 damage

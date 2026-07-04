@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -44,8 +44,8 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
     }
 
     @Test
@@ -56,8 +56,8 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the Efreet itself as own target
         harness.handlePermanentChosen(player1, efreet.getId());
@@ -82,8 +82,8 @@ class CapriciousEfreetTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, bears.getId());
 
         // Step 2: multi-permanent choice for opponent targets
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
     }
 
     @Test
@@ -207,8 +207,8 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.interaction.awaitingInputType())
-                .isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // The only valid own target should be the Efreet itself (not the land)
         // Choosing the Efreet should work

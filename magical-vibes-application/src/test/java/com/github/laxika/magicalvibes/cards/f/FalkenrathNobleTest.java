@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -57,7 +57,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → Noble dies → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -88,7 +88,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());
@@ -116,7 +116,7 @@ class FalkenrathNobleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock → bears die → death trigger
 
         // Player1 is prompted to choose a target player
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose opponent as target
         harness.handlePermanentChosen(player1, player2.getId());

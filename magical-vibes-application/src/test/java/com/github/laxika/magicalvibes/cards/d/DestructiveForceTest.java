@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -104,7 +104,7 @@ class DestructiveForceTest extends BaseCardTest {
 
         // Player1 (active player, APNAP first) must choose 5 of 7 lands.
         // Player2's lands are deferred — all sacrifices happen simultaneously per ruling.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(gd.pendingForcedSacrificeCount).isEqualTo(5);
         assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player1.getId());
 
@@ -150,7 +150,7 @@ class DestructiveForceTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // First player in APNAP order is prompted (active player = player1)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player1.getId());
 
         // First player chooses 5 lands — no sacrifice happens yet (deferred)
@@ -165,7 +165,7 @@ class DestructiveForceTest extends BaseCardTest {
                 .filter(p -> p.getCard().hasType(CardType.LAND)).count()).isEqualTo(7);
 
         // Second player should now be prompted
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player2.getId());
 
         // Second player chooses 5 lands — now ALL chosen lands are sacrificed simultaneously

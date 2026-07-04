@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -77,7 +77,7 @@ class BertaWiseExtrapolatorTest extends BaseCardTest {
 
             GameData localGd = harness.getGameData();
             assertThat(berta.getPlusOnePlusOneCounters()).isEqualTo(1);
-            assertThat(localGd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+            assertThat(localGd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
 
             int before = localGd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE);
             harness.handleListChoice(player1, "BLUE");

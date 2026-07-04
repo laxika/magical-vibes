@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -55,7 +54,7 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Manually begin the may ability interaction
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -86,14 +85,14 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
         harness.handleMayAbilityChosen(player1, true);
 
         // Stack entry created, pass priorities to resolve
         harness.passBothPriorities();
 
         // Should be in LIBRARY_SEARCH state
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose to exile the first card (index 0 = Island)
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -132,13 +131,13 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
         harness.handleMayAbilityChosen(player1, true);
 
         // Pass priorities to resolve
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose not to exile (-1)
         gs.handleLibraryCardChosen(gd, player1, -1);
@@ -147,7 +146,7 @@ class PsychicSurgeryTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(exileSizeBefore);
 
         // Should be in LIBRARY_REORDER state to reorder the 2 cards on top
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 
         // Reorder: put them back in order [0, 1] (Island on top, Forest second)
         gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1));
@@ -176,14 +175,14 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
         harness.handleMayAbilityChosen(player1, true);
 
         // Pass priorities to resolve — should handle empty library gracefully
         harness.passBothPriorities();
 
         // No library search should be initiated since library is empty
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -206,13 +205,13 @@ class PsychicSurgeryTest extends BaseCardTest {
 
         // Begin and accept may ability
         PendingMayAbility pending = gd.pendingMayAbilities.getFirst();
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()), AwaitingInput.MAY_ABILITY_CHOICE);
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(pending.controllerId(), pending.description(), pending.manaCost()));
         harness.handleMayAbilityChosen(player1, true);
 
         // Pass priorities to resolve
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Exile the only card
         gs.handleLibraryCardChosen(gd, player1, 0);

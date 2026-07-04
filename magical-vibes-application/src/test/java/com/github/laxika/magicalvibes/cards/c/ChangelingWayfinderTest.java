@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -79,7 +78,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect → may prompt
 
         // May ability prompt is pending
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
@@ -96,7 +95,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Inner effect resolved inline — library search prompt appears immediately
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     }
 
     @Test
@@ -110,7 +109,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
@@ -141,7 +140,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore - 1);
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // Log mentions the reveal
@@ -192,7 +191,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions declining
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("chooses not to take a card"));
@@ -211,7 +210,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false); // decline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).noneMatch(entry -> entry.contains("searches their library"));
     }
 
@@ -232,7 +231,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no basic land cards"));
     }
 
@@ -249,7 +248,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }
 
@@ -269,7 +268,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }

@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 
 import com.github.laxika.magicalvibes.cards.v.Vivisection;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -96,7 +95,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
     }
 
@@ -155,7 +154,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // AI has a 2/2
         Permanent aiBears = new Permanent(new GrizzlyBears());
@@ -181,7 +180,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         gd.playerLifeTotals.put(human.getId(), 4);
 
@@ -321,7 +320,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // AI has Berserkers of Blood Ridge (4/4 must-attack)
         Permanent berserkers = new Permanent(new BerserkersOfBloodRidge());
@@ -346,7 +345,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gd.playerLifeTotals.put(human.getId(), 20);
 
         // AI has Berserkers (4/4 must-attack) and Bears (2/2 optional)
@@ -658,7 +657,7 @@ class MediumAiDecisionEngineTest {
 
             // Simulate mana ability triggering awaiting input (e.g. Treasure color choice)
             Mockito.doAnswer(inv -> {
-                mockGd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+                mockGd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
                 return null;
             }).when(mockMessageHandler).handleTapPermanent(any(), any());
 
@@ -715,7 +714,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(human.getId());
 
@@ -781,7 +780,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()), AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()));
 
         ai.handleMessage("AVAILABLE_ATTACKERS", "");
 
@@ -937,7 +936,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         // Opponent controls Trove of Temptation
         Permanent trove = new Permanent(new TroveOfTemptation());
@@ -1008,7 +1007,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.setAwaitingInput(null);
+        gd.interaction.clearAwaitingInput();
         gd.stack.clear();
         gd.priorityPassedBy.add(human.getId());
 

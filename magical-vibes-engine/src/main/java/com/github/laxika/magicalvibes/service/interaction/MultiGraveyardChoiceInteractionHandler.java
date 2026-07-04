@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -35,11 +34,6 @@ public class MultiGraveyardChoiceInteractionHandler
     @Override
     public Class<PendingInteraction.MultiGraveyardChoice> handledType() {
         return PendingInteraction.MultiGraveyardChoice.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.MULTI_GRAVEYARD_CHOICE;
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -187,7 +186,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 // Active player (player1) should be prompted first
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
                 // Player2 should be in the pending queue
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).containsExactly(player2Id);
@@ -255,7 +254,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 // Player1 was skipped, player2 is prompted
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
@@ -277,7 +276,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 // Player1 was skipped, player2 is prompted
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
             }
 
@@ -297,7 +296,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 
@@ -327,7 +326,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 // Player1's search was prevented (no tax paid), player2 gets to search (tax paid)
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
             }
 
@@ -350,7 +349,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
                 assertThat(result).isTrue();
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }

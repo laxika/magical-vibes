@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -697,6 +698,20 @@ public class GameTestHarness {
             gameData.priorityPassedBy.remove(player.getId());
         }
         gameData.interaction.clearAwaitingInput();
+    }
+
+    /** Marks the attacker-declaration interaction active for the current active player (test-state shortcut). */
+    public void beginAttackerDeclarationInput() {
+        gameData.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gameData.activePlayerId));
+    }
+
+    /** Marks the blocker-declaration interaction active for the defending (non-active) player (test-state shortcut). */
+    public void beginBlockerDeclarationInput() {
+        java.util.UUID defenderId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(gameData.activePlayerId))
+                .findFirst()
+                .orElse(null);
+        gameData.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(defenderId));
     }
 
     public void forceActivePlayer(Player player) {

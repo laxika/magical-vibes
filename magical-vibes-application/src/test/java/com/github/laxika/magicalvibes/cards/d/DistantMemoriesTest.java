@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -60,7 +59,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
     }
@@ -82,7 +81,7 @@ class DistantMemoriesTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Should now be awaiting opponent's may ability choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
@@ -116,7 +115,7 @@ class DistantMemoriesTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Should now be awaiting opponent's may ability choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
@@ -183,7 +182,7 @@ class DistantMemoriesTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Should NOT be in library search mode (library was empty)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         // Log should mention empty library
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("it is empty"));
     }

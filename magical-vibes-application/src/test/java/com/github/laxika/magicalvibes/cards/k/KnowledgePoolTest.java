@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -143,7 +143,7 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.stack).noneMatch(se -> se.getCard().getName().equals("Counsel of the Soratami"));
 
         // Player should be presented with a choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
     }
 
     // ===== Player picks from pool =====
@@ -196,7 +196,7 @@ class KnowledgePoolTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(poolSizeBefore + 1);
 
         // Interaction should be cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== No re-trigger =====
@@ -252,7 +252,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No choice should be presented (original spell gone)
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Pool should be unchanged
         assertThat(gd.getCardsExiledByPermanent(kpPermId)).hasSize(poolSizeBefore);
@@ -273,7 +273,7 @@ class KnowledgePoolTest extends BaseCardTest {
 
         // The original spell (Counsel) gets added to pool but the "other" filter
         // removes the just-exiled card, and only lands remain eligible → no choice
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== "Other" filter =====
@@ -291,7 +291,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve KP trigger
 
         // Player should be offered only the Shock (not the just-exiled Counsel)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
 
         var validIds = gd.interaction.activeInteraction(
                 com.github.laxika.magicalvibes.model.PendingInteraction.KnowledgePoolCastChoice.class).validCardIds();
@@ -326,7 +326,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Trigger should fizzle — no choice presented
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Original spell should still be on stack (not exiled)
         assertThat(gd.stack).anyMatch(se -> se.getCard().getName().equals("Counsel of the Soratami"));
@@ -382,7 +382,7 @@ class KnowledgePoolTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(shock.getId()));
 
         // Should be waiting for target selection (permanent choice)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose target — Grizzly Bears
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -147,7 +146,7 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
                 eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
                 // Only opponent (player2) should be prompted, not the controller (player1)
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
@@ -172,7 +171,7 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
 
                 eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 }

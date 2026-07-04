@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -140,7 +140,7 @@ class LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandlerTest {
                 lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler.resolve(gd, entry, effect);
 
                 // No matching permanent names â†’ reorder remaining to bottom
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
             }
 
             @Test
@@ -163,7 +163,7 @@ class LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandlerTest {
 
                 lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

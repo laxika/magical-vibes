@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -79,8 +78,7 @@ public class GameService {
      * is the declaring player. Per CR 508.1i, mana abilities may be activated during this window.
      */
     private boolean isAttackTaxManaPayment(GameData gameData, Player player) {
-        return gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)
-                && gameData.interaction.activeInteraction() instanceof PendingInteraction.AttackerDeclaration ad
+        return gameData.interaction.activeInteraction() instanceof PendingInteraction.AttackerDeclaration ad
                 && ad.activePlayerId().equals(player.getId());
     }
 

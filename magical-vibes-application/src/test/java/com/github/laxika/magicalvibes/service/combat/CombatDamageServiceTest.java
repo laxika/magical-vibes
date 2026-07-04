@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -812,8 +812,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            assertThat(gameData.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+            assertThat(gameData.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
             assertThatThrownBy(() -> combatDamageService.handleCombatDamageAssigned(
                     gameData, player1, 0, Map.of(
@@ -833,8 +833,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            assertThat(gameData.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+            assertThat(gameData.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
             assertThatThrownBy(() -> combatDamageService.handleCombatDamageAssigned(
                     gameData, player1, 0, Map.of(
@@ -854,8 +854,8 @@ class CombatDamageServiceTest {
 
             combatDamageService.resolveCombatDamage(gameData);
 
-            assertThat(gameData.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+            assertThat(gameData.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
             combatDamageService.handleCombatDamageAssigned(gameData, player1, 0, Map.of(
                     blocker1.getId(), 1,

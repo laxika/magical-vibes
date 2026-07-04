@@ -1035,13 +1035,9 @@ public class GameData {
         // MAY_ABILITY_CHOICE window).
         target.interaction.setPermanentChoiceContext(source.permanentChoiceContext());
 
-        if (source.awaitingInputType() == null) {
-            return; // default state, nothing to copy
-        }
-
         // The active interaction record carries everything (immutable, shallow copy)
         if (source.activeInteraction() != null) {
-            target.interaction.beginInteraction(source.activeInteraction(), source.awaitingInputType());
+            target.interaction.beginInteraction(source.activeInteraction());
         }
     }
 }

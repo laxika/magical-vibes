@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -143,7 +143,7 @@ class NimDeathmantleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock, creature dies
 
         // Should be prompted with may ability to pay {4}
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Accept and pay
         harness.handleMayAbilityChosen(player1, true);
@@ -182,7 +182,7 @@ class NimDeathmantleTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve Shock, opponent's creature dies
 
         // Should NOT be prompted with may ability (opponent's creature, not in our graveyard)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test
@@ -202,7 +202,7 @@ class NimDeathmantleTest extends BaseCardTest {
         harness.castInstant(player1, 0, bears.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Decline
         harness.handleMayAbilityChosen(player1, false);

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -60,7 +59,7 @@ class ConundrumSphinxTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities(); // resolve trigger
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOf(ChoiceContext.EachPlayerCardNameRevealChoice.class);
@@ -76,7 +75,7 @@ class ConundrumSphinxTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Lightning Bolt");
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
                 .isInstanceOf(ChoiceContext.EachPlayerCardNameRevealChoice.class);
@@ -245,7 +244,7 @@ class ConundrumSphinxTest extends BaseCardTest {
         harness.handleListChoice(player1, "Lightning Bolt");
         harness.handleListChoice(player2, "Grizzly Bears");
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
     }
 
@@ -256,7 +255,7 @@ class ConundrumSphinxTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player, attackerIndices);
     }
 

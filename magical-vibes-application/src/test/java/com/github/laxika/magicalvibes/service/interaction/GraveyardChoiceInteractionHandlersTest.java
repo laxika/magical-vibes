@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -75,7 +74,7 @@ class GraveyardChoiceInteractionHandlersTest {
                             "Return a creature card from your graveyard to your hand.")
                     .build());
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseCardFromGraveyardMessage msg = (ChooseCardFromGraveyardMessage) messageCaptor.getValue();
             assertThat(msg.cardIndices()).containsExactly(0, 2);
@@ -137,8 +136,8 @@ class GraveyardChoiceInteractionHandlersTest {
                     PLAYER1_ID, List.of(0, 1),
                     "Choose a creature card from your graveyard to exile as an activation cost."));
 
-            assertThat(gd.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE);
+            assertThat(gd.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.GraveyardExileCostChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseCardFromGraveyardMessage msg = (ChooseCardFromGraveyardMessage) messageCaptor.getValue();
             assertThat(msg.cardIndices()).containsExactly(0, 1);

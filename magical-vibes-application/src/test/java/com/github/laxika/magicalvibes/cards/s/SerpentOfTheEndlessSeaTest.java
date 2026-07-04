@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -149,7 +148,7 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
         gs.declareAttackers(gd, player1, List.of(serpentIndex));
@@ -166,7 +165,7 @@ class SerpentOfTheEndlessSeaTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
 
         int serpentIndex = gd.playerBattlefields.get(player1.getId()).indexOf(serpent);
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(serpentIndex)))

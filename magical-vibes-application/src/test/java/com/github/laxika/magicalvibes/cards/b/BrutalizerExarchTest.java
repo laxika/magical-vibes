@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -56,7 +55,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             GameData gd = harness.getGameData();
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .anyMatch(p -> p.getCard().getName().equals("Brutalizer Exarch"));
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
             // Only creature cards should be shown
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .allMatch(c -> c.hasType(CardType.CREATURE));
@@ -98,7 +97,7 @@ class BrutalizerExarchTest extends BaseCardTest {
 
             // Deck should be shuffled but same size (no card moved)
             assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -114,7 +113,7 @@ class BrutalizerExarchTest extends BaseCardTest {
 
             // No creatures in library, so search finds nothing
             GameData gd = harness.getGameData();
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         }
     }
 

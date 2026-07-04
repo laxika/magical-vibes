@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.s;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BottleGnomes;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -57,7 +56,7 @@ class SpireSerpentTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
@@ -98,7 +97,7 @@ class SpireSerpentTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         gs.declareAttackers(gd, player1, List.of(serpentIndex));
 
@@ -147,7 +146,7 @@ class SpireSerpentTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()));
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(serpentIndex)))
                 .isInstanceOf(IllegalStateException.class)

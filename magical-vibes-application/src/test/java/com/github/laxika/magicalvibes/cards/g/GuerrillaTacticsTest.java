@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.d.Distress;
 import com.github.laxika.magicalvibes.cards.m.MindRot;
 import com.github.laxika.magicalvibes.cards.s.Sift;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -160,7 +159,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
 
         // Guerrilla Tactics' discard trigger should prompt player2 to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
     }
 
@@ -265,7 +264,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.handleCardChosen(player2, 0);
 
         // Guerrilla Tactics' discard trigger should prompt player2 to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
 
         // Player2 chooses player1 as target
@@ -299,7 +298,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0); // Discard the Guerrilla Tactics
 
         // No trigger — self-discard does not activate the ability
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
@@ -378,7 +377,7 @@ class GuerrillaTacticsTest extends BaseCardTest {
 
         // Megrim deals 2 damage to player2 (the discarding player)
         // Guerrilla Tactics trigger prompts player2 to choose any target
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Player2 targets player1 with the 4 damage
         harness.handlePermanentChosen(player2, player1.getId());

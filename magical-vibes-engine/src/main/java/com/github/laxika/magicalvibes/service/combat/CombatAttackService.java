@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -142,7 +141,7 @@ public class CombatAttackService {
      * Validates and processes a player's attacker declaration.
      */
     public CombatResult declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.AttackerDeclaration.class) == null) {
             throw new IllegalStateException("Not awaiting attacker declaration");
         }
         if (!player.getId().equals(gameData.activePlayerId)) {

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -190,7 +189,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Game pauses for discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
@@ -214,7 +213,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Discard does nothing, no input needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         // But lands still untap (per MTG ruling)
         assertThat(land.isTapped()).isFalse();
     }
@@ -297,7 +296,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Discard prompt appears
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
 
         // Discard happened
@@ -334,7 +333,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // No discard prompt
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Hand unchanged
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
@@ -384,7 +383,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Game pauses for discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
 
         harness.handleCardChosen(player2, 0);
@@ -421,7 +420,7 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
         resolveCombat();
 
         // Discard prompt appears
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player2, 0);
 
         // Discard happened

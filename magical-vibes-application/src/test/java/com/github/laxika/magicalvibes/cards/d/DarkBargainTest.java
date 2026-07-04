@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -77,7 +77,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
     }
 
     @Test
@@ -171,7 +171,7 @@ class DarkBargainTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         harness.handleMultipleCardsChosen(player1, List.of(card0.getId(), card1.getId()));
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -246,7 +246,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Both cards should go directly to hand (2 cards <= toHandCount of 2)
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(cardA, cardB);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         // Self-damage should still apply
@@ -268,7 +268,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(singleCard);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
@@ -288,7 +288,7 @@ class DarkBargainTest extends BaseCardTest {
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         // Self-damage should still apply even with empty library
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore - 2);

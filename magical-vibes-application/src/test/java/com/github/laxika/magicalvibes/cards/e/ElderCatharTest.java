@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ChampionOfTheParish;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -98,7 +97,7 @@ class ElderCatharTest extends BaseCardTest {
                     .anyMatch(c -> c.getName().equals("Elder Cathar"));
 
             // Controller should be prompted to choose a target creature
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
@@ -172,7 +171,7 @@ class ElderCatharTest extends BaseCardTest {
 
             // No valid targets (player1 has no creatures, can't target opponent's)
             // The trigger should be skipped
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
         }
 
@@ -191,7 +190,7 @@ class ElderCatharTest extends BaseCardTest {
             GameData gd = harness.getGameData();
 
             // All creatures dead — no valid targets for "creature you control"
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
         }
 

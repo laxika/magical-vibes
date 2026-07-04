@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -129,7 +128,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("library is empty")));
             }
 
@@ -144,7 +143,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(1); // untouched
             }
 
@@ -164,7 +163,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 // Cards should be back on the bottom of the library
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(2);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(s -> s.contains("no eligible cards")));
@@ -191,7 +190,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNotNull();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).randomRemainingToBottom()).isTrue();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).validCardIds()).containsExactly(dino.getId());
@@ -213,7 +212,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
                 // Only 1 card was in library, so only 1 revealed
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(1);
             }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -212,7 +211,7 @@ public class ExileSupport {
      * Called from GameService.handleMultipleCardsChosen dispatch.
      */
     public void handleMirrorOfFateChoice(GameData gameData, Player player, List<UUID> cardIds) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MIRROR_OF_FATE_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MirrorOfFateChoice.class) == null) {
             throw new IllegalStateException("Not awaiting Mirror of Fate choice");
         }
         PendingInteraction.MirrorOfFateChoice ctx =

@@ -212,7 +212,7 @@ void deathTriggerPromptsForTarget() {
 
     assertThat(gd.playerGraveyards.get(player1.getId()))
             .anyMatch(c -> c.getName().equals("CardName"));
-    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+    assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
     assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
 }
 ```
@@ -230,7 +230,7 @@ void deathTriggerResolvesOnTarget() {
     setupCombatWhereCardDies("CardName");
     harness.passBothPriorities(); // CardName dies
 
-    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+    assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
     // Choose target — handlePermanentChosen puts the triggered ability on the stack
     harness.handlePermanentChosen(player1, bearsId);
@@ -282,7 +282,7 @@ void deathTriggerSkipsWithNoCreatures() {
     harness.passBothPriorities(); // Wrath resolves — all creatures die
 
     // No creature-only trigger prompt (no valid targets)
-    assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+    assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
 }
 ```
@@ -330,7 +330,7 @@ void deathTriggerTargetsPlayer() {
     setupCombatWhereCardDies("CardName");
     harness.passBothPriorities(); // CardName dies
 
-    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+    assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
     // Target a player (pass player UUID instead of permanent UUID)
     harness.handlePermanentChosen(player1, player2.getId());
@@ -356,7 +356,7 @@ void deathTriggerAfterWrathTargetsPlayer() {
     harness.passBothPriorities();
 
     // Any-target trigger should still fire — players are valid targets
-    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+    assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
     harness.handlePermanentChosen(player1, player2.getId());
     harness.passBothPriorities();
@@ -587,7 +587,7 @@ void upkeepPromptsMayAbility() {
     advanceToUpkeep(player1);
     harness.passBothPriorities(); // resolve MayEffect from stack
 
-    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+    assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     assertThat(gd.interaction.awaitingMayAbilityPlayerId()).isEqualTo(player1.getId());
 }
 ```
@@ -621,7 +621,7 @@ void acceptingOffersMatchingCards() {
     harness.passBothPriorities();
     harness.handleMayAbilityChosen(player1, true);
 
-    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+    assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
     assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
     // Assert only expected cards are offered
     assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(EXPECTED_COUNT);
@@ -648,7 +648,7 @@ void choosingPutsOnBattlefieldThenReorders() {
             .anyMatch(p -> p.getCard().getName().equals("Expected Card Name"));
 
     // Remaining cards in reorder phase
-    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+    assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
     assertThat(gd.interaction.libraryView().reorderCards()).hasSize(REMAINING_COUNT);
 }
 ```
@@ -669,7 +669,7 @@ void decliningToChooseReordersAll() {
     harness.getGameService().handleLibraryCardChosen(gd, player1, -1);
 
     assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
-    assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+    assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 }
 ```
 

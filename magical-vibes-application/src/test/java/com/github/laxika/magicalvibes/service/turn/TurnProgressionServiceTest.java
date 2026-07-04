@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -516,7 +516,7 @@ class TurnProgressionServiceTest {
         @Test
         @DisplayName("Clears awaiting input")
         void clearsAwaitingInput() {
-            gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+            gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
             turnProgressionService.advanceTurn(gd);
 
@@ -846,7 +846,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Does not process may abilities when awaiting input")
         void doesNotProcessMayAbilitiesWhenAwaitingInput() {
             gd.pendingMayAbilities.add(newMayAbility());
-            gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
 
             turnProgressionService.resolveAutoPass(gd);
 

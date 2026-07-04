@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -189,7 +188,7 @@ class PlayerInputServiceTest {
         void setsInteractionState() {
             svc.beginCardChoice(gd, PLAYER1_ID, List.of(0, 1, 2), "Choose a card");
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
         }
 
         @Test
@@ -222,7 +221,7 @@ class PlayerInputServiceTest {
 
             svc.beginTargetedCardChoice(gd, PLAYER1_ID, List.of(0), "Choose", targetId);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
         }
 
         @Test
@@ -251,7 +250,7 @@ class PlayerInputServiceTest {
 
             svc.beginPermanentChoice(gd, PLAYER1_ID, List.of(permId), "Pick a permanent");
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         }
 
         @Test
@@ -284,7 +283,7 @@ class PlayerInputServiceTest {
 
             svc.beginAnyTargetChoice(gd, PLAYER1_ID, List.of(permId), List.of(PLAYER2_ID), "Choose target");
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         }
 
         @Test
@@ -326,7 +325,7 @@ class PlayerInputServiceTest {
 
             svc.beginMultiPermanentChoice(gd, PLAYER1_ID, List.of(perm1), 3, "Choose up to 3");
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         }
 
         @Test
@@ -359,7 +358,7 @@ class PlayerInputServiceTest {
 
             svc.beginMultiGraveyardChoice(gd, PLAYER1_ID, List.of(card), 2, "Choose cards");
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         }
 
         @Test
@@ -391,7 +390,7 @@ class PlayerInputServiceTest {
 
             svc.beginColorChoice(gd, PLAYER1_ID, permId, null);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COLOR_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         }
 
         @Test
@@ -797,7 +796,7 @@ class PlayerInputServiceTest {
 
             svc.beginMultiZoneExileChoice(gd, PLAYER1_ID, List.of(card), PLAYER2_ID, "Bear");
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_ZONE_EXILE_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiZoneExileChoice.class);
         }
 
         @Test
@@ -837,7 +836,7 @@ class PlayerInputServiceTest {
 
             svc.beginImprintFromHandChoice(gd, PLAYER1_ID, List.of(0, 1), "Choose artifact", sourcePermId);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.IMPRINT_FROM_HAND_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
         }
 
         @Test
@@ -871,7 +870,7 @@ class PlayerInputServiceTest {
 
             svc.beginExileFromHandChoice(gd, PLAYER1_ID, sourcePermId, 1);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
         }
 
         @Test
@@ -904,7 +903,7 @@ class PlayerInputServiceTest {
 
             svc.beginDiscardChoice(gd, PLAYER1_ID, 1);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseCardFromHandMessage msg = (ChooseCardFromHandMessage) messageCaptor.getValue();
             assertThat(msg.cardIndices()).containsExactly(0, 1);
@@ -916,7 +915,7 @@ class PlayerInputServiceTest {
         void parameterizedVersionUsesProvidedArgs() {
             svc.beginDiscardChoice(gd, PLAYER1_ID, List.of(1, 3), "Discard a land", 1);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseCardFromHandMessage msg = (ChooseCardFromHandMessage) messageCaptor.getValue();
             assertThat(msg.cardIndices()).containsExactly(1, 3);
@@ -938,7 +937,7 @@ class PlayerInputServiceTest {
             svc.processNextMayAbility(gd);
 
             verifyNoInteractions(sessionManager);
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -962,7 +961,7 @@ class PlayerInputServiceTest {
 
             svc.processNextMayAbility(gd);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             MayAbilityMessage msg = (MayAbilityMessage) messageCaptor.getValue();
             assertThat(msg.prompt()).isEqualTo("May draw a card");

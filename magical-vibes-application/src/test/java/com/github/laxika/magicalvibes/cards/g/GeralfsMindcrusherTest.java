@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -142,7 +142,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         // Undying returned it with a +1/+1 counter and its ETB ability now asks for a target.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         Permanent mindcrusher = mindcrusherOnBattlefield();
         assertThat(mindcrusher).isNotNull();
@@ -169,7 +169,7 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
 
         // Choose the opponent as the target of the returned Mindcrusher's ETB mill.
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveUntilInputOrEmpty();
 

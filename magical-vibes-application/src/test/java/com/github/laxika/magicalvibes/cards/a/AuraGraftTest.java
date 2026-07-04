@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -128,7 +127,7 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(aura);
 
         // Should prompt for permanent choice to reattach
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.AuraGraft.class);
         assertThat(((PermanentChoiceContext.AuraGraft) gd.interaction.permanentChoiceContext()).auraPermanentId()).isEqualTo(aura.getId());
@@ -152,7 +151,7 @@ class AuraGraftTest extends BaseCardTest {
 
         assertThat(aura.getAttachedTo()).isEqualTo(myCreature.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     @Test
@@ -232,7 +231,7 @@ class AuraGraftTest extends BaseCardTest {
         harness.castInstant(player1, 0, aura.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         // Only the other land should be a valid reattach target — not the creature
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(otherLand.getId())
@@ -258,7 +257,7 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
 
         // Should prompt for reattachment
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         harness.handlePermanentChosen(player1, myCreature2.getId());
 
@@ -283,7 +282,7 @@ class AuraGraftTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(aura);
 
         // No permanent choice should be prompted (only creature is the current target)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(gd.interaction.permanentChoiceContext()).isNull();
 
         // Aura stays attached to the same creature

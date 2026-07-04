@@ -14,10 +14,6 @@ import java.util.UUID;
  * as {@code EffectHandlerRegistry}), so handler beans never create dependency cycles with
  * the services that dispatch through the registry.
  *
- * <p>Interaction kinds migrate here one at a time from the legacy {@code AwaitingInput} /
- * {@code InteractionContext} machinery; callers fall back to the legacy path whenever
- * {@link #dispatchAnswer} or {@link #replayPrompt} report the active interaction is not
- * registry-managed.
  */
 public class InteractionHandlerRegistry {
 
@@ -45,7 +41,7 @@ public class InteractionHandlerRegistry {
         if (handler == null) {
             throw new IllegalArgumentException("No interaction handler registered for " + interaction.getClass().getName());
         }
-        gameData.interaction.beginInteraction(interaction, handler.legacyInputType());
+        gameData.interaction.beginInteraction(interaction);
         UUID decider = handler.decidingPlayerId(interaction);
         handler.prompt(gameData, interaction, resolveMessageRecipient(gameData, decider));
     }
@@ -60,7 +56,7 @@ public class InteractionHandlerRegistry {
         if (handler == null) {
             throw new IllegalArgumentException("No interaction handler registered for " + interaction.getClass().getName());
         }
-        gameData.interaction.beginInteraction(interaction, handler.legacyInputType());
+        gameData.interaction.beginInteraction(interaction);
     }
 
     /** Prompts the active interaction's deciding player (mind-control recipient resolved). */

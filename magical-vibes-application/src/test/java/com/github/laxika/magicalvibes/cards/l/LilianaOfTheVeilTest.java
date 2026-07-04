@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -130,7 +129,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
 
         // Active player (player1) discards first — enters discard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
     }
 
     // ===== -2 ability: Target player sacrifices a creature =====
@@ -171,7 +170,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.SacrificeCreature.class);
     }
@@ -209,7 +208,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 6 - 6
         // Controller should be prompted to choose permanents for pile 1
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(gd.pendingPileSeparation).isTrue();
     }
 
@@ -232,7 +231,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Step 2: Target player (player2) should be prompted to choose a pile
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         // Target player chooses Yes = sacrifice pile 1 (bears)
         harness.handleMayAbilityChosen(player2, true);

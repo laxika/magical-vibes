@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyDay;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.StoneGolem;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,7 +55,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
@@ -71,7 +70,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
             harness.handleGraveyardCardChosen(player1, 0);
 
             assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -91,7 +90,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             // No valid targets — should skip graveyard choice
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -105,7 +104,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             // Plains is a permanent but not a creature — should skip graveyard choice
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -119,7 +118,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
 
             // No valid targets — should skip graveyard choice
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -133,7 +132,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, false);
 
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
             assertThat(gd.playerGraveyards.get(player1.getId()))
                     .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         }
@@ -147,7 +146,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         }
 
         @Test
@@ -164,7 +163,7 @@ class BishopOfRebirthTest extends BaseCardTest {
             harness.passBothPriorities();
             harness.handleMayAbilityChosen(player1, true);
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
             // Only Grizzly Bears should be a valid choice
             harness.handleGraveyardCardChosen(player1, 0);
@@ -187,7 +186,7 @@ class BishopOfRebirthTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 }

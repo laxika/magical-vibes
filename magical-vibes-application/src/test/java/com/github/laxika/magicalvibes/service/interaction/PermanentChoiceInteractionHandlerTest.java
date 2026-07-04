@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -65,7 +64,7 @@ class PermanentChoiceInteractionHandlerTest {
 
         registry.begin(gd, choice(List.of(perm1, perm2), List.of(), null, "Choose a creature to sacrifice."));
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
         ChoosePermanentMessage msg = (ChoosePermanentMessage) messageCaptor.getValue();
         assertThat(msg.permanentIds()).containsExactly(perm1, perm2);

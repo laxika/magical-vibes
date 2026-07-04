@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.Peek;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -104,7 +103,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(karn.getCounterCount(CounterType.LOYALTY)).isEqualTo(10); // 6 + 4
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
             assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
         }
 
@@ -120,7 +119,7 @@ class KarnLiberatedTest extends BaseCardTest {
             // Target player (player2) chooses which card to exile
             harness.handleCardChosen(player2, 0); // exile Grizzly Bears
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
             assertThat(gd.playerHands.get(player2.getId()).getFirst().getName()).isEqualTo("Forest");
 
@@ -156,7 +155,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.activateAbility(player1, 0, 0, null, player1.getId());
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
             assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
 
             harness.handleCardChosen(player1, 1); // exile Forest
@@ -176,7 +175,7 @@ class KarnLiberatedTest extends BaseCardTest {
             harness.passBothPriorities();
 
             // No exile prompt since hand is empty
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to exile"));
         }
 

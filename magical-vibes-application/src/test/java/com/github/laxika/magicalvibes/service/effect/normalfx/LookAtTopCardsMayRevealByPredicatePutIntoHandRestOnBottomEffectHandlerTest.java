@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -142,7 +142,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
                 lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
                 // With 2 cards and no creatures, should begin library reorder (to bottom)
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
             }
 
             @Test
@@ -159,7 +159,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
 
                 // Single card goes back to deck without reorder prompt
                 assertThat(gd.playerDecks.get(player1Id)).hasSize(1);
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
             }
 
             @Test
@@ -180,7 +180,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
 
                 lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 
@@ -202,7 +202,7 @@ class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandlerTest
 
                 lookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MirrorOfFateEffect;
@@ -91,7 +91,7 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting mirror of fate choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MIRROR_OF_FATE_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MirrorOfFateChoice.class);
     }
 
     @Test
@@ -158,7 +158,7 @@ class MirrorOfFateTest extends BaseCardTest {
                 List.of(exiledBears.getId(), exiledElves.getId()));
 
         // Should be awaiting library reorder (player chooses the order)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 
         // Cards should be removed from exile already
         assertThat(gd.getPlayerExiledCards(player1.getId()))
@@ -250,14 +250,14 @@ class MirrorOfFateTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MIRROR_OF_FATE_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MirrorOfFateChoice.class);
 
         // Choose 7 of the 10
         List<UUID> chosen = exiledCards.stream().limit(7).map(Card::getId).toList();
         harness.handleMultipleCardsChosen(player1, chosen);
 
         // Should be awaiting library reorder for the 7 cards
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REORDER);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
 
         // Complete reorder: keep original order [0, 1, 2, 3, 4, 5, 6]
         gs.handleLibraryCardsReordered(gd, player1, List.of(0, 1, 2, 3, 4, 5, 6));

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -169,7 +168,7 @@ class MerfolkLooterTest extends BaseCardTest {
         // After drawing, hand should have 2 cards (original + drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         // Should be awaiting discard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player1.getId());
         assertThat(gd.gameLog).anyMatch(log -> log.contains("draws a card"));
     }
@@ -195,7 +194,7 @@ class MerfolkLooterTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
         // No longer awaiting input
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
     }
 
@@ -233,7 +232,7 @@ class MerfolkLooterTest extends BaseCardTest {
         // No card drawn, hand still has 1 card
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         // Should still be awaiting discard
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to draw"));
     }
 
@@ -248,7 +247,7 @@ class MerfolkLooterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No card drawn, hand still empty - discard should be skipped
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no cards to discard"));
     }
 

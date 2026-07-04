@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -61,7 +60,7 @@ public class GraveyardChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.GRAVEYARD_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
             throw new IllegalStateException("Not awaiting graveyard choice");
         }
         PendingInteraction.GraveyardChoice graveyardChoice =
@@ -278,7 +277,7 @@ public class GraveyardChoiceHandlerService {
     }
 
     public void handleMultipleCardsChosen(GameData gameData, Player player, List<UUID> cardIds) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MULTI_GRAVEYARD_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class) == null) {
             throw new IllegalStateException("Not awaiting multi-graveyard choice");
         }
         PendingInteraction.MultiGraveyardChoice multiGraveyardChoice =

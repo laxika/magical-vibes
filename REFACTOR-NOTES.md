@@ -656,15 +656,57 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 `awaitingInput` enum value, the `activeInteraction` record, and the independent
 pre-seed/aura/equipment fields.
 
-### Stage 4 — `AwaitingInput` enum teardown
+### ✅ Stage 4 — DONE: `AwaitingInput` enum teardown
 
-Remove the `AwaitingInput` enum: `isAwaitingInput(KIND)` checks become
-`activeInteraction(Record.class) != null` (or a registry-derived kind lookup),
-`beginInteraction` loses its enum parameter, and the dispatch-miss legacy fallbacks in
-`GameService` (`declareAttackers`/`declareBlockers`/`handleCombatDamageAssigned`) collapse.
-Wire messages must not change — derive any legacy enum names needed by the frontend from the
-interaction record class. Watch the enum-only test states (`setAwaitingInput(...)` in the AI
-suites) and `EffectResolutionService`'s re-run check.
+The enum is deleted. It never reached the wire (zero references in `magical-vibes-networking`
+and the frontend — `GameBroadcastService` only ever used the no-arg `isAwaitingInput()`), so
+the teardown was purely internal:
+
+- **`InteractionState`**: the `awaitingInput` field, `awaitingInputType()`, `setAwaitingInput`,
+  and per-kind `isAwaitingInput(KIND)` are gone; `isAwaitingInput()` now means
+  `activeInteraction != null`; `beginInteraction(record)` is single-argument.
+  `GameData.copyInteractionInto` copies the pre-seed carrier + the active record only
+  (enum-only states no longer exist, so the null-enum early return went away).
+- **`InteractionHandler.legacyInputType()` removed** from the interface and all ~25 handlers
+  (`HandCardChoiceInteractionHandlers.Base` lost its `legacyType` field/ctor param);
+  the registry's `begin`/`beginWithoutPrompt` call the single-arg `beginInteraction`.
+- **Per-kind checks → record checks** (12 sites): the entry validations in
+  `AbilityActivationService` / `ChoiceHandlerService` (×2) / `GraveyardChoiceHandlerService`
+  (×2) / `LibraryChoiceHandlerService` / `MayAbilityHandlerService` /
+  `MultiPermanentChoiceHandlerService` / `ExileSupport`, the combat services'
+  `declareAttackers`/`declareBlockers` guards, `EffectResolutionService`'s
+  X_VALUE_CHOICE re-run check, and `AiDecisionEngine`'s blocker-rejection fallback all read
+  `activeInteraction(PendingInteraction.X.class)`. `GameService.isAttackTaxManaPayment`
+  dropped its now-redundant enum conjunct (the `instanceof` subsumes it).
+- **The `GameService` dispatch-miss fallbacks stay** (`declareAttackers`/`declareBlockers`/
+  `handleCombatDamageAssigned`): they are no longer a migration crutch but the genuine
+  stray-message path — a declaration/assignment arriving with no matching interaction active
+  takes the same legacy body, whose combat-flow validation now throws off the record check
+  with the identical error texts (attackers keep the re-send-and-rethrow quirk).
+- **AI**: `GameSimulator`'s three enum switches (`getLegalActions`, `autoResolveDecisions`,
+  `resolveInteraction`) now switch on the active record with type patterns —
+  behavior-identical since enum value ↔ record class is a bijection; the enum's
+  `CARD_CHOICE, DISCARD_CHOICE` multi-label became two record cases sharing extracted
+  helpers (`addHandChoiceActions` / `resolveHandCardChoice`), matching exactly the two kinds
+  the enum label covered (TARGETED/EXILE/IMPRINT/DISCARD_COST still fall to `default`, as
+  legacy). `getInteractionPlayer` lost its dead enum parameter. `AiManaManager`'s three
+  "did a mana ability trigger a NEW prompt" compares became record-**class** compares
+  (`interactionKind` helper) — byte-equivalent to the enum compare.
+- **Tests** (~700 files, mechanical perl): `awaitingInputType()).isEqualTo(KIND)` →
+  `activeInteraction()).isInstanceOf(PendingInteraction.X.class)`;
+  `isNotEqualTo(KIND)` → `activeInteraction(PendingInteraction.X.class)).isNull()` (preserves
+  the legacy passes-when-nothing-active semantics — `isNotInstanceOf` would fail on null);
+  `awaitingInputType()).isNull()` → `activeInteraction()).isNull()`;
+  `beginInteraction(record, KIND)` → single-arg; `setAwaitingInput(null)` →
+  `clearAwaitingInput()`. The ~525 enum-only combat states
+  (`setAwaitingInput(ATTACKER/BLOCKER_DECLARATION)` before calling the declare entries) now
+  begin real records via new `GameTestHarness.beginAttackerDeclarationInput()` /
+  `beginBlockerDeclarationInput()` (active player / non-active defender — the record IDs are
+  not consulted by the answer path, which validates against `gd.activePlayerId`); the few
+  non-harness sites (AiManaManagerTest, Easy/Hard/MediumAi, TurnProgressionServiceTest,
+  AutoPassServiceTest, StackResolutionServiceTest) begin minimal real records inline
+  (presence/kind is all those tests exercise). agent-docs snippets updated
+  (TEST_RECIPES.md, CARD_IMPLEMENTATION_PLAYBOOK.md).
 
 ### Stage 5 — Effect-resolution resumption
 

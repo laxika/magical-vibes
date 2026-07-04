@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.ai.AiManaManager;
 import com.github.laxika.magicalvibes.ai.BoardEvaluator;
 import com.github.laxika.magicalvibes.ai.CombatSimulator;
 import com.github.laxika.magicalvibes.ai.SpellEvaluator;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -198,7 +197,7 @@ public class GameSimulator {
     public List<SimulationAction> getLegalActions(GameData gd, UUID playerId) {
         List<SimulationAction> actions = new ArrayList<>();
 
-        AwaitingInput awaitingInput = gd.interaction.awaitingInputType();
+        PendingInteraction awaitingInput = gd.interaction.activeInteraction();
 
         if (awaitingInput == null) {
             // Normal priority — can cast spells or pass
@@ -250,7 +249,7 @@ public class GameSimulator {
         }
 
         switch (awaitingInput) {
-            case ATTACKER_DECLARATION -> {
+            case PendingInteraction.AttackerDeclaration ignored -> {
                 List<Integer> availableIndices = combatAttackService.getAttackableCreatureIndices(gd, playerId);
                 List<Integer> mustAttackIndices = combatAttackService.getMustAttackIndices(gd, playerId, availableIndices);
                 // Use CombatSimulator to find best attackers, then also offer empty/must-only attack
@@ -274,7 +273,7 @@ public class GameSimulator {
                     actions.add(new SimulationAction.DeclareAttackers(availableIndices));
                 }
             }
-            case BLOCKER_DECLARATION -> {
+            case PendingInteraction.BlockerDeclaration ignored -> {
                 // Offer diverse blocking options for MCTS to explore:
                 // 1) No blocking at all
                 actions.add(new SimulationAction.DeclareBlockers(List.of()));
@@ -316,33 +315,22 @@ public class GameSimulator {
                     }
                 }
             }
-            case CARD_CHOICE, DISCARD_CHOICE -> {
-                if (gd.interaction.activeInteraction() instanceof PendingInteraction.HandChoice cardChoice
-                        && cardChoice.validIndices() != null) {
-                    for (int idx : cardChoice.validIndices()) {
-                        actions.add(new SimulationAction.ChooseCard(idx));
-                    }
-                }
-            }
-            case REVEALED_HAND_CHOICE -> {
-                var rhc = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-                if (rhc != null && rhc.validIndices() != null) {
+            case PendingInteraction.HandCardChoice cardChoice -> addHandChoiceActions(actions, cardChoice);
+            case PendingInteraction.DiscardChoice cardChoice -> addHandChoiceActions(actions, cardChoice);
+            case PendingInteraction.RevealedHandChoice rhc -> {
+                if (rhc.validIndices() != null) {
                     for (int idx : rhc.validIndices()) {
                         actions.add(new SimulationAction.ChooseCard(idx));
                     }
                 }
             }
-            case PERMANENT_CHOICE -> {
-                var permChoice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-                if (permChoice != null) {
-                    for (UUID id : permChoice.validIds()) {
-                        actions.add(new SimulationAction.ChoosePermanent(id));
-                    }
+            case PendingInteraction.PermanentChoice permChoice -> {
+                for (UUID id : permChoice.validIds()) {
+                    actions.add(new SimulationAction.ChoosePermanent(id));
                 }
             }
-            case COLOR_CHOICE -> {
-                var cc = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-                if (cc != null && cc.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
+            case PendingInteraction.ColorChoice cc -> {
+                if (cc.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     for (var kw : kgc.options()) {
                         actions.add(new SimulationAction.ChooseColor(kw.name()));
                     }
@@ -354,7 +342,7 @@ public class GameSimulator {
                     actions.add(new SimulationAction.ChooseColor("GREEN"));
                 }
             }
-            case MAY_ABILITY_CHOICE -> {
+            case PendingInteraction.MayAbilityChoice ignored -> {
                 actions.add(new SimulationAction.MayAbilityChoice(true));
                 actions.add(new SimulationAction.MayAbilityChoice(false));
             }
@@ -479,7 +467,7 @@ public class GameSimulator {
         for (int i = 0; i < maxIterations; i++) {
             if (isTerminal(gd)) return;
 
-            AwaitingInput awaiting = gd.interaction.awaitingInputType();
+            PendingInteraction awaiting = gd.interaction.activeInteraction();
             if (awaiting == null) {
                 // Check if we need to pass priority for the non-MCTS player
                 UUID priorityHolder = getPriorityPlayer(gd);
@@ -498,7 +486,7 @@ public class GameSimulator {
             }
 
             // Determine which player the interaction is for
-            UUID interactionPlayer = getInteractionPlayer(gd, awaiting);
+            UUID interactionPlayer = getInteractionPlayer(gd);
             if (interactionPlayer == null) return;
 
             Player resolvePlayer = new Player(interactionPlayer, gd.playerIdToName.getOrDefault(interactionPlayer, "AI"));
@@ -514,9 +502,9 @@ public class GameSimulator {
         }
     }
 
-    private void resolveInteraction(GameData gd, Player player, AwaitingInput awaiting, UUID mctsPlayerId) {
+    private void resolveInteraction(GameData gd, Player player, PendingInteraction awaiting, UUID mctsPlayerId) {
         switch (awaiting) {
-            case ATTACKER_DECLARATION -> {
+            case PendingInteraction.AttackerDeclaration ignored -> {
                 UUID pid = player.getId();
                 List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(pid, List.of());
                 List<Integer> available = new ArrayList<>();
@@ -537,123 +525,94 @@ public class GameSimulator {
                 }
                 gameService.declareAttackers(gd, player, attackers, null);
             }
-            case BLOCKER_DECLARATION -> {
+            case PendingInteraction.BlockerDeclaration ignored -> {
                 List<int[]> blockers = findBestBlockerAssignments(gd, player.getId());
                 List<BlockerAssignment> assignments = blockers.stream()
                         .map(a -> new BlockerAssignment(a[0], a[1]))
                         .toList();
                 gameService.declareBlockers(gd, player, assignments);
             }
-            case CARD_CHOICE, DISCARD_CHOICE -> {
-                if (gd.interaction.activeInteraction() instanceof PendingInteraction.HandChoice cc
-                        && cc.validIndices() != null && !cc.validIndices().isEmpty()) {
-                    // Pick lowest value card
-                    List<Card> hand = gd.playerHands.get(player.getId());
-                    int bestIdx = cc.validIndices().iterator().next();
-                    if (hand != null) {
-                        bestIdx = cc.validIndices().stream()
-                                .min(Comparator.comparingDouble(idx ->
-                                        spellEvaluator.estimateSpellValue(gd, hand.get(idx), player.getId())))
-                                .orElse(bestIdx);
-                    }
-                    gameService.handleCardChosen(gd, player, bestIdx);
-                }
-            }
-            case PERMANENT_CHOICE -> {
-                var pc = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-                if (pc != null && !pc.validIds().isEmpty()) {
+            case PendingInteraction.HandCardChoice cc -> resolveHandCardChoice(gd, player, cc);
+            case PendingInteraction.DiscardChoice cc -> resolveHandCardChoice(gd, player, cc);
+            case PendingInteraction.PermanentChoice pc -> {
+                if (!pc.validIds().isEmpty()) {
                     UUID chosen = pc.validIds().iterator().next();
                     gameService.handlePermanentChosen(gd, player, chosen);
                 }
             }
-            case COLOR_CHOICE -> {
-                var ccCtx = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-                if (ccCtx != null && ccCtx.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
+            case PendingInteraction.ColorChoice ccCtx -> {
+                if (ccCtx.context() instanceof ChoiceContext.KeywordGrantChoice kgc) {
                     gameService.handleListChoice(gd, player, kgc.options().getFirst().name());
                 } else {
                     gameService.handleListChoice(gd, player, "RED");
                 }
             }
-            case MAY_ABILITY_CHOICE -> gameService.handleMayAbilityChosen(gd, player, true);
-            case GRAVEYARD_CHOICE -> {
-                var gc = gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-                if (gc != null && gc.validIndices() != null && !gc.validIndices().isEmpty()) {
+            case PendingInteraction.MayAbilityChoice ignored -> gameService.handleMayAbilityChosen(gd, player, true);
+            case PendingInteraction.GraveyardChoice gc -> {
+                if (gc.validIndices() != null && !gc.validIndices().isEmpty()) {
                     gameService.handleGraveyardCardChosen(gd, player, gc.validIndices().iterator().next());
                 }
             }
-            case ACTIVATED_ABILITY_GRAVEYARD_EXILE_COST_CHOICE -> {
-                var gec = gd.interaction.activeInteraction(PendingInteraction.GraveyardExileCostChoice.class);
-                if (gec != null && gec.validIndices() != null && !gec.validIndices().isEmpty()) {
+            case PendingInteraction.GraveyardExileCostChoice gec -> {
+                if (gec.validIndices() != null && !gec.validIndices().isEmpty()) {
                     gameService.handleGraveyardCardChosen(gd, player, gec.validIndices().iterator().next());
                 }
             }
-            case MULTI_PERMANENT_CHOICE -> {
-                var mpc = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-                if (mpc != null && mpc.validIds() != null && !mpc.validIds().isEmpty()) {
+            case PendingInteraction.MultiPermanentChoice mpc -> {
+                if (mpc.validIds() != null && !mpc.validIds().isEmpty()) {
                     List<UUID> chosen = mpc.validIds().stream().limit(mpc.maxCount()).toList();
                     gameService.handleMultiplePermanentsChosen(gd, player, chosen);
                 }
             }
-            case MULTI_GRAVEYARD_CHOICE -> {
-                var mgc = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
-                if (mgc != null && !mgc.validCardIds().isEmpty()) {
+            case PendingInteraction.MultiGraveyardChoice mgc -> {
+                if (!mgc.validCardIds().isEmpty()) {
                     List<UUID> chosen = mgc.validCardIds().stream().limit(mgc.maxCount()).toList();
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
-            case MULTI_ZONE_EXILE_CHOICE -> {
-                var mzec = gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
-                if (mzec != null && mzec.validCardIds() != null && !mzec.validCardIds().isEmpty()) {
+            case PendingInteraction.MultiZoneExileChoice mzec -> {
+                if (mzec.validCardIds() != null && !mzec.validCardIds().isEmpty()) {
                     List<UUID> chosen = new ArrayList<>(mzec.validCardIds());
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
-            case MIRROR_OF_FATE_CHOICE -> {
-                var mfc = gd.interaction.activeInteraction(PendingInteraction.MirrorOfFateChoice.class);
-                if (mfc != null && mfc.validCardIds() != null && !mfc.validCardIds().isEmpty()) {
+            case PendingInteraction.MirrorOfFateChoice mfc -> {
+                if (mfc.validCardIds() != null && !mfc.validCardIds().isEmpty()) {
                     List<UUID> chosen = mfc.validCardIds().stream().limit(mfc.maxCount()).toList();
                     gameService.handleMultipleCardsChosen(gd, player, chosen);
                 }
             }
-            case COMBAT_DAMAGE_ASSIGNMENT -> {
-                var cda = gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
-                if (cda != null) {
-                    Map<UUID, Integer> assignments = autoAssignCombatDamage(cda);
-                    gameService.handleCombatDamageAssigned(gd, player, cda.attackerIndex(), assignments);
-                }
+            case PendingInteraction.CombatDamageAssignment cda -> {
+                Map<UUID, Integer> assignments = autoAssignCombatDamage(cda);
+                gameService.handleCombatDamageAssigned(gd, player, cda.attackerIndex(), assignments);
             }
-            case LIBRARY_SEARCH -> {
-                var ls = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
-                if (ls != null && ls.params().cards() != null && !ls.params().cards().isEmpty()) {
+            case PendingInteraction.LibrarySearch ls -> {
+                if (ls.params().cards() != null && !ls.params().cards().isEmpty()) {
                     gameService.handleLibraryCardChosen(gd, player, 0);
                 }
             }
-            case SCRY -> {
-                var sc = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
-                if (sc != null && sc.cards() != null) {
+            case PendingInteraction.Scry sc -> {
+                if (sc.cards() != null) {
                     List<Integer> topOrder = new ArrayList<>();
                     for (int k = 0; k < sc.cards().size(); k++) topOrder.add(k);
                     gameService.handleScryCompleted(gd, player, topOrder, List.of());
                 }
             }
-            case LIBRARY_REORDER -> {
-                var lr = gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class);
-                if (lr != null && lr.cards() != null) {
+            case PendingInteraction.LibraryReorder lr -> {
+                if (lr.cards() != null) {
                     List<Integer> order = new ArrayList<>();
                     for (int k = 0; k < lr.cards().size(); k++) order.add(k);
                     gameService.handleLibraryCardsReordered(gd, player, order);
                 }
             }
-            case REVEALED_HAND_CHOICE -> {
-                var rhc = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-                if (rhc != null && rhc.validIndices() != null && !rhc.validIndices().isEmpty()) {
+            case PendingInteraction.RevealedHandChoice rhc -> {
+                if (rhc.validIndices() != null && !rhc.validIndices().isEmpty()) {
                     gameService.handleCardChosen(gd, player, rhc.validIndices().iterator().next());
                 }
             }
-            case HAND_TOP_BOTTOM_CHOICE -> gameService.handleHandTopBottomChosen(gd, player, 0, 1);
-            case LIBRARY_REVEAL_CHOICE -> {
-                var lrc = gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
-                if (lrc != null && lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
+            case PendingInteraction.HandTopBottomChoice ignored -> gameService.handleHandTopBottomChosen(gd, player, 0, 1);
+            case PendingInteraction.LibraryRevealChoice lrc -> {
+                if (lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
                     if (lrc.lifeCostPerSelection() > 0) {
                         // Punisher reveal (e.g. Sword-Point Diplomacy): deny nothing (don't pay life)
                         gameService.handleMultipleCardsChosen(gd, player, List.of());
@@ -669,8 +628,31 @@ public class GameSimulator {
         }
     }
 
-    private UUID getInteractionPlayer(GameData gd, AwaitingInput awaiting) {
-        // Registry-managed interactions carry the decider on the active record
+    private static void addHandChoiceActions(List<SimulationAction> actions, PendingInteraction.HandChoice cardChoice) {
+        if (cardChoice.validIndices() != null) {
+            for (int idx : cardChoice.validIndices()) {
+                actions.add(new SimulationAction.ChooseCard(idx));
+            }
+        }
+    }
+
+    private void resolveHandCardChoice(GameData gd, Player player, PendingInteraction.HandChoice cc) {
+        if (cc.validIndices() != null && !cc.validIndices().isEmpty()) {
+            // Pick lowest value card
+            List<Card> hand = gd.playerHands.get(player.getId());
+            int bestIdx = cc.validIndices().iterator().next();
+            if (hand != null) {
+                bestIdx = cc.validIndices().stream()
+                        .min(Comparator.comparingDouble(idx ->
+                                spellEvaluator.estimateSpellValue(gd, hand.get(idx), player.getId())))
+                        .orElse(bestIdx);
+            }
+            gameService.handleCardChosen(gd, player, bestIdx);
+        }
+    }
+
+    private UUID getInteractionPlayer(GameData gd) {
+        // The active interaction record carries the decider
         PendingInteraction active = gd.interaction.activeInteraction();
         if (active != null) {
             return switch (active) {

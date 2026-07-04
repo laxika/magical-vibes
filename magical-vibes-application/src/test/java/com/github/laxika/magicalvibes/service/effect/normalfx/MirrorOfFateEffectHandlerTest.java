@@ -3,7 +3,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -215,7 +214,7 @@ class MirrorOfFateEffectHandlerTest {
                 Card libraryCard = createSorceryCard("Doom Blade");
                 gd.playerDecks.get(player1Id).add(libraryCard);
 
-                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(exiledCard.getId()), 7), AwaitingInput.MIRROR_OF_FATE_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(exiledCard.getId()), 7));
 
                 exileSupport.handleMirrorOfFateChoice(gd, player, List.of(exiledCard.getId()));
 
@@ -245,7 +244,7 @@ class MirrorOfFateEffectHandlerTest {
                 gd.addToExile(player1Id, card1);
                 gd.addToExile(player1Id, card2);
 
-                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(card1.getId(), card2.getId()), 1), AwaitingInput.MIRROR_OF_FATE_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(card1.getId(), card2.getId()), 1));
 
                 assertThatThrownBy(() ->
                         exileSupport.handleMirrorOfFateChoice(gd, player,
@@ -263,7 +262,7 @@ class MirrorOfFateEffectHandlerTest {
                 gd.addToExile(player1Id, card1);
                 gd.addToExile(player1Id, card2);
 
-                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(card1.getId(), card2.getId()), 7), AwaitingInput.MIRROR_OF_FATE_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.MirrorOfFateChoice(player1Id, List.of(card1.getId(), card2.getId()), 7));
 
                 exileSupport.handleMirrorOfFateChoice(gd, player,
                         List.of(card1.getId(), card2.getId()));

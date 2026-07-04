@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -34,11 +33,6 @@ public class LibrarySearchInteractionHandler
     @Override
     public Class<PendingInteraction.LibrarySearch> handledType() {
         return PendingInteraction.LibrarySearch.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.LIBRARY_SEARCH;
     }
 
     @Override

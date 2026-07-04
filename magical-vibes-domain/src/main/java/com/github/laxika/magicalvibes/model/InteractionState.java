@@ -5,10 +5,8 @@ import java.util.UUID;
 public class InteractionState {
 
     // --- Core state ---
-    private AwaitingInput awaitingInput;
-    /** The currently active interaction. While set, {@link #awaitingInput} carries the matching
-     *  legacy enum value (kept until the enum teardown stage) — the registry handler owns
-     *  prompting, answer handling, and reconnect replay. */
+    /** The currently active interaction — the registry handler owns prompting, answer
+     *  handling, and reconnect replay. */
     private PendingInteraction activeInteraction;
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
@@ -23,7 +21,6 @@ public class InteractionState {
      */
     public InteractionState deepCopy() {
         InteractionState copy = new InteractionState();
-        copy.awaitingInput = this.awaitingInput;
         copy.activeInteraction = this.activeInteraction;
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
@@ -38,32 +35,15 @@ public class InteractionState {
     // ========================================================================
 
     public boolean isAwaitingInput() {
-        return this.awaitingInput != null;
+        return this.activeInteraction != null;
     }
 
-    public AwaitingInput awaitingInputType() {
-        return this.awaitingInput;
-    }
-
-    public void setAwaitingInput(AwaitingInput inputType) {
-        this.awaitingInput = inputType;
-    }
-
-    public boolean isAwaitingInput(AwaitingInput inputType) {
-        return this.awaitingInput == inputType;
-    }
-
-    /**
-     * Marks the given registry-managed interaction as the currently active one. The legacy
-     * {@link AwaitingInput} value is set alongside it so enum-based awaiting checks keep
-     * working until the enum is removed.
-     */
-    public void beginInteraction(PendingInteraction interaction, AwaitingInput legacyType) {
+    /** Marks the given registry-managed interaction as the currently active one. */
+    public void beginInteraction(PendingInteraction interaction) {
         this.activeInteraction = interaction;
-        this.awaitingInput = legacyType;
     }
 
-    /** The active registry-managed interaction, or {@code null} when none (or a legacy kind) is active. */
+    /** The active registry-managed interaction, or {@code null} when none is active. */
     public PendingInteraction activeInteraction() {
         return this.activeInteraction;
     }
@@ -74,7 +54,6 @@ public class InteractionState {
     }
 
     public void clearAwaitingInput() {
-        this.awaitingInput = null;
         this.activeInteraction = null;
     }
 

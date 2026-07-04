@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -97,7 +96,7 @@ class BogardanFirefiendTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Bogardan Firefiend"));
 
         // Player1 should be prompted to choose a target creature
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
     }
 
@@ -113,7 +112,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         harness.passBothPriorities(); // Combat damage — Firefiend dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the surviving Grizzly Bears (2/2)
         harness.handlePermanentChosen(player1, bearsId);
@@ -150,7 +149,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         harness.passBothPriorities(); // Firefiend dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the 3/3 bear
         harness.handlePermanentChosen(player1, bigBearId);
@@ -175,7 +174,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         harness.passBothPriorities(); // Firefiend dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose own Grizzly Bears
         harness.handlePermanentChosen(player1, ownBearsId);
@@ -214,7 +213,7 @@ class BogardanFirefiendTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // No permanent choice should be prompted (no valid creature targets after Wrath)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         // Log should mention no valid targets
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
@@ -232,7 +231,7 @@ class BogardanFirefiendTest extends BaseCardTest {
         harness.passBothPriorities(); // Firefiend dies
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose target
         harness.handlePermanentChosen(player1, bearsId);

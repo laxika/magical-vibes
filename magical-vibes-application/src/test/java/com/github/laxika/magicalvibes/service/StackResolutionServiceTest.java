@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -265,7 +265,7 @@ class StackResolutionServiceTest {
             Card card = createCreature("ETB Creature");
             gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
             doAnswer(inv -> {
-                gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
                 return null;
             }).when(battlefieldEntryService).handleCreatureEnteredBattlefield(
                     any(), any(), any(), any(), anyBoolean(), anyInt(), anyBoolean(), any());

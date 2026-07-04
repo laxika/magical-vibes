@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -77,7 +76,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting library search with castable cards
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
 
@@ -168,7 +167,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // No castable cards (all lands) — should NOT be awaiting library search
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // All cards should be on bottom of library (random order)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
@@ -196,7 +195,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Grizzly Bears MV 2 > MV 1 → no castable cards
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     // ===== Does not trigger for spells not cast from hand =====
@@ -220,7 +219,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting library search (1 card revealed — Llanowar Elves MV 1 ≤ 1)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Choose Llanowar Elves (index 0) — cast without paying
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -263,7 +262,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // Should NOT be awaiting LIBRARY_REORDER (random order, no player interaction)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_REORDER);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryReorder.class)).isNull();
 
         // Remaining revealed card (GrizzlyBears) + extraForest + Mountain should be in library
         // GrizzlyBears was remaining after choosing LlanowarElves, placed on bottom
@@ -292,7 +291,7 @@ class SunbirdsInvocationTest extends BaseCardTest {
         // Library size unchanged (no cards revealed)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(deckSizeBefore);
         // Should not be awaiting library search
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     // ===== Opponent's spells don't trigger =====

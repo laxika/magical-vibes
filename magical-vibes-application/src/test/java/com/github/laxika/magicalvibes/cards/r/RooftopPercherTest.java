@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -77,7 +76,7 @@ class RooftopPercherTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Rooftop Percher"));
 
         // Graveyard target selection is pending (at trigger time, before ability goes on stack)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
 
@@ -123,7 +122,7 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions exile
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("exiles") && entry.contains("from graveyard"));
@@ -140,7 +139,7 @@ class RooftopPercherTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         // All valid IDs should be from player2's graveyard
         List<UUID> p2GraveyardIds = gd.playerGraveyards.get(player2.getId()).stream()
@@ -176,7 +175,7 @@ class RooftopPercherTest extends BaseCardTest {
                 + gd.getPlayerExiledCards(player2.getId()).size();
         assertThat(totalExiled).isEqualTo(1);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== ETB: choosing zero targets =====
@@ -202,7 +201,7 @@ class RooftopPercherTest extends BaseCardTest {
 
         // Life was still gained (ability resolves normally with 0 targets)
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== ETB with empty graveyards =====
@@ -222,7 +221,7 @@ class RooftopPercherTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(23);
 
         // No graveyard choice was needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Max count capping =====
@@ -238,7 +237,7 @@ class RooftopPercherTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(1);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds()).hasSize(1);
     }
@@ -327,7 +326,7 @@ class RooftopPercherTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve creature → target prompt
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of()))
                 .isInstanceOf(IllegalStateException.class)

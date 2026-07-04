@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -319,10 +319,10 @@ public class AiManaManager {
             return;
         }
 
-        // Track initial awaiting input so we only bail when a mana ability triggers
+        // Track the initial interaction kind so we only bail when a mana ability triggers
         // a NEW input prompt (e.g. color choice), not when we're already awaiting
-        // input for something else (e.g. ATTACKER_DECLARATION during attack tax payment).
-        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        // input for something else (e.g. attacker declaration during attack tax payment).
+        Class<?> initialInteractionKind = interactionKind(gameData);
         Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
         while (true) {
@@ -339,7 +339,7 @@ public class AiManaManager {
             if (cost.canPay(currentPool, costModifier)) {
                 return;
             }
-            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
+            if (interactionKind(gameData) != initialInteractionKind) {
                 return;
             }
         }
@@ -358,7 +358,7 @@ public class AiManaManager {
             return;
         }
 
-        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        Class<?> initialInteractionKind = interactionKind(gameData);
         Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
         while (true) {
@@ -375,7 +375,7 @@ public class AiManaManager {
             if (cost.canPayCreatureOnly(currentPool, costModifier)) {
                 return;
             }
-            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
+            if (interactionKind(gameData) != initialInteractionKind) {
                 return;
             }
         }
@@ -394,7 +394,7 @@ public class AiManaManager {
             return;
         }
 
-        AwaitingInput initialAwaitingInput = gameData.interaction.awaitingInputType();
+        Class<?> initialInteractionKind = interactionKind(gameData);
         Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
 
         while (true) {
@@ -411,7 +411,7 @@ public class AiManaManager {
             if (isXSpellPaid(cost, card, currentPool, xValue, costModifier)) {
                 return;
             }
-            if (gameData.interaction.awaitingInputType() != initialAwaitingInput) {
+            if (interactionKind(gameData) != initialInteractionKind) {
                 return;
             }
         }
@@ -819,5 +819,11 @@ public class AiManaManager {
             }
         }
         return 0;
+    }
+
+    /** The active interaction kind (record class), or {@code null} when none is active. */
+    private static Class<?> interactionKind(GameData gameData) {
+        PendingInteraction active = gameData.interaction.activeInteraction();
+        return active == null ? null : active.getClass();
     }
 }

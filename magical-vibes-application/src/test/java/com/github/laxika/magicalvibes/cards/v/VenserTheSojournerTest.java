@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -246,7 +246,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
 
         // Game should be awaiting permanent choice for the emblem trigger target
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
 
         // Choose the opponent's bears as the target
         harness.handlePermanentChosen(player1, bearsId);
@@ -283,7 +283,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         harness.castCreature(player2, 0);
 
         // Should NOT be awaiting permanent choice
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isFalse();
         // Just the creature spell on stack
         assertThat(gd.stack).hasSize(1);
     }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -77,7 +76,7 @@ class XValueChoiceInteractionHandlerTest {
         void setsInteractionState() {
             registry.begin(gd, choice(5));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.X_VALUE_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.XValueChoice.class);
             assertThat(gd.interaction.activeInteraction()).isEqualTo(choice(5));
         }
 

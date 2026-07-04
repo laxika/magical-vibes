@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -38,11 +37,6 @@ public class XValueChoiceInteractionHandler implements InteractionHandler<Pendin
     @Override
     public Class<PendingInteraction.XValueChoice> handledType() {
         return PendingInteraction.XValueChoice.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.X_VALUE_CHOICE;
     }
 
     @Override

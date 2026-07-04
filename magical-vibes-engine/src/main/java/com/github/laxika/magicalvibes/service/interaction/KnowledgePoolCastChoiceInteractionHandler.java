@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -39,11 +38,6 @@ public class KnowledgePoolCastChoiceInteractionHandler
     @Override
     public Class<PendingInteraction.KnowledgePoolCastChoice> handledType() {
         return PendingInteraction.KnowledgePoolCastChoice.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE;
     }
 
     @Override

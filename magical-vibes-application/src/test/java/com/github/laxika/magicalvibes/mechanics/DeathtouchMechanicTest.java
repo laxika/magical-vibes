@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.mechanics;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AvatarOfMight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -96,7 +96,7 @@ class DeathtouchMechanicTest extends BaseCardTest {
         // Advance to combat damage — needs manual assignment (2 blockers)
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
         // Assign 1 damage to each blocker (deathtouch makes 1 lethal)
         harness.handleCombatDamageAssigned(player1, 0, Map.of(
@@ -137,7 +137,7 @@ class DeathtouchMechanicTest extends BaseCardTest {
         // Advance to combat damage — needs manual assignment (trample)
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.COMBAT_DAMAGE_ASSIGNMENT);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.CombatDamageAssignment.class);
 
         // With deathtouch+trample, only 1 to blocker is needed, 7 tramples through
         // AvatarOfMight is 8/8

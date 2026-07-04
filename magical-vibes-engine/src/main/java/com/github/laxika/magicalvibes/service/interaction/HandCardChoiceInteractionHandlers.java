@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +15,7 @@ import java.util.UUID;
 /**
  * The six hand-card choice handlers (the legacy shared {@code InteractionContext.CardChoice}
  * family). Each kind sends the same {@code ChooseCardFromHandMessage} with the record's
- * begin-time indices and prompt; only the legacy enum value, the decline flag, and the
+ * begin-time indices and prompt; only the decline flag and the
  * per-kind "Awaiting …" log line differ, so they share a base class. Answers all arrive as
  * {@link InteractionAnswer.CardIndexChosen} and delegate to the legacy per-kind answer
  * methods on {@link CardChoiceHandlerService} / {@link AbilityActivationService}.
@@ -31,21 +30,14 @@ public final class HandCardChoiceInteractionHandlers {
             implements InteractionHandler<T> {
 
         private final SessionManager sessionManager;
-        private final AwaitingInput legacyType;
         private final boolean canDecline;
         private final String awaitingLogSuffix;
 
-        private Base(SessionManager sessionManager, AwaitingInput legacyType, boolean canDecline,
+        private Base(SessionManager sessionManager, boolean canDecline,
                      String awaitingLogSuffix) {
             this.sessionManager = sessionManager;
-            this.legacyType = legacyType;
             this.canDecline = canDecline;
             this.awaitingLogSuffix = awaitingLogSuffix;
-        }
-
-        @Override
-        public AwaitingInput legacyInputType() {
-            return legacyType;
         }
 
         @Override
@@ -82,7 +74,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         public HandCardChoiceInteractionHandler(SessionManager sessionManager,
                                                 CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, AwaitingInput.CARD_CHOICE, true, "to choose a card from hand");
+            super(sessionManager, true, "to choose a card from hand");
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -106,7 +98,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         public TargetedHandCardChoiceInteractionHandler(SessionManager sessionManager,
                                                         CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, AwaitingInput.TARGETED_CARD_CHOICE, true, "to choose a card from hand (targeted)");
+            super(sessionManager, true, "to choose a card from hand (targeted)");
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -130,7 +122,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         public DiscardChoiceInteractionHandler(SessionManager sessionManager,
                                                CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, AwaitingInput.DISCARD_CHOICE, false, "to choose a card to discard");
+            super(sessionManager, false, "to choose a card to discard");
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -154,7 +146,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         public ExileFromHandChoiceInteractionHandler(SessionManager sessionManager,
                                                      CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, AwaitingInput.EXILE_FROM_HAND_CHOICE, false, "to choose a card to exile from hand");
+            super(sessionManager, false, "to choose a card to exile from hand");
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -178,7 +170,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         public ImprintFromHandChoiceInteractionHandler(SessionManager sessionManager,
                                                        CardChoiceHandlerService cardChoiceHandlerService) {
-            super(sessionManager, AwaitingInput.IMPRINT_FROM_HAND_CHOICE, false, "to choose an artifact from hand to imprint");
+            super(sessionManager, false, "to choose an artifact from hand to imprint");
             this.cardChoiceHandlerService = cardChoiceHandlerService;
         }
 
@@ -205,7 +197,7 @@ public final class HandCardChoiceInteractionHandlers {
 
         public DiscardCostChoiceInteractionHandler(SessionManager sessionManager,
                                                    AbilityActivationService abilityActivationService) {
-            super(sessionManager, AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE, false, null);
+            super(sessionManager, false, null);
             this.abilityActivationService = abilityActivationService;
         }
 

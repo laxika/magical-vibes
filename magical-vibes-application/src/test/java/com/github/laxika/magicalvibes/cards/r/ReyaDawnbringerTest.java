@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -163,7 +163,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         advanceToUpkeepAndTrigger();
 
         // Inner effects resolve inline → graveyard choice prompt
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose the creature (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -184,7 +184,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
         advanceToUpkeepAndTrigger();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Decline with -1
         harness.handleGraveyardCardChosen(player1, -1);
@@ -231,7 +231,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
         advanceToUpkeepAndTrigger();
 
         // Inner effects resolved inline — no graveyard choice since graveyard is empty
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
     }
 
@@ -246,7 +246,7 @@ class ReyaDawnbringerTest extends BaseCardTest {
 
         advanceToUpkeepAndTrigger();
 
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
         assertThat(gd.gameLog).anyMatch(s -> s.contains("no creature cards in graveyard"));
         // HolyDay stays in graveyard untouched
         assertThat(gd.playerGraveyards.get(player1.getId()))

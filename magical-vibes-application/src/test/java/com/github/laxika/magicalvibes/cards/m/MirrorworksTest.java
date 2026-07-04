@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GlintHawkIdol;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,7 +44,7 @@ class MirrorworksTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayPayManaEffect from stack -> may prompt
 
         // Should be prompted with may ability to pay {2}
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     @Test
@@ -132,7 +132,7 @@ class MirrorworksTest extends BaseCardTest {
 
         // The token entering should NOT trigger Mirrorworks again (nontoken restriction)
         // Check that we don't have another may ability prompt
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.pendingMayAbilities).isEmpty();
     }
 
@@ -146,7 +146,7 @@ class MirrorworksTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve Mirrorworks spell
 
         // Should not prompt for may ability (no other artifact with the trigger)
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -84,7 +83,7 @@ class LibrarySearchInteractionHandlerTest {
 
         registry.begin(gd, search(cards, "Search your library for a basic land card to put into your hand.", true));
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
         ChooseCardFromLibraryMessage msg = (ChooseCardFromLibraryMessage) messageCaptor.getValue();
         assertThat(msg.cards()).hasSize(2);

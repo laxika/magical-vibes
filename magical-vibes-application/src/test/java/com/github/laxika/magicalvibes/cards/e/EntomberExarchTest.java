@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -84,7 +83,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -122,7 +121,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.REVEALED_HAND_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).choosingPlayerId()).isEqualTo(player1.getId());
             // Only instant (index 0) should be valid, creature (index 1) should not
             assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices()).containsExactly(0);
@@ -174,7 +173,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -188,7 +187,7 @@ class EntomberExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
             assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         }
 

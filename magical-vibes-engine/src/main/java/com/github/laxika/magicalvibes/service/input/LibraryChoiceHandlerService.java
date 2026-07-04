@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
@@ -76,7 +75,7 @@ public class LibraryChoiceHandlerService {
 
 
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.LIBRARY_SEARCH)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) == null) {
             throw new IllegalStateException("Not awaiting library search");
         }
         PendingInteraction.LibrarySearch activeSearch =

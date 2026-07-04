@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ColossalDreadmaw;
 import com.github.laxika.magicalvibes.cards.a.AncientBrontodon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -65,7 +65,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(13);
 
         // Should be awaiting library reveal choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Choose both Dinosaur creatures
         harness.handleMultipleCardsChosen(player1, List.of(dino1.getId(), dino2.getId()));
@@ -95,7 +95,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         resolveCombatWithGishath();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Choose nothing
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -121,7 +121,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         resolveCombatWithGishath();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         // Bears should not be selectable
         assertThatThrownBy(() ->
@@ -144,7 +144,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // No choice should be needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // All cards should be on the bottom of the library
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
@@ -161,7 +161,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         resolveCombatWithGishath();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
     }
 
@@ -177,7 +177,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
         resolveCombatWithGishath();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
 
         harness.handleMultipleCardsChosen(player1, List.of(dino.getId()));
 
@@ -221,7 +221,7 @@ class GishathSunsAvatarTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // No player damage = no trigger = no library reveal choice
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_REVEAL_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)).isNull();
         // Library should be untouched
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -36,11 +35,6 @@ public class AttackerDeclarationInteractionHandler
     @Override
     public Class<PendingInteraction.AttackerDeclaration> handledType() {
         return PendingInteraction.AttackerDeclaration.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.ATTACKER_DECLARATION;
     }
 
     @Override

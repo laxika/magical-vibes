@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BaronyVampire;
 import com.github.laxika.magicalvibes.cards.c.CoralMerfolk;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetCutthroat;
 import com.github.laxika.magicalvibes.cards.f.FathomFleetFirebrand;
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -142,7 +142,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting a graveyard choice for the Pirate
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose the first Pirate (index 0)
         harness.handleGraveyardCardChosen(player1, 0);
@@ -178,7 +178,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Frenzied Raptor"));
 
         // Should be awaiting graveyard choice for Pirate
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Choose Fathom Fleet Firebrand
         harness.handleGraveyardCardChosen(player1, 0);
@@ -205,7 +205,7 @@ class GrimCaptainsCallTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Dinosaur was auto-returned; Pirate requires choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
 
         // Decline the Pirate choice
         harness.handleGraveyardCardChosen(player1, -1);

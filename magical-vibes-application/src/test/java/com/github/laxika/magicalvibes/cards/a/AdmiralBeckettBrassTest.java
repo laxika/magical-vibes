@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -166,7 +165,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             harness.passBothPriorities();
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
             // Choose the opponent's Grizzly Bears
             harness.handlePermanentChosen(player1, opponentBears.getId());
@@ -319,7 +318,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
             // Land should not be a valid target
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(opponentLand.getId());
@@ -347,7 +346,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             harness.passBothPriorities();
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
             // Own Pirates should not be valid targets
             assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(pirate1.getId());
@@ -379,7 +378,7 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
             // Admiral Beckett Brass belongs to player1 — should NOT trigger on player2's end step
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         }
     }
 }

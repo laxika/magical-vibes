@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -39,11 +38,6 @@ public class LibraryRevealChoiceInteractionHandler
     @Override
     public Class<PendingInteraction.LibraryRevealChoice> handledType() {
         return PendingInteraction.LibraryRevealChoice.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.LIBRARY_REVEAL_CHOICE;
     }
 
     @Override

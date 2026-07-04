@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -77,7 +76,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
     }
 
@@ -143,11 +142,11 @@ class LifesFinaleTest extends BaseCardTest {
 
         // Pick first creature
         gs.handleLibraryCardChosen(gd, player1, 0);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick second creature
         gs.handleLibraryCardChosen(gd, player1, 0);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
         // Pick third creature
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -190,7 +189,7 @@ class LifesFinaleTest extends BaseCardTest {
         assertThat(graveyardCreatures).isEqualTo(1);
 
         // Search should be complete
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -227,7 +226,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should not be awaiting library search
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
     }
 
     @Test
@@ -243,7 +242,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should not be awaiting library search
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // Log should mention no matching cards
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no matching cards"));
@@ -286,7 +285,7 @@ class LifesFinaleTest extends BaseCardTest {
         gs.handleLibraryCardChosen(gd, player1, 0);
 
         // No more creature cards — search should end automatically
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // The creature should be in graveyard
         assertThat(gd.playerGraveyards.get(player2.getId()))

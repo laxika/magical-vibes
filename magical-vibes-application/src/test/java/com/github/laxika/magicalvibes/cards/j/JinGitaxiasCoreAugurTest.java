@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -102,7 +101,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
 
         // Opponent should be prompted to discard all 3 cards (max hand size = 7 - 7 = 0)
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(((PendingInteraction.HandChoice) gd.interaction.activeInteraction()).playerId()).isEqualTo(player2.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(3);
     }
@@ -126,7 +125,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
 
         // Controller should discard down to 7 (normal hand size, not reduced)
         assertThat(gd.currentStep).isEqualTo(TurnStep.CLEANUP);
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).remainingCount()).isEqualTo(1);
     }
 
@@ -143,7 +142,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         // No discard needed
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
     }
 
     @Test
@@ -164,7 +163,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         gs.advanceStep(gd);
 
         // No discard needed — max hand size is back to 7
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.DISCARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
 }

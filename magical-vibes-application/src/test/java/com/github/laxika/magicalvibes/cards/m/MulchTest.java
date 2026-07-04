@@ -205,6 +205,6 @@ class MulchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should not be awaiting any input
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

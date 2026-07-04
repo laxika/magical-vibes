@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -61,7 +60,7 @@ class PrimevalTitanTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve creature spell → MayEffect on stack
             harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
@@ -74,7 +73,7 @@ class PrimevalTitanTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve MayEffect → may prompt
             harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .allMatch(c -> c.hasType(CardType.LAND));
             assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3); // Forest, Island, Plains
@@ -95,7 +94,7 @@ class PrimevalTitanTest extends BaseCardTest {
             gs.handleLibraryCardChosen(gd, player1, 0);
 
             // Second search should be presented
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
 
             // Pick second land
             gs.handleLibraryCardChosen(gd, player1, 0);
@@ -137,7 +136,7 @@ class PrimevalTitanTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve MayEffect → may prompt
             harness.handleMayAbilityChosen(player1, false);
 
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         }
 
         @Test
@@ -159,7 +158,7 @@ class PrimevalTitanTest extends BaseCardTest {
 
             // Only one land should have entered
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore + 1);
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -178,7 +177,7 @@ class PrimevalTitanTest extends BaseCardTest {
 
             // No lands entered
             assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
-            assertThat(gd.interaction.awaitingInputType()).isNull();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test
@@ -195,7 +194,7 @@ class PrimevalTitanTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline
 
             // No lands to search for, search fails
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
             assertThat(gd.gameLog).anyMatch(entry -> entry.contains("finds no land cards"));
         }
     }
@@ -214,7 +213,7 @@ class PrimevalTitanTest extends BaseCardTest {
             declareAttackers(List.of(0));
             harness.passBothPriorities(); // resolve MayEffect → may prompt
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
             assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
@@ -253,7 +252,7 @@ class PrimevalTitanTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve MayEffect → may prompt
             harness.handleMayAbilityChosen(player1, false);
 
-            assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         }
     }
 
@@ -276,7 +275,7 @@ class PrimevalTitanTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.setAwaitingInput(AwaitingInput.ATTACKER_DECLARATION);
+        harness.beginAttackerDeclarationInput();
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 

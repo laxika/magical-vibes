@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -166,7 +165,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
@@ -190,7 +189,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("finds no") && msg.contains("Library is shuffled")));
             }
@@ -205,7 +204,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("it is empty")));
             }
@@ -226,7 +225,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("prevented by Leonin Arbiter")));
             }
@@ -247,7 +246,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
             }
 
             @Test
@@ -271,7 +270,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 searchLibraryForCardsToHandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
             }
 
             @Test
@@ -292,7 +291,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 searchLibraryForCardTypesToBattlefieldHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("prevented by Leonin Arbiter")));
                 // Library should be same size (shuffled, not modified)
@@ -312,7 +311,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
 
                 distantMemoriesHandler.resolve(gd, entry, new DistantMemoriesEffect());
 
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("prevented by Leonin Arbiter")));
             }
@@ -337,7 +336,7 @@ class SearchLibraryForCardsToHandEffectHandlerTest {
                 assertThat(gd.playerHands.get(player2Id)).isEmpty();
                 assertThat(gd.playerDecks.get(player2Id)).hasSize(deckSizeBefore + 1);
                 // Search was prevented
-                assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.LIBRARY_SEARCH);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("prevented by Leonin Arbiter")));
             }

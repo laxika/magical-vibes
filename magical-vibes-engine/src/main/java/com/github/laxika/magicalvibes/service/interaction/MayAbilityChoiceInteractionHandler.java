@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -32,11 +31,6 @@ public class MayAbilityChoiceInteractionHandler implements InteractionHandler<Pe
     @Override
     public Class<PendingInteraction.MayAbilityChoice> handledType() {
         return PendingInteraction.MayAbilityChoice.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.MAY_ABILITY_CHOICE;
     }
 
     @Override

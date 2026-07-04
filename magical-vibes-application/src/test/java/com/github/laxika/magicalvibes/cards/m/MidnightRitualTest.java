@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -55,7 +54,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 2);
 
         // Should be awaiting multi-graveyard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).maxCount()).isEqualTo(2);
 
@@ -108,7 +107,7 @@ class MidnightRitualTest extends BaseCardTest {
         assertThat(entry.getTargetCardIds()).containsExactly(bears1.getId(), bears2.getId());
 
         // Awaiting state is cleared
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
 
         // Log mentions casting
         assertThat(gd.gameLog).anyMatch(l -> l.contains("casts Midnight Ritual"));
@@ -187,7 +186,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         // No graveyard choice — spell goes directly on stack
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.SORCERY_SPELL);
         assertThat(gd.stack.getFirst().getTargetCardIds()).isEmpty();
@@ -261,7 +260,7 @@ class MidnightRitualTest extends BaseCardTest {
         harness.castSorcery(player1, 0, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     // ===== Multiple tokens =====

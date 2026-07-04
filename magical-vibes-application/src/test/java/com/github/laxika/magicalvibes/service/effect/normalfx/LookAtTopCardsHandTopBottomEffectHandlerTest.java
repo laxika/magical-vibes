@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -125,7 +124,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
                 lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 assertThat(gd.playerHands.get(player1Id)).isEmpty();
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("library is empty")));
@@ -143,7 +142,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
                 lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isNull();
+                assertThat(gd.interaction.activeInteraction()).isNull();
                 assertThat(gd.playerHands.get(player1Id)).contains(singleCard);
                 assertThat(gd.playerDecks.get(player1Id)).isEmpty();
             }
@@ -162,7 +161,7 @@ class LookAtTopCardsHandTopBottomEffectHandlerTest {
 
                 lookAtTopCardsHandTopBottomEffectHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
+                assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1Id);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(3);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.s.Shock;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -44,7 +44,7 @@ class ChartACourseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should be awaiting discard choice (did not attack)
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isTrue();
 
         // Hand should have 2 cards (0 original after casting + 2 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -72,7 +72,7 @@ class ChartACourseTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should NOT be awaiting discard — attack condition met
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isFalse();
 
         // Hand should have 2 cards (0 original after casting + 2 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
@@ -96,7 +96,7 @@ class ChartACourseTest extends BaseCardTest {
 
         // Hand should have 3 cards (1 remaining + 2 drawn)
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.DISCARD_CHOICE)).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class) != null).isFalse();
     }
 
     // ===== Spell goes to graveyard after resolution =====

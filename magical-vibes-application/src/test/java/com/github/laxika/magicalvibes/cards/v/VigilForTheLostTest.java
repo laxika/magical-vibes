@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.c.CruelEdict;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -91,7 +90,7 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null).isTrue();
         PendingInteraction.XValueChoice ctx = (PendingInteraction.XValueChoice) gd.interaction.activeInteraction();
         assertThat(ctx).isNotNull();
         assertThat(ctx.playerId()).isEqualTo(player1.getId());
@@ -240,7 +239,7 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.isAwaitingInput(AwaitingInput.X_VALUE_CHOICE)).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class) != null).isTrue();
         assertThat(((PendingInteraction.XValueChoice) gd.interaction.activeInteraction()).maxValue()).isEqualTo(4);
 
         // Choose X=4 (all mana)

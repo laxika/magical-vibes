@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
@@ -96,7 +95,7 @@ public class MayAbilityHandlerService {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.MAY_ABILITY_CHOICE)) {
+        if (gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
             throw new IllegalStateException("Not awaiting may ability choice");
         }
         PendingInteraction.MayAbilityChoice mayAbilityChoice =

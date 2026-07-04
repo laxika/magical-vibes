@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -37,11 +36,6 @@ public class MirrorOfFateChoiceInteractionHandler
     @Override
     public Class<PendingInteraction.MirrorOfFateChoice> handledType() {
         return PendingInteraction.MirrorOfFateChoice.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.MIRROR_OF_FATE_CHOICE;
     }
 
     @Override

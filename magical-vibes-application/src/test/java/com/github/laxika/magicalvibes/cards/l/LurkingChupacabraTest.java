@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.b.BrazenBuccaneers;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -50,7 +49,7 @@ class LurkingChupacabraTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         // Should be awaiting target choice for Chupacabra's trigger
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Choose the opponent's creature
         harness.handlePermanentChosen(player1, opponentCreature.getId());
@@ -76,11 +75,11 @@ class LurkingChupacabraTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         // Should be awaiting may ability for explore graveyard choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MAY_ABILITY_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
         // Now should be awaiting target choice for Chupacabra
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
         // Resolve the triggered ability
@@ -104,7 +103,7 @@ class LurkingChupacabraTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // Now target choice for Chupacabra
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, opponentCreature.getId());
 
         harness.passBothPriorities();
@@ -125,7 +124,7 @@ class LurkingChupacabraTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         // No permanent choice should be awaited
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     // ===== No valid targets — trigger is skipped =====
@@ -140,7 +139,7 @@ class LurkingChupacabraTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         // No target selection should be needed — trigger should be skipped
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     // ===== Cannot target own creatures =====
@@ -157,7 +156,7 @@ class LurkingChupacabraTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         // Should be awaiting target choice
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
 
         // Verify the valid targets do NOT include our own creature
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -178,7 +177,7 @@ class LurkingChupacabraTest extends BaseCardTest {
         castExplorerAndResolveExplore();
 
         // Explore with empty library does nothing, so no trigger
-        assertThat(gd.interaction.awaitingInputType()).isNotEqualTo(AwaitingInput.PERMANENT_CHOICE);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
 
     // ===== Helpers =====

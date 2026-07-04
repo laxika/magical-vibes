@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.p.Plains;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -761,7 +761,7 @@ class EasyAiDecisionEngineTest {
     @DisplayName("Easy AI caps attackers to affordable count when attack tax is present")
     void capsAttackersWhenAttackTaxPresent() throws Exception {
         gd.currentStep = TurnStep.DECLARE_ATTACKERS;
-        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
         // 3 creatures on the AI battlefield
         for (int i = 0; i < 3; i++) {
@@ -1023,7 +1023,7 @@ class EasyAiDecisionEngineTest {
             testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
             testHarness.clearPriorityPassed();
             testGd.status = GameStatus.RUNNING;
-            testGd.interaction.setAwaitingInput(null);
+            testGd.interaction.clearAwaitingInput();
             testGd.stack.clear();
         }
 
@@ -1102,7 +1102,7 @@ class EasyAiDecisionEngineTest {
     @DisplayName("Easy AI attacks with at least one creature when forced by opponent effect")
     void attacksWithAtLeastOneWhenForcedByOpponentEffect() throws Exception {
         gd.currentStep = TurnStep.DECLARE_ATTACKERS;
-        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
         // AI has a 2/2
         Permanent creature = new Permanent(new Card());
@@ -1151,7 +1151,7 @@ class EasyAiDecisionEngineTest {
     @DisplayName("Easy AI can declare zero attackers when not forced by opponent effect")
     void canDeclareZeroAttackersWhenNotForced() throws Exception {
         gd.currentStep = TurnStep.DECLARE_ATTACKERS;
-        gd.interaction.setAwaitingInput(com.github.laxika.magicalvibes.model.AwaitingInput.ATTACKER_DECLARATION);
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(gd.activePlayerId));
 
         // AI has a 2/2 but strong opponent blocker — Easy AI should choose not to attack
         Permanent creature = new Permanent(new Card());
@@ -1218,7 +1218,7 @@ class EasyAiDecisionEngineTest {
 
         // Simulate mana ability triggering awaiting input (e.g. Treasure color choice)
         Mockito.doAnswer(inv -> {
-            gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
             return null;
         }).when(messageHandler).handleTapPermanent(any(), any());
 
@@ -1254,7 +1254,7 @@ class EasyAiDecisionEngineTest {
         when(gameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
 
         Mockito.doAnswer(inv -> {
-            gd.interaction.setAwaitingInput(AwaitingInput.COLOR_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.ColorChoice(null, null, null, null, java.util.List.of(), "Choose a color."));
             return null;
         }).when(messageHandler).handleTapPermanent(any(), any());
 
@@ -1300,7 +1300,7 @@ class EasyAiDecisionEngineTest {
             testHarness.forceStep(TurnStep.PRECOMBAT_MAIN);
             testHarness.clearPriorityPassed();
             testGd.status = GameStatus.RUNNING;
-            testGd.interaction.setAwaitingInput(null);
+            testGd.interaction.clearAwaitingInput();
             testGd.stack.clear();
         }
 
@@ -1364,7 +1364,7 @@ class EasyAiDecisionEngineTest {
             testHarness.forceStep(TurnStep.POSTCOMBAT_MAIN);
             testHarness.clearPriorityPassed();
             testGd.status = GameStatus.RUNNING;
-            testGd.interaction.setAwaitingInput(null);
+            testGd.interaction.clearAwaitingInput();
             testGd.stack.clear();
 
             giveAiMountainsLocal(1); // Only 1 mana — Bolt costs {R} but Kopala adds {2}

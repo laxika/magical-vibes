@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -33,11 +32,6 @@ public class BlockerDeclarationInteractionHandler
     @Override
     public Class<PendingInteraction.BlockerDeclaration> handledType() {
         return PendingInteraction.BlockerDeclaration.class;
-    }
-
-    @Override
-    public AwaitingInput legacyInputType() {
-        return AwaitingInput.BLOCKER_DECLARATION;
     }
 
     @Override

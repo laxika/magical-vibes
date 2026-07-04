@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -83,7 +82,7 @@ class ExileChoiceInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.KnowledgePoolCastChoice(
                     PLAYER1_ID, List.of(poolCard.getId()), 1));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.KNOWLEDGE_POOL_CAST_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.KnowledgePoolCastChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
             assertThat(msg.cardIds()).containsExactly(poolCard.getId());
@@ -118,7 +117,7 @@ class ExileChoiceInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.MirrorOfFateChoice(
                     PLAYER1_ID, List.of(exiled.getId()), 7));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MIRROR_OF_FATE_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MirrorOfFateChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
             assertThat(msg.cardIds()).containsExactly(exiled.getId());

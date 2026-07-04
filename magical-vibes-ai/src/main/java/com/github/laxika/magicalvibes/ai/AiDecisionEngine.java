@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -406,7 +406,7 @@ public abstract class AiDecisionEngine {
         // If the game is still awaiting blockers after the call, the declaration
         // was rejected — fall back to empty blockers so the game doesn't get stuck.
         if (!request.blockerAssignments().isEmpty()
-                && gameData.interaction.isAwaitingInput(AwaitingInput.BLOCKER_DECLARATION)) {
+                && gameData.interaction.activeInteraction(PendingInteraction.BlockerDeclaration.class) != null) {
             log.warn("AI: Blocker declaration rejected in game {} (still awaiting blockers); falling back to no blockers.", gameId);
             sendEmptyBlockerFallback();
         }

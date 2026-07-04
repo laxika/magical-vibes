@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -266,7 +266,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Returns when awaiting input inside loop")
         void returnsWhenAwaitingInput() {
-            gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
 
             sut.resolveAutoPass(gd, ignored -> {});
 
@@ -664,7 +664,7 @@ class AutoPassServiceTest {
                     "Test trigger",
                     List.of()
             ));
-            gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+            gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
 
             sut.resolveAutoPassCombatTriggers(gd);
 
@@ -710,7 +710,7 @@ class AutoPassServiceTest {
 
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(null);
             org.mockito.Mockito.doAnswer(inv -> {
-                gd.interaction.setAwaitingInput(AwaitingInput.PERMANENT_CHOICE);
+                gd.interaction.beginInteraction(new PendingInteraction.PermanentChoice(null, java.util.List.of(), java.util.List.of(), null, "Choose a permanent."));
                 return null;
             }).when(stackResolutionService).resolveTopOfStack(gd);
 

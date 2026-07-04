@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -83,7 +82,7 @@ class MultiSelectionInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.MultiPermanentChoice(
                     PLAYER1_ID, List.of(perm1, perm2), 2, "Choose up to 2 permanents."));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_PERMANENT_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseMultiplePermanentsMessage msg = (ChooseMultiplePermanentsMessage) messageCaptor.getValue();
             assertThat(msg.permanentIds()).containsExactly(perm1, perm2);
@@ -135,7 +134,7 @@ class MultiSelectionInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.MultiGraveyardChoice(
                     PLAYER1_ID, List.of(card1, card2), 2, "Choose up to 2 target creature cards from your graveyard."));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.MULTI_GRAVEYARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
             ChooseMultipleCardsMessage msg = (ChooseMultipleCardsMessage) messageCaptor.getValue();
             assertThat(msg.cardIds()).containsExactly(card1.getId(), card2.getId());

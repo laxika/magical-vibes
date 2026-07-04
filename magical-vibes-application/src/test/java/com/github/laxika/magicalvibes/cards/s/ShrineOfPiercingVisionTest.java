@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -137,7 +136,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities(); // resolve ability from stack
 
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(3);
     }
@@ -194,7 +193,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
 
         // No cards should be added to hand
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no charge counters"));
     }
 
@@ -211,7 +210,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Single card goes directly to hand — no choice needed
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
         assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
     }
@@ -255,7 +254,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should use all available cards (capped at deck size)
-        assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.HAND_TOP_BOTTOM_CHOICE);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(deckSize);
     }
 

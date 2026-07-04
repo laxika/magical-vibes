@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -80,7 +79,7 @@ class HandCardChoiceInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.HandCardChoice(
                     PLAYER1_ID, List.of(0, 2), "Choose a creature card from your hand to put onto the battlefield."));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.CARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandCardChoice.class);
             ChooseCardFromHandMessage msg = sentMessage();
             assertThat(msg.cardIndices()).containsExactly(0, 2);
             assertThat(msg.prompt()).isEqualTo("Choose a creature card from your hand to put onto the battlefield.");
@@ -93,7 +92,7 @@ class HandCardChoiceInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.TargetedHandCardChoice(
                     PLAYER1_ID, List.of(1), UUID.randomUUID(), "Choose an Aura."));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.TARGETED_CARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.TargetedHandCardChoice.class);
             ChooseCardFromHandMessage msg = sentMessage();
             assertThat(msg.canDecline()).isTrue();
         }
@@ -121,7 +120,7 @@ class HandCardChoiceInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.DiscardChoice(
                     PLAYER1_ID, List.of(0, 1), 2, "Choose a card to discard."));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.DISCARD_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
             ChooseCardFromHandMessage msg = sentMessage();
             assertThat(msg.prompt()).isEqualTo("Choose a card to discard.");
             assertThat(msg.canDecline()).isFalse();
@@ -137,7 +136,7 @@ class HandCardChoiceInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.ExileFromHandChoice(
                     PLAYER1_ID, List.of(0), UUID.randomUUID(), 1, "Choose a card to exile."));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.EXILE_FROM_HAND_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
             assertThat(sentMessage().prompt()).isEqualTo("Choose a card to exile.");
 
             Player player = new Player(PLAYER1_ID, "Player1");
@@ -151,7 +150,7 @@ class HandCardChoiceInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.ImprintFromHandChoice(
                     PLAYER1_ID, List.of(0, 1), UUID.randomUUID(), "Choose an artifact card from your hand to imprint."));
 
-            assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.IMPRINT_FROM_HAND_CHOICE);
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ImprintFromHandChoice.class);
             assertThat(sentMessage().prompt()).isEqualTo("Choose an artifact card from your hand to imprint.");
 
             Player player = new Player(PLAYER1_ID, "Player1");
@@ -170,8 +169,8 @@ class HandCardChoiceInteractionHandlersTest {
             registry.begin(gd, new PendingInteraction.DiscardCostChoice(
                     PLAYER1_ID, List.of(0), "Choose a land card to discard as an activation cost."));
 
-            assertThat(gd.interaction.awaitingInputType())
-                    .isEqualTo(AwaitingInput.ACTIVATED_ABILITY_DISCARD_COST_CHOICE);
+            assertThat(gd.interaction.activeInteraction())
+                    .isInstanceOf(PendingInteraction.DiscardCostChoice.class);
             ChooseCardFromHandMessage msg = sentMessage();
             assertThat(msg.prompt()).isEqualTo("Choose a land card to discard as an activation cost.");
             assertThat(msg.canDecline()).isFalse();

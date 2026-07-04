@@ -85,7 +85,7 @@ class DesperateRavingsTest extends BaseCardTest {
         // Graveyard has Desperate Ravings + 1 discarded
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         // Random discard doesn't prompt
-        assertThat(gd.interaction.awaitingInputType()).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
         // Log should mention discard at random
         long randomDiscardLogs = gd.gameLog.stream()
                 .filter(log -> log.contains("discards") && log.contains("at random"))
