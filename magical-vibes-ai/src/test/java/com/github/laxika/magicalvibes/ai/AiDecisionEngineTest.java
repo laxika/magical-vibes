@@ -97,7 +97,7 @@ class AiDecisionEngineTest {
         harness.getSessionManager().registerPlayer(aiConn, aiPlayer.getId(), "Bob");
         ai = new EasyAiDecisionEngine(gd.id, aiPlayer, harness.getGameRegistry(),
                 harness.getGameService(), harness.getGameQueryService(), harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         ai.setSelfConnection(aiConn);
     }
 
@@ -1881,6 +1881,8 @@ class AiDecisionEngineTest {
         @Mock private CombatAttackService mockCombatAttackService;
         @Mock private Connection mockConnection;
         @Mock private GameBroadcastService mockGameBroadcastService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService mockCastingCostService;
+        @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService mockCastingPermissionService;
         @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService mockTargetValidationService;
 
         private GameData mockGd;
@@ -1922,6 +1924,7 @@ class AiDecisionEngineTest {
             EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
+                    mockCastingCostService, mockCastingPermissionService,
                     mockTargetValidationService, null);
             engine.setSelfConnection(mockConnection);
             return engine;

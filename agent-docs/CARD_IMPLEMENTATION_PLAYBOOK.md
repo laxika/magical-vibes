@@ -241,6 +241,7 @@ Then do all of:
   ```
   Add the `@Component` handler in `service/effect/normalfx/`. Spring auto-discovers it via `GameEngineConfig`; card tests and MCTS simulation reuse the same graph through `GameTestEngineContext` / `HeadlessSimulationContext`.
 - For static/continuous effects, create a `@Component` implementing `StaticEffectHandlerBean` in `service/effect/staticfx/`. See **STATIC_EFFECT_HANDLERS.md** for naming, self vs non-self handlers, and registration details.
+- For cast-cost modifiers (cost reductions/taxes), create a `@Component` implementing `CostModificationHandlerBean` in `service/cast/costmod/`. See **COST_MODIFICATION_HANDLERS.md** for the `onSpellItself` (spell-carried) vs battlefield-permanent split, scoping via `CostModificationSource`, and registration. `CastingCostService` is the single source of truth — never re-add `instanceof` cost chains in `GameBroadcastService`/`SpellCastingService`.
 - If the effect requires target validation, add a `@ValidatesTarget`-annotated method in the appropriate validator class under `service/validate/` (see `EFFECTS_INDEX.md` target validator map):
   ```java
   @ValidatesTarget(YourNewEffect.class)

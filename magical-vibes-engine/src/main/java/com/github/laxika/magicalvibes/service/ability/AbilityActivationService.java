@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.ability;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -107,6 +108,7 @@ public class AbilityActivationService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final CastingCostService castingCostService;
     private final TargetLegalityService targetLegalityService;
     private final ActivatedAbilityExecutionService activatedAbilityExecutionService;
     private final PlayerInputService playerInputService;
@@ -705,7 +707,7 @@ public class AbilityActivationService {
         }
 
         // Compute targeting tax from effects like Kopala, Warden of Waves
-        int targetingTax = gameBroadcastService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
+        int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
 
         // Pre-validate mana cost before entering interactive cost choices (CR 602.2b)
         if (abilityCost != null) {

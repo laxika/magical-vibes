@@ -121,11 +121,11 @@ class RandomAiFuzzTest {
         // Each engine gets its own Random derived from the master seed for thread safety
         RandomAiDecisionEngine engine1 = new RandomAiDecisionEngine(
                 gd.id, player1, gameRegistry, gameService, gqs,
-                harness.getCombatAttackService(), harness.getGameBroadcastService(),
+                harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                 harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()));
         RandomAiDecisionEngine engine2 = new RandomAiDecisionEngine(
                 gd.id, player2, gameRegistry, gameService, gqs,
-                harness.getCombatAttackService(), harness.getGameBroadcastService(),
+                harness.getCombatAttackService(), harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(),
                 harness.getTargetValidationService(), harness.getTargetLegalityService(), new Random(rng.nextLong()));
 
         AiConnection aiConn1 = new AiConnection("ai-fuzz-1", engine1, objectMapper, AI_DECISION_DELAY_MS);

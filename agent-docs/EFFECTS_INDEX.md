@@ -1265,6 +1265,7 @@ All stack-resolution ("normal") effects use one `@Component` handler class per e
 | Permanent control/tokens/regeneration | `normalfx/*EffectHandler` | `PermanentControlSupport` |
 | Permanent counters | `normalfx/*EffectHandler` | `PermanentCounterSupport` |
 | Static continuous effects | `staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) | `StaticEffectSupport` |
+| Cast-cost modifiers (reductions/taxes) | `cast/costmod/*Handler` (see **COST_MODIFICATION_HANDLERS.md**) | `CostModificationSupport` |
 | Prevention | `normalfx/*EffectHandler` | `PreventionSupport` |
 | Turn effects | `normalfx/*EffectHandler` | `TurnSupport` |
 | Copy/retarget | `normalfx/*EffectHandler` | `CopySupport`, `TargetRedirectionSupport` |

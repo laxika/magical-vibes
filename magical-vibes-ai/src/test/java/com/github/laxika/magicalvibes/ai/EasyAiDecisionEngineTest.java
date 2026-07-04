@@ -63,6 +63,8 @@ class EasyAiDecisionEngineTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private CombatAttackService combatAttackService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    @Mock private com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     @Mock private com.github.laxika.magicalvibes.service.effect.TargetValidationService targetValidationService;
     @Mock private Connection selfConnection;
 
@@ -102,10 +104,11 @@ class EasyAiDecisionEngineTest {
     }
 
     private EasyAiDecisionEngine createEngine() {
-        Mockito.lenient().when(gameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+        Mockito.lenient().when(castingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
+                castingCostService, castingPermissionService,
                 targetValidationService, null);
         engine.setSelfConnection(selfConnection);
         return engine;
@@ -475,7 +478,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.COLORLESS, 1);
 
         // Cost modifier adds 1 (e.g. opponent has Thalia) — now needs 3 total
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(1);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(1);
 
         createEngine().handleMessage("GAME_STATE", "");
 
@@ -501,7 +504,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.COLORLESS, 2);
 
         // Cost reduction of 1 — now only needs 3 total
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(-1);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(-1);
 
         createEngine().handleMessage("GAME_STATE", "");
 
@@ -525,11 +528,12 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.COLORLESS, 1);
 
         // Spell casting not allowed (e.g. spell limit reached, type restricted, silenced)
-        when(gameBroadcastService.isSpellCastingAllowed(any(), any(), any())).thenReturn(false);
+        when(castingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(false);
 
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
+                castingCostService, castingPermissionService,
                 targetValidationService, null);
         engine.setSelfConnection(selfConnection);
         engine.handleMessage("GAME_STATE", "");
@@ -682,7 +686,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.BLACK, 4);
 
         // Cost modifier +1 (e.g. Thalia on opponent's battlefield)
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(1);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(1);
 
         Mockito.doAnswer(inv -> {
             gd.playerHands.get(aiPlayer.getId()).removeFirst();
@@ -714,7 +718,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.BLACK, 4);
 
         // Cost modifier +2 — no X value is affordable
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(2);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(2);
 
         createEngine().handleMessage("GAME_STATE", "");
 
@@ -738,7 +742,7 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.BLACK, 4);
 
         // No cost modifier
-        when(gameBroadcastService.getCastCostModifier(any(), any(), any())).thenReturn(0);
+        when(castingCostService.getCastCostModifier(any(), any(), any())).thenReturn(0);
 
         Mockito.doAnswer(inv -> {
             gd.playerHands.get(aiPlayer.getId()).removeFirst();
@@ -781,7 +785,7 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(List.of(0, 1, 2));
         when(combatAttackService.getMustAttackIndices(eq(gd), eq(aiPlayer.getId()), any()))
                 .thenReturn(List.of());
-        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+        when(castingCostService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
                 .thenReturn(1);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
@@ -1013,7 +1017,7 @@ class EasyAiDecisionEngineTest {
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getGameService(), testHarness.getGameQueryService(),
-                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
+                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
             easyAi.setSelfConnection(aiConn);
         }
@@ -1129,7 +1133,7 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(List.of());
         when(combatAttackService.isOpponentForcedToAttack(gd, aiPlayer.getId()))
                 .thenReturn(true);
-        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+        when(castingCostService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
                 .thenReturn(0);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
@@ -1177,7 +1181,7 @@ class EasyAiDecisionEngineTest {
                 .thenReturn(List.of());
         when(combatAttackService.isOpponentForcedToAttack(gd, aiPlayer.getId()))
                 .thenReturn(false);
-        when(gameBroadcastService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
+        when(castingCostService.getAttackPaymentPerCreature(gd, aiPlayer.getId()))
                 .thenReturn(0);
         when(gameQueryService.getEffectivePower(eq(gd), any())).thenReturn(2);
         when(gameQueryService.getEffectiveToughness(eq(gd), any())).thenReturn(2);
@@ -1290,7 +1294,7 @@ class EasyAiDecisionEngineTest {
             testHarness.getSessionManager().registerPlayer(aiConn, aiTestPlayer.getId(), "Bob");
             easyAi = new EasyAiDecisionEngine(testGd.id, aiTestPlayer, testHarness.getGameRegistry(),
                     testHarness.getGameService(), testHarness.getGameQueryService(),
-                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(),
+                    testHarness.getCombatAttackService(), testHarness.getGameBroadcastService(), testHarness.getCastingCostService(), testHarness.getCastingPermissionService(),
                     testHarness.getTargetValidationService(), testHarness.getTargetLegalityService());
             easyAi.setSelfConnection(aiConn);
         }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class AttackerDeclarationInteractionHandler
     private final SessionManager sessionManager;
     private final CombatService combatService;
     private final GameBroadcastService gameBroadcastService;
+    private final CastingCostService castingCostService;
     private final TurnProgressionService turnProgressionService;
 
     @Override
@@ -52,7 +54,7 @@ public class AttackerDeclarationInteractionHandler
         UUID activeId = interaction.activePlayerId();
         List<Integer> attackable = combatService.getAttackableCreatureIndices(gameData, activeId);
         List<Integer> mustAttack = combatService.getMustAttackIndices(gameData, activeId, attackable);
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, activeId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, activeId);
         boolean mustAttackWithAtLeastOne = combatService.isOpponentForcedToAttack(gameData, activeId);
         sessionManager.sendToPlayer(recipientId, new AvailableAttackersMessage(
                 attackable, mustAttack, combatService.buildAvailableTargets(gameData, activeId),

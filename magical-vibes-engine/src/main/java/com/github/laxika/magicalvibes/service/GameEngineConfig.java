@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.NetworkingConfig;
 import com.github.laxika.magicalvibes.scryfall.ScryfallConfig;
+import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
+import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.TargetValidatorRegistry;
@@ -52,6 +54,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     private final TargetValidatorRegistry targetValidatorRegistry;
     private final TriggerCollectorRegistry triggerCollectorRegistry;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final CostModificationHandlerRegistry costModificationHandlerRegistry;
 
     public GameEngineConfig(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
@@ -60,6 +63,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
         this.targetValidatorRegistry = new TargetValidatorRegistry();
         this.triggerCollectorRegistry = new TriggerCollectorRegistry();
         this.interactionHandlerRegistry = new InteractionHandlerRegistry();
+        this.costModificationHandlerRegistry = new CostModificationHandlerRegistry();
     }
 
     @Bean
@@ -85,6 +89,11 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     @Bean
     public InteractionHandlerRegistry interactionHandlerRegistry() {
         return interactionHandlerRegistry;
+    }
+
+    @Bean
+    public CostModificationHandlerRegistry costModificationHandlerRegistry() {
+        return costModificationHandlerRegistry;
     }
 
     @Override
@@ -114,6 +123,10 @@ public class GameEngineConfig implements SmartInitializingSingleton {
 
         for (InteractionHandler<?> bean : applicationContext.getBeansOfType(InteractionHandler.class).values()) {
             interactionHandlerRegistry.register(bean);
+        }
+
+        for (CostModificationHandlerBean bean : applicationContext.getBeansOfType(CostModificationHandlerBean.class).values()) {
+            costModificationHandlerRegistry.register(bean);
         }
 
         int triggerCount = registerTriggerCollectors();

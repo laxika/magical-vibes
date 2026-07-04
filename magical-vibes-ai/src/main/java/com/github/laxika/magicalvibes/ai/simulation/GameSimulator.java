@@ -157,6 +157,7 @@ public class GameSimulator {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     private final AiManaManager manaManager;
     private final GameRegistry gameRegistry;
     private final BoardEvaluator boardEvaluator;
@@ -176,12 +177,14 @@ public class GameSimulator {
     GameSimulator(GameService gameService,
                   GameQueryService gameQueryService,
                   GameBroadcastService gameBroadcastService,
+                  com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
                   GameRegistry gameRegistry,
                   CombatAttackService combatAttackService) {
         this.gameService = gameService;
         this.gameQueryService = gameQueryService;
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameBroadcastService = gameBroadcastService;
+        this.castingCostService = castingCostService;
         this.gameRegistry = gameRegistry;
         this.combatAttackService = combatAttackService;
         this.manaManager = new AiManaManager(gameQueryService);
@@ -884,7 +887,7 @@ public class GameSimulator {
 
     private int calculateSmartX(GameData gd, Card card, UUID targetId, ManaPool virtualPool) {
         ManaCost cost = new ManaCost(card.getManaCost());
-        int costModifier = gameBroadcastService.getCastCostModifier(gd, gd.activePlayerId, card);
+        int costModifier = castingCostService.getCastCostModifier(gd, gd.activePlayerId, card);
         int maxX;
         if (card.getXColorRestriction() != null) {
             maxX = cost.calculateMaxX(virtualPool, card.getXColorRestriction(), costModifier);

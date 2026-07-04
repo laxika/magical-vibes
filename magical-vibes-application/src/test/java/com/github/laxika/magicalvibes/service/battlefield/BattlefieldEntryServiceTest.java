@@ -36,6 +36,7 @@ class BattlefieldEntryServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
     @Mock private TriggerCollectionService triggerCollectionService;
@@ -50,7 +51,7 @@ class BattlefieldEntryServiceTest {
     void setUp() {
         PredicateEvaluationService predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         service = new BattlefieldEntryService(
-                gameQueryService, gameBroadcastService, playerInputService,
+                gameQueryService, gameBroadcastService, castingCostService, playerInputService,
                 permanentCopierService, triggerCollectionService,
                 graveyardTargetingService, etbTokenTargetService,
                 new EtbEffectResolver(new ConditionEvaluationService(gameQueryService, predicateEvaluationService,
@@ -72,7 +73,7 @@ class BattlefieldEntryServiceTest {
         land.addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(predicate));
         Permanent entering = new Permanent(land);
 
-        when(gameBroadcastService.controlsPermanent(gd, player1Id, predicate)).thenReturn(false);
+        when(castingCostService.controlsPermanent(gd, player1Id, predicate)).thenReturn(false);
 
         service.putPermanentOntoBattlefield(gd, player1Id, entering);
 
@@ -89,7 +90,7 @@ class BattlefieldEntryServiceTest {
         land.addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(predicate));
         Permanent entering = new Permanent(land);
 
-        when(gameBroadcastService.controlsPermanent(eq(gd), eq(player1Id), eq(predicate))).thenReturn(true);
+        when(castingCostService.controlsPermanent(eq(gd), eq(player1Id), eq(predicate))).thenReturn(true);
 
         service.putPermanentOntoBattlefield(gd, player1Id, entering);
 

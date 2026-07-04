@@ -62,6 +62,8 @@ import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -102,11 +104,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                 GameService gameService, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
                                 GameBroadcastService gameBroadcastService,
+                                CastingCostService castingCostService,
+                                CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
         this(gameId, aiPlayer, gameRegistry,
                 new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
                 gameQueryService, combatAttackService, gameBroadcastService,
+                castingCostService, castingPermissionService,
                 targetValidationService, targetLegalityService);
     }
 
@@ -114,9 +119,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                                 AiGameActions gameActions, GameQueryService gameQueryService,
                                 CombatAttackService combatAttackService,
                                 GameBroadcastService gameBroadcastService,
+                                CastingCostService castingCostService,
+                                CastingPermissionService castingPermissionService,
                                 TargetValidationService targetValidationService,
                                 TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
@@ -529,7 +536,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
         if (!heldInstants.isEmpty()) {
             Card card = hand.get(best.handIndex);
-            int costModifier = gameBroadcastService.getCastCostModifier(
+            int costModifier = castingCostService.getCastCostModifier(
                     gameData, aiPlayer.getId(), card);
             int spellCost = Math.max(0, card.getManaValue() + costModifier);
             int totalMana = virtualPool.getTotal();
@@ -1040,7 +1047,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         // 7. X value
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int costModifier = gameBroadcastService.getCastCostModifier(
+        int costModifier = castingCostService.getCastCostModifier(
                 gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
@@ -1238,7 +1245,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             };
 
             double heldValue = baseValue * multiplier;
-            int modifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+            int modifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
             int effectiveCost = Math.max(0, card.getManaValue() + modifier);
             candidates.add(new HeldInstantCandidate(card, heldValue, effectiveCost));
         }
@@ -1281,7 +1288,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         int manaSpent = 0;
 
         for (SpellCandidate candidate : candidates) {
-            int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), candidate.card);
+            int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), candidate.card);
             int effectiveCost = Math.max(0, candidate.card.getManaValue() + costModifier);
             if (manaSpent + effectiveCost <= availableMana) {
                 totalValue += candidate.value;
@@ -1312,7 +1319,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             // verify valid targets exist for the affordable maxX. Without this check,
             // MCTS would wastefully simulate the spell when no targets can be hit.
             if (hasPermanentManaValueEqualsXTarget(card) && new ManaCost(card.getManaCost()).hasX()) {
-                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+                int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 if (maxX <= 0 || targetSelector.findValidPermanentTargetsForManaValueX(
                         gameData, card, aiPlayer.getId(), maxX).isEmpty()) {
@@ -1386,7 +1393,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (hasCardDrawEtb(card)) {
                     value += 0.5;
                 }
-                int costMod = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+                int costMod = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
                 int effectiveCost = Math.max(0, card.getManaValue() + costMod);
                 candidates.add(new CastCandidate(i, value, effectiveCost));
             }
@@ -2838,7 +2845,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             if (damage <= 0) continue;
             if (!isSpellCastable(gameData, card, virtualPool)) continue;
 
-            int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card);
+            int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card);
             int effectiveCost = Math.max(0, card.getManaValue() + costModifier);
             candidates.add(new BurnCandidate(card, damage, effectiveCost));
         }

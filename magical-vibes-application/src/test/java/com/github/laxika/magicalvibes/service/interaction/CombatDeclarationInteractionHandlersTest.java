@@ -40,6 +40,7 @@ class CombatDeclarationInteractionHandlersTest {
     @Mock private SessionManager sessionManager;
     @Mock private CombatService combatService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     @Mock private TurnProgressionService turnProgressionService;
 
     @Captor private ArgumentCaptor<Object> messageCaptor;
@@ -54,7 +55,7 @@ class CombatDeclarationInteractionHandlersTest {
     void setUp() {
         registry = new InteractionHandlerRegistry();
         registry.register(new AttackerDeclarationInteractionHandler(
-                sessionManager, combatService, gameBroadcastService, turnProgressionService));
+                sessionManager, combatService, gameBroadcastService, castingCostService, turnProgressionService));
         registry.register(new BlockerDeclarationInteractionHandler(
                 sessionManager, combatService, turnProgressionService));
 
@@ -76,7 +77,7 @@ class CombatDeclarationInteractionHandlersTest {
             when(combatService.getAttackableCreatureIndices(gd, PLAYER1_ID)).thenReturn(List.of(0, 2));
             when(combatService.getMustAttackIndices(gd, PLAYER1_ID, List.of(0, 2))).thenReturn(List.of(2));
             when(combatService.buildAvailableTargets(gd, PLAYER1_ID)).thenReturn(List.of());
-            when(gameBroadcastService.getAttackPaymentPerCreature(gd, PLAYER1_ID)).thenReturn(1);
+            when(castingCostService.getAttackPaymentPerCreature(gd, PLAYER1_ID)).thenReturn(1);
             when(combatService.isOpponentForcedToAttack(gd, PLAYER1_ID)).thenReturn(true);
 
             registry.begin(gd, new PendingInteraction.AttackerDeclaration(PLAYER1_ID));

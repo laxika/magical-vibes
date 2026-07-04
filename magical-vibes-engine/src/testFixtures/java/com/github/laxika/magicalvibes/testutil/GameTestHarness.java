@@ -56,6 +56,8 @@ public class GameTestHarness {
     private static DrawService staticDrawService;
     private static PlayerInputService staticPlayerInputService;
     private static GameBroadcastService staticGameBroadcastService;
+    private static com.github.laxika.magicalvibes.service.cast.CastingCostService staticCastingCostService;
+    private static com.github.laxika.magicalvibes.service.cast.CastingPermissionService staticCastingPermissionService;
     private static BattlefieldEntryService staticBattlefieldEntryService;
     private static TriggerCollectionService staticTriggerCollectionService;
     private static SpellCastingService staticSpellCastingService;
@@ -82,6 +84,8 @@ public class GameTestHarness {
         staticDrawService = context.getBean(DrawService.class);
         staticPlayerInputService = context.getBean(PlayerInputService.class);
         staticGameBroadcastService = context.getBean(GameBroadcastService.class);
+        staticCastingCostService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingCostService.class);
+        staticCastingPermissionService = context.getBean(com.github.laxika.magicalvibes.service.cast.CastingPermissionService.class);
         staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
         staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
         staticSpellCastingService = context.getBean(SpellCastingService.class);
@@ -110,6 +114,8 @@ public class GameTestHarness {
     private final DrawService drawService;
     private final PlayerInputService playerInputService;
     private final GameBroadcastService gameBroadcastService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final TriggerCollectionService triggerCollectionService;
     private final SpellCastingService spellCastingService;
@@ -138,6 +144,8 @@ public class GameTestHarness {
         drawService = staticDrawService;
         playerInputService = staticPlayerInputService;
         gameBroadcastService = staticGameBroadcastService;
+        castingCostService = staticCastingCostService;
+        castingPermissionService = staticCastingPermissionService;
         battlefieldEntryService = staticBattlefieldEntryService;
         triggerCollectionService = staticTriggerCollectionService;
         spellCastingService = staticSpellCastingService;
@@ -832,6 +840,14 @@ public class GameTestHarness {
 
     public GameBroadcastService getGameBroadcastService() {
         return gameBroadcastService;
+    }
+
+    public com.github.laxika.magicalvibes.service.cast.CastingCostService getCastingCostService() {
+        return castingCostService;
+    }
+
+    public com.github.laxika.magicalvibes.service.cast.CastingPermissionService getCastingPermissionService() {
+        return castingPermissionService;
     }
 
     public BattlefieldEntryService getBattlefieldEntryService() {

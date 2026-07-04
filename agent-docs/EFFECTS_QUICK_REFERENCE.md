@@ -502,6 +502,7 @@ All normal (stack-resolution) effects: one `NormalEffectHandlerBean` `@Component
 | Boost/tap/keyword/animation | `normalfx/*EffectHandler` | `TapUntapSupport`, `AnimationSupport` |
 | Permanent control/tokens/counters | `normalfx/*EffectHandler` | `PermanentControlSupport`, `PermanentCounterSupport` |
 | Static effects | `staticfx/*Handler` (see **STATIC_EFFECT_HANDLERS.md**) | `StaticEffectSupport` |
+| Cast-cost modifiers (reductions/taxes) | `cast/costmod/*Handler` (see **COST_MODIFICATION_HANDLERS.md**) | `CostModificationSupport` |
 | Prevention | `normalfx/*EffectHandler` | `PreventionSupport` |
 | Turn | `normalfx/*EffectHandler` | `TurnSupport` |
 | Copy/retarget | `normalfx/*EffectHandler` | `CopySupport`, `TargetRedirectionSupport` |

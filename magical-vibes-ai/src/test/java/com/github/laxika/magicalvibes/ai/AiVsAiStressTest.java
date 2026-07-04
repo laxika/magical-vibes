@@ -107,10 +107,10 @@ class AiVsAiStressTest {
 
         HardAiDecisionEngine engine1 = new HardAiDecisionEngine(
                 gd.id, player1, gameRegistry, gameService, gqs, harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
         HardAiDecisionEngine engine2 = new HardAiDecisionEngine(
                 gd.id, player2, gameRegistry, gameService, gqs, harness.getCombatAttackService(),
-                harness.getGameBroadcastService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
+                harness.getGameBroadcastService(), harness.getCastingCostService(), harness.getCastingPermissionService(), harness.getTargetValidationService(), harness.getTargetLegalityService());
 
         AiConnection aiConn1 = new AiConnection("ai-stress-1", engine1, objectMapper, AI_DECISION_DELAY_MS);
         AiConnection aiConn2 = new AiConnection("ai-stress-2", engine2, objectMapper, AI_DECISION_DELAY_MS);

@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -67,6 +68,7 @@ public class CombatAttackService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final CastingCostService castingCostService;
     private final TriggerCollectionService triggerCollectionService;
     private final CombatTriggerService combatTriggerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -102,11 +104,11 @@ public class CombatAttackService {
      * "attacks each combat if able" requirement. Returns empty if an attack tax is in effect.
      */
     public List<Integer> getMustAttackIndices(GameData gameData, UUID playerId, List<Integer> attackableIndices) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return List.of();
         }
-        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return List.of();
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -184,7 +186,7 @@ public class CombatAttackService {
         }
 
         // Validate attack tax (e.g. Windborn Muse / Ghostly Prison)
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             int totalTax = taxPerCreature * attackerIndices.size();
             ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -222,7 +224,7 @@ public class CombatAttackService {
         }
 
         // Pay Phyrexian attack tax (e.g. Norn's Annex — {W/P} per attacker)
-        List<ManaColor> phyrexianPayments = gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
+        List<ManaColor> phyrexianPayments = castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId);
         if (!phyrexianPayments.isEmpty()) {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             int lifeCost = 0;
@@ -697,11 +699,11 @@ public class CombatAttackService {
     private void validateMaximumAttackRequirements(GameData gameData, UUID playerId,
                                                     List<Integer> attackableIndices,
                                                     Set<Integer> declaredAttackerIndices) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return;
         }
-        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return;
         }
 
@@ -735,11 +737,11 @@ public class CombatAttackService {
      * (CR 508.1d — the player is not required to pay optional attack costs).
      */
     public boolean isOpponentForcedToAttack(GameData gameData, UUID playerId) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, playerId);
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, playerId);
         if (taxPerCreature > 0) {
             return false;
         }
-        if (!gameBroadcastService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
+        if (!castingCostService.getPhyrexianAttackPaymentsPerCreature(gameData, playerId).isEmpty()) {
             return false;
         }
         for (UUID pid : gameData.orderedPlayerIds) {

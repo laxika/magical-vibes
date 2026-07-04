@@ -74,6 +74,12 @@ class SpellCastingServiceTest {
     private GameBroadcastService gameBroadcastService;
 
     @Mock
+    private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+
+    @Mock
+    private com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
+
+    @Mock
     private TurnProgressionService turnProgressionService;
 
     @Mock
@@ -437,9 +443,8 @@ class SpellCastingServiceTest {
             gd.playerBattlefields.get(player1Id).add(dinosaur);
             gd.playerBattlefields.get(player2Id).add(opponentCreature);
 
-            when(gameQueryService.findPermanentById(gd, dinosaur.getId())).thenReturn(dinosaur);
-            when(gameQueryService.findPermanentController(gd, dinosaur.getId())).thenReturn(player1Id);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, dinosaur, predicate)).thenReturn(true);
+            when(castingCostService.computeTargetBasedCostReduction(
+                    gd, player1Id, sorcery, List.of(dinosaur.getId(), opponentCreature.getId()))).thenReturn(2);
 
             svc.playCard(gd, player1, 0, null, null, null,
                     List.of(dinosaur.getId(), opponentCreature.getId()), null, false, null);
@@ -463,8 +468,8 @@ class SpellCastingServiceTest {
             tappedCreature.tap();
             gd.playerBattlefields.get(player2Id).add(tappedCreature);
 
-            when(gameQueryService.findPermanentById(gd, tappedCreature.getId())).thenReturn(tappedCreature);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, tappedCreature, predicate)).thenReturn(true);
+            when(castingCostService.computeTargetBasedCostReduction(
+                    gd, player1Id, instant, List.of(tappedCreature.getId()))).thenReturn(3);
 
             svc.playCard(gd, player1, 0, null, null, null,
                     List.of(tappedCreature.getId()), null, false, null);
@@ -490,8 +495,8 @@ class SpellCastingServiceTest {
                     StackEntryType.INSTANT_SPELL, targetInstant, player2Id, "Target Bolt", List.of(), 0, null, null);
             gd.stack.add(targetEntry);
 
-            when(gameQueryService.findStackEntryByCardId(gd, targetInstant.getId())).thenReturn(targetEntry);
-            when(predicateEvaluationService.matchesStackEntryPredicate(targetEntry, predicate, null)).thenReturn(true);
+            when(castingCostService.computeTargetBasedCostReduction(
+                    gd, player1Id, instant, List.of(targetInstant.getId()))).thenReturn(2);
 
             svc.playCard(gd, player1, 0, null, null, null,
                     List.of(targetInstant.getId()), null, false, null);
@@ -784,7 +789,7 @@ class SpellCastingServiceTest {
             // Card not playable without convoke, but playable with 1 convoke creature
             when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(gameBroadcastService.getPlayableCardIndices(gd, player1Id, 1)).thenReturn(List.of(0));
-            when(gameBroadcastService.getCastCostModifier(gd, player1Id, convokeCard)).thenReturn(0);
+            when(castingCostService.getCastCostModifier(gd, player1Id, convokeCard)).thenReturn(0);
             when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenReturn(true);
 
             svc.playCard(gd, player1, 0, null, null, null, null, List.of(helperId), false, null);

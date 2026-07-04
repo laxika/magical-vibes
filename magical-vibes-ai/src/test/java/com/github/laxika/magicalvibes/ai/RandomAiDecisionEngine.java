@@ -69,9 +69,11 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
                            GameService gameService, GameQueryService gameQueryService,
                            CombatAttackService combatAttackService,
                            GameBroadcastService gameBroadcastService,
+                           com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService,
+                           com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService,
                            TargetValidationService targetValidationService,
                            TargetLegalityService targetLegalityService, Random rng) {
-        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameService, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.rng = rng;
     }
 
@@ -233,7 +235,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             ManaCost castCost = new ManaCost(card.getManaCost());
             Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
             if (castCost.hasX() && xValue == null) {
-                int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+                int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
                 maxX = Math.min(maxX, getMaxXForGraveyardRequirements(gameData, card));
                 if (maxX <= 0) {

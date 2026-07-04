@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
 import com.github.laxika.magicalvibes.networking.message.PassPriorityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -48,11 +50,14 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                                   GameService gameService, GameQueryService gameQueryService,
                                   CombatAttackService combatAttackService,
                                   GameBroadcastService gameBroadcastService,
+                                  CastingCostService castingCostService,
+                                  CastingPermissionService castingPermissionService,
                                   TargetValidationService targetValidationService,
                                   TargetLegalityService targetLegalityService) {
         this(gameId, aiPlayer, gameRegistry,
                 new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
                 gameQueryService, combatAttackService, gameBroadcastService,
+                castingCostService, castingPermissionService,
                 targetValidationService, targetLegalityService);
     }
 
@@ -60,9 +65,11 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
                                   AiGameActions gameActions, GameQueryService gameQueryService,
                                   CombatAttackService combatAttackService,
                                   GameBroadcastService gameBroadcastService,
+                                  CastingCostService castingCostService,
+                                  CastingPermissionService castingPermissionService,
                                   TargetValidationService targetValidationService,
                                   TargetLegalityService targetLegalityService) {
-        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, targetValidationService, targetLegalityService);
+        super(gameId, aiPlayer, gameRegistry, gameActions, gameQueryService, combatAttackService, gameBroadcastService, castingCostService, castingPermissionService, targetValidationService, targetLegalityService);
         this.boardEvaluator = new BoardEvaluator(gameQueryService);
         this.spellEvaluator = new SpellEvaluator(gameQueryService, boardEvaluator);
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
@@ -185,7 +192,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         // Calculate X value (for modal spells, xValue is the mode index)
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, costModifier);
@@ -353,7 +360,7 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
 
         ManaCost castCost = new ManaCost(card.getManaCost());
         Integer xValue = modalPlan != null ? modalPlan.modeIndex() : null;
-        int instantCostModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+        int instantCostModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         if (castCost.hasX() && xValue == null) {
             if (hasPermanentManaValueEqualsXTarget(card)) {
                 int maxX = manaManager.calculateMaxAffordableX(card, virtualPool, instantCostModifier);

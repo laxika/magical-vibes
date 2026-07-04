@@ -35,6 +35,8 @@ import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
@@ -74,6 +76,8 @@ public abstract class AiDecisionEngine {
     protected final PredicateEvaluationService predicateEvaluationService;
     protected final CombatAttackService combatAttackService;
     protected final GameBroadcastService gameBroadcastService;
+    protected final CastingCostService castingCostService;
+    protected final CastingPermissionService castingPermissionService;
 
     protected final AiManaManager manaManager;
     protected final AiTargetSelector targetSelector;
@@ -85,11 +89,14 @@ public abstract class AiDecisionEngine {
                             GameService gameService, GameQueryService gameQueryService,
                             CombatAttackService combatAttackService,
                             GameBroadcastService gameBroadcastService,
+                            CastingCostService castingCostService,
+                            CastingPermissionService castingPermissionService,
                             TargetValidationService targetValidationService,
                             TargetLegalityService targetLegalityService) {
         this(gameId, aiPlayer, gameRegistry,
                 new AiGameActions(gameId, aiPlayer, gameService, gameRegistry),
                 gameQueryService, combatAttackService, gameBroadcastService,
+                castingCostService, castingPermissionService,
                 targetValidationService, targetLegalityService);
     }
 
@@ -97,6 +104,8 @@ public abstract class AiDecisionEngine {
                             AiGameActions gameActions, GameQueryService gameQueryService,
                             CombatAttackService combatAttackService,
                             GameBroadcastService gameBroadcastService,
+                            CastingCostService castingCostService,
+                            CastingPermissionService castingPermissionService,
                             TargetValidationService targetValidationService,
                             TargetLegalityService targetLegalityService) {
         this.gameId = gameId;
@@ -107,6 +116,8 @@ public abstract class AiDecisionEngine {
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.combatAttackService = combatAttackService;
         this.gameBroadcastService = gameBroadcastService;
+        this.castingCostService = castingCostService;
+        this.castingPermissionService = castingPermissionService;
 
         this.manaManager = new AiManaManager(gameQueryService);
         BoardEvaluator boardEvaluator = new BoardEvaluator(gameQueryService);
@@ -320,7 +331,7 @@ public abstract class AiDecisionEngine {
      * if there is no attack tax.
      */
     protected int getMaxAffordableAttackers(GameData gameData) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
         if (taxPerCreature <= 0) {
             return Integer.MAX_VALUE;
         }
@@ -342,7 +353,7 @@ public abstract class AiDecisionEngine {
      * AIs that want to keep Jackal attacking should pair it before calling this.
      */
     protected List<Integer> prepareAttackersForTax(GameData gameData, List<Integer> attackerIndices) {
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
+        int taxPerCreature = castingCostService.getAttackPaymentPerCreature(gameData, aiPlayer.getId());
         if (taxPerCreature <= 0 || attackerIndices.isEmpty()) {
             return dropLoneCantAttackAlone(gameData, attackerIndices);
         }
@@ -426,7 +437,7 @@ public abstract class AiDecisionEngine {
      * sacrifice costs, and graveyard requirements.
      */
     protected boolean isSpellCastable(GameData gameData, Card card, ManaPool virtualPool) {
-        if (!gameBroadcastService.isSpellCastingAllowed(gameData, aiPlayer.getId(), card)) {
+        if (!castingPermissionService.isSpellCastingAllowed(gameData, aiPlayer.getId(), card)) {
             return false;
         }
         if (!canPaySacrificeCosts(gameData, card)) {
@@ -464,7 +475,7 @@ public abstract class AiDecisionEngine {
      */
     protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool, int extraCost) {
         ManaCost cost = new ManaCost(card.getManaCost());
-        int modifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + extraCost;
+        int modifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + extraCost;
         if (cost.hasX()) {
             if (!cost.canPay(virtualPool, Math.max(0, 1 + modifier))) return false;
         } else {
@@ -482,7 +493,7 @@ public abstract class AiDecisionEngine {
      * target permanents with certain subtypes.
      */
     protected int computeTargetingTax(GameData gameData, UUID targetId, List<UUID> multiTargetIds) {
-        return gameBroadcastService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds);
+        return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds);
     }
 
     /**
@@ -783,7 +794,7 @@ public abstract class AiDecisionEngine {
 
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue, int targetingTax) {
         if (card.getManaCost() == null) return false;
-        int costModifier = gameBroadcastService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
+        int costModifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + targetingTax;
         AiManaManager.ManaTapAction tap = manaTapAction();
 
         if (card.isRequiresCreatureMana()) {

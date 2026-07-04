@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectContext;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -57,6 +58,7 @@ public class BattlefieldEntryService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final CastingCostService castingCostService;
     private final PlayerInputService playerInputService;
     private final PermanentCopierService permanentCopierService;
     private final TriggerCollectionService triggerCollectionService;
@@ -69,6 +71,7 @@ public class BattlefieldEntryService {
     // (effect handlers) → BattlefieldEntryService.
     public BattlefieldEntryService(GameQueryService gameQueryService,
                                    GameBroadcastService gameBroadcastService,
+                                   CastingCostService castingCostService,
                                    PlayerInputService playerInputService,
                                    PermanentCopierService permanentCopierService,
                                    @Lazy TriggerCollectionService triggerCollectionService,
@@ -77,6 +80,7 @@ public class BattlefieldEntryService {
                                    EtbEffectResolver etbEffectResolver) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
+        this.castingCostService = castingCostService;
         this.playerInputService = playerInputService;
         this.permanentCopierService = permanentCopierService;
         this.triggerCollectionService = triggerCollectionService;
@@ -222,7 +226,7 @@ public class BattlefieldEntryService {
                 }
             }
             if (effect instanceof EntersTappedUnlessControlsPermanentEffect controlsPermanent) {
-                if (!gameBroadcastService.controlsPermanent(gameData, controllerId, controlsPermanent.predicate())) {
+                if (!castingCostService.controlsPermanent(gameData, controllerId, controlsPermanent.predicate())) {
                     enteringPermanent.tap();
                 }
             }
