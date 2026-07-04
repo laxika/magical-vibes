@@ -122,6 +122,33 @@ class GameBroadcastServiceTest {
         }
 
         @Test
+        @DisplayName("Over-reduction floors at colored pips: playable with only the colored mana, not with an empty pool")
+        void overReductionFloorsAtColoredPips() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+
+            // Reducer discounts creatures by {5} — more than this creature's {2} generic portion.
+            Card reducer = new Card();
+            reducer.setName("Big Reducer");
+            reducer.setType(CardType.ENCHANTMENT);
+            reducer.addEffect(EffectSlot.STATIC,
+                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), 5));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            Card creature = new Card();
+            creature.setName("Centaur Courser");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{2}{G}");
+            gd.playerHands.get(player1Id).add(creature);
+
+            // Empty pool: the over-reduction must NOT pay the {G} pip — unplayable.
+            assertThat(svc.getPlayableCardIndices(gd, player1Id, 0)).doesNotContain(0);
+
+            // A single {G}: colored pip satisfied, generic floored to 0 — playable.
+            gd.playerManaPools.get(player1Id).add(com.github.laxika.magicalvibes.model.ManaColor.GREEN);
+            assertThat(svc.getPlayableCardIndices(gd, player1Id, 0)).contains(0);
+        }
+
+        @Test
         @DisplayName("Spell taxed by opponent permanent becomes unplayable without enough mana")
         void spellTaxedByOpponentBecomesUnplayable() {
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);

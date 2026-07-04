@@ -407,6 +407,93 @@ class CastingCostServiceTest {
         }
 
         @Test
+        @DisplayName("Combines increase and reduction to a non-zero net (both modifiers fire)")
+        void combinesIncreaseAndReductionToNonZeroNet() {
+            // Opponent has Thalia: +2 to instants (asymmetric amount so a mistaken single-apply is visible)
+            Card thalia = new Card();
+            thalia.setName("Thalia");
+            thalia.setType(CardType.CREATURE);
+            thalia.addEffect(EffectSlot.STATIC,
+                    new IncreaseOpponentCastCostEffect(Set.of(CardType.INSTANT), 2));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(thalia));
+
+            // Player has a SELF-scoped reducer for instants: -3
+            Card familiar = new Card();
+            familiar.setName("Reducer");
+            familiar.setType(CardType.ARTIFACT);
+            familiar.addEffect(EffectSlot.STATIC,
+                    new ReduceCastCostForMatchingSpellsEffect(
+                            new CardTypePredicate(CardType.INSTANT), 3, CostModificationScope.SELF));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(familiar));
+
+            when(predicateEvaluationService.matchesCardPredicate(any(), any(), any())).thenAnswer(invocation -> {
+                Card card = invocation.getArgument(0);
+                CardTypePredicate pred = invocation.getArgument(1);
+                return card.hasType(pred.cardType());
+            });
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+
+            Card bolt = new Card();
+            bolt.setName("Lightning Bolt");
+            bolt.setType(CardType.INSTANT);
+            bolt.setManaCost("{R}");
+
+            // +2 from Thalia, -3 from reducer = net -1 (a clearly non-zero value both ways)
+            assertThat(svc.getCastCostModifier(gd, player1Id, bolt, snapshot)).isEqualTo(-1);
+        }
+
+        @Test
+        @DisplayName("Reduction larger than the mana cost returns the full negative delta (service does not clamp)")
+        void reductionExceedingManaCostReturnsFullNegativeDelta() {
+            // Heartless-style: creatures cost {5} less — more than this creature's generic cost.
+            Card reducer = new Card();
+            reducer.setName("Big Reducer");
+            reducer.setType(CardType.ENCHANTMENT);
+            reducer.addEffect(EffectSlot.STATIC,
+                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), 5));
+            gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+
+            Card creature = new Card();
+            creature.setName("Grizzly Bears");
+            creature.setType(CardType.CREATURE);
+            creature.setManaCost("{1}{G}"); // mana value 2, generic 1
+
+            // The service reports the raw signed delta of -5; the generic floor / colored-pip
+            // protection is applied downstream by ManaCost.canPay, not here.
+            assertThat(svc.getCastCostModifier(gd, player1Id, creature, snapshot)).isEqualTo(-5);
+        }
+
+        @Test
+        @DisplayName("Spell-self reduction is applied via the spell, not collected into the battlefield snapshot")
+        void spellSelfReductionNotDoubleCountedInSnapshot() {
+            // ReduceOwnCastCostPerCreatureOnBattlefield is an onSpellItself() effect: it lives on the
+            // spell being cast, so it must NOT be picked up as a battlefield modifier (which would
+            // double-count it), yet must still reduce the cost through the spell-self path.
+            Card ownCreature = new Card();
+            ownCreature.setName("Grizzly Bears");
+            ownCreature.setType(CardType.CREATURE);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(ownCreature));
+
+            when(gameQueryService.isCreature(any(), any())).thenReturn(true);
+
+            Card blasphemousAct = new Card();
+            blasphemousAct.setName("Blasphemous Act");
+            blasphemousAct.setType(CardType.SORCERY);
+            blasphemousAct.setManaCost("{8}{R}");
+            blasphemousAct.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostPerCreatureOnBattlefieldEffect(1));
+
+            var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
+
+            // The spell's own effect is not a battlefield modifier.
+            assertThat(snapshot.modifiers()).isEmpty();
+            // But it is applied exactly once through the spell-self path: 1 creature → -1.
+            assertThat(svc.getCastCostModifier(gd, player1Id, blasphemousAct, snapshot)).isEqualTo(-1);
+        }
+
+        @Test
         @DisplayName("One-off and snapshot-based computation agree")
         void oneOffAndSnapshotAgree() {
             Card taxCard = new Card();
