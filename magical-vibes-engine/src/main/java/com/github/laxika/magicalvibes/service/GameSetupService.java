@@ -95,6 +95,12 @@ public class GameSetupService {
             String deckId = gameData.playerDeckChoices.get(playerId);
             List<Card> deck = resolveDeck(deckId);
 
+            // Stamp card ownership: each card is owned by the player whose deck it started in.
+            // Preserved across zone changes; used to evaluate "a spell you don't own".
+            for (Card card : deck) {
+                card.setOwnerId(playerId);
+            }
+
             Collections.shuffle(deck, random);
             gameData.playerDecks.put(playerId, deck);
             gameData.mulliganCounts.put(playerId, 0);

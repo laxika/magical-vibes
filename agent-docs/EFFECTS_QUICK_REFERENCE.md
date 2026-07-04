@@ -255,6 +255,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ExileTopCardsMayPlayUntilNextTurnEffect(int count)` — exile top N from library (fixed count), may play until end of your next turn (owner-relative expiry via `ExileSupport.grantPlayUntilOwnersNextTurn`)
 - `ExileTargetPermanentMayPlayUntilNextTurnEffect()` — exile the target permanent, its owner may play it until end of their next turn (e.g. Suspend Aggression; pair with a permanent target filter). Tokens exiled this way cease to exist
 - `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(CardPredicate filter, boolean ownGraveyardOnly)` — exile a targeted graveyard card matching the filter, controller may play it until end of their next turn (e.g. Practiced Scrollsmith; ETB graveyard-target flow via `MultiGraveyardChoice`)
+- `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect()` — exile a targeted instant/sorcery from an opponent's graveyard; controller may cast it **this turn**, spending mana of any type, and it is exiled instead of going to a graveyard (Nita, Forum Conciliator). Uses `exilePlayPermissions` + `exilePlayPermissionsExpireEndOfTurn` + `exilePlayAnyManaType` + `exileInsteadOfGraveyard`. Targets graveyard (`canTargetGraveyard()`/`canTargetAnyGraveyard()`)
 - `ChooseCardFromTargetHandToDiscardEffect(int, List<CardType>)` — choose from hand to discard
 - `ChooseCardFromTargetHandToExileEffect(int, List<CardType>)` — choose from hand to exile
 - `LookAtHandEffect()` — look at hand

@@ -272,6 +272,14 @@ public class GameData {
     /** Card UUIDs whose exile-play permission expires at end of the turn number stored as the value
      *  (e.g. Archaic's Agony: until end of your next turn). */
     public final Map<UUID, Integer> exilePlayPermissionsExpireAtTurnEnd = new ConcurrentHashMap<>();
+    /** Exiled card UUIDs that may be cast spending mana of any type (e.g. Nita, Forum Conciliator's
+     *  activated ability). Complements the battlefield-permanent any-mana grant used by Hostage Taker.
+     *  Cleared during cleanup step. */
+    public final Set<UUID> exilePlayAnyManaType = ConcurrentHashMap.newKeySet();
+    /** Card UUIDs that are exiled instead of being put into a graveyard (e.g. a spell cast via
+     *  Nita, Forum Conciliator: "If that spell would be put into a graveyard, exile it instead").
+     *  Cleared during cleanup step. */
+    public final Set<UUID> exileInsteadOfGraveyard = ConcurrentHashMap.newKeySet();
     /** Maps graveyard card UUID → player UUID who may play it this turn (e.g. Ark of Hunger).
      *  Cleared during cleanup step for entries in {@link #graveyardPlayPermissionsExpireEndOfTurn}. */
     public final Map<UUID, UUID> graveyardPlayPermissions = new ConcurrentHashMap<>();
@@ -935,6 +943,8 @@ public class GameData {
         copy.exilePlayPermissions.putAll(this.exilePlayPermissions);
         copy.exilePlayPermissionsExpireEndOfTurn.addAll(this.exilePlayPermissionsExpireEndOfTurn);
         copy.exilePlayPermissionsExpireAtTurnEnd.putAll(this.exilePlayPermissionsExpireAtTurnEnd);
+        copy.exilePlayAnyManaType.addAll(this.exilePlayAnyManaType);
+        copy.exileInsteadOfGraveyard.addAll(this.exileInsteadOfGraveyard);
         copy.graveyardPlayPermissions.putAll(this.graveyardPlayPermissions);
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;

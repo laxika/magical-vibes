@@ -374,6 +374,9 @@ public class CastingPermissionService {
     }
 
     public boolean hasAnyManaTypePermission(GameData gameData, UUID playerId, UUID cardId) {
+        // Per-card any-mana grant from a "this turn" exile-cast permission (e.g. Nita, Forum Conciliator).
+        if (gameData.exilePlayAnyManaType.contains(cardId)) return true;
+
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return false;
         for (Permanent perm : battlefield) {

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
@@ -179,6 +180,8 @@ public class PredicateEvaluationService {
                     p.predicates().stream().allMatch(sub -> matchesCardPredicate(card, sub, sourceCardId, gameData, cardOwnerId));
             case CardAnyOfPredicate p ->
                     p.predicates().stream().anyMatch(sub -> matchesCardPredicate(card, sub, sourceCardId, gameData, cardOwnerId));
+            case CardControllerDoesNotOwnPredicate ignored ->
+                    card.getOwnerId() != null && cardOwnerId != null && !card.getOwnerId().equals(cardOwnerId);
         };
     }
 

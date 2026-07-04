@@ -113,6 +113,10 @@ public class TurnCleanupService {
         }
         gameData.exilePlayPermissionsExpireEndOfTurn.clear();
 
+        // Per-card "this turn" exile-cast riders (e.g. Nita, Forum Conciliator) end with the turn.
+        gameData.exilePlayAnyManaType.clear();
+        gameData.exileInsteadOfGraveyard.clear();
+
         int currentTurn = gameData.turnNumber;
         gameData.exilePlayPermissionsExpireAtTurnEnd.entrySet().removeIf(entry -> {
             if (entry.getValue() <= currentTurn) {

@@ -106,3 +106,9 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | Predicate | Constructor | Matches |
 |-----------|-------------|---------|
 | `PlayerRelationPredicate` | `(PlayerRelation)` | player by relation. `PlayerRelation`: `OPPONENT`, `SELF` |
+
+## CardPredicate (spell/card filters)
+
+| Predicate | Constructor | Matches |
+|-----------|-------------|---------|
+| `CardControllerDoesNotOwnPredicate` | `()` | a card whose owner is not the perspective player (the `cardOwnerId` argument of `matchesCardPredicate`, which is the casting player in the spell-cast trigger path). Cards with no tracked owner (tokens/copies) never match. Use as a `SpellCastTriggerEffect` filter for "a spell you don't own" (Nita, Forum Conciliator). Ownership is stamped at game setup on `Card.ownerId` and preserved across zones |

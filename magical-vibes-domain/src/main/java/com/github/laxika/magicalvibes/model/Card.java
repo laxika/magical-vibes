@@ -34,6 +34,13 @@ public class Card {
     }
 
     private final UUID id = UUID.randomUUID();
+    /**
+     * The player who owns this card — the player whose deck it started the game in. Stamped once
+     * at game setup ({@code GameSetupService}) and preserved across zone changes. Cards created by
+     * the engine (tokens, copies) leave this {@code null}. Distinct from control: used to evaluate
+     * "a spell you don't own" (e.g. Nita, Forum Conciliator).
+     */
+    @Setter private UUID ownerId;
     @Setter private String name;
     @Setter private CardType type;
     private String manaCost;
