@@ -78,7 +78,8 @@ class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler = new LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler(gameBroadcastService, sessionManager, cardViewFactory);
+        lookAtTopCardsOfTargetLibraryMayExileOneEffectHandler = new LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler(gameBroadcastService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 

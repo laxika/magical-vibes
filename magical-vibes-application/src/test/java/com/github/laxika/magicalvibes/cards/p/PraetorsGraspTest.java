@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -49,9 +51,9 @@ class PraetorsGraspTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // All cards should be shown, not filtered by type
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
     }
 
     // ===== Exile with play permission =====

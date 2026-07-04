@@ -75,9 +75,9 @@ class PrimevalTitanTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline → library search
 
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.librarySearch().cards())
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .allMatch(c -> c.hasType(CardType.LAND));
-            assertThat(gd.interaction.librarySearch().cards()).hasSize(3); // Forest, Island, Plains
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3); // Forest, Island, Plains
         }
 
         @Test

@@ -64,8 +64,8 @@ class HorizonSpellbombTest extends BaseCardTest {
 
         // Should be awaiting library search
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
@@ -85,7 +85,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         // Resolve the search ability
         harness.passBothPriorities();
 
-        List<Card> offered = gd.interaction.librarySearch().cards();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
@@ -201,7 +201,7 @@ class HorizonSpellbombTest extends BaseCardTest {
         // Should be awaiting library search
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // Hand should have grown by 2 (draw + search)

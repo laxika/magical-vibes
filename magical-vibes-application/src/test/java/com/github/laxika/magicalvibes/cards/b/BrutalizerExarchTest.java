@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -56,7 +58,7 @@ class BrutalizerExarchTest extends BaseCardTest {
                     .anyMatch(p -> p.getCard().getName().equals("Brutalizer Exarch"));
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
             // Only creature cards should be shown
-            assertThat(gd.interaction.librarySearch().cards())
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .allMatch(c -> c.hasType(CardType.CREATURE));
         }
 
@@ -69,7 +71,7 @@ class BrutalizerExarchTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB trigger
 
             GameData gd = harness.getGameData();
-            List<Card> offered = gd.interaction.librarySearch().cards();
+            List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
             String chosenName = offered.getFirst().getName();
 
             gs.handleLibraryCardChosen(gd, player1, 0);

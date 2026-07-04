@@ -40,15 +40,11 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ScryMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -71,8 +67,6 @@ public class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHand
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final LibraryRevealSupport libraryRevealSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -112,21 +106,17 @@ public class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHand
 
         String prompt = "You may reveal a " + description + " from among them and put it into your hand.";
 
-        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, matchingCards)
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, matchingCards)
                 .reveals(true)
                 .canFailToFind(true)
                 .sourceCards(topCards)
                 .reorderRemainingToBottom(true)
                 .shuffleAfterSelection(false)
                 .prompt(prompt)
-                .build());
-
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
+                .build(),
                 prompt,
-                true
-        ));
+                true));
     
     }
 }

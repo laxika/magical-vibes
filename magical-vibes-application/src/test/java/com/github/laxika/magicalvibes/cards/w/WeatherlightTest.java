@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.ArvadTheCursed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -206,8 +208,8 @@ class WeatherlightTest extends BaseCardTest {
         // Trigger should have resolved — offering the legendary creature
         GameData gdAfter = harness.getGameData();
         assertThat(gdAfter.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gdAfter.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gdAfter.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Arvad the Cursed");
+        assertThat(gdAfter.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gdAfter.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Arvad the Cursed");
     }
 
     @Test

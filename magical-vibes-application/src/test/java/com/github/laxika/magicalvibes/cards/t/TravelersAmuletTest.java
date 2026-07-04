@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -37,8 +39,8 @@ class TravelersAmuletTest extends BaseCardTest {
 
         // Should be awaiting library search with only basic lands offered
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
@@ -52,7 +54,7 @@ class TravelersAmuletTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        List<Card> offered = gd.interaction.librarySearch().cards();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);

@@ -86,9 +86,9 @@ class SunBlessedMountTest extends BaseCardTest {
 
         // Library search prompt should appear
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Huatli, Dinosaur Knight");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Huatli, Dinosaur Knight");
     }
 
     // ===== Accept may: not found anywhere =====

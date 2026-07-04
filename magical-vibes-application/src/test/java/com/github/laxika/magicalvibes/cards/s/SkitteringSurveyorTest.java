@@ -64,8 +64,8 @@ class SkitteringSurveyorTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
@@ -80,7 +80,7 @@ class SkitteringSurveyorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         GameData gd = harness.getGameData();
-        List<Card> offered = gd.interaction.librarySearch().cards();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);

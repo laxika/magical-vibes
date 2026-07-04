@@ -29,7 +29,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
         PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
-        PendingInteraction.LibraryRevealChoice {
+        PendingInteraction.LibraryRevealChoice,
+        PendingInteraction.LibrarySearch {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -360,5 +361,18 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                boolean randomRemainingToBottom, int lifeCostPerSelection,
                                UUID beneficiaryPlayerId, int maxCount, String prompt)
             implements PendingInteraction {
+    }
+
+    /**
+     * Search-style pick of one card from a presented library subset (tutors, look-at-top-N
+     * picks, Head Games, Sphinx Ambassador, ...). {@code params} is the immutable
+     * {@link LibrarySearchParams} the begin site built - the multi-pick countdown
+     * ({@code remainingCount}/{@code accumulatedCards}) advances by beginning a fresh record.
+     * {@code messagePrompt} and {@code messageCanFailToFind} are the exact begin-time
+     * {@code ChooseCardFromLibraryMessage} fields (some sites word the message differently
+     * from {@code params.prompt()}); both are re-sent verbatim on reconnect.
+     */
+    record LibrarySearch(LibrarySearchParams params, String messagePrompt,
+                         boolean messageCanFailToFind) implements PendingInteraction {
     }
 }

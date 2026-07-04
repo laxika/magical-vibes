@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
@@ -88,10 +90,10 @@ class StrataScytheTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // Only land cards should be presented (Plains and Forest, not Grizzly Bears)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.LAND));
     }
 

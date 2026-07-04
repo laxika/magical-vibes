@@ -86,7 +86,7 @@ class LlanowarSentinelTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline (pays mana, shows search)
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.getName().equals("Llanowar Sentinel"));
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }

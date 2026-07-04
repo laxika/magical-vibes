@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -62,7 +64,6 @@ class SearchLibraryForCardTypesToBattlefieldEffectHandlerTest {
     private PermanentRemovalService permanentRemovalService;
     @Mock
     private PlayerInputService playerInputService;
-    @InjectMocks
     private LibrarySearchSupport support;
     private GameData gd;
     private UUID player1Id;
@@ -71,6 +72,8 @@ class SearchLibraryForCardTypesToBattlefieldEffectHandlerTest {
 
     @BeforeEach
     void setUp() {
+        support = new LibrarySearchSupport(gameBroadcastService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -148,7 +151,7 @@ class SearchLibraryForCardTypesToBattlefieldEffectHandlerTest {
                 searchLibraryForCardTypesToBattlefieldHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().cards())
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                         .allMatch(c -> c.getName().equals("Plains")
                                 || c.getName().equals("Forest")
                                 || c.getName().equals("Swamp"));

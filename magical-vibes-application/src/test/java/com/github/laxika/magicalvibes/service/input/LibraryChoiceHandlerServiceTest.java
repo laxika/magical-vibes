@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -59,7 +61,6 @@ class LibraryChoiceHandlerServiceTest {
     @Mock private EffectResolutionService effectResolutionService;
     @Mock private ExileService exileService;
 
-    @InjectMocks
     private LibraryChoiceHandlerService service;
 
     private GameData gd;
@@ -70,6 +71,16 @@ class LibraryChoiceHandlerServiceTest {
 
     @BeforeEach
     void setUp() {
+        com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
+                new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry();
+        registry.register(new com.github.laxika.magicalvibes.service.interaction.LibrarySearchInteractionHandler(
+                sessionManager, cardViewFactory, mock(LibraryChoiceHandlerService.class)));
+        service = new LibraryChoiceHandlerService(gameQueryService,
+                mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
+                graveyardService, warpWorldService, battlefieldEntryService, legendRuleService,
+                stateBasedActionService, gameBroadcastService, turnProgressionService,
+                playerInputService, effectResolutionService, exileService, registry,
+                mock(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");
@@ -128,7 +139,8 @@ class LibraryChoiceHandlerServiceTest {
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.BATTLEFIELD)
                 .build();
-        gd.interaction.beginLibrarySearch(params);
+        gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Search your library for a basic land card and put it onto the battlefield.", true),
+                com.github.laxika.magicalvibes.model.AwaitingInput.LIBRARY_SEARCH);
     }
 
     // =========================================================================
@@ -159,7 +171,7 @@ class LibraryChoiceHandlerServiceTest {
 
             // Player2 should now be prompted to search
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
             assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
         }
 
@@ -182,7 +194,7 @@ class LibraryChoiceHandlerServiceTest {
 
             // Player2 should now be prompted to search
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-            assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
         }
 
         @Test
@@ -288,8 +300,8 @@ class LibraryChoiceHandlerServiceTest {
             service.handleLibraryCardChosen(gd, player1, 0);
 
             // Player2 should only see basic land cards
-            assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-            assertThat(gd.interaction.librarySearch().cards())
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                     .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }
     }

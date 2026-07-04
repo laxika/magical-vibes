@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.s.SpiresOfOrazca;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -118,8 +120,8 @@ class ThaumaticCompassTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ability
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Forest");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Forest");
     }
 
     // ===== End step transform =====

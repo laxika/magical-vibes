@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.FrenziedRaptor;
 import com.github.laxika.magicalvibes.cards.g.GrazingWhiptail;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -144,8 +146,8 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
 
         // Library search should be awaiting input
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getSubtypes())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getSubtypes())
                 .contains(CardSubtype.DINOSAUR);
     }
 

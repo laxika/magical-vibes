@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -51,11 +53,11 @@ class GreenSunsZenithTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
         // Library: LlanowarElves (MV 1, green), GrizzlyBears (MV 2, green), AirElemental (MV 5, blue), Plains, Swamp
         // X=2 → only green creatures with MV <= 2: LlanowarElves (1) and GrizzlyBears (2)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
     }
 
@@ -70,8 +72,8 @@ class GreenSunsZenithTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Only LlanowarElves (MV 1, green) qualifies
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Llanowar Elves");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Llanowar Elves");
     }
 
     @Test
@@ -84,10 +86,10 @@ class GreenSunsZenithTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // AirElemental (MV 5, blue) should not appear despite high X
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .doesNotContain("Air Elemental");
         // Only green creatures
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
     }
 
@@ -100,7 +102,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.CREATURE));
     }
 
@@ -118,8 +120,8 @@ class GreenSunsZenithTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(1);
-        assertThat(gd.interaction.librarySearch().cards().getFirst().getName()).isEqualTo("Glissa, the Traitor");
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName()).isEqualTo("Glissa, the Traitor");
     }
 
     @Test
@@ -131,7 +133,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().destination())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
     }
 
@@ -147,7 +149,7 @@ class GreenSunsZenithTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -199,7 +201,7 @@ class GreenSunsZenithTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
     }
 
     @Test

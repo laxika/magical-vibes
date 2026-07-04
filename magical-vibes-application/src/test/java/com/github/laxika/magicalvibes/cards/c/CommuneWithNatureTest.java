@@ -74,10 +74,10 @@ class CommuneWithNatureTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
     }
 

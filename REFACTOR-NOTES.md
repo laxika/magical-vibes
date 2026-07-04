@@ -458,6 +458,46 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   handler), and the new focused `LibraryRevealChoiceInteractionHandlerTest` covers begin
   content, the null-prompt no-send rule, dispatch delegation, and replay gating.
 
+- `PendingInteraction.LibrarySearch` (LIBRARY_SEARCH) — search-style single-card picks from a
+  presented library subset: tutors, look-at-top-N picks, Head Games, Sphinx Ambassador, the
+  each-player basic-land searches, Sunbird's Invocation cast-without-paying, imprint-from-top.
+  The record wraps the immutable `LibrarySearchParams` the begin site built plus the exact
+  begin-time `messagePrompt` + `messageCanFailToFind` (several begin sites word the
+  `ChooseCardFromLibraryMessage` differently from `params.prompt()`, so both are carried and
+  re-sent verbatim on reconnect); card views derive from `params.cards()` at prompt time. The
+  multi-pick countdown (`remainingCount`/`accumulatedCards`) and the Sphinx Ambassador
+  `PendingSphinxAmbassadorChoice` poll/re-queue stay in
+  `LibraryChoiceHandlerService.handleLibraryCardChosen` (now reads the active record; the
+  fail-to-find "fail to find" decline path and all log/error texts unchanged), and each mid-flow
+  pick begins a fresh record via `registry.begin` (immutable re-begin precedent). Answered via the
+  new single-index `InteractionAnswer.LibraryCardChosen` (kept distinct from the graveyard/card
+  index shapes, per the per-entry-point convention); `GameService.handleLibraryCardChosen` was
+  single-family, so it collapsed to dispatch-or-throw with the same "Not awaiting library search"
+  and GameService lost its `LibraryChoiceHandlerService` dep. **Replay-fidelity correction**: the
+  legacy reconnect replay derived a blank-prompt fallback ("Search your library for a basic land
+  card to put into your hand." vs "...a card..." off `canFailToFind`) that diverged from the
+  begin-time message; replay now re-sends the exact begin-time prompt/flag (matching begin — same
+  precedent as the prior prompt corrections), and the direct begin sites gain the uniform
+  mind-control recipient redirect via `registry.begin`. **`copyInteractionInto` finding**: the
+  legacy simulation copy rebuilt the context through `LibrarySearchParams.builder` and silently
+  DROPPED `filterCardName`/`attachToPlayerId`/`filterPredicate`/`accumulatedCards`; the
+  active-record copy preserves them verbatim — a simulation-only fidelity improvement. Removed:
+  `InteractionContext.LibrarySearch` (+ its convenience constructor) and all cases
+  (`controlledPlayerMatchesContext`, `ReconnectionService` ×2, `GameSimulator`,
+  `GameData.copyInteractionInto`), the `InteractionState.beginLibrarySearch/clearLibrarySearch/
+  librarySearchContext` set + the `librarySearch` sub-state field, and **`LibrarySearchState`
+  deleted entirely**. `LibrarySearchParams` stays (the record wraps it; the answer handler and
+  begin sites build it); the now-unused `SessionManager`/`CardViewFactory` deps were dropped from
+  `LibrarySearchSupport`, `LibraryChoiceHandlerService`, `ReconnectionService`, and the six
+  reveal/tutor effect handlers. AI: `LibrarySearchAiStrategy` (highest-value nonland, else first —
+  ported verbatim; no difficulty overrides existed); `AiChoiceHandler.handleLibrarySearch` is a
+  thin `handleActiveInteraction` alias; `GameSimulator`'s LIBRARY_SEARCH resolve case reads the
+  record (picks index 0) and `getInteractionPlayer` gained the record case. Tests: ~70 card /
+  effect-handler tests' `interaction.librarySearch().X` reads rewritten to
+  `activeInteraction(PendingInteraction.LibrarySearch.class).params().X`; `LibraryChoiceHandlerServiceTest`
+  and `InteractionRegistryTestSupport` register the real handler; new focused
+  `LibrarySearchInteractionHandlerTest` covers begin content, dispatch delegation, and replay gating.
+
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
    `InteractionAnswer` if new.
@@ -480,7 +520,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 ### Stage 3 continuation — migrate the remaining kinds
 
 Suggested order: PERMANENT_CHOICE,
-LIBRARY_SEARCH, COMBAT_DAMAGE_ASSIGNMENT, and last the combat
+COMBAT_DAMAGE_ASSIGNMENT, and last the combat
 declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 
 ### Stage 4 — Generic `AwaitingInput` kinds → interaction records

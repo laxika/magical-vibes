@@ -39,15 +39,11 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ScryMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -67,8 +63,7 @@ import org.springframework.stereotype.Component;
 public class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -99,7 +94,8 @@ public class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler implements No
 
         List<Card> sourceCards = new ArrayList<>(topCards);
 
-        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, topCards)
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, topCards)
                 .canFailToFind(true)
                 .targetPlayerId(targetPlayerId)
                 .sourceCards(sourceCards)
@@ -107,14 +103,9 @@ public class LookAtTopCardsOfTargetLibraryMayExileOneEffectHandler implements No
                 .shuffleAfterSelection(false)
                 .prompt("You may exile one of these cards. The rest will be put on top of the library.")
                 .destination(LibrarySearchDestination.EXILE)
-                .build());
-
-        List<CardView> cardViews = topCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
+                .build(),
                 "You may exile one of these cards. The rest will be put on top of the library.",
-                true
-        ));
+                true));
 
         log.info("Game {} - {} looks at top {} of {}'s library ({})", gameData.id, controllerName, actual, targetName, entry.getCard().getName());
     

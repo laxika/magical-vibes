@@ -79,7 +79,8 @@ class LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler = new LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler(sessionManager, cardViewFactory, libraryRevealSupport);
+        lookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler = new LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffectHandler(libraryRevealSupport,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 

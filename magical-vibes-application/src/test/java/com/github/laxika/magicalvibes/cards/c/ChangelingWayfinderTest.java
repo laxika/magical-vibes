@@ -111,9 +111,9 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(3);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactlyInAnyOrder("Plains", "Forest", "Island");
     }
 
@@ -142,7 +142,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         // Awaiting state is cleared
         assertThat(gd.interaction.awaitingInputType()).isNull();
-        assertThat(gd.interaction.librarySearch()).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
 
         // Log mentions the reveal
         assertThat(gd.gameLog).anyMatch(entry -> entry.contains("reveals") && entry.contains("puts it into their hand"));
@@ -159,7 +159,7 @@ class ChangelingWayfinderTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
 
         GameData gd = harness.getGameData();
-        List<Card> searchCards = gd.interaction.librarySearch().cards();
+        List<Card> searchCards = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = searchCards.get(2).getName(); // pick the third card
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 2);
@@ -270,8 +270,8 @@ class ChangelingWayfinderTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards()).allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
     }
 
     // ===== Changeling keyword: counts as every creature type =====

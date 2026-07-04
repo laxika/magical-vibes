@@ -39,15 +39,11 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ScryMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -67,8 +63,7 @@ import org.springframework.stereotype.Component;
 public class SunbirdsInvocationRevealAndCastEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -123,7 +118,8 @@ public class SunbirdsInvocationRevealAndCastEffectHandler implements NormalEffec
         String prompt = "You may cast a spell with mana value " + manaValue
                 + " or less from among the revealed cards without paying its mana cost.";
 
-        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, castable)
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, castable)
                 .reveals(true)
                 .canFailToFind(true)
                 .sourceCards(new ArrayList<>(topCards))
@@ -131,14 +127,9 @@ public class SunbirdsInvocationRevealAndCastEffectHandler implements NormalEffec
                 .shuffleAfterSelection(false)
                 .prompt(prompt)
                 .destination(LibrarySearchDestination.CAST_WITHOUT_PAYING)
-                .build());
-
-        List<CardView> cardViews = castable.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
+                .build(),
                 prompt,
-                true
-        ));
+                true));
     
     }
 }

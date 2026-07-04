@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -54,7 +56,7 @@ class IncreasingAmbitionTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount()).isEqualTo(1);
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
@@ -79,14 +81,14 @@ class IncreasingAmbitionTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve flashback sorcery -> library search prompt
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().remainingCount()).isEqualTo(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount()).isEqualTo(2);
 
         // First pick
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
 
         // A second pick is prompted
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().remainingCount()).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().remainingCount()).isEqualTo(1);
 
         // Second pick
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);

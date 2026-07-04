@@ -74,9 +74,9 @@ class SquadronHawkTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.getName().equals("Squadron Hawk"));
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
     }
 
     @Test
@@ -175,7 +175,7 @@ class SquadronHawkTest extends BaseCardTest {
         harness.passBothPriorities(); // Resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.librarySearch().reveals()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
     }
 
     private void setupAndCast() {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
@@ -59,8 +61,8 @@ class DistantMemoriesTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
     }
 
     // ===== Opponent accepts — card goes to hand =====
@@ -74,7 +76,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sorcery → library search
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         // Player 1 chooses a card from library
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -108,7 +110,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve sorcery → library search
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
 
         // Player 1 chooses a card from library
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -144,7 +146,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        String chosenName = gd.interaction.librarySearch().cards().getFirst().getName();
+        String chosenName = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().getFirst().getName();
         int deckSizeBefore = gd.playerDecks.get(player1.getId()).size();
 
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -215,7 +217,7 @@ class DistantMemoriesTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
 
     // ===== Helpers =====

@@ -39,8 +39,7 @@ import java.util.function.Predicate;
 public class LibrarySearchSupport {
 
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * Starts the next pending "each player searches for a basic land" search from the queue.
@@ -194,10 +193,8 @@ public class LibrarySearchSupport {
 
     public void sendLibrarySearchToPlayer(GameData gameData, UUID playerId, LibrarySearchParams params,
                                             String prompt, boolean canFailToFind, String logMessage) {
-        gameData.interaction.beginLibrarySearch(params);
-
-        List<CardView> cardViews = params.cards().stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, canFailToFind));
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
+                params, prompt, canFailToFind));
 
         gameBroadcastService.logAndBroadcast(gameData, logMessage);
     }

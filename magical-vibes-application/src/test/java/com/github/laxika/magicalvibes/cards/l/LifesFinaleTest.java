@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Peek;
@@ -76,7 +78,7 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -94,9 +96,9 @@ class LifesFinaleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Only creature cards should appear in the search
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.CREATURE));
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
     }
 
     @Test

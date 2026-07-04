@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.interaction.LibrarySearchState;
 import com.github.laxika.magicalvibes.model.interaction.PermanentChoiceState;
 
 import java.util.ArrayList;
@@ -22,7 +21,6 @@ public class InteractionState {
 
     // --- Grouped sub-states ---
     private PermanentChoiceState permanentChoice;
-    private LibrarySearchState librarySearch;
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
@@ -40,7 +38,6 @@ public class InteractionState {
         copy.context = this.context;
         copy.activeInteraction = this.activeInteraction;
         copy.permanentChoice = this.permanentChoice != null ? this.permanentChoice.deepCopy() : null;
-        copy.librarySearch = this.librarySearch != null ? this.librarySearch.deepCopy() : null;
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
@@ -105,9 +102,6 @@ public class InteractionState {
 
     public PermanentChoiceState permanentChoice() {
         return permanentChoice;
-    }
-    public LibrarySearchState librarySearch() {
-        return librarySearch;
     }
     // ========================================================================
     // Combat
@@ -224,47 +218,6 @@ public class InteractionState {
     public void clearPendingEquipmentAttach() {
         this.pendingEquipmentAttachEquipmentId = null;
         this.pendingEquipmentAttachTargetId = null;
-    }
-
-    // ========================================================================
-    // Library search
-    // ========================================================================
-
-    public void beginLibrarySearch(LibrarySearchParams params) {
-        this.awaitingInput = AwaitingInput.LIBRARY_SEARCH;
-        this.librarySearch = new LibrarySearchState(
-                params.playerId(), params.cards(), params.reveals(), params.canFailToFind(),
-                params.targetPlayerId(), params.remainingCount(), params.sourceCards(),
-                params.reorderRemainingToBottom(), params.reorderRemainingToTop(),
-                params.shuffleAfterSelection(),
-                params.prompt(), params.destination(), params.filterCardTypes(),
-                params.accumulatedCards(), params.filterCardName(), params.attachToPlayerId(),
-                params.filterPredicate()
-        );
-        this.context = new InteractionContext.LibrarySearch(params.playerId(), params.cards(), params.reveals(),
-                params.canFailToFind(), params.targetPlayerId(), params.remainingCount(), params.sourceCards(),
-                params.reorderRemainingToBottom(), params.reorderRemainingToTop(),
-                params.shuffleAfterSelection(), params.prompt(), params.destination(),
-                params.filterCardTypes(), params.accumulatedCards(), params.filterCardName(),
-                params.attachToPlayerId(), params.filterPredicate());
-    }
-
-    public void clearLibrarySearch() {
-        this.librarySearch = null;
-    }
-
-    public InteractionContext.LibrarySearch librarySearchContext() {
-        if (context instanceof InteractionContext.LibrarySearch ls) return ls;
-        if (librarySearch == null) return null;
-        return new InteractionContext.LibrarySearch(librarySearch.playerId(), librarySearch.cards(),
-                librarySearch.reveals(), librarySearch.canFailToFind(),
-                librarySearch.targetPlayerId(), librarySearch.remainingCount(),
-                librarySearch.sourceCards(), librarySearch.reorderRemainingToBottom(),
-                librarySearch.reorderRemainingToTop(),
-                librarySearch.shuffleAfterSelection(), librarySearch.prompt(), librarySearch.destination(),
-                librarySearch.filterCardTypes(), librarySearch.accumulatedCards(),
-                librarySearch.filterCardName(), librarySearch.attachToPlayerId(),
-                librarySearch.filterPredicate());
     }
 
 }

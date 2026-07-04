@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -78,7 +80,8 @@ class ImprintFromTopCardsEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameBroadcastService, sessionManager, cardViewFactory,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
-        imprintFromTopCardsEffectHandler = new ImprintFromTopCardsEffectHandler(gameQueryService, gameBroadcastService, sessionManager, cardViewFactory, exileService, libraryRevealSupport);
+        imprintFromTopCardsEffectHandler = new ImprintFromTopCardsEffectHandler(gameQueryService, gameBroadcastService, exileService, libraryRevealSupport,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
     }
 
@@ -173,7 +176,7 @@ class ImprintFromTopCardsEffectHandlerTest {
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
                 verify(sessionManager).sendToPlayer(eq(player1Id), any());
             }
 }

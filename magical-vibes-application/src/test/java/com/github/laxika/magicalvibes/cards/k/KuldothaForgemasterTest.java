@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.FlightSpellbomb;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -166,7 +168,7 @@ class KuldothaForgemasterTest extends BaseCardTest {
         // Should prompt for library search
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Only artifact cards should be available to search
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.getName().equals("Gold Myr"));
 
         // Choose Gold Myr

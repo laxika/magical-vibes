@@ -166,7 +166,7 @@ class LilianaVessTest extends BaseCardTest {
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(3); // 5 - 2
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // All cards from library should be offered (unrestricted search)
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
     }
 
     @Test
@@ -179,7 +179,7 @@ class LilianaVessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        List<Card> offered = gd.interaction.librarySearch().cards();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         // Find Grizzly Bears in the offered cards
         int bearsIndex = -1;
         for (int i = 0; i < offered.size(); i++) {
@@ -208,7 +208,7 @@ class LilianaVessTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isFalse();
     }
 
     // ===== -8 ability: Put all creature cards from all graveyards onto battlefield =====

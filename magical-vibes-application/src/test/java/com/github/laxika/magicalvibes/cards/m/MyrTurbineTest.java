@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.i.IronMyr;
 import com.github.laxika.magicalvibes.cards.l.LeadenMyr;
@@ -217,7 +219,7 @@ class MyrTurbineTest extends BaseCardTest {
         // Should prompt for library search
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Only Myr creature cards should be available
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.getSubtypes().contains(CardSubtype.MYR));
 
         // Choose Myr Sire

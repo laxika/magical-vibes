@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -56,7 +58,6 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
     private PermanentRemovalService permanentRemovalService;
     @Mock
     private PlayerInputService playerInputService;
-    @InjectMocks
     private LibrarySearchSupport support;
     private GameData gd;
     private UUID player1Id;
@@ -65,6 +66,8 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
 
     @BeforeEach
     void setUp() {
+        support = new LibrarySearchSupport(gameBroadcastService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -145,7 +148,7 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
 
                 // Only opponent (player2) should be prompted, not the controller (player1)
                 assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 
@@ -158,7 +161,7 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
                 eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
                 assertThat(gd.pendingEachPlayerBasicLandSearchTapped).isTrue();
-                assertThat(gd.interaction.librarySearch().destination())
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                         .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
             }
 

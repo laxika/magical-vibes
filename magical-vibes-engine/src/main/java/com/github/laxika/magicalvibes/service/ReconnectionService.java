@@ -11,12 +11,9 @@ import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessa
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -34,7 +31,6 @@ import java.util.UUID;
 public class ReconnectionService {
 
     private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final CombatService combatService;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
@@ -82,12 +78,6 @@ public class ReconnectionService {
                     resendFromContext(gameData, playerId, pc);
                 }
             }
-            case LIBRARY_SEARCH -> {
-                InteractionContext.LibrarySearch ls = gameData.interaction.librarySearchContext();
-                if (ls != null) {
-                    resendFromContext(gameData, playerId, ls);
-                }
-            }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
                 InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
@@ -126,19 +116,6 @@ public class ReconnectionService {
                     sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(
                             new ArrayList<>(pc.validIds()), "Choose a permanent."));
                 }
-            }
-            case InteractionContext.LibrarySearch ls -> {
-                if (!playerId.equals(ls.playerId()) || ls.cards() == null) {
-                    return;
-                }
-                List<CardView> cardViews = ls.cards().stream().map(cardViewFactory::create).toList();
-                String prompt = ls.prompt() != null && !ls.prompt().isBlank()
-                        ? ls.prompt()
-                        : ls.canFailToFind()
-                            ? "Search your library for a basic land card to put into your hand."
-                            : "Search your library for a card to put into your hand.";
-                sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
-                        cardViews, prompt, ls.canFailToFind()));
             }
             case InteractionContext.CombatDamageAssignment cda -> {
                 if (!playerId.equals(cda.playerId())) {

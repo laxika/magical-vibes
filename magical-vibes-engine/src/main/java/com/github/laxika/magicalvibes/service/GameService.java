@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.input.LibraryChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -47,7 +46,6 @@ public class GameService {
     private final TurnProgressionService turnProgressionService;
     private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LibraryChoiceHandlerService libraryChoiceHandlerService;
     private final SpellCastingService spellCastingService;
     private final StackResolutionService stackResolutionService;
     private final AbilityActivationService abilityActivationService;
@@ -125,7 +123,6 @@ public class GameService {
             case InteractionContext.AttackerDeclaration ad -> controlledId.equals(ad.activePlayerId());
             case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
             case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
-            case InteractionContext.LibrarySearch ls -> controlledId.equals(ls.playerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
         };
     }
@@ -549,7 +546,10 @@ public class GameService {
     public void handleLibraryCardChosen(GameData gameData, Player player, int cardIndex) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            libraryChoiceHandlerService.handleLibraryCardChosen(gameData, player, cardIndex);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.LibraryCardChosen(cardIndex))) {
+                throw new IllegalStateException("Not awaiting library search");
+            }
         }
     }
 

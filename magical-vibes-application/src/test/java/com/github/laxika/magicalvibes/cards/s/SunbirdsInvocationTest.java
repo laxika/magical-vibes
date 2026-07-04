@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -76,12 +78,12 @@ class SunbirdsInvocationTest extends BaseCardTest {
 
         // Should be awaiting library search with castable cards
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
 
         // Only Llanowar Elves (MV 1) should be castable (≤ 2, non-land);
         // Grizzly Bears (MV 2) is also castable
-        List<String> castableNames = gd.interaction.librarySearch().cards().stream()
+        List<String> castableNames = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream()
                 .map(Card::getName).toList();
         assertThat(castableNames).containsExactlyInAnyOrder("Llanowar Elves", "Grizzly Bears");
 

@@ -39,15 +39,11 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseFromListMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ChooseMultipleCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.networking.message.ScryMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -68,9 +64,8 @@ import org.springframework.stereotype.Component;
 public class LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final SessionManager sessionManager;
-    private final CardViewFactory cardViewFactory;
     private final LibraryRevealSupport libraryRevealSupport;
+    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -135,21 +130,17 @@ public class LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffectHa
             return;
         }
 
-        gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(controllerId, matchingCards)
+        interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
+                LibrarySearchParams.builder(controllerId, matchingCards)
                 .canFailToFind(true)
                 .sourceCards(topCards)
                 .reorderRemainingToBottom(true)
                 .shuffleAfterSelection(false)
                 .prompt("You may put a creature card that shares a creature type with the enchanted creature onto the battlefield.")
                 .destination(LibrarySearchDestination.BATTLEFIELD)
-                .build());
-
-        List<CardView> cardViews = matchingCards.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(controllerId, new ChooseCardFromLibraryMessage(
-                cardViews,
+                .build(),
                 "You may put a creature card that shares a creature type with the enchanted creature onto the battlefield.",
-                true
-        ));
+                true));
     
     }
 }

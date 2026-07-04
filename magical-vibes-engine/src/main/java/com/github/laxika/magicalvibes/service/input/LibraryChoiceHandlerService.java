@@ -27,11 +27,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.ChooseCardFromLibraryMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
-import com.github.laxika.magicalvibes.networking.model.CardView;
-import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -64,7 +60,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 @RequiredArgsConstructor
 public class LibraryChoiceHandlerService {
 
-    private final SessionManager sessionManager;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
@@ -73,7 +68,6 @@ public class LibraryChoiceHandlerService {
     private final LegendRuleService legendRuleService;
     private final StateBasedActionService stateBasedActionService;
     private final GameBroadcastService gameBroadcastService;
-    private final CardViewFactory cardViewFactory;
     private final TurnProgressionService turnProgressionService;
     private final PlayerInputService playerInputService;
     private final EffectResolutionService effectResolutionService;
@@ -86,7 +80,9 @@ public class LibraryChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput(AwaitingInput.LIBRARY_SEARCH)) {
             throw new IllegalStateException("Not awaiting library search");
         }
-        InteractionContext.LibrarySearch librarySearch = gameData.interaction.librarySearchContext();
+        PendingInteraction.LibrarySearch activeSearch =
+                gameData.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        LibrarySearchParams librarySearch = activeSearch != null ? activeSearch.params() : null;
         if (librarySearch == null || !player.getId().equals(librarySearch.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -120,7 +116,6 @@ public class LibraryChoiceHandlerService {
         UUID handOwnerId = targetPlayerId != null ? targetPlayerId : playerId;
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearLibrarySearch();
 
         List<Card> deck = gameData.playerDecks.get(deckOwnerId);
 
@@ -457,7 +452,8 @@ public class LibraryChoiceHandlerService {
                 prompt = "Search your library for a matching card to put " + destinationDesc + " (" + newRemaining + " remaining).";
             }
 
-            gameData.interaction.beginLibrarySearch(LibrarySearchParams.builder(playerId, new ArrayList<>(newSearchCards))
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(
+                    LibrarySearchParams.builder(playerId, new ArrayList<>(newSearchCards))
                     .targetPlayerId(targetPlayerId)
                     .remainingCount(newRemaining)
                     .canFailToFind(toGraveyard || canFailToFind)
@@ -466,14 +462,8 @@ public class LibraryChoiceHandlerService {
                     .filterCardName(filterCardName)
                     .filterPredicate(filterPredicate)
                     .accumulatedCards(accumulatedCards)
-                    .build());
-
-            List<CardView> cardViews = newSearchCards.stream().map(cardViewFactory::create).toList();
-            sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(
-                    cardViews,
-                    prompt,
-                    toGraveyard || canFailToFind
-            ));
+                    .build(),
+                    prompt, toGraveyard || canFailToFind));
 
             log.info("Game {} - {} picks from library, {} remaining", gameData.id, player.getUsername(), newRemaining);
             return;
@@ -623,9 +613,7 @@ public class LibraryChoiceHandlerService {
                 .destination(LibrarySearchDestination.HAND)
                 .build();
 
-        gameData.interaction.beginLibrarySearch(params);
-        List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, true));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
         return true;
     }
 
@@ -654,9 +642,7 @@ public class LibraryChoiceHandlerService {
                 .destination(LibrarySearchDestination.GRAVEYARD)
                 .build();
 
-        gameData.interaction.beginLibrarySearch(params);
-        List<CardView> cardViews = deck.stream().map(cardViewFactory::create).toList();
-        sessionManager.sendToPlayer(playerId, new ChooseCardFromLibraryMessage(cardViews, prompt, false));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, false));
         return true;
     }
 
@@ -704,9 +690,7 @@ public class LibraryChoiceHandlerService {
                     .destination(destination)
                     .build();
 
-            gameData.interaction.beginLibrarySearch(params);
-            List<CardView> cardViews = basicLands.stream().map(cardViewFactory::create).toList();
-            sessionManager.sendToPlayer(nextPlayerId, new ChooseCardFromLibraryMessage(cardViews, prompt, true));
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
 
             String logMsg = playerName + " searches their library.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);

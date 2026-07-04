@@ -1056,21 +1056,6 @@ public class GameData {
                     targetInteraction.beginBlockerDeclaration(bd.defenderId());
             case InteractionContext.PermanentChoice pc ->
                     targetInteraction.beginPermanentChoice(pc.playerId(), pc.validIds(), pc.context());
-            case InteractionContext.LibrarySearch ls ->
-                    targetInteraction.beginLibrarySearch(LibrarySearchParams.builder(ls.playerId(),
-                                    ls.cards() != null ? new ArrayList<>(ls.cards()) : null)
-                            .reveals(ls.reveals())
-                            .canFailToFind(ls.canFailToFind())
-                            .targetPlayerId(ls.targetPlayerId())
-                            .remainingCount(ls.remainingCount())
-                            .sourceCards(ls.sourceCards() != null ? new ArrayList<>(ls.sourceCards()) : null)
-                            .reorderRemainingToBottom(ls.reorderRemainingToBottom())
-                            .reorderRemainingToTop(ls.reorderRemainingToTop())
-                            .shuffleAfterSelection(ls.shuffleAfterSelection())
-                            .prompt(ls.prompt())
-                            .destination(ls.destination())
-                            .filterCardTypes(ls.filterCardTypes())
-                            .build());
             case InteractionContext.CombatDamageAssignment cda ->
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),

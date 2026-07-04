@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -58,7 +60,6 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
     private PermanentRemovalService permanentRemovalService;
     @Mock
     private PlayerInputService playerInputService;
-    @InjectMocks
     private LibrarySearchSupport support;
     private GameData gd;
     private UUID player1Id;
@@ -67,6 +68,8 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
     @BeforeEach
     void setUp() {
+        support = new LibrarySearchSupport(gameBroadcastService,
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameBroadcastService));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -185,7 +188,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 // Active player (player1) should be prompted first
                 assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player1Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
                 // Player2 should be in the pending queue
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).containsExactly(player2Id);
             }
@@ -210,8 +213,8 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-                assertThat(gd.interaction.librarySearch().cards())
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                         .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
             }
 
@@ -230,7 +233,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.interaction.librarySearch().destination())
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                         .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
             }
 
@@ -253,7 +256,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 // Player1 was skipped, player2 is prompted
                 assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 
@@ -275,7 +278,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 // Player1 was skipped, player2 is prompted
                 assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
             }
 
             @Test
@@ -325,7 +328,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 // Player1's search was prevented (no tax paid), player2 gets to search (tax paid)
                 assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
             }
 
 
@@ -348,7 +351,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
 
                 assertThat(result).isTrue();
                 assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 
@@ -364,7 +367,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
                 assertThat(result).isTrue();
-                assertThat(gd.interaction.librarySearch().playerId()).isEqualTo(player2Id);
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
                 assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 
@@ -393,7 +396,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
                 assertThat(result).isTrue();
-                assertThat(gd.interaction.librarySearch().destination())
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                         .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
             }
 
@@ -408,7 +411,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 boolean result = support.startNextEachPlayerBasicLandSearch(gd);
 
                 assertThat(result).isTrue();
-                assertThat(gd.interaction.librarySearch().destination())
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                         .isEqualTo(LibrarySearchDestination.BATTLEFIELD);
             }
 }

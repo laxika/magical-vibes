@@ -622,9 +622,9 @@ void acceptingOffersMatchingCards() {
     harness.handleMayAbilityChosen(player1, true);
 
     assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-    assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+    assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
     // Assert only expected cards are offered
-    assertThat(gd.interaction.librarySearch().cards()).hasSize(EXPECTED_COUNT);
+    assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(EXPECTED_COUNT);
 }
 ```
 

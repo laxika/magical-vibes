@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -75,7 +77,7 @@ class BirthingPodTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
         // Only MV 4 creature should be available (not MV 2)
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .hasSize(1)
                 .allMatch(c -> c.getName().equals("Hill Giant"));
 
@@ -229,7 +231,7 @@ class BirthingPodTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
         // Only MV 5 should be offered
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .hasSize(1)
                 .allMatch(c -> c.getName().equals("Air Elemental"));
 

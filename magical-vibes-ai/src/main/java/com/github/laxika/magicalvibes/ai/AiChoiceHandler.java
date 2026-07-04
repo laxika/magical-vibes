@@ -185,37 +185,9 @@ class AiChoiceHandler {
 
     // ===== Library Search =====
 
+    /** Baseline library search answer via {@code LibrarySearchAiStrategy}. */
     void handleLibrarySearch(GameData gameData) {
-        InteractionContext.LibrarySearch librarySearch = gameData.interaction.librarySearchContext();
-        if (librarySearch == null) {
-            return;
-        }
-        UUID choicePlayerId = librarySearch.playerId();
-        List<Card> searchCards = librarySearch.cards();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (searchCards == null || searchCards.isEmpty()) {
-            return;
-        }
-
-        // Pick highest value non-land, or first card
-        int bestIndex = 0;
-        int bestScore = -1;
-        for (int i = 0; i < searchCards.size(); i++) {
-            Card card = searchCards.get(i);
-            int score = card.hasType(CardType.LAND) ? card.getManaValue() : card.getManaValue() * 2 + 10;
-            if (score > bestScore) {
-                bestScore = score;
-                bestIndex = i;
-            }
-        }
-
-        log.info("AI: Choosing card {} from library in game {}", searchCards.get(bestIndex).getName(), gameId);
-        final int idx = bestIndex;
-        send(() -> gameActions.handleLibraryCardChosen(selfConnection, new LibraryCardChosenRequest(idx)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Graveyard Choice =====

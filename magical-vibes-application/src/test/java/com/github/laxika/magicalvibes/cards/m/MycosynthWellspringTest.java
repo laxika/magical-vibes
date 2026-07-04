@@ -85,7 +85,7 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline -> library search
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.getSupertypes().contains(com.github.laxika.magicalvibes.model.CardSupertype.BASIC));
     }
 
@@ -101,7 +101,7 @@ class MycosynthWellspringTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
         harness.handleMayAbilityChosen(player1, true); // inner effect resolves inline -> library search
 
-        List<Card> offered = gd.interaction.librarySearch().cards();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);
@@ -153,7 +153,7 @@ class MycosynthWellspringTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
 
-        List<Card> offered = gd.interaction.librarySearch().cards();
+        List<Card> offered = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
         String chosenName = offered.getFirst().getName();
 
         harness.getGameService().handleLibraryCardChosen(gd, player1, 0);

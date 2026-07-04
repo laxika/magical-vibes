@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -50,7 +52,7 @@ class CurseOfMisfortunesTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactly("Fake Curse");
 
         gs.handleLibraryCardChosen(gd, player1, 0);
@@ -98,7 +100,7 @@ class CurseOfMisfortunesTest extends BaseCardTest {
 
         // Only the differently-named curse may be searched for
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
-        assertThat(gd.interaction.librarySearch().cards().stream().map(Card::getName))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards().stream().map(Card::getName))
                 .containsExactly("Unique");
     }
 

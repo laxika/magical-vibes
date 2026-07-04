@@ -66,12 +66,12 @@ class TrinketMageTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.LIBRARY_SEARCH);
         // Ornithopter (MV 0) and Origin Spellbomb (MV 1) should be offered
-        assertThat(gd.interaction.librarySearch().cards()).hasSize(2);
-        assertThat(gd.interaction.librarySearch().cards())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
                 .allMatch(c -> c.hasType(CardType.ARTIFACT)
                         && c.getManaValue() <= 1);
-        assertThat(gd.interaction.librarySearch().reveals()).isTrue();
-        assertThat(gd.interaction.librarySearch().canFailToFind()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().reveals()).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().canFailToFind()).isTrue();
     }
 
     @Test

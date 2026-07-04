@@ -624,8 +624,8 @@ public class GameSimulator {
                 }
             }
             case LIBRARY_SEARCH -> {
-                var ls = gd.interaction.librarySearchContext();
-                if (ls != null && ls.cards() != null && !ls.cards().isEmpty()) {
+                var ls = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+                if (ls != null && ls.params().cards() != null && !ls.params().cards().isEmpty()) {
                     gameService.handleLibraryCardChosen(gd, player, 0);
                 }
             }
@@ -691,6 +691,7 @@ public class GameSimulator {
                 case PendingInteraction.GraveyardExileCostChoice gec -> gec.playerId();
                 case PendingInteraction.HandChoice hc -> hc.playerId();
                 case PendingInteraction.LibraryRevealChoice lrc -> lrc.playerId();
+                case PendingInteraction.LibrarySearch ls -> ls.params().playerId();
                 default -> null;
             };
         }
@@ -700,7 +701,6 @@ public class GameSimulator {
             case InteractionContext.AttackerDeclaration ad -> ad.activePlayerId();
             case InteractionContext.BlockerDeclaration bd -> bd.defenderId();
             case InteractionContext.PermanentChoice pc -> pc.playerId();
-            case InteractionContext.LibrarySearch ls -> ls.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
         };
     }
