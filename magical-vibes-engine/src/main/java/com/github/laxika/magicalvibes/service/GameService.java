@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
+import com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
@@ -120,7 +121,6 @@ public class GameService {
         return switch (ctx) {
             case InteractionContext.AttackerDeclaration ad -> controlledId.equals(ad.activePlayerId());
             case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
-            case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
         };
     }
 
@@ -581,15 +581,14 @@ public class GameService {
     public void handleCombatDamageAssigned(GameData gameData, Player player, int attackerIndex, Map<UUID, Integer> assignments) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            try {
-                combatService.handleCombatDamageAssigned(gameData, player, attackerIndex, assignments);
-            } catch (IllegalStateException e) {
-                // Re-send the assignment notification so the player can retry
-                // (the frontend already cleared its popup when it sent the invalid request)
-                combatService.resolveCombatDamage(gameData);
-                throw e;
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.CombatDamageAssigned(attackerIndex, assignments))) {
+                // No assignment prompt is active — preserve the legacy stray-message path
+                // (the combat flow itself rejects with "Not in combat damage assignment
+                // phase" and re-sends; the legacy entry never consulted the interaction).
+                CombatDamageAssignmentInteractionHandler.applyAssignment(gameData, player,
+                        attackerIndex, assignments, combatService, turnProgressionService);
             }
-            turnProgressionService.handleCombatResult(combatService.resolveCombatDamage(gameData), gameData);
         }
     }
 

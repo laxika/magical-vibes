@@ -33,6 +33,7 @@ public final class AiInteractionStrategies {
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
         register(new PermanentChoiceAiStrategy());
+        register(new CombatDamageAssignmentAiStrategy());
     }
 
     private AiInteractionStrategies() {

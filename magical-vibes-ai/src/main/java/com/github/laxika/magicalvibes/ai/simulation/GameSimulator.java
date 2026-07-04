@@ -617,7 +617,7 @@ public class GameSimulator {
                 }
             }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
-                var cda = gd.interaction.combatDamageAssignmentContext();
+                var cda = gd.interaction.activeInteraction(PendingInteraction.CombatDamageAssignment.class);
                 if (cda != null) {
                     Map<UUID, Integer> assignments = autoAssignCombatDamage(cda);
                     gameService.handleCombatDamageAssigned(gd, player, cda.attackerIndex(), assignments);
@@ -693,6 +693,7 @@ public class GameSimulator {
                 case PendingInteraction.LibraryRevealChoice lrc -> lrc.playerId();
                 case PendingInteraction.LibrarySearch ls -> ls.params().playerId();
                 case PendingInteraction.PermanentChoice pc -> pc.playerId();
+                case PendingInteraction.CombatDamageAssignment cda -> cda.playerId();
                 default -> null;
             };
         }
@@ -701,7 +702,6 @@ public class GameSimulator {
         return switch (ctx) {
             case InteractionContext.AttackerDeclaration ad -> ad.activePlayerId();
             case InteractionContext.BlockerDeclaration bd -> bd.defenderId();
-            case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
         };
     }
 
@@ -1054,7 +1054,7 @@ public class GameSimulator {
         return -1;
     }
 
-    private Map<UUID, Integer> autoAssignCombatDamage(InteractionContext.CombatDamageAssignment cda) {
+    private Map<UUID, Integer> autoAssignCombatDamage(PendingInteraction.CombatDamageAssignment cda) {
         Map<UUID, Integer> assignments = new HashMap<>();
         int remaining = cda.totalDamage();
         for (var target : cda.validTargets()) {

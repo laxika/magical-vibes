@@ -28,7 +28,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -69,7 +68,6 @@ class CombatDamageServiceTest {
     @Mock private CombatAttackService combatAttackService;
     @Mock private CombatTriggerService combatTriggerService;
 
-    @InjectMocks
     private CombatDamageService combatDamageService;
 
     private GameData gameData;
@@ -80,6 +78,19 @@ class CombatDamageServiceTest {
 
     @BeforeEach
     void setUp() {
+        com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry registry =
+                new com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry();
+        registry.register(new com.github.laxika.magicalvibes.service.interaction.CombatDamageAssignmentInteractionHandler(
+                sessionManager,
+                org.mockito.Mockito.mock(CombatService.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.turn.TurnProgressionService.class)));
+        combatDamageService = new CombatDamageService(gameQueryService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService.class),
+                gameBroadcastService, gameOutcomeService, damagePreventionService, graveyardService,
+                permanentRemovalService, playerInputService, registry, triggerCollectionService,
+                lifeSupport, combatAttackService, combatTriggerService);
+
         UUID gameId = UUID.randomUUID();
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();

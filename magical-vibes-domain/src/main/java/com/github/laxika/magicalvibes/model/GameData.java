@@ -1061,10 +1061,6 @@ public class GameData {
                     targetInteraction.beginAttackerDeclaration(ad.activePlayerId());
             case InteractionContext.BlockerDeclaration bd ->
                     targetInteraction.beginBlockerDeclaration(bd.defenderId());
-            case InteractionContext.CombatDamageAssignment cda ->
-                    targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
-                            cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
-                            cda.validTargets(), cda.isTrample(), cda.isDeathtouch());
         }
     }
 }

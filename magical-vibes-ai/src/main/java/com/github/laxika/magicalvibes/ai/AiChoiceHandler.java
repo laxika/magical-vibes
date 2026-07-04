@@ -10,13 +10,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ChosenFromListRequest;
-import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedRequest;
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
@@ -27,9 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -206,52 +202,9 @@ class AiChoiceHandler {
 
     // ===== Combat Damage Assignment =====
 
+    /** Baseline combat damage assignment via {@code CombatDamageAssignmentAiStrategy}. */
     void handleCombatDamageAssignment(GameData gameData) {
-        InteractionContext.CombatDamageAssignment cda;
-        synchronized (gameData) {
-            cda = gameData.interaction.combatDamageAssignmentContext();
-        }
-        if (cda == null || !aiPlayerId.equals(cda.playerId())) {
-            log.warn("AI: No combat damage assignment context for player {} in game {} (cda={})",
-                    aiPlayerId, gameId, cda);
-            return;
-        }
-
-        int atkIdx = cda.attackerIndex();
-        int totalDamage = cda.totalDamage();
-        var targets = cda.validTargets();
-
-        Map<String, Integer> assignments = new HashMap<>();
-        int remaining = totalDamage;
-
-        for (var target : targets) {
-            if (target.isPlayer()) continue;
-            int lethal = target.effectiveToughness() - target.currentDamage();
-            int dmg = Math.min(remaining, lethal);
-            if (dmg > 0) {
-                assignments.put(target.id().toString(), dmg);
-                remaining -= dmg;
-            }
-        }
-
-        if (remaining > 0) {
-            for (var target : targets) {
-                if (target.isPlayer()) {
-                    assignments.put(target.id().toString(), remaining);
-                    remaining = 0;
-                    break;
-                }
-            }
-        }
-
-        if (remaining > 0 && !targets.isEmpty()) {
-            var firstBlocker = targets.stream().filter(t -> !t.isPlayer()).findFirst().orElse(targets.get(0));
-            assignments.merge(firstBlocker.id().toString(), remaining, Integer::sum);
-        }
-
-        log.info("AI: Assigning combat damage for attacker {} in game {}: {}", atkIdx, gameId, assignments);
-        send(() -> gameActions.handleCombatDamageAssigned(selfConnection,
-                new CombatDamageAssignedRequest(atkIdx, assignments)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Internal =====

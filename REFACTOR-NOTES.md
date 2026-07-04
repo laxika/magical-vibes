@@ -546,6 +546,51 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   needed no changes; `PlayerInputServiceTest` registers the new handler; new focused
   `PermanentChoiceInteractionHandlerTest` covers both message variants, the merged validIds,
   dispatch delegation, and replay gating.
+- `PendingInteraction.CombatDamageAssignment` (COMBAT_DAMAGE_ASSIGNMENT) — the active player's
+  damage split for one multi-blocked (or trample/unblocked-overflow) attacker, fired
+  mid-damage-step by `CombatDamageService.sendNextCombatDamageAssignment`. The record mirrors
+  the legacy context 1:1 (`playerId, attackerIndex, attackerPermanentId, attackerName,
+  totalDamage, List<CombatDamageTarget> validTargets, isTrample, isDeathtouch`); the handler
+  derives the notification's `CombatDamageTargetView`s from the domain targets (the legacy
+  begin site built both lists pairwise from the same data, and the legacy replay derived views
+  the same way — **this kind's legacy replay was already faithful**, no prompt/order correction
+  needed; the begin site's pairwise duplication collapsed to the domain list only). The legacy
+  begin recipient (`CombatHelper.getEffectiveRecipient`) is the identical mind-control redirect
+  `registry.begin` applies. **None of the assignment/validation math moved**: the answer is
+  validated against the combat state on `GameData` (`combatDamagePhase1Complete`,
+  `combatDamagePendingIndices`, the trample/deathtouch lethal-minimum checks in
+  `CombatDamageService.handleCombatDamageAssigned`) — NOT the active record, deliberately
+  preserving the legacy tolerance for out-of-order answers to still-pending attackers while
+  another attacker's prompt is active. Answered via the new
+  `InteractionAnswer.CombatDamageAssigned(attackerIndex, Map<UUID,Integer>)`; the handler's
+  `handleAnswer` runs the exact legacy `GameService` entry body (apply → on
+  `IllegalStateException` re-send the prompt via `resolveCombatDamage` and rethrow → else
+  continue the loop via `turnProgressionService.handleCombatResult`, which begins a fresh
+  record for the next pending attacker — sequential re-begin chain unchanged), exposed as the
+  static `CombatDamageAssignmentInteractionHandler.applyAssignment`.
+  **`GameService.handleCombatDamageAssigned` keeps a legacy fallback on dispatch miss** (calls
+  the same `applyAssignment`) instead of dispatch-or-throw: the legacy entry never consulted
+  the interaction, so a stray request with no assignment active took exactly that path (the
+  combat flow rejects it with "Not in combat damage assignment phase" and re-sends); the
+  fallback preserves it byte-for-byte and dies with the stage-4 teardown. Removed:
+  `InteractionContext.CombatDamageAssignment` + all cases (`controlledPlayerMatchesContext`,
+  `ReconnectionService` ×2, `GameSimulator` legacy decider, `GameData.copyInteractionInto`),
+  `InteractionState.beginCombatDamageAssignment/clearCombatDamageAssignment(no-op)/
+  combatDamageAssignmentContext` — with it `InteractionContext` is down to the two combat
+  declarations. AI: `CombatDamageAssignmentAiStrategy` (lethal per blocker in presented order,
+  remainder to the overflow player else piled on the first blocker; ported verbatim incl. the
+  wrong-player warn log); `AiChoiceHandler.handleCombatDamageAssignment` is a thin
+  `handleActiveInteraction` alias — the legacy handler was the only one reading its context
+  inside `synchronized (gameData)`; the alias reads the immutable record unsynchronized like
+  every other migrated kind (server-side thread-safety nuance only, no wire/log effect); no
+  difficulty overrides existed. `GameSimulator`'s resolve case and `autoAssignCombatDamage`
+  read the record; the decider lookup gained the record case. Tests: none read the legacy
+  context (only `awaitingInputType()` enum asserts — unchanged); `CombatDamageServiceTest`
+  swapped `@InjectMocks` for manual construction with a real registry + the real handler
+  (mocked answer deps), since its trample-validation tests drive `resolveCombatDamage` into
+  the begin; new focused `CombatDamageAssignmentInteractionHandlerTest` covers begin content,
+  answer application + loop continuation, the invalid-assignment re-send-and-rethrow path,
+  and replay gating.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -568,8 +613,8 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 
 ### Stage 3 continuation — migrate the remaining kinds
 
-Suggested order: COMBAT_DAMAGE_ASSIGNMENT, and last the combat
-declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
+Remaining: only the combat declarations (ATTACKER_DECLARATION / BLOCKER_DECLARATION),
+which are entangled with `CombatService` — scope to be reviewed before starting.
 
 ### Stage 4 — Generic `AwaitingInput` kinds → interaction records
 

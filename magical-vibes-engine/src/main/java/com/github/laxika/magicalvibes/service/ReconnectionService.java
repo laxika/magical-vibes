@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
 import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
-import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
-import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -71,12 +69,6 @@ public class ReconnectionService {
                             gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId));
                 }
             }
-            case COMBAT_DAMAGE_ASSIGNMENT -> {
-                InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
-                if (cda != null) {
-                    resendFromContext(gameData, playerId, cda);
-                }
-            }
         }
     }
 
@@ -103,18 +95,6 @@ public class ReconnectionService {
                     sessionManager.sendToPlayer(defenderId, combatService.buildAvailableBlockersMessage(
                             gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId));
                 }
-            }
-            case InteractionContext.CombatDamageAssignment cda -> {
-                if (!playerId.equals(cda.playerId())) {
-                    return;
-                }
-                List<CombatDamageTargetView> targetViews = cda.validTargets().stream()
-                        .map(t -> new CombatDamageTargetView(
-                                t.id().toString(), t.name(), t.effectiveToughness(), t.currentDamage(), t.isPlayer()))
-                        .toList();
-                sessionManager.sendToPlayer(playerId, new CombatDamageAssignmentNotification(
-                        cda.attackerIndex(), cda.attackerPermanentId().toString(),
-                        cda.attackerName(), cda.totalDamage(), targetViews, cda.isTrample(), cda.isDeathtouch()));
             }
         }
     }

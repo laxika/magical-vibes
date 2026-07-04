@@ -56,4 +56,9 @@ public sealed interface InteractionAnswer {
     /** A single permanent (or player, for any-target choices) picked by ID. */
     record PermanentChosen(java.util.UUID permanentId) implements InteractionAnswer {
     }
+
+    /** One attacker's combat damage split across its blockers / overflow target. */
+    record CombatDamageAssigned(int attackerIndex, java.util.Map<java.util.UUID, Integer> assignments)
+            implements InteractionAnswer {
+    }
 }

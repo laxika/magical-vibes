@@ -51,9 +51,8 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerRandomDiscardOrControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.networking.SessionManager;
-import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
-import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -92,7 +91,7 @@ public class CombatDamageService {
     private final GraveyardService graveyardService;
     private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
-    private final SessionManager sessionManager;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
     private final LifeSupport lifeSupport;
     private final CombatAttackService combatAttackService;
@@ -1500,14 +1499,11 @@ public class CombatDamageService {
                 .filter(i -> !p1.deadDefenderIndices.contains(i))
                 .toList();
 
-        List<CombatDamageTargetView> targetViews = new ArrayList<>();
         List<CombatDamageTarget> domainTargets = new ArrayList<>();
         for (int blkIdx : livingBlockers) {
             Permanent blk = defBf.get(blkIdx);
             int toughness = gameQueryService.getEffectiveToughness(gameData, blk);
             int damageTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
-            targetViews.add(new CombatDamageTargetView(
-                    blk.getId().toString(), blk.getCard().getName(), toughness, damageTaken, false));
             domainTargets.add(new CombatDamageTarget(
                     blk.getId(), blk.getCard().getName(), toughness, damageTaken, false));
         }
@@ -1519,15 +1515,11 @@ public class CombatDamageService {
             UUID overflowTarget = atk.getAttackTarget() != null ? atk.getAttackTarget() : defenderId;
             if (gameData.playerIds.contains(overflowTarget)) {
                 String defenderName = gameData.playerIdToName.get(overflowTarget);
-                targetViews.add(new CombatDamageTargetView(
-                        overflowTarget.toString(), defenderName, 0, 0, true));
                 domainTargets.add(new CombatDamageTarget(
                         overflowTarget, defenderName, 0, 0, true));
             } else {
                 Permanent pw = gameQueryService.findPermanentById(gameData, overflowTarget);
                 if (pw != null) {
-                    targetViews.add(new CombatDamageTargetView(
-                            overflowTarget.toString(), pw.getCard().getName(), 0, 0, true));
                     domainTargets.add(new CombatDamageTarget(
                             overflowTarget, pw.getCard().getName(), 0, 0, true));
                 }
@@ -1541,11 +1533,8 @@ public class CombatDamageService {
                 livingBlockers.stream().map(i -> defBf.get(i).getCard().getName()
                         + " " + gameQueryService.getEffectiveToughness(gameData, defBf.get(i)) + " toughness").toList());
 
-        gameData.interaction.beginCombatDamageAssignment(activeId, atkIdx, atk.getId(),
-                atk.getCard().getName(), totalDamage, domainTargets, isTrample, isDeathtouch);
-
-        CombatDamageAssignmentNotification notification = new CombatDamageAssignmentNotification(
-                atkIdx, atk.getId().toString(), atk.getCard().getName(), totalDamage, targetViews, isTrample, isDeathtouch);
-        sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, activeId), notification);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
+                activeId, atkIdx, atk.getId(), atk.getCard().getName(), totalDamage,
+                domainTargets, isTrample, isDeathtouch));
     }
 }

@@ -31,7 +31,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.LibrarySearch,
-        PendingInteraction.PermanentChoice {
+        PendingInteraction.PermanentChoice,
+        PendingInteraction.CombatDamageAssignment {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -398,5 +399,21 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             all.addAll(validPlayerIds);
             return all;
         }
+    }
+
+    /**
+     * The active player's combat damage assignment for one attacker blocked by multiple
+     * creatures (or with a trample/unblocked overflow target). Fired mid-damage-step by
+     * {@code CombatDamageService}; answering feeds back into the damage-resolution loop,
+     * which begins a fresh record for the next pending attacker. The answer is validated
+     * against the combat state on {@code GameData} ({@code combatDamagePendingIndices}, the
+     * assignment math), not this record — the record carries exactly the begin-time
+     * notification content for the prompt and reconnect replay.
+     */
+    record CombatDamageAssignment(UUID playerId, int attackerIndex, UUID attackerPermanentId,
+                                  String attackerName, int totalDamage,
+                                  java.util.List<CombatDamageTarget> validTargets,
+                                  boolean isTrample, boolean isDeathtouch)
+            implements PendingInteraction {
     }
 }
