@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -65,6 +66,7 @@ class AbilityActivationServiceTest {
     @Mock private GraveyardService graveyardService;
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
+    @Mock private CastingCostService castingCostService;
     @Mock private TargetLegalityService targetLegalityService;
     @Mock private ActivatedAbilityExecutionService activatedAbilityExecutionService;
     @Mock private PlayerInputService playerInputService;

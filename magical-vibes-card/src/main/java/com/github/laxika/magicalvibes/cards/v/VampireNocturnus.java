@@ -23,8 +23,13 @@ public class VampireNocturnus extends Card {
         addEffect(EffectSlot.STATIC, new PlayWithTopCardRevealedEffect());
         // As long as the top card of your library is black, Vampire Nocturnus and other
         // Vampire creatures you control each get +2/+1 and have flying.
-        addEffect(EffectSlot.STATIC, new ConditionalEffect(new TopCardOfLibraryColor(CardColor.BLACK), new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), GrantScope.ALL_OWN_CREATURES,
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.VAMPIRE)))
-        ));
+        // Other Vampires only get the bonus while they remain Vampires...
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new TopCardOfLibraryColor(CardColor.BLACK),
+                new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES,
+                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.VAMPIRE)))));
+        // ...but Vampire Nocturnus names itself, so it always gets the bonus even if it
+        // loses the Vampire subtype (the self-reference isn't filtered by creature type).
+        addEffect(EffectSlot.STATIC, new ConditionalEffect(new TopCardOfLibraryColor(CardColor.BLACK),
+                new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), GrantScope.SELF)));
     }
 }
