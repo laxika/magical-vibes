@@ -1028,39 +1028,20 @@ public class GameData {
      */
     private static void copyInteractionInto(GameData target, InteractionState source) {
         // The interaction field is final on GameData, so we replicate its state
-        // by clearing and re-configuring through public methods.
-        // However, since InteractionState uses private fields and public begin*/clear* methods,
-        // we use the context object to reconstruct the state.
+        // through its public methods.
 
         // The permanent-choice pre-seed carrier is copied unconditionally: it can be set
         // outside any awaiting window (e.g. a clone-copy context pre-seeded across the
-        // MAY_ABILITY_CHOICE window), and during an active PERMANENT_CHOICE the legacy
-        // rebuild restored it via beginPermanentChoice.
+        // MAY_ABILITY_CHOICE window).
         target.interaction.setPermanentChoiceContext(source.permanentChoiceContext());
 
         if (source.awaitingInputType() == null) {
             return; // default state, nothing to copy
         }
 
-        // Registry-managed interactions carry everything in the active record (immutable)
+        // The active interaction record carries everything (immutable, shallow copy)
         if (source.activeInteraction() != null) {
             target.interaction.beginInteraction(source.activeInteraction(), source.awaitingInputType());
-            return;
-        }
-
-        // Copy context through reflection-free approach: re-read the source's context
-        // and call the appropriate begin* method on the target's interaction.
-        InteractionState targetInteraction = target.interaction;
-        var ctx = source.currentContext();
-        if (ctx == null) {
-            return;
-        }
-
-        switch (ctx) {
-            case InteractionContext.AttackerDeclaration ad ->
-                    targetInteraction.beginAttackerDeclaration(ad.activePlayerId());
-            case InteractionContext.BlockerDeclaration bd ->
-                    targetInteraction.beginBlockerDeclaration(bd.defenderId());
         }
     }
 }

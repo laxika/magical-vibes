@@ -138,7 +138,7 @@ class HardAiDecisionEngineTest {
 
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.forceActivePlayer(player1);
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
         MCTSEngine engine = new MCTSEngine(simulator);
@@ -170,7 +170,7 @@ class HardAiDecisionEngineTest {
 
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.forceActivePlayer(player2);
-        gd.interaction.beginBlockerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.BlockerDeclaration(player1.getId()), AwaitingInput.BLOCKER_DECLARATION);
 
         GameSimulator simulator = GameSimulator.forQueryService(harness.getGameQueryService());
         MCTSEngine engine = new MCTSEngine(simulator);
@@ -994,7 +994,7 @@ class HardAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         ai.handleMessage("AVAILABLE_ATTACKERS", "");
 

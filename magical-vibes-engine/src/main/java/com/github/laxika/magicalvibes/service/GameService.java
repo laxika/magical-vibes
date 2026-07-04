@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -80,7 +80,7 @@ public class GameService {
      */
     private boolean isAttackTaxManaPayment(GameData gameData, Player player) {
         return gameData.interaction.isAwaitingInput(AwaitingInput.ATTACKER_DECLARATION)
-                && gameData.interaction.currentContext() instanceof InteractionContext.AttackerDeclaration ad
+                && gameData.interaction.activeInteraction() instanceof PendingInteraction.AttackerDeclaration ad
                 && ad.activePlayerId().equals(player.getId());
     }
 
@@ -102,10 +102,6 @@ public class GameService {
             if (controlledId.equals(activeDecider)) {
                 return new Player(controlledId, gameData.playerIdToName.get(controlledId));
             }
-            InteractionContext ctx = gameData.interaction.currentContext();
-            if (ctx != null && controlledPlayerMatchesContext(ctx, controlledId)) {
-                return new Player(controlledId, gameData.playerIdToName.get(controlledId));
-            }
         }
 
         // Check if the controlled player currently holds priority
@@ -115,13 +111,6 @@ public class GameService {
         }
 
         return player; // Controller acts as themselves
-    }
-
-    private boolean controlledPlayerMatchesContext(InteractionContext ctx, UUID controlledId) {
-        return switch (ctx) {
-            case InteractionContext.AttackerDeclaration ad -> controlledId.equals(ad.activePlayerId());
-            case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
-        };
     }
 
     public void passPriority(GameData gameData, Player player) {
@@ -561,6 +550,12 @@ public class GameService {
     public void declareAttackers(GameData gameData, Player player, List<Integer> attackerIndices, Map<Integer, UUID> attackTargets) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.AttackersDeclared(attackerIndices, attackTargets))) {
+                return;
+            }
+            // No declaration is active — preserve the legacy stray-message path (the combat
+            // flow rejects with "Not awaiting attacker declaration" and re-sends).
             try {
                 turnProgressionService.handleCombatResult(combatService.declareAttackers(gameData, player, attackerIndices, attackTargets), gameData);
             } catch (IllegalStateException | IllegalArgumentException e) {
@@ -574,6 +569,12 @@ public class GameService {
     public void declareBlockers(GameData gameData, Player player, List<BlockerAssignment> blockerAssignments) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
+            if (interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.BlockersDeclared(blockerAssignments))) {
+                return;
+            }
+            // No declaration is active — preserve the legacy stray-message path (the combat
+            // flow rejects with "Not awaiting blocker declaration").
             turnProgressionService.handleCombatResult(combatService.declareBlockers(gameData, player, blockerAssignments), gameData);
         }
     }

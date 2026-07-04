@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
@@ -41,13 +42,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.message.AttackTarget;
-import com.github.laxika.magicalvibes.networking.message.AvailableAttackersMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -68,9 +68,9 @@ public class CombatAttackService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
     private final TriggerCollectionService triggerCollectionService;
     private final CombatTriggerService combatTriggerService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as attackers.
@@ -135,13 +135,7 @@ public class CombatAttackService {
             return;
         }
 
-        List<Integer> mustAttack = getMustAttackIndices(gameData, activeId, attackable);
-        List<AttackTarget> availableTargets = buildAvailableTargets(gameData, activeId);
-        int taxPerCreature = gameBroadcastService.getAttackPaymentPerCreature(gameData, activeId);
-        boolean mustAttackWithAtLeastOne = isOpponentForcedToAttack(gameData, activeId);
-        gameData.interaction.beginAttackerDeclaration(activeId);
-        sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, activeId),
-                new AvailableAttackersMessage(attackable, mustAttack, availableTargets, taxPerCreature, mustAttackWithAtLeastOne));
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.AttackerDeclaration(activeId));
     }
 
     /**

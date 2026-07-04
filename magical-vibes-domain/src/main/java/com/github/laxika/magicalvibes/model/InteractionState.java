@@ -6,10 +6,8 @@ public class InteractionState {
 
     // --- Core state ---
     private AwaitingInput awaitingInput;
-    private InteractionContext context;
-    /** The currently active interaction for kinds migrated to the InteractionHandlerRegistry.
-     *  While set, {@link #awaitingInput} still carries the legacy enum value (kept until the
-     *  enum teardown stage) but {@link #context} stays null — the registry handler owns
+    /** The currently active interaction. While set, {@link #awaitingInput} carries the matching
+     *  legacy enum value (kept until the enum teardown stage) — the registry handler owns
      *  prompting, answer handling, and reconnect replay. */
     private PendingInteraction activeInteraction;
 
@@ -26,7 +24,6 @@ public class InteractionState {
     public InteractionState deepCopy() {
         InteractionState copy = new InteractionState();
         copy.awaitingInput = this.awaitingInput;
-        copy.context = this.context;
         copy.activeInteraction = this.activeInteraction;
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
@@ -56,10 +53,6 @@ public class InteractionState {
         return this.awaitingInput == inputType;
     }
 
-    public InteractionContext currentContext() {
-        return this.context;
-    }
-
     /**
      * Marks the given registry-managed interaction as the currently active one. The legacy
      * {@link AwaitingInput} value is set alongside it so enum-based awaiting checks keep
@@ -82,22 +75,7 @@ public class InteractionState {
 
     public void clearAwaitingInput() {
         this.awaitingInput = null;
-        this.context = null;
         this.activeInteraction = null;
-    }
-
-    // ========================================================================
-    // Combat
-    // ========================================================================
-
-    public void beginAttackerDeclaration(UUID activePlayerId) {
-        this.awaitingInput = AwaitingInput.ATTACKER_DECLARATION;
-        this.context = new InteractionContext.AttackerDeclaration(activePlayerId);
-    }
-
-    public void beginBlockerDeclaration(UUID defenderId) {
-        this.awaitingInput = AwaitingInput.BLOCKER_DECLARATION;
-        this.context = new InteractionContext.BlockerDeclaration(defenderId);
     }
 
     // ========================================================================

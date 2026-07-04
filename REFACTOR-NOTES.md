@@ -591,6 +591,45 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   the begin; new focused `CombatDamageAssignmentInteractionHandlerTest` covers begin content,
   answer application + loop continuation, the invalid-assignment re-send-and-rethrow path,
   and replay gating.
+- `PendingInteraction.AttackerDeclaration(activePlayerId)` +
+  `PendingInteraction.BlockerDeclaration(defenderId)` (ATTACKER_DECLARATION /
+  BLOCKER_DECLARATION) — **the final stage-3 kinds; `InteractionContext` is deleted
+  entirely**, along with `InteractionState.currentContext()`/the `context` field,
+  `GameService.controlledPlayerMatchesContext` and its `resolveActingPlayer` fallback (the
+  registry's `activeDecidingPlayerId` covers everything), `GameData.copyInteractionInto`'s
+  legacy context switch, `GameSimulator`'s legacy decider fallback, and the whole legacy half
+  of `ReconnectionService` (now a one-line `replayPrompt` delegate; it lost its
+  SessionManager/CombatService/GameQueryService/GameBroadcastService deps).
+  The records carry only the decider: both prompts are re-derived from live combat state
+  at prompt time, exactly as the legacy begin sites AND legacy replay did (attackers:
+  attackable/must-attack/targets/tax/forced-attack; blockers: blockable + the filtered
+  attacker list). The blocker filter was extracted into
+  `CombatBlockService.getBlockableAttackerIndices` (exposed on the `CombatService` facade),
+  used by both the step's skip-check and the handler prompt — **one replay-fidelity
+  correction**: the legacy reconnect replay applied only the plain `hasCantBeBlocked` filter,
+  omitting the defender-condition and historic-cast filters, so replay could show more
+  attackers than the original prompt. The legacy begin recipient
+  (`CombatHelper.getEffectiveRecipient`) is the identical mind-control redirect
+  `registry.begin` applies; both combat services lost their `SessionManager` deps.
+  Answers: `InteractionAnswer.AttackersDeclared(indices, attackTargets)` /
+  `BlockersDeclared(assignments)`; the handlers run the exact legacy `GameService` entry
+  bodies (attackers keep the catch → `handleDeclareAttackersStep` re-send → rethrow;
+  answer validation stays in `CombatAttackService.declareAttackers` /
+  `CombatBlockService.declareBlockers`, enum-checked, error texts untouched). **Both
+  `GameService` entries keep a legacy fallback on dispatch miss** (combat-damage precedent):
+  the legacy entries never consulted the interaction, so a stray declaration takes exactly
+  the legacy path ("Not awaiting attacker/blocker declaration", attackers with the re-send
+  quirk); the fallbacks die with the stage-4 teardown.
+  `GameService.isAttackTaxManaPayment` (the CR 508.1i mana-ability window) reads the active
+  record; test-only `setAwaitingInput(...)`-without-record states behave identically (the
+  legacy context was equally absent there). AI: NO strategy — the decision engines answer
+  combat via wire-message-driven logic keyed on the enum (unchanged); `GameSimulator`'s
+  action-gen/resolve cases already read combat state, only its decider gained the record
+  cases. Tests: 9 files' `beginAttackerDeclaration/beginBlockerDeclaration` calls rewritten
+  to `beginInteraction(record, enum)` (scratchpad perl); new
+  `CombatDeclarationInteractionHandlersTest` covers both prompts' live-state derivation,
+  answer delegation incl. the attacker re-send-and-rethrow, replay gating, and cross-kind
+  answer-shape gating.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -611,18 +650,21 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 
 ## Remaining stages (in suggested order)
 
-### Stage 3 continuation — migrate the remaining kinds
+### ✅ Stage 3 — DONE: every `AwaitingInput` kind is registry-managed
 
-Remaining: only the combat declarations (ATTACKER_DECLARATION / BLOCKER_DECLARATION),
-which are entangled with `CombatService` — scope to be reviewed before starting.
+`InteractionContext` and all grouped sub-states are gone; `InteractionState` is down to the
+`awaitingInput` enum value, the `activeInteraction` record, and the independent
+pre-seed/aura/equipment fields.
 
-### Stage 4 — Generic `AwaitingInput` kinds → interaction records
+### Stage 4 — `AwaitingInput` enum teardown
 
-`InteractionState` / `InteractionContext` (the "currently active interaction" holder) becomes
-a thin pointer to the active `PendingInteraction`; the 26-value `AwaitingInput` enum and the
-grouped sub-states (`CardChoiceState`, `LibraryViewState`, `MultiSelectionState`, …) go away.
+Remove the `AwaitingInput` enum: `isAwaitingInput(KIND)` checks become
+`activeInteraction(Record.class) != null` (or a registry-derived kind lookup),
+`beginInteraction` loses its enum parameter, and the dispatch-miss legacy fallbacks in
+`GameService` (`declareAttackers`/`declareBlockers`/`handleCombatDamageAssigned`) collapse.
 Wire messages must not change — derive any legacy enum names needed by the frontend from the
-interaction record class.
+interaction record class. Watch the enum-only test states (`setAwaitingInput(...)` in the AI
+suites) and `EffectResolutionService`'s re-run check.
 
 ### Stage 5 — Effect-resolution resumption
 

@@ -77,6 +77,10 @@ public class CombatService {
         return combatBlockService.getBlockableCreatureIndices(gameData, playerId);
     }
 
+    public List<Integer> getBlockableAttackerIndices(GameData gameData, UUID activeId, UUID defenderId) {
+        return combatBlockService.getBlockableAttackerIndices(gameData, activeId, defenderId);
+    }
+
     public Map<Integer, List<Integer>> computeLegalBlockPairs(GameData gameData,
                                                               List<Integer> blockerIndices,
                                                               List<Integer> attackerIndices,

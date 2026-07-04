@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HierophantsChalice;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -247,7 +248,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player2.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player2.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // Bears at index 0, Forest at index 1
         gs.tapPermanent(gd, player2, 1);
@@ -272,7 +273,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player2.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player2.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // Bears at 0,1; Forest at index 2. Tap Forest for 1 mana — need 2 for both attackers
         gs.tapPermanent(gd, player2, 2);
@@ -292,7 +293,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player2.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player2.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // player1 tries to tap their Forest — should fail (they're not the declarant)
         assertThatThrownBy(() -> gs.tapPermanent(gd, player1, 1))
@@ -308,7 +309,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player2.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player2.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // Pyromancer's tap ability is not a mana ability — should be blocked
         assertThatThrownBy(() -> gs.activateAbility(gd, player2, 0, 0, null, null, null))
@@ -326,7 +327,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player2.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player2.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // Hierophant's Chalice mana ability (index 1 = chalice on battlefield) — should succeed
         gs.activateAbility(gd, player2, 1, 0, null, null, null);
@@ -346,7 +347,7 @@ class BairdStewardOfArgiveTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player2.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player2.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // Bears at 0,1; Plains at 2,3
         gs.tapPermanent(gd, player2, 2);

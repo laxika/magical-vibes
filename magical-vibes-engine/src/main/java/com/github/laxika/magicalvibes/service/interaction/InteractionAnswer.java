@@ -61,4 +61,16 @@ public sealed interface InteractionAnswer {
     record CombatDamageAssigned(int attackerIndex, java.util.Map<java.util.UUID, Integer> assignments)
             implements InteractionAnswer {
     }
+
+    /** The active player's attacker declaration ({@code attackTargets} may be null). */
+    record AttackersDeclared(java.util.List<Integer> attackerIndices,
+                             java.util.Map<Integer, java.util.UUID> attackTargets)
+            implements InteractionAnswer {
+    }
+
+    /** The defending player's blocker declaration. */
+    record BlockersDeclared(
+            java.util.List<com.github.laxika.magicalvibes.networking.message.BlockerAssignment> blockerAssignments)
+            implements InteractionAnswer {
+    }
 }

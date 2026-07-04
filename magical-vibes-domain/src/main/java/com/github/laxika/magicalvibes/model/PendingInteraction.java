@@ -32,7 +32,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibraryRevealChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.PermanentChoice,
-        PendingInteraction.CombatDamageAssignment {
+        PendingInteraction.CombatDamageAssignment,
+        PendingInteraction.AttackerDeclaration,
+        PendingInteraction.BlockerDeclaration {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -415,5 +417,20 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<CombatDamageTarget> validTargets,
                                   boolean isTrample, boolean isDeathtouch)
             implements PendingInteraction {
+    }
+
+    /**
+     * The active player's attacker declaration. The available-attackers notification is
+     * re-derived from live combat state at prompt time (the legacy begin site and reconnect
+     * replay both did the same re-derivation), so the record carries only the decider.
+     */
+    record AttackerDeclaration(UUID activePlayerId) implements PendingInteraction {
+    }
+
+    /**
+     * The defending player's blocker declaration. The available-blockers notification is
+     * re-derived from live combat state at prompt time, so the record carries only the decider.
+     */
+    record BlockerDeclaration(UUID defenderId) implements PendingInteraction {
     }
 }

@@ -27,12 +27,13 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipm
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapOnTargetEffect;
-import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessage;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,9 +52,9 @@ public class CombatBlockService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
-    private final SessionManager sessionManager;
     private final CombatAttackService combatAttackService;
     private final CombatTriggerService combatTriggerService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
      * Returns the battlefield indices of creatures the given player can legally declare as blockers.
@@ -106,30 +107,34 @@ public class CombatBlockService {
      * Initiates the declare-blockers step. Sends available blockers and legal block pairs
      * to the defending player. Skips if no blockers or no blockable attackers exist.
      */
-    public CombatResult handleDeclareBlockersStep(GameData gameData) {
-        UUID activeId = gameData.activePlayerId;
-        UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
-        List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
+    /**
+     * The attacking creature indices the defender can legally be asked to block: the active
+     * player's attackers filtered by every "can't be blocked" condition. Used by both the
+     * declare-blockers step and the blocker-declaration prompt (including reconnect replay).
+     */
+    public List<Integer> getBlockableAttackerIndices(GameData gameData, UUID activeId, UUID defenderId) {
         List<Integer> attackerIndices = combatAttackService.getAttackingCreatureIndices(gameData, activeId);
-
-        // Filter out attackers that can't be blocked
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(activeId);
         List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
-        attackerIndices = attackerIndices.stream()
+        return attackerIndices.stream()
                 .filter(idx -> !gameQueryService.hasCantBeBlocked(gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToDefenderCondition(predicateEvaluationService, gameData, attackerBattlefield.get(idx), defenderBattlefield))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
                 .toList();
+    }
+
+    public CombatResult handleDeclareBlockersStep(GameData gameData) {
+        UUID activeId = gameData.activePlayerId;
+        UUID defenderId = gameQueryService.getOpponentId(gameData, activeId);
+        List<Integer> blockable = getBlockableCreatureIndices(gameData, defenderId);
+        List<Integer> attackerIndices = getBlockableAttackerIndices(gameData, activeId, defenderId);
 
         if (blockable.isEmpty() || attackerIndices.isEmpty()) {
             log.info("Game {} - Defending player has no creatures that can block or no blockable attackers", gameData.id);
             return CombatResult.ADVANCE_ONLY;
         }
 
-        AvailableBlockersMessage message = buildAvailableBlockersMessage(gameData, blockable, attackerIndices, defenderId, activeId);
-
-        gameData.interaction.beginBlockerDeclaration(defenderId);
-        sessionManager.sendToPlayer(CombatHelper.getEffectiveRecipient(gameData, defenderId), message);
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.BlockerDeclaration(defenderId));
         return CombatResult.DONE;
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AuraOfSilence;
 import com.github.laxika.magicalvibes.cards.a.AngelicBlessing;
@@ -1679,7 +1680,7 @@ class AiDecisionEngineTest {
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         ai.handleMessage("AVAILABLE_ATTACKERS", "");
 
@@ -1739,7 +1740,7 @@ class AiDecisionEngineTest {
         // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // Both creatures are at indices 0 (elves) and 1 (bears) — request both as attackers
         // Tax for 2 attackers = {2}, but only 1 mana available from elves.
@@ -1769,7 +1770,7 @@ class AiDecisionEngineTest {
         // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // Plains at index 0, Bears at index 1 — only Bears is an attacker
         // Tax for 1 attacker = {1}, paid by tapping Plains
@@ -1795,7 +1796,7 @@ class AiDecisionEngineTest {
         // Set up ATTACKER_DECLARATION state so tapping for tax is allowed
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         // Request elves (index 0) as sole attacker. Tax = {1}, paid by tapping elves itself.
         List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0));
@@ -1845,7 +1846,7 @@ class AiDecisionEngineTest {
 
         harness.forceActivePlayer(aiPlayer);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         List<Integer> result = ai.prepareAttackersForTax(gd, List.of(0, 1));
 

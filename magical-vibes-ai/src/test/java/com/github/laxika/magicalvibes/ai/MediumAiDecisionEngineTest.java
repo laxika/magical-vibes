@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.t.TroveOfTemptation;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.BairdStewardOfArgive;
@@ -780,7 +781,7 @@ class MediumAiDecisionEngineTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
         gd.status = GameStatus.RUNNING;
-        gd.interaction.beginAttackerDeclaration(aiPlayer.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(aiPlayer.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         ai.handleMessage("AVAILABLE_ATTACKERS", "");
 

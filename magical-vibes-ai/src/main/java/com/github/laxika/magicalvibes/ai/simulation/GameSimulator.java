@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
-import com.github.laxika.magicalvibes.model.InteractionContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -694,15 +693,12 @@ public class GameSimulator {
                 case PendingInteraction.LibrarySearch ls -> ls.params().playerId();
                 case PendingInteraction.PermanentChoice pc -> pc.playerId();
                 case PendingInteraction.CombatDamageAssignment cda -> cda.playerId();
+                case PendingInteraction.AttackerDeclaration ad -> ad.activePlayerId();
+                case PendingInteraction.BlockerDeclaration bd -> bd.defenderId();
                 default -> null;
             };
         }
-        var ctx = gd.interaction.currentContext();
-        if (ctx == null) return null;
-        return switch (ctx) {
-            case InteractionContext.AttackerDeclaration ad -> ad.activePlayerId();
-            case InteractionContext.BlockerDeclaration bd -> bd.defenderId();
-        };
+        return null;
     }
 
     private UUID getPriorityPlayer(GameData gd) {

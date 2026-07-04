@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -43,7 +44,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         int droneIndex = gd.playerBattlefields.get(player1.getId()).indexOf(drone);
 
@@ -88,7 +89,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         int droneIndex = gd.playerBattlefields.get(player1.getId()).indexOf(drone);
         gs.declareAttackers(gd, player1, List.of(droneIndex));
@@ -137,7 +138,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         int droneIndex = gd.playerBattlefields.get(player1.getId()).indexOf(drone);
 
@@ -158,7 +159,7 @@ class TrainingDroneTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
         harness.clearPriorityPassed();
-        gd.interaction.beginAttackerDeclaration(player1.getId());
+        gd.interaction.beginInteraction(new PendingInteraction.AttackerDeclaration(player1.getId()), AwaitingInput.ATTACKER_DECLARATION);
 
         assertThatThrownBy(() -> gs.declareAttackers(gd, player1, List.of(0)))
                 .isInstanceOf(IllegalStateException.class)
