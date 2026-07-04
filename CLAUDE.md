@@ -3,7 +3,7 @@
 - Rules accuracy is the number one priority — never ship rules-incorrect engine behavior. If a card's behavior is at all ambiguous, search the web for the official ruling.
 - Reuse over creation: build effects by combining existing ones (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToControllerEffect`) and parameterize with predicates (`DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`) rather than adding new classes. When you do add a new effect/predicate, update the relevant `agent-docs/` files.
 - If unit tests exist for a service you extend, add tests for the new behavior too.
-- When running the full test suite, always use `run_in_background: true` on the Bash tool call (the tests take 20+ minutes, exceeding the max timeout).
+- Do not ever run the full test suite! Ask me and I'll run it for you.
 
 ## Implementing cards
 
