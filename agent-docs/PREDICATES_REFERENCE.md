@@ -95,6 +95,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `StackEntryControlledByEnchantedPlayerPredicate` | `()` | spells controlled by the player the source aura is attached to (the enchanted player). The enchanted player's ID is supplied externally by the evaluating service (`PredicateEvaluationService.matchesStackEntryPredicate(entry, predicate, enchantedPlayerId)`). Used by Curse of Echoes |
 | `StackEntryTargetsYourPermanentPredicate` | `()` | spells targeting a permanent you control |
 | `StackEntryTargetsYouOrCreatureYouControlPredicate` | `()` | spells/abilities targeting you or a creature you control |
+| `StackEntryTargetsPermanentPredicate` | `(PermanentPredicate filter)` | spells/abilities targeting at least one permanent matching `filter` (any controller; filter evaluated with the evaluating source's controller as `sourceControllerId`). Used as `SpellCastTriggerEffect.castSpellTargetCondition` — e.g. Repartee ("cast an instant or sorcery spell that targets a creature") with `new PermanentIsCreaturePredicate()` |
 | `StackEntryAllOfPredicate` | `(List<StackEntryPredicate>)` | AND composition |
 | `StackEntryAnyOfPredicate` | `(List<StackEntryPredicate>)` | OR composition |
 | `StackEntryNotPredicate` | `(StackEntryPredicate)` | NOT inversion |

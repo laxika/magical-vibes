@@ -36,10 +36,12 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYouOrCreatureYouControlPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsYourPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import lombok.RequiredArgsConstructor;
@@ -795,6 +797,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryTargetsYouOrCreatureYouControlPredicate) {
             return targetsPlayerOrCreatureControlledBy(gameData, stackEntry, controllerId);
         }
+        if (predicate instanceof StackEntryTargetsPermanentPredicate targetsPermanent) {
+            return targetsAnyMatchingPermanent(gameData, stackEntry, targetsPermanent.filter(), controllerId);
+        }
         if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
             for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
                 if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId)) {
@@ -835,6 +840,27 @@ public class TargetLegalityService {
             }
         }
         return false;
+    }
+
+    private boolean targetsAnyMatchingPermanent(GameData gameData, StackEntry stackEntry,
+                                                 PermanentPredicate filter, UUID controllerId) {
+        FilterContext ctx = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        if (stackEntry.getTargetId() != null && matchesTarget(gameData, stackEntry.getTargetId(), filter, ctx)) {
+            return true;
+        }
+        if (stackEntry.getTargetIds() != null) {
+            for (UUID targetId : stackEntry.getTargetIds()) {
+                if (matchesTarget(gameData, targetId, filter, ctx)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean matchesTarget(GameData gameData, UUID targetId, PermanentPredicate filter, FilterContext ctx) {
+        Permanent perm = gameQueryService.findPermanentById(gameData, targetId);
+        return perm != null && predicateEvaluationService.matchesPermanentPredicate(perm, filter, ctx);
     }
 
     private boolean targetsPlayerOrCreatureControlledBy(GameData gameData, StackEntry stackEntry, UUID controllerId) {

@@ -196,6 +196,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `TargetSpellControllerLosesLifeEffect(int)` — target spell controller loses life
 - `TargetSpellControllerDiscardsEffect(int)` — target spell controller discards
 - `CounterUnlessPaysEffect(int)` or `(int, boolean useX, boolean exileIfCountered)` — counter unless pays
+- `CounterUnlessDiscardsEffect()` — counter unless controller discards a card (Ward—Discard a card)
 - `CounterlashEffect()` — counter target spell, then may cast from hand sharing a card type without paying mana cost
 - `MayCastFromHandWithoutPayingManaCostEffect()` — marker for may-cast-from-hand routing in PendingMayAbility
 - `CantBeCounteredEffect()` — can't be countered (static)

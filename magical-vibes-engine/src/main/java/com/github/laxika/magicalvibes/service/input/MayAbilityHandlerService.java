@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardMayPlayFreeOrExi
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
@@ -280,6 +281,13 @@ public class MayAbilityHandlerService {
         boolean isCounterUnlessPays = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessPaysEffect);
         if (isCounterUnlessPays) {
             mayPenaltyChoiceHandlerService.handleCounterUnlessPaysChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Counter-unless-discard (Ward—Discard a card) — handled via the may ability system
+        boolean isCounterUnlessDiscards = ability.effects().stream().anyMatch(e -> e instanceof CounterUnlessDiscardsEffect);
+        if (isCounterUnlessDiscards) {
+            mayPenaltyChoiceHandlerService.handleCounterUnlessDiscardsChoice(gameData, player, accepted, ability);
             return;
         }
 

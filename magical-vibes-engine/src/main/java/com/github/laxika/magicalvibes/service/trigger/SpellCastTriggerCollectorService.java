@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffe
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -65,6 +66,7 @@ public class SpellCastTriggerCollectorService {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final TargetLegalityService targetLegalityService;
 
     // ── ON_ANY_PLAYER_CASTS_SPELL ──────────────────────────────────────
 
@@ -533,6 +535,14 @@ public class SpellCastTriggerCollectorService {
         if (!predicateEvaluationService.matchesCardPredicate(spellCard, trigger.spellFilter(), null,
                 match.gameData(), castingPlayerId)) return false;
 
+        // Repartee-style condition on the cast spell's chosen targets (e.g. "targets a creature").
+        if (trigger.castSpellTargetCondition() != null) {
+            StackEntry spellEntry = findStackEntryForCard(match.gameData(), spellCard.getId());
+            if (spellEntry == null) return false;
+            if (!targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
+                    trigger.castSpellTargetCondition(), castingPlayerId)) return false;
+        }
+
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
         boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
         boolean needsPlayerTarget = resolved.stream().anyMatch(CardEffect::canTargetPlayer);
@@ -585,6 +595,15 @@ public class SpellCastTriggerCollectorService {
             match.gameData().stack.add(entry);
         }
         return true;
+    }
+
+    private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(cardId)) {
+                return se;
+            }
+        }
+        return null;
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {

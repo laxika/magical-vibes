@@ -41,6 +41,7 @@ public enum CardSubtype {
     REBEL("Rebel"),
     KNIGHT("Knight"),
     SPIRIT("Spirit"),
+    INKLING("Inkling"),
     AURA("Aura"),
     NOMAD("Nomad"),
     WIZARD("Wizard"),

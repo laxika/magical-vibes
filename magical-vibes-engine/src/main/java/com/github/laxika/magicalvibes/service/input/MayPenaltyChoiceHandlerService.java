@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -132,6 +134,89 @@ public class MayPenaltyChoiceHandlerService {
         String logEntry = player.getUsername() + " declines to pay {" + amount + "}. " + targetEntry.getCard().getName() + suffix;
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} — spell countered{}", gameData.id, player.getUsername(), exileIfCountered ? " and exiled" : "");
+    }
+
+    public void handleCounterUnlessDiscardsChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
+        // Presence check — the effect is a marker; wording differs from counter-unless-pays.
+        ability.effects().stream()
+                .filter(e -> e instanceof CounterUnlessDiscardsEffect)
+                .findFirst().orElseThrow();
+
+        UUID targetCardId = ability.targetCardId();
+        UUID controllerId = ability.controllerId(); // the countered spell's controller — the decision maker
+
+        StackEntry targetEntry = null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                targetEntry = se;
+                break;
+            }
+        }
+
+        if (targetEntry == null) {
+            log.info("Game {} - Counter-unless-discard target no longer on stack", gameData.id);
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
+            log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (gameQueryService.isProtectedFromCounterBySourceCard(gameData, targetEntry.getControllerId(), ability.sourceCard())) {
+            log.info("Game {} - {} cannot be countered by {} spells",
+                    gameData.id, targetEntry.getCard().getName(),
+                    ability.sourceCard().getColor().name().toLowerCase());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (accepted) {
+            List<Card> hand = gameData.playerHands.get(controllerId);
+            List<Integer> validIndices = new ArrayList<>();
+            if (hand != null) {
+                for (int i = 0; i < hand.size(); i++) {
+                    validIndices.add(i);
+                }
+            }
+
+            if (!validIndices.isEmpty()) {
+                // Paying the Ward cost is the controller's own choice — not an opponent-caused discard.
+                gameData.discardCausedByOpponent = false;
+                playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
+                        "Choose a card to discard.", 1);
+
+                String logEntry = player.getUsername() + " discards a card. " + targetEntry.getCard().getName() + " is not countered.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} accepts counter-unless-discard for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
+                return;
+            }
+
+            // Hand changed since prompt — no cards left, fall through to counter
+        }
+
+        // Declined or no cards — counter the spell/ability
+        counterUnlessDiscardCounter(gameData, ability.sourceCard(), targetEntry);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void counterUnlessDiscardCounter(GameData gameData, Card sourceCard, StackEntry targetEntry) {
+        gameData.stack.remove(targetEntry);
+        stateTriggerService.cleanupResolvedStateTrigger(gameData, targetEntry);
+
+        boolean isAbility = targetEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || targetEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+        if (!targetEntry.isCopy() && !isAbility) {
+            graveyardService.addCardToGraveyard(gameData, targetEntry.getControllerId(), targetEntry.getCard());
+        }
+
+        String logEntry = isAbility
+                ? targetEntry.getCard().getName() + "'s ability is countered. (" + sourceCard.getName() + ")"
+                : targetEntry.getCard().getName() + " is countered. (" + sourceCard.getName() + ")";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} counters {}", gameData.id, sourceCard.getName(), targetEntry.getCard().getName());
     }
 
     public void handleSacrificeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
