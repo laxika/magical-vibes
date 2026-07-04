@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -108,8 +109,9 @@ public class MayAbilityHandlerService {
         gameData.interaction.clearAwaitingInput();
 
         // Pile separation: permanent-pile (Liliana) vs card-pile (Boneyard Parley)
-        if (gameData.pendingPileSeparation) {
-            if (!gameData.pendingPileSeparationCards.isEmpty()) {
+        PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
+        if (pileSeparation != null) {
+            if (pileSeparation.cardPileMode()) {
                 graveyardReturnSupport.completeCardPileSeparationStep2(gameData, accepted);
             } else {
                 destructionSupport.completePileSeparationStep2(gameData, accepted);

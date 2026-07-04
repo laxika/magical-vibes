@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -77,9 +78,12 @@ class YawningFissureTest extends BaseCardTest {
         GameData gd = harness.getGameData();
 
         // Opponent must choose 1 of 2 lands
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player2.getId());
-        assertThat(gd.pendingForcedSacrificeCount).isEqualTo(1);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
         // Choose the Forest
         Permanent forest = gd.playerBattlefields.get(player2.getId()).stream()

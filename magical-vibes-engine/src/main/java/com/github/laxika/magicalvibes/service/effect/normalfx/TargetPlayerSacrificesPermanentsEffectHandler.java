@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -68,10 +69,10 @@ public class TargetPlayerSacrificesPermanentsEffectHandler implements NormalEffe
                 } else {
                     // More matching permanents than required — prompt player to choose
                     List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
-                    gameData.pendingForcedSacrificeCount = e.count();
-                    gameData.pendingForcedSacrificePlayerId = targetPlayerId;
                     playerInputService.beginMultiPermanentChoice(gameData, targetPlayerId, matchingIds,
-                            e.count(), "Choose " + e.count() + " permanent"
+                            e.count(),
+                            new MultiPermanentChoiceContext.ForcedSacrifice(targetPlayerId, List.of(), List.of()),
+                            "Choose " + e.count() + " permanent"
                                     + (e.count() > 1 ? "s" : "") + " to sacrifice.");
                 }
     }

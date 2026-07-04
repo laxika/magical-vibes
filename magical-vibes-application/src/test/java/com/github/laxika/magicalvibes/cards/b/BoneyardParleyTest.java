@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -140,7 +141,7 @@ class BoneyardParleyTest extends BaseCardTest {
                 .noneMatch(c -> c.getName().equals("Grizzly Bears"));
 
         // Opponent (player2) should be prompted to separate into piles
-        assertThat(gd.pendingPileSeparation).isTrue();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isTrue();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
         // Step 4: Opponent puts bears1 in Pile 1, rest in Pile 2
@@ -164,7 +165,7 @@ class BoneyardParleyTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Llanowar Elves"));
 
         // Pending state should be cleaned up
-        assertThat(gd.pendingPileSeparation).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
     }
 
     @Test
@@ -195,7 +196,7 @@ class BoneyardParleyTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Grizzly Bears"));
 
-        assertThat(gd.pendingPileSeparation).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
     }
 
     @Test

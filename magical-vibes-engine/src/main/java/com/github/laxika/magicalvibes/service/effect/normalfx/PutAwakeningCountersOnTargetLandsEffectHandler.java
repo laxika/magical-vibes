@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -57,8 +58,9 @@ public class PutAwakeningCountersOnTargetLandsEffectHandler implements NormalEff
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} combat damage trigger: {} valid lands", gameData.id, creatureName, validLandIds.size());
 
-        gameData.pendingAwakeningCounterPlacement = true;
-        playerInputService.beginMultiPermanentChoice(gameData, attackerId, validLandIds, validLandIds.size(), "Choose any number of lands to put awakening counters on.");
+        playerInputService.beginMultiPermanentChoice(gameData, attackerId, validLandIds, validLandIds.size(),
+                new MultiPermanentChoiceContext.AwakeningCounterPlacement(),
+                "Choose any number of lands to put awakening counters on.");
     
     }
 }

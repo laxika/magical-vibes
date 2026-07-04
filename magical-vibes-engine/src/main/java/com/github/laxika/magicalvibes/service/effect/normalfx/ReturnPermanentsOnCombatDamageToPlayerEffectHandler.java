@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -64,9 +65,10 @@ public class ReturnPermanentsOnCombatDamageToPlayerEffectHandler implements Norm
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} combat damage trigger: {} damage, {} valid targets", gameData.id, creatureName, damageDealt, validIds.size());
 
-        gameData.pendingCombatDamageBounceTargetPlayerId = defenderId;
         int maxCount = Math.min(damageDealt, validIds.size());
-        playerInputService.beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount, "Return up to " + damageDealt + " " + (damageDealt > 1 ? targetsLabel : targetLabel) + " to their owner's hand.");
+        playerInputService.beginMultiPermanentChoice(gameData, attackerId, validIds, maxCount,
+                new MultiPermanentChoiceContext.CombatDamageBounce(defenderId),
+                "Return up to " + damageDealt + " " + (damageDealt > 1 ? targetsLabel : targetLabel) + " to their owner's hand.");
     
     }
 }

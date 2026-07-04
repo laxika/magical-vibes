@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesPermanent
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,8 @@ public class EachPlayerSacrificesPermanentsEffectHandler implements NormalEffect
                 // then each other player in turn order, then all chosen permanents are sacrificed at the
                 // same time. Collect all IDs to sacrifice and defer actual sacrifice until all choices
                 // are made.
+                List<UUID> autoSacrificeIds = new ArrayList<>();
+                List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -59,21 +62,20 @@ public class EachPlayerSacrificesPermanentsEffectHandler implements NormalEffect
                     if (matching.size() <= e.count()) {
                         // No choice needed — mark all for simultaneous sacrifice
                         matching.stream().map(Permanent::getId)
-                                .forEach(gameData.pendingSimultaneousSacrificeIds::add);
+                                .forEach(autoSacrificeIds::add);
                     } else {
                         // Player must choose — add to queue
                         List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
-                        gameData.pendingForcedSacrificeQueue.add(
-                                new PendingForcedSacrifice(playerId, e.count(), matchingIds));
+                        choosers.add(new PendingForcedSacrifice(playerId, e.count(), matchingIds));
                     }
                 }
 
-                if (gameData.pendingForcedSacrificeQueue.isEmpty()) {
+                if (choosers.isEmpty()) {
                     // All players auto-resolved — sacrifice everything now
-                    destructionSupport.performSimultaneousSacrifice(gameData);
+                    destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
                 } else {
                     // Some players need to choose — begin the first prompt
-                    destructionSupport.beginNextForcedSacrificeFromQueue(gameData);
+                    destructionSupport.beginNextForcedSacrificeFromQueue(gameData, choosers, autoSacrificeIds);
                 }
     }
 }

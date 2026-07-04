@@ -80,7 +80,7 @@ class MultiSelectionInteractionHandlersTest {
             UUID perm2 = UUID.randomUUID();
 
             registry.begin(gd, new PendingInteraction.MultiPermanentChoice(
-                    PLAYER1_ID, List.of(perm1, perm2), 2, "Choose up to 2 permanents."));
+                    PLAYER1_ID, List.of(perm1, perm2), 2, null, "Choose up to 2 permanents."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
             verify(sessionManager).sendToPlayer(eq(PLAYER1_ID), messageCaptor.capture());
@@ -95,7 +95,7 @@ class MultiSelectionInteractionHandlersTest {
         void dispatchDelegates() {
             UUID permId = UUID.randomUUID();
             registry.begin(gd, new PendingInteraction.MultiPermanentChoice(
-                    PLAYER1_ID, List.of(permId), 1, "Pick one."));
+                    PLAYER1_ID, List.of(permId), 1, null, "Pick one."));
             Player player = new Player(PLAYER1_ID, "Player1");
 
             boolean handled = registry.dispatchAnswer(gd, player,
@@ -110,7 +110,7 @@ class MultiSelectionInteractionHandlersTest {
         void replayOnlyToDecider() {
             UUID permId = UUID.randomUUID();
             registry.begin(gd, new PendingInteraction.MultiPermanentChoice(
-                    PLAYER1_ID, List.of(permId), 1, "Pick one."));
+                    PLAYER1_ID, List.of(permId), 1, null, "Pick one."));
             org.mockito.Mockito.clearInvocations(sessionManager);
 
             assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();

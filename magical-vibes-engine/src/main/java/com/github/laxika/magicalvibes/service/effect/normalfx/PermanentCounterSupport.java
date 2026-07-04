@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -148,12 +149,10 @@ public class PermanentCounterSupport {
             }
         } else {
             // Multiple eligible — controller must choose one
-            gameData.pendingOwnPermanentCounterPlacement = true;
-            gameData.pendingOwnPermanentCounterType = effect.counterType();
-            gameData.pendingOwnPermanentCounterCount = effect.count();
             String counterName = counterTypeName(effect.counterType());
             playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds,
-                    1, "Choose a permanent to put " + effect.count() + " " + counterName + " counter(s) on.");
+                    1, new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(effect.counterType(), effect.count()),
+                    "Choose a permanent to put " + effect.count() + " " + counterName + " counter(s) on.");
         }
     }
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesPermane
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,8 @@ public class EachOpponentSacrificesPermanentsEffectHandler implements NormalEffe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (EachOpponentSacrificesPermanentsEffect) effect;
         UUID controllerId = entry.getControllerId();
+        List<UUID> autoSacrificeIds = new ArrayList<>();
+        List<PendingForcedSacrifice> choosers = new ArrayList<>();
 
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     if (playerId.equals(controllerId)) continue;
@@ -57,18 +60,17 @@ public class EachOpponentSacrificesPermanentsEffectHandler implements NormalEffe
 
                     if (matching.size() <= e.count()) {
                         matching.stream().map(Permanent::getId)
-                                .forEach(gameData.pendingSimultaneousSacrificeIds::add);
+                                .forEach(autoSacrificeIds::add);
                     } else {
                         List<UUID> matchingIds = matching.stream().map(Permanent::getId).toList();
-                        gameData.pendingForcedSacrificeQueue.add(
-                                new PendingForcedSacrifice(playerId, e.count(), matchingIds));
+                        choosers.add(new PendingForcedSacrifice(playerId, e.count(), matchingIds));
                     }
                 }
 
-                if (gameData.pendingForcedSacrificeQueue.isEmpty()) {
-                    destructionSupport.performSimultaneousSacrifice(gameData);
+                if (choosers.isEmpty()) {
+                    destructionSupport.performSimultaneousSacrifice(gameData, autoSacrificeIds);
                 } else {
-                    destructionSupport.beginNextForcedSacrificeFromQueue(gameData);
+                    destructionSupport.beginNextForcedSacrificeFromQueue(gameData, choosers, autoSacrificeIds);
                 }
     }
 }

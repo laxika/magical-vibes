@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -74,8 +75,13 @@ public class PlayerInputService {
     }
 
     public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount, String prompt) {
+        beginMultiPermanentChoice(gameData, playerId, validIds, maxCount, null, prompt);
+    }
+
+    public void beginMultiPermanentChoice(GameData gameData, UUID playerId, List<UUID> validIds, int maxCount,
+                                          MultiPermanentChoiceContext context, String prompt) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiPermanentChoice(
-                playerId, new ArrayList<>(validIds), maxCount, prompt));
+                playerId, new ArrayList<>(validIds), maxCount, context, prompt));
     }
 
     public void beginMultiGraveyardChoice(GameData gameData, UUID playerId, List<Card> cards, int maxCount, String prompt) {

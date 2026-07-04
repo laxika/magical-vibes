@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -209,7 +210,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(liliana.getCounterCount(CounterType.LOYALTY)).isEqualTo(0); // 6 - 6
         // Controller should be prompted to choose permanents for pile 1
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.pendingPileSeparation).isTrue();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isTrue();
     }
 
     @Test
@@ -312,7 +313,7 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingPileSeparation).isFalse();
+        assertThat(gd.hasPendingInteraction(PendingPileSeparation.class)).isFalse();
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no permanents to separate"));
     }
 

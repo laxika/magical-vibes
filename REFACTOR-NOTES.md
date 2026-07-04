@@ -754,6 +754,121 @@ the other, losing the target. The copy now preserves the shared identity when th
 alias (and keeps independent deep copies when they are genuinely distinct). Covered by two
 new `GameDataDeepCopyTest` cases.
 
+### 🔶 Stage 6 — IN PROGRESS: per-mechanic `pending*` carry-over fields → interaction payloads
+
+Goal: move the ~50 per-mechanic global mutable fields on `GameData` (one per card mechanic,
+each with hand-written set/clear discipline, a `simulationCopy` line, and a Karn-restart
+clear) into the payload of the interaction they belong to, so the state exists only while its
+interaction/flow is active and copies with it.
+
+**Batch 1 — DONE: `MultiPermanentChoiceContext` (12 fields removed).**
+New sealed `model/MultiPermanentChoiceContext` — the multi-select analogue of
+`PermanentChoiceContext`. `PendingInteraction.MultiPermanentChoice` gained a `context`
+component (null = legacy `GameData`-flag dispatch, kept only for the queued-state kinds
+below); `PlayerInputService.beginMultiPermanentChoice` gained a context overload (the 5-arg
+form delegates with null). `MultiPermanentChoiceHandlerService.handleMultiplePermanentsChosen`
+dispatches on the context record instead of the flag chain — behavior-identical since every
+begin site set exactly one flag and exactly one context is snapshotted per begin. Migrated
+(field → record): `pendingExileDamagedPlayerControlsPermanent` → `ExileDamagedPlayerControls`,
+`pendingSacrificeSelfToDestroySourceId` → `SacrificeSelfToDestroy(sourceId)`,
+`pendingTransformAndAttachSourceId` → `TransformAndAttach(sourceId)`,
+`pendingSacrificeAttackingCreature` → `SacrificeAttackingCreatures`,
+`pendingCombatDamageBounceTargetPlayerId` → `CombatDamageBounce(targetPlayerId)`,
+`pendingAimCounterPlacement` → `AimCounterPlacement`,
+`pendingOwnPermanentCounterPlacement/Type/Count` → `OwnPermanentCounterPlacement(type, count)`,
+`pendingAwakeningCounterPlacement` → `AwakeningCounterPlacement`,
+`pendingProliferateCount` → `Proliferate(remainingCount)` (multi-round countdown rides on the
+fresh-record-per-pick re-begin, DiscardChoice precedent),
+`pendingTapSubtypeBoostSourcePermanentId` → `TapSubtypeBoost(sourceId)`.
+Begin sites converted in the ten owning effect handlers / `PermanentCounterSupport`; the
+answer methods take the context instead of reading+clearing fields (the flag-clear-at-top
+lines are gone — `clearAwaitingInput` retires the record). `GameData` lost the 12 fields +
+copy lines; `KarnRestartGameEffectHandler` lost their resets (the active-interaction clear
+covers them). The AI reads none of these fields (verified) — no AI change.
+
+**Batch 2 — DONE: forced-sacrifice / destroy-rest family (7 fields removed).**
+`MultiPermanentChoiceContext.ForcedSacrifice(sacrificingPlayerId, remainingChoosers,
+accumulatedSacrificeIds)` and `.DestroyRestChoice(remainingChoosers, protectedIds,
+sourceName)` carry the APNAP queue remainder (`List<PendingForcedSacrifice>`, record kept)
+and the accumulated ids across sequential re-begins; every re-begin constructs fresh
+immutable lists (`List.copyOf`), so the shallow interaction copy stays safe. The legacy
+answer-time discriminator `simultaneousFlow = !simultaneousIds.isEmpty() || !queue.isEmpty()`
+is computed from the carried lists — identical inputs, including the edge where an
+each-player flow with a single chooser and no auto-picks takes the direct path.
+`DestructionSupport.beginNextForcedSacrificeFromQueue/beginNextDestroyRestChoice/
+completeDestroyRestChoice/performDestroyAllCreaturesExcept/performSimultaneousSacrifice` now
+take the carried state as parameters; the four each-player/each-opponent seeding handlers
+collect auto-ids + choosers locally; the two direct-flow handlers
+(`TargetPlayerSacrifices…`, `DamageSourceControllerSacrifices…`) begin with
+`ForcedSacrifice(playerId, List.of(), List.of())`. Removed: `pendingForcedSacrificeCount`,
+`pendingForcedSacrificePlayerId`, `pendingForcedSacrificeQueue`,
+`pendingSimultaneousSacrificeIds`, `pendingDestroyRestMode`,
+`pendingDestroyRestProtectedIds`, `pendingDestroyRestSourceName`.
+
+**Batch 3 — DONE: pile separation (8 fields removed → queued `PendingPileSeparation`).**
+The flow spans two interaction windows (pile-1 multi-choice → pile-choice may prompt), so it
+became a queued `PendingInteraction` record (`PendingKnowledgePoolCast` precedent), not an
+interaction payload: `PendingPileSeparation(controllerId, targetPlayerId, allPermanentIds,
+cards, cardOwners, pile1Ids, pile2Ids)` with compact-constructor `List.copyOf` defensiveness;
+`cardPileMode()` = `!cards.isEmpty()` (the legacy mode discriminator verbatim). The effect
+handlers queue it; step 1 (`DestructionSupport.completePileSeparationStep1` /
+`GraveyardReturnSupport.completeCardPileSeparationStep1`) polls it and re-queues it with the
+piles filled; step 2 (both `…Step2` methods, reached via `MayAbilityHandlerService`'s
+peek-check) polls it to completion — the poll replaces the legacy 6/8-line field cleanup.
+The dispatch checks (`MultiPermanentChoiceHandlerService`, `GraveyardChoiceHandlerService`,
+`MayAbilityHandlerService`) read `has/peekPendingInteraction(PendingPileSeparation.class)`
+instead of the flag. Removed: `pendingPileSeparation`, `…ControllerId`, `…TargetPlayerId`,
+`…AllPermanentIds`, `…Pile1Ids`, `…Pile2Ids`, `…Cards`, `…CardOwners`.
+
+Note: a pre-existing failure in `MCTSEngineTest` ("MCTS selects removal over creature when
+opponent has a blocker") reproduces identically on a clean checkout — unrelated to stage 6.
+
+**Remaining inventory (next batches, in suggested order):**
+
+- **Discard carry-over → `DiscardChoice` payload / continuation record**:
+  `pendingRummageDrawCount`, `pendingUntapAfterDiscardPermanentId` (consumed at discard
+  completion in `CardChoiceHandlerService`; must ride across the fresh-record-per-pick
+  re-begins), and the `pendingEachPlayerDiscardQueue`/`…ControllerId`/`…Amount` APNAP
+  continuation (`PlayerInteractionSupport.startNextEachPlayerDiscard`).
+  **Caution**: `pendingReturnToHandOnDiscardType` and `pendingTransformOnCreatureDiscard` are
+  consumed on the *random/immediate* discard paths too (`StackResolutionService` ~535, the
+  random-discard handlers), i.e. they are discard-event observers, not interaction state —
+  they migrate only if the discard event itself grows a context parameter; otherwise they
+  stay documented. `discardCausedByOpponent` is read by `TriggerCollectionService` on every
+  discard (prompted or immediate) — same caveat.
+- **Library-search follow-ups → `LibrarySearch` payload / continuation record**:
+  `pendingBasicLandToHandSearch`, `pendingCardToGraveyardSearch` (one-shot follow-up flags
+  consumed in `LibraryChoiceHandlerService`), `pendingEachPlayerBasicLandSearchQueue`/
+  `…Tapped` (APNAP continuation in `LibrarySearchSupport`), `pendingOpponentExileChoice`
+  (already an immutable record; consumed at search completion), `imprintSourcePermanentId`
+  (consumed at LibrarySearch/LibraryReveal completion).
+- **`pendingExileFromHandPlayPermissionController` → `ExileFromHandChoice` payload** (small).
+- **`pendingGraveyardReturnQueue`** — spans sequential `GraveyardChoice` interactions; could
+  carry on the `GraveyardChoice` record like the batch-2 queues.
+
+**Deliberately staying as documented explicit fields** (lifecycle is not a single
+interaction):
+
+- The effect-resolution quintet (stage 5 decision above).
+- `chosenXValue` — one-shot answer mailbox consumed by the re-run of the same effect
+  (`XValueChoiceInteractionHandler` writes it; same protocol as `resolvedMayAccepted`).
+- `pendingETBDamageAssignments` — cast-time data consumed at resolution; spans cast →
+  resolve, not an interaction.
+- `pendingSearchContext` — Leonin Arbiter tax; parked across the may-ability window
+  (`permanentChoiceContext` precedent).
+- `pendingAbilityActivation` — activation continuation spanning its cost-choice interactions
+  (already documented on the DiscardCostChoice/GraveyardExileCostChoice records).
+- `pendingMayAbilities` — a genuine FIFO whose head drives `MayAbilityChoice`; its own
+  refactor if ever.
+- `pendingLibraryBottomReorders` — continuation queue spanning reorder interactions
+  (Warp World).
+- `graveyardTargetOperation` / `cloneOperation` / `warpWorldOperation` — pre-existing grouped
+  operation-state objects.
+- Everything that is delayed-trigger or turn-scoped state rather than interaction state
+  (`pendingDelayed*`, `pendingDestroyAtEndStep`, `pendingTokenExiles*`,
+  `pendingLethalDamageDestructions`, `pendingManaAbilityTriggers`, `pendingTurnControl`,
+  `pendingNextInstantSorceryCopyCount`, `pendingExileReturns`, …) — out of scope.
+
 ## Constraints (from the task)
 
 - Work on `main`. No behavior change (log text, ordering, wire protocol, frontend untouched).

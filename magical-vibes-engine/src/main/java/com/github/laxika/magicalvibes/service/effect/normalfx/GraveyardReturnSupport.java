@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -1029,23 +1030,31 @@ public class GraveyardReturnSupport {
      * Prompt controller to choose which pile to put onto the battlefield.
      */
     public void completeCardPileSeparationStep1(GameData gameData, List<UUID> pile1CardIds) {
-        gameData.pendingPileSeparationPile1Ids.addAll(pile1CardIds);
+        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
+
+        List<UUID> pile1 = new ArrayList<>(state.pile1Ids());
+        pile1.addAll(pile1CardIds);
         // Pile 2 is everything not in Pile 1
-        for (Card card : gameData.pendingPileSeparationCards) {
+        List<UUID> pile2 = new ArrayList<>(state.pile2Ids());
+        for (Card card : state.cards()) {
             if (!pile1CardIds.contains(card.getId())) {
-                gameData.pendingPileSeparationPile2Ids.add(card.getId());
+                pile2.add(card.getId());
             }
         }
 
-        String pile1Desc = buildCardPileDescription(gameData.pendingPileSeparationCards, gameData.pendingPileSeparationPile1Ids);
-        String pile2Desc = buildCardPileDescription(gameData.pendingPileSeparationCards, gameData.pendingPileSeparationPile2Ids);
+        // Re-queue with the piles filled — step 2 (the pile-choice may prompt) polls it.
+        gameData.queueInteraction(new PendingPileSeparation(state.controllerId(), state.targetPlayerId(),
+                state.allPermanentIds(), state.cards(), state.cardOwners(), pile1, pile2));
 
-        UUID opponentId = gameData.pendingPileSeparationTargetPlayerId;
+        String pile1Desc = buildCardPileDescription(state.cards(), pile1);
+        String pile2Desc = buildCardPileDescription(state.cards(), pile2);
+
+        UUID opponentId = state.targetPlayerId();
         String opponentName = gameData.playerIdToName.get(opponentId);
         gameBroadcastService.logAndBroadcast(gameData,
                 opponentName + " separates cards into two piles. Pile 1: " + pile1Desc + ". Pile 2: " + pile2Desc + ".");
 
-        UUID controllerId = gameData.pendingPileSeparationControllerId;
+        UUID controllerId = state.controllerId();
         String prompt = "Choose a pile to put onto the battlefield. Yes = Pile 1 (" + pile1Desc + "), No = Pile 2 (" + pile2Desc + ").";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, controllerId, List.of(), prompt));
         playerInputService.processNextMayAbility(gameData);
@@ -1056,34 +1065,23 @@ public class GraveyardReturnSupport {
      * return the other pile to their owners' graveyards.
      */
     public void completeCardPileSeparationStep2(GameData gameData, boolean accepted) {
+        PendingPileSeparation state = gameData.pollPendingInteraction(PendingPileSeparation.class);
         List<UUID> chosenPileCardIds = accepted
-                ? new ArrayList<>(gameData.pendingPileSeparationPile1Ids)
-                : new ArrayList<>(gameData.pendingPileSeparationPile2Ids);
+                ? new ArrayList<>(state.pile1Ids())
+                : new ArrayList<>(state.pile2Ids());
         List<UUID> otherPileCardIds = accepted
-                ? new ArrayList<>(gameData.pendingPileSeparationPile2Ids)
-                : new ArrayList<>(gameData.pendingPileSeparationPile1Ids);
+                ? new ArrayList<>(state.pile2Ids())
+                : new ArrayList<>(state.pile1Ids());
         String chosenPileName = accepted ? "Pile 1" : "Pile 2";
 
-        UUID controllerId = gameData.pendingPileSeparationControllerId;
+        UUID controllerId = state.controllerId();
         String controllerName = gameData.playerIdToName.get(controllerId);
 
-        // Store references before cleanup
-        List<Card> allCards = new ArrayList<>(gameData.pendingPileSeparationCards);
-        Map<UUID, UUID> cardOwners = new HashMap<>(gameData.pendingPileSeparationCardOwners);
+        List<Card> allCards = new ArrayList<>(state.cards());
+        Map<UUID, UUID> cardOwners = new HashMap<>(state.cardOwners());
 
-        // Build descriptions before cleanup
         String chosenDesc = buildCardPileDescription(allCards, chosenPileCardIds);
         String otherDesc = buildCardPileDescription(allCards, otherPileCardIds);
-
-        // Clean up pending state
-        gameData.pendingPileSeparation = false;
-        gameData.pendingPileSeparationControllerId = null;
-        gameData.pendingPileSeparationTargetPlayerId = null;
-        gameData.pendingPileSeparationAllPermanentIds.clear();
-        gameData.pendingPileSeparationPile1Ids.clear();
-        gameData.pendingPileSeparationPile2Ids.clear();
-        gameData.pendingPileSeparationCards.clear();
-        gameData.pendingPileSeparationCardOwners.clear();
 
         gameBroadcastService.logAndBroadcast(gameData,
                 controllerName + " chooses " + chosenPileName + ".");

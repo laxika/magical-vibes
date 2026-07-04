@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -318,7 +319,8 @@ public class GraveyardChoiceHandlerService {
         }
 
         // Card pile separation (Boneyard Parley): opponent assigns exiled cards to piles
-        if (gameData.pendingPileSeparation && !gameData.pendingPileSeparationCards.isEmpty()) {
+        PendingPileSeparation pileSeparation = gameData.peekPendingInteraction(PendingPileSeparation.class);
+        if (pileSeparation != null && pileSeparation.cardPileMode()) {
             gameData.interaction.clearAwaitingInput();
             graveyardReturnSupport.completeCardPileSeparationStep1(gameData, cardIds);
             return;

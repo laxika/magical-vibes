@@ -5,11 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingForcedSacrifice;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -98,42 +100,43 @@ public class MultiPermanentChoiceHandlerService {
             }
         }
 
-        if (gameData.pendingExileDamagedPlayerControlsPermanent) {
+        MultiPermanentChoiceContext context = multiPermanentChoice.context();
+        if (context instanceof MultiPermanentChoiceContext.ExileDamagedPlayerControls) {
             handleExileDamagedPlayerControlsPermanent(gameData, playerId, permanentIds);
-        } else if (gameData.pendingSacrificeSelfToDestroySourceId != null) {
-            handleSacrificeSelfToDestroy(gameData, playerId, permanentIds);
-        } else if (gameData.pendingTransformAndAttachSourceId != null) {
-            handleTransformAndAttach(gameData, playerId, permanentIds);
-        } else if (gameData.pendingSacrificeAttackingCreature) {
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy ctx) {
+            handleSacrificeSelfToDestroy(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TransformAndAttach ctx) {
+            handleTransformAndAttach(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures) {
             handleSacrificeAttackingCreature(gameData, permanentIds);
-        } else if (gameData.pendingDestroyRestMode && gameData.pendingForcedSacrificeCount > 0) {
-            handleDestroyRestChoice(gameData, permanentIds);
-        } else if (gameData.pendingForcedSacrificeCount > 0) {
-            handleForcedSacrifice(gameData, permanentIds);
-        } else if (gameData.pendingCombatDamageBounceTargetPlayerId != null) {
-            handleCombatDamageBounce(gameData, playerId, permanentIds);
-        } else if (gameData.pendingAimCounterPlacement) {
+        } else if (context instanceof MultiPermanentChoiceContext.CombatDamageBounce ctx) {
+            handleCombatDamageBounce(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.AimCounterPlacement) {
             handleAimCounterPlacement(gameData, permanentIds);
-        } else if (gameData.pendingOwnPermanentCounterPlacement) {
-            handleOwnPermanentCounterPlacement(gameData, permanentIds);
-        } else if (gameData.pendingAwakeningCounterPlacement) {
+        } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacement ctx) {
+            handleOwnPermanentCounterPlacement(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.AwakeningCounterPlacement) {
             handleAwakeningCounterPlacement(gameData, playerId, permanentIds);
-        } else if (gameData.pendingProliferateCount > 0) {
-            handleProliferate(gameData, playerId, permanentIds);
-        } else if (gameData.pendingTapSubtypeBoostSourcePermanentId != null) {
-            handleTapSubtypeBoost(gameData, playerId, permanentIds);
+        } else if (context instanceof MultiPermanentChoiceContext.Proliferate ctx) {
+            handleProliferate(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.TapSubtypeBoost ctx) {
+            handleTapSubtypeBoost(gameData, playerId, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.DestroyRestChoice ctx) {
+            handleDestroyRestChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ForcedSacrifice ctx) {
+            handleForcedSacrifice(gameData, permanentIds, ctx);
         } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
             handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
-        } else if (gameData.pendingPileSeparation) {
+        } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
             handlePileSeparation(gameData, permanentIds);
         } else {
             throw new IllegalStateException("No pending multi-permanent choice context");
         }
     }
 
-    private void handleSacrificeSelfToDestroy(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        UUID sourcePermId = gameData.pendingSacrificeSelfToDestroySourceId;
-        gameData.pendingSacrificeSelfToDestroySourceId = null;
+    private void handleSacrificeSelfToDestroy(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                              MultiPermanentChoiceContext.SacrificeSelfToDestroy context) {
+        UUID sourcePermId = context.sourcePermanentId();
 
         if (permanentIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to sacrifice.";
@@ -168,9 +171,9 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
     }
 
-    private void handleTransformAndAttach(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        UUID sourcePermId = gameData.pendingTransformAndAttachSourceId;
-        gameData.pendingTransformAndAttachSourceId = null;
+    private void handleTransformAndAttach(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                          MultiPermanentChoiceContext.TransformAndAttach context) {
+        UUID sourcePermId = context.sourcePermanentId();
 
         if (permanentIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to attach.";
@@ -184,8 +187,6 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handleExileDamagedPlayerControlsPermanent(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        gameData.pendingExileDamagedPlayerControlsPermanent = false;
-
         if (permanentIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to exile a permanent.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -206,8 +207,6 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handleSacrificeAttackingCreature(GameData gameData, List<UUID> permanentIds) {
-        gameData.pendingSacrificeAttackingCreature = false;
-
         for (UUID permId : permanentIds) {
             Permanent creature = gameQueryService.findPermanentById(gameData, permId);
             if (creature != null) {
@@ -230,34 +229,27 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaMayAbilitiesThenBroadcastAutoPass(gameData);
     }
 
-    private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds) {
-        UUID sacrificingPlayerId = gameData.pendingForcedSacrificePlayerId;
-        gameData.pendingForcedSacrificeCount = 0;
-        gameData.pendingForcedSacrificePlayerId = null;
+    private void handleForcedSacrifice(GameData gameData, List<UUID> permanentIds,
+                                       MultiPermanentChoiceContext.ForcedSacrifice context) {
+        UUID sacrificingPlayerId = context.sacrificingPlayerId();
 
-        boolean simultaneousFlow = !gameData.pendingSimultaneousSacrificeIds.isEmpty()
-                || !gameData.pendingForcedSacrificeQueue.isEmpty();
+        boolean simultaneousFlow = !context.accumulatedSacrificeIds().isEmpty()
+                || !context.remainingChoosers().isEmpty();
 
         if (simultaneousFlow) {
             // "Each player sacrifices" flow — defer actual sacrifice until all players have chosen.
             // Per CR 101.4: all chosen permanents are sacrificed at the same time.
-            gameData.pendingSimultaneousSacrificeIds.addAll(permanentIds);
+            List<UUID> allIds = new ArrayList<>(context.accumulatedSacrificeIds());
+            allIds.addAll(permanentIds);
 
-            if (!gameData.pendingForcedSacrificeQueue.isEmpty()) {
+            if (!context.remainingChoosers().isEmpty()) {
                 // More players still need to choose — prompt the next one
-                var next = gameData.pendingForcedSacrificeQueue.removeFirst();
-                gameData.pendingForcedSacrificeCount = next.count();
-                gameData.pendingForcedSacrificePlayerId = next.playerId();
-                playerInputService.beginMultiPermanentChoice(gameData, next.playerId(), next.validPermanentIds(),
-                        next.count(), "Choose " + next.count() + " permanent"
-                                + (next.count() > 1 ? "s" : "") + " to sacrifice.");
+                destructionSupport.beginNextForcedSacrificeFromQueue(gameData,
+                        context.remainingChoosers(), allIds);
                 return;
             }
 
             // All players have chosen — sacrifice all simultaneously
-            List<UUID> allIds = new ArrayList<>(gameData.pendingSimultaneousSacrificeIds);
-            gameData.pendingSimultaneousSacrificeIds.clear();
-
             for (UUID permId : allIds) {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
@@ -304,8 +296,9 @@ public class MultiPermanentChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleDestroyRestChoice(GameData gameData, List<UUID> permanentIds) {
-        destructionSupport.completeDestroyRestChoice(gameData, permanentIds);
+    private void handleDestroyRestChoice(GameData gameData, List<UUID> permanentIds,
+                                         MultiPermanentChoiceContext.DestroyRestChoice context) {
+        destructionSupport.completeDestroyRestChoice(gameData, permanentIds, context);
 
         // If we're still awaiting input (next player's choice), return
         if (gameData.interaction.isAwaitingInput()) {
@@ -332,9 +325,9 @@ public class MultiPermanentChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleCombatDamageBounce(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        UUID targetPlayerId = gameData.pendingCombatDamageBounceTargetPlayerId;
-        gameData.pendingCombatDamageBounceTargetPlayerId = null;
+    private void handleCombatDamageBounce(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                          MultiPermanentChoiceContext.CombatDamageBounce context) {
+        UUID targetPlayerId = context.targetPlayerId();
 
         if (permanentIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to return any permanents.";
@@ -377,8 +370,6 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handleAwakeningCounterPlacement(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        gameData.pendingAwakeningCounterPlacement = false;
-
         if (permanentIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to put awakening counters on any lands.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
@@ -414,8 +405,6 @@ public class MultiPermanentChoiceHandlerService {
     }
 
     private void handleAimCounterPlacement(GameData gameData, List<UUID> permanentIds) {
-        gameData.pendingAimCounterPlacement = false;
-
         if (gameData.pendingEffectResolutionEntry != null) {
             permanentCounterSupport.placeCountersOnPermanents(gameData,
                     gameData.pendingEffectResolutionEntry, permanentIds, CounterType.AIM);
@@ -432,12 +421,10 @@ public class MultiPermanentChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleOwnPermanentCounterPlacement(GameData gameData, List<UUID> permanentIds) {
-        gameData.pendingOwnPermanentCounterPlacement = false;
-        CounterType counterType = gameData.pendingOwnPermanentCounterType;
-        int count = gameData.pendingOwnPermanentCounterCount;
-        gameData.pendingOwnPermanentCounterType = null;
-        gameData.pendingOwnPermanentCounterCount = 0;
+    private void handleOwnPermanentCounterPlacement(GameData gameData, List<UUID> permanentIds,
+                                                    MultiPermanentChoiceContext.OwnPermanentCounterPlacement context) {
+        CounterType counterType = context.counterType();
+        int count = context.count();
 
         if (!permanentIds.isEmpty() && gameData.pendingEffectResolutionEntry != null) {
             Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
@@ -458,8 +445,9 @@ public class MultiPermanentChoiceHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
-    private void handleProliferate(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        gameData.pendingProliferateCount--;
+    private void handleProliferate(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                   MultiPermanentChoiceContext.Proliferate context) {
+        int remainingProliferates = context.remainingCount() - 1;
 
         if (permanentIds.isEmpty()) {
             String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to proliferate any permanents.";
@@ -504,7 +492,7 @@ public class MultiPermanentChoiceHandlerService {
         // More proliferates remaining (e.g. "proliferate, then proliferate again")
         // Per MTG Rule 704.3, SBA are not checked during ability resolution,
         // so defer SBA until all proliferates are done.
-        if (gameData.pendingProliferateCount > 0) {
+        if (remainingProliferates > 0) {
             List<UUID> eligiblePermanentIds = new ArrayList<>();
             gameData.forEachPermanent((pid, p) -> {
                 if (p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0
@@ -517,12 +505,13 @@ public class MultiPermanentChoiceHandlerService {
                 }
             });
             if (eligiblePermanentIds.isEmpty()) {
-                gameData.pendingProliferateCount = 0;
                 String logEntry = "Proliferate: no permanents with counters to choose.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else {
                 playerInputService.beginMultiPermanentChoice(gameData, playerId, eligiblePermanentIds,
-                        eligiblePermanentIds.size(), "Proliferate: Choose permanents to add counters to.");
+                        eligiblePermanentIds.size(),
+                        new MultiPermanentChoiceContext.Proliferate(remainingProliferates),
+                        "Proliferate: Choose permanents to add counters to.");
                 return;
             }
         }
@@ -545,9 +534,9 @@ public class MultiPermanentChoiceHandlerService {
         gameBroadcastService.broadcastGameState(gameData);
     }
 
-    private void handleTapSubtypeBoost(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        UUID sourcePermanentId = gameData.pendingTapSubtypeBoostSourcePermanentId;
-        gameData.pendingTapSubtypeBoostSourcePermanentId = null;
+    private void handleTapSubtypeBoost(GameData gameData, UUID playerId, List<UUID> permanentIds,
+                                       MultiPermanentChoiceContext.TapSubtypeBoost context) {
+        UUID sourcePermanentId = context.sourcePermanentId();
 
         int count = permanentIds.size();
 

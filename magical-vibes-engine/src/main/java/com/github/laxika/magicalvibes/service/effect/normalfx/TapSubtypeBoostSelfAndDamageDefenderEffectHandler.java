@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -60,8 +61,8 @@ public class TapSubtypeBoostSelfAndDamageDefenderEffectHandler implements Normal
             return;
         }
 
-        gameData.pendingTapSubtypeBoostSourcePermanentId = sourcePermanentId;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds, eligibleIds.size(),
+                new MultiPermanentChoiceContext.TapSubtypeBoost(sourcePermanentId),
                 "You may tap any number of untapped " + e.subtype().getDisplayName() + " you control.");
     }
 }

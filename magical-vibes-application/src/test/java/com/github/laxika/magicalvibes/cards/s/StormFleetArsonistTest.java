@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -92,9 +93,12 @@ class StormFleetArsonistTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve ETB trigger
 
         // Opponent should be prompted to choose which permanent to sacrifice
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.pendingForcedSacrificeCount).isEqualTo(1);
-        assertThat(gd.pendingForcedSacrificePlayerId).isEqualTo(player2.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
 
         // Player2 chooses the first permanent
         List<Permanent> p2Battlefield = gd.playerBattlefields.get(player2.getId());

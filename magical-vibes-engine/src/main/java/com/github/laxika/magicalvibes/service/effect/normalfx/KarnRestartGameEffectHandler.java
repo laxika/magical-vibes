@@ -195,10 +195,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PendingKnowledgePoolCast.class);
         gameData.imprintSourcePermanentId = null;
         gameData.pendingOpponentExileChoice = null;
-        gameData.pendingCombatDamageBounceTargetPlayerId = null;
-        gameData.pendingSacrificeSelfToDestroySourceId = null;
-        gameData.pendingTransformAndAttachSourceId = null;
-        gameData.pendingProliferateCount = 0;
         gameData.pendingReturnToHandOnDiscardType = null;
         gameData.pendingTransformOnCreatureDiscard = null;
         gameData.pendingRummageDrawCount = 0;
@@ -216,9 +212,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.additionalCombatMainPhasePairs = 0;
         gameData.discardCausedByOpponent = false;
         gameData.cleanupDiscardPending = false;
-        gameData.pendingSacrificeAttackingCreature = false;
-        gameData.pendingAwakeningCounterPlacement = false;
-        gameData.pendingTapSubtypeBoostSourcePermanentId = null;
         gameData.mindControlledPlayerId = null;
         gameData.mindControllerPlayerId = null;
         gameData.pendingSearchContext = null;

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAn
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,13 +48,8 @@ public class SeparatePermanentsIntoPilesAndSacrificeEffectHandler implements Nor
                 List<UUID> allPermanentIds = permanents.stream().map(Permanent::getId).toList();
 
                 // Store pile separation state
-                gameData.pendingPileSeparation = true;
-                gameData.pendingPileSeparationControllerId = controllerId;
-                gameData.pendingPileSeparationTargetPlayerId = targetPlayerId;
-                gameData.pendingPileSeparationAllPermanentIds.clear();
-                gameData.pendingPileSeparationAllPermanentIds.addAll(allPermanentIds);
-                gameData.pendingPileSeparationPile1Ids.clear();
-                gameData.pendingPileSeparationPile2Ids.clear();
+                gameData.queueInteraction(new PendingPileSeparation(controllerId, targetPlayerId,
+                        allPermanentIds, List.of(), Map.of(), List.of(), List.of()));
 
                 // Prompt the controller to choose permanents for pile 1
                 playerInputService.beginMultiPermanentChoice(gameData, controllerId, allPermanentIds,

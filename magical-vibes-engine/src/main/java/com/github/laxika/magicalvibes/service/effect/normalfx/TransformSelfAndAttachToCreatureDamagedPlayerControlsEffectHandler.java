@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -62,8 +63,8 @@ public class TransformSelfAndAttachToCreatureDamagedPlayerControlsEffectHandler 
             return;
         }
 
-        gameData.pendingTransformAndAttachSourceId = sourcePermanentId;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, validCreatureIds, 1,
+                new MultiPermanentChoiceContext.TransformAndAttach(sourcePermanentId),
                 entry.getCard().getName() + "'s ability — Choose a creature "
                         + gameData.playerIdToName.get(defenderId) + " controls to attach to.");
     }

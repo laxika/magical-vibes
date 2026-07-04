@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -56,8 +57,8 @@ public class ExilePermanentDamagedPlayerControlsEffectHandler implements NormalE
             return;
         }
 
-        gameData.pendingExileDamagedPlayerControlsPermanent = true;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, validIds, 1,
+                new MultiPermanentChoiceContext.ExileDamagedPlayerControls(),
                 entry.getCard().getName() + "'s ability — Choose a permanent "
                         + gameData.playerIdToName.get(defenderId) + " controls to exile.");
     }

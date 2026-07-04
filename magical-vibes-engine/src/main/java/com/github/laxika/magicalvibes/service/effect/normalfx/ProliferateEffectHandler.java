@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
@@ -56,8 +57,9 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
         long totalProliferates = entry.getEffectsToResolve().stream()
                 .filter(e -> e instanceof ProliferateEffect)
                 .count();
-        gameData.pendingProliferateCount = (int) totalProliferates;
         playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligiblePermanentIds,
-                eligiblePermanentIds.size(), "Proliferate: Choose permanents to add counters to.");
+                eligiblePermanentIds.size(),
+                new MultiPermanentChoiceContext.Proliferate((int) totalProliferates),
+                "Proliferate: Choose permanents to add counters to.");
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -58,9 +59,9 @@ public class DamageSourceControllerSacrificesPermanentsEffectHandler implements 
                 }
 
                 // More permanents than required — prompt player to choose
-                gameData.pendingForcedSacrificeCount = count;
-                gameData.pendingForcedSacrificePlayerId = sacrificingPlayerId;
                 playerInputService.beginMultiPermanentChoice(gameData, sacrificingPlayerId, permanentIds,
-                        count, "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to sacrifice.");
+                        count,
+                        new MultiPermanentChoiceContext.ForcedSacrifice(sacrificingPlayerId, List.of(), List.of()),
+                        "Choose " + count + " permanent" + (count > 1 ? "s" : "") + " to sacrifice.");
     }
 }

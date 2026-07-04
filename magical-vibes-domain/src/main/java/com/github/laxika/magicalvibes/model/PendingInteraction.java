@@ -18,7 +18,7 @@ import java.util.UUID;
 public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
-        PendingKarnRestart, PendingKnowledgePoolCast,
+        PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation,
         PendingInteraction.XValueChoice, PendingInteraction.Scry,
         PendingInteraction.HandTopBottomChoice, PendingInteraction.LibraryReorder,
         PendingInteraction.MayAbilityChoice, PendingInteraction.KnowledgePoolCastChoice,
@@ -107,9 +107,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Select zero or more permanents from a list (sacrifice picks, proliferate targets,
      * combat-damage bounce, counter placement, …). {@code validIds} keeps the begin-time
      * order and {@code prompt} the exact begin-time text (also re-sent on reconnect).
+     * {@code context} is the begin-time snapshot of the operation to run with the answer
+     * (a {@link MultiPermanentChoiceContext}) and drives the answer dispatch; a null context
+     * falls through to the legacy {@code GameData}-flag dispatch chain (kinds not yet
+     * migrated onto the context).
      */
     record MultiPermanentChoice(UUID playerId, java.util.List<UUID> validIds, int maxCount,
-                                String prompt) implements PendingInteraction {
+                                MultiPermanentChoiceContext context, String prompt)
+            implements PendingInteraction {
     }
 
     /**

@@ -115,11 +115,6 @@ public class GameData {
     public final CloneOperationState cloneOperation = new CloneOperationState();
     public UUID imprintSourcePermanentId;
     public PendingOpponentExileChoice pendingOpponentExileChoice;
-    public UUID pendingCombatDamageBounceTargetPlayerId;
-    public UUID pendingSacrificeSelfToDestroySourceId;
-    public UUID pendingTransformAndAttachSourceId;
-    public boolean pendingExileDamagedPlayerControlsPermanent;
-    public int pendingProliferateCount;
     /** Creatures that took lethal damage during effect resolution — destroyed after all effects resolve. */
     public final List<Permanent> pendingLethalDamageDestructions = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
@@ -199,39 +194,8 @@ public class GameData {
     public final List<TargetSourceDamagePreventionShield> targetSourceDamagePreventionShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending source redirect damage to deal after source-specific prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<SourceDamageRedirectShield> pendingSourceRedirectDamage = Collections.synchronizedList(new ArrayList<>());
-    public boolean pendingSacrificeAttackingCreature;
-    public int pendingForcedSacrificeCount;
-    public UUID pendingForcedSacrificePlayerId;
-    public final List<PendingForcedSacrifice> pendingForcedSacrificeQueue = Collections.synchronizedList(new ArrayList<>());
-    /** Permanent IDs to sacrifice simultaneously once all players have made forced sacrifice choices. */
-    public final List<UUID> pendingSimultaneousSacrificeIds = Collections.synchronizedList(new ArrayList<>());
-    /** When true, the forced sacrifice queue is being used for "choose creature to keep" (destroy rest) instead of "choose to sacrifice". */
-    public boolean pendingDestroyRestMode;
-    /** Creature IDs chosen to be kept (protected from destruction) during a destroy-rest flow. */
-    public final List<UUID> pendingDestroyRestProtectedIds = Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
-    /** Name of the card that initiated the destroy-rest flow (for logging). */
-    public String pendingDestroyRestSourceName;
-    public boolean pendingAwakeningCounterPlacement;
-    public boolean pendingAimCounterPlacement;
-    public boolean pendingOwnPermanentCounterPlacement;
-    public CounterType pendingOwnPermanentCounterType;
-    public int pendingOwnPermanentCounterCount;
-    public UUID pendingTapSubtypeBoostSourcePermanentId;
-    /** Pile separation state: shared by permanent-pile effects (Liliana of the Veil) and card-pile effects (Boneyard Parley).
-     *  When {@code pendingPileSeparationCards} is non-empty, the pile IDs refer to card UUIDs (card-pile mode);
-     *  otherwise they refer to permanent UUIDs (permanent-pile mode). */
-    public boolean pendingPileSeparation;
-    public UUID pendingPileSeparationControllerId;
-    public UUID pendingPileSeparationTargetPlayerId;
-    public final List<UUID> pendingPileSeparationAllPermanentIds = Collections.synchronizedList(new ArrayList<>());
-    public final List<UUID> pendingPileSeparationPile1Ids = Collections.synchronizedList(new ArrayList<>());
-    public final List<UUID> pendingPileSeparationPile2Ids = Collections.synchronizedList(new ArrayList<>());
-    /** Card-pile mode only: the actual Card objects held during separation (not in any zone). */
-    public final List<Card> pendingPileSeparationCards = Collections.synchronizedList(new ArrayList<>());
-    /** Card-pile mode only: maps card UUID → original owner UUID for returning to owners' graveyards. */
-    public final Map<UUID, UUID> pendingPileSeparationCardOwners = new ConcurrentHashMap<>();
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
     /** Delayed triggers that untap up to N permanents matching a filter at the beginning of the next end step. */
     public final List<DelayedUntapPermanents> pendingDelayedUntapPermanents = Collections.synchronizedList(new ArrayList<>());
@@ -743,11 +707,6 @@ public class GameData {
         this.colorSourceDamageBonusThisTurn.forEach((pid, colorMap) ->
                 copy.colorSourceDamageBonusThisTurn.put(pid, new HashMap<>(colorMap)));
         copy.combatDamageRedirectTarget = this.combatDamageRedirectTarget;
-        copy.pendingCombatDamageBounceTargetPlayerId = this.pendingCombatDamageBounceTargetPlayerId;
-        copy.pendingSacrificeSelfToDestroySourceId = this.pendingSacrificeSelfToDestroySourceId;
-        copy.pendingTransformAndAttachSourceId = this.pendingTransformAndAttachSourceId;
-        copy.pendingExileDamagedPlayerControlsPermanent = this.pendingExileDamagedPlayerControlsPermanent;
-        copy.pendingProliferateCount = this.pendingProliferateCount;
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
@@ -771,29 +730,7 @@ public class GameData {
         copy.simulation = true;
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamagePhase1Complete = this.combatDamagePhase1Complete;
-        copy.pendingSacrificeAttackingCreature = this.pendingSacrificeAttackingCreature;
-        copy.pendingForcedSacrificeCount = this.pendingForcedSacrificeCount;
-        copy.pendingForcedSacrificePlayerId = this.pendingForcedSacrificePlayerId;
-        copy.pendingForcedSacrificeQueue.addAll(this.pendingForcedSacrificeQueue);
-        copy.pendingSimultaneousSacrificeIds.addAll(this.pendingSimultaneousSacrificeIds);
-        copy.pendingDestroyRestMode = this.pendingDestroyRestMode;
-        copy.pendingDestroyRestProtectedIds.addAll(this.pendingDestroyRestProtectedIds);
-        copy.pendingDestroyRestSourceName = this.pendingDestroyRestSourceName;
         copy.pendingGraveyardReturnQueue.addAll(this.pendingGraveyardReturnQueue);
-        copy.pendingAwakeningCounterPlacement = this.pendingAwakeningCounterPlacement;
-        copy.pendingAimCounterPlacement = this.pendingAimCounterPlacement;
-        copy.pendingOwnPermanentCounterPlacement = this.pendingOwnPermanentCounterPlacement;
-        copy.pendingOwnPermanentCounterType = this.pendingOwnPermanentCounterType;
-        copy.pendingOwnPermanentCounterCount = this.pendingOwnPermanentCounterCount;
-        copy.pendingTapSubtypeBoostSourcePermanentId = this.pendingTapSubtypeBoostSourcePermanentId;
-        copy.pendingPileSeparation = this.pendingPileSeparation;
-        copy.pendingPileSeparationControllerId = this.pendingPileSeparationControllerId;
-        copy.pendingPileSeparationTargetPlayerId = this.pendingPileSeparationTargetPlayerId;
-        copy.pendingPileSeparationAllPermanentIds.addAll(this.pendingPileSeparationAllPermanentIds);
-        copy.pendingPileSeparationPile1Ids.addAll(this.pendingPileSeparationPile1Ids);
-        copy.pendingPileSeparationPile2Ids.addAll(this.pendingPileSeparationPile2Ids);
-        copy.pendingPileSeparationCards.addAll(this.pendingPileSeparationCards);
-        copy.pendingPileSeparationCardOwners.putAll(this.pendingPileSeparationCardOwners);
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
         copy.playerIds.addAll(this.playerIds);

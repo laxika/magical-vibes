@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -172,9 +173,9 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
 
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
-                assertThat(gd.pendingExileDamagedPlayerControlsPermanent).isTrue();
                 verify(playerInputService).beginMultiPermanentChoice(
-                        eq(gd), eq(player1Id), eq(List.of(defenderPerm.getId())), eq(1), anyString());
+                        eq(gd), eq(player1Id), eq(List.of(defenderPerm.getId())), eq(1),
+                        eq(new MultiPermanentChoiceContext.ExileDamagedPlayerControls()), anyString());
             }
 
             @Test
@@ -203,7 +204,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
                 verify(playerInputService).beginMultiPermanentChoice(
                         eq(gd), eq(player1Id),
                         eq(List.of(gd.playerBattlefields.get(player2Id).getFirst().getId())),
-                        eq(1), anyString());
+                        eq(1), any(), anyString());
             }
 
             @Test
@@ -222,7 +223,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), anyString());
-                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), anyString());
+                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), anyString());
             }
 
             @Test
@@ -239,7 +240,7 @@ class ExilePermanentDamagedPlayerControlsEffectHandlerTest {
 
                 exilePermanentDamagedPlayerControlsHandler.resolve(gd, entry, effect);
 
-                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), anyString());
+                verify(playerInputService, never()).beginMultiPermanentChoice(any(), any(), any(), anyInt(), any(), anyString());
                 verify(gameBroadcastService, never()).logAndBroadcast(any(), anyString());
             }
 }

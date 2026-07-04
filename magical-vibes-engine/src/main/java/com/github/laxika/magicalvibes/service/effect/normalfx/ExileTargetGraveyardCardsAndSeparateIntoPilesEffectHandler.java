@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
@@ -82,17 +83,9 @@ public class ExileTargetGraveyardCardsAndSeparateIntoPilesEffectHandler implemen
                 .findFirst()
                 .orElseThrow();
 
-        // Store pile separation state (reusing shared pile separation fields)
-        gameData.pendingPileSeparation = true;
-        gameData.pendingPileSeparationControllerId = controllerId;
-        gameData.pendingPileSeparationTargetPlayerId = opponentId;
-        gameData.pendingPileSeparationCards.clear();
-        gameData.pendingPileSeparationCards.addAll(exiledCards);
-        gameData.pendingPileSeparationCardOwners.clear();
-        gameData.pendingPileSeparationCardOwners.putAll(cardOwners);
-        gameData.pendingPileSeparationAllPermanentIds.clear();
-        gameData.pendingPileSeparationPile1Ids.clear();
-        gameData.pendingPileSeparationPile2Ids.clear();
+        // Store pile separation state (card-pile mode)
+        gameData.queueInteraction(new PendingPileSeparation(controllerId, opponentId,
+                List.of(), exiledCards, cardOwners, List.of(), List.of()));
 
         // Prompt opponent to separate into two piles
         playerInputService.beginMultiGraveyardChoice(gameData, opponentId, exiledCards, exiledCards.size(),
