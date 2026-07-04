@@ -318,6 +318,23 @@ public class TargetLegalityService {
     }
 
     /**
+     * Validates a graveyard/exile target against an explicit effect list rather than the card's raw
+     * SPELL slot. Used by modal spells, whose raw SPELL slot holds only the {@code ChooseOneEffect};
+     * the chosen mode's unwrapped effects (and their target filters) must be validated instead.
+     */
+    public void validateEffectTargetInZone(GameData gameData, Card card, List<CardEffect> effects,
+                                           UUID targetId, Zone targetZone) {
+        targetValidationService.validateEffectTargets(effects,
+                new TargetValidationContext(gameData, targetId, targetZone, card));
+    }
+
+    public void validateEffectTargetInZone(GameData gameData, Card card, List<CardEffect> effects,
+                                           UUID targetId, Zone targetZone, int xValue) {
+        targetValidationService.validateEffectTargets(effects,
+                new TargetValidationContext(gameData, targetId, targetZone, card, xValue));
+    }
+
+    /**
      * Validates only the graveyard-targeting effects of a spell, ignoring permanent-targeting effects.
      * Used for spells with mixed graveyard + permanent targets (e.g. Yawgmoth's Vile Offering)
      * where each target type is validated separately.

@@ -153,7 +153,10 @@ public class SpellCastingService {
                     throw new IllegalStateException("Invalid mode index: " + effectiveXValue);
                 }
                 ChooseOneEffect.ChooseOneOption chosen = coe.options().get(effectiveXValue);
-                effects.set(i, chosen.effect());
+                // A mode may carry multiple effects (e.g. "Surveil 2, then draw a card"); splice them
+                // all in at the modal effect's position so each resolves in order.
+                effects.remove(i);
+                effects.addAll(i, chosen.effects());
                 // Apply per-mode target filter so downstream validation uses the correct filter
                 if (chosen.targetFilter() != null) {
                     card.setCastTimeTargetFilter(chosen.targetFilter());
@@ -477,16 +480,20 @@ public class SpellCastingService {
             targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
         }
 
-        ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).stream()
+        // For modal spells, graveyard-targeting is determined by the chosen mode's unwrapped effects
+        // (the raw SPELL slot holds only the ChooseOneEffect, which reports no graveyard targeting).
+        List<CardEffect> graveyardTargetingSource = wasModal ? filteredSpellEffects : card.getEffects(EffectSlot.SPELL);
+
+        ReturnCardFromGraveyardEffect graveyardReturnEffect = (ReturnCardFromGraveyardEffect) graveyardTargetingSource.stream()
                 .filter(e -> e instanceof ReturnCardFromGraveyardEffect)
                 .findFirst().orElse(null);
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null;
 
         // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
-                && card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetGraveyard());
-        boolean canTargetAnyGraveyard = card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetAnyGraveyard());
-        boolean targetsControllersGraveyardOnly = card.getEffects(EffectSlot.SPELL).stream()
+                && graveyardTargetingSource.stream().anyMatch(e -> e.canTargetGraveyard());
+        boolean canTargetAnyGraveyard = graveyardTargetingSource.stream().anyMatch(e -> e.canTargetAnyGraveyard());
+        boolean targetsControllersGraveyardOnly = graveyardTargetingSource.stream()
                 .anyMatch(e -> e.targetsControllersGraveyardOnly());
 
         // Detect exile targeting effects (e.g. ReturnTargetCardFromExileToHandEffect)
@@ -532,7 +539,7 @@ public class SpellCastingService {
                     // Mixed graveyard + permanent targeting: validate only graveyard effects
                     targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card, targetId);
                 } else {
-                    targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD, effectiveXValue);
+                    targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource, targetId, Zone.GRAVEYARD, effectiveXValue);
                 }
             } else if (needsGraveyardEffectTargeting) {
                 boolean inControllersGraveyard = gameData.playerGraveyards
@@ -550,7 +557,7 @@ public class SpellCastingService {
                     // Mixed graveyard + permanent targeting: validate only graveyard effects
                     targetLegalityService.validateGraveyardEffectTargetOnly(gameData, card, targetId);
                 } else {
-                    targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD);
+                    targetLegalityService.validateEffectTargetInZone(gameData, card, graveyardTargetingSource, targetId, Zone.GRAVEYARD);
                 }
             } else {
                 targetLegalityService.validateSpellTargeting(gameData, card, targetId, null, playerId, unwrappedNeedsTarget, effectiveXValue);

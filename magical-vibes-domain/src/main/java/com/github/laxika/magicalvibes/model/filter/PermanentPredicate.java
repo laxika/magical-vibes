@@ -33,6 +33,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsTappedPredicate,
         PermanentIsTokenPredicate,
         PermanentManaValueEqualsXPredicate,
+        PermanentMaxManaValuePredicate,
         PermanentNotPredicate,
         PermanentPowerAtLeastPredicate,
         PermanentPowerAtMostControlledCreatureCountPredicate,

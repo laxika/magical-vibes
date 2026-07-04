@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicat
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostControlledCreatureCountPredicate;
@@ -313,6 +314,8 @@ public class PredicateEvaluationService {
                 }
                 yield permanent.getCard().getManaValue() == filterContext.xValue();
             }
+            case PermanentMaxManaValuePredicate maxManaValuePredicate ->
+                    permanent.getCard().getManaValue() <= maxManaValuePredicate.maxManaValue();
             case PermanentPowerAtLeastPredicate powerAtLeastPredicate -> {
                 if (gameData == null) {
                     yield permanent.getEffectivePower() >= powerAtLeastPredicate.minPower();
