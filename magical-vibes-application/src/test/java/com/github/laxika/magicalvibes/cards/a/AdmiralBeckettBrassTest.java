@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
@@ -320,9 +322,9 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
             // Land should not be a valid target
-            assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(opponentLand.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(opponentLand.getId());
             // Grizzly Bears should be a valid target
-            assertThat(gd.interaction.permanentChoice().validIds()).contains(opponentBears.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(opponentBears.getId());
         }
 
         @Test
@@ -348,11 +350,11 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
 
             // Own Pirates should not be valid targets
-            assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(pirate1.getId());
-            assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(pirate2.getId());
-            assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(pirate3.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(pirate1.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(pirate2.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(pirate3.getId());
             // Opponent's creature should be a valid target
-            assertThat(gd.interaction.permanentChoice().validIds()).contains(opponentBears.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(opponentBears.getId());
         }
 
         @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.a.AngelsFeather;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AwaitingInput;
@@ -153,11 +155,11 @@ class VoltaicServantTest extends BaseCardTest {
 
         // Grizzly Bears (non-artifact) should NOT be in valid choices
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(bearsId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(bearsId);
 
         // Voltaic Servant (artifact creature) should be a valid target
         UUID servantId = harness.getPermanentId(player1, "Voltaic Servant");
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(servantId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(servantId);
     }
 
     // ===== Untapping already untapped artifact =====

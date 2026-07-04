@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.Gravedigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -123,7 +125,7 @@ class DiregrafCaptainTest extends BaseCardTest {
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         // Only the opponent (player2) is a valid target, never the controller (player1).
-        assertThat(gd.interaction.permanentChoice().validIds()).containsExactly(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).containsExactly(player2.getId());
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // Resolve the life-loss trigger

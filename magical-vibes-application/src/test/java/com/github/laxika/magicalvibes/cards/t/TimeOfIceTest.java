@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -138,8 +140,8 @@ class TimeOfIceTest extends BaseCardTest {
         Permanent ownBears = findCreature(player1, "Grizzly Bears");
         Permanent oppBears = findCreature(player2, "Grizzly Bears");
 
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(oppBears.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(ownBears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(oppBears.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(ownBears.getId());
     }
 
     @Test

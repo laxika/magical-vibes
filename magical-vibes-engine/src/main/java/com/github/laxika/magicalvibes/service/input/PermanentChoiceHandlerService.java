@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.InteractionContext;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -27,10 +25,8 @@ public class PermanentChoiceHandlerService {
     private final PermanentChoiceBattlefieldHandlerService battlefieldHandler;
 
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
-        if (!gameData.interaction.isAwaitingInput(AwaitingInput.PERMANENT_CHOICE)) {
-            throw new IllegalStateException("Not awaiting permanent choice");
-        }
-        InteractionContext.PermanentChoice permanentChoice = gameData.interaction.permanentChoiceContextView();
+        PendingInteraction.PermanentChoice permanentChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         if (permanentChoice == null || !player.getId().equals(permanentChoice.playerId())) {
             throw new IllegalStateException("Not your turn to choose");
         }
@@ -39,14 +35,13 @@ public class PermanentChoiceHandlerService {
         Set<UUID> validIds = permanentChoice.validIds();
 
         gameData.interaction.clearAwaitingInput();
-        gameData.interaction.clearPermanentChoice();
+        gameData.interaction.clearPermanentChoiceContext();
 
         if (!validIds.contains(permanentId)) {
             throw new IllegalStateException("Invalid permanent: " + permanentId);
         }
 
         PermanentChoiceContext context = permanentChoice.context();
-        gameData.interaction.clearPermanentChoiceContext();
 
         if (context instanceof PermanentChoiceContext.CloneCopy) {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);

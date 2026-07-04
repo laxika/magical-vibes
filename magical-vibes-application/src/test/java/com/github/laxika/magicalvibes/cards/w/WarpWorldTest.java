@@ -165,9 +165,9 @@ class WarpWorldTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.interaction.pendingAuraCard()).isNotNull();
         assertThat(gd.interaction.pendingAuraCard().getName()).isEqualTo("Pacifism");
-        assertThat(gd.interaction.permanentChoice().validIds()).hasSize(2);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).hasSize(2);
 
-        UUID chosenTarget = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
+        UUID chosenTarget = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, chosenTarget);
 
         Permanent aura = gd.playerBattlefields.get(player1.getId()).stream()
@@ -199,7 +199,7 @@ class WarpWorldTest extends BaseCardTest {
 
         UUID opponentCreatureId = gd.playerBattlefields.get(player2.getId()).stream()
                 .map(Permanent::getId)
-                .filter(id -> gd.interaction.permanentChoice().validIds().contains(id))
+                .filter(id -> gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().contains(id))
                 .findFirst()
                 .orElseThrow();
 
@@ -232,7 +232,7 @@ class WarpWorldTest extends BaseCardTest {
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         assertThat(gd.playerBattlefields.get(player1.getId())).allMatch(p -> p.getCard().hasType(CardType.CREATURE));
 
-        UUID chosenTarget = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
+        UUID chosenTarget = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, chosenTarget);
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream().filter(p -> p.getCard().getName().equals("Pacifism")).count()).isEqualTo(1);
@@ -263,15 +263,15 @@ class WarpWorldTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player2.getId());
 
-        UUID p2Choice = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
+        UUID p2Choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player2, p2Choice);
 
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
 
-        UUID p1Choice = gd.interaction.permanentChoice().validIds().stream().findFirst().orElseThrow();
+        UUID p1Choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds().stream().findFirst().orElseThrow();
         harness.handlePermanentChosen(player1, p1Choice);
 
         assertThat(gd.interaction.awaitingInputType()).isNull();

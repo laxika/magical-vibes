@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RavagerOfTheFells;
@@ -102,9 +104,9 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
         assertThat(huntmaster.isTransformed()).isTrue();
         assertThat(huntmaster.getCard().getName()).isEqualTo("Ravager of the Fells");
 
-        assertThat(gd.interaction.permanentChoice().validIds()).containsExactly(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).containsExactly(player2.getId());
         harness.handlePermanentChosen(player1, player2.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(bear.getId(), player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bear.getId(), player1.getId());
         harness.handlePermanentChosen(player1, bear.getId());
         harness.passBothPriorities();
 
@@ -146,7 +148,7 @@ class HuntmasterOfTheFellsTest extends BaseCardTest {
         advanceToUpkeepAndResolveTransform(player1);
 
         harness.handlePermanentChosen(player1, player2.getId());
-        assertThat(gd.interaction.permanentChoice().validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(opponentSpider.getId(), player1.getId())
                 .doesNotContain(ownBear.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownBear.getId()))

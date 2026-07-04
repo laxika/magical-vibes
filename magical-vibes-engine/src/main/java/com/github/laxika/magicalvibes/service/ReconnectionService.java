@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.networking.message.AvailableBlockersMessag
 import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignmentNotification;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.message.ChooseHandTopBottomMessage;
-import com.github.laxika.magicalvibes.networking.message.ChoosePermanentMessage;
 import com.github.laxika.magicalvibes.networking.message.ReorderLibraryCardsMessage;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
@@ -72,12 +71,6 @@ public class ReconnectionService {
                             gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId));
                 }
             }
-            case PERMANENT_CHOICE -> {
-                InteractionContext.PermanentChoice pc = gameData.interaction.permanentChoiceContextView();
-                if (pc != null) {
-                    resendFromContext(gameData, playerId, pc);
-                }
-            }
             case COMBAT_DAMAGE_ASSIGNMENT -> {
                 InteractionContext.CombatDamageAssignment cda = gameData.interaction.combatDamageAssignmentContext();
                 if (cda != null) {
@@ -109,12 +102,6 @@ public class ReconnectionService {
                             .toList();
                     sessionManager.sendToPlayer(defenderId, combatService.buildAvailableBlockersMessage(
                             gameData, blockable, attackerIndices, defenderId, gameData.activePlayerId));
-                }
-            }
-            case InteractionContext.PermanentChoice pc -> {
-                if (playerId.equals(pc.playerId())) {
-                    sessionManager.sendToPlayer(playerId, new ChoosePermanentMessage(
-                            new ArrayList<>(pc.validIds()), "Choose a permanent."));
                 }
             }
             case InteractionContext.CombatDamageAssignment cda -> {

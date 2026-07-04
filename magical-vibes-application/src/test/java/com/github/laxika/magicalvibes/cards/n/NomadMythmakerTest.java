@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -136,8 +138,8 @@ class NomadMythmakerTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-        assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(creature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(creature.getId());
         assertThat(gd.interaction.pendingAuraCard()).isNotNull();
         assertThat(gd.interaction.pendingAuraCard().getName()).isEqualTo("Holy Strength");
 
@@ -233,7 +235,7 @@ class NomadMythmakerTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         // Both creatures should be valid choices (Mythmaker is also a creature, so 3 total)
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(creature1.getId(), creature2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(creature1.getId(), creature2.getId());
     }
 
     // ===== Fizzle cases =====

@@ -30,7 +30,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
         PendingInteraction.ImprintFromHandChoice, PendingInteraction.DiscardCostChoice,
         PendingInteraction.LibraryRevealChoice,
-        PendingInteraction.LibrarySearch {
+        PendingInteraction.LibrarySearch,
+        PendingInteraction.PermanentChoice {
 
     // ------------------------------------------------------------------
     // Generic interaction kinds, migrated one at a time from the legacy
@@ -374,5 +375,28 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record LibrarySearch(LibrarySearchParams params, String messagePrompt,
                          boolean messageCanFailToFind) implements PendingInteraction {
+    }
+
+    /**
+     * "Choose a permanent" / "choose any target" — the single-pick battlefield/player
+     * targeting prompt serving the ~45 {@link PermanentChoiceContext} operations (trigger-slot
+     * targets, sacrifices, clone copies, spell retargets, aura placement, ...). Carries the two
+     * begin-time ordered ID lists exactly as the {@code ChoosePermanentMessage} sent them
+     * ({@code validPlayerIds} is empty for the plain permanent variant) plus the begin-time
+     * {@code prompt}; validation uses the merged {@link #validIds()} set, as legacy did.
+     * {@code context} is the begin-time snapshot of the pre-seeded
+     * {@code InteractionState.permanentChoiceContext} carrier field and drives the answer
+     * dispatch (a null context falls through to the pending-aura placement path).
+     */
+    record PermanentChoice(UUID playerId, java.util.List<UUID> validPermanentIds,
+                           java.util.List<UUID> validPlayerIds, PermanentChoiceContext context,
+                           String prompt) implements PendingInteraction {
+
+        /** Merged valid-target IDs (permanents + players), the legacy validation set. */
+        public java.util.Set<UUID> validIds() {
+            java.util.Set<UUID> all = new java.util.LinkedHashSet<>(validPermanentIds);
+            all.addAll(validPlayerIds);
+            return all;
+        }
     }
 }

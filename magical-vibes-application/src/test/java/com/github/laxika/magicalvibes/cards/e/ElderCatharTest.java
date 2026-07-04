@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.cards.c.ChampionOfTheParish;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
@@ -97,7 +99,7 @@ class ElderCatharTest extends BaseCardTest {
 
             // Controller should be prompted to choose a target creature
             assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-            assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
         }
 
         @Test

@@ -213,7 +213,7 @@ void deathTriggerPromptsForTarget() {
     assertThat(gd.playerGraveyards.get(player1.getId()))
             .anyMatch(c -> c.getName().equals("CardName"));
     assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
-    assertThat(gd.interaction.permanentChoice().playerId()).isEqualTo(player1.getId());
+    assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId()).isEqualTo(player1.getId());
 }
 ```
 
@@ -262,7 +262,7 @@ void deathTriggerValidIds() {
     setupCombatWhereCardDies("CardName");
     harness.passBothPriorities();
 
-    assertThat(gd.interaction.permanentChoice().validIds()).contains(bearsId);
+    assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bearsId);
 }
 ```
 

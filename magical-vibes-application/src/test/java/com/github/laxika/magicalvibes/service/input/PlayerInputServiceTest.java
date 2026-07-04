@@ -98,6 +98,8 @@ class PlayerInputServiceTest {
                 sessionManager, cardChoiceHandlerService));
         registry.register(new HandCardChoiceInteractionHandlers.ImprintFromHandChoiceInteractionHandler(
                 sessionManager, cardChoiceHandlerService));
+        registry.register(new com.github.laxika.magicalvibes.service.interaction.PermanentChoiceInteractionHandler(
+                sessionManager, mock(PermanentChoiceHandlerService.class)));
         svc = new PlayerInputService(sessionManager, cardViewFactory, registry);
 
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
@@ -305,7 +307,7 @@ class PlayerInputServiceTest {
 
             svc.beginAnyTargetChoice(gd, PLAYER1_ID, List.of(permId), List.of(PLAYER2_ID), "Choose any");
 
-            assertThat(gd.interaction.permanentChoice().validIds()).containsExactlyInAnyOrder(permId, PLAYER2_ID);
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).containsExactlyInAnyOrder(permId, PLAYER2_ID);
         }
     }
 

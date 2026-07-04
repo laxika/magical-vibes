@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
 import com.github.laxika.magicalvibes.service.combat.CombatService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
-import com.github.laxika.magicalvibes.service.input.PermanentChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
@@ -44,7 +43,6 @@ public class GameService {
     private final GameBroadcastService gameBroadcastService;
     private final CombatService combatService;
     private final TurnProgressionService turnProgressionService;
-    private final PermanentChoiceHandlerService permanentChoiceHandlerService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final SpellCastingService spellCastingService;
     private final StackResolutionService stackResolutionService;
@@ -122,7 +120,6 @@ public class GameService {
         return switch (ctx) {
             case InteractionContext.AttackerDeclaration ad -> controlledId.equals(ad.activePlayerId());
             case InteractionContext.BlockerDeclaration bd -> controlledId.equals(bd.defenderId());
-            case InteractionContext.PermanentChoice pc -> controlledId.equals(pc.playerId());
             case InteractionContext.CombatDamageAssignment cda -> controlledId.equals(cda.playerId());
         };
     }
@@ -458,7 +455,10 @@ public class GameService {
     public void handlePermanentChosen(GameData gameData, Player player, UUID permanentId) {
         synchronized (gameData) {
             player = resolveActingPlayer(gameData, player);
-            permanentChoiceHandlerService.handlePermanentChosen(gameData, player, permanentId);
+            if (!interactionHandlerRegistry.dispatchAnswer(gameData, player,
+                    new InteractionAnswer.PermanentChosen(permanentId))) {
+                throw new IllegalStateException("Not awaiting permanent choice");
+            }
         }
     }
 

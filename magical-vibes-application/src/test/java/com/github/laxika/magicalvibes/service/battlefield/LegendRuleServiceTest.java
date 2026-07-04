@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -109,7 +111,7 @@ class LegendRuleServiceTest {
             boolean result = svc.checkLegendRule(gd, player1Id);
 
             assertThat(result).isFalse();
-            assertThat(gd.interaction.permanentChoice()).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
 
@@ -121,7 +123,7 @@ class LegendRuleServiceTest {
             boolean result = svc.checkLegendRule(gd, player1Id);
 
             assertThat(result).isFalse();
-            assertThat(gd.interaction.permanentChoice()).isNull();
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), anyList(), anyString());
         }
 

@@ -32,6 +32,7 @@ public final class AiInteractionStrategies {
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new LibraryRevealChoiceAiStrategy());
         register(new LibrarySearchAiStrategy());
+        register(new PermanentChoiceAiStrategy());
     }
 
     private AiInteractionStrategies() {

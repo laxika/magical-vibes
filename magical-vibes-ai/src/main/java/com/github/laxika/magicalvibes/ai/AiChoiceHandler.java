@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.ai;
 import com.github.laxika.magicalvibes.ai.interaction.AiInteractionContext;
 import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategies;
 import com.github.laxika.magicalvibes.ai.interaction.AiInteractionStrategy;
-import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -12,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionContext;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.networking.message.BottomCardsRequest;
@@ -22,7 +20,6 @@ import com.github.laxika.magicalvibes.networking.message.CombatDamageAssignedReq
 import com.github.laxika.magicalvibes.networking.message.GraveyardCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.LibraryCardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.MultipleCardsChosenRequest;
-import com.github.laxika.magicalvibes.networking.message.PermanentChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.ScryCompletedRequest;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.Setter;
@@ -33,7 +30,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -87,53 +83,9 @@ class AiChoiceHandler {
 
     // ===== Permanent Choice =====
 
+    /** Baseline permanent / any-target answer via {@code PermanentChoiceAiStrategy}. */
     void handlePermanentChoice(GameData gameData) {
-        InteractionContext.PermanentChoice permanentChoice = gameData.interaction.permanentChoiceContextView();
-        if (permanentChoice == null) {
-            return;
-        }
-        UUID choicePlayerId = permanentChoice.playerId();
-        Set<UUID> validIds = permanentChoice.validIds();
-
-        if (!aiPlayerId.equals(choicePlayerId)) {
-            return;
-        }
-
-        if (validIds == null || validIds.isEmpty()) {
-            return;
-        }
-
-        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayerId);
-        List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
-        List<Permanent> ownField = gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of());
-
-        // Try opponent's best creature first
-        UUID best = opponentField.stream()
-                .filter(p -> validIds.contains(p.getId()))
-                .filter(p -> gameQueryService.isCreature(gameData, p))
-                .max(Comparator.comparingInt(p -> gameQueryService.getEffectivePower(gameData, p)))
-                .map(Permanent::getId)
-                .orElse(null);
-
-        if (best == null) {
-            best = opponentField.stream()
-                    .filter(p -> validIds.contains(p.getId()))
-                    .max(Comparator.comparingInt(p -> p.getCard().getManaValue()))
-                    .map(Permanent::getId)
-                    .orElse(null);
-        }
-
-        if (best == null) {
-            best = ownField.stream()
-                    .filter(p -> validIds.contains(p.getId()))
-                    .min(Comparator.comparingInt(p -> p.getCard().getManaValue()))
-                    .map(Permanent::getId)
-                    .orElse(validIds.iterator().next());
-        }
-
-        log.info("AI: Choosing permanent {} in game {}", best, gameId);
-        final UUID finalBest = best;
-        send(() -> gameActions.handlePermanentChosen(selfConnection, new PermanentChosenRequest(finalBest)));
+        handleActiveInteraction(gameData);
     }
 
     // ===== Multiple Permanent Choice =====

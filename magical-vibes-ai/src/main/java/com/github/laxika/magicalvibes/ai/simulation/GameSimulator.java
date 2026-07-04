@@ -334,8 +334,8 @@ public class GameSimulator {
                 }
             }
             case PERMANENT_CHOICE -> {
-                var permChoice = gd.interaction.permanentChoiceContextView();
-                if (permChoice != null && permChoice.validIds() != null) {
+                var permChoice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+                if (permChoice != null) {
                     for (UUID id : permChoice.validIds()) {
                         actions.add(new SimulationAction.ChoosePermanent(id));
                     }
@@ -561,8 +561,8 @@ public class GameSimulator {
                 }
             }
             case PERMANENT_CHOICE -> {
-                var pc = gd.interaction.permanentChoiceContextView();
-                if (pc != null && pc.validIds() != null && !pc.validIds().isEmpty()) {
+                var pc = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+                if (pc != null && !pc.validIds().isEmpty()) {
                     UUID chosen = pc.validIds().iterator().next();
                     gameService.handlePermanentChosen(gd, player, chosen);
                 }
@@ -692,6 +692,7 @@ public class GameSimulator {
                 case PendingInteraction.HandChoice hc -> hc.playerId();
                 case PendingInteraction.LibraryRevealChoice lrc -> lrc.playerId();
                 case PendingInteraction.LibrarySearch ls -> ls.params().playerId();
+                case PendingInteraction.PermanentChoice pc -> pc.playerId();
                 default -> null;
             };
         }
@@ -700,7 +701,6 @@ public class GameSimulator {
         return switch (ctx) {
             case InteractionContext.AttackerDeclaration ad -> ad.activePlayerId();
             case InteractionContext.BlockerDeclaration bd -> bd.defenderId();
-            case InteractionContext.PermanentChoice pc -> pc.playerId();
             case InteractionContext.CombatDamageAssignment cda -> cda.playerId();
         };
     }

@@ -52,4 +52,8 @@ public sealed interface InteractionAnswer {
     /** A single card picked from a presented library subset by index. */
     record LibraryCardChosen(int cardIndex) implements InteractionAnswer {
     }
+
+    /** A single permanent (or player, for any-target choices) picked by ID. */
+    record PermanentChosen(java.util.UUID permanentId) implements InteractionAnswer {
+    }
 }

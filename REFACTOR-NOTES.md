@@ -497,6 +497,55 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
   `activeInteraction(PendingInteraction.LibrarySearch.class).params().X`; `LibraryChoiceHandlerServiceTest`
   and `InteractionRegistryTestSupport` register the real handler; new focused
   `LibrarySearchInteractionHandlerTest` covers begin content, dispatch delegation, and replay gating.
+- `PendingInteraction.PermanentChoice` (PERMANENT_CHOICE) — the single-pick battlefield/player
+  targeting prompt serving the ~45 `PermanentChoiceContext` operations (trigger-slot targets,
+  sacrifices, clone copies, spell retargets, legend rule, aura placement, …). The record carries
+  `(playerId, validPermanentIds, validPlayerIds, context, prompt)`: the TWO begin-time ordered ID
+  lists exactly as `ChoosePermanentMessage` sent them (`beginPermanentChoice` sends only a
+  permanent list; `beginAnyTargetChoice` sends permanents + players — `validPlayerIds` is empty
+  for the plain variant), with validation over the derived merged `validIds()` set as legacy.
+  **The independent `InteractionState.permanentChoiceContext` field is deliberately KEPT** (only
+  the prompt/validation state migrated): its lifecycle spans interactions — the ~60 begin sites
+  pre-seed it via `setPermanentChoiceContext(...)` before calling the (signature-unchanged)
+  `PlayerInputService.beginPermanentChoice`/`beginAnyTargetChoice` helpers, which snapshot it
+  into the record, and `MayCopyHandlerService`'s clone-copy decline clears a pre-seed that never
+  reaches any permanent-choice begin (set across the MAY_ABILITY_CHOICE window). Folding it into
+  begin arguments would have meant rewiring all ~60 sites for no behavior gain. The answer's
+  entry (`PermanentChoiceHandlerService.handlePermanentChosen`) reads the active record, keeps
+  its clear-before-invalid-throw sequence and all error texts ("Not your turn to choose",
+  "Invalid permanent: X", "No pending permanent choice context"), and keeps the entire ~45-branch
+  `instanceof` dispatch plus the `pendingAuraCard` fallback untouched; the per-variant "Awaiting …"
+  log lines stay at the `PlayerInputService` helpers (ColorChoice precedent — replay does not
+  re-log). Answered via the new `InteractionAnswer.PermanentChosen(UUID)`;
+  `GameService.handlePermanentChosen` was single-kind, so it collapsed to dispatch-or-throw with
+  the legacy "Not awaiting permanent choice" (GameService lost its `PermanentChoiceHandlerService`
+  dep). **Replay-fidelity corrections**: the legacy reconnect replay sent a generic
+  "Choose a permanent." (wrong for every varied begin prompt) with the merged validIds set in
+  hash-scrambled order stuffed into the permanent-ID list — the any-target player-ID list was
+  degraded into it entirely — and replay now re-sends the begin-time prompt and both ordered
+  lists. **`copyInteractionInto` change**: the pre-seed carrier field is now copied
+  unconditionally at the top (legacy only restored it while a PERMANENT_CHOICE was active, via
+  the `beginPermanentChoice` rebuild; pre-seeds parked across other interaction windows — e.g.
+  the clone-copy may-choice — were silently dropped from simulation copies, so a simulated
+  accept hit "No pending permanent choice context"; simulation-only fidelity improvement,
+  LIBRARY_SEARCH finding precedent). Removed: `InteractionContext.PermanentChoice` + all cases
+  (`controlledPlayerMatchesContext`, `ReconnectionService` ×2, `GameSimulator` legacy decider,
+  `GameData.copyInteractionInto`), `InteractionState.beginPermanentChoice/clearPermanentChoice/
+  permanentChoiceContextView` + the `permanentChoice` sub-state field, and **`PermanentChoiceState`
+  deleted entirely** (it was the last grouped sub-state — the "Grouped sub-states" section of
+  `InteractionState` is gone). AI: `PermanentChoiceAiStrategy` (opponent's strongest creature by
+  effective power → opponent's highest MV → own cheapest → first valid; ported verbatim, inlining
+  the package-private `AiUtils.getOpponentId`); `AiChoiceHandler.handlePermanentChoice` is a thin
+  `handleActiveInteraction` alias (no difficulty overrides existed — the CHOOSE_PERMANENT wire
+  case calls the choice handler directly); `GameSimulator`'s PERMANENT_CHOICE action-gen and
+  resolve cases read the record (first-valid pick order changes from HashSet-iteration to
+  begin-time order — same arbitrary-to-ordered correction as prior kinds) and the decider lookup
+  gained the record case. Tests: 48 files' `permanentChoice().playerId()/validIds()` /
+  `permanentChoiceContextView()` reads rewritten to the typed accessor (scratchpad
+  `fix_permanent_tests.pl`); the ~30 test files reading the kept `permanentChoiceContext()` field
+  needed no changes; `PlayerInputServiceTest` registers the new handler; new focused
+  `PermanentChoiceInteractionHandlerTest` covers both message variants, the merged validIds,
+  dispatch delegation, and replay gating.
 
 **Migration recipe per kind** (repeat for each remaining `AwaitingInput` value):
 1. Add the record to `PendingInteraction` (+ permits) and the answer shape to
@@ -519,8 +568,7 @@ Scaffolding is in place and the first kind (X value choice) is migrated end to e
 
 ### Stage 3 continuation — migrate the remaining kinds
 
-Suggested order: PERMANENT_CHOICE,
-COMBAT_DAMAGE_ASSIGNMENT, and last the combat
+Suggested order: COMBAT_DAMAGE_ASSIGNMENT, and last the combat
 declarations (ATTACKER/BLOCKER) which are entangled with `CombatService`.
 
 ### Stage 4 — Generic `AwaitingInput` kinds → interaction records

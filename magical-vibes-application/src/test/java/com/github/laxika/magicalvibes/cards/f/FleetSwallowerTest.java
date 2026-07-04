@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+
 import com.github.laxika.magicalvibes.model.AwaitingInput;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -60,7 +62,7 @@ class FleetSwallowerTest extends BaseCardTest {
 
             declareAttackers(List.of(0));
 
-            assertThat(gd.interaction.permanentChoice().validIds())
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                     .containsExactlyInAnyOrder(player1.getId(), player2.getId())
                     .doesNotContain(opponentCreature.getId());
         }

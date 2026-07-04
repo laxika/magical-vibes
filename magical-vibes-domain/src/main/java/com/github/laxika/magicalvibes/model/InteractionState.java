@@ -1,11 +1,6 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.interaction.PermanentChoiceState;
-
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 public class InteractionState {
@@ -18,9 +13,6 @@ public class InteractionState {
      *  enum teardown stage) but {@link #context} stays null — the registry handler owns
      *  prompting, answer handling, and reconnect replay. */
     private PendingInteraction activeInteraction;
-
-    // --- Grouped sub-states ---
-    private PermanentChoiceState permanentChoice;
 
     // --- Independent fields (lifecycle not tied to a single begin/clear cycle) ---
     private PermanentChoiceContext permanentChoiceContext;
@@ -37,7 +29,6 @@ public class InteractionState {
         copy.awaitingInput = this.awaitingInput;
         copy.context = this.context;
         copy.activeInteraction = this.activeInteraction;
-        copy.permanentChoice = this.permanentChoice != null ? this.permanentChoice.deepCopy() : null;
         copy.permanentChoiceContext = this.permanentChoiceContext;
         copy.pendingAuraCard = this.pendingAuraCard;
         copy.pendingAuraOwnerId = this.pendingAuraOwnerId;
@@ -97,13 +88,6 @@ public class InteractionState {
     }
 
     // ========================================================================
-    // Sub-state accessors
-    // ========================================================================
-
-    public PermanentChoiceState permanentChoice() {
-        return permanentChoice;
-    }
-    // ========================================================================
     // Combat
     // ========================================================================
 
@@ -136,20 +120,14 @@ public class InteractionState {
     }
 
     // ========================================================================
-    // Permanent choice
+    // Permanent choice context (pre-seed carrier)
     // ========================================================================
-
-    public void beginPermanentChoice(UUID playerId, Set<UUID> validIds, PermanentChoiceContext choiceContext) {
-        this.awaitingInput = AwaitingInput.PERMANENT_CHOICE;
-        this.permanentChoice = new PermanentChoiceState(playerId, new HashSet<>(validIds));
-        this.permanentChoiceContext = choiceContext;
-        this.context = new InteractionContext.PermanentChoice(playerId, new HashSet<>(validIds), choiceContext);
-    }
-
-    public void clearPermanentChoice() {
-        this.permanentChoice = null;
-        this.permanentChoiceContext = null;
-    }
+    // The ~60 permanent-choice begin sites pre-seed this field with the operation to run when
+    // the chosen permanent arrives; PlayerInputService.beginPermanentChoice/beginAnyTargetChoice
+    // snapshot it into the active PendingInteraction.PermanentChoice record. It stays a separate
+    // field (rather than folding into the record's begin arguments) because its lifecycle spans
+    // interactions: e.g. the clone-copy may-choice pre-seeds it before the MAY_ABILITY_CHOICE
+    // window, and a decline clears it without any permanent-choice begin ever happening.
 
     public void setPermanentChoiceContext(PermanentChoiceContext choiceContext) {
         this.permanentChoiceContext = choiceContext;
@@ -161,13 +139,6 @@ public class InteractionState {
 
     public void clearPermanentChoiceContext() {
         this.permanentChoiceContext = null;
-    }
-
-    public InteractionContext.PermanentChoice permanentChoiceContextView() {
-        if (context instanceof InteractionContext.PermanentChoice pc) return pc;
-        if (permanentChoice == null) return null;
-        return new InteractionContext.PermanentChoice(permanentChoice.playerId(),
-                permanentChoice.validIds(), permanentChoiceContext);
     }
 
     // ========================================================================

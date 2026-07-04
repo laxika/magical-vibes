@@ -648,8 +648,8 @@ class TwincastTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         // Valid targets should include the creature but NOT the enchantment
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(bearsPermId);
-        assertThat(gd.interaction.permanentChoice().validIds()).doesNotContain(anthemPermId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bearsPermId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(anthemPermId);
     }
 
     @Test
@@ -679,9 +679,9 @@ class TwincastTest extends BaseCardTest {
         GameData gd = harness.getGameData();
         assertThat(gd.interaction.awaitingInputType()).isEqualTo(AwaitingInput.PERMANENT_CHOICE);
         // Valid targets should include the creature AND both players
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(bearsPermId);
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(player1.getId());
-        assertThat(gd.interaction.permanentChoice().validIds()).contains(player2.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(bearsPermId);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player2.getId());
     }
 }
 

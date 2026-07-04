@@ -1031,6 +1031,13 @@ public class GameData {
         // by clearing and re-configuring through public methods.
         // However, since InteractionState uses private fields and public begin*/clear* methods,
         // we use the context object to reconstruct the state.
+
+        // The permanent-choice pre-seed carrier is copied unconditionally: it can be set
+        // outside any awaiting window (e.g. a clone-copy context pre-seeded across the
+        // MAY_ABILITY_CHOICE window), and during an active PERMANENT_CHOICE the legacy
+        // rebuild restored it via beginPermanentChoice.
+        target.interaction.setPermanentChoiceContext(source.permanentChoiceContext());
+
         if (source.awaitingInputType() == null) {
             return; // default state, nothing to copy
         }
@@ -1054,8 +1061,6 @@ public class GameData {
                     targetInteraction.beginAttackerDeclaration(ad.activePlayerId());
             case InteractionContext.BlockerDeclaration bd ->
                     targetInteraction.beginBlockerDeclaration(bd.defenderId());
-            case InteractionContext.PermanentChoice pc ->
-                    targetInteraction.beginPermanentChoice(pc.playerId(), pc.validIds(), pc.context());
             case InteractionContext.CombatDamageAssignment cda ->
                     targetInteraction.beginCombatDamageAssignment(cda.playerId(), cda.attackerIndex(),
                             cda.attackerPermanentId(), cda.attackerName(), cda.totalDamage(),
