@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ImprovisationCapstoneCastSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -41,6 +42,7 @@ public class PermanentChoiceSpellHandlerService {
     // PlayerInputService → InteractionHandlerRegistry → ImprovisationCapstoneCastChoiceInteractionHandler
     // → ImprovisationCapstoneCastSupport.
     private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
+    private final ExileCastTargetSupport exileCastTargetSupport;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -48,7 +50,8 @@ public class PermanentChoiceSpellHandlerService {
                                               TriggerCollectionService triggerCollectionService,
                                               PlayerInputService playerInputService,
                                               TurnProgressionService turnProgressionService,
-                                              @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport) {
+                                              @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport,
+                                              ExileCastTargetSupport exileCastTargetSupport) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameBroadcastService = gameBroadcastService;
@@ -56,6 +59,7 @@ public class PermanentChoiceSpellHandlerService {
         this.playerInputService = playerInputService;
         this.turnProgressionService = turnProgressionService;
         this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
+        this.exileCastTargetSupport = exileCastTargetSupport;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -133,6 +137,13 @@ public class PermanentChoiceSpellHandlerService {
     }
 
     public void handleExileCastSpellTarget(GameData gameData, UUID permanentId, PermanentChoiceContext.ExileCastSpellTarget ect) {
+        // Multi-target spells (e.g. Echocasting Symposium: target player + target creature you control)
+        // collect their targets one slot at a time, in the card's declared order.
+        if (ect.cardToCast().getMaxTargets() > 1) {
+            handleMultiTargetExileCast(gameData, permanentId, ect);
+            return;
+        }
+
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
 
@@ -169,10 +180,83 @@ public class PermanentChoiceSpellHandlerService {
             log.info("Game {} - {} cast-from-exile target no longer exists", gameData.id, ect.cardToCast().getName());
         }
 
-        // Improvisation Capstone casts a batch of exiled spells; a targeted one pauses here for the
-        // target choice, so resume casting the remainder of the queue before yielding priority.
+        resumeAfterExileCast(gameData, ect.controllerId());
+    }
+
+    /**
+     * Collects the targets of a multi-target spell cast from exile one slot at a time. Each response
+     * fills the next declared target slot; while slots remain, computes the legal candidates for the
+     * following slot and prompts again. Once every slot is filled the spell is put on the stack with
+     * its ordered target list.
+     */
+    private void handleMultiTargetExileCast(GameData gameData, UUID permanentId,
+                                            PermanentChoiceContext.ExileCastSpellTarget ect) {
+        Card card = ect.cardToCast();
+        List<UUID> chosen = new ArrayList<>(ect.chosenTargets());
+        chosen.add(permanentId);
+
+        int totalSlots = card.getMaxTargets();
+        if (chosen.size() < totalSlots) {
+            List<UUID> nextCandidates = exileCastTargetSupport.nextSlotCandidates(gameData, card, ect.controllerId(), chosen);
+            if (nextCandidates.isEmpty()) {
+                // The full target set was pre-validated before prompting, so this only happens if a
+                // remaining slot's targets vanished mid-selection. The spell can't be legally cast:
+                // a copy ceases to exist (CR 707.10a), a real card goes to its owner's graveyard.
+                if (!ect.copy()) {
+                    graveyardService.addCardToGraveyard(gameData, ect.controllerId(), card);
+                }
+                String logEntry = card.getName() + "'s targets are no longer valid.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} multi-target cast-from-exile has no legal target for a remaining slot",
+                        gameData.id, card.getName());
+                resumeAfterExileCast(gameData, ect.controllerId());
+                return;
+            }
+
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ExileCastSpellTarget(
+                    card, ect.controllerId(), ect.spellEffects(), ect.spellType(), ect.copy(), chosen));
+            playerInputService.beginPermanentChoice(gameData, ect.controllerId(), nextCandidates,
+                    "Choose a target for " + card.getName() + ".");
+            gameBroadcastService.logAndBroadcast(gameData,
+                    card.getName() + " targets " + getTargetDisplayName(gameData, permanentId) + " — choosing next target.");
+            return;
+        }
+
+        // Every target slot is filled — put the spell on the stack preserving the declared order.
+        StackEntry entry = new StackEntry(
+                ect.spellType(),
+                card,
+                ect.controllerId(),
+                card.getName(),
+                new ArrayList<>(ect.spellEffects()),
+                0,
+                chosen
+        );
+        entry.setCopy(ect.copy());
+        gameData.stack.add(entry);
+
+        gameData.recordSpellCast(ect.controllerId(), card);
+        gameData.priorityPassedBy.clear();
+
+        List<String> targetNames = chosen.stream().map(id -> getTargetDisplayName(gameData, id)).toList();
+        String logEntry = card.getName() + " targets " + String.join(", ", targetNames) + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} multi-target cast-from-exile targets {}", gameData.id, card.getName(), targetNames);
+
+        triggerCollectionService.checkSpellCastTriggers(gameData, card, ect.controllerId(), false);
+        triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
+
+        resumeAfterExileCast(gameData, ect.controllerId());
+    }
+
+    /**
+     * Resumes turn flow after a spell cast from exile has been placed on the stack (or fizzled).
+     * Improvisation Capstone casts a batch of exiled spells; a targeted one pauses for target
+     * selection, so resume casting the remainder of the queue before yielding priority.
+     */
+    private void resumeAfterExileCast(GameData gameData, UUID controllerId) {
         if (!gameData.pendingImprovisationCapstoneCastQueue.isEmpty()) {
-            improvisationCapstoneCastSupport.castNextFromQueue(gameData, ect.controllerId());
+            improvisationCapstoneCastSupport.castNextFromQueue(gameData, controllerId);
             return;
         }
 

@@ -5,23 +5,17 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +27,10 @@ import org.springframework.stereotype.Component;
 public class ImprovisationCapstoneCastSupport {
 
     private final GameBroadcastService gameBroadcastService;
-    private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final GraveyardService graveyardService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final ExileCastTargetSupport exileCastTargetSupport;
 
     public void castChosenSpellsWithoutPaying(GameData gameData, Player player, List<UUID> cardIds) {
         gameData.interaction.clearAwaitingInput();
@@ -75,13 +68,19 @@ public class ImprovisationCapstoneCastSupport {
         Card card = exiledEntry.card();
         gameData.removeFromExile(cardId);
 
-        StackEntryType spellType = mapCardTypeToSpellType(card);
+        StackEntryType spellType = exileCastTargetSupport.mapCardTypeToSpellType(card);
         List<CardEffect> spellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         String playerName = gameData.playerIdToName.get(playerId);
 
         if (EffectResolution.needsTarget(card)) {
-            List<UUID> validTargets = buildValidSpellTargets(gameData, card);
-            if (validTargets.isEmpty()) {
+            List<UUID> firstCandidates = exileCastTargetSupport.firstSlotCandidates(gameData, card, playerId);
+            boolean multiTarget = card.getMaxTargets() > 1;
+            // Multi-target: require a full legal set of targets (CR 601.2c) before prompting.
+            boolean hasLegalTargets = multiTarget
+                    ? exileCastTargetSupport.hasLegalTargetSet(gameData, card, playerId)
+                    : !firstCandidates.isEmpty();
+
+            if (!hasLegalTargets) {
                 graveyardService.addCardToGraveyard(gameData, playerId, card);
                 gameBroadcastService.logAndBroadcast(gameData, card.getName() + " has no valid targets.");
                 castNextFromQueue(gameData, playerId);
@@ -90,7 +89,7 @@ public class ImprovisationCapstoneCastSupport {
 
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.ExileCastSpellTarget(card, playerId, spellEffects, spellType));
-            playerInputService.beginPermanentChoice(gameData, playerId, validTargets,
+            playerInputService.beginPermanentChoice(gameData, playerId, firstCandidates,
                     "Choose a target for " + card.getName() + ".");
             gameBroadcastService.logAndBroadcast(gameData,
                     playerName + " casts " + card.getName() + " without paying its mana cost — choosing target.");
@@ -107,46 +106,5 @@ public class ImprovisationCapstoneCastSupport {
                 playerName + " casts " + card.getName() + " without paying its mana cost (Improvisation Capstone).");
         triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId, false);
         castNextFromQueue(gameData, playerId);
-    }
-
-    private List<UUID> buildValidSpellTargets(GameData gameData, Card card) {
-        Set<TargetType> allowedTargets = EffectResolution.computeAllowedTargets(card);
-        List<UUID> validTargets = new ArrayList<>();
-
-        if (allowedTargets.contains(TargetType.PERMANENT)) {
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) {
-                    continue;
-                }
-                for (Permanent p : battlefield) {
-                    if (card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter) {
-                        if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, filter.predicate())) {
-                            validTargets.add(p.getId());
-                        }
-                    } else if (gameQueryService.isCreature(gameData, p)) {
-                        validTargets.add(p.getId());
-                    }
-                }
-            }
-        }
-
-        if (allowedTargets.contains(TargetType.PLAYER)) {
-            validTargets.addAll(gameData.orderedPlayerIds);
-        }
-
-        return validTargets;
-    }
-
-    private static StackEntryType mapCardTypeToSpellType(Card card) {
-        return switch (card.getType()) {
-            case INSTANT -> StackEntryType.INSTANT_SPELL;
-            case SORCERY -> StackEntryType.SORCERY_SPELL;
-            case CREATURE -> StackEntryType.CREATURE_SPELL;
-            case ARTIFACT -> StackEntryType.ARTIFACT_SPELL;
-            case ENCHANTMENT -> StackEntryType.ENCHANTMENT_SPELL;
-            case PLANESWALKER -> StackEntryType.PLANESWALKER_SPELL;
-            default -> StackEntryType.SORCERY_SPELL;
-        };
     }
 }
