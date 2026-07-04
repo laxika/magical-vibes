@@ -66,7 +66,8 @@ class FinalPartingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(4);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.HAND);
-        assertThat(gd.pendingCardToGraveyardSearch).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().followUp().cardToGraveyard()).isTrue();
     }
 
     @Test
@@ -93,7 +94,8 @@ class FinalPartingTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.GRAVEYARD);
-        assertThat(gd.pendingCardToGraveyardSearch).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().followUp().cardToGraveyard()).isFalse();
         // Library lost one card, so second search shows 3
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(3);
     }

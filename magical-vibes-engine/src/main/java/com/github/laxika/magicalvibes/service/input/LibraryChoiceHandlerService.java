@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKarnScionExileReturn;
@@ -96,6 +97,7 @@ public class LibraryChoiceHandlerService {
         boolean reorderRemainingToBottom = librarySearch.reorderRemainingToBottom();
         boolean reorderRemainingToTop = librarySearch.reorderRemainingToTop();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
+        LibrarySearchFollowUp followUp = librarySearch.followUp();
         LibrarySearchDestination destination = librarySearch.destination() != null
                 ? librarySearch.destination()
                 : LibrarySearchDestination.HAND;
@@ -141,10 +143,9 @@ public class LibraryChoiceHandlerService {
                 chosenCard = searchCards.get(cardIndex);
                 if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
                     exileService.exileCard(gameData, playerId, chosenCard);
-                    UUID sourcePermanentId = gameData.imprintSourcePermanentId;
+                    UUID sourcePermanentId = followUp.imprintSourcePermanentId();
                     if (sourcePermanentId != null) {
                         gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
-                        gameData.imprintSourcePermanentId = null;
                     }
                 } else if (destination == LibrarySearchDestination.EXILE) {
                     exileService.exileCard(gameData, deckOwnerId, chosenCard);
@@ -251,14 +252,13 @@ public class LibraryChoiceHandlerService {
             log.info("Game {} - {} declines to take a card from library", gameData.id, player.getUsername());
             // Per ruling: if you find only one basic land with Cultivate, it must go to
             // the battlefield tapped — skipping the battlefield pick means finding zero,
-            // so clear the pending hand search and shuffle.
-            if (gameData.pendingBasicLandToHandSearch) {
-                gameData.pendingBasicLandToHandSearch = false;
+            // so drop the pending hand search and shuffle.
+            if (followUp.basicLandToHand()) {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
                 String shuffleLog = player.getUsername() + "'s library is shuffled.";
                 gameBroadcastService.logAndBroadcast(gameData, shuffleLog);
             }
-            if (startPendingEachPlayerBasicLandSearch(gameData)) return;
+            if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand())) return;
             turnProgressionService.resolveAutoPass(gameData);
             return;
         }
@@ -294,9 +294,8 @@ public class LibraryChoiceHandlerService {
             gameBroadcastService.logAndBroadcast(gameData, logMsg);
             log.info("Game {} - {} exiles {} from library search", gameData.id, player.getUsername(), chosenCard.getName());
 
-            if (gameData.pendingOpponentExileChoice != null) {
-                PendingOpponentExileChoice pending = gameData.pendingOpponentExileChoice;
-                gameData.pendingOpponentExileChoice = null;
+            if (followUp.opponentExileChoice() != null) {
+                PendingOpponentExileChoice pending = followUp.opponentExileChoice();
 
                 UUID opponentId = null;
                 for (UUID pid : gameData.orderedPlayerIds) {
@@ -380,10 +379,9 @@ public class LibraryChoiceHandlerService {
             gameData.playerHands.get(handOwnerId).add(chosenCard);
         } else if (destination == LibrarySearchDestination.EXILE_IMPRINT) {
             exileService.exileCard(gameData, playerId, chosenCard);
-            UUID sourcePermanentId = gameData.imprintSourcePermanentId;
+            UUID sourcePermanentId = followUp.imprintSourcePermanentId();
             if (sourcePermanentId != null) {
                 gameQueryService.setImprintedCardOnPermanent(gameData, sourcePermanentId, chosenCard);
-                gameData.imprintSourcePermanentId = null;
             }
         } else if (destination == LibrarySearchDestination.BATTLEFIELD_ATTACHED_TO_PLAYER) {
             Permanent perm = new Permanent(chosenCard);
@@ -460,6 +458,7 @@ public class LibraryChoiceHandlerService {
                     .filterCardName(filterCardName)
                     .filterPredicate(filterPredicate)
                     .accumulatedCards(accumulatedCards)
+                    .followUp(followUp)
                     .build(),
                     prompt, toGraveyard || canFailToFind));
 
@@ -514,9 +513,9 @@ public class LibraryChoiceHandlerService {
             stateBasedActionService.performStateBasedActions(gameData);
         }
 
-        if (startPendingBasicLandToHandSearch(gameData, playerId)) return;
-        if (startPendingCardToGraveyardSearch(gameData, playerId)) return;
-        if (startPendingEachPlayerBasicLandSearch(gameData)) return;
+        if (startPendingBasicLandToHandSearch(gameData, playerId, followUp)) return;
+        if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
+        if (startPendingEachPlayerBasicLandSearch(gameData, followUp)) return;
         turnProgressionService.resolveAutoPass(gameData);
     }
     /**
@@ -586,9 +585,8 @@ public class LibraryChoiceHandlerService {
      * If a pending basic-land-to-hand search is queued (e.g. Cultivate second pick),
      * starts the follow-up library search and returns true. Otherwise returns false.
      */
-    private boolean startPendingBasicLandToHandSearch(GameData gameData, UUID playerId) {
-        if (!gameData.pendingBasicLandToHandSearch) return false;
-        gameData.pendingBasicLandToHandSearch = false;
+    private boolean startPendingBasicLandToHandSearch(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
+        if (!followUp.basicLandToHand()) return false;
 
         List<Card> deck = gameData.playerDecks.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
@@ -609,6 +607,7 @@ public class LibraryChoiceHandlerService {
                 .reveals(true)
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.HAND)
+                .followUp(followUp.clearBasicLandToHand())
                 .build();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
@@ -619,9 +618,8 @@ public class LibraryChoiceHandlerService {
      * If a pending unrestricted card-to-graveyard search is queued (e.g. Final Parting second pick),
      * starts the follow-up library search and returns true. Otherwise returns false.
      */
-    private boolean startPendingCardToGraveyardSearch(GameData gameData, UUID playerId) {
-        if (!gameData.pendingCardToGraveyardSearch) return false;
-        gameData.pendingCardToGraveyardSearch = false;
+    private boolean startPendingCardToGraveyardSearch(GameData gameData, UUID playerId, LibrarySearchFollowUp followUp) {
+        if (!followUp.cardToGraveyard()) return false;
 
         List<Card> deck = gameData.playerDecks.get(playerId);
         String playerName = gameData.playerIdToName.get(playerId);
@@ -638,6 +636,7 @@ public class LibraryChoiceHandlerService {
                 .reveals(false)
                 .canFailToFind(false)
                 .destination(LibrarySearchDestination.GRAVEYARD)
+                .followUp(followUp.clearCardToGraveyard())
                 .build();
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, false));
@@ -647,21 +646,22 @@ public class LibraryChoiceHandlerService {
     /**
      * If a pending "each player searches for a basic land to battlefield" queue is non-empty,
      * starts the next player's library search and returns true. Otherwise returns false.
-     * Respects {@code pendingEachPlayerBasicLandSearchTapped} for the destination.
+     * Respects {@code followUp.eachPlayerSearchTapped()} for the destination.
      * Used by Field of Ruin, Old-Growth Dryads.
      */
-    private boolean startPendingEachPlayerBasicLandSearch(GameData gameData) {
-        if (gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) return false;
+    private boolean startPendingEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        if (followUp.remainingEachPlayerBasicLandSearches().isEmpty()) return false;
 
-        LibrarySearchDestination destination = gameData.pendingEachPlayerBasicLandSearchTapped
+        LibrarySearchDestination destination = followUp.eachPlayerSearchTapped()
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                 : LibrarySearchDestination.BATTLEFIELD;
-        String prompt = gameData.pendingEachPlayerBasicLandSearchTapped
+        String prompt = followUp.eachPlayerSearchTapped()
                 ? "You may search your library for a basic land card and put it onto the battlefield tapped."
                 : "Search your library for a basic land card and put it onto the battlefield.";
 
-        while (!gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) {
-            UUID nextPlayerId = gameData.pendingEachPlayerBasicLandSearchQueue.pollFirst();
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerBasicLandSearches());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
             String playerName = gameData.playerIdToName.get(nextPlayerId);
 
             List<Card> deck = gameData.playerDecks.get(nextPlayerId);
@@ -686,6 +686,7 @@ public class LibraryChoiceHandlerService {
                     .reveals(false)
                     .canFailToFind(true)
                     .destination(destination)
+                    .followUp(followUp.withRemainingEachPlayerBasicLandSearches(remaining))
                     .build();
 
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));

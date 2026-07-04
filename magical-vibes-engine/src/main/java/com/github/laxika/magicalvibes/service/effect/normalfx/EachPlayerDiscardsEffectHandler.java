@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,19 +28,17 @@ public class EachPlayerDiscardsEffectHandler implements NormalEffectHandlerBean 
 
         UUID controllerId = entry.getControllerId();
         // Build APNAP-ordered queue: active player first, then others in turn order
-        gameData.pendingEachPlayerDiscardQueue.clear();
-        gameData.pendingEachPlayerDiscardControllerId = controllerId;
+        List<UUID> choosers = new ArrayList<>();
         UUID activePlayerId = gameData.activePlayerId;
-        gameData.pendingEachPlayerDiscardQueue.add(activePlayerId);
+        choosers.add(activePlayerId);
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(activePlayerId)) {
-                gameData.pendingEachPlayerDiscardQueue.add(playerId);
+                choosers.add(playerId);
             }
         }
-        // Store the amount for later queue processing
-        gameData.pendingEachPlayerDiscardAmount = e.amount();
-        // Start the first player's discard
-        playerInteractionSupport.startNextEachPlayerDiscard(gameData);
+        // Start the first player's discard; the queue remainder rides the discard choice
+        playerInteractionSupport.startNextEachPlayerDiscard(gameData,
+                DiscardFollowUp.eachPlayer(choosers, controllerId, e.amount()));
     
     }
 }

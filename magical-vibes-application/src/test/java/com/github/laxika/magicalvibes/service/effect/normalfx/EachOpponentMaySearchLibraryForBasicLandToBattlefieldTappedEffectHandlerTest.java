@@ -148,7 +148,8 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
                 // Only opponent (player2) should be prompted, not the controller (player1)
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                        .params().followUp().remainingEachPlayerBasicLandSearches()).isEmpty();
             }
 
             @Test
@@ -159,7 +160,8 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
 
                 eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
-                assertThat(gd.pendingEachPlayerBasicLandSearchTapped).isTrue();
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                        .params().followUp().eachPlayerSearchTapped()).isTrue();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                         .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
             }
@@ -172,6 +174,5 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
                 eachOpponentMaySearchBasicLandHandler.resolve(gd, entry(), effect);
 
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 }

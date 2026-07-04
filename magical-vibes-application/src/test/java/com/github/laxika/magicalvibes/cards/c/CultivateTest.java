@@ -65,7 +65,8 @@ class CultivateTest extends BaseCardTest {
                 .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.BATTLEFIELD_TAPPED);
-        assertThat(gd.pendingBasicLandToHandSearch).isTrue();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().followUp().basicLandToHand()).isTrue();
     }
 
     @Test
@@ -87,11 +88,12 @@ class CultivateTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().hasType(CardType.LAND) && p.isTapped());
 
-        // Second search begins for hand
+        // Second search begins for hand, with the follow-up consumed
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
                 .isEqualTo(LibrarySearchDestination.HAND);
-        assertThat(gd.pendingBasicLandToHandSearch).isFalse();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().followUp().basicLandToHand()).isFalse();
     }
 
     @Test
@@ -135,7 +137,6 @@ class CultivateTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(battlefieldBefore);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.pendingBasicLandToHandSearch).isFalse();
     }
 
     @Test

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -60,15 +61,14 @@ public class SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffectHandler i
             return;
         }
 
-        // Mark that a follow-up hand search is pending after the first pick
-        gameData.pendingBasicLandToHandSearch = true;
-
-        // First pick: basic land to battlefield tapped (no shuffle yet)
+        // First pick: basic land to battlefield tapped (no shuffle yet); the follow-up
+        // hand search rides the search interaction
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(basicLands))
                 .reveals(true)
                 .canFailToFind(true)
                 .destination(LibrarySearchDestination.BATTLEFIELD_TAPPED)
                 .shuffleAfterSelection(false)
+                .followUp(LibrarySearchFollowUp.forBasicLandToHand())
                 .build(), "Search your library for a basic land card to put onto the battlefield tapped.", true);
 
         log.info("Game {} - {} searches library for Cultivate ({} basic lands)", gameData.id, playerName, basicLands.size());

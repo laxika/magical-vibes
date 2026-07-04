@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -126,6 +127,10 @@ public class PlayerInteractionSupport {
     
     }
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount) {
+        resolveDiscardCards(gameData, playerId, amount, DiscardFollowUp.NONE);
+    }
+
+    public void resolveDiscardCards(GameData gameData, UUID playerId, int amount, DiscardFollowUp followUp) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
@@ -134,7 +139,7 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        playerInputService.beginDiscardChoice(gameData, playerId, amount);
+        playerInputService.beginDiscardChoice(gameData, playerId, amount, followUp);
 
     }
     public void resolveRandomDiscardCards(GameData gameData, UUID playerId, String sourceName, int amount) {
@@ -261,23 +266,23 @@ public class PlayerInteractionSupport {
         };
     
     }
-    public void startNextEachPlayerDiscard(GameData gameData) {
+    public void startNextEachPlayerDiscard(GameData gameData, DiscardFollowUp followUp) {
 
-        int amount = gameData.pendingEachPlayerDiscardAmount;
-        while (!gameData.pendingEachPlayerDiscardQueue.isEmpty()) {
-            UUID nextPlayerId = gameData.pendingEachPlayerDiscardQueue.removeFirst();
-            gameData.discardCausedByOpponent = !nextPlayerId.equals(gameData.pendingEachPlayerDiscardControllerId);
+        int amount = followUp.eachPlayerAmount();
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerDiscards());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
+            gameData.discardCausedByOpponent = !nextPlayerId.equals(followUp.eachPlayerControllerId());
             List<Card> hand = gameData.playerHands.get(nextPlayerId);
             if (hand == null || hand.isEmpty()) {
                 String logEntry = gameData.playerIdToName.get(nextPlayerId) + " has no cards to discard.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 continue;
             }
-            playerInputService.beginDiscardChoice(gameData, nextPlayerId, amount);
+            playerInputService.beginDiscardChoice(gameData, nextPlayerId, amount,
+                    followUp.withRemainingEachPlayerDiscards(remaining));
             return;
         }
-        // All players done — clear controller tracking
-        gameData.pendingEachPlayerDiscardControllerId = null;
-    
+
     }
 }

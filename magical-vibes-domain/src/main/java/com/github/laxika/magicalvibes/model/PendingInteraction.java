@@ -321,20 +321,23 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Discard a card from hand (DISCARD_CHOICE). {@code remainingCount} is the multi-pick
      * countdown including the upcoming pick; each answered pick begins a fresh record with
      * the decremented count (this replaces the old {@code InteractionState}
-     * {@code discardRemainingCount} field for discards).
+     * {@code discardRemainingCount} field for discards). {@code followUp} is the carry-over
+     * work run when the whole sequence completes; re-begins pass it forward unchanged.
      */
     record DiscardChoice(UUID playerId, java.util.List<Integer> validIndices,
-                         int remainingCount, String prompt)
+                         int remainingCount, DiscardFollowUp followUp, String prompt)
             implements PendingInteraction, HandChoice {
     }
 
     /**
      * Exile a card from hand (EXILE_FROM_HAND_CHOICE), tracked with
      * {@code sourcePermanentId} when non-null (e.g. Karn Liberated). {@code remainingCount}
-     * works as in {@link DiscardChoice}.
+     * works as in {@link DiscardChoice}. A non-null {@code playPermissionControllerId}
+     * grants that player permission to play each exiled card (e.g. Fiend of the Shadows).
      */
     record ExileFromHandChoice(UUID playerId, java.util.List<Integer> validIndices,
-                               UUID sourcePermanentId, int remainingCount, String prompt)
+                               UUID sourcePermanentId, UUID playPermissionControllerId,
+                               int remainingCount, String prompt)
             implements PendingInteraction, HandChoice {
     }
 

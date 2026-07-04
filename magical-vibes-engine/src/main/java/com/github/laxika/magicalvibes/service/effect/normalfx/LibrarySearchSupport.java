@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
@@ -42,20 +43,22 @@ public class LibrarySearchSupport {
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
     /**
-     * Starts the next pending "each player searches for a basic land" search from the queue.
-     * Returns true if a search was initiated, false if the queue is empty.
-     * Respects {@code pendingEachPlayerBasicLandSearchTapped} for the destination.
+     * Starts the next pending "each player searches for a basic land" search from the
+     * follow-up's remaining-searchers list; the advanced remainder rides the begun search.
+     * Returns true if a search was initiated, false if no searcher remains.
+     * Respects {@code followUp.eachPlayerSearchTapped()} for the destination.
      */
-    public boolean startNextEachPlayerBasicLandSearch(GameData gameData) {
-        LibrarySearchDestination destination = gameData.pendingEachPlayerBasicLandSearchTapped
+    public boolean startNextEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
+        LibrarySearchDestination destination = followUp.eachPlayerSearchTapped()
                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                 : LibrarySearchDestination.BATTLEFIELD;
-        String prompt = gameData.pendingEachPlayerBasicLandSearchTapped
+        String prompt = followUp.eachPlayerSearchTapped()
                 ? "You may search your library for a basic land card and put it onto the battlefield tapped."
                 : "Search your library for a basic land card and put it onto the battlefield.";
 
-        while (!gameData.pendingEachPlayerBasicLandSearchQueue.isEmpty()) {
-            UUID nextPlayerId = gameData.pendingEachPlayerBasicLandSearchQueue.pollFirst();
+        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerBasicLandSearches());
+        while (!remaining.isEmpty()) {
+            UUID nextPlayerId = remaining.remove(0);
             boolean started = performLibrarySearch(
                     gameData,
                     nextPlayerId,
@@ -64,7 +67,8 @@ public class LibrarySearchSupport {
                     prompt,
                     false,
                     true,
-                    destination
+                    destination,
+                    followUp.withRemainingEachPlayerBasicLandSearches(remaining)
             );
             if (started) {
                 return true;
@@ -104,6 +108,20 @@ public class LibrarySearchSupport {
             boolean reveals,
             boolean canFailToFind,
             LibrarySearchDestination destination) {
+        return performLibrarySearch(gameData, controllerId, filter, noMatchDescription, prompt,
+                reveals, canFailToFind, destination, LibrarySearchFollowUp.NONE);
+    }
+
+    public boolean performLibrarySearch(
+            GameData gameData,
+            UUID controllerId,
+            Predicate<Card> filter,
+            String noMatchDescription,
+            String prompt,
+            boolean reveals,
+            boolean canFailToFind,
+            LibrarySearchDestination destination,
+            LibrarySearchFollowUp followUp) {
         if (isSearchPrevented(gameData, controllerId)) return false;
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
@@ -130,6 +148,7 @@ public class LibrarySearchSupport {
                 .canFailToFind(canFailToFind)
                 .prompt(prompt)
                 .destination(destination)
+                .followUp(followUp)
                 .build(), prompt, canFailToFind);
 
         log.info("Game {} - {} searches their library ({} matches)", gameData.id, playerName, matchingCards.size());

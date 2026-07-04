@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -54,10 +55,10 @@ public class DiscardUpToThenDrawThatManyEffectHandler implements NormalEffectHan
                 return;
             }
 
-            // Store the draw count for after discards complete
-            gameData.pendingRummageDrawCount = chosenCount + e.extraDraw();
             gameData.discardCausedByOpponent = false;
-            playerInteractionSupport.resolveDiscardCards(gameData, controllerId, chosenCount);
+            // The draw count rides the discard choice and fires after the discards complete
+            playerInteractionSupport.resolveDiscardCards(gameData, controllerId, chosenCount,
+                    DiscardFollowUp.rummage(chosenCount + e.extraDraw()));
             return;
         }
 

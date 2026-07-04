@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -47,15 +48,14 @@ public class SearchLibraryForCardToHandAndCardToGraveyardEffectHandler implement
             return;
         }
 
-        // Mark that a follow-up graveyard search is pending after the first (hand) pick
-        gameData.pendingCardToGraveyardSearch = true;
-
-        // First pick: any card to hand (no shuffle yet)
+        // First pick: any card to hand (no shuffle yet); the follow-up graveyard search
+        // rides the search interaction
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId, LibrarySearchParams.builder(controllerId, new ArrayList<>(deck))
                 .reveals(false)
                 .canFailToFind(false)
                 .destination(LibrarySearchDestination.HAND)
                 .shuffleAfterSelection(false)
+                .followUp(LibrarySearchFollowUp.forCardToGraveyard())
                 .build(), "Search your library for a card to put into your hand.", false);
 
         log.info("Game {} - {} searches library for Final Parting ({} cards)", gameData.id, playerName, deck.size());

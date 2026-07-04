@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -28,8 +29,6 @@ public class SearchLibraryForCardTypeToExileAndImprintEffectHandler implements N
 
     private void doResolve(GameData gameData, StackEntry entry,
                                                           SearchLibraryForCardTypeToExileAndImprintEffect effect) {
-        gameData.imprintSourcePermanentId = entry.getSourcePermanentId();
-
         String typeText = librarySearchSupport.formatCardTypeSetForPrompt(effect.cardTypes());
         librarySearchSupport.performLibrarySearch(
                 gameData,
@@ -39,7 +38,8 @@ public class SearchLibraryForCardTypeToExileAndImprintEffectHandler implements N
                 "Search your library for a " + typeText + " card to exile (imprint).",
                 false,
                 true,
-                LibrarySearchDestination.EXILE_IMPRINT
+                LibrarySearchDestination.EXILE_IMPRINT,
+                LibrarySearchFollowUp.imprint(entry.getSourcePermanentId())
         );
     }
 }

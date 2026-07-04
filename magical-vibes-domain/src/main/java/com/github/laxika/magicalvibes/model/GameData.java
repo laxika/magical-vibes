@@ -113,8 +113,6 @@ public class GameData {
     public final List<PendingMayAbility> pendingMayAbilities = new ArrayList<>();
     public final GraveyardTargetOperationState graveyardTargetOperation = new GraveyardTargetOperationState();
     public final CloneOperationState cloneOperation = new CloneOperationState();
-    public UUID imprintSourcePermanentId;
-    public PendingOpponentExileChoice pendingOpponentExileChoice;
     /** Creatures that took lethal damage during effect resolution — destroyed after all effects resolve. */
     public final List<Permanent> pendingLethalDamageDestructions = new ArrayList<>();
     public StackEntry pendingEffectResolutionEntry;
@@ -153,23 +151,11 @@ public class GameData {
     public boolean discardCausedByOpponent;
     public PendingReturnToHandOnDiscardType pendingReturnToHandOnDiscardType;
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
-    /** Number of cards to draw after a "discard up to N, then draw that many" completes. */
-    public int pendingRummageDrawCount;
-    /** Permanent ID to untap after a "discard a card, then untap [source]" completes. */
-    public UUID pendingUntapAfterDiscardPermanentId;
-    /** Queue of player IDs still needing to discard for an "each player discards" effect (APNAP order). */
-    public final Deque<UUID> pendingEachPlayerDiscardQueue = new ArrayDeque<>();
-    public UUID pendingEachPlayerDiscardControllerId;
-    public int pendingEachPlayerDiscardAmount;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     public int additionalCombatMainPhasePairs;
     public int lastBroadcastedLogSize = 0;
     public UUID draftId;
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
-    /** Queue of player IDs still needing to search for a basic land for an "each player searches" effect (APNAP order). */
-    public final Deque<UUID> pendingEachPlayerBasicLandSearchQueue = new ArrayDeque<>();
-    /** When true, lands found via pendingEachPlayerBasicLandSearchQueue enter the battlefield tapped. */
-    public boolean pendingEachPlayerBasicLandSearchTapped;
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
     public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
@@ -284,7 +270,6 @@ public class GameData {
     /** Transient field: while a player is choosing a card to exile from hand, identifies the player who should
      *  gain permission to play that card for as long as it remains exiled (e.g. Fiend of the Shadows). Null when
      *  the exiling effect does not grant play permission to a controller. */
-    public UUID pendingExileFromHandPlayPermissionController;
 
     /** Tracks how many cards each player has drawn this turn. */
     public final Map<UUID, Integer> cardsDrawnThisTurn = new ConcurrentHashMap<>();
@@ -334,12 +319,6 @@ public class GameData {
 
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
-
-    /** When true, a follow-up library search for a basic land to hand is pending (e.g. Cultivate second pick). */
-    public boolean pendingBasicLandToHandSearch;
-
-    /** When true, a follow-up unrestricted library search for a card to graveyard is pending (e.g. Final Parting second pick). */
-    public boolean pendingCardToGraveyardSearch;
 
     /** Damage assignments provided at cast time for an ETB divided-damage effect (e.g. Kuldotha Flamefiend). */
     public Map<UUID, Integer> pendingETBDamageAssignments = Map.of();
@@ -851,12 +830,6 @@ public class GameData {
         copy.graveyardTargetOperation.entryType = this.graveyardTargetOperation.entryType;
         copy.graveyardTargetOperation.xValue = this.graveyardTargetOperation.xValue;
 
-        // --- Imprint ---
-        copy.imprintSourcePermanentId = this.imprintSourcePermanentId;
-
-        // --- Post-exile search ---
-        copy.pendingOpponentExileChoice = this.pendingOpponentExileChoice; // record — immutable
-
         // --- CloneOperationState ---
         copy.cloneOperation.card = this.cloneOperation.card;
         copy.cloneOperation.controllerId = this.cloneOperation.controllerId;
@@ -882,13 +855,8 @@ public class GameData {
         // --- Deques ---
         copy.pendingInteractions.addAll(this.pendingInteractions);
         copy.extraTurns.addAll(this.extraTurns);
-        copy.pendingEachPlayerDiscardQueue.addAll(this.pendingEachPlayerDiscardQueue);
-        copy.pendingEachPlayerDiscardControllerId = this.pendingEachPlayerDiscardControllerId;
-        copy.pendingEachPlayerDiscardAmount = this.pendingEachPlayerDiscardAmount;
         this.pendingLibraryBottomReorders.forEach(req ->
                 copy.pendingLibraryBottomReorders.add(new LibraryBottomReorderRequest(req.playerId(), new ArrayList<>(req.cards()))));
-        copy.pendingEachPlayerBasicLandSearchQueue.addAll(this.pendingEachPlayerBasicLandSearchQueue);
-        copy.pendingEachPlayerBasicLandSearchTapped = this.pendingEachPlayerBasicLandSearchTapped;
 
         // --- Combat damage assignment state ---
         this.combatDamagePlayerAssignments.forEach((k, v) ->
@@ -938,7 +906,6 @@ public class GameData {
         copy.graveyardPlayPermissionsExpireEndOfTurn.addAll(this.graveyardPlayPermissionsExpireEndOfTurn);
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.graveyardLeaveNotificationPendingOwners.addAll(this.graveyardLeaveNotificationPendingOwners);
-        copy.pendingExileFromHandPlayPermissionController = this.pendingExileFromHandPlayPermissionController;
 
         // --- Search tax payments (Leonin Arbiter) ---
         this.paidSearchTaxPermanentIds.forEach((k, v) ->

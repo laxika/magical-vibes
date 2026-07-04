@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,17 +52,17 @@ public class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandl
         }
 
         // Build APNAP-ordered queue: active player first, then others in turn order
-        gameData.pendingEachPlayerBasicLandSearchQueue.clear();
-        gameData.pendingEachPlayerBasicLandSearchTapped = false;
+        List<UUID> searchers = new ArrayList<>();
         UUID activePlayerId = gameData.activePlayerId;
-        gameData.pendingEachPlayerBasicLandSearchQueue.add(activePlayerId);
+        searchers.add(activePlayerId);
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(activePlayerId)) {
-                gameData.pendingEachPlayerBasicLandSearchQueue.add(playerId);
+                searchers.add(playerId);
             }
         }
 
-        // Start the first player's search
-        librarySearchSupport.startNextEachPlayerBasicLandSearch(gameData);
+        // Start the first player's search; the queue remainder rides the search interaction
+        librarySearchSupport.startNextEachPlayerBasicLandSearch(gameData,
+                LibrarySearchFollowUp.eachPlayerBasicLand(searchers, false));
     }
 }

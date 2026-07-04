@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
@@ -118,7 +119,7 @@ class HandCardChoiceInteractionHandlersTest {
         @DisplayName("Discard begin sends a non-declinable prompt and dispatch delegates")
         void discard() {
             registry.begin(gd, new PendingInteraction.DiscardChoice(
-                    PLAYER1_ID, List.of(0, 1), 2, "Choose a card to discard."));
+                    PLAYER1_ID, List.of(0, 1), 2, DiscardFollowUp.NONE, "Choose a card to discard."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
             ChooseCardFromHandMessage msg = sentMessage();
@@ -134,7 +135,7 @@ class HandCardChoiceInteractionHandlersTest {
         @DisplayName("Exile-from-hand begin sends its prompt and dispatch delegates")
         void exileFromHand() {
             registry.begin(gd, new PendingInteraction.ExileFromHandChoice(
-                    PLAYER1_ID, List.of(0), UUID.randomUUID(), 1, "Choose a card to exile."));
+                    PLAYER1_ID, List.of(0), UUID.randomUUID(), null, 1, "Choose a card to exile."));
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
             assertThat(sentMessage().prompt()).isEqualTo("Choose a card to exile.");
@@ -191,7 +192,7 @@ class HandCardChoiceInteractionHandlersTest {
     @DisplayName("replayPrompt re-sends only to the decider")
     void replayOnlyToDecider() {
         registry.begin(gd, new PendingInteraction.DiscardChoice(
-                PLAYER1_ID, List.of(0), 1, "Choose a card to discard."));
+                PLAYER1_ID, List.of(0), 1, DiscardFollowUp.NONE, "Choose a card to discard."));
         org.mockito.Mockito.clearInvocations(sessionManager);
 
         assertThat(registry.replayPrompt(gd, PLAYER2_ID)).isTrue();

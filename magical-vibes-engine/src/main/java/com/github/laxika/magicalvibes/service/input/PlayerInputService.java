@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -291,21 +292,35 @@ public class PlayerInputService {
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId, int remainingCount) {
+        beginExileFromHandChoice(gameData, playerId, sourcePermanentId, null, remainingCount);
+    }
+
+    public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
+                                         UUID playPermissionControllerId, int remainingCount) {
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = allHandIndices(hand);
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandChoice(
-                playerId, validIndices, sourcePermanentId, remainingCount, "Choose a card to exile."));
+                playerId, validIndices, sourcePermanentId, playPermissionControllerId, remainingCount,
+                "Choose a card to exile."));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {
+        beginDiscardChoice(gameData, playerId, remainingCount, DiscardFollowUp.NONE);
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount, DiscardFollowUp followUp) {
         List<Card> hand = gameData.playerHands.get(playerId);
-        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount);
+        beginDiscardChoice(gameData, playerId, allHandIndices(hand), "Choose a card to discard.", remainingCount, followUp);
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, int remainingCount) {
+        beginDiscardChoice(gameData, playerId, validIndices, prompt, remainingCount, DiscardFollowUp.NONE);
+    }
+
+    public void beginDiscardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, int remainingCount, DiscardFollowUp followUp) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.DiscardChoice(
-                playerId, new ArrayList<>(validIndices), remainingCount, prompt));
+                playerId, new ArrayList<>(validIndices), remainingCount, followUp, prompt));
     }
 
     public void processNextMayAbility(GameData gameData) {

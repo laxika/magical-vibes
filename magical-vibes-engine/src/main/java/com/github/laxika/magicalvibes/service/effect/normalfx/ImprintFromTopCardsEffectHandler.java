@@ -96,8 +96,6 @@ public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        gameData.imprintSourcePermanentId = entry.getSourcePermanentId();
-
         List<Card> sourceCards = new ArrayList<>(topCards);
 
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibrarySearch(
@@ -107,6 +105,7 @@ public class ImprintFromTopCardsEffectHandler implements NormalEffectHandlerBean
                 .shuffleAfterSelection(false)
                 .prompt("Exile one card face down (imprint). The rest go to the bottom of your library.")
                 .destination(LibrarySearchDestination.EXILE_IMPRINT)
+                .followUp(com.github.laxika.magicalvibes.model.LibrarySearchFollowUp.imprint(entry.getSourcePermanentId()))
                 .build(),
                 "Exile one card face down (imprint). The rest go to the bottom of your library.",
                 false));

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -111,7 +112,8 @@ public class CardChoiceHandlerService {
         if (!validIndices.contains(cardIndex)) {
             // Invalid index (e.g. player clicked "Decline" sending -1) — re-prompt the discard choice
             log.warn("Game {} - {} sent invalid discard card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
-            playerInputService.beginDiscardChoice(gameData, player.getId(), discardChoice.remainingCount());
+            playerInputService.beginDiscardChoice(gameData, player.getId(), discardChoice.remainingCount(),
+                    discardChoice.followUp());
             return;
         }
 
@@ -151,8 +153,9 @@ public class CardChoiceHandlerService {
 
         if (remainingDiscards > 0 && !hand.isEmpty()) {
             gameBroadcastService.broadcastGameState(gameData);
-            playerInputService.beginDiscardChoice(gameData, playerId, remainingDiscards);
+            playerInputService.beginDiscardChoice(gameData, playerId, remainingDiscards, discardChoice.followUp());
         } else {
+            DiscardFollowUp followUp = discardChoice.followUp();
             gameData.interaction.clearAwaitingInput();
             finalizePendingReturnToHandOnDiscard(gameData);
 
@@ -163,8 +166,8 @@ public class CardChoiceHandlerService {
             }
 
             // Continue "each player discards" queue (e.g. Serum Raker's death trigger)
-            if (!gameData.pendingEachPlayerDiscardQueue.isEmpty()) {
-                playerInteractionSupport.startNextEachPlayerDiscard(gameData);
+            if (!followUp.remainingEachPlayerDiscards().isEmpty()) {
+                playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
                 return;
             }
 
@@ -175,9 +178,8 @@ public class CardChoiceHandlerService {
             }
 
             // Draw cards after "discard up to N, then draw that many" completes
-            if (gameData.pendingRummageDrawCount > 0) {
-                int drawCount = gameData.pendingRummageDrawCount;
-                gameData.pendingRummageDrawCount = 0;
+            if (followUp.rummageDrawCount() > 0) {
+                int drawCount = followUp.rummageDrawCount();
                 for (int i = 0; i < drawCount; i++) {
                     drawService.resolveDrawCard(gameData, playerId);
                 }
@@ -187,9 +189,8 @@ public class CardChoiceHandlerService {
             }
 
             // Untap permanent after "discard a card, then untap [source]" completes
-            if (gameData.pendingUntapAfterDiscardPermanentId != null) {
-                UUID permanentId = gameData.pendingUntapAfterDiscardPermanentId;
-                gameData.pendingUntapAfterDiscardPermanentId = null;
+            if (followUp.untapPermanentId() != null) {
+                UUID permanentId = followUp.untapPermanentId();
                 for (UUID pid : gameData.orderedPlayerIds) {
                     List<Permanent> bf = gameData.playerBattlefields.get(pid);
                     if (bf == null) continue;
@@ -239,7 +240,7 @@ public class CardChoiceHandlerService {
         if (!validIndices.contains(cardIndex)) {
             log.warn("Game {} - {} sent invalid exile card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
             playerInputService.beginExileFromHandChoice(gameData, player.getId(), exileChoice.sourcePermanentId(),
-                    exileChoice.remainingCount());
+                    exileChoice.playPermissionControllerId(), exileChoice.remainingCount());
             return;
         }
 
@@ -257,8 +258,8 @@ public class CardChoiceHandlerService {
 
         // Grant the controlling player permission to play this card for as long as it remains
         // exiled (e.g. Fiend of the Shadows). Does not expire at end of turn.
-        if (gameData.pendingExileFromHandPlayPermissionController != null) {
-            gameData.exilePlayPermissions.put(card.getId(), gameData.pendingExileFromHandPlayPermissionController);
+        if (exileChoice.playPermissionControllerId() != null) {
+            gameData.exilePlayPermissions.put(card.getId(), exileChoice.playPermissionControllerId());
         }
 
         String logEntry = player.getUsername() + " exiles " + card.getName() + " from hand.";
@@ -269,10 +270,10 @@ public class CardChoiceHandlerService {
 
         if (remainingExiles > 0 && !hand.isEmpty()) {
             gameBroadcastService.broadcastGameState(gameData);
-            playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId, remainingExiles);
+            playerInputService.beginExileFromHandChoice(gameData, playerId, sourcePermanentId,
+                    exileChoice.playPermissionControllerId(), remainingExiles);
         } else {
             gameData.interaction.clearAwaitingInput();
-            gameData.pendingExileFromHandPlayPermissionController = null;
 
             // Resume resolving remaining effects
             if (gameData.pendingEffectResolutionEntry != null) {

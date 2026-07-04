@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -149,7 +150,7 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 verify(permanentRemovalService, never()).tryDestroyPermanent(any(), any(), anyBoolean());
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
             }
 
             @Test
@@ -188,8 +189,9 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 // Active player (player1) should be prompted first
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player1Id);
-                // Player2 should be in the pending queue
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).containsExactly(player2Id);
+                // Player2 should be in the carried queue remainder
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                        .params().followUp().remainingEachPlayerBasicLandSearches()).containsExactly(player2Id);
             }
 
             @Test
@@ -256,7 +258,8 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 // Player1 was skipped, player2 is prompted
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                        .params().followUp().remainingEachPlayerBasicLandSearches()).isEmpty();
             }
 
             @Test
@@ -297,7 +300,6 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 destroyTargetAndEachPlayerSearchesBasicLandHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 
             @Test
@@ -334,7 +336,8 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
     @Test
             @DisplayName("Returns false when queue is empty")
             void returnsFalseWhenQueueEmpty() {
-                boolean result = support.startNextEachPlayerBasicLandSearch(gd);
+                boolean result = support.startNextEachPlayerBasicLandSearch(gd,
+                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(), false));
 
                 assertThat(result).isFalse();
             }
@@ -344,14 +347,15 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
             void startsSearchForNextPlayer() {
                 stubCardViewFactory();
                 gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
-                gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
-                boolean result = support.startNextEachPlayerBasicLandSearch(gd);
+                boolean result = support.startNextEachPlayerBasicLandSearch(gd,
+                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
 
                 assertThat(result).isTrue();
                 assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                        .params().followUp().remainingEachPlayerBasicLandSearches()).isEmpty();
             }
 
             @Test
@@ -360,14 +364,14 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
                 stubCardViewFactory();
                 gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
                 gd.playerDecks.get(player2Id).add(createBasicLand("Forest"));
-                gd.pendingEachPlayerBasicLandSearchQueue.add(player1Id);
-                gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
-                boolean result = support.startNextEachPlayerBasicLandSearch(gd);
+                boolean result = support.startNextEachPlayerBasicLandSearch(gd,
+                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player1Id, player2Id), false));
 
                 assertThat(result).isTrue();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
+                assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                        .params().followUp().remainingEachPlayerBasicLandSearches()).isEmpty();
             }
 
             @Test
@@ -375,13 +379,11 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
             void returnsFalseWhenAllPlayersLackBasicLands() {
                 gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears", CardType.CREATURE));
                 gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
-                gd.pendingEachPlayerBasicLandSearchQueue.add(player1Id);
-                gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
 
-                boolean result = support.startNextEachPlayerBasicLandSearch(gd);
+                boolean result = support.startNextEachPlayerBasicLandSearch(gd,
+                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player1Id, player2Id), false));
 
                 assertThat(result).isFalse();
-                assertThat(gd.pendingEachPlayerBasicLandSearchQueue).isEmpty();
             }
 
             @Test
@@ -389,10 +391,9 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
             void usesBattlefieldTappedDestination() {
                 stubCardViewFactory();
                 gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
-                gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
-                gd.pendingEachPlayerBasicLandSearchTapped = true;
 
-                boolean result = support.startNextEachPlayerBasicLandSearch(gd);
+                boolean result = support.startNextEachPlayerBasicLandSearch(gd,
+                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), true));
 
                 assertThat(result).isTrue();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())
@@ -404,10 +405,9 @@ class DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest 
             void usesBattlefieldDestination() {
                 stubCardViewFactory();
                 gd.playerDecks.get(player2Id).add(createBasicLand("Plains"));
-                gd.pendingEachPlayerBasicLandSearchQueue.add(player2Id);
-                gd.pendingEachPlayerBasicLandSearchTapped = false;
 
-                boolean result = support.startNextEachPlayerBasicLandSearch(gd);
+                boolean result = support.startNextEachPlayerBasicLandSearch(gd,
+                        LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
 
                 assertThat(result).isTrue();
                 assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().destination())

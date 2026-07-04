@@ -161,7 +161,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
-        gameData.pendingEachPlayerDiscardQueue.clear();
         gameData.emblems.clear();
         gameData.extraTurns.clear();
         gameData.pendingLibraryBottomReorders.clear();
@@ -193,14 +192,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.chosenXValue = null;
         gameData.pendingAbilityActivation = null;
         gameData.clearPendingInteractions(PendingKnowledgePoolCast.class);
-        gameData.imprintSourcePermanentId = null;
-        gameData.pendingOpponentExileChoice = null;
         gameData.pendingReturnToHandOnDiscardType = null;
         gameData.pendingTransformOnCreatureDiscard = null;
-        gameData.pendingRummageDrawCount = 0;
-        gameData.pendingUntapAfterDiscardPermanentId = null;
-        gameData.pendingEachPlayerDiscardControllerId = null;
-        gameData.pendingEachPlayerDiscardAmount = 0;
         gameData.combatDamageRedirectTarget = null;
         gameData.globalDamagePreventionShield = 0;
         gameData.damageRedirectShields.clear();

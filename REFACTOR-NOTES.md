@@ -754,7 +754,7 @@ the other, losing the target. The copy now preserves the shared identity when th
 alias (and keeps independent deep copies when they are genuinely distinct). Covered by two
 new `GameDataDeepCopyTest` cases.
 
-### 🔶 Stage 6 — IN PROGRESS: per-mechanic `pending*` carry-over fields → interaction payloads
+### ✅ Stage 6 — COMPLETE: per-mechanic `pending*` carry-over fields → interaction payloads
 
 Goal: move the ~50 per-mechanic global mutable fields on `GameData` (one per card mechanic,
 each with hand-written set/clear discipline, a `simulationCopy` line, and a Karn-restart
@@ -820,34 +820,70 @@ The dispatch checks (`MultiPermanentChoiceHandlerService`, `GraveyardChoiceHandl
 instead of the flag. Removed: `pendingPileSeparation`, `…ControllerId`, `…TargetPlayerId`,
 `…AllPermanentIds`, `…Pile1Ids`, `…Pile2Ids`, `…Cards`, `…CardOwners`.
 
+**Batch 4 — DONE: discard carry-over (5 fields removed → `DiscardFollowUp` on the record).**
+New `model/DiscardFollowUp` record carried as a `followUp` component on
+`PendingInteraction.DiscardChoice`; the fresh-record-per-pick re-begins (continuation and the
+invalid-index re-prompt in `CardChoiceHandlerService.handleDiscardCardChosen`) pass it forward
+unchanged, and the sequence-completion branch reads it instead of `GameData`. Migrated:
+`pendingRummageDrawCount` → `DiscardFollowUp.rummage(drawCount)` ("discard, then draw that
+many": `DiscardAndDrawCardEffectHandler`, `DiscardUpToThenDrawThatManyEffectHandler`),
+`pendingUntapAfterDiscardPermanentId` → `DiscardFollowUp.untap(permanentId)` (Elaborate
+Firecannon), and the `pendingEachPlayerDiscardQueue`/`…ControllerId`/`…Amount` APNAP trio →
+`DiscardFollowUp.eachPlayer(remainingChoosers, controllerId, amount)`;
+`PlayerInteractionSupport.startNextEachPlayerDiscard` takes the follow-up, pops the local
+remainder (same skip-empty-hands loop, same `discardCausedByOpponent` assignment per chooser),
+and re-begins with `withRemainingEachPlayerDiscards`. `beginDiscardChoice`/`resolveDiscardCards`
+gained follow-up overloads (existing arities delegate with `DiscardFollowUp.NONE` — the
+cleanup-discard, may-penalty, and plain-discard call sites are untouched). Bonus:
+`pendingRummageDrawCount`/`pendingUntapAfterDiscardPermanentId` had NO `simulationCopy` lines
+(pre-existing copy gap) — carried on the interaction record they now copy correctly for free.
+Deliberately NOT migrated (discard-EVENT observers, read on the random/immediate discard paths
+too, e.g. `StackResolutionService` ~535, `TriggerCollectionService` ~282):
+`pendingReturnToHandOnDiscardType`, `pendingTransformOnCreatureDiscard`,
+`discardCausedByOpponent` — they would migrate only if the discard event itself grew a context
+parameter.
+
+**Batch 5 — DONE: library-search follow-ups (6 fields removed → `LibrarySearchFollowUp`).**
+New `model/LibrarySearchFollowUp` record carried on `LibrarySearchParams` (new `followUp`
+component + builder method, compact-constructor null→NONE); every re-begin (the multi-pick
+countdown in `LibraryChoiceHandlerService`) passes it forward, and the follow-up starter
+methods consume it from the record: `pendingBasicLandToHandSearch` →
+`forBasicLandToHand()` (Cultivate second pick; the begun hand search carries
+`clearBasicLandToHand()`), `pendingCardToGraveyardSearch` → `forCardToGraveyard()` (Final
+Parting), `pendingEachPlayerBasicLandSearchQueue`/`…Tapped` →
+`eachPlayerBasicLand(remainingSearchers, tapped)` (Field of Ruin / Old-Growth Dryads; both
+the `LibrarySearchSupport.startNextEachPlayerBasicLandSearch` loop and the
+`LibraryChoiceHandlerService` private continuation take the follow-up and re-begin with
+`withRemainingEachPlayerBasicLandSearches`), `pendingOpponentExileChoice` →
+`opponentExile(choice)` (Distant Memories; the `PendingOpponentExileChoice` record survives
+as the payload), `imprintSourcePermanentId` → `imprint(sourceId)` (Strata Scythe / Hoarding
+Dragon / Clone Shell; consumed at both EXILE_IMPRINT completion paths).
+`performLibrarySearch` gained a follow-up overload. Note: the static factories are named
+`forBasicLandToHand`/`forCardToGraveyard` because bare names would collide with the record
+accessors. Bonus copy-gap closures: the two booleans had no `simulationCopy` lines and the
+queue had no Karn-restart reset — all moot now.
+
+**Batch 6 — DONE: `pendingExileFromHandPlayPermissionController` (1 field removed).**
+`PendingInteraction.ExileFromHandChoice` gained a `playPermissionControllerId` component
+(Fiend of the Shadows: controller may play the exiled card); `beginExileFromHandChoice`
+gained the overload, the multi-pick re-begins carry it, and the per-card grant in
+`CardChoiceHandlerService.handleExileFromHandChosen` reads it off the record (the
+completion-time null-out is gone with the field).
+
 Note: a pre-existing failure in `MCTSEngineTest` ("MCTS selects removal over creature when
 opponent has a blocker") reproduces identically on a clean checkout — unrelated to stage 6.
 
-**Remaining inventory (next batches, in suggested order):**
-
-- **Discard carry-over → `DiscardChoice` payload / continuation record**:
-  `pendingRummageDrawCount`, `pendingUntapAfterDiscardPermanentId` (consumed at discard
-  completion in `CardChoiceHandlerService`; must ride across the fresh-record-per-pick
-  re-begins), and the `pendingEachPlayerDiscardQueue`/`…ControllerId`/`…Amount` APNAP
-  continuation (`PlayerInteractionSupport.startNextEachPlayerDiscard`).
-  **Caution**: `pendingReturnToHandOnDiscardType` and `pendingTransformOnCreatureDiscard` are
-  consumed on the *random/immediate* discard paths too (`StackResolutionService` ~535, the
-  random-discard handlers), i.e. they are discard-event observers, not interaction state —
-  they migrate only if the discard event itself grows a context parameter; otherwise they
-  stay documented. `discardCausedByOpponent` is read by `TriggerCollectionService` on every
-  discard (prompted or immediate) — same caveat.
-- **Library-search follow-ups → `LibrarySearch` payload / continuation record**:
-  `pendingBasicLandToHandSearch`, `pendingCardToGraveyardSearch` (one-shot follow-up flags
-  consumed in `LibraryChoiceHandlerService`), `pendingEachPlayerBasicLandSearchQueue`/
-  `…Tapped` (APNAP continuation in `LibrarySearchSupport`), `pendingOpponentExileChoice`
-  (already an immutable record; consumed at search completion), `imprintSourcePermanentId`
-  (consumed at LibrarySearch/LibraryReveal completion).
-- **`pendingExileFromHandPlayPermissionController` → `ExileFromHandChoice` payload** (small).
-- **`pendingGraveyardReturnQueue`** — spans sequential `GraveyardChoice` interactions; could
-  carry on the `GraveyardChoice` record like the batch-2 queues.
-
 **Deliberately staying as documented explicit fields** (lifecycle is not a single
 interaction):
+
+- `pendingGraveyardReturnQueue` — considered for the batch-2 carried-queue treatment but
+  left global on purpose: its continuation check
+  (`GraveyardChoiceHandlerService.handleGraveyardCardChosen` end) fires on the completion of
+  ANY graveyard choice, so an interleaved `GraveyardChoice` begun mid-flow (e.g. by an ETB
+  trigger of a creature returned to the battlefield by a queue step) still advances the
+  queue. Carried on the record, that interleaved choice would hold an empty queue and the
+  continuation would be lost. Already an immutable-record queue with a correct
+  `simulationCopy` line.
 
 - The effect-resolution quintet (stage 5 decision above).
 - `chosenXValue` — one-shot answer mailbox consumed by the re-run of the same effect
