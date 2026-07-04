@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesCondi
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
@@ -37,7 +38,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -107,6 +110,37 @@ public class DeathTriggerCollectorService {
                 sd.controllerId(),
                 sd.dyingCard().getName() + "'s ability",
                 new ArrayList<>(List.of(resolved))
+        ));
+        return true;
+    }
+
+    @CollectsTrigger(value = MoveDyingSourceCountersToTargetCreatureEffect.class, slot = EffectSlot.ON_DEATH)
+    boolean handleMoveDyingSourceCounters(TriggerMatchContext match,
+            MoveDyingSourceCountersToTargetCreatureEffect effect, TriggerContext ctx) {
+        TriggerContext.SelfDeath sd = (TriggerContext.SelfDeath) ctx;
+        Permanent dyingPermanent = sd.dyingPermanent();
+        if (dyingPermanent == null) {
+            return false;
+        }
+        // Intervening-if: only fires if it had one or more counters on it. Snapshot every concrete
+        // counter type (ANY and SILVER are wildcard categories, not stored on a permanent).
+        Map<CounterType, Integer> snapshot = new EnumMap<>(CounterType.class);
+        for (CounterType type : CounterType.values()) {
+            if (type == CounterType.ANY || type == CounterType.SILVER) {
+                continue;
+            }
+            int count = dyingPermanent.getCounterCount(type);
+            if (count > 0) {
+                snapshot.put(type, count);
+            }
+        }
+        if (snapshot.isEmpty()) {
+            return false;
+        }
+
+        match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                sd.dyingCard(), sd.controllerId(),
+                new ArrayList<>(List.of(new MoveDyingSourceCountersToTargetCreatureEffect(snapshot)))
         ));
         return true;
     }

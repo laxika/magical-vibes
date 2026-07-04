@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPre
 import java.util.List;
 
 @CardRegistration(set = "SOS", collectorNumber = "35")
+@CardRegistration(set = "SOS", collectorNumber = "314")
 public class StirringHopesinger extends Card {
 
     public StirringHopesinger() {

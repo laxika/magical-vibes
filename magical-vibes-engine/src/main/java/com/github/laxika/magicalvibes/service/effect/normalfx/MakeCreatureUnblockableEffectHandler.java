@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -26,7 +28,10 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        // Self-targeting triggers (e.g. Repartee) populate sourcePermanentId rather than targetId;
+        // fall back to it so "this creature can't be blocked this turn" works off the stack.
+        UUID targetId = entry.getTargetId() != null ? entry.getTargetId() : entry.getSourcePermanentId();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }
