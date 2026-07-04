@@ -252,6 +252,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `EachOpponentDiscardsEffect(int)` — each opponent discards
 - `TargetPlayerDiscardsEffect(int)` — target discards
 - `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect()` — exile top N from library (N = stack entry excess damage), may play until end of your next turn
+- `ExileTopCardsMayPlayUntilNextTurnEffect(int count)` — exile top N from library (fixed count), may play until end of your next turn
 - `ChooseCardFromTargetHandToDiscardEffect(int, List<CardType>)` — choose from hand to discard
 - `ChooseCardFromTargetHandToExileEffect(int, List<CardType>)` — choose from hand to exile
 - `LookAtHandEffect()` — look at hand

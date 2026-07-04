@@ -46,4 +46,9 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped) impleme
     public boolean isDamageOrDestruction() {
         return wrapped.isDamageOrDestruction();
     }
+
+    @Override
+    public boolean isSelfTargeting() {
+        return wrapped.isSelfTargeting();
+    }
 }

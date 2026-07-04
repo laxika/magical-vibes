@@ -46,4 +46,9 @@ public record ConditionalReplacementEffect(
     public boolean isDamageOrDestruction() {
         return baseEffect.isDamageOrDestruction() || upgradedEffect.isDamageOrDestruction();
     }
+
+    @Override
+    public boolean isSelfTargeting() {
+        return baseEffect.isSelfTargeting() || upgradedEffect.isSelfTargeting();
+    }
 }
