@@ -64,6 +64,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveya
 import com.github.laxika.magicalvibes.model.effect.GrantSourceActivatedAbilitiesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -161,6 +162,28 @@ public class SpellCastingService {
             }
         }
         return effectiveXValue;
+    }
+
+    private void applyModalEtbTargetFilter(Card card, int effectiveXValue) {
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (effect instanceof ChooseOneEffect coe) {
+                if (effectiveXValue >= 0 && effectiveXValue < coe.options().size()) {
+                    TargetFilter filter = coe.options().get(effectiveXValue).targetFilter();
+                    if (filter != null) {
+                        card.setCastTimeTargetFilter(filter);
+                    }
+                }
+                return;
+            }
+        }
+    }
+
+    private boolean isOptionalModalEtbSkip(Card card, int effectiveXValue) {
+        if (effectiveXValue >= 0) {
+            return false;
+        }
+        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> e instanceof ChooseOneEffect coe && coe.optional());
     }
 
     private ManaRestrictionFlags computeManaRestrictionFlags(GameData gameData, UUID playerId, Card card) {
@@ -301,6 +324,7 @@ public class SpellCastingService {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         Card card = hand.get(cardIndex);
+        applyModalEtbTargetFilter(card, effectiveXValue);
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         SacrificeCostFlags sacFlags = extractAndRemoveSacrificeCosts(filteredSpellEffects);
         ExileCardFromGraveyardCost exileGraveyardCost = extractAndRemoveExileGraveyardCost(filteredSpellEffects);
@@ -476,7 +500,8 @@ public class SpellCastingService {
                 && card.getMaxTargets() == 0
                 && !EffectResolution.needsDamageDistribution(card)
                 && !(kicked && findKickedDividedDamageEffect(filteredSpellEffects) != null)
-                && !needsExileTargeting && !needsSingleGraveyardTargeting && !needsGraveyardEffectTargeting) {
+                && !needsExileTargeting && !needsSingleGraveyardTargeting && !needsGraveyardEffectTargeting
+                && !isOptionalModalEtbSkip(card, effectiveXValue)) {
             throw new IllegalStateException("Spell requires a target");
         }
 

@@ -125,6 +125,8 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `SacrificePermanentThenEffect(PermanentPredicate, CardEffect, String)` — sacrifice then effect
 - `SpellCastTriggerEffect(CardPredicate, List<CardEffect>)` + overloads — spell cast trigger
 - `BecomePreparedEffect()` — source becomes "prepared" (Strixhaven); exiles a castable copy of its prepare spell (back face)
+- `MakeTargetCreaturePreparedEffect()` — target creature becomes prepared; no-op if already prepared or no prepare spell
+- `MakeTargetCreatureUnpreparedEffect()` — target creature becomes unprepared; no-op if not prepared
 
 See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 

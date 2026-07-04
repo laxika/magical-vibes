@@ -11,7 +11,11 @@ import java.util.List;
  * Used by cards like Slagstorm: "Choose one — Slagstorm deals 3 damage to each creature.
  * — Slagstorm deals 3 damage to each player."
  */
-public record ChooseOneEffect(List<ChooseOneOption> options) implements CardEffect {
+public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional) implements CardEffect {
+
+    public ChooseOneEffect(List<ChooseOneOption> options) {
+        this(options, false);
+    }
 
     public record ChooseOneOption(String label, CardEffect effect, TargetFilter targetFilter) {
         public ChooseOneOption(String label, CardEffect effect) {

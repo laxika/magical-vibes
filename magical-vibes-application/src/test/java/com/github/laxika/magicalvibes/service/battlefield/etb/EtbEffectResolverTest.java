@@ -111,6 +111,16 @@ class EtbEffectResolverTest {
     }
 
     @Test
+    @DisplayName("ChooseOne: optional modal with etbMode -1 drops the trigger")
+    void optionalChooseOneSkipsWhenNoModeChosen() {
+        DrawCardEffect opt0 = new DrawCardEffect(1);
+        ChooseOneEffect modal = new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw", opt0, null)), true);
+
+        assertThat(resolver.resolve(ctx(true, -1, false), modal)).isNull();
+    }
+
+    @Test
     @DisplayName("KickedConditional: unwraps when kicked, dropped otherwise")
     void kickedConditional() {
         DrawCardEffect wrapped = new DrawCardEffect(1);

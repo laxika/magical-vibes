@@ -51,10 +51,13 @@ public class EtbEffectResolver {
         register(LoseGameIfNotCastFromHandEffect.class, (ctx, effect) ->
                 ctx.wasCastFromHand() ? null : new TargetPlayerLosesGameEffect(ctx.controllerId()));
 
-        // Modal ETB (choose one): unwrap the option picked at cast time (etbMode), defaulting to the
-        // first option when the index is out of range.
+        // Modal ETB (choose one / choose up to one): unwrap the option picked at cast time (etbMode).
+        // Optional modals with etbMode < 0 chose no mode and drop the trigger.
         register(ChooseOneEffect.class, (ctx, effect) -> {
             ChooseOneEffect coe = (ChooseOneEffect) effect;
+            if (coe.optional() && ctx.etbMode() < 0) {
+                return null;
+            }
             if (ctx.etbMode() >= 0 && ctx.etbMode() < coe.options().size()) {
                 return coe.options().get(ctx.etbMode()).effect();
             }
