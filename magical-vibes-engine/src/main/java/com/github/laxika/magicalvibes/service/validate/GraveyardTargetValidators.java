@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
@@ -22,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -87,6 +89,34 @@ public class GraveyardTargetValidators {
         }
         if (!graveyardCard.hasType(CardType.CREATURE)) {
             throw new IllegalStateException("Target must be a creature card");
+        }
+    }
+
+    @ValidatesTarget(GrantFlashbackToTargetGraveyardCardEffect.class)
+    public void validateGrantFlashbackToTargetGraveyardCard(
+            TargetValidationContext ctx, GrantFlashbackToTargetGraveyardCardEffect effect) {
+        if (ctx.targetZone() != Zone.GRAVEYARD) {
+            throw new IllegalStateException("Spell requires a graveyard target");
+        }
+        if (ctx.targetId() == null) {
+            throw new IllegalStateException("Spell requires a target card");
+        }
+        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
+        if (graveyardCard == null) {
+            throw new IllegalStateException("Target card not found in any graveyard");
+        }
+        if (effect.cardTypes().stream().noneMatch(graveyardCard::hasType)) {
+            String typeLabel = effect.cardTypes().stream()
+                    .map(t -> t.name().toLowerCase())
+                    .collect(Collectors.joining(" or "));
+            throw new IllegalStateException("Target must be a " + typeLabel + " card");
+        }
+        UUID controllerId = tvs.findSourcePermanentController(ctx);
+        if (controllerId != null) {
+            UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
+            if (graveyardOwnerId != null && !graveyardOwnerId.equals(controllerId)) {
+                throw new IllegalStateException("Target must be in your graveyard");
+            }
         }
     }
 

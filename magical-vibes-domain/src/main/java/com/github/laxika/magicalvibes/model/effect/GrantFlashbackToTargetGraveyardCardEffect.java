@@ -12,4 +12,5 @@ import java.util.Set;
  */
 public record GrantFlashbackToTargetGraveyardCardEffect(Set<CardType> cardTypes) implements CardEffect {
     @Override public boolean canTargetGraveyard() { return true; }
+    @Override public boolean targetsControllersGraveyardOnly() { return true; }
 }

@@ -102,6 +102,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToControllerEffect(int)` — self damage
 - `DealDamageToTargetCreatureControllerEffect(int)` — target creature's controller
 - `DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype, boolean)` — damage = subtype count
+- `DealDamageToTargetCreatureEqualToManaSpentToCastEffect()` — damage = total mana spent to cast (snapshotted at cast time)
 - `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect(CardSubtype, boolean)` — any target = subtype count
 - `DealDamageToEachOpponentEffect(int)` — each opponent
 - `DealOrderedDamageToAnyTargetsEffect(List<Integer>)` — ordered multi-target
@@ -372,6 +373,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutCountersOnSelfEffect(CounterType)` — one counter of a type on self (charge, +1/+1, study, etc.)
 - `PutCountersOnSelfEffect(CounterType, int count)` — N counters of a type on self (e.g. Withengar Unbound: 13 +1/+1)
 - `PutPlusOnePlusOneCounterOnTargetCreatureEffect(int)` — +1/+1 on target
+- `PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect()` — +1/+1 on each creature the first target player controls (multi-target: player at `targetIds[0]`)
 - `PutMinusOneMinusOneCounterOnTargetCreatureEffect(int)` — -1/-1 on target
 - `PutCounterOnEachControlledPermanentEffect(CounterType, int, PermanentPredicate)` — counters on each own permanent matching predicate (use `PermanentIsCreaturePredicate` for "each creature you control")
 - `PutCounterOnEnchantedCreatureEffect(CounterType)` or `(CounterType, int)` — counter(s) on enchanted creature
@@ -385,6 +387,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Keywords / abilities
 
 - `GrantKeywordEffect(Keyword, GrantScope)` or `(Keyword, GrantScope, PermanentPredicate)` or `(Set<Keyword>, GrantScope)` — grant keywords. Add a trailing `GrantDuration` (`(Keyword, GrantScope, GrantDuration)` / `(Set<Keyword>, GrantScope, GrantDuration)`) for one-shot duration: `END_OF_TURN` (default) or `UNTIL_YOUR_NEXT_TURN`. In `STATIC` slot the grant is continuous and the duration is ignored.
+- `GrantChosenKeywordToSecondTargetEffect(List<Keyword> options)` — prompt to choose one keyword from options, grant to second target permanent until end of turn (multi-target: creature at `targetIds[1]`)
 - `GrantKeywordToTargetIfPermanentEffect(Keyword, PermanentPredicate)` — grant keyword to target only if it matches predicate
 - `GrantFlashToCardTypeEffect(CardPredicate)` — flash to card types (static)
 - `GrantActivatedAbilityEffect(ActivatedAbility, GrantScope)` or `(ActivatedAbility, GrantScope, PermanentPredicate)` — grant ability

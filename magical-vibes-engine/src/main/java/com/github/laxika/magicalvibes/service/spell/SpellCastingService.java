@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
@@ -378,7 +379,8 @@ public class SpellCastingService {
                     if (toTap.isTapped()) {
                         throw new IllegalStateException("Permanent is already tapped");
                     }
-                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, toTap, tapCost.get().filter())) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(toTap, tapCost.get().filter(),
+                            FilterContext.of(gameData).withSourceControllerId(playerId))) {
                         throw new IllegalStateException("Tap target does not match the required filter");
                     }
                 }
@@ -460,6 +462,8 @@ public class SpellCastingService {
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting
                 && card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetGraveyard());
         boolean canTargetAnyGraveyard = card.getEffects(EffectSlot.SPELL).stream().anyMatch(e -> e.canTargetAnyGraveyard());
+        boolean targetsControllersGraveyardOnly = card.getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(e -> e.targetsControllersGraveyardOnly());
 
         // Detect exile targeting effects (e.g. ReturnTargetCardFromExileToHandEffect)
         ReturnTargetCardFromExileToHandEffect exileReturnEffect = (ReturnTargetCardFromExileToHandEffect) card.getEffects(EffectSlot.SPELL).stream()
@@ -506,14 +510,16 @@ public class SpellCastingService {
                     targetLegalityService.validateEffectTargetInZone(gameData, card, targetId, Zone.GRAVEYARD, effectiveXValue);
                 }
             } else if (needsGraveyardEffectTargeting) {
-                if (!canTargetAnyGraveyard) {
-                    boolean inControllersGraveyard = gameData.playerGraveyards
-                            .getOrDefault(playerId, List.of())
-                            .stream()
-                            .anyMatch(c -> c.getId().equals(targetId));
-                    if (inControllersGraveyard) {
-                        throw new IllegalStateException("Target must be in an opponent's graveyard");
+                boolean inControllersGraveyard = gameData.playerGraveyards
+                        .getOrDefault(playerId, List.of())
+                        .stream()
+                        .anyMatch(c -> c.getId().equals(targetId));
+                if (targetsControllersGraveyardOnly) {
+                    if (!inControllersGraveyard) {
+                        throw new IllegalStateException("Target must be in your graveyard");
                     }
+                } else if (!canTargetAnyGraveyard && inControllersGraveyard) {
+                    throw new IllegalStateException("Target must be in an opponent's graveyard");
                 }
                 if (card.getMaxTargets() > 0) {
                     // Mixed graveyard + permanent targeting: validate only graveyard effects
@@ -720,6 +726,9 @@ public class SpellCastingService {
                         convergeSnapshot, pool.getColoredManaTotals(), convokeContributions);
                 gameData.setSpellCastConvergeValue(card.getId(), converge);
                 resolvedXValue = converge;
+            }
+            if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
+                resolvedXValue = gameData.getSpellCastManaSpent(card.getId());
             }
 
             // Check for "up to N target cards from all graveyards" pile separation spells (e.g. Boneyard Parley)
@@ -1226,25 +1235,45 @@ public class SpellCastingService {
     public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
+        playFlashbackSpell(gameData, player, graveyardCardIndex, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, List.of());
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, int graveyardCardIndex, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds) {
         List<Card> graveyard = gameData.playerGraveyards.get(player.getId());
         playFlashbackSpellFromLocation(gameData, player, graveyard, graveyardCardIndex, xValue, targetId,
-                targetIds, exileGraveyardCardIndices, chosenGraveyardType);
+                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds);
     }
 
     public void playFlashbackSpell(GameData gameData, Player player, UUID graveyardCardId, Integer xValue,
                                     UUID targetId, List<UUID> targetIds,
                                     List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
+        playFlashbackSpell(gameData, player, graveyardCardId, xValue, targetId, targetIds,
+                exileGraveyardCardIndices, chosenGraveyardType, List.of());
+    }
+
+    public void playFlashbackSpell(GameData gameData, Player player, UUID graveyardCardId, Integer xValue,
+                                    UUID targetId, List<UUID> targetIds,
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds) {
         GraveyardCardLocation location = findGraveyardCardLocation(gameData, graveyardCardId);
         if (location == null) {
             throw new IllegalArgumentException("Invalid graveyard card id");
         }
         playFlashbackSpellFromLocation(gameData, player, location.graveyard(), location.index(), xValue, targetId,
-                targetIds, exileGraveyardCardIndices, chosenGraveyardType);
+                targetIds, exileGraveyardCardIndices, chosenGraveyardType, tapPermanentIds);
     }
 
     private void playFlashbackSpellFromLocation(GameData gameData, Player player, List<Card> graveyard,
                                     int graveyardCardIndex, Integer xValue, UUID targetId, List<UUID> targetIds,
-                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType) {
+                                    List<Integer> exileGraveyardCardIndices, CardType chosenGraveyardType,
+                                    List<UUID> tapPermanentIds) {
+        if (tapPermanentIds == null) {
+            tapPermanentIds = List.of();
+        }
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (gameData.status != GameStatus.RUNNING) {
@@ -1311,32 +1340,14 @@ public class SpellCastingService {
             throw new IllegalStateException("Cannot cast sorcery-speed spell from graveyard now");
         }
 
-        // Validate and pay mana cost (graveyard cast, granted flashback, emblem flashback,
-        // granted graveyard cast, and granted graveyard play all use the card's normal mana cost)
-        String manaCostStr = (isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
-                || isGrantedGraveyardCast || isGrantedGraveyardPlay)
-                ? card.getManaCost()
-                : flashbackOpt.get().getCost(ManaCastingCost.class)
-                        .orElseThrow(() -> new IllegalStateException("Flashback has no mana cost"))
-                        .manaCost();
-        ManaCost cost = new ManaCost(manaCostStr);
-        ManaPool pool = gameData.playerManaPools.get(playerId);
+        // Validate and pay flashback / graveyard cast cost
         int additionalCost = castingCostService.getCastCostModifier(gameData, playerId, card);
         additionalCost += castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
-        // Per MTG rules, flashback-only mana (e.g. Altar of the Lost) can be spent on any spell
-        // with flashback that is cast from a graveyard, even if not using the flashback ability itself.
-        // It cannot be spent on GraveyardCast-only or Muldrotha-style casts of non-flashback cards.
-        boolean cardHasFlashback = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
-        if (cardHasFlashback) {
-            if (!cost.canPayFlashback(pool, effectiveXValue + additionalCost)) {
-                throw new IllegalStateException("Not enough mana to pay flashback cost");
-            }
-            cost.payFlashback(pool, effectiveXValue + additionalCost);
-        } else {
-            if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
-                throw new IllegalStateException("Not enough mana to pay casting cost");
-            }
-            cost.pay(pool, effectiveXValue + additionalCost);
+        effectiveXValue = payFlashbackOrGraveyardCastCost(gameData, player, card, flashbackOpt, graveyardCastOpt,
+                grantedFlashback, emblemFlashback, grantedHavengulCast, isGrantedGraveyardCast, isGrantedGraveyardPlay,
+                isGraveyardCast, effectiveXValue, additionalCost, tapPermanentIds);
+        if (EffectResolution.hasManaSpentToCastDamageEffect(card)) {
+            effectiveXValue = gameData.getSpellCastManaSpent(card.getId());
         }
 
         // Remove card from graveyard
@@ -1949,6 +1960,86 @@ public class SpellCastingService {
     }
 
     private record GraveyardCardLocation(List<Card> graveyard, int index) {}
+
+    private int payFlashbackOrGraveyardCastCost(GameData gameData, Player player, Card card,
+                                                Optional<FlashbackCast> flashbackOpt,
+                                                Optional<GraveyardCast> graveyardCastOpt,
+                                                boolean grantedFlashback, boolean emblemFlashback,
+                                                boolean grantedHavengulCast, boolean isGrantedGraveyardCast,
+                                                boolean isGrantedGraveyardPlay, boolean isGraveyardCast,
+                                                int effectiveXValue, int additionalCost,
+                                                List<UUID> tapPermanentIds) {
+        UUID playerId = player.getId();
+        boolean usesNormalManaCost = isGraveyardCast || grantedFlashback || emblemFlashback || grantedHavengulCast
+                || isGrantedGraveyardCast || isGrantedGraveyardPlay;
+        int manaSpent = 0;
+
+        if (usesNormalManaCost) {
+            ManaCost cost = new ManaCost(card.getManaCost());
+            ManaPool pool = gameData.playerManaPools.get(playerId);
+            boolean cardHasFlashback = flashbackOpt.isPresent() || grantedFlashback || emblemFlashback;
+            int before = pool.getTotalAllMana();
+            if (cardHasFlashback) {
+                if (!cost.canPayFlashback(pool, effectiveXValue + additionalCost)) {
+                    throw new IllegalStateException("Not enough mana to pay flashback cost");
+                }
+                cost.payFlashback(pool, effectiveXValue + additionalCost);
+            } else {
+                if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
+                    throw new IllegalStateException("Not enough mana to pay casting cost");
+                }
+                cost.pay(pool, effectiveXValue + additionalCost);
+            }
+            manaSpent = before - pool.getTotalAllMana();
+        } else {
+            FlashbackCast flashback = flashbackOpt.orElseThrow(() -> new IllegalStateException("Flashback has no cost"));
+            var manaCostOpt = flashback.getCost(ManaCastingCost.class);
+            if (manaCostOpt.isPresent()) {
+                ManaCost cost = new ManaCost(manaCostOpt.get().manaCost());
+                ManaPool pool = gameData.playerManaPools.get(playerId);
+                int before = pool.getTotalAllMana();
+                if (!cost.canPayFlashback(pool, effectiveXValue + additionalCost)) {
+                    throw new IllegalStateException("Not enough mana to pay flashback cost");
+                }
+                cost.payFlashback(pool, effectiveXValue + additionalCost);
+                manaSpent = before - pool.getTotalAllMana();
+            }
+
+            var tapCost = flashback.getCost(TapUntappedPermanentsCost.class);
+            if (tapCost.isPresent()) {
+                int requiredCount = tapCost.get().count();
+                if (tapPermanentIds.size() != requiredCount) {
+                    throw new IllegalStateException("Must tap exactly " + requiredCount + " permanents");
+                }
+                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+                for (UUID tapId : tapPermanentIds) {
+                    Permanent toTap = battlefield.stream()
+                            .filter(p -> p.getId().equals(tapId))
+                            .findFirst()
+                            .orElse(null);
+                    if (toTap == null) {
+                        throw new IllegalStateException("Tap target not found on your battlefield");
+                    }
+                    if (toTap.isTapped()) {
+                        throw new IllegalStateException("Permanent is already tapped");
+                    }
+                    if (!predicateEvaluationService.matchesPermanentPredicate(toTap, tapCost.get().filter(),
+                            FilterContext.of(gameData).withSourceControllerId(playerId))) {
+                        throw new IllegalStateException("Tap target does not match the required filter");
+                    }
+                    toTap.tap();
+                    gameBroadcastService.logAndBroadcast(gameData,
+                            player.getUsername() + " taps " + toTap.getCard().getName()
+                                    + " for " + card.getName() + ".");
+                }
+            } else if (manaCostOpt.isEmpty()) {
+                throw new IllegalStateException("Flashback has no cost");
+            }
+        }
+
+        gameData.addSpellCastManaSpent(card.getId(), manaSpent);
+        return effectiveXValue;
+    }
 
     private void payAlternateCastingCost(GameData gameData, Player player, Card card, List<UUID> sacrificePermanentIds) {
         gameData.addSpellCastManaSpent(card.getId(), computeAlternateCastingManaPayment(gameData, player, card, sacrificePermanentIds));

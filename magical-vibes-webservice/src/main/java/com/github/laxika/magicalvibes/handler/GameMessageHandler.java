@@ -368,9 +368,11 @@ public class GameMessageHandler implements MessageHandler {
             } else if (Boolean.TRUE.equals(request.flashback())) {
                 CardType chosenGraveyardType = request.chosenGraveyardType() != null
                         ? CardType.valueOf(request.chosenGraveyardType()) : null;
+                java.util.List<UUID> tapPermanentIds = request.alternateCostSacrificePermanentIds() != null
+                        ? request.alternateCostSacrificePermanentIds() : java.util.List.of();
                 gameService.playFlashbackSpell(gameData, player, request.cardIndex(), request.xValue(), request.targetId(),
                         request.targetIds() != null ? request.targetIds() : java.util.List.of(),
-                        request.exileGraveyardCardIndices(), chosenGraveyardType);
+                        request.exileGraveyardCardIndices(), chosenGraveyardType, tapPermanentIds);
             } else if (request.fromExileCardId() != null) {
                 gameService.playCardFromExile(gameData, player, request.fromExileCardId(), request.xValue(), request.targetId());
             } else if (request.alternateCostSacrificePermanentIds() != null && !request.alternateCostSacrificePermanentIds().isEmpty()) {

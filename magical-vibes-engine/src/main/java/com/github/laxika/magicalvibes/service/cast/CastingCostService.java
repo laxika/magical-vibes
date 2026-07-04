@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.cast;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
@@ -21,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingP
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingStackEntryEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePaymentToAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.RequirePhyrexianPaymentToAttackEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -335,5 +337,26 @@ public class CastingCostService {
 
     public boolean stackHasMatchingSpell(GameData gameData, StackEntryPredicate predicate) {
         return support.stackHasMatchingSpell(gameData, predicate);
+    }
+
+    /**
+     * Returns true if the flashback option's {@link TapUntappedPermanentsCost} (e.g. Group Project's
+     * "tap three untapped creatures you control") is currently payable. Used for the playable-card
+     * previews of flashback options that have no mana cost.
+     */
+    public boolean canPayFlashbackTapCost(GameData gameData, UUID playerId, FlashbackCast flashback) {
+        var tapCost = flashback.getCost(TapUntappedPermanentsCost.class);
+        if (tapCost.isEmpty()) {
+            return false;
+        }
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) {
+            return false;
+        }
+        long matchingCount = battlefield.stream()
+                .filter(p -> !p.isTapped() && predicateEvaluationService.matchesPermanentPredicate(p,
+                        tapCost.get().filter(), FilterContext.of(gameData).withSourceControllerId(playerId)))
+                .count();
+        return matchingCount >= tapCost.get().count();
     }
 }

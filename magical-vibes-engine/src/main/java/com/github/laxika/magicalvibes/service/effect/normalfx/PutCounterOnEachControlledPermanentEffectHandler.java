@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +39,7 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
 
         FilterContext ctx = FilterContext.of(gameData).withSourceCardId(entry.getCard().getId());
         int count = 0;
+        List<Permanent> plusOneTargets = new ArrayList<>();
         for (Permanent p : battlefield) {
             if (!predicateEvaluationService.matchesPermanentPredicate(p, e.predicate(), ctx)) continue;
             if (gameQueryService.cantHaveCounters(gameData, p)) continue;
@@ -46,6 +48,9 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
 
             p.setCounterCount(e.counterType(), p.getCounterCount(e.counterType()) + e.count());
             count++;
+            if (e.counterType() == CounterType.PLUS_ONE_PLUS_ONE && e.count() > 0) {
+                plusOneTargets.add(p);
+            }
         }
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
@@ -54,5 +59,11 @@ public class PutCounterOnEachControlledPermanentEffectHandler implements NormalE
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} puts {} {} counter(s) on {} controlled permanent(s)", gameData.id,
                 entry.getCard().getName(), e.count(), counterName, count);
+
+        // Fire ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT triggers after all placements (rules-correct).
+        // Deferred past the loop since firing pushes triggered abilities onto the stack.
+        for (Permanent p : plusOneTargets) {
+            permanentCounterSupport.firePlusOnePlusOneCountersPutOnSelfTriggers(gameData, p);
+        }
     }
 }

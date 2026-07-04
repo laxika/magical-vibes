@@ -224,6 +224,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "Whenever one or more +1/+1 counters are put on CARDNAME" | `AwardAnyColorManaEffect()` (or other effects) | `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` | Fired from `PermanentCounterSupport` after each +1/+1 placement event (once per event). Used by Berta, Wise Extrapolator |
 | "put N +1/+1 counters on target creature" | `PutPlusOnePlusOneCounterOnTargetCreatureEffect(N)` | SPELL/trigger | |
 | "put a +1/+1 counter on each creature you control" | `PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())` | SPELL/trigger | |
+| "put a +1/+1 counter on each creature target player controls" | `PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect()` | SPELL | Multi-target: player first (`targetIds[0]`). Practiced Offense |
+| "target creature gains your choice of [keyword] or [keyword] until end of turn" | `GrantChosenKeywordToSecondTargetEffect(List.of(Keyword.X, Keyword.Y))` | SPELL | Multi-target: creature second (`targetIds[1]`). Practiced Offense |
+| "damage to target creature equal to the amount of mana spent to cast this spell" | `DealDamageToTargetCreatureEqualToManaSpentToCastEffect()` | SPELL | Total mana spent snapshotted at cast time. Molten Note |
 | "put a -1/-1 counter on target creature" | `PutMinusOneMinusOneCounterOnTargetCreatureEffect(1)` | SPELL/trigger | |
 | "proliferate" | `ProliferateEffect()` | SPELL/trigger | |
 | "put N <named> counters on CARDNAME" | `PutCountersOnSelfEffect(CounterType.X, N)` | trigger/ability | for a non-P/T named counter type on the source (e.g. Jar of Eyeballs: `CounterType.EYEBALL, 2`) |

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToManaSpentToCastEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 
 import java.util.ArrayList;
@@ -211,6 +212,14 @@ public final class EffectResolution {
     public static boolean hasConvergeEffect(Card card) {
         return card.getKeywords().contains(Keyword.CONVERGE)
                 || hasConvergeEffect(card.getEffects(EffectSlot.SPELL));
+    }
+
+    public static boolean hasManaSpentToCastDamageEffect(List<CardEffect> effects) {
+        return effects.stream().anyMatch(DealDamageToTargetCreatureEqualToManaSpentToCastEffect.class::isInstance);
+    }
+
+    public static boolean hasManaSpentToCastDamageEffect(Card card) {
+        return hasManaSpentToCastDamageEffect(card.getEffects(EffectSlot.SPELL));
     }
 
     private static void collectTargetTypes(CardEffect e, Set<TargetType> out) {

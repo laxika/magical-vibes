@@ -623,6 +623,10 @@ public class GameBroadcastService {
                     ? card.getManaCost()
                     : flashback.get().getCost(ManaCastingCost.class).map(ManaCastingCost::manaCost).orElse(null);
             if (manaCostStr == null) {
+                // Flashback with no mana cost — e.g. Group Project's "tap three creatures" cost.
+                if (flashback.isPresent() && castingCostService.canPayFlashbackTapCost(gameData, playerId, flashback.get())) {
+                    playable.add(i);
+                }
                 continue;
             }
             ManaCost cost = new ManaCost(manaCostStr);

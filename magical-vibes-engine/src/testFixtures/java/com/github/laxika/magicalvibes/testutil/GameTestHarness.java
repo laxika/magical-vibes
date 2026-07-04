@@ -504,6 +504,18 @@ public class GameTestHarness {
         gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, targetIds);
     }
 
+    public void castFlashback(Player player, int graveyardCardIndex, List<UUID> targetIds, List<UUID> tapPermanentIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, targetIds,
+                null, null, tapPermanentIds);
+    }
+
+    public void castFlashbackWithTapCost(Player player, int graveyardCardIndex, List<UUID> tapPermanentIds) {
+        ensurePriority(player);
+        gameService.playFlashbackSpell(gameData, player, graveyardCardIndex, null, null, List.of(),
+                null, null, tapPermanentIds);
+    }
+
     public void castAndResolveFlashback(Player player, int graveyardCardIndex, UUID targetId) {
         castFlashback(player, graveyardCardIndex, targetId);
         passBothPriorities();

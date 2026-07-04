@@ -254,7 +254,7 @@ public class PermanentCounterSupport {
         log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
     }
 
-    private void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
+    void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
         Card card = target.getCard();
         List<CardEffect> effects = card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT);
         if (effects.isEmpty()) {
