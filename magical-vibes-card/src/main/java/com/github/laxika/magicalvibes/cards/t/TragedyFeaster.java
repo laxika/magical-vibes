@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
 @CardRegistration(set = "SOS", collectorNumber = "102")
+@CardRegistration(set = "SOS", collectorNumber = "293")
 public class TragedyFeaster extends Card {
 
     public TragedyFeaster() {

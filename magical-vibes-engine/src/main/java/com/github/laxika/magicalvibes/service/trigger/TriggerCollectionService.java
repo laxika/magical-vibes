@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
@@ -247,6 +248,35 @@ public class TriggerCollectionService {
             }
         }
 
+        // ON_SELF_CAST — "When you cast this spell, copy it if <condition>" (SOS Infusion copy cycle).
+        // Scanned against the just-cast card itself (it's a spell on the stack, not a permanent).
+        for (CardEffect effect : spellCard.getEffects(EffectSlot.ON_SELF_CAST)) {
+            if (!(effect instanceof CopyThisSpellIfConditionEffect trigger)) continue;
+
+            StackEntry spellEntry = null;
+            for (StackEntry se : gameData.stack) {
+                if (se.getCard().getId().equals(spellCard.getId())) {
+                    spellEntry = se;
+                    break;
+                }
+            }
+            if (spellEntry == null) continue;
+
+            // Always triggers; the "if <condition>" is an effect clause re-checked at resolution.
+            StackEntry snapshot = new StackEntry(spellEntry);
+            CardEffect copyEffect = new ConditionalEffect(trigger.condition(),
+                    new CopyControllerCastSpellEffect(snapshot, castingPlayerId));
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    spellCard,
+                    castingPlayerId,
+                    spellCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(copyEffect))
+            ));
+            log.info("Game {} - {} self-cast copy trigger queued for {}",
+                    gameData.id, spellCard.getName(), castingPlayerId);
+        }
+
         playerInputService.processNextMayAbility(gameData);
     }
 
@@ -405,6 +435,8 @@ public class TriggerCollectionService {
             // monitor the enchanted/equipped creature, not themselves.
             if (!targetPermanent.isAttached()) {
                 collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId);
+                collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
+                        gameData, targetPermanent, controllerId, spellEntry.getControllerId());
             }
 
             for (UUID playerId : gameData.orderedPlayerIds) {
@@ -457,6 +489,8 @@ public class TriggerCollectionService {
             // Attached permanents (auras/equipment) use the loop below instead.
             if (!targetPermanent.isAttached() && controllerId != null) {
                 collectBecomesTargetOfSpellOrAbilityTriggers(gameData, targetPermanent, controllerId);
+                collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
+                        gameData, targetPermanent, controllerId, abilityEntry.getControllerId());
             }
 
             // Check for "whenever a creature you control becomes the target of opponent's spell or ability"
@@ -553,6 +587,40 @@ public class TriggerCollectionService {
                 log.info("Game {} - {} becomes-target-of-opponent-spell counter-unless-discard trigger queued", gameData.id, source.getCard().getName());
             }
         }
+    }
+
+    /**
+     * "Whenever this creature becomes the target of a spell or ability an opponent controls, &lt;non-counter effect&gt;."
+     * Handles the non-counter effects in {@link EffectSlot#ON_BECOMES_TARGET_OF_OPPONENT_SPELL} (e.g. "you may
+     * draw a card"). Counter/Ward effects on that slot are handled separately by
+     * {@link #collectBecomesTargetOfOpponentSpellTriggers} (spell path only). Called from both the spell and
+     * ability paths so the "or ability" clause is honored. Used by Tenured Concocter.
+     */
+    private void collectBecomesTargetOfOpponentSpellOrAbilityNonCounterTriggers(
+            GameData gameData, Permanent source, UUID controllerId, UUID spellOrAbilityControllerId) {
+        // Only trigger if the spell/ability is controlled by an opponent
+        if (controllerId.equals(spellOrAbilityControllerId)) return;
+
+        List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
+                .filter(e -> !(e instanceof CounterUnlessPaysEffect) && !(e instanceof CounterUnlessDiscardsEffect))
+                .toList();
+        if (effects.isEmpty()) return;
+
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                controllerId,
+                source.getCard().getName() + "'s triggered ability",
+                new ArrayList<>(effects),
+                null,
+                source.getId()
+        );
+        gameData.stack.add(entry);
+
+        String logEntry = source.getCard().getName() + "'s triggered ability triggers.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} becomes-target-of-opponent-spell-or-ability (non-counter) trigger queued",
+                gameData.id, source.getCard().getName());
     }
 
     /**

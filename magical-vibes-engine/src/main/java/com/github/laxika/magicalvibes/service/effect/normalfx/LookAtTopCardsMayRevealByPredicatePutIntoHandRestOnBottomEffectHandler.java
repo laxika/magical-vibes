@@ -97,10 +97,13 @@ public class LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffectHand
 
         if (e.anyNumber()) {
             List<UUID> cardIds = matchingCards.stream().map(Card::getId).toList();
+            int max = Math.min(e.maxReveal(), matchingCards.size());
+            String revealPrompt = e.maxReveal() >= Integer.MAX_VALUE
+                    ? "You may reveal any number of " + description + "s and put them into your hand."
+                    : "You may reveal up to " + max + " " + description + "s and put them into your hand.";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryRevealChoice(
                     controllerId, topCards, cardIds, false, true, true, false, 0, null,
-                    matchingCards.size(),
-                    "You may reveal any number of " + description + "s and put them into your hand."));
+                    max, revealPrompt));
             return;
         }
 

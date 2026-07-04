@@ -156,6 +156,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  entry so the resolved effect can act on it. Checked in
      *  {@code CombatAttackService.declareAttackers}. Used by Lost in the Woods. */
     ON_CREATURE_ATTACKS_YOU,
+    /** Triggers when this instant/sorcery spell is cast (a "when you cast this spell" ability on the
+     *  spell itself). Scanned against the just-cast card in
+     *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle
+     *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
+    ON_SELF_CAST,
     /** Triggers whenever a player loses the game. Fired from {@code GameOutcomeService}
      *  at the moment a player is determined to lose (life/poison loss in
      *  {@code checkWinCondition}, or a direct loss via {@code declareWinner}).

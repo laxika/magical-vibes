@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "SOS", collectorNumber = "105")
+@CardRegistration(set = "SOS", collectorNumber = "330")
 public class WitheringCurse extends Card {
 
     public WitheringCurse() {

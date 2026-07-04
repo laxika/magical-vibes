@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @CardRegistration(set = "SOS", collectorNumber = "91")
+@CardRegistration(set = "SOS", collectorNumber = "326")
 public class MoseoVeinsNewDean extends Card {
 
     public MoseoVeinsNewDean() {
