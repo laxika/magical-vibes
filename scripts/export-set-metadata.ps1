@@ -75,13 +75,15 @@ if ($scryfallCards.Count -eq 0) {
 
 $cards = foreach ($card in $scryfallCards) {
     [ordered]@{
-        name      = $card.name
-        cardText  = Get-CardField -Card $card -FieldName "oracle_text"
-        colors    = @(Get-CardField -Card $card -FieldName "colors")
-        manaCost  = Get-CardField -Card $card -FieldName "mana_cost"
-        power     = Get-CardField -Card $card -FieldName "power"
-        toughness = Get-CardField -Card $card -FieldName "toughness"
-        typeLine  = Get-CardField -Card $card -FieldName "type_line"
+        setId           = $setCode
+        collectorNumber = $card.collector_number
+        name            = $card.name
+        cardText        = Get-CardField -Card $card -FieldName "oracle_text"
+        colors          = @(Get-CardField -Card $card -FieldName "colors")
+        manaCost        = Get-CardField -Card $card -FieldName "mana_cost"
+        power           = Get-CardField -Card $card -FieldName "power"
+        toughness       = Get-CardField -Card $card -FieldName "toughness"
+        typeLine        = Get-CardField -Card $card -FieldName "type_line"
     }
 }
 
