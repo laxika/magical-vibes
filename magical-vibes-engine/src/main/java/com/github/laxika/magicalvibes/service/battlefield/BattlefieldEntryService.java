@@ -29,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPer
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessManyLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -534,10 +535,14 @@ public class BattlefieldEntryService {
         // Separate graveyard flashback-grant effects (need single-target selection at trigger time)
         List<CardEffect> graveyardFlashbackEffects = mandatoryEffects.stream()
                 .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect).toList();
+        // Separate graveyard exile-and-may-play effects (need single-target selection at trigger time)
+        List<CardEffect> graveyardMayPlayEffects = mandatoryEffects.stream()
+                .filter(e -> e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect).toList();
         List<CardEffect> otherEffects = mandatoryEffects.stream()
                 .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
                 .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
                 .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
+                .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
                 .filter(e -> !e.canTargetSpell()).toList();
         // Separate spell-targeting effects (need stack-target selection at trigger time)
         List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
@@ -668,6 +673,13 @@ public class BattlefieldEntryService {
         for (CardEffect effect : graveyardFlashbackEffects) {
             for (int t = 0; t < 1 + extraWizardTriggers; t++) {
                 graveyardTargetingService.handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
+            }
+        }
+
+        // Handle graveyard exile-and-may-play effects: target card in controller's graveyard
+        for (CardEffect effect : graveyardMayPlayEffects) {
+            for (int t = 0; t < 1 + extraWizardTriggers; t++) {
+                graveyardTargetingService.handleGraveyardMayPlayETBTargeting(gameData, controllerId, card, List.of(effect));
             }
         }
 

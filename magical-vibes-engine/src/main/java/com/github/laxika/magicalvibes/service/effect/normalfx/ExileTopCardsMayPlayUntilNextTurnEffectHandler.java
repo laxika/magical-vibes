@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileService exileService;
+    private final ExileSupport exileSupport;
     private final GameBroadcastService gameBroadcastService;
 
     @Override
@@ -43,13 +44,11 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
             return;
         }
 
-        int expireTurn = gameData.turnNumber + 2;
         List<String> exiledNames = new ArrayList<>();
         for (int i = 0; i < count && !deck.isEmpty(); i++) {
             Card topCard = deck.removeFirst();
             exileService.exileCard(gameData, controllerId, topCard);
-            gameData.exilePlayPermissions.put(topCard.getId(), controllerId);
-            gameData.exilePlayPermissionsExpireAtTurnEnd.put(topCard.getId(), expireTurn);
+            exileSupport.grantPlayUntilOwnersNextTurn(gameData, topCard.getId(), controllerId);
             exiledNames.add(topCard.getName());
         }
 

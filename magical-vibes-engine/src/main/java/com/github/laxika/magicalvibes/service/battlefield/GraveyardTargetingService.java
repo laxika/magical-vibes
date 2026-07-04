@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -158,6 +159,41 @@ public class GraveyardTargetingService {
             gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
             playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
                     "Choose target instant or sorcery card from a graveyard to cast.");
+        }
+    }
+
+    public void handleGraveyardMayPlayETBTargeting(GameData gameData, UUID controllerId, Card card,
+                                                    List<CardEffect> effects) {
+        ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect mayPlayEffect = effects.stream()
+                .filter(e -> e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect)
+                .map(e -> (ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect) e)
+                .findFirst().orElseThrow();
+        CardPredicate filter = mayPlayEffect.filter();
+        boolean anyGraveyard = mayPlayEffect.canTargetAnyGraveyard();
+
+        List<Card> matchingCards = new ArrayList<>();
+        List<UUID> searchPlayerIds = anyGraveyard ? gameData.orderedPlayerIds : List.of(controllerId);
+        for (UUID playerId : searchPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
+            if (graveyard == null) continue;
+            for (Card graveyardCard : graveyard) {
+                if (filter == null
+                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
+                    matchingCards.add(graveyardCard);
+                }
+            }
+        }
+
+        if (matchingCards.isEmpty()) {
+            String etbLog = card.getName() + "'s enter-the-battlefield ability has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, etbLog);
+            log.info("Game {} - {} ETB graveyard may-play has no valid targets", gameData.id, card.getName());
+        } else {
+            gameData.graveyardTargetOperation.card = card;
+            gameData.graveyardTargetOperation.controllerId = controllerId;
+            gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
+            playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, 1,
+                    "Choose target card from your graveyard to exile.");
         }
     }
 

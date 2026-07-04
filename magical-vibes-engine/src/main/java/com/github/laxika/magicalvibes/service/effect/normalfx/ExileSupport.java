@@ -75,6 +75,20 @@ public class ExileSupport {
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
+    /**
+     * Grants {@code ownerId} permission to play (cast) the exiled card until the end of their next
+     * turn, using {@code exilePlayPermissions} + {@code exilePlayPermissionsExpireAtTurnEnd}.
+     *
+     * <p>The expiry turn is owner-relative: if the owner is the active player, their next turn is
+     * two turns away; otherwise the upcoming turn is theirs. The permission is cleared at the end of
+     * that turn by {@code TurnCleanupService}.
+     */
+    public void grantPlayUntilOwnersNextTurn(GameData gameData, UUID cardId, UUID ownerId) {
+        int expireTurn = gameData.turnNumber + (ownerId.equals(gameData.activePlayerId) ? 2 : 1);
+        gameData.exilePlayPermissions.put(cardId, ownerId);
+        gameData.exilePlayPermissionsExpireAtTurnEnd.put(cardId, expireTurn);
+    }
+
     public StackEntryType mapCardTypeToSpellType(Card card) {
         return switch (card.getType()) {
             case CREATURE -> StackEntryType.CREATURE_SPELL;
