@@ -438,6 +438,12 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, targetIds, List.of());
     }
 
+    /** Cast a modal instant, choosing the mode at {@code modeIndex} and passing multiple targets. */
+    public void castModalInstant(Player player, int cardIndex, int modeIndex, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex, modeIndex, null, null, targetIds, List.of());
+    }
+
     public void castInstant(Player player, int cardIndex, UUID spellTargetId, UUID permanentTargetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, spellTargetId, null, List.of(permanentTargetId), List.of());

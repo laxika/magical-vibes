@@ -63,6 +63,13 @@ public class Card {
     @Setter private String collectorNumber;
 
     @Setter private boolean token;
+    /** "This spell can't be copied." Honored by the copy effect handlers. */
+    @Setter private boolean cantBeCopied;
+    /**
+     * When true, the permanent this card becomes is registered for sacrifice at the beginning of
+     * the next end step (e.g. the token created by copying a creature spell with Choreographed Sparks).
+     */
+    @Setter private boolean sacrificeAtEndStep;
     @Setter private boolean requiresCreatureMana;
     @Setter private int additionalCostPerExtraTarget;
     /**
@@ -149,6 +156,16 @@ public class Card {
      */
     public void registerEffectTargetIndex(CardEffect effect, int targetIndex) {
         effectTargetIndexMap.put(effect, targetIndex);
+    }
+
+    /**
+     * Clears runtime target-first declarations. Used by modal spells (ChooseOneEffect) whose chosen
+     * mode declares its own {@code target()} slots at cast time, so re-casting the same card instance
+     * does not accumulate stale target declarations.
+     */
+    public void clearRuntimeSpellTargets() {
+        spellTargets.clear();
+        effectTargetIndexMap.clear();
     }
 
     // ── Derived targeting getters (replace old stored fields) ────────

@@ -164,6 +164,8 @@ public class GameData {
      *  When the source permanent leaves the battlefield, the exiled card returns. */
     public final Map<UUID, PendingExileReturn> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
     public final Set<UUID> pendingTokenExilesAtEndStep = ConcurrentHashMap.newKeySet();
+    /** Permanent IDs scheduled for sacrifice at the beginning of the next end step (e.g. Choreographed Sparks' creature-copy token). */
+    public final Set<UUID> permanentsToSacrificeAtEndStep = ConcurrentHashMap.newKeySet();
     /** Permanent IDs scheduled for destruction at the beginning of the next end step (e.g. Stone Giant). */
     public final Set<UUID> pendingDestroyAtEndStep = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
@@ -856,6 +858,9 @@ public class GameData {
 
         // --- Pending token exiles at end step (Mimic Vat) ---
         copy.pendingTokenExilesAtEndStep.addAll(this.pendingTokenExilesAtEndStep);
+
+        // --- Pending sacrifices at end step (Choreographed Sparks) ---
+        copy.permanentsToSacrificeAtEndStep.addAll(this.permanentsToSacrificeAtEndStep);
 
         // --- Pending destroy at end step (Stone Giant) ---
         copy.pendingDestroyAtEndStep.addAll(this.pendingDestroyAtEndStep);

@@ -1166,6 +1166,22 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Pending end-step sacrifices are processed at end step")
+        void pendingEndStepSacrificesProcessed() {
+            Card tokenCard = createCardWithName("Spark Token");
+            Permanent token = new Permanent(tokenCard);
+            gd.playerBattlefields.get(player1Id).add(token);
+            gd.permanentsToSacrificeAtEndStep.add(token.getId());
+
+            when(gameQueryService.findPermanentById(gd, token.getId())).thenReturn(token);
+
+            sut.handleEndStepTriggers(gd);
+
+            verify(permanentRemovalService).removePermanentToGraveyard(gd, token);
+            assertThat(gd.permanentsToSacrificeAtEndStep).isEmpty();
+        }
+
+        @Test
         @DisplayName("Pending destroy at end step destroys permanents")
         void pendingDestroyAtEndStepProcessed() {
             Card card = createCardWithName("Doomed Creature");

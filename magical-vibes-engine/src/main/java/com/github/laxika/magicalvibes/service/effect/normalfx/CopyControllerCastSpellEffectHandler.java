@@ -36,6 +36,12 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
         UUID castingPlayerId = e.castingPlayerId();
         Card spellCard = spellSnapshot.getCard();
 
+        // CR 706.2 — a spell that "can't be copied" is not copied.
+        if (spellCard.isCantBeCopied()) {
+            log.info("Game {} - {} can't be copied", gameData.id, spellCard.getName());
+            return;
+        }
+
         Card copyCard = copySupport.createCopyCard(spellCard);
         StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, castingPlayerId, spellSnapshot.getTargetId());
 

@@ -1079,6 +1079,22 @@ public class StepTriggerService {
             }
         }
 
+        // Process pending end-step sacrifices (e.g. Choreographed Sparks' creature-copy token)
+        if (!gameData.permanentsToSacrificeAtEndStep.isEmpty()) {
+            Set<UUID> toSacrifice = new HashSet<>(gameData.permanentsToSacrificeAtEndStep);
+            gameData.permanentsToSacrificeAtEndStep.clear();
+            for (UUID permId : toSacrifice) {
+                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
+                if (perm != null) {
+                    permanentRemovalService.removePermanentToGraveyard(gameData, perm);
+                    String logEntry = perm.getCard().getName() + " is sacrificed.";
+                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    log.info("Game {} - {} sacrificed at end step (delayed trigger)", gameData.id, perm.getCard().getName());
+                    permanentRemovalService.removeOrphanedAuras(gameData);
+                }
+            }
+        }
+
         // Process pending end-step destructions (e.g. Stone Giant)
         if (!gameData.pendingDestroyAtEndStep.isEmpty()) {
             Set<UUID> toDestroy = new HashSet<>(gameData.pendingDestroyAtEndStep);

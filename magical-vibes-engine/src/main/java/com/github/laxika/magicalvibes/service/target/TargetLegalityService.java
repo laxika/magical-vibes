@@ -91,6 +91,28 @@ public class TargetLegalityService {
     }
 
     /**
+     * Validates a spell that targets multiple distinct spells on the stack, each with its own
+     * per-position filter (e.g. Choreographed Sparks' "both" mode: one instant/sorcery spell and
+     * one creature spell). Targets must be distinct and each must satisfy its position's filter.
+     */
+    public void validateMultiSpellTargetsOnStack(GameData gameData, Card card, List<UUID> targetIds, UUID controllerId) {
+        List<TargetFilter> perPositionFilters = card.getMultiTargetFilters();
+        if (targetIds == null || targetIds.size() != perPositionFilters.size()) {
+            throw new IllegalStateException("Must choose " + perPositionFilters.size() + " target spells");
+        }
+        for (int i = 0; i < targetIds.size(); i++) {
+            for (int j = i + 1; j < targetIds.size(); j++) {
+                if (targetIds.get(i).equals(targetIds.get(j))) {
+                    throw new IllegalStateException("Targets must be different spells");
+                }
+            }
+        }
+        for (int i = 0; i < targetIds.size(); i++) {
+            validateSpellTargetOnStack(gameData, targetIds.get(i), perPositionFilters.get(i), controllerId);
+        }
+    }
+
+    /**
      * Validates that the given graveyard card IDs are legal targets for a multi-target graveyard ability.
      * Each card must exist in an opponent's graveyard (not the controller's).
      */
@@ -396,6 +418,16 @@ public class TargetLegalityService {
     public boolean isTargetIllegalOnResolution(GameData gameData, StackEntry entry) {
         if (entry.isNonTargeting()) {
             return false;
+        }
+
+        // Multi-spell targeting: spell targets multiple distinct spells on the stack (e.g.
+        // Choreographed Sparks' "both" mode). Per MTG CR 608.2b: fizzles only when ALL of the
+        // targeted spells have left the stack; each still-legal target is handled per-effect.
+        if (entry.getTargetId() == null && entry.getTargetZone() == Zone.STACK
+                && !entry.getTargetIds().isEmpty()) {
+            boolean anyStillOnStack = entry.getTargetIds().stream()
+                    .anyMatch(id -> gameData.stack.stream().anyMatch(se -> se.getCard().getId().equals(id)));
+            return !anyStillOnStack;
         }
 
         // Multi-zone targeting: spell targets both a spell on the stack and permanent(s)

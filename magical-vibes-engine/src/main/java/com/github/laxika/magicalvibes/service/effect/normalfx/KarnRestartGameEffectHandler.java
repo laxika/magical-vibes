@@ -152,6 +152,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.exileReturnOnPermanentLeave.clear();
         gameData.sourceLinkedAnimations.clear();
         gameData.pendingTokenExilesAtEndStep.clear();
+        gameData.permanentsToSacrificeAtEndStep.clear();
         gameData.pendingMayAbilities.clear();
         gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);

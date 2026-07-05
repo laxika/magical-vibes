@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -157,8 +158,20 @@ public class SpellCastingService {
                 // all in at the modal effect's position so each resolves in order.
                 effects.remove(i);
                 effects.addAll(i, chosen.effects());
-                // Apply per-mode target filter so downstream validation uses the correct filter
-                if (chosen.targetFilter() != null) {
+                // Reset any target declarations left over from a previous cast of this card instance.
+                card.clearRuntimeSpellTargets();
+                card.setCastTimeTargetFilter(null);
+                if (chosen.targetFilters() != null) {
+                    // Multi-target mode (e.g. Choreographed Sparks' "both"): declare one target slot
+                    // per filter and map each of the mode's effects positionally to its own target.
+                    for (int t = 0; t < chosen.targetFilters().size(); t++) {
+                        SpellTarget spellTarget = card.target(chosen.targetFilters().get(t));
+                        if (t < chosen.effects().size()) {
+                            card.registerEffectTargetIndex(chosen.effects().get(t), spellTarget.getIndex());
+                        }
+                    }
+                } else if (chosen.targetFilter() != null) {
+                    // Apply per-mode target filter so downstream validation uses the correct filter
                     card.setCastTimeTargetFilter(chosen.targetFilter());
                 }
                 return 0;
@@ -349,6 +362,10 @@ public class SpellCastingService {
         boolean unwrappedNeedsTarget = wasModal
                 ? filteredSpellEffects.stream().anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer() || e.canTargetGraveyard())
                 : EffectResolution.needsSpellCastTarget(card);
+        // Modal mode that targets multiple distinct spells on the stack (e.g. Choreographed Sparks'
+        // "both": one instant/sorcery spell + one creature spell). unwrapChooseOneEffect declared one
+        // target() slot per filter, so the card now reports more than one spell target.
+        boolean multipleSpellTargets = wasModal && unwrappedNeedsSpellTarget && card.getSpellTargets().size() > 1;
 
         // Validate alternate casting cost if used (e.g. Demon of Death's Gate)
         if (usingAlternateCost) {
@@ -477,7 +494,11 @@ public class SpellCastingService {
 
         // Validate spell target (targeting a spell on the stack)
         if (unwrappedNeedsSpellTarget) {
-            targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
+            if (multipleSpellTargets) {
+                targetLegalityService.validateMultiSpellTargetsOnStack(gameData, card, targetIds, playerId);
+            } else {
+                targetLegalityService.validateSpellTargetOnStack(gameData, targetId, card.getTargetFilter(), playerId);
+            }
         }
 
         // For modal spells, graveyard-targeting is determined by the chosen mode's unwrapped effects
@@ -581,8 +602,8 @@ public class SpellCastingService {
             }
         }
 
-        // Validate multi-target permanent targeting
-        if (card.getMaxTargets() > 0 && !targetIds.isEmpty()) {
+        // Validate multi-target permanent targeting (skip when the targets are spells on the stack)
+        if (card.getMaxTargets() > 0 && !targetIds.isEmpty() && !multipleSpellTargets) {
             targetLegalityService.validateMultiSpellTargets(gameData, card, targetIds, playerId);
         }
 
@@ -949,7 +970,15 @@ public class SpellCastingService {
                         filteredSpellEffects, resolvedXValue, null, damageAssignments
                 ));
             } else if (unwrappedNeedsSpellTarget) {
-                if (unwrappedNeedsTarget && !targetIds.isEmpty()) {
+                if (multipleSpellTargets) {
+                    // Spell targets multiple distinct spells on the stack (e.g. Choreographed Sparks'
+                    // "both" mode). Each spell target is resolved by its mapped effect via targetIds.
+                    gameData.stack.add(new StackEntry(
+                            entryType, card, playerId, card.getName(),
+                            filteredSpellEffects, resolvedXValue, null,
+                            null, Map.of(), Zone.STACK, List.of(), targetIds
+                    ));
+                } else if (unwrappedNeedsTarget && !targetIds.isEmpty()) {
                     // Spell targets both a spell on the stack and permanent(s) (e.g. Lost in the Mist)
                     gameData.stack.add(new StackEntry(
                             entryType, card, playerId, card.getName(),

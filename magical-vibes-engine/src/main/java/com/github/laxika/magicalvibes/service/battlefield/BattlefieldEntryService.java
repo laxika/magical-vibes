@@ -121,6 +121,10 @@ public class BattlefieldEntryService {
         gameData.permanentsEnteredBattlefieldThisTurn
                 .computeIfAbsent(controllerId, k -> new ArrayList<>())
                 .add(permanent.getCard());
+        // Delayed "sacrifice this token at the beginning of the next end step" (Choreographed Sparks).
+        if (permanent.getCard().isSacrificeAtEndStep()) {
+            gameData.permanentsToSacrificeAtEndStep.add(permanent.getId());
+        }
     }
 
     /**
