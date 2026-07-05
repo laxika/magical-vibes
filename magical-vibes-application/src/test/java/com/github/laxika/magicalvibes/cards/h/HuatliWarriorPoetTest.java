@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("+2 ability has GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect")
+    @DisplayName("+2 ability has GainLifeEffect(GreatestPowerAmongControlled)")
     void plusTwoAbilityHasCorrectEffect() {
         HuatliWarriorPoet card = new HuatliWarriorPoet();
         var ability = card.getActivatedAbilities().get(0);
@@ -42,7 +43,7 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         assertThat(ability.getLoyaltyCost()).isEqualTo(2);
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect.class);
+        assertThat(ability.getEffects().getFirst()).isEqualTo(new GainLifeEffect(new GreatestPowerAmongControlled()));
     }
 
     @Test

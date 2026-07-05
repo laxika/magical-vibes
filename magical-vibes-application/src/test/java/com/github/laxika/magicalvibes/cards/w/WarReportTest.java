@@ -7,7 +7,12 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerMatchingPermanentOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +31,9 @@ class WarReportTest extends BaseCardTest {
         WarReport card = new WarReport();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GainLifePerMatchingPermanentOnBattlefieldEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isEqualTo(new GainLifeEffect(new Sum(
+                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER),
+                new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.ANY_PLAYER))));
     }
 
     // ===== Casting =====

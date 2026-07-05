@@ -26,8 +26,9 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
@@ -78,6 +79,7 @@ class ActivatedAbilityExecutionServiceTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private StateBasedActionService stateBasedActionService;
     @Mock private GameQueryService gameQueryService;
+    @Mock private com.github.laxika.magicalvibes.service.effect.AmountEvaluationService amountEvaluationService;
     @Mock private GameBroadcastService gameBroadcastService;
     @Mock private PlayerInputService playerInputService;
     @Mock private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -265,6 +267,7 @@ class ActivatedAbilityExecutionServiceTest {
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}, gain 1 life.");
 
             stubIsCreature(perm, false);
+            when(amountEvaluationService.evaluate(eq(gameData), eq(new Fixed(1)), any())).thenReturn(1);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -857,18 +860,19 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("GainLifeEqualToChargeCountersOnSourceEffect snapshots counters as xValue")
-        void gainLifeSnapshotsChargeCounters() {
+        @DisplayName("GainLifeEffect(CountersOnSource) entry carries the source snapshot for post-sacrifice resolution")
+        void gainLifeEntryCarriesSourcePermanentSnapshot() {
             Card card = createCard("Golden Urn", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             perm.setCounterCount(CounterType.CHARGE, 5);
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new GainLifeEqualToChargeCountersOnSourceEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(),
+                    new GainLifeEffect(new CountersOnSource(CounterType.CHARGE)));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Sacrifice: Gain life.");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(5);
+            assertThat(gameData.stack.getFirst().getSourcePermanentSnapshot()).isSameAs(perm);
         }
 
         @Test

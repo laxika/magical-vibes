@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -21,7 +24,7 @@ public class ElspethTirel extends Card {
         // +2: You gain 1 life for each creature you control.
         addActivatedAbility(new ActivatedAbility(
                 +2,
-                List.of(new GainLifePerControlledCreatureEffect()),
+                List.of(new GainLifeEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER))),
                 "+2: You gain 1 life for each creature you control."
         ));
 

@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToXValueEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -84,7 +85,7 @@ class ArguelsBloodFastTest extends BaseCardTest {
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
         SacrificeCreatureCost sacCost = (SacrificeCreatureCost) ability.getEffects().get(0);
         assertThat(sacCost.trackSacrificedToughness()).isTrue();
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GainLifeEqualToXValueEffect.class);
+        assertThat(ability.getEffects().get(1)).isEqualTo(new GainLifeEffect(new XValue()));
     }
 
     // ===== Front face: {1}{B}, Pay 2 life: Draw a card =====

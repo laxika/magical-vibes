@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,13 +23,13 @@ class BountifulHarvestTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Has GainLifePerControlledMatchingPermanentEffect as spell effect")
+    @DisplayName("Has GainLifeEffect(PermanentCount(land, CONTROLLER)) as spell effect")
     void hasCorrectEffect() {
         BountifulHarvest card = new BountifulHarvest();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(GainLifePerControlledMatchingPermanentEffect.class);
+                .isEqualTo(new GainLifeEffect(new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
     }
 
     // ===== Casting =====

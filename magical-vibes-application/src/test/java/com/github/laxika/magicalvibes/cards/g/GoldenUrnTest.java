@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -38,7 +39,8 @@ class GoldenUrnTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isNull();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GainLifeEqualToChargeCountersOnSourceEffect.class);
+        assertThat(ability.getEffects().get(1))
+                .isEqualTo(new GainLifeEffect(new CountersOnSource(CounterType.CHARGE)));
     }
 
     // ===== Upkeep triggered ability =====

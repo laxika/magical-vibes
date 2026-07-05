@@ -330,18 +330,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Life
 
-- `GainLifeEffect(int)` — gain N life
-- `GainLifeForEachSubtypeOnBattlefieldEffect(CardSubtype)` — life per subtype
-- `GainLifePerControlledCreatureEffect()` — life per creature
-- `GainLifePerControlledMatchingPermanentEffect(List<PermanentPredicate>)` — life per matching
-- `GainLifePerCreatureOnBattlefieldEffect()` — life per all creatures
-- `GainLifePerMatchingPermanentOnBattlefieldEffect(List<PermanentPredicate>)` — life per matching (all)
-- `GainLifePerCardsInHandEffect()` — life per hand card
-- `GainLifePerCreatureCardInGraveyardEffect(int)` — N life per creature in graveyard
-- `GainLifePerGraveyardCardEffect(int lifePerCard)` — N life per card in graveyard
+- `GainLifeEffect(DynamicAmount)` or `(int)` — gain life; dynamic derivations via `DynamicAmount` (PermanentCount, CardsInHand, CardsInGraveyard, CountersOnSource, GreatestPowerAmongControlled, XValue, Scaled, Sum, …)
 - `GainLifeEqualToTargetToughnessEffect()` — life = target toughness
-- `GainLifeEqualToXValueEffect()` — life = X
-- `GainLifeMultipliedByXValueEffect(int)` — life = X * multiplier
 - `TargetPlayerGainsLifeEffect(int)` — target gains life
 - `DoubleTargetPlayerLifeEffect()` — double target life
 - `SetTargetPlayerLifeToSpecificValueEffect(int)` — set life to value

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -53,7 +54,8 @@ class EnterTriggerCollectorServiceTest {
     @BeforeEach
     void setUp() {
         TriggerCollectorRegistry registry = new TriggerCollectorRegistry();
-        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameBroadcastService), registry);
+        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameBroadcastService,
+                new AmountEvaluationService(predicateEvaluationService, gameQueryService)), registry);
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,

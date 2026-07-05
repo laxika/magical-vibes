@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
@@ -29,7 +32,7 @@ class ArchangelsLightTest extends BaseCardTest {
 
         assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GainLifePerGraveyardCardEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isEqualTo(new GainLifeEffect(new Scaled(new CardsInGraveyard(null, CountScope.CONTROLLER), 2)));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleGraveyardIntoLibraryEffect.class);
     }
 

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfAndGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -37,7 +38,7 @@ class ElixirOfImmortalityTest extends BaseCardTest {
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects())
                 .hasSize(2)
-                .anyMatch(e -> e instanceof GainLifeEffect ge && ge.amount() == 5)
+                .anyMatch(e -> e instanceof GainLifeEffect ge && ge.amount().equals(new Fixed(5)))
                 .anyMatch(e -> e instanceof ShuffleSelfAndGraveyardIntoLibraryEffect);
     }
 

@@ -138,6 +138,13 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "you gain N life" / "gain N life" | `GainLifeEffect(N)` | SPELL/trigger | |
+| "you gain 1 life for each [permanent]" | `GainLifeEffect(new PermanentCount(predicate, scope))` | SPELL/trigger | scope: "you control" = CONTROLLER, "on the battlefield" = ANY_PLAYER; "N life for each" = wrap in `Scaled(count, N)`; independent counts summed ("each creature and each artifact", artifact creatures count twice) = `Sum(count1, count2)` (War Report ruling) |
+| "you gain 1 life for each card in your hand" | `GainLifeEffect(new CardsInHand(CountScope.CONTROLLER))` | SPELL/trigger | Venser's Journal, Sword of War and Peace |
+| "you gain N life for each card in your graveyard" | `GainLifeEffect(new CardsInGraveyard(cardPredicate, CountScope.CONTROLLER))` | SPELL/trigger | `null` predicate = every card; ×N via `Scaled` (Gnaw to the Bone, Archangel's Light) |
+| "you gain life equal to the number of charge counters on ~" (sacrifice cost) | `GainLifeEffect(new CountersOnSource(CounterType.CHARGE))` | ability effect | resolves from the stack entry's source snapshot (last-known info) after the source is sacrificed; Golden Urn |
+| "you gain life equal to the greatest power among creatures you control" | `GainLifeEffect(new GreatestPowerAmongControlled())` | ability/trigger | Huatli, Warrior Poet +2 |
+| "you gain life equal to the sacrificed creature's toughness" | `GainLifeEffect(new XValue())` | ability effect | with `SacrificeCreatureCost(trackToughness)` snapshotting toughness into xValue |
+| "you gain twice X life" | `GainLifeEffect(new Scaled(new XValue(), 2))` | SPELL | Sanguine Sacrament |
 | "you lose N life" / "lose N life" | `LoseLifeEffect(N)` | SPELL/trigger | |
 | "target player gains N life" | `TargetPlayerGainsLifeEffect(N)` | SPELL | |
 | "target player loses N life" | `TargetPlayerLosesLifeEffect(N)` | SPELL | |

@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainLifeMultipliedByXValueEffect;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -20,16 +22,14 @@ class SanguineSacramentTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has GainLifeMultipliedByXValueEffect with multiplier 2 and PutSelfOnBottomOfOwnersLibraryEffect")
+    @DisplayName("Has GainLifeEffect(Scaled(XValue, 2)) and PutSelfOnBottomOfOwnersLibraryEffect")
     void hasCorrectEffects() {
         SanguineSacrament card = new SanguineSacrament();
 
         assertThat(EffectResolution.needsTarget(card)).isFalse();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(GainLifeMultipliedByXValueEffect.class);
-        assertThat(((GainLifeMultipliedByXValueEffect) card.getEffects(EffectSlot.SPELL).get(0)).multiplier())
-                .isEqualTo(2);
+                .isEqualTo(new GainLifeEffect(new Scaled(new XValue(), 2)));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1))
                 .isInstanceOf(PutSelfOnBottomOfOwnersLibraryEffect.class);
     }

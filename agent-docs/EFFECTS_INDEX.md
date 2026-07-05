@@ -109,11 +109,20 @@ sealed interface `model/amount/DynamicAmount` has one small record per derivatio
   spell, X paid, …)
 - `Scaled(DynamicAmount amount, int factor)` — base amount × constant ("+2/+0 per Equipment"
   = `Scaled(count, 2)`)
+- `Sum(List<DynamicAmount> amounts)` (varargs ctor) — components summed independently, so a
+  permanent matching two summed `PermanentCount`s counts twice (War Report: creature count +
+  artifact count, artifact creatures add 2)
 - `PermanentCount(PermanentPredicate filter, CountScope scope[, boolean excludeSource])` —
   matching battlefield permanents; `CountScope` is `CONTROLLER` / `OPPONENTS` / `ANY_PLAYER`;
   `excludeSource=true` models "each *other* …" wordings
 - `CardsInGraveyard(CardPredicate filter, CountScope scope)` — matching non-token cards in
-  the graveyard(s) in scope
+  the graveyard(s) in scope (`null` filter = every card)
+- `CardsInHand(CountScope scope)` — cards in the hand(s) of the players in scope
+- `CountersOnSource(CounterType counterType)` — counters of that type on the source
+  permanent; reads the stack entry's live source, falling back to the last-known
+  `sourcePermanentSnapshot` when the source left the battlefield as a cost (Golden Urn)
+- `GreatestPowerAmongControlled()` — greatest effective power among creatures the
+  controller controls (0 if none)
 - `AttachmentsOnSource(boolean countAuras, boolean countEquipment)` — Auras/Equipment
   attached to the source
 - `CreaturesBlockingSource()` — creatures currently blocking the source
@@ -746,23 +755,11 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `GainLifeEffect` | `(int amount)` | gain N life |
+| `GainLifeEffect` | `(DynamicAmount amount)` or `(int amount)` sugar for `Fixed` | gain life; the amount is any `DynamicAmount` evaluated at resolution. Examples: `new GainLifeEffect(3)`; per creature you control = `PermanentCount(IsCreature, CONTROLLER)`; per card in your hand = `CardsInHand(CONTROLLER)`; per card in your graveyard = `CardsInGraveyard(null, CONTROLLER)` (× N via `Scaled`); X paid / toughness snapshotted as xValue (`SacrificeCreatureCost(trackToughness)`) = `XValue()`; twice X = `Scaled(XValue(), 2)`; charge counters on sacrificed source = `CountersOnSource(CHARGE)`; greatest power among your creatures = `GreatestPowerAmongControlled()`; War Report's creatures-plus-artifacts = `Sum(...)` |
 | `PayXManaGainXLifeEffect` | `()` | on resolution, pays all available mana from the controller's pool as X and gains X life. Used for "you may pay {X}. If you do, you gain X life" triggered abilities where payment happens during resolution (e.g. Vigil for the Lost) |
-| `GainLifeForEachSubtypeOnBattlefieldEffect` | `(CardSubtype subtype)` | gain 1 life per permanent with given subtype on the battlefield (all players) |
-| `GainLifePerControlledCreatureEffect` | `()` | gain 1 life per creature you control |
-| `GainLifePerControlledMatchingPermanentEffect` | `(List<PermanentPredicate> predicates)` | gain life equal to sum of permanents you control matching each predicate; controller-only version of GainLifePerMatchingPermanentOnBattlefieldEffect |
-| `GainLifePerCreatureOnBattlefieldEffect` | `()` | gain 1 life per creature on the battlefield (all players) |
-| `GainLifePerMatchingPermanentOnBattlefieldEffect` | `(List<PermanentPredicate> predicates)` | gain life equal to sum of permanents matching each predicate on the battlefield (all players); a permanent matching multiple predicates is counted once per match (e.g. artifact creature counts twice with creature+artifact predicates) |
-| `GainLifePerCardsInHandEffect` | `()` | gain 1 life per card in controller's hand (upkeep trigger) |
-| `GainLifePerCreatureCardInGraveyardEffect` | `(int lifePerCreature)` | gain N life per creature card in controller's graveyard |
-| `GainLifePerGraveyardCardEffect` | `(int lifePerCard)` | gain N life per card in controller's graveyard (e.g. 1 for Ancestor's Chosen, 2 for Archangel's Light) |
 | `GainLifeEqualToTargetToughnessEffect` | `()` | gain life equal to target creature's toughness |
 | `GainLifeEqualToToughnessEffect` | `()` | gain life equal to own toughness (self, e.g. dies trigger) |
 | `GainLifeEqualToDamageDealtEffect` | `()` | gain life equal to damage dealt (lifelink-style, static) |
-| `GainLifeEqualToChargeCountersOnSourceEffect` | `()` | gain life equal to number of charge counters on source (activated ability sacrifice effect) |
-| `GainLifeEqualToGreatestPowerAmongOwnCreaturesEffect` | `()` | gain life equal to the greatest power among creatures you control |
-| `GainLifeEqualToXValueEffect` | `()` | gain life equal to xValue on stack entry (use with `SacrificeCreatureCost(trackToughness/power)` or other xValue-setting costs) |
-| `GainLifeMultipliedByXValueEffect` | `(int multiplier)` | gain life equal to xValue × multiplier. For "gain twice X life" use multiplier=2. Used by Sanguine Sacrament |
 | `TargetPlayerGainsLifeEffect` | `(int amount)` | target player gains N life |
 | `EachTargetPlayerGainsLifeEffect` | `(int amount)` | each targeted player gains N life (multi-target, reads from `targetIds`). Pair with `setMinTargets(0)` and `setMaxTargets(99)` for "any number of target players". Used by Hunters' Feast |
 | `DoubleTargetPlayerLifeEffect` | `()` | double target player's life total |

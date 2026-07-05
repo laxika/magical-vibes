@@ -11,7 +11,10 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,7 +38,7 @@ class ElspethTirelTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("+2 ability has GainLifePerControlledCreatureEffect")
+    @DisplayName("+2 ability has GainLifeEffect(PermanentCount(creature, CONTROLLER))")
     void plusTwoAbilityHasCorrectEffect() {
         ElspethTirel card = new ElspethTirel();
         var ability = card.getActivatedAbilities().get(0);
@@ -43,7 +46,7 @@ class ElspethTirelTest extends BaseCardTest {
         assertThat(ability.getLoyaltyCost()).isEqualTo(2);
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GainLifePerControlledCreatureEffect.class);
+        assertThat(ability.getEffects().getFirst()).isEqualTo(new GainLifeEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
     }
 
     @Test

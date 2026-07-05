@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerCreatureOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +29,7 @@ class BluntTheAssaultTest extends BaseCardTest {
         BluntTheAssault card = new BluntTheAssault();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GainLifePerCreatureOnBattlefieldEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isEqualTo(new GainLifeEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(PreventAllCombatDamageEffect.class);
     }
 

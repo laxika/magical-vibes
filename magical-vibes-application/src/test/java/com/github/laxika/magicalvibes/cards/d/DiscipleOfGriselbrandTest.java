@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToXValueEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -39,7 +40,7 @@ class DiscipleOfGriselbrandTest extends BaseCardTest {
         assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GainLifeEqualToXValueEffect.class);
+        assertThat(ability.getEffects().get(1)).isEqualTo(new GainLifeEffect(new XValue()));
 
         SacrificeCreatureCost sacCost = (SacrificeCreatureCost) ability.getEffects().get(0);
         assertThat(sacCost.trackSacrificedToughness()).isTrue();

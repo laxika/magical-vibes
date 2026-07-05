@@ -11,7 +11,9 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifePerCardsInHandEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -68,7 +70,7 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
                 card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
         assertThat(effects).hasSize(2);
         assertThat(effects).filteredOn(e -> e instanceof DealDamageToTargetPlayerByHandSizeEffect).hasSize(1);
-        assertThat(effects).filteredOn(e -> e instanceof GainLifePerCardsInHandEffect).hasSize(1);
+        assertThat(effects).filteredOn(e -> e.equals(new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)))).hasSize(1);
     }
 
     @Test

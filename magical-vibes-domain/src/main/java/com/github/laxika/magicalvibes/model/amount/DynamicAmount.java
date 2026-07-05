@@ -14,12 +14,16 @@ package com.github.laxika.magicalvibes.model.amount;
 public sealed interface DynamicAmount permits
         AttachmentsOnSource,
         CardsInGraveyard,
+        CardsInHand,
+        CountersOnSource,
         CreaturesBlockingSource,
         Fixed,
+        GreatestPowerAmongControlled,
         ImprintedCreaturePower,
         ImprintedCreatureToughness,
         OpponentPoisonCounters,
         PermanentCount,
         Scaled,
+        Sum,
         XValue {
 }

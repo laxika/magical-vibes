@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCoun
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
@@ -60,6 +59,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -89,6 +90,7 @@ public class ActivatedAbilityExecutionService {
     private final StateBasedActionService stateBasedActionService;
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final PlayerInputService playerInputService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
@@ -207,7 +209,6 @@ public class ActivatedAbilityExecutionService {
 
         // Snapshot charge counters before sacrifice so the value survives in the stack entry's xValue
         else if (abilityEffects.stream().anyMatch(e -> e instanceof DrawCardsEqualToChargeCountersOnSourceEffect
-                || e instanceof GainLifeEqualToChargeCountersOnSourceEffect
                 || e instanceof MillTargetPlayerByChargeCountersEffect
                 || e instanceof TargetPlayerDiscardsByChargeCountersEffect
                 || e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect
@@ -471,7 +472,9 @@ public class ActivatedAbilityExecutionService {
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
             } else if (effect instanceof GainLifeEffect gain) {
-                lifeSupport.applyGainLife(gameData, playerId, gain.amount());
+                int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
+                        new AmountContext(playerId, permanent, 0, false));
+                lifeSupport.applyGainLife(gameData, playerId, amount);
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
                 String cardName = permanent.getCard().getName();
                 int damage = dmg.damage();
@@ -682,6 +685,7 @@ public class ActivatedAbilityExecutionService {
                 effectivePermanentTargetIds
         );
         stackEntry.setTargetFilter(ability.getTargetFilter());
+        stackEntry.setSourcePermanentSnapshot(permanent);
         gameData.stack.add(stackEntry);
         triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
         stateBasedActionService.performStateBasedActions(gameData);

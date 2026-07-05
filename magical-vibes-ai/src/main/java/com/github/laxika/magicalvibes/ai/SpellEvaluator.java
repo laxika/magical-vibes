@@ -75,7 +75,7 @@ public class SpellEvaluator {
 
     public SpellEvaluator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
-        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService);
+        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.gameQueryService = gameQueryService;
         this.boardEvaluator = boardEvaluator;
     }
@@ -392,7 +392,9 @@ public class SpellEvaluator {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
         if (effect instanceof GainLifeEffect gain) {
-            return gain.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
+            int gainAmount = amountEvaluationService.evaluate(gameData, gain.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
         if (effect instanceof TargetPlayerDiscardsEffect discard) {
             int opponentHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
@@ -504,7 +506,9 @@ public class SpellEvaluator {
 
         // Life — scaled by danger level: more valuable when AI is under pressure
         if (effect instanceof GainLifeEffect gain) {
-            return gain.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
+            int gainAmount = amountEvaluationService.evaluate(gameData, gain.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
         if (effect instanceof LoseLifeEffect lose) {
             return -lose.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);

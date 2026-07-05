@@ -37,6 +37,12 @@ public class StackEntry {
     @Setter private UUID attackedTargetId;
     /** Excess damage dealt by a prior effect on this stack entry (e.g. Archaic's Agony). */
     @Setter private int excessDamageDealt;
+    /**
+     * Last-known snapshot of the source permanent, set at activation time. Used to evaluate
+     * source-relative amounts (e.g. counters on the source) per CR 608.2h last-known
+     * information when the source left the battlefield before resolution (sacrifice costs).
+     */
+    @Setter private Permanent sourcePermanentSnapshot;
     private final List<UUID> targetIds;
 
     // Creature spell constructor
@@ -223,6 +229,7 @@ public class StackEntry {
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
         this.excessDamageDealt = source.excessDamageDealt;
+        this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }
 

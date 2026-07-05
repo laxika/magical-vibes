@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToXValueEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +28,7 @@ public class TempleOfAclazotz extends Card {
         // {T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new SacrificeCreatureCost(false, false, true), new GainLifeEqualToXValueEffect()),
+                List.of(new SacrificeCreatureCost(false, false, true), new GainLifeEffect(new XValue())),
                 "{T}, Sacrifice a creature: You gain life equal to the sacrificed creature's toughness.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),
