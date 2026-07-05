@@ -188,8 +188,10 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             }
 
             if (candidate.ability().getManaCost() != null) {
+                // A {T}-ability's own source must not be tapped for mana
                 manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
-                        candidate.ability().getManaCost(), 0, manaTapAction());
+                        candidate.ability().getManaCost(), 0, manaTapAction(), false,
+                        candidate.ability().isRequiresTap() ? candidate.permanent().getId() : null);
                 if (gameData.interaction.isAwaitingInput()) {
                     return true; // Mana ability triggered a pending choice; will resume after it resolves
                 }
@@ -200,6 +202,14 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             // shifting or invalidating indexes captured during collection.
             int permIdx = battlefield.indexOf(permanent);
             if (permIdx < 0) {
+                continue;
+            }
+
+            // Re-verify with the engine against the ACTUAL pool: tapping can under-deliver
+            // relative to the virtual-pool plan (e.g. the {T}-ability's own source was the
+            // only untapped producer left), and a doomed request is rejected silently.
+            if (!canActivateAbility(gameData, permanent, candidate.ability(),
+                    candidate.abilityIndex(), gameData.playerManaPools.get(aiPlayer.getId()))) {
                 continue;
             }
 
@@ -397,6 +407,12 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             final List<UUID> finalMultiTargetIds = multiTargetIds;
             send(() -> gameActions.handlePlayCard(selfConnection,
                     new PlayCardRequest(cardIndex, finalXValue, finalTargetId, finalDamageAssignments, finalMultiTargetIds, null, null, finalSacrificePermanentId, null, null, null, null, finalExileGraveyardCardIndex, finalExileGraveyardCardIndices, null, null, null)));
+
+            // Game may have ended while paying costs (e.g. Manabarbs killing the caster
+            // on a land tap) — every later action no-ops, which is not a legality bug.
+            if (gameData.status != GameStatus.RUNNING) {
+                return true;
+            }
 
             // Identity check: hand size alone is unreliable because ETB/cast triggers
             // can add cards back to hand (e.g. Explore revealing a land), masking a

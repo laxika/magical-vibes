@@ -30,7 +30,12 @@ public class ShuffleIntoLibraryEffectHandler implements NormalEffectHandlerBean 
         // normal effect resolution, so we need the guard here too.
         if (entry.isCopy()) return;
 
+        // When an earlier effect paused resolution for user input (e.g. Beacon of Unrest's
+        // graveyard choice), handleSpellDisposition already shuffled the card in — this
+        // handler then runs again on resumption, so it must not add a second copy.
         List<Card> deck = gameData.playerDecks.get(entry.getControllerId());
+        if (deck.contains(entry.getCard())) return;
+
         deck.add(entry.getCard());
         LibraryShuffleHelper.shuffleLibrary(gameData, entry.getControllerId());
 

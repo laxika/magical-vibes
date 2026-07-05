@@ -165,6 +165,26 @@ class BeaconOfUnrestTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("shuffled into its owner's library"));
     }
 
+    @Test
+    @DisplayName("Resolution state is fully consumed — exactly one Beacon in the deck, no dangling resumption")
+    void noDanglingResumptionAfterChoice() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        harness.setHand(player1, List.of(new BeaconOfUnrest()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        GameData gd = harness.getGameData();
+        // A dangling entry would re-run ShuffleIntoLibraryEffect from a later unrelated
+        // interaction, putting a second Beacon copy into the deck
+        assertThat(gd.pendingEffectResolutionEntry).isNull();
+        assertThat(gd.playerDecks.get(player1.getId()))
+                .filteredOn(c -> c.getName().equals("Beacon of Unrest"))
+                .hasSize(1);
+    }
+
     // ===== Empty graveyards =====
 
     @Test

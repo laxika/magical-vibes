@@ -22,9 +22,9 @@ import java.util.stream.Collectors;
 /**
  * Handles "select zero or more of the revealed/looked-at library cards" choices. Card views
  * derive from the record's begin-time ordered valid IDs against the held-out cards; a null
- * prompt means the begin site sent no choice message (Karn Scion flows) and none is sent on
- * replay either. The answer (battlefield/hand placement, punisher life payment, Karn flows)
- * is applied by {@link LibraryChoiceHandlerService#handleLibraryRevealChoice}.
+ * prompt means the begin site sends its own choice message and none is sent on replay either.
+ * The answer (battlefield/hand placement, punisher life payment, Karn flows) is applied by
+ * {@link LibraryChoiceHandlerService#handleLibraryRevealChoice}.
  */
 @Component
 @RequiredArgsConstructor

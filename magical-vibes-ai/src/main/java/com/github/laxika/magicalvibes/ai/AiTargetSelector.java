@@ -13,10 +13,6 @@ import com.github.laxika.magicalvibes.model.SpellTarget;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
@@ -802,48 +798,18 @@ class AiTargetSelector {
     }
 
     /**
-     * Simplified target validation for activated abilities. Checks the ability's
-     * TargetFilter, hexproof, shroud, and protection. The server performs full
-     * validation, so this is a best-effort pre-filter.
+     * Target pre-filter for activated abilities: runs the engine's own full targeting
+     * validation ({@code TargetLegalityService}) against the candidate, so the AI's idea
+     * of a legal ability target can never drift from the server's.
      */
     private boolean isValidAbilityPermanentTarget(GameData gameData, ActivatedAbility ability,
                                                   Permanent target, UUID aiPlayerId, Permanent source) {
-        // Hexproof check
-        UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
-        if (targetController != null && !targetController.equals(aiPlayerId)) {
-            if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.HEXPROOF)) {
-                return false;
-            }
-            if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.SHROUD)) {
-                return false;
-            }
-        }
-        if (gameQueryService.hasKeyword(gameData, target, com.github.laxika.magicalvibes.model.Keyword.SHROUD)) {
+        try {
+            targetLegalityService.validateActivatedAbilityTargeting(gameData, aiPlayerId, ability,
+                    ability.getEffects(), target.getId(), null, source.getCard(), 0);
+            return true;
+        } catch (IllegalStateException | IllegalArgumentException e) {
             return false;
         }
-
-        // TargetFilter check
-        TargetFilter filter = ability.getTargetFilter();
-        if (filter != null) {
-            FilterContext ctx = FilterContext.of(gameData)
-                    .withSourceControllerId(aiPlayerId)
-                    .withSourceCardId(source.getCard().getId());
-            if (filter instanceof PermanentPredicateTargetFilter ppf) {
-                if (!predicateEvaluationService.matchesPermanentPredicate(target, ppf.predicate(), ctx)) {
-                    return false;
-                }
-            } else if (filter instanceof ControlledPermanentPredicateTargetFilter cpf) {
-                if (!targetController.equals(aiPlayerId)) return false;
-                if (!predicateEvaluationService.matchesPermanentPredicate(target, cpf.predicate(), ctx)) {
-                    return false;
-                }
-            } else if (filter instanceof OwnedPermanentPredicateTargetFilter opf) {
-                if (!predicateEvaluationService.matchesPermanentPredicate(target, opf.predicate(), ctx)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
     }
 }

@@ -66,7 +66,8 @@ public class KarnScionReturnSilverCounterCardEffectHandler implements NormalEffe
         List<UUID> validIds = silverCards.stream().map(Card::getId).toList();
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.LibraryRevealChoice(
                 controllerId, new ArrayList<>(silverCards), validIds,
-                false, true, false, false, 0, null, silverCards.size(), null));
+                false, true, false, false, 0, null, 1,
+                "Choose a card with a silver counter to return to your hand."));
 
         gameBroadcastService.broadcastGameState(gameData);
 

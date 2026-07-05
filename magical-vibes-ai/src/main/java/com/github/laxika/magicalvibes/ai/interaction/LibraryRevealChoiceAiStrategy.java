@@ -37,6 +37,10 @@ class LibraryRevealChoiceAiStrategy implements AiInteractionStrategy<PendingInte
                     interaction.lifeCostPerSelection(), ctx.gameId());
         } else {
             chosen = new ArrayList<>(interaction.validCardIds());
+            // Respect the choice limit (e.g. Karn Scion +1: the opponent picks exactly one card)
+            if (interaction.maxCount() > 0 && chosen.size() > interaction.maxCount()) {
+                chosen = chosen.subList(0, interaction.maxCount());
+            }
             log.info("AI: Choosing {} revealed cards in game {}", chosen.size(), ctx.gameId());
         }
         ctx.gameActions().handleMultipleCardsChosen(ctx.selfConnection(), new MultipleCardsChosenRequest(chosen));

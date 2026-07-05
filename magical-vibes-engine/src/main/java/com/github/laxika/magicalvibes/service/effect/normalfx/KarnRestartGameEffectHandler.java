@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KarnRestartGameEffect;
+import com.github.laxika.magicalvibes.networking.SessionManager;
+import com.github.laxika.magicalvibes.networking.message.MulliganResolvedMessage;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
     private final GameBroadcastService gameBroadcastService;
+    private final SessionManager sessionManager;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -264,5 +267,10 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
 
         gameBroadcastService.logAndBroadcast(gameData, "Mulligan phase — decide to keep or mulligan.");
         gameBroadcastService.broadcastGameState(gameData);
+
+        // Kick off the new mulligan round for message-driven clients (AI players decide on
+        // MULLIGAN_RESOLVED; without this the restarted game waits forever on their answer)
+        sessionManager.sendToPlayers(gameData.orderedPlayerIds,
+                new MulliganResolvedMessage(controllerName, false, 0));
     }
 }

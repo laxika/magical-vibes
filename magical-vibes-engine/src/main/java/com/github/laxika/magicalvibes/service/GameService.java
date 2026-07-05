@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -409,6 +410,29 @@ public class GameService {
             player = resolveActingPlayer(gameData, player);
             requirePriority(gameData, player);
             abilityActivationService.activateGraveyardAbility(gameData, player, graveyardCardIndex, abilityIndex);
+        }
+    }
+
+    /**
+     * Pure legality query: could {@code playerId} activate the ability at {@code abilityIndex} on
+     * {@code permanent} right now? Runs the engine's own activation checks (everything except
+     * target choice, with X assumed 0) against the given mana pool, which may be hypothetical.
+     * Never mutates game state. Exposed so AI players share the engine's legality rules instead
+     * of re-implementing them.
+     */
+    public boolean canActivateAbility(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, ManaPool manaPool) {
+        synchronized (gameData) {
+            return abilityActivationService.canActivateAbility(gameData, playerId, permanent, abilityIndex, manaPool);
+        }
+    }
+
+    /**
+     * Returns the activated abilities currently available on a permanent (own + static-granted +
+     * temporary), in {@code abilityIndex} order. Read-only.
+     */
+    public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
+        synchronized (gameData) {
+            return abilityActivationService.getEffectiveActivatedAbilities(gameData, permanent);
         }
     }
 

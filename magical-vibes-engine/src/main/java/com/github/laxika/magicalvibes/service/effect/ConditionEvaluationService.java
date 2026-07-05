@@ -87,7 +87,8 @@ public class ConditionEvaluationService {
             case NotKicked ignored ->
                     !ctx.kicked();
             case Raid ignored ->
-                    gameData.playersDeclaredAttackersThisTurn.contains(ctx.controllerId());
+                    ctx.controllerId() != null
+                            && gameData.playersDeclaredAttackersThisTurn.contains(ctx.controllerId());
             case Equipped ignored ->
                     isSourceEquipped(gameData, ctx);
             case GainedLifeThisTurn ignored ->
@@ -139,7 +140,7 @@ public class ConditionEvaluationService {
             case PermanentEnteredThisTurn c ->
                     countPermanentsEnteredThisTurn(gameData, ctx, c) >= c.minCount();
             case ControllerCastAnotherSpellThisTurn c ->
-                    gameQueryService.hasControllerCastAnotherSpellThisTurn(
+                    ctx.controllerId() != null && gameQueryService.hasControllerCastAnotherSpellThisTurn(
                             gameData, ctx.controllerId(), ctx.sourceCard(), c.filter());
             case SpellManaSpentAtLeast c ->
                     ctx.xValue() >= c.minMana();
@@ -204,6 +205,9 @@ public class ConditionEvaluationService {
      * bonus computation); every other context uses the general artifact check.
      */
     private boolean isMetalcraftMet(GameData gameData, ConditionContext ctx) {
+        // No controller (e.g. static self bonus computed while the permanent is being removed):
+        // controller-dependent conditions are simply not met
+        if (ctx.controllerId() == null) return false;
         if (!ctx.staticEvaluation()) {
             return gameQueryService.isMetalcraftMet(gameData, ctx.controllerId());
         }
@@ -229,12 +233,14 @@ public class ConditionEvaluationService {
     }
 
     private boolean controlsMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
         return battlefield.stream().anyMatch(p -> matchesPermanent(gameData, p, filter, ctx));
     }
 
     private boolean controlsAnotherMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
         return battlefield.stream()
@@ -265,12 +271,14 @@ public class ConditionEvaluationService {
     }
 
     private long countControlledMatchingPermanents(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return 0;
         return battlefield.stream().filter(p -> matchesPermanent(gameData, p, filter, ctx)).count();
     }
 
     private boolean noOtherMatchingPermanent(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
+        if (ctx.controllerId() == null) return true;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return true;
         return battlefield.stream()
@@ -278,6 +286,7 @@ public class ConditionEvaluationService {
     }
 
     private int countMatchingGraveyardCards(GameData gameData, ConditionContext ctx, GraveyardCardThreshold c) {
+        if (ctx.controllerId() == null) return 0;
         List<Card> graveyard = gameData.playerGraveyards.get(ctx.controllerId());
         if (graveyard == null) return 0;
         int count = 0;
@@ -300,12 +309,14 @@ public class ConditionEvaluationService {
     }
 
     private long countAttackingCreatures(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return 0;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return 0;
         return battlefield.stream().filter(Permanent::isAttacking).count();
     }
 
     private boolean hasMatchingAttacker(GameData gameData, ConditionContext ctx, PermanentPredicate predicate) {
+        if (ctx.controllerId() == null) return false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
         return battlefield.stream()
@@ -319,7 +330,9 @@ public class ConditionEvaluationService {
     }
 
     private boolean isDefendingPlayerPoisoned(GameData gameData, UUID attackingPlayerId) {
+        if (attackingPlayerId == null) return false;
         UUID defendingPlayerId = gameQueryService.getOpponentId(gameData, attackingPlayerId);
+        if (defendingPlayerId == null) return false;
         return gameData.playerPoisonCounters.getOrDefault(defendingPlayerId, 0) > 0;
     }
 
@@ -342,6 +355,7 @@ public class ConditionEvaluationService {
     }
 
     private long countPermanentsEnteredThisTurn(GameData gameData, ConditionContext ctx, PermanentEnteredThisTurn c) {
+        if (ctx.controllerId() == null) return 0;
         List<Card> entered = gameData.permanentsEnteredBattlefieldThisTurn
                 .getOrDefault(ctx.controllerId(), List.of());
         return entered.stream()

@@ -52,7 +52,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -742,6 +744,31 @@ class AbilityActivationServiceTest {
         }
 
         @Test
+        @DisplayName("Illegal target rewinds the activation with no loyalty paid (CR 601.2)")
+        void illegalTargetDoesNotPayLoyalty() {
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
+
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            doThrow(new IllegalStateException("Invalid target"))
+                    .when(targetLegalityService).validateActivatedAbilityTargeting(
+                            any(), any(), any(), any(), any(), any(), any(), anyInt());
+
+            assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Invalid target");
+
+            assertThat(perm.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+            assertThat(perm.getLoyaltyActivationsThisTurn()).isEqualTo(0);
+        }
+
+        @Test
         @DisplayName("Positive loyalty cost adds counters")
         void positiveLoyaltyCostAddsCounters() {
             Card card = createPlaneswalkerCard("Koth of the Hammer");
@@ -1066,6 +1093,113 @@ class AbilityActivationServiceTest {
             assertThatThrownBy(() -> service.activateAbility(gameData, player1, 0, null, null, null, null))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("no more than 1 times each turn");
+        }
+    }
+
+    // =========================================================================
+    // canActivateAbility (pure legality query)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("canActivateAbility")
+    class CanActivateAbility {
+
+        @Test
+        @DisplayName("Returns true for a legal activation")
+        void trueForLegalActivation() {
+            Card card = createArtifactWithTapAbility("Lux Cannon");
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isTrue();
+            assertThat(perm.isTapped()).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false when the permanent is tapped")
+        void falseWhenTapped() {
+            Card card = createArtifactWithTapAbility("Lux Cannon");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.tap();
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false when blocked by Pithing Needle")
+        void falseWhenBlockedByPithingNeedle() {
+            Card card = createArtifactWithTapAbility("Lux Cannon");
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            addPithingNeedle(player2Id, "Lux Cannon");
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isFalse();
+        }
+
+        @Test
+        @DisplayName("Checks mana affordability against the provided pool, not the player's actual pool")
+        void checksManaAgainstProvidedPool() {
+            Card card = createArtifactWithManaAbility("{2}");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            // Player's actual pool is empty
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+            when(gameQueryService.isArtifact(perm)).thenReturn(true);
+
+            ManaPool hypotheticalPool = new ManaPool();
+            hypotheticalPool.add(ManaColor.COLORLESS, 2);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0, hypotheticalPool)).isTrue();
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isFalse();
+            // The query never spends from the provided pool
+            assertThat(hypotheticalPool.get(ManaColor.COLORLESS)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("Returns false for an invalid ability index")
+        void falseForInvalidAbilityIndex() {
+            Card card = createArtifactWithTapAbility("Lux Cannon");
+            Permanent perm = addReadyPermanent(player1Id, card);
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 99,
+                    gameData.playerManaPools.get(player1Id))).isFalse();
+        }
+
+        @Test
+        @DisplayName("Loyalty query never pays the loyalty cost")
+        void loyaltyQueryDoesNotPay() {
+            Card card = createPlaneswalkerCard("Koth of the Hammer");
+            Permanent perm = addReadyPermanent(player1Id, card);
+            perm.setCounterCount(CounterType.LOYALTY, 3);
+
+            gameData.activePlayerId = player1Id;
+            gameData.currentStep = TurnStep.PRECOMBAT_MAIN;
+
+            when(gameQueryService.computeStaticBonus(gameData, perm)).thenReturn(EMPTY_BONUS);
+            when(gameQueryService.hasAuraWithEffect(eq(gameData), eq(perm), eq(EnchantedCreatureCantActivateAbilitiesEffect.class)))
+                    .thenReturn(false);
+
+            assertThat(service.canActivateAbility(gameData, player1Id, perm, 0,
+                    gameData.playerManaPools.get(player1Id))).isTrue();
+            assertThat(perm.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+            assertThat(perm.getLoyaltyActivationsThisTurn()).isEqualTo(0);
         }
     }
 

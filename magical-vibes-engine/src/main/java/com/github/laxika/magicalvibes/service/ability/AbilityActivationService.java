@@ -619,17 +619,7 @@ public class AbilityActivationService {
         }
 
         Permanent permanent = battlefield.get(permanentIndex);
-        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
-        List<ActivatedAbility> abilities;
-        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
-            // Creature has lost all its own abilities; only static-granted abilities remain
-            abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
-        } else {
-            abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
-            abilities.addAll(staticBonus.grantedActivatedAbilities());
-        }
-        abilities.addAll(permanent.getTemporaryActivatedAbilities());
-        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
+        List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, permanent);
         if (abilities.isEmpty()) {
             throw new IllegalStateException("Permanent has no activated ability");
         }
@@ -638,35 +628,15 @@ public class AbilityActivationService {
         ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
         List<CardEffect> abilityEffects = ability.getEffects();
         String abilityCost = ability.getManaCost();
-        boolean isTapAbility = ability.isRequiresTap();
 
-        // Pithing Needle check: block non-mana activated abilities of the chosen name
-        validateNotBlockedByPithingNeedle(gameData, permanent, ability);
+        // Compute targeting tax from effects like Kopala, Warden of Waves (feeds the mana affordability check)
+        int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
 
-        // Arrest check: block all activated abilities of enchanted creature
-        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
-            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
-        }
-        validateNotBlockedByStaticAbilityLock(gameData, permanent);
-
-        // Validate activation timing restrictions (e.g. "Activate only during your upkeep")
-        validateTimingRestrictions(gameData, playerId, permanent, ability);
-        validateActivationLimitPerTurn(gameData, permanent, ability, effectiveIndex);
-
-        // Validate loyalty ability restrictions
-        if (ability.getLoyaltyCost() != null) {
-            validateAndPayLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
-        }
-
-        // Validate tap requirement
-        if (isTapAbility) {
-            if (permanent.isTapped()) {
-                throw new IllegalStateException("Permanent is already tapped");
-            }
-            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
-                throw new IllegalStateException("Creature has summoning sickness");
-            }
-        }
+        // All state-based legality checks, shared with the AI's dry-run query. Nothing is mutated
+        // until every check (including targeting below) has passed, so an illegal activation
+        // rewinds cleanly with no cost paid (CR 602.2b/601.2c).
+        validateActivationLegality(gameData, playerId, permanent, ability, effectiveIndex, effectiveXValue,
+                gameData.playerManaPools.get(playerId), targetingTax);
 
         // Validate spell target for abilities that counter spells
         if (ability.isNeedsSpellTarget()) {
@@ -690,47 +660,17 @@ public class AbilityActivationService {
             targetLegalityService.validateActivatedAbilityTargeting(
                     gameData, playerId, ability, abilityEffects, targetId, targetZone, permanent.getCard(), effectiveXValue);
         }
-        for (PermanentChoiceCostHandler handler : permanentChoiceCosts) {
-            handler.validateCanPay(gameData, playerId);
+
+        // Pay the loyalty cost only now that full legality, including targets, is confirmed
+        // (CR 601.2: an illegal activation rewinds with no cost paid)
+        if (ability.getLoyaltyCost() != null) {
+            payLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
         }
 
-        // Validate pay-life cost
         Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
                 .filter(PayLifeCost.class::isInstance)
                 .map(PayLifeCost.class::cast)
                 .findFirst();
-        if (payLifeCost.isPresent()) {
-            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            if (life < payLifeCost.get().amount()) {
-                throw new IllegalStateException("Not enough life to pay (need " + payLifeCost.get().amount() + ", have " + life + ")");
-            }
-        }
-
-        // Compute targeting tax from effects like Kopala, Warden of Waves
-        int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
-
-        // Pre-validate mana cost before entering interactive cost choices (CR 602.2b)
-        if (abilityCost != null) {
-            ManaCost preCheck = new ManaCost(abilityCost);
-            ManaPool pool = gameData.playerManaPools.get(playerId);
-            boolean artifactCtx = gameQueryService.isArtifact(permanent);
-            boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            if (preCheck.hasX()) {
-                if (!preCheck.canPay(pool, effectiveXValue + targetingTax, artifactCtx, myrCtx)) {
-                    throw new IllegalStateException("Not enough mana to activate ability");
-                }
-            } else {
-                if (!preCheck.canPay(pool, targetingTax, artifactCtx, myrCtx)) {
-                    throw new IllegalStateException("Not enough mana to activate ability");
-                }
-            }
-        } else if (targetingTax > 0) {
-            // No base mana cost but targeting tax applies — validate player can pay the tax
-            ManaPool pool = gameData.playerManaPools.get(playerId);
-            if (pool.getTotal() < targetingTax) {
-                throw new IllegalStateException("Not enough mana to activate ability");
-            }
-        }
 
         ExileCardFromGraveyardCost exileGraveyardCost = abilityEffects.stream()
                 .filter(ExileCardFromGraveyardCost.class::isInstance)
@@ -740,11 +680,6 @@ public class AbilityActivationService {
         if (exileGraveyardCost != null) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             List<Integer> validExileIndices = collectGraveyardIndicesForType(graveyard, exileGraveyardCost.requiredType());
-            if (validExileIndices.isEmpty()) {
-                String typeName = exileGraveyardCost.requiredType() != null
-                        ? exileGraveyardCost.requiredType().name().toLowerCase() + " " : "";
-                throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
-            }
             if (exileGraveyardCardIndex == null) {
                 beginGraveyardExileCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
                         exileGraveyardCost.requiredType(), validExileIndices);
@@ -767,10 +702,6 @@ public class AbilityActivationService {
         if (discardCardTypeCost != null) {
             List<Card> hand = gameData.playerHands.get(playerId);
             List<Integer> validDiscardIndices = collectDiscardIndices(hand, discardCardTypeCost);
-            if (validDiscardIndices.isEmpty()) {
-                String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
-                throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
-            }
             if (discardCardIndex == null) {
                 beginDiscardCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
                         discardCardTypeCost.label(), validDiscardIndices);
@@ -778,66 +709,25 @@ public class AbilityActivationService {
             }
         }
 
-        // Validate and pay remove-counter cost
         Optional<RemoveCounterFromSourceCost> removeCounterCost = abilityEffects.stream()
                 .filter(e -> e instanceof RemoveCounterFromSourceCost)
                 .map(e -> (RemoveCounterFromSourceCost) e)
                 .findFirst();
-        if (removeCounterCost.isPresent()) {
-            int required = removeCounterCost.get().count();
-            CounterType ct = removeCounterCost.get().counterType();
-            int available = switch (ct) {
-                case SILVER -> 0; // Silver counters are on exiled cards, not permanents
-                case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
-                default -> permanent.getCounterCount(ct);
-            };
-            if (available < required) {
-                throw new IllegalStateException("Not enough counters to remove (need " + required + ", have " + available + ")");
-            }
-        }
 
-        // Validate mill-controller cost (e.g. Deranged Assistant: "{T}, Mill a card: Add {C}.")
         Optional<MillControllerCost> millControllerCost = abilityEffects.stream()
                 .filter(e -> e instanceof MillControllerCost)
                 .map(e -> (MillControllerCost) e)
                 .findFirst();
-        if (millControllerCost.isPresent()) {
-            int required = millControllerCost.get().count();
-            List<Card> deck = gameData.playerDecks.get(playerId);
-            if (deck == null || deck.size() < required) {
-                throw new IllegalStateException("Not enough cards in library to mill (need " + required + ")");
-            }
-        }
 
-        // Validate and pay remove-charge-counter cost
         Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
                 .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
                 .map(e -> (RemoveChargeCountersFromSourceCost) e)
                 .findFirst();
-        if (removeChargeCost.isPresent()) {
-            int required = removeChargeCost.get().count();
-            if (permanent.getCounterCount(CounterType.CHARGE) < required) {
-                throw new IllegalStateException("Not enough charge counters (need " + required + ", have " + permanent.getCounterCount(CounterType.CHARGE) + ")");
-            }
-        }
 
-        // Validate X value for Prototype Portal-style abilities:
-        // Per ruling: "You may not activate the second ability if no card has been exiled with Prototype Portal."
-        // X is defined by the exiled card's mana value (not chosen freely), so no imprint = can't activate.
-        CreateTokenCopyOfImprintedCardEffect imprintedCopyEffect = abilityEffects.stream()
-                .filter(CreateTokenCopyOfImprintedCardEffect.class::isInstance)
-                .map(CreateTokenCopyOfImprintedCardEffect.class::cast)
-                .findFirst().orElse(null);
-        if (imprintedCopyEffect != null && !imprintedCopyEffect.exileAtEndStep()) {
-            Card imprintedCard = permanent.getCard().getImprintedCard();
-            if (imprintedCard == null) {
-                throw new IllegalStateException("No card has been exiled with " + permanent.getCard().getName());
-            }
-            int requiredX = imprintedCard.getManaValue();
-            if (effectiveXValue != requiredX) {
-                throw new IllegalStateException("X must equal the mana value of the imprinted card (" + requiredX + ")");
-            }
-        }
+        // Validate X for Prototype Portal-style abilities here rather than in the shared legality
+        // check alone: when the same ability's exile cost just imprinted a card (re-entry after the
+        // graveyard choice), the imprint only exists at this point.
+        validateImprintedCopyXValue(permanent, abilityEffects, effectiveXValue);
 
         // Pay mana cost (including targeting tax if applicable)
         if (abilityCost != null) {
@@ -1090,10 +980,17 @@ public class AbilityActivationService {
                 finalXValue, context.targetId(), context.targetZone(), nonTargeting, effectiveIndex);
     }
 
-    private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {
+    /**
+     * Returns the complete list of activated abilities currently available on a permanent: its own
+     * printed abilities (unless it has lost all abilities), abilities granted by static effects,
+     * and temporary/until-next-turn abilities. The list order defines the {@code abilityIndex}
+     * used by {@code activateAbility}.
+     */
+    public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
         GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
         List<ActivatedAbility> abilities;
         if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            // Permanent has lost all its own abilities; only static-granted abilities remain
             abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
         } else {
             abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
@@ -1101,11 +998,216 @@ public class AbilityActivationService {
         }
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
         abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
+        return abilities;
+    }
+
+    private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {
+        List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, permanent);
         int idx = abilityIndex != null ? abilityIndex : 0;
         if (idx < 0 || idx >= abilities.size()) {
             throw new IllegalStateException("Invalid ability index");
         }
         return abilities.get(idx);
+    }
+
+    /**
+     * Pure legality query: could {@code playerId} legally activate the ability at
+     * {@code abilityIndex} on {@code permanent} right now, disregarding target choice?
+     * X is assumed to be 0. Mana affordability is checked against {@code manaPool}, which may be
+     * hypothetical (the AI passes the pool of mana it could produce). Never mutates game state.
+     */
+    public boolean canActivateAbility(GameData gameData, UUID playerId, Permanent permanent,
+                                      int abilityIndex, ManaPool manaPool) {
+        try {
+            ActivatedAbility ability = resolveAbility(gameData, permanent, abilityIndex);
+            validateActivationLegality(gameData, playerId, permanent, ability, abilityIndex, 0, manaPool, 0);
+            return true;
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Runs every state-based (target-independent) legality check for activating {@code ability},
+     * throwing {@link IllegalStateException} on the first violated rule and mutating nothing.
+     * This is the single source of truth for activation legality: {@code activateAbilityInternal}
+     * calls it before paying any cost, and AI players query it via {@link #canActivateAbility}.
+     * Spell-target and target legality are validated separately where the chosen targets are known.
+     *
+     * @param manaPool              pool to check mana affordability against (may be hypothetical)
+     * @param additionalGenericCost extra generic mana required, e.g. targeting tax; 0 when unknown
+     */
+    public void validateActivationLegality(GameData gameData, UUID playerId, Permanent permanent,
+                                           ActivatedAbility ability, int abilityIndex, int xValue,
+                                           ManaPool manaPool, int additionalGenericCost) {
+        List<CardEffect> abilityEffects = ability.getEffects();
+
+        // Pithing Needle check: block non-mana activated abilities of the chosen name
+        validateNotBlockedByPithingNeedle(gameData, permanent, ability);
+
+        // Arrest check: block all activated abilities of enchanted creature
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
+            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
+        }
+        validateNotBlockedByStaticAbilityLock(gameData, permanent);
+
+        // Activation timing restrictions (e.g. "Activate only during your upkeep")
+        validateTimingRestrictions(gameData, playerId, permanent, ability);
+        validateActivationLimitPerTurn(gameData, permanent, ability, abilityIndex);
+
+        // Loyalty ability restrictions (the cost itself is paid after target legality is confirmed)
+        if (ability.getLoyaltyCost() != null) {
+            validateLoyaltyCost(gameData, playerId, permanent, ability, xValue);
+        }
+
+        // Tap requirement
+        if (ability.isRequiresTap()) {
+            if (permanent.isTapped()) {
+                throw new IllegalStateException("Permanent is already tapped");
+            }
+            if (permanent.isSummoningSick() && gameQueryService.isCreature(gameData, permanent) && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
+                throw new IllegalStateException("Creature has summoning sickness");
+            }
+        }
+
+        // Permanent-choice costs (sacrifice, tap others, crew, ...) need enough valid choices
+        UUID sourceId = permanent.getId();
+        for (CardEffect effect : abilityEffects) {
+            PermanentChoiceCostHandler handler = toPermanentChoiceCostHandler(effect, sourceId, xValue);
+            if (handler != null) {
+                handler.validateCanPay(gameData, playerId);
+            }
+        }
+
+        // Pay-life cost
+        Optional<PayLifeCost> payLifeCost = abilityEffects.stream()
+                .filter(PayLifeCost.class::isInstance)
+                .map(PayLifeCost.class::cast)
+                .findFirst();
+        if (payLifeCost.isPresent()) {
+            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
+            if (life < payLifeCost.get().amount()) {
+                throw new IllegalStateException("Not enough life to pay (need " + payLifeCost.get().amount() + ", have " + life + ")");
+            }
+        }
+
+        // Mana affordability (CR 602.2b — checked before entering interactive cost choices)
+        String abilityCost = ability.getManaCost();
+        if (abilityCost != null) {
+            ManaCost preCheck = new ManaCost(abilityCost);
+            boolean artifactCtx = gameQueryService.isArtifact(permanent);
+            boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
+            if (preCheck.hasX()) {
+                if (!preCheck.canPay(manaPool, xValue + additionalGenericCost, artifactCtx, myrCtx)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+            } else {
+                if (!preCheck.canPay(manaPool, additionalGenericCost, artifactCtx, myrCtx)) {
+                    throw new IllegalStateException("Not enough mana to activate ability");
+                }
+            }
+        } else if (additionalGenericCost > 0) {
+            // No base mana cost but targeting tax applies — validate player can pay the tax
+            if (manaPool.getTotal() < additionalGenericCost) {
+                throw new IllegalStateException("Not enough mana to activate ability");
+            }
+        }
+
+        // Exile-from-graveyard cost needs at least one valid card
+        ExileCardFromGraveyardCost exileGraveyardCost = abilityEffects.stream()
+                .filter(ExileCardFromGraveyardCost.class::isInstance)
+                .map(ExileCardFromGraveyardCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (exileGraveyardCost != null
+                && collectGraveyardIndicesForType(gameData.playerGraveyards.get(playerId), exileGraveyardCost.requiredType()).isEmpty()) {
+            String typeName = exileGraveyardCost.requiredType() != null
+                    ? exileGraveyardCost.requiredType().name().toLowerCase() + " " : "";
+            throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
+        }
+
+        // Discard cost needs at least one valid card in hand
+        DiscardCardTypeCost discardCardTypeCost = abilityEffects.stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .map(DiscardCardTypeCost.class::cast)
+                .findFirst()
+                .orElse(null);
+        if (discardCardTypeCost != null
+                && collectDiscardIndices(gameData.playerHands.get(playerId), discardCardTypeCost).isEmpty()) {
+            String costLabel = discardCardTypeCost.label() != null ? discardCardTypeCost.label() + " " : "";
+            throw new IllegalStateException("Must discard a " + costLabel + "card to activate ability");
+        }
+
+        // Remove-counter cost availability
+        Optional<RemoveCounterFromSourceCost> removeCounterCost = abilityEffects.stream()
+                .filter(e -> e instanceof RemoveCounterFromSourceCost)
+                .map(e -> (RemoveCounterFromSourceCost) e)
+                .findFirst();
+        if (removeCounterCost.isPresent()) {
+            int required = removeCounterCost.get().count();
+            CounterType ct = removeCounterCost.get().counterType();
+            int available = switch (ct) {
+                case SILVER -> 0; // Silver counters are on exiled cards, not permanents
+                case ANY -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
+                default -> permanent.getCounterCount(ct);
+            };
+            if (available < required) {
+                throw new IllegalStateException("Not enough counters to remove (need " + required + ", have " + available + ")");
+            }
+        }
+
+        // Mill-controller cost (e.g. Deranged Assistant: "{T}, Mill a card: Add {C}.")
+        Optional<MillControllerCost> millControllerCost = abilityEffects.stream()
+                .filter(e -> e instanceof MillControllerCost)
+                .map(e -> (MillControllerCost) e)
+                .findFirst();
+        if (millControllerCost.isPresent()) {
+            int required = millControllerCost.get().count();
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck == null || deck.size() < required) {
+                throw new IllegalStateException("Not enough cards in library to mill (need " + required + ")");
+            }
+        }
+
+        // Remove-charge-counter cost availability
+        Optional<RemoveChargeCountersFromSourceCost> removeChargeCost = abilityEffects.stream()
+                .filter(e -> e instanceof RemoveChargeCountersFromSourceCost)
+                .map(e -> (RemoveChargeCountersFromSourceCost) e)
+                .findFirst();
+        if (removeChargeCost.isPresent()) {
+            int required = removeChargeCost.get().count();
+            if (permanent.getCounterCount(CounterType.CHARGE) < required) {
+                throw new IllegalStateException("Not enough charge counters (need " + required + ", have " + permanent.getCounterCount(CounterType.CHARGE) + ")");
+            }
+        }
+
+        // Imprinted-copy X requirement — unless this same ability's exile cost sets the imprint
+        // during payment, in which case the check runs after that cost (validateImprintedCopyXValue)
+        if (exileGraveyardCost == null || !exileGraveyardCost.imprintOnSource()) {
+            validateImprintedCopyXValue(permanent, abilityEffects, xValue);
+        }
+    }
+
+    /**
+     * Validates X for Prototype Portal-style abilities. Per ruling: "You may not activate the
+     * second ability if no card has been exiled with Prototype Portal." X is defined by the exiled
+     * card's mana value (not chosen freely), so no imprint = can't activate.
+     */
+    private void validateImprintedCopyXValue(Permanent permanent, List<CardEffect> abilityEffects, int effectiveXValue) {
+        CreateTokenCopyOfImprintedCardEffect imprintedCopyEffect = abilityEffects.stream()
+                .filter(CreateTokenCopyOfImprintedCardEffect.class::isInstance)
+                .map(CreateTokenCopyOfImprintedCardEffect.class::cast)
+                .findFirst().orElse(null);
+        if (imprintedCopyEffect != null && !imprintedCopyEffect.exileAtEndStep()) {
+            Card imprintedCard = permanent.getCard().getImprintedCard();
+            if (imprintedCard == null) {
+                throw new IllegalStateException("No card has been exiled with " + permanent.getCard().getName());
+            }
+            int requiredX = imprintedCard.getManaValue();
+            if (effectiveXValue != requiredX) {
+                throw new IllegalStateException("X must equal the mana value of the imprinted card (" + requiredX + ")");
+            }
+        }
     }
 
     private int effectiveAbilityIndex(Integer abilityIndex) {
@@ -1236,7 +1338,11 @@ public class AbilityActivationService {
         }
     }
 
-    private void validateAndPayLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
+    /**
+     * Validates all loyalty-ability activation rules without paying anything, returning the
+     * (possibly negative) loyalty delta the activation will apply.
+     */
+    private int validateLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
         // Sorcery-speed timing: must be active player, main phase, stack empty
         if (!playerId.equals(gameData.activePlayerId)) {
             throw new IllegalStateException("Loyalty abilities can only be activated on your turn");
@@ -1270,8 +1376,11 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Not enough loyalty counters");
             }
         }
+        return loyaltyCost;
+    }
 
-        // Pay loyalty cost
+    private void payLoyaltyCost(GameData gameData, UUID playerId, Permanent permanent, ActivatedAbility ability, int effectiveXValue) {
+        int loyaltyCost = validateLoyaltyCost(gameData, playerId, permanent, ability, effectiveXValue);
         permanent.setCounterCount(CounterType.LOYALTY, permanent.getCounterCount(CounterType.LOYALTY) + loyaltyCost);
         permanent.setLoyaltyActivationsThisTurn(permanent.getLoyaltyActivationsThisTurn() + 1);
     }
@@ -1532,7 +1641,11 @@ public class AbilityActivationService {
         return isManaAbility(ability);
     }
 
-    private boolean isManaAbility(ActivatedAbility ability) {
+    /**
+     * Returns true if an activated ability is a mana ability per CR 605.1a: no target, no spell
+     * target, no loyalty cost, and at least one mana-producing (non-cost) effect.
+     */
+    public static boolean isManaAbility(ActivatedAbility ability) {
         if (ability.isNeedsTarget() || ability.isNeedsSpellTarget() || ability.getLoyaltyCost() != null) {
             return false;
         }

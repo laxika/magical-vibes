@@ -307,6 +307,16 @@ public class AiManaManager {
 
     void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action,
                          boolean skipChoiceSources) {
+        tapLandsForCost(gameData, aiPlayerId, manaCostStr, costModifier, action, skipChoiceSources, null);
+    }
+
+    /**
+     * @param excludePermanentId a permanent that must never be used as a mana source, or null —
+     *                           e.g. the source of a {T}-ability whose mana cost is being paid
+     *                           (tapping it for mana would make its own ability unactivatable)
+     */
+    void tapLandsForCost(GameData gameData, UUID aiPlayerId, String manaCostStr, int costModifier, ManaTapAction action,
+                         boolean skipChoiceSources, UUID excludePermanentId) {
         ManaCost cost = new ManaCost(manaCostStr);
         ManaPool currentPool = gameData.playerManaPools.get(aiPlayerId);
 
@@ -324,6 +334,13 @@ public class AiManaManager {
         // input for something else (e.g. attacker declaration during attack tax payment).
         Class<?> initialInteractionKind = interactionKind(gameData);
         Set<Permanent> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+        if (excludePermanentId != null) {
+            for (Permanent p : battlefield) {
+                if (p.getId().equals(excludePermanentId)) {
+                    visited.add(p);
+                }
+            }
+        }
 
         while (true) {
             int index = pickBestTapIndex(gameData, aiPlayerId, battlefield, cost, currentPool,

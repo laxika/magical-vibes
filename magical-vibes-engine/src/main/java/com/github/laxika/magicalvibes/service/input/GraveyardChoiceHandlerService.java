@@ -274,6 +274,18 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
+        // Resume the paused spell/ability resolution that began this choice, so effects after
+        // the graveyard-return effect run now. Left dangling, the resumption state would fire
+        // spuriously from a later, unrelated interaction completion (e.g. Beacon of Unrest
+        // getting shuffled into the library a second time).
+        if (gameData.pendingEffectResolutionEntry != null && !gameData.interaction.isAwaitingInput()) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         turnProgressionService.resolveAutoPass(gameData);
     }
 

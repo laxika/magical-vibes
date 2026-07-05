@@ -22,6 +22,7 @@ public final class AiInteractionStrategies {
         register(new LibraryReorderAiStrategy());
         register(new MayAbilityChoiceAiStrategy());
         register(new KnowledgePoolCastChoiceAiStrategy());
+        register(new ImprovisationCapstoneCastChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
         register(new MultiZoneExileChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());

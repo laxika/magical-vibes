@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
@@ -29,6 +32,7 @@ import com.github.laxika.magicalvibes.networking.message.TapPermanentRequest;
 import com.github.laxika.magicalvibes.networking.message.XValueChosenRequest;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +51,7 @@ import java.util.UUID;
  * action is simply a no-op for the AI). The {@link Connection} parameter is accepted for call-site
  * symmetry with the broadcast pipeline but is unused here — the acting player is fixed.
  */
+@Slf4j
 public class AiGameActions {
 
     private final UUID gameId;
@@ -144,7 +149,9 @@ public class AiGameActions {
                         Boolean.TRUE.equals(request.fromGraveyard()), request.sacrificePermanentId(), request.phyrexianLifeCount(),
                         null, null, null, Boolean.TRUE.equals(request.kicked()));
             }
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // Illegal action is a no-op for the AI; logged so fuzz failures show the engine's reason
+            log.info("AI: engine rejected playCard (index={}) in game {}: {}", request.cardIndex(), gameId, e.getMessage());
         }
     }
 
@@ -153,8 +160,25 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.tapPermanent(gameData, aiPlayer, request.permanentIndex());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected tapPermanent (index={}) in game {}: {}", request.permanentIndex(), gameId, e.getMessage());
         }
+    }
+
+    /**
+     * Pure legality query — asks the engine whether the AI player could activate the given
+     * ability right now, with mana affordability measured against {@code manaPool} (typically
+     * the AI's virtual pool of producible mana). Mutates nothing and swallows nothing: the
+     * engine's answer is the AI's answer, so AI strategies share the engine's legality rules
+     * instead of re-implementing them.
+     */
+    public boolean canActivateAbility(GameData gameData, Permanent permanent, int abilityIndex, ManaPool manaPool) {
+        return gameService.canActivateAbility(gameData, aiPlayer.getId(), permanent, abilityIndex, manaPool);
+    }
+
+    /** Returns the activated abilities available on a permanent, in engine {@code abilityIndex} order. */
+    public List<ActivatedAbility> getEffectiveActivatedAbilities(GameData gameData, Permanent permanent) {
+        return gameService.getEffectiveActivatedAbilities(gameData, permanent);
     }
 
     public void handleActivateAbility(Connection connection, ActivateAbilityRequest request) {
@@ -163,7 +187,9 @@ public class AiGameActions {
         try {
             gameService.activateAbility(gameData, aiPlayer, request.permanentIndex(), request.abilityIndex(), request.xValue(),
                     request.targetId(), request.targetZone(), request.targetIds(), request.damageAssignments());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected activateAbility (permanentIndex={}, abilityIndex={}) in game {}: {}",
+                    request.permanentIndex(), request.abilityIndex(), gameId, e.getMessage());
         }
     }
 

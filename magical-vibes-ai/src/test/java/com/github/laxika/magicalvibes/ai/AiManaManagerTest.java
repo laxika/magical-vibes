@@ -927,6 +927,23 @@ class AiManaManagerTest {
         }
 
         @Test
+        @DisplayName("never taps the excluded permanent (a {T}-ability's own source)")
+        void excludedPermanentIsNeverTapped() {
+            Permanent source = addUntappedLand("Conqueror's Foothold", ManaColor.COLORLESS);
+            Permanent forest = addUntappedLand("Forest", ManaColor.GREEN);
+
+            AiManaManager.ManaTapAction action = (permanentIndex, abilityIndex) -> {
+                gd.playerManaPools.get(player1Id).add(ManaColor.GREEN, 1);
+            };
+
+            manager.tapLandsForCost(gd, player1Id, "{2}", 0, action, false, source.getId());
+
+            // Only the forest could be tapped; the excluded source is skipped even though
+            // the cost is not fully met
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);
+        }
+
+        @Test
         @DisplayName("skips tapped permanents")
         void skipsTappedPermanents() {
             addTappedLand(ManaColor.GREEN);

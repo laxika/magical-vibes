@@ -1898,13 +1898,22 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         candidates.sort(Comparator.comparingDouble(AbilityCandidate::value).reversed());
         AbilityCandidate best = candidates.getFirst();
 
-        // Tap mana for the ability cost
+        // Tap mana for the ability cost; a {T}-ability's own source must not be tapped for mana
         if (best.ability().getManaCost() != null) {
             manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
-                    best.ability().getManaCost(), 0, manaTapAction());
+                    best.ability().getManaCost(), 0, manaTapAction(), false,
+                    best.ability().isRequiresTap() ? best.permanent().getId() : null);
             if (gameData.interaction.isAwaitingInput()) {
                 return true; // Mana ability triggered a pending choice
             }
+        }
+
+        // Re-verify with the engine against the ACTUAL pool: tapping can under-deliver
+        // relative to the virtual-pool plan (e.g. the {T}-ability's own source was the
+        // only untapped producer left), and a doomed request is rejected silently.
+        if (!canActivateAbility(gameData, best.permanent(), best.ability(), best.abilityIndex(),
+                gameData.playerManaPools.get(aiPlayer.getId()))) {
+            return false;
         }
 
         log.info("AI (Hard): Activating ability {} on {} (value={}) in game {}",
