@@ -118,7 +118,7 @@ All paths relative to `cards/`.
 | Mill half library (spell) | `t/Traumatize.java` | MillHalfLibraryEffect(false) |
 | Mill half library (ON_ATTACK) | `f/FleetSwallower.java` | ON_ATTACK MillHalfLibraryEffect(true) — creature attacks, target player mills half library rounded up |
 | Shuffle-back spell | `b/BeaconOfDestruction.java` | Effect + ShuffleIntoLibraryEffect |
-| X draw (controller) | `m/MindSpring.java` | DrawXCardsEffect — non-targeting X draw for controller |
+| X draw (controller) | `m/MindSpring.java` | DrawCardEffect(new XValue()) — non-targeting X draw for controller |
 | X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealXDamageToAnyTargetEffect(true) + ShuffleIntoLibraryEffect |
 | X tokens + shuffle | `w/WhiteSunsZenith.java` | CreateXCreatureTokenEffect + ShuffleIntoLibraryEffect |
 | Fight (two-target) | `p/PreyUpon.java` | FirstTargetFightsSecondTargetEffect, multi-target: creature you control + creature you don't control |

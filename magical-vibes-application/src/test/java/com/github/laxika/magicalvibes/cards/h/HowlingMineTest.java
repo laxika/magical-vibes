@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -34,7 +35,7 @@ class HowlingMineTest extends BaseCardTest {
                 .isInstanceOf(DrawCardForTargetPlayerEffect.class);
         DrawCardForTargetPlayerEffect effect =
                 (DrawCardForTargetPlayerEffect) card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.requireSourceUntapped()).isTrue();
     }
 

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -45,7 +46,7 @@ class TheFlameOfKeldTest extends BaseCardTest {
         var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
         assertThat(effects).hasSize(1);
         assertThat(effects.getFirst()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) effects.getFirst()).amount()).isEqualTo(2);
+        assertThat(((DrawCardEffect) effects.getFirst()).amount()).isEqualTo(new Fixed(2));
     }
 
     @Test

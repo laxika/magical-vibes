@@ -75,7 +75,7 @@ class TeferiTimebenderTest extends BaseCardTest {
         assertThat(ability.getEffects().get(0)).isInstanceOf(GainLifeEffect.class);
         assertThat(((GainLifeEffect) ability.getEffects().get(0)).amount()).isEqualTo(new Fixed(2));
         assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().get(1)).amount()).isEqualTo(2);
+        assertThat(((DrawCardEffect) ability.getEffects().get(1)).amount()).isEqualTo(new Fixed(2));
     }
 
     @Test

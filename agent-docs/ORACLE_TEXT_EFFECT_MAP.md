@@ -115,9 +115,12 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "draw N cards" / "draw a card" | `DrawCardEffect(N)` | SPELL/trigger | |
-| "draw X cards" | `DrawXCardsEffect()` | SPELL | X-cost |
-| "draw a card for each creature card in your graveyard" | `DrawCardsPerCreatureCardInGraveyardEffect(1)` | SPELL | |
+| "draw X cards" | `DrawCardEffect(new XValue())` | SPELL | X-cost |
+| "draw a card for each creature you control" | `DrawCardEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER))` | trigger | Tishana |
+| "draw a card for each creature card in your graveyard" | `DrawCardEffect(new CardsInGraveyard(new CardTypePredicate(CREATURE), CountScope.CONTROLLER))` | SPELL | Grim Flowering |
+| "draw a card for each charge counter on [source]" | `DrawCardEffect(new CountersOnSource(CounterType.CHARGE))` | ability | Culling Dais; survives sacrifice via sourcePermanentSnapshot |
 | "target player draws N cards" | `DrawCardForTargetPlayerEffect(N)` | SPELL | |
+| "target player draws X cards" | `DrawCardForTargetPlayerEffect(new XValue(), false, true)` | SPELL | Blue Sun's Zenith |
 | "each player draws N cards" | `EachPlayerDrawsCardEffect(N)` | SPELL | |
 | "draw N cards, then discard M cards" | `DrawAndDiscardCardEffect(N, M)` | SPELL | Loot |
 | "discard N cards, then draw M cards" | `DiscardAndDrawCardEffect(N, M)` | SPELL | Rummage |

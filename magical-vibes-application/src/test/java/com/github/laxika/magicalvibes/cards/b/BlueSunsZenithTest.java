@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DrawXCardsForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -26,7 +27,8 @@ class BlueSunsZenithTest extends BaseCardTest {
         BlueSunsZenith card = new BlueSunsZenith();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawXCardsForTargetPlayerEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
+                .isEqualTo(new DrawCardForTargetPlayerEffect(new XValue(), false, true));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
     }
 

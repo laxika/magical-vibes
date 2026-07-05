@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
@@ -29,7 +30,7 @@ class ThinkTwiceTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
 
         DrawCardEffect draw = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(draw.amount()).isEqualTo(1);
+        assertThat(draw.amount()).isEqualTo(new Fixed(1));
     }
 
     @Test

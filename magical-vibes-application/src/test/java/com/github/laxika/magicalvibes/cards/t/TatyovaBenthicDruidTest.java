@@ -42,7 +42,7 @@ class TatyovaBenthicDruidTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(1))
                 .isInstanceOf(DrawCardEffect.class);
         assertThat(((DrawCardEffect) card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(1)).amount())
-                .isEqualTo(1);
+                .isEqualTo(new Fixed(1));
     }
 
     // ===== Triggers when controller plays a land =====

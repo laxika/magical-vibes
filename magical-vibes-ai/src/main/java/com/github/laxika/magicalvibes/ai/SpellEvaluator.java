@@ -369,7 +369,8 @@ public class SpellEvaluator {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
         if (effect instanceof DrawCardEffect draw) {
-            return draw.amount() * 6.0;
+            return amountEvaluationService.evaluate(gameData, draw.amount(),
+                    AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
         if (effect instanceof CreateTokenEffect token) {
             if (token.primaryType() == CardType.CREATURE) {
@@ -472,7 +473,8 @@ public class SpellEvaluator {
 
         // Draw
         if (effect instanceof DrawCardEffect draw) {
-            return draw.amount() * 6.0;
+            return amountEvaluationService.evaluate(gameData, draw.amount(),
+                    AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
 
         // Bounce

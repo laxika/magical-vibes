@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
@@ -844,18 +843,19 @@ class ActivatedAbilityExecutionServiceTest {
     class ChargeCounterSnapshotting {
 
         @Test
-        @DisplayName("DrawCardsEqualToChargeCountersOnSourceEffect snapshots counters as xValue")
-        void drawCardsSnapshotsChargeCounters() {
+        @DisplayName("DrawCardEffect(CountersOnSource) entry carries the source snapshot for post-sacrifice resolution")
+        void drawCardEntryCarriesSourcePermanentSnapshot() {
             Card card = createCard("Culling Dais", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             perm.setCounterCount(CounterType.CHARGE, 3);
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new DrawCardsEqualToChargeCountersOnSourceEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(),
+                    new DrawCardEffect(new CountersOnSource(CounterType.CHARGE)));
             ActivatedAbility ability = new ActivatedAbility(false, "{1}", effects, "{1}, Sacrifice: Draw cards.");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
-            assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(3);
+            assertThat(gameData.stack.getFirst().getSourcePermanentSnapshot()).isSameAs(perm);
             verify(permanentRemovalService).removePermanentToGraveyard(gameData, perm);
         }
 

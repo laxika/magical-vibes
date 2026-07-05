@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -36,7 +37,7 @@ class JayemdaeTomeTest extends BaseCardTest {
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
         DrawCardEffect effect = (DrawCardEffect) ability.getEffects().getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
     }
 
     // ===== Casting and resolving =====

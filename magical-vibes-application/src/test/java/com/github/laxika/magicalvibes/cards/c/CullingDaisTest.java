@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -46,7 +47,8 @@ class CullingDaisTest extends BaseCardTest {
         assertThat(ability1.getManaCost()).isEqualTo("{1}");
         assertThat(ability1.getEffects()).hasSize(2);
         assertThat(ability1.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability1.getEffects().get(1)).isInstanceOf(DrawCardsEqualToChargeCountersOnSourceEffect.class);
+        assertThat(ability1.getEffects().get(1))
+                .isEqualTo(new DrawCardEffect(new CountersOnSource(CounterType.CHARGE)));
     }
 
     // ===== Ability 0: Sacrifice creature to add charge counter =====

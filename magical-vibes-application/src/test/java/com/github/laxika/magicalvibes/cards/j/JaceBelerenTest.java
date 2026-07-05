@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,7 +57,7 @@ class JaceBelerenTest extends BaseCardTest {
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().getFirst()).isInstanceOf(DrawCardForTargetPlayerEffect.class);
         DrawCardForTargetPlayerEffect effect = (DrawCardForTargetPlayerEffect) ability.getEffects().getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.targetsPlayer()).isTrue();
     }
 

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -64,7 +65,7 @@ class TrigonOfThoughtTest extends BaseCardTest {
         assertThat(ability.getEffects())
                 .hasSize(2)
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof DrawCardEffect dc && dc.amount() == 1);
+                .anyMatch(e -> e instanceof DrawCardEffect dc && dc.amount().equals(new Fixed(1)));
     }
 
     // ===== Entering the battlefield with charge counters =====

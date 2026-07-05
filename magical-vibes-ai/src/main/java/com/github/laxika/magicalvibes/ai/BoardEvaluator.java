@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.List;
@@ -47,10 +49,12 @@ public class BoardEvaluator {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
 
     public BoardEvaluator(GameQueryService gameQueryService) {
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
         this.gameQueryService = gameQueryService;
+        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
     }
 
     /**
@@ -218,7 +222,7 @@ public class BoardEvaluator {
     public double creatureThreatScore(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
         double score = creatureScore(gameData, perm, controllerId, opponentId);
         score += lordBonus(gameData, perm, controllerId);
-        score += activatedAbilityThreat(perm);
+        score += activatedAbilityThreat(gameData, perm, controllerId);
         score += evasionContextBonus(gameData, perm, controllerId, opponentId);
         score += growthThreatBonus(perm);
         return score;
@@ -279,7 +283,7 @@ public class BoardEvaluator {
     /**
      * Bonus for creatures with dangerous activated abilities (damage, removal, card draw).
      */
-    private double activatedAbilityThreat(Permanent perm) {
+    private double activatedAbilityThreat(GameData gameData, Permanent perm, UUID controllerId) {
         double bonus = 0;
         for (ActivatedAbility ability : perm.getCard().getActivatedAbilities()) {
             for (CardEffect effect : ability.getEffects()) {
@@ -293,7 +297,9 @@ public class BoardEvaluator {
                 } else if (effect instanceof ExileTargetPermanentEffect) {
                     bonus += 9.0;
                 } else if (effect instanceof DrawCardEffect draw) {
-                    bonus += draw.amount() * 4.0;
+                    int drawAmount = amountEvaluationService.evaluate(gameData, draw.amount(),
+                            new AmountContext(controllerId, perm, 0, false));
+                    bonus += drawAmount * 4.0;
                 }
             }
         }

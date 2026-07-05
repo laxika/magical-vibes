@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -722,7 +723,7 @@ class SpellCastingServiceTest {
             assertThat(gd.stack.getLast().getEffectsToResolve()).hasSize(1);
             assertThat(gd.stack.getLast().getEffectsToResolve().get(0)).isInstanceOf(DrawCardEffect.class);
             DrawCardEffect effect = (DrawCardEffect) gd.stack.getLast().getEffectsToResolve().get(0);
-            assertThat(effect.amount()).isEqualTo(2);
+            assertThat(effect.amount()).isEqualTo(new Fixed(2));
         }
     }
 

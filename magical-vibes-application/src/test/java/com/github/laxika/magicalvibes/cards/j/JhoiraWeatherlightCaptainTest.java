@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -38,7 +39,7 @@ class JhoiraWeatherlightCaptainTest extends BaseCardTest {
         assertThat(trigger.resolvedEffects()).hasSize(1);
         assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
         DrawCardEffect drawEffect = (DrawCardEffect) trigger.resolvedEffects().getFirst();
-        assertThat(drawEffect.amount()).isEqualTo(1);
+        assertThat(drawEffect.amount()).isEqualTo(new Fixed(1));
     }
 
     // ===== Artifact spell triggers =====

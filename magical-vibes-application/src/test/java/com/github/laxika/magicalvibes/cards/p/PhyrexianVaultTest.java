@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -43,7 +44,7 @@ class PhyrexianVaultTest extends BaseCardTest {
         assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
 
         DrawCardEffect draw = (DrawCardEffect) ability.getEffects().get(1);
-        assertThat(draw.amount()).isEqualTo(1);
+        assertThat(draw.amount()).isEqualTo(new Fixed(1));
     }
 
     // ===== Casting and resolving =====

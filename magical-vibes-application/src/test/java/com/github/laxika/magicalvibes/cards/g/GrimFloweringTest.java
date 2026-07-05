@@ -1,9 +1,13 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsPerCreatureCardInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,10 +26,8 @@ class GrimFloweringTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DrawCardsPerCreatureCardInGraveyardEffect.class);
-        DrawCardsPerCreatureCardInGraveyardEffect effect =
-                (DrawCardsPerCreatureCardInGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cardsPerCreature()).isEqualTo(1);
+                .isEqualTo(new DrawCardEffect(
+                        new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
     }
 
     @Test

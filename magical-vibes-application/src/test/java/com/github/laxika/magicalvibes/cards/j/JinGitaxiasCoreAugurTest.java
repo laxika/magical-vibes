@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -32,7 +33,7 @@ class JinGitaxiasCoreAugurTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
                 .isInstanceOf(DrawCardEffect.class);
         DrawCardEffect draw = (DrawCardEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(draw.amount()).isEqualTo(7);
+        assertThat(draw.amount()).isEqualTo(new Fixed(7));
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())

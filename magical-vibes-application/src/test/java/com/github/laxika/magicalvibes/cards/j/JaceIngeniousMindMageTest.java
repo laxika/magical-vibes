@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -43,7 +44,7 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().getFirst()).amount()).isEqualTo(1);
+        assertThat(((DrawCardEffect) ability.getEffects().getFirst()).amount()).isEqualTo(new Fixed(1));
     }
 
     @Test

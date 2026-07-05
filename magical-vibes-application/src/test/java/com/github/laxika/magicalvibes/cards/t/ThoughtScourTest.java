@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -28,7 +29,7 @@ class ThoughtScourTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(MillTargetPlayerEffect.class);
         assertThat(((MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0)).count()).isEqualTo(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount()).isEqualTo(1);
+        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount()).isEqualTo(new Fixed(1));
     }
 
     // ===== Mill effect =====

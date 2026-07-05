@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +36,7 @@ class HarrowingJourneyTest extends BaseCardTest {
                 (DrawCardForTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0);
         TargetPlayerLosesLifeEffect lifeLossEffect =
                 (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(drawEffect.amount()).isEqualTo(3);
+        assertThat(drawEffect.amount()).isEqualTo(new Fixed(3));
         assertThat(lifeLossEffect.amount()).isEqualTo(3);
     }
 

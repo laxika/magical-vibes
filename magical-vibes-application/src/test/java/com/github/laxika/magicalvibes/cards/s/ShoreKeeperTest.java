@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,7 +33,7 @@ class ShoreKeeperTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
                 .isInstanceOf(DrawCardEffect.class);
         assertThat(((DrawCardEffect) card.getActivatedAbilities().getFirst().getEffects().get(1)).amount())
-                .isEqualTo(3);
+                .isEqualTo(new Fixed(3));
     }
 
     // ===== Activation =====

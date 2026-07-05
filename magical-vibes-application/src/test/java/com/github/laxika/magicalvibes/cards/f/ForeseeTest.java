@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -32,7 +33,7 @@ class ForeseeTest extends BaseCardTest {
         assertThat(scryEffect.count()).isEqualTo(4);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
         DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(drawEffect.amount()).isEqualTo(2);
+        assertThat(drawEffect.amount()).isEqualTo(new Fixed(2));
     }
 
     // ===== Casting =====

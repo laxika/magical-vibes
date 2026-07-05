@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -37,7 +38,7 @@ class PonderTest extends BaseCardTest {
         assertThat(mayEffect.wrapped()).isInstanceOf(ShuffleLibraryEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(DrawCardEffect.class);
         DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(drawEffect.amount()).isEqualTo(1);
+        assertThat(drawEffect.amount()).isEqualTo(new Fixed(1));
     }
 
     // ===== Casting =====

@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class ExileTargetPermanentAndReturnImmediatelyEffectHandler implements No
     private final PermanentRemovalService permanentRemovalService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final DrawService drawService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -71,7 +74,9 @@ public class ExileTargetPermanentAndReturnImmediatelyEffectHandler implements No
 
         // Apply bonus if the exiled permanent had the required subtype
         if (hadBonusSubtype && e.bonusEffect() instanceof DrawCardEffect drawEffect) {
-            for (int i = 0; i < drawEffect.amount(); i++) {
+            int drawAmount = amountEvaluationService.evaluate(gameData, drawEffect.amount(),
+                    AmountContext.forStackEntry(entry, null));
+            for (int i = 0; i < drawAmount; i++) {
                 drawService.resolveDrawCard(gameData, entry.getControllerId());
             }
             String drawLog = gameData.playerIdToName.get(entry.getControllerId())

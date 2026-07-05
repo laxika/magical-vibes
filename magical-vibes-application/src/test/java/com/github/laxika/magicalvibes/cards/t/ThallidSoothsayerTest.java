@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,7 +41,7 @@ class ThallidSoothsayerTest extends BaseCardTest {
         assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
 
         DrawCardEffect draw = (DrawCardEffect) ability.getEffects().get(1);
-        assertThat(draw.amount()).isEqualTo(1);
+        assertThat(draw.amount()).isEqualTo(new Fixed(1));
     }
 
     // ===== Activation: sacrificing a creature and drawing =====

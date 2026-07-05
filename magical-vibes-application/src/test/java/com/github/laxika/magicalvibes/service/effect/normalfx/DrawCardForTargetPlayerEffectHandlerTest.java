@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -75,5 +76,29 @@ class DrawCardForTargetPlayerEffectHandlerTest extends AbstractPlayerInteraction
                 resolveEffect(gd, entry, effect);
 
                 verify(drawService, times(1)).resolveDrawCard(gd, player2Id);
+            }
+
+            @Test
+            @DisplayName("Target player draws X cards based on the entry's xValue")
+            void targetPlayerDrawsXCards() {
+                Card card = createCard("Blue Sun's Zenith");
+                DrawCardForTargetPlayerEffect effect = new DrawCardForTargetPlayerEffect(new XValue(), false, true);
+                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 4, player2Id);
+
+                resolveEffect(gd, entry, effect);
+
+                verify(drawService, times(4)).resolveDrawCard(gd, player2Id);
+            }
+
+            @Test
+            @DisplayName("Target player draws nothing when X is 0")
+            void targetPlayerDrawsNothingWhenXIsZero() {
+                Card card = createCard("Blue Sun's Zenith");
+                DrawCardForTargetPlayerEffect effect = new DrawCardForTargetPlayerEffect(new XValue(), false, true);
+                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 0, player2Id);
+
+                resolveEffect(gd, entry, effect);
+
+                verify(drawService, never()).resolveDrawCard(any(), any());
             }
 }

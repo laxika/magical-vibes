@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -26,7 +27,7 @@ class JacesIngenuityTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DrawCardEffect.class);
         DrawCardEffect effect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(3);
+        assertThat(effect.amount()).isEqualTo(new Fixed(3));
     }
 
     // ===== Casting =====

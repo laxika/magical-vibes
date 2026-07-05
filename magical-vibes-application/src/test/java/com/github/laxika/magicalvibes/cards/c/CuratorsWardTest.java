@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shatter;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -54,7 +55,7 @@ class CuratorsWardTest extends BaseCardTest {
         assertThat(trigger.permanentFilter()).isInstanceOf(CardIsHistoricPredicate.class);
         assertThat(trigger.resolvedEffects()).hasSize(1);
         assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) trigger.resolvedEffects().getFirst()).amount()).isEqualTo(2);
+        assertThat(((DrawCardEffect) trigger.resolvedEffects().getFirst()).amount()).isEqualTo(new Fixed(2));
     }
 
     // ===== Hexproof grant =====

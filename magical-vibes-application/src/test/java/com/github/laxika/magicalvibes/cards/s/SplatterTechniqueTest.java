@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.e.EnormousBaloth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -36,7 +37,7 @@ class SplatterTechniqueTest extends BaseCardTest {
         assertThat(effect.options()).hasSize(2);
         assertThat(effect.options().get(0).effect()).isInstanceOf(DrawCardEffect.class);
         assertThat(effect.options().get(1).effect()).isInstanceOf(MassDamageEffect.class);
-        assertThat(((DrawCardEffect) effect.options().get(0).effect()).amount()).isEqualTo(4);
+        assertThat(((DrawCardEffect) effect.options().get(0).effect()).amount()).isEqualTo(new Fixed(4));
     }
 
     @Nested

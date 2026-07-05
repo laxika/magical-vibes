@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DireFleetCaptain;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -38,7 +39,7 @@ class SirensRuseTest extends BaseCardTest {
                 (ExileTargetPermanentAndReturnImmediatelyEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.bonusSubtype()).isEqualTo(CardSubtype.PIRATE);
         assertThat(effect.bonusEffect()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) effect.bonusEffect()).amount()).isEqualTo(1);
+        assertThat(((DrawCardEffect) effect.bonusEffect()).amount()).isEqualTo(new Fixed(1));
     }
 
     @Test

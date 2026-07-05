@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -31,7 +32,7 @@ class PiratesPrizeTest extends BaseCardTest {
                 .hasSize(2)
                 .satisfies(effects -> {
                     assertThat(effects.get(0)).isInstanceOf(DrawCardEffect.class);
-                    assertThat(((DrawCardEffect) effects.get(0)).amount()).isEqualTo(2);
+                    assertThat(((DrawCardEffect) effects.get(0)).amount()).isEqualTo(new Fixed(2));
                     assertThat(effects.get(1)).isInstanceOf(CreateTokenEffect.class);
                 });
     }

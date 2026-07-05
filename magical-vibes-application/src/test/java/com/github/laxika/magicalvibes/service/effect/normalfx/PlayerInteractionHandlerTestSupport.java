@@ -60,6 +60,11 @@ final class PlayerInteractionHandlerTestSupport {
             deps.put(PermanentRemovalService.class, permanentRemovalService);
             deps.put(GraveyardService.class, graveyardService);
             deps.put(InteractionHandlerRegistry.class, interactionHandlerRegistry);
+            // Real amount evaluator on top of the mocked collaborators — Fixed amounts
+            // evaluate without touching any mock.
+            deps.put(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class,
+                    new com.github.laxika.magicalvibes.service.effect.AmountEvaluationService(
+                            predicateEvaluationService, gameQueryService));
 
             Constructor<?> chosen = null;
             Object[] chosenArgs = null;

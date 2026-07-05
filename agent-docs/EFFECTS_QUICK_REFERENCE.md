@@ -236,12 +236,9 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Draw / discard / hand manipulation
 
-- `DrawCardEffect(int)` — draw N
-- `DrawCardsPerCreatureCardInGraveyardEffect(int)` — draw N per creature card in your graveyard
+- `DrawCardEffect(DynamicAmount)` or `(int)` — controller draws that many; use `XValue` for "draw X", `PermanentCount`/`CardsInGraveyard`/`CountersOnSource` for "draw a card for each …"
 - `EachPlayerDrawsCardEffect(int)` — each player draws N
-- `DrawCardForTargetPlayerEffect(int)` or `(int, boolean requiresUntapped, boolean targets)` — target draws
-- `DrawXCardsEffect()` — draw X
-- `DrawXCardsForTargetPlayerEffect()` — target draws X
+- `DrawCardForTargetPlayerEffect(DynamicAmount, boolean requiresUntapped, boolean targets)` or `(int)` — target/entry player draws; `XValue` for "target player draws X"
 - `DrawAndDiscardCardEffect(int draw, int discard)` — loot
 - `DiscardAndDrawCardEffect(int discard, int draw)` — rummage
 - `DiscardCardEffect(int)` — discard N

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -35,7 +36,7 @@ class ConsecratedSphinxTest extends BaseCardTest {
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_DRAWS).getFirst();
         assertThat(mayEffect.wrapped()).isInstanceOf(DrawCardEffect.class);
         DrawCardEffect drawEffect = (DrawCardEffect) mayEffect.wrapped();
-        assertThat(drawEffect.amount()).isEqualTo(2);
+        assertThat(drawEffect.amount()).isEqualTo(new Fixed(2));
     }
 
     @Test

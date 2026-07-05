@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -49,7 +50,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(ability.isNeedsTarget()).isFalse();
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().get(0)).amount()).isEqualTo(1);
+        assertThat(((DrawCardEffect) ability.getEffects().get(0)).amount()).isEqualTo(new Fixed(1));
         assertThat(ability.getEffects().get(1)).isInstanceOf(RegisterDelayedUntapPermanentsEffect.class);
         assertThat(((RegisterDelayedUntapPermanentsEffect) ability.getEffects().get(1)).count()).isEqualTo(2);
     }

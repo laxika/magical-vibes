@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -26,7 +27,7 @@ class WeightOfMemoryTest extends BaseCardTest {
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(3);
+        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new Fixed(3));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MillTargetPlayerEffect.class);
         assertThat(((MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(1)).count()).isEqualTo(3);
     }

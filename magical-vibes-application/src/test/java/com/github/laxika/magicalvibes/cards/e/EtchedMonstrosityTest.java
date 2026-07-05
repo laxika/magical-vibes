@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -43,7 +44,7 @@ class EtchedMonstrosityTest extends BaseCardTest {
                     assertThat(effects.get(0)).isInstanceOf(RemoveCounterFromSourceCost.class);
                     assertThat(((RemoveCounterFromSourceCost) effects.get(0)).count()).isEqualTo(5);
                     assertThat(effects.get(1)).isInstanceOf(DrawCardForTargetPlayerEffect.class);
-                    assertThat(((DrawCardForTargetPlayerEffect) effects.get(1)).amount()).isEqualTo(3);
+                    assertThat(((DrawCardForTargetPlayerEffect) effects.get(1)).amount()).isEqualTo(new Fixed(3));
                 });
     }
 

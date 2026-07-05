@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -34,7 +35,7 @@ class MindcullingTest extends BaseCardTest {
         assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(2);
+        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new Fixed(2));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerDiscardsEffect.class);
         assertThat(((TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount()).isEqualTo(2);
     }

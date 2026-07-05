@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggerMode;
@@ -36,7 +37,7 @@ class InfiltrationLensTest extends BaseCardTest {
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
         assertThat(mayEffect.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) mayEffect.wrapped()).amount()).isEqualTo(2);
+        assertThat(((DrawCardEffect) mayEffect.wrapped()).amount()).isEqualTo(new Fixed(2));
         assertThat(card.getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).getFirst().triggerMode())
                 .isEqualTo(TriggerMode.PER_BLOCKER);
     }

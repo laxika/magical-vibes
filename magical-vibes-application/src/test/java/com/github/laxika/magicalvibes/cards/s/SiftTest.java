@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -34,7 +35,7 @@ class SiftTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
         DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(drawEffect.amount()).isEqualTo(3);
+        assertThat(drawEffect.amount()).isEqualTo(new Fixed(3));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DiscardCardEffect.class);
         DiscardCardEffect discardEffect = (DiscardCardEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(discardEffect.amount()).isEqualTo(1);

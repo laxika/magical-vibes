@@ -33,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardsEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
@@ -106,7 +105,7 @@ public class ActivatedAbilityExecutionService {
      *       effects (e.g. {@code BoostSelfEffect}, {@code RegenerateEffect}, {@code AnimateSelfEffect}).</li>
      *   <li>Taps the permanent if the ability requires a tap cost.</li>
      *   <li>Snapshots charge counters into {@code effectiveXValue} for counter-dependent effects
-     *       (e.g. {@code DrawCardsEqualToChargeCountersOnSourceEffect}) so the value survives sacrifice.</li>
+     *       (e.g. {@code MillTargetPlayerByChargeCountersEffect}) so the value survives sacrifice.</li>
      *   <li>Executes {@link com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost} if present —
      *       removes the permanent from the battlefield, adds it to the graveyard, and collects death triggers.</li>
      *   <li>Logs the activation and broadcasts to all players.</li>
@@ -208,8 +207,7 @@ public class ActivatedAbilityExecutionService {
         }
 
         // Snapshot charge counters before sacrifice so the value survives in the stack entry's xValue
-        else if (abilityEffects.stream().anyMatch(e -> e instanceof DrawCardsEqualToChargeCountersOnSourceEffect
-                || e instanceof MillTargetPlayerByChargeCountersEffect
+        else if (abilityEffects.stream().anyMatch(e -> e instanceof MillTargetPlayerByChargeCountersEffect
                 || e instanceof TargetPlayerDiscardsByChargeCountersEffect
                 || e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect
                 || e instanceof DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect

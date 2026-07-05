@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -33,7 +34,7 @@ class ShapersSanctuaryTest extends BaseCardTest {
         MayEffect mayEffect = (MayEffect) effects.getFirst();
         assertThat(mayEffect.wrapped()).isInstanceOf(DrawCardEffect.class);
         DrawCardEffect drawEffect = (DrawCardEffect) mayEffect.wrapped();
-        assertThat(drawEffect.amount()).isEqualTo(1);
+        assertThat(drawEffect.amount()).isEqualTo(new Fixed(1));
     }
 
     // ===== Trigger on opponent spell targeting creature =====
