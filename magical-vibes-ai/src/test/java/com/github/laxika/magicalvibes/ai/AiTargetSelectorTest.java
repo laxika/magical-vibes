@@ -297,9 +297,9 @@ class AiTargetSelectorTest {
                         Set.of("GY Creature", "GY Instant", "GY Sorcery", "GY Artifact", "GY Enchantment", "GY Basic Land")
                 ),
                 Arguments.of(
-                        "GrantFlashbackToTargetGraveyardCard filters to matching card types",
+                        "GrantFlashbackToTargetGraveyardCard ignores the opponent's graveyard (controller-only)",
                         new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)),
-                        Set.of("GY Instant", "GY Sorcery")
+                        Set.of()
                 ),
                 Arguments.of(
                         "ExileTargetCardFromGraveyardAndImprint(ARTIFACT) filters to artifacts only",
@@ -339,6 +339,26 @@ class AiTargetSelectorTest {
 
         Set<String> resultNames = results.stream().map(Card::getName).collect(java.util.stream.Collectors.toSet());
         assertThat(resultNames).isEqualTo(expectedNames);
+    }
+
+    @Test
+    @DisplayName("findValidGraveyardTargets searches own graveyard for controller-only effects")
+    void findValidGraveyardTargets_controllerOnlyEffectUsesOwnGraveyard() {
+        setupGraveyardWithAllTypes(); // opponent's graveyard — must be ignored
+        harness.setGraveyard(aiPlayer, List.of(
+                makeGraveyardCard("Own GY Instant", CardType.INSTANT),
+                makeGraveyardCard("Own GY Creature", CardType.CREATURE)
+        ));
+
+        Card spellCard = new Card();
+        spellCard.setName("Test Spell");
+        spellCard.setType(CardType.SORCERY);
+        spellCard.addEffect(EffectSlot.SPELL,
+                new GrantFlashbackToTargetGraveyardCardEffect(Set.of(CardType.INSTANT, CardType.SORCERY)));
+
+        List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
+
+        assertThat(results).extracting(Card::getName).containsExactly("Own GY Instant");
     }
 
     @Test

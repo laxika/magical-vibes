@@ -33,6 +33,7 @@ final class FuzzLogWatcher extends AppenderBase<ILoggingEvent> {
     private static final String PROJECT_LOGGER_PREFIX = "com.github.laxika.magicalvibes";
     private static final List<String> LEGALITY_DISAGREEMENT_MARKERS = List.of(
             "PlayCard failed silently",
+            "ActivateAbility failed silently",
             "Blocker declaration threw",
             "Blocker declaration rejected");
 

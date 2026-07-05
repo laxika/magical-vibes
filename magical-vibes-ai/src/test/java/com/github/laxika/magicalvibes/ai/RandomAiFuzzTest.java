@@ -40,9 +40,10 @@ import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Fuzz test that pits two Random AI players against each other with randomly built
- * 2-color decks. Unlike {@link AiVsAiStressTest} which uses the smart Hard AI, this
- * test uses purely random decision-making to exercise far more edge cases — unusual
- * spell timing, bizarre combat assignments, random targets, etc.
+ * 1–3-color decks (up to 4 copies per card). Unlike {@link AiVsAiStressTest} which
+ * uses the smart Hard AI, this test uses purely random decision-making to exercise
+ * far more edge cases — unusual spell timing, bizarre combat assignments, random
+ * targets, random ability activations, occasional mulligans, etc.
  *
  * <p>Each game prints its random seed so failures can be reproduced by hardcoding
  * the seed in code or via {@code -DfuzzSeed=12345} system property.</p>
@@ -110,16 +111,15 @@ class RandomAiFuzzTest {
         Player player1 = harness.getPlayer1();
         Player player2 = harness.getPlayer2();
 
-        // 2. Pick random 2-color combinations (independently for each player)
-        CardColor[] p1Colors = pickTwoColors(rng);
-        CardColor[] p2Colors = pickTwoColors(rng);
+        // 2. Pick random color combinations (independently for each player)
+        Set<CardColor> p1Colors = pickDeckColors(rng);
+        Set<CardColor> p2Colors = pickDeckColors(rng);
 
-        System.out.printf("  Player 1: %s/%s  |  Player 2: %s/%s%n",
-                p1Colors[0], p1Colors[1], p2Colors[0], p2Colors[1]);
+        System.out.printf("  Player 1: %s  |  Player 2: %s%n", p1Colors, p2Colors);
 
         // 3. Build random decks and assign them
-        List<Card> deck1 = buildRandomDeck(p1Colors[0], p1Colors[1], rng);
-        List<Card> deck2 = buildRandomDeck(p2Colors[0], p2Colors[1], rng);
+        List<Card> deck1 = buildRandomDeck(p1Colors, rng);
+        List<Card> deck2 = buildRandomDeck(p2Colors, rng);
         Collections.shuffle(deck1, rng);
         Collections.shuffle(deck2, rng);
         assignDeck(gd, player1.getId(), deck1);
@@ -163,9 +163,11 @@ class RandomAiFuzzTest {
         sessionManager.setInGame("ai-fuzz-1");
         sessionManager.setInGame("ai-fuzz-2");
 
-        // 5. Both AIs keep their opening hand — transitions the game to RUNNING
-        harness.getGameService().keepHand(gd, player1);
-        harness.getGameService().keepHand(gd, player2);
+        // 5. Kick off the mulligan phase for both AIs (mirrors AiPlayerService).
+        // Each engine randomly keeps or mulligans, exercising the London mulligan
+        // and bottoming paths; the game transitions to RUNNING once both keep.
+        aiConn1.scheduleInitialAction(engine1::handleInitialMulligan);
+        aiConn2.scheduleInitialAction(engine2::handleInitialMulligan);
 
         // 6. Poll until the game finishes (or gets stuck)
         String lastFingerprint = "";
@@ -376,19 +378,16 @@ class RandomAiFuzzTest {
     // Random deck construction (same as AiVsAiStressTest)
     // ------------------------------------------------------------------
 
-    private CardColor[] pickTwoColors(Random rng) {
-        CardColor[] all = CardColor.values();
-        int i = rng.nextInt(all.length);
-        int j;
-        do {
-            j = rng.nextInt(all.length);
-        } while (j == i);
-        return new CardColor[]{all[i], all[j]};
+    private Set<CardColor> pickDeckColors(Random rng) {
+        // 20% mono-color, 60% two-color, 20% three-color
+        int roll = rng.nextInt(10);
+        int colorCount = roll < 2 ? 1 : roll < 8 ? 2 : 3;
+        List<CardColor> all = new ArrayList<>(List.of(CardColor.values()));
+        Collections.shuffle(all, rng);
+        return EnumSet.copyOf(all.subList(0, colorCount));
     }
 
-    private List<Card> buildRandomDeck(CardColor c1, CardColor c2, Random rng) {
-        Set<CardColor> deckColors = EnumSet.of(c1, c2);
-
+    private List<Card> buildRandomDeck(Set<CardColor> deckColors, Random rng) {
         List<CardPrinting> playable = new ArrayList<>();
         for (CardPrinting printing : allNonLandPrintings) {
             Card sample = printing.createCard();
@@ -396,23 +395,25 @@ class RandomAiFuzzTest {
                 playable.add(printing);
             }
         }
-        Collections.shuffle(playable, rng);
 
+        // Sample with replacement, up to 4 copies per printing, so same-card
+        // interactions (multiple copies in play, in the graveyard, legend rule)
+        // get exercised too.
         List<Card> deck = new ArrayList<>();
-
-        for (int i = 0; i < Math.min(SPELL_COUNT, playable.size()); i++) {
-            deck.add(playable.get(i).createCard());
+        Map<CardPrinting, Integer> copiesUsed = new HashMap<>();
+        while (deck.size() < SPELL_COUNT && !playable.isEmpty()) {
+            int idx = rng.nextInt(playable.size());
+            CardPrinting printing = playable.get(idx);
+            deck.add(printing.createCard());
+            if (copiesUsed.merge(printing, 1, Integer::sum) >= 4) {
+                playable.remove(idx);
+            }
         }
 
-        int landsPerColor = LAND_COUNT / 2;
-        int extra = LAND_COUNT % 2;
-        CardPrinting land1 = BASIC_LAND_PRINTINGS.get(c1);
-        CardPrinting land2 = BASIC_LAND_PRINTINGS.get(c2);
-        for (int i = 0; i < landsPerColor + extra; i++) {
-            deck.add(land1.createCard());
-        }
-        for (int i = 0; i < landsPerColor; i++) {
-            deck.add(land2.createCard());
+        // Distribute lands as evenly as possible across the deck's colors
+        List<CardColor> colors = new ArrayList<>(deckColors);
+        for (int i = 0; i < LAND_COUNT; i++) {
+            deck.add(BASIC_LAND_PRINTINGS.get(colors.get(i % colors.size())).createCard());
         }
 
         return deck;

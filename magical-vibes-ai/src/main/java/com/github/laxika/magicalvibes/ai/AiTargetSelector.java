@@ -492,10 +492,13 @@ class AiTargetSelector {
                             .toList();
                 }
             } else {
-                // For non-return effects: canTargetAnyGraveyard → all graveyards, otherwise → opponent's
-                GraveyardSearchScope scope = effect.canTargetAnyGraveyard()
-                        ? GraveyardSearchScope.ALL_GRAVEYARDS
-                        : GraveyardSearchScope.OPPONENT_GRAVEYARD;
+                // For non-return effects: controller-only → own graveyard,
+                // canTargetAnyGraveyard → all graveyards, otherwise → opponent's
+                GraveyardSearchScope scope = effect.targetsControllersGraveyardOnly()
+                        ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                        : effect.canTargetAnyGraveyard()
+                                ? GraveyardSearchScope.ALL_GRAVEYARDS
+                                : GraveyardSearchScope.OPPONENT_GRAVEYARD;
                 candidates = getGraveyardCandidates(gameData, scope, aiPlayerId, opponentId);
 
                 // Apply card-type filters matching what GraveyardTargetValidators enforces

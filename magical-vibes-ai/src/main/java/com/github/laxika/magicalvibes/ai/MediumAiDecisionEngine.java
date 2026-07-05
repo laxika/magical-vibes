@@ -471,15 +471,15 @@ public class MediumAiDecisionEngine extends AiDecisionEngine {
         UUID choicePlayerId = cardChoice.playerId();
         List<Integer> validIndices = cardChoice.validIndices();
 
-        if (!aiPlayer.getId().equals(choicePlayerId)) return;
+        if (!AiUtils.isRespondingFor(gameData, aiPlayer.getId(), choicePlayerId)) return;
 
-        List<Card> hand = gameData.playerHands.get(aiPlayer.getId());
+        List<Card> hand = gameData.playerHands.get(choicePlayerId);
         if (hand == null || validIndices == null || validIndices.isEmpty()) return;
 
         // Discard the card with the lowest spell value instead of highest mana cost
         int bestIndex = validIndices.stream()
                 .min(Comparator.comparingDouble(i ->
-                        spellEvaluator.estimateSpellValue(gameData, hand.get(i), aiPlayer.getId())))
+                        spellEvaluator.estimateSpellValue(gameData, hand.get(i), choicePlayerId)))
                 .orElse(validIndices.iterator().next());
 
         log.info("AI (Medium): Discarding card at index {} in game {}", bestIndex, gameId);

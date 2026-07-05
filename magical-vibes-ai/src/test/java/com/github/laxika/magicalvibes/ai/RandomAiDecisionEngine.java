@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -27,6 +29,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.networking.message.ActivateAbilityRequest;
 import com.github.laxika.magicalvibes.networking.message.CardChosenRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareAttackersRequest;
 import com.github.laxika.magicalvibes.networking.message.DeclareBlockersRequest;
@@ -115,7 +118,118 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
             return;
         }
 
+        // Re-check priority: casting an instant may have triggered abilities that
+        // set awaiting input.
+        if (!hasPriority(gameData)) {
+            return;
+        }
+
+        // Half the time, try activating a random non-mana activated ability.
+        // Abilities are instant-speed (loyalty abilities are gated to sorcery speed
+        // inside canActivateAbility); the 50% keeps games moving.
+        if (rng.nextBoolean() && tryActivateRandomAbility(gameData)) {
+            return;
+        }
+
         send(() -> gameActions.handlePassPriority(selfConnection, new PassPriorityRequest()));
+    }
+
+    // ===== Random Ability Activation =====
+
+    /**
+     * Attempts to activate a randomly chosen legal non-mana activated ability.
+     * Abilities this engine can't parameterize (X mana costs, variable loyalty
+     * costs, multi-target, spell targets) are skipped. Returns true if an
+     * activation (or a mana-tap pending choice) was initiated.
+     */
+    private boolean tryActivateRandomAbility(GameData gameData) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+        if (battlefield.isEmpty()) {
+            return false;
+        }
+
+        ManaPool virtualPool = manaManager.buildVirtualManaPool(gameData, aiPlayer.getId());
+
+        record AbilityCandidate(Permanent permanent, int abilityIndex, ActivatedAbility ability) {}
+        List<AbilityCandidate> candidates = new ArrayList<>();
+
+        for (Permanent permanent : List.copyOf(battlefield)) {
+            List<ActivatedAbility> abilities = buildEffectiveAbilityList(gameData, permanent);
+            for (int abilIdx = 0; abilIdx < abilities.size(); abilIdx++) {
+                ActivatedAbility ability = abilities.get(abilIdx);
+                if (isManaAbility(ability)) continue;
+                if (ability.isVariableLoyaltyCost()) continue;
+                if (ability.isMultiTarget()) continue;
+                if (ability.isNeedsSpellTarget()) continue;
+                if (ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) continue;
+                if (!canActivateAbility(gameData, permanent, ability, abilIdx, virtualPool)) continue;
+                candidates.add(new AbilityCandidate(permanent, abilIdx, ability));
+            }
+        }
+
+        if (candidates.isEmpty()) {
+            return false;
+        }
+        Collections.shuffle(candidates, rng);
+
+        for (AbilityCandidate candidate : candidates) {
+            Permanent permanent = candidate.permanent();
+            if (!battlefield.contains(permanent)) {
+                continue; // Left the battlefield since candidates were collected
+            }
+
+            UUID targetId = null;
+            if (candidate.ability().isNeedsTarget()) {
+                targetId = targetSelector.chooseAbilityTarget(gameData, candidate.ability(),
+                        aiPlayer.getId(), permanent);
+                if (targetId == null) {
+                    continue;
+                }
+            }
+
+            if (candidate.ability().getManaCost() != null) {
+                manaManager.tapLandsForCost(gameData, aiPlayer.getId(),
+                        candidate.ability().getManaCost(), 0, manaTapAction());
+                if (gameData.interaction.isAwaitingInput()) {
+                    return true; // Mana ability triggered a pending choice; will resume after it resolves
+                }
+            }
+
+            // Re-resolve the index at send time: paying mana costs can remove
+            // permanents from the battlefield (e.g. sacrifice-for-mana artifacts),
+            // shifting or invalidating indexes captured during collection.
+            int permIdx = battlefield.indexOf(permanent);
+            if (permIdx < 0) {
+                continue;
+            }
+
+            log.info("Random AI: Activating ability {} on {} in game {}", candidate.abilityIndex(),
+                    permanent.getCard().getName(), gameId);
+            final int finalPermIdx = permIdx;
+            final int abilIdx = candidate.abilityIndex();
+            final UUID finalTargetId = targetId;
+            int stackSizeBefore = gameData.stack.size();
+            boolean tappedBefore = permanent.isTapped();
+            send(() -> gameActions.handleActivateAbility(selfConnection,
+                    new ActivateAbilityRequest(finalPermIdx, abilIdx, null, finalTargetId, null, null, null)));
+
+            // The engine rejects some invalid activations by returning silently. If the
+            // AI treated such an activation as its action for this priority, no state
+            // change is broadcast, no new message arrives, and the game deadlocks —
+            // detect it and fall through to the next candidate (or pass priority).
+            boolean activated = gameData.stack.size() > stackSizeBefore
+                    || gameData.interaction.isAwaitingInput()
+                    || (!tappedBefore && permanent.isTapped())
+                    || gameData.status != GameStatus.RUNNING;
+            if (!activated) {
+                log.warn("Random AI: ActivateAbility failed silently in game {}. Permanent='{}' abilityIndex={} step={} activePlayer={}",
+                        gameId, permanent.getCard().getName(), candidate.abilityIndex(),
+                        gameData.currentStep, gameData.activePlayerId);
+                continue;
+            }
+            return true;
+        }
+        return false;
     }
 
     // ===== Random Spell Casting =====
@@ -693,7 +807,7 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         UUID choicePlayerId = cardChoice.playerId();
         List<Integer> validIndices = cardChoice.validIndices();
 
-        if (!aiPlayer.getId().equals(choicePlayerId)) {
+        if (!AiUtils.isRespondingFor(gameData, aiPlayer.getId(), choicePlayerId)) {
             return;
         }
 
@@ -709,10 +823,13 @@ class RandomAiDecisionEngine extends AiDecisionEngine {
         send(() -> gameActions.handleCardChosen(selfConnection, new CardChosenRequest(chosen)));
     }
 
-    // ===== Mulligan: always keep (speeds up games) =====
+    // ===== Mulligan: mostly keep, occasionally mulligan =====
 
     @Override
     protected boolean shouldKeepHand(GameData gameData) {
-        return true;
+        // Mulligan 10% of the time (at most twice) so the London mulligan and
+        // card-bottoming paths get fuzzed without slowing games down much.
+        int mulliganCount = gameData.mulliganCounts.getOrDefault(aiPlayer.getId(), 0);
+        return mulliganCount >= 2 || rng.nextInt(10) > 0;
     }
 }

@@ -59,11 +59,11 @@ class AiChoiceHandler {
         UUID choicePlayerId = cardChoice.playerId();
         List<Integer> validIndices = cardChoice.validIndices();
 
-        if (!aiPlayerId.equals(choicePlayerId)) {
+        if (!AiUtils.isRespondingFor(gameData, aiPlayerId, choicePlayerId)) {
             return;
         }
 
-        List<Card> hand = gameData.playerHands.get(aiPlayerId);
+        List<Card> hand = gameData.playerHands.get(choicePlayerId);
         if (hand == null || validIndices == null || validIndices.isEmpty()) {
             return;
         }
@@ -120,8 +120,24 @@ class AiChoiceHandler {
         if (strategy == null) {
             return;
         }
-        send(() -> strategy.answer(active, new AiInteractionContext(
-                gameData, gameId, aiPlayerId, gameQueryService, gameActions, selfConnection)));
+        send(() -> strategy.answer(active, contextFor(gameData, aiPlayerId)));
+
+        // Mindslaver: prompts for the controlled player's interactions are routed to
+        // the controlling player's connection, and the engine substitutes the acting
+        // player when the controller answers (GameService.resolveActingPlayer). So
+        // when this AI controls another player, also dispatch as that player — each
+        // strategy self-guards on the interaction's player id, so at most one of the
+        // two dispatches answers. The identity check skips this when the first
+        // dispatch already answered (a new interaction may have replaced it).
+        UUID controlledId = gameData.mindControlledPlayerId;
+        if (controlledId != null && aiPlayerId.equals(gameData.mindControllerPlayerId)
+                && gameData.interaction.activeInteraction() == active) {
+            send(() -> strategy.answer(active, contextFor(gameData, controlledId)));
+        }
+    }
+
+    private AiInteractionContext contextFor(GameData gameData, UUID actingPlayerId) {
+        return new AiInteractionContext(gameData, gameId, actingPlayerId, gameQueryService, gameActions, selfConnection);
     }
 
     // ===== Scry =====

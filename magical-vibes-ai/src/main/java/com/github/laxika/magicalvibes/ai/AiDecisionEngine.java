@@ -1,17 +1,36 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.CostEffect;
+import com.github.laxika.magicalvibes.model.effect.CrewCost;
+import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
@@ -50,6 +69,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -790,6 +810,265 @@ public abstract class AiDecisionEngine {
      */
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue) {
         return tapManaForSpell(gameData, card, xValue, 0);
+    }
+
+    // ===== Activated-Ability Legality =====
+
+    /**
+     * Builds the complete list of activated abilities for a permanent, matching the
+     * same logic as AbilityActivationService. Includes the permanent's own abilities,
+     * abilities granted by static effects, and temporary abilities.
+     */
+    protected List<ActivatedAbility> buildEffectiveAbilityList(GameData gameData, Permanent permanent) {
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+        List<ActivatedAbility> abilities;
+        if (staticBonus.losesAllAbilities() || permanent.isLosesAllAbilitiesUntilEndOfTurn()) {
+            abilities = new ArrayList<>(staticBonus.grantedActivatedAbilities());
+        } else {
+            abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
+            abilities.addAll(staticBonus.grantedActivatedAbilities());
+        }
+        abilities.addAll(permanent.getTemporaryActivatedAbilities());
+        abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
+        return abilities;
+    }
+
+    /**
+     * Returns true if an activated ability is a mana ability per CR 605.1a:
+     * no target, no spell target, no loyalty cost, and has at least one mana-producing effect.
+     */
+    protected static boolean isManaAbility(ActivatedAbility ability) {
+        if (ability.isNeedsTarget() || ability.isNeedsSpellTarget() || ability.getLoyaltyCost() != null) {
+            return false;
+        }
+        List<CardEffect> nonCostEffects = ability.getEffects().stream()
+                .filter(e -> !(e instanceof CostEffect))
+                .toList();
+        return !nonCostEffects.isEmpty() && nonCostEffects.stream().anyMatch(e -> e instanceof ManaProducingEffect);
+    }
+
+    /**
+     * Checks whether an activated ability can be activated: tap state, summoning sickness,
+     * Arrest, timing restriction, per-turn limit, mana affordability, loyalty rules,
+     * and cost effects.
+     */
+    protected boolean canActivateAbility(GameData gameData, Permanent permanent,
+                                         ActivatedAbility ability, int abilityIndex,
+                                         ManaPool virtualPool) {
+        // Loyalty ability rules: sorcery speed, once per turn, sufficient loyalty
+        if (ability.getLoyaltyCost() != null) {
+            if (!canActivateLoyaltyAbility(gameData, permanent, ability)) return false;
+        }
+
+        // Tap check
+        if (ability.isRequiresTap()) {
+            if (permanent.isTapped()) return false;
+            if (permanent.isSummoningSick()
+                    && gameQueryService.isCreature(gameData, permanent)
+                    && !gameQueryService.hasKeyword(gameData, permanent, Keyword.HASTE)) {
+                return false;
+            }
+        }
+
+        // Arrest check (enchanted creature can't activate abilities)
+        if (gameQueryService.hasAuraWithEffect(gameData, permanent,
+                EnchantedCreatureCantActivateAbilitiesEffect.class)) {
+            return false;
+        }
+
+        // Ability locks (Pithing Needle / Damping Matrix style statics)
+        if (isBlockedByAbilityLock(gameData, permanent, ability)) return false;
+
+        // Timing restriction
+        if (!canMeetAbilityTimingRestriction(gameData, ability, permanent)) return false;
+
+        // Per-turn activation limit
+        if (isAbilityActivationLimitReached(gameData, permanent, abilityIndex, ability)) return false;
+
+        // Required subtype count (e.g., "Activate only if you control five or more Vampires")
+        if (ability.getRequiredControlledSubtype() != null) {
+            int count = gameQueryService.countControlledSubtypePermanents(
+                    gameData, aiPlayer.getId(), ability.getRequiredControlledSubtype());
+            if (count < ability.getRequiredControlledSubtypeCount()) return false;
+        }
+
+        // Mana affordability
+        if (ability.getManaCost() != null) {
+            ManaCost cost = new ManaCost(ability.getManaCost());
+            if (!cost.canPay(virtualPool, 0)) return false;
+        }
+
+        // Cost effects payability
+        return canPayAbilityCostEffects(gameData, ability, permanent);
+    }
+
+    /**
+     * Mirrors the engine's activation locks ({@code AbilityActivationService}):
+     * Pithing Needle-style chosen-name locks and Damping Matrix-style
+     * "activated abilities of matching permanents can't be activated" statics.
+     */
+    protected boolean isBlockedByAbilityLock(GameData gameData, Permanent permanent, ActivatedAbility ability) {
+        boolean manaAbility = isManaAbility(ability);
+        for (UUID pid : gameData.playerIds) {
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                for (CardEffect effect : p.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock
+                            && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.predicate())) {
+                        return true;
+                    }
+                    if (effect instanceof ActivatedAbilitiesOfChosenNameCantBeActivatedEffect nameLock
+                            && permanent.getCard().getName() != null
+                            && permanent.getCard().getName().equals(p.getChosenName())
+                            && (!manaAbility || nameLock.blocksManaAbilities())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks planeswalker loyalty ability activation rules:
+     * must be active player, main phase, stack empty, once-per-turn limit,
+     * and sufficient loyalty counters for negative costs.
+     */
+    protected boolean canActivateLoyaltyAbility(GameData gameData, Permanent permanent,
+                                                ActivatedAbility ability) {
+        // Must be active player (our turn)
+        if (!aiPlayer.getId().equals(gameData.activePlayerId)) return false;
+
+        // Must be a main phase
+        if (gameData.currentStep != TurnStep.PRECOMBAT_MAIN
+                && gameData.currentStep != TurnStep.POSTCOMBAT_MAIN) return false;
+
+        // Stack must be empty
+        if (!gameData.stack.isEmpty()) return false;
+
+        // Once per turn (twice with Oath of Teferi or similar)
+        int maxActivations = gameQueryService.hasExtraLoyaltyActivation(gameData, aiPlayer.getId()) ? 2 : 1;
+        if (permanent.getLoyaltyActivationsThisTurn() >= maxActivations) return false;
+
+        // For negative loyalty costs, check sufficient loyalty counters
+        int loyaltyCost = ability.getLoyaltyCost();
+        if (loyaltyCost < 0 && permanent.getCounterCount(CounterType.LOYALTY) < Math.abs(loyaltyCost)) return false;
+
+        return true;
+    }
+
+    /**
+     * Checks if the ability's timing restriction is met.
+     */
+    protected boolean canMeetAbilityTimingRestriction(GameData gameData, ActivatedAbility ability,
+                                                      Permanent permanent) {
+        ActivationTimingRestriction restriction = ability.getTimingRestriction();
+        if (restriction == null) return true;
+
+        return switch (restriction) {
+            case METALCRAFT -> gameQueryService.isMetalcraftMet(gameData, aiPlayer.getId());
+            case MORBID -> gameQueryService.isMorbidMet(gameData);
+            case ONLY_DURING_YOUR_TURN -> aiPlayer.getId().equals(gameData.activePlayerId);
+            case ONLY_DURING_YOUR_UPKEEP -> aiPlayer.getId().equals(gameData.activePlayerId)
+                    && gameData.currentStep == TurnStep.UPKEEP;
+            case ONLY_WHILE_ATTACKING -> permanent.isAttacking();
+            case ONLY_WHILE_CREATURE -> gameQueryService.isCreature(gameData, permanent);
+            case POWER_4_OR_GREATER -> gameQueryService.getEffectivePower(gameData, permanent) >= 4;
+            case RAID -> gameData.playersDeclaredAttackersThisTurn.contains(aiPlayer.getId());
+            case SORCERY_SPEED -> aiPlayer.getId().equals(gameData.activePlayerId)
+                    && (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                    || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
+                    && gameData.stack.isEmpty();
+        };
+    }
+
+    /**
+     * Returns true if the per-turn activation limit has been reached for this ability.
+     */
+    protected boolean isAbilityActivationLimitReached(GameData gameData, Permanent permanent,
+                                                      int abilityIndex, ActivatedAbility ability) {
+        if (ability.getMaxActivationsPerTurn() == null) return false;
+        Map<Integer, Integer> counts = gameData.activatedAbilityUsesThisTurn.get(permanent.getId());
+        int current = counts != null ? counts.getOrDefault(abilityIndex, 0) : 0;
+        return current >= ability.getMaxActivationsPerTurn();
+    }
+
+    /**
+     * Checks whether the non-mana costs of an activated ability can be paid
+     * (sacrifice, life, charge counters, etc.).
+     */
+    protected boolean canPayAbilityCostEffects(GameData gameData, ActivatedAbility ability,
+                                               Permanent permanent) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
+
+        for (CardEffect effect : ability.getEffects()) {
+            if (effect instanceof SacrificeCreatureCost sacCost) {
+                boolean hasCreature = battlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .anyMatch(p -> !sacCost.excludeSelf() || !p.getId().equals(permanent.getId()));
+                if (!hasCreature) return false;
+            } else if (effect instanceof SacrificeArtifactCost) {
+                boolean hasArtifact = battlefield.stream()
+                        .anyMatch(p -> gameQueryService.isArtifact(gameData, p));
+                if (!hasArtifact) return false;
+            } else if (effect instanceof SacrificePermanentCost sacCost) {
+                boolean hasMatch = battlefield.stream()
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
+                if (!hasMatch) return false;
+            } else if (effect instanceof SacrificeMultiplePermanentsCost sacCost) {
+                long matching = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))
+                        .count();
+                if (matching < sacCost.count()) return false;
+            } else if (effect instanceof ReturnMultiplePermanentsToHandCost returnCost) {
+                long matching = battlefield.stream()
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, returnCost.filter()))
+                        .count();
+                if (matching < returnCost.count()) return false;
+            } else if (effect instanceof TapCreatureCost tapCost) {
+                boolean hasUntapped = battlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .filter(p -> !p.isTapped())
+                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, tapCost.predicate()));
+                if (!hasUntapped) return false;
+            } else if (effect instanceof TapMultiplePermanentsCost tapCost) {
+                long matching = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> !tapCost.excludeSource() || !p.getId().equals(permanent.getId()))
+                        .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, tapCost.filter()))
+                        .count();
+                if (matching < tapCost.count()) return false;
+            } else if (effect instanceof CrewCost crewCost) {
+                // CR 702.122a: "other untapped creatures" — the Vehicle cannot crew itself
+                int totalPower = battlefield.stream()
+                        .filter(p -> !p.isTapped())
+                        .filter(p -> !p.getId().equals(permanent.getId()))
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .mapToInt(p -> Math.max(0, gameQueryService.getEffectivePower(gameData, p)))
+                        .sum();
+                if (totalPower < crewCost.requiredPower()) return false;
+            } else if (effect instanceof RemoveCounterFromControlledCreatureCost counterCost) {
+                boolean hasCreatureWithCounters = battlefield.stream()
+                        .filter(p -> gameQueryService.isCreature(gameData, p))
+                        .anyMatch(p -> p.getCounterCount(counterCost.counterType()) >= counterCost.count());
+                if (!hasCreatureWithCounters) return false;
+            } else if (effect instanceof TapXPermanentsCost) {
+                // X-based tap costs need an xValue the AI doesn't model yet
+                return false;
+            } else if (effect instanceof PayLifeCost lifeCost) {
+                int life = gameData.getLife(aiPlayer.getId());
+                if (life <= lifeCost.amount()) return false;
+            } else if (effect instanceof RemoveChargeCountersFromSourceCost counterCost) {
+                if (permanent.getCounterCount(CounterType.CHARGE) < counterCost.count()) return false;
+            } else if (effect instanceof RemoveCounterFromSourceCost counterCost) {
+                int available = switch (counterCost.counterType()) {
+                    case PLUS_ONE_PLUS_ONE -> permanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE);
+                    case CHARGE -> permanent.getCounterCount(CounterType.CHARGE);
+                    default -> 0;
+                };
+                if (available < counterCost.count()) return false;
+            }
+        }
+        return true;
     }
 
     protected boolean tapManaForSpell(GameData gameData, Card card, Integer xValue, int targetingTax) {
