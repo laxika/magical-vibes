@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -45,7 +46,7 @@ class TroveOfTemptationTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.tokenName()).isEqualTo("Treasure");
     }
 

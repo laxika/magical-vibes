@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.l.LanternSpirit;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -48,7 +49,7 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
 
         CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(token.amount()).isEqualTo(2);
+        assertThat(token.amount()).isEqualTo(new Fixed(2));
         assertThat(token.tokenName()).isEqualTo("Spirit");
         assertThat(token.power()).isEqualTo(2);
         assertThat(token.toughness()).isEqualTo(2);

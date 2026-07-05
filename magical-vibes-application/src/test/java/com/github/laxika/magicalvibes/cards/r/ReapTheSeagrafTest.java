@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -31,7 +32,7 @@ class ReapTheSeagrafTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
 
         CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.tokenName()).isEqualTo("Zombie");
         assertThat(effect.power()).isEqualTo(2);
         assertThat(effect.toughness()).isEqualTo(2);

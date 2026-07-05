@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -34,7 +35,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         assertThat(effects).hasSize(1);
         assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.tokenName()).isEqualTo("Knight");
         assertThat(effect.power()).isEqualTo(2);
         assertThat(effect.toughness()).isEqualTo(2);
@@ -52,7 +53,7 @@ class HistoryOfBenaliaTest extends BaseCardTest {
         assertThat(effects).hasSize(1);
         assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.tokenName()).isEqualTo("Knight");
         assertThat(effect.power()).isEqualTo(2);
         assertThat(effect.toughness()).isEqualTo(2);

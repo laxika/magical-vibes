@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -36,7 +37,8 @@ public class ShrineOfLoyalLegions extends Card {
                 "{3}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new CreateTokensEqualToChargeCountersOnSourceEffect(
+                        new CreateTokenEffect(
+                                new CountersOnSource(CounterType.CHARGE),
                                 "Myr", 1, 1, null,
                                 List.of(CardSubtype.PHYREXIAN, CardSubtype.MYR),
                                 Set.of(), Set.of(CardType.ARTIFACT))

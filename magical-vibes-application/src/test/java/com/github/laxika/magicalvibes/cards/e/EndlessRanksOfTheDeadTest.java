@@ -8,7 +8,13 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledCreatureSubtypeEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Divided;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,11 +47,14 @@ class EndlessRanksOfTheDeadTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokensPerControlledCreatureSubtypeEffect.class);
-        CreateTokensPerControlledCreatureSubtypeEffect effect =
-                (CreateTokensPerControlledCreatureSubtypeEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.ZOMBIE);
-        assertThat(effect.divisor()).isEqualTo(2);
+                .isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect effect =
+                (CreateTokenEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
+        assertThat(effect.amount()).isEqualTo(new Divided(new PermanentCount(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))),
+                CountScope.CONTROLLER), 2));
         assertThat(effect.tokenName()).isEqualTo("Zombie");
         assertThat(effect.power()).isEqualTo(2);
         assertThat(effect.toughness()).isEqualTo(2);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -31,7 +32,7 @@ class MitoticSlimeTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
 
         CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
+        assertThat(effect.amount()).isEqualTo(new Fixed(2));
         assertThat(effect.tokenName()).isEqualTo("Ooze");
         assertThat(effect.power()).isEqualTo(2);
         assertThat(effect.toughness()).isEqualTo(2);
@@ -47,7 +48,7 @@ class MitoticSlimeTest extends BaseCardTest {
         assertThat(tokenDeathEffect).isInstanceOf(CreateTokenEffect.class);
 
         CreateTokenEffect innerEffect = (CreateTokenEffect) tokenDeathEffect;
-        assertThat(innerEffect.amount()).isEqualTo(2);
+        assertThat(innerEffect.amount()).isEqualTo(new Fixed(2));
         assertThat(innerEffect.tokenName()).isEqualTo("Ooze");
         assertThat(innerEffect.power()).isEqualTo(1);
         assertThat(innerEffect.toughness()).isEqualTo(1);

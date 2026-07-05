@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -33,7 +34,7 @@ class NestedGhoulTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
 
         CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0);
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.tokenName()).isEqualTo("Zombie");
         assertThat(effect.power()).isEqualTo(2);
         assertThat(effect.toughness()).isEqualTo(2);

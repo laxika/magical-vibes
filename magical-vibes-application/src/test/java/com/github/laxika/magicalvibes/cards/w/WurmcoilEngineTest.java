@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -28,7 +29,7 @@ class WurmcoilEngineTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(2);
 
         CreateTokenEffect deathtouch = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
-        assertThat(deathtouch.amount()).isEqualTo(1);
+        assertThat(deathtouch.amount()).isEqualTo(new Fixed(1));
         assertThat(deathtouch.tokenName()).isEqualTo("Phyrexian Wurm");
         assertThat(deathtouch.power()).isEqualTo(3);
         assertThat(deathtouch.toughness()).isEqualTo(3);
@@ -38,7 +39,7 @@ class WurmcoilEngineTest extends BaseCardTest {
         assertThat(deathtouch.additionalTypes()).containsExactly(CardType.ARTIFACT);
 
         CreateTokenEffect lifelink = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(1);
-        assertThat(lifelink.amount()).isEqualTo(1);
+        assertThat(lifelink.amount()).isEqualTo(new Fixed(1));
         assertThat(lifelink.tokenName()).isEqualTo("Phyrexian Wurm");
         assertThat(lifelink.power()).isEqualTo(3);
         assertThat(lifelink.toughness()).isEqualTo(3);

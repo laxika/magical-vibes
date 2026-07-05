@@ -35,7 +35,7 @@ class CaptainLanneryStormTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.tokenName()).isEqualTo("Treasure");
         assertThat(effect.primaryType()).isEqualTo(CardType.ARTIFACT);
     }

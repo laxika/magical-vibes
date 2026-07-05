@@ -120,7 +120,7 @@ All paths relative to `cards/`.
 | Shuffle-back spell | `b/BeaconOfDestruction.java` | Effect + ShuffleIntoLibraryEffect |
 | X draw (controller) | `m/MindSpring.java` | DrawCardEffect(new XValue()) — non-targeting X draw for controller |
 | X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealXDamageToAnyTargetEffect(true) + ShuffleIntoLibraryEffect |
-| X tokens + shuffle | `w/WhiteSunsZenith.java` | CreateXCreatureTokenEffect + ShuffleIntoLibraryEffect |
+| X tokens + shuffle | `w/WhiteSunsZenith.java` | CreateTokenEffect(new XValue(), ...) + ShuffleIntoLibraryEffect |
 | Fight (two-target) | `p/PreyUpon.java` | FirstTargetFightsSecondTargetEffect, multi-target: creature you control + creature you don't control |
 | Fight (any two creatures) | `b/BloodFeud.java` | FirstTargetFightsSecondTargetEffect, both targets are any creature (no controller restriction). Cross-group distinct is the default — no extra flags needed when oracle text says "another target" |
 | Counter + target spell cost reduction | `b/BrushOff.java` | STATIC ReduceOwnCastCostIfTargetingStackEntryEffect(StackEntryTypeInPredicate(INSTANT_SPELL, SORCERY_SPELL), 2) + SPELL CounterSpellEffect — costs {1}{U} less when targeting an instant or sorcery spell, counters any spell |

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -44,7 +45,7 @@ class RuthlessKnaveTest extends BaseCardTest {
         assertThat(treasureAbility.getEffects().get(0)).isInstanceOf(SacrificePermanentCost.class);
         assertThat(treasureAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect = (CreateTokenEffect) treasureAbility.getEffects().get(1);
-        assertThat(tokenEffect.amount()).isEqualTo(2);
+        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
 
         // Ability 1: Sacrifice three Treasures: Draw a card.
         var drawAbility = card.getActivatedAbilities().get(1);

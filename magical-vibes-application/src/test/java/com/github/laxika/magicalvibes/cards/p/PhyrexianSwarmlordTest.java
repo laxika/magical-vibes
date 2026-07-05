@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenPerOpponentPoisonCounterEffect;
+import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,13 +30,15 @@ class PhyrexianSwarmlordTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has UPKEEP_TRIGGERED CreateTokenPerOpponentPoisonCounterEffect")
+    @DisplayName("Has UPKEEP_TRIGGERED CreateTokenEffect counting opponent poison counters")
     void hasCorrectEffect() {
         PhyrexianSwarmlord card = new PhyrexianSwarmlord();
 
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenPerOpponentPoisonCounterEffect.class);
+                .isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
+        assertThat(effect.amount()).isEqualTo(new OpponentPoisonCounters());
     }
 
     // ===== No poison counters =====

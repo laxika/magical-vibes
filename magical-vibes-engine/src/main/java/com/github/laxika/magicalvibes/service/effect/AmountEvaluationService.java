@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
+import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
@@ -57,6 +59,8 @@ public class AmountEvaluationService {
                     ctx.xValue();
             case Scaled s ->
                     s.factor() * evaluate(gameData, s.amount(), ctx);
+            case Divided d ->
+                    evaluate(gameData, d.amount(), ctx) / d.divisor();
             case Sum s ->
                     s.amounts().stream().mapToInt(a -> evaluate(gameData, a, ctx)).sum();
             case PermanentCount c ->
@@ -75,6 +79,8 @@ public class AmountEvaluationService {
                     countCreaturesBlockingSource(gameData, ctx);
             case OpponentPoisonCounters ignored ->
                     countOpponentPoisonCounters(gameData, ctx);
+            case CreatureDeathsThisTurn c ->
+                    countCreatureDeathsThisTurn(gameData, c, ctx);
             case ImprintedCreaturePower ignored ->
                     imprintedCreaturePT(ctx, true);
             case ImprintedCreatureToughness ignored ->
@@ -90,6 +96,7 @@ public class AmountEvaluationService {
         return switch (amount) {
             case XValue ignored -> true;
             case Scaled s -> referencesXValue(s.amount());
+            case Divided d -> referencesXValue(d.amount());
             case Sum s -> s.amounts().stream().anyMatch(this::referencesXValue);
             default -> false;
         };
@@ -202,6 +209,15 @@ public class AmountEvaluationService {
             }
         });
         return count[0];
+    }
+
+    private int countCreatureDeathsThisTurn(GameData gameData, CreatureDeathsThisTurn count, AmountContext ctx) {
+        int total = 0;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;
+            total += gameData.creatureDeathCountThisTurn.getOrDefault(playerId, 0);
+        }
+        return total;
     }
 
     private int countOpponentPoisonCounters(GameData gameData, AmountContext ctx) {

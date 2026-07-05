@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -39,7 +40,7 @@ class RegisaurAlphaTest extends BaseCardTest {
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect =
                 (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(1);
+        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(1));
         assertThat(tokenEffect.tokenName()).isEqualTo("Dinosaur");
         assertThat(tokenEffect.power()).isEqualTo(3);
         assertThat(tokenEffect.toughness()).isEqualTo(3);

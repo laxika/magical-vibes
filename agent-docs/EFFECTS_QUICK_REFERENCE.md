@@ -310,7 +310,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Tokens
 
-- `CreateTokenEffect(...)` — create tokens (many constructors, see EFFECTS_INDEX.md)
+- `CreateTokenEffect(...)` — create tokens (many constructors, see EFFECTS_INDEX.md). The count is a `DynamicAmount` (`int` ctors are `Fixed` sugar): any "create a token for each …" or "create X tokens" = this effect + an amount (`XValue`, `PermanentCount`, `CardsInGraveyard`, `CountersOnSource`, `AttachmentsOnSource`, `OpponentPoisonCounters`, `CreatureDeathsThisTurn`, `Divided`, …) — never a new effect class
 - `CreateTokenEffect.whiteSpirit(int)` — 1/1 white Spirit creature token with flying
 - `CreateTokenEffect.blackZombie(int)` — 2/2 black Zombie creature token
 - `CreateTokenEffect.whiteSoldier(int)` — 1/1 white Soldier creature token
@@ -319,8 +319,6 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `MoveDyingSourceCountersToTargetCreatureEffect()` — `ON_DEATH`: if the dying creature had ≥1 counter (any type), move all of its counters onto up to one target creature (e.g. Scolding Administrator). Intervening-if snapshots the counters at death; targets any creature
 - For "create a token that gains [keyword] until end of turn", set `CreateTokenEffect`'s `grantedKeywordsUntilEndOfTurn` (e.g. `new CreateTokenEffect(amount, name, p, t, color, colors, subtypes, innateKeywords, Set.of(Keyword.HASTE))` — Artistic Process Elemental gains haste). Distinct from the token's innate `keywords`.
 - `CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness, CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes, CounterType counterType)` — create one token with X counters of `counterType` from ability/spell X value (e.g. Berta's Fractal with `PLUS_ONE_PLUS_ONE`)
-- `CreateTokenForEachControlledPermanentEffect(PermanentPredicate, ...)` — token per permanent
-- `CreateTokenForEachOpponentCreatureEffect(...)` — token per opponent creature
 - `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(CardPredicate, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep)` — exile graveyard target, create token copy with optional extra subtypes/haste/end-step exile
 - `CreateTokenCopyOfTargetPermanentEffect()` or `(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, Map<CounterType, Integer> initialCounters)` — create token copy of targeted permanent; optional type/subtype/P/T overrides and post-ETB counters
 - `CreateTokenCopyOfTargetCreatureForTargetPlayerEffect()` — target player creates a token copy of target creature you control (two targets: player + creature); Echocasting Symposium

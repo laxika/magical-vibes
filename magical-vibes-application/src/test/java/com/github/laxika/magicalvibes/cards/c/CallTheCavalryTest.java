@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -29,7 +30,7 @@ class CallTheCavalryTest extends BaseCardTest {
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect =
                 (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(2);
+        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
         assertThat(tokenEffect.tokenName()).isEqualTo("Knight");
         assertThat(tokenEffect.power()).isEqualTo(2);
         assertThat(tokenEffect.toughness()).isEqualTo(2);

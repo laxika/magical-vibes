@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -14,8 +17,9 @@ import java.util.Set;
 public class HowlOfTheNightPack extends Card {
 
     public HowlOfTheNightPack() {
-        addEffect(EffectSlot.SPELL, new CreateTokensPerControlledLandSubtypeEffect(
-                CardSubtype.FOREST,
+        // Create a 2/2 green Wolf creature token for each Forest you control.
+        addEffect(EffectSlot.SPELL, new CreateTokenEffect(
+                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER),
                 "Wolf", 2, 2, CardColor.GREEN,
                 List.of(CardSubtype.WOLF),
                 Set.of(), Set.of()

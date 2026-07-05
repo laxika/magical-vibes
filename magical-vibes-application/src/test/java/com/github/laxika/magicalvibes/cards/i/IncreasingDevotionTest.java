@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -38,7 +39,7 @@ class IncreasingDevotionTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
 
         CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(token.amount()).isEqualTo(5);
+        assertThat(token.amount()).isEqualTo(new Fixed(5));
         assertThat(token.tokenName()).isEqualTo("Human");
         assertThat(token.power()).isEqualTo(1);
         assertThat(token.toughness()).isEqualTo(1);
@@ -50,7 +51,7 @@ class IncreasingDevotionTest extends BaseCardTest {
                 (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(((CastFromZone) conditional.condition()).sourceZone()).isEqualTo(Zone.GRAVEYARD);
         assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(5);
+        assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(new Fixed(5));
 
         FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
         assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{7}{W}{W}");

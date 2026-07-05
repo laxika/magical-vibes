@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -31,7 +32,7 @@ class MausoleumGuardTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
 
         CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
+        assertThat(effect.amount()).isEqualTo(new Fixed(2));
         assertThat(effect.tokenName()).isEqualTo("Spirit");
         assertThat(effect.power()).isEqualTo(1);
         assertThat(effect.toughness()).isEqualTo(1);

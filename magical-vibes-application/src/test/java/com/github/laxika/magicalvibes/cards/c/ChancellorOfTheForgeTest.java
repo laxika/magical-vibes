@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.y.YouthfulKnight;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,8 +9,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensEqualToControlledCreatureCountEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +38,10 @@ class ChancellorOfTheForgeTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokensEqualToControlledCreatureCountEffect.class);
+                .isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect etbEffect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
+        assertThat(etbEffect.amount())
+                .isEqualTo(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER));
     }
 
     @Test
@@ -134,7 +140,7 @@ class ChancellorOfTheForgeTest extends BaseCardTest {
                 (MayEffect) new ChancellorOfTheForge().getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
         CreateTokenEffect revealEffect = (CreateTokenEffect) mayEffect.wrapped();
 
-        assertThat(revealEffect.amount()).isEqualTo(1);
+        assertThat(revealEffect.amount()).isEqualTo(new Fixed(1));
         assertThat(revealEffect.tokenName()).isEqualTo("Phyrexian Goblin");
         assertThat(revealEffect.power()).isEqualTo(1);
         assertThat(revealEffect.toughness()).isEqualTo(1);

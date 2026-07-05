@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensPerControlledLandSubtypeEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,17 +21,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 class HowlOfTheNightPackTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Has CreateTokensPerControlledLandSubtypeEffect on resolution")
+    @DisplayName("Has CreateTokenEffect counting controlled Forests on resolution")
     void hasCorrectEffect() {
         HowlOfTheNightPack card = new HowlOfTheNightPack();
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokensPerControlledLandSubtypeEffect.class);
+                .isInstanceOf(CreateTokenEffect.class);
 
-        CreateTokensPerControlledLandSubtypeEffect effect =
-                (CreateTokensPerControlledLandSubtypeEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.landSubtype()).isEqualTo(CardSubtype.FOREST);
+        CreateTokenEffect effect =
+                (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        assertThat(effect.amount()).isEqualTo(
+                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER));
         assertThat(effect.tokenName()).isEqualTo("Wolf");
         assertThat(effect.power()).isEqualTo(2);
         assertThat(effect.toughness()).isEqualTo(2);

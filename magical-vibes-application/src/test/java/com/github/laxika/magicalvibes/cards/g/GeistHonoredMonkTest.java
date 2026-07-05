@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -34,7 +35,7 @@ class GeistHonoredMonkTest extends BaseCardTest {
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect =
                 (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(2);
+        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
         assertThat(tokenEffect.tokenName()).isEqualTo("Spirit");
         assertThat(tokenEffect.keywords()).containsExactly(Keyword.FLYING);
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
@@ -37,7 +38,7 @@ class ContractKillingTest extends BaseCardTest {
 
         CreateTokenEffect treasureEffect = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(treasureEffect.primaryType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(treasureEffect.amount()).isEqualTo(2);
+        assertThat(treasureEffect.amount()).isEqualTo(new Fixed(2));
     }
 
     // ===== Destroy + Treasure creation =====

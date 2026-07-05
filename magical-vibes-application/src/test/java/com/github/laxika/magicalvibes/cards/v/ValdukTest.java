@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenPerAttachmentOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,18 +54,17 @@ class ValdukTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Valduk has beginning-of-combat triggered CreateTokenPerAttachmentOnSourceEffect")
+    @DisplayName("Valduk has beginning-of-combat triggered CreateTokenEffect counting attachments")
     void hasCorrectEffect() {
         Valduk card = new Valduk();
 
         assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenPerAttachmentOnSourceEffect.class);
+                .isInstanceOf(CreateTokenEffect.class);
 
-        CreateTokenPerAttachmentOnSourceEffect effect =
-                (CreateTokenPerAttachmentOnSourceEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
-        assertThat(effect.countAuras()).isTrue();
-        assertThat(effect.countEquipment()).isTrue();
+        CreateTokenEffect effect =
+                (CreateTokenEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
+        assertThat(effect.amount()).isEqualTo(new AttachmentsOnSource(true, true));
         assertThat(effect.exileAtEndStep()).isTrue();
         assertThat(effect.tokenName()).isEqualTo("Elemental");
         assertThat(effect.power()).isEqualTo(3);

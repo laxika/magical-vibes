@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -38,7 +39,7 @@ class SiegeGangCommanderTest extends BaseCardTest {
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect =
                 (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(3);
+        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(3));
 
         assertThat(card.getActivatedAbilities()).hasSize(1);
         var ability = card.getActivatedAbilities().getFirst();

@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenPerEquipmentOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,13 +40,15 @@ class KembaKhaRegentTest extends BaseCardTest {
     // ===== Card properties =====
 
     @Test
-    @DisplayName("Kemba has upkeep-triggered CreateTokenPerEquipmentOnSourceEffect")
+    @DisplayName("Kemba has upkeep-triggered CreateTokenEffect counting attached Equipment")
     void hasCorrectProperties() {
         KembaKhaRegent card = new KembaKhaRegent();
 
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenPerEquipmentOnSourceEffect.class);
+                .isInstanceOf(CreateTokenEffect.class);
+        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
+        assertThat(effect.amount()).isEqualTo(new AttachmentsOnSource(false, true));
     }
 
     // ===== No equipment attached =====

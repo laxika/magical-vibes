@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -39,7 +40,7 @@ class WakedancerTest extends BaseCardTest {
         assertThat(morbid.wrapped()).isInstanceOf(CreateTokenEffect.class);
 
         CreateTokenEffect token = (CreateTokenEffect) morbid.wrapped();
-        assertThat(token.amount()).isEqualTo(1);
+        assertThat(token.amount()).isEqualTo(new Fixed(1));
         assertThat(token.tokenName()).isEqualTo("Zombie");
         assertThat(token.power()).isEqualTo(2);
         assertThat(token.toughness()).isEqualTo(2);

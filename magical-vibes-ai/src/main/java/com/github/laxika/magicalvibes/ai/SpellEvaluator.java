@@ -373,11 +373,13 @@ public class SpellEvaluator {
                     AmountContext.forEstimation(aiPlayerId)) * 6.0;
         }
         if (effect instanceof CreateTokenEffect token) {
+            int tokenAmount = amountEvaluationService.evaluate(gameData, token.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
             if (token.primaryType() == CardType.CREATURE) {
                 double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
-                return tokenScore * token.amount();
+                return tokenScore * tokenAmount;
             } else {
-                return 3.0 * token.amount();
+                return 3.0 * tokenAmount;
             }
         }
         if (effect instanceof DealDamageToAnyTargetEffect dmg) {
@@ -498,11 +500,13 @@ public class SpellEvaluator {
 
         // Tokens
         if (effect instanceof CreateTokenEffect token) {
+            int tokenAmount = amountEvaluationService.evaluate(gameData, token.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
             if (token.primaryType() == CardType.CREATURE) {
                 double tokenScore = token.power() * 3.0 + token.toughness() * 1.5;
-                return tokenScore * token.amount();
+                return tokenScore * tokenAmount;
             } else {
-                return 3.0 * token.amount();
+                return 3.0 * tokenAmount;
             }
         }
 
@@ -582,7 +586,7 @@ public class SpellEvaluator {
         bonus += equipmentWithEvasionBonus(gameData, card, aiBattlefield);
         bonus += deathTriggerWithSacOutletBonus(gameData, card, aiBattlefield);
         bonus += anthemWithWideBoardBonus(gameData, card, aiBattlefield);
-        bonus += tokenMakerWithDeathTriggersBonus(gameData, card, aiBattlefield);
+        bonus += tokenMakerWithDeathTriggersBonus(gameData, card, aiPlayerId, aiBattlefield);
         return bonus;
     }
 
@@ -721,17 +725,19 @@ public class SpellEvaluator {
      * Token-making spells are more valuable when the AI controls permanents with
      * "whenever a creature dies" or "whenever a creature enters" triggers.
      */
-    private double tokenMakerWithDeathTriggersBonus(GameData gameData, Card card, List<Permanent> aiBattlefield) {
+    private double tokenMakerWithDeathTriggersBonus(GameData gameData, Card card, UUID aiPlayerId, List<Permanent> aiBattlefield) {
         // Check if this card creates creature tokens
         int tokenCount = 0;
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof CreateTokenEffect token && token.primaryType() == CardType.CREATURE) {
-                tokenCount += token.amount();
+                tokenCount += amountEvaluationService.evaluate(gameData, token.amount(),
+                        AmountContext.forEstimation(aiPlayerId));
             }
         }
         for (CardEffect effect : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
             if (effect instanceof CreateTokenEffect token && token.primaryType() == CardType.CREATURE) {
-                tokenCount += token.amount();
+                tokenCount += amountEvaluationService.evaluate(gameData, token.amount(),
+                        AmountContext.forEstimation(aiPlayerId));
             }
         }
         if (tokenCount == 0) return 0;

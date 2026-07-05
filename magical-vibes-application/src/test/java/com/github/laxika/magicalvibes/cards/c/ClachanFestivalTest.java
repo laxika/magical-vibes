@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -32,7 +33,7 @@ class ClachanFestivalTest extends BaseCardTest {
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect etbEffect =
                 (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbEffect.amount()).isEqualTo(2);
+        assertThat(etbEffect.amount()).isEqualTo(new Fixed(2));
 
         assertThat(card.getActivatedAbilities()).hasSize(1);
         var ability = card.getActivatedAbilities().getFirst();

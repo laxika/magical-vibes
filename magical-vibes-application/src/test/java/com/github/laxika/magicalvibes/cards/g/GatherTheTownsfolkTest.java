@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -35,7 +36,7 @@ class GatherTheTownsfolkTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect base = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(base.amount()).isEqualTo(2);
+        assertThat(base.amount()).isEqualTo(new Fixed(2));
         assertThat(base.tokenName()).isEqualTo("Human");
         assertThat(base.power()).isEqualTo(1);
         assertThat(base.toughness()).isEqualTo(1);
@@ -48,7 +49,7 @@ class GatherTheTownsfolkTest extends BaseCardTest {
                 (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
         assertThat(((ControllerLifeAtMost) conditional.condition()).threshold()).isEqualTo(5);
         assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(3);
+        assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(new Fixed(3));
     }
 
     // ===== Casting and resolving =====

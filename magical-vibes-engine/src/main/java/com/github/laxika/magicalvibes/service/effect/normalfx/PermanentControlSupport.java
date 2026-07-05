@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.scryfall.ScryfallOracleLoader;
@@ -44,9 +45,17 @@ public class PermanentControlSupport {
     private final GameBroadcastService gameBroadcastService;
 
     public void applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, String sourceSetCode) {
+        if (!(token.amount() instanceof Fixed fixed)) {
+            throw new IllegalStateException("Dynamic token counts must be evaluated before applyCreateToken: " + token.amount());
+        }
+        applyCreateToken(gameData, controllerId, token, fixed.value(), sourceSetCode);
+    }
+
+    /** Creates {@code amount} tokens from the blueprint; the count is already evaluated by the caller. */
+    public void applyCreateToken(GameData gameData, UUID controllerId, CreateTokenEffect token, int amount, String sourceSetCode) {
         Set<Keyword> grantedKeywordsUntilEndOfTurn = token.grantedKeywordsUntilEndOfTurn();
         int tokenMultiplier = gameQueryService.getTokenMultiplier(gameData, controllerId);
-        int totalAmount = token.amount() * tokenMultiplier;
+        int totalAmount = amount * tokenMultiplier;
         Set<CardType> enterTappedTypesSnapshot = EnumSet.noneOf(CardType.class);
         enterTappedTypesSnapshot.addAll(battlefieldEntryService.snapshotEnterTappedTypes(gameData));
         boolean isCreature = token.primaryType() == CardType.CREATURE;

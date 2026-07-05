@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -51,7 +52,7 @@ class HeartlessPillageTest extends BaseCardTest {
         assertThat(raid.wrapped()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect treasure = (CreateTokenEffect) raid.wrapped();
         assertThat(treasure.primaryType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(treasure.amount()).isEqualTo(1);
+        assertThat(treasure.amount()).isEqualTo(new Fixed(1));
     }
 
     // ===== Casting =====

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -32,7 +33,7 @@ class PrecursorGolemTest extends BaseCardTest {
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect =
                 (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(2);
+        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
         assertThat(tokenEffect.tokenName()).isEqualTo("Golem");
         assertThat(tokenEffect.power()).isEqualTo(3);
         assertThat(tokenEffect.toughness()).isEqualTo(3);

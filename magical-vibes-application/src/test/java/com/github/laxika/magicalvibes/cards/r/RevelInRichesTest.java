@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -39,7 +40,7 @@ class RevelInRichesTest extends BaseCardTest {
                 .isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect tokenEffect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst();
         assertThat(tokenEffect.primaryType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(tokenEffect.amount()).isEqualTo(1);
+        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(1));
         assertThat(tokenEffect.tokenName()).isEqualTo("Treasure");
 
         // Upkeep trigger: win if 10+ Treasures

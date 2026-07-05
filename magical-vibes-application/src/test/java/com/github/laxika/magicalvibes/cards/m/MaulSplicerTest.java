@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -29,7 +30,7 @@ class MaulSplicerTest extends BaseCardTest {
 
         CreateTokenEffect tokenEffect =
                 (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(2);
+        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
         assertThat(tokenEffect.tokenName()).isEqualTo("Phyrexian Golem");
         assertThat(tokenEffect.power()).isEqualTo(3);
         assertThat(tokenEffect.toughness()).isEqualTo(3);

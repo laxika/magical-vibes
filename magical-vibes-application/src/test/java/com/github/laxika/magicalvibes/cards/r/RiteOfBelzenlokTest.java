@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -37,7 +38,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         assertThat(effects).hasSize(1);
         assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
+        assertThat(effect.amount()).isEqualTo(new Fixed(2));
         assertThat(effect.tokenName()).isEqualTo("Cleric");
         assertThat(effect.power()).isZero();
         assertThat(effect.toughness()).isEqualTo(1);
@@ -55,7 +56,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         assertThat(effects).hasSize(1);
         assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
+        assertThat(effect.amount()).isEqualTo(new Fixed(2));
         assertThat(effect.tokenName()).isEqualTo("Cleric");
         assertThat(effect.power()).isZero();
         assertThat(effect.toughness()).isEqualTo(1);
@@ -70,7 +71,7 @@ class RiteOfBelzenlokTest extends BaseCardTest {
         assertThat(effects).hasSize(1);
         assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
         CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
+        assertThat(effect.amount()).isEqualTo(new Fixed(1));
         assertThat(effect.tokenName()).isEqualTo("Demon");
         assertThat(effect.power()).isEqualTo(6);
         assertThat(effect.toughness()).isEqualTo(6);

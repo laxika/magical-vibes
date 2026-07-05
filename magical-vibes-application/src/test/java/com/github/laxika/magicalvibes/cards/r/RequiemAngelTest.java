@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LanternSpirit;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -43,7 +44,7 @@ class RequiemAngelTest extends BaseCardTest {
         assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
 
         CreateTokenEffect token = (CreateTokenEffect) conditional.wrapped();
-        assertThat(token.amount()).isEqualTo(1);
+        assertThat(token.amount()).isEqualTo(new Fixed(1));
         assertThat(token.tokenName()).isEqualTo("Spirit");
         assertThat(token.power()).isEqualTo(1);
         assertThat(token.toughness()).isEqualTo(1);
