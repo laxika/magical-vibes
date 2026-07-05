@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessMan
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
@@ -503,6 +504,13 @@ public class ActivatedAbilityExecutionService {
                         gameData.playersDealtDamageThisTurn.add(playerId);
                     }
                 }
+            } else if (effect instanceof DealDamageToEachOpponentEffect dmg) {
+                // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser:
+                // "Add {R}. When you do, this creature deals 1 damage to each opponent."
+                for (UUID opponentId : gameData.orderedPlayerIds) {
+                    if (opponentId.equals(playerId)) continue;
+                    dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, dmg.damage());
+                }
             }
         }
         stateBasedActionService.performStateBasedActions(gameData);
@@ -515,6 +523,43 @@ public class ActivatedAbilityExecutionService {
             playerInputService.processNextMayAbility(gameData);
         }
         gameBroadcastService.broadcastGameState(gameData);
+    }
+
+    /**
+     * Deals a mana-ability rider's damage to a single player, applying the same prevention/infect/
+     * redirect handling used by the {@link DealDamageToControllerEffect} rider. Used by
+     * {@link DealDamageToEachOpponentEffect} riders (e.g. Rubble Rouser).
+     */
+    private void dealManaAbilityRiderDamageToPlayer(GameData gameData, Permanent permanent, UUID playerId, int damage) {
+        String cardName = permanent.getCard().getName();
+        String playerName = gameData.playerIdToName.get(playerId);
+        if (!gameQueryService.isDamagePreventable(gameData)
+                || (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
+                    && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
+                    && !gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
+                    && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor()))) {
+            int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
+            effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
+            if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {
+                if (gameQueryService.canPlayerGetPoisonCounters(gameData, playerId)) {
+                    int currentPoison = gameData.playerPoisonCounters.getOrDefault(playerId, 0);
+                    gameData.playerPoisonCounters.put(playerId, currentPoison + effectiveDamage);
+                    gameBroadcastService.logAndBroadcast(gameData, playerName + " gets " + effectiveDamage + " poison counters from " + cardName + ".");
+                }
+            } else if (effectiveDamage > 0 && !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
+                gameBroadcastService.logAndBroadcast(gameData, playerName + "'s life total can't change.");
+            } else {
+                int currentLife = gameData.getLife(playerId);
+                gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                if (effectiveDamage > 0) {
+                    gameBroadcastService.logAndBroadcast(gameData, playerName + " takes " + effectiveDamage + " damage from " + cardName + ".");
+                    log.info("Game {} - {} takes {} damage from {}", gameData.id, playerName, effectiveDamage, cardName);
+                }
+            }
+            if (effectiveDamage > 0) {
+                gameData.playersDealtDamageThisTurn.add(playerId);
+            }
+        }
     }
 
     private boolean isDampingManaReplacementActive(GameData gameData) {

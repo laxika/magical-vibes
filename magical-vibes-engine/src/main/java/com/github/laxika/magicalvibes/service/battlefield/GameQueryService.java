@@ -474,7 +474,8 @@ public class GameQueryService {
      * (e.g. Leyline of Punishment).
      */
     public boolean isDamagePreventable(GameData gameData) {
-        return !anyBattlefieldHasStaticEffect(gameData, DamageCantBePreventedEffect.class);
+        return !gameData.damageCantBePreventedThisTurn
+                && !anyBattlefieldHasStaticEffect(gameData, DamageCantBePreventedEffect.class);
     }
 
     /**

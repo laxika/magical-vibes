@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPlayFromG
 import java.util.List;
 
 @CardRegistration(set = "SOS", collectorNumber = "173")
+@CardRegistration(set = "SOS", collectorNumber = "344")
 public class ArkOfHunger extends Card {
 
     public ArkOfHunger() {

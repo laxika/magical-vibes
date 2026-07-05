@@ -88,6 +88,7 @@ public class TurnCleanupService {
         gameData.playerSourceDamagePreventionIds.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();
+        gameData.damageCantBePreventedThisTurn = false;
         gameData.drawReplacementTargetToController.clear();
         gameData.colorSourceDamageBonusThisTurn.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();
@@ -106,6 +107,7 @@ public class TurnCleanupService {
         // but guard against any leaked batch depth across turns).
         gameData.graveyardLeaveNotificationDepth = 0;
         gameData.graveyardLeaveNotificationPendingOwners.clear();
+        gameData.playersWhoseCardsLeftGraveyardThisTurn.clear();
 
         // Remove temporary impulse-draw exile permissions (e.g. Vance's Blasting Cannons)
         for (var cardId : gameData.exilePlayPermissionsExpireEndOfTurn) {

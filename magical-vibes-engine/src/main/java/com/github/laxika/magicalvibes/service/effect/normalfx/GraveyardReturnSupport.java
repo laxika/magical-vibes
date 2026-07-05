@@ -939,8 +939,20 @@ public class GraveyardReturnSupport {
      * are presented after each exile.
      */
     public void beginGraveyardExileChoice(GameData gameData, UUID playerId, int remainingCount) {
+        beginGraveyardExileChoice(gameData, playerId, remainingCount, null);
+    }
+
+    /**
+     * Variant of {@link #beginGraveyardExileChoice(GameData, UUID, int)} that excludes a specific
+     * card from the choice (by identity). Used when a spell resolving with a "you may exile a card
+     * from your graveyard" clause has already been placed into its owner's graveyard — that spell
+     * card is not actually in the graveyard yet per the rules and must not be a valid choice.
+     */
+    public void beginGraveyardExileChoice(GameData gameData, UUID playerId, int remainingCount, Card excludedCard) {
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-        List<Integer> validIndices = IntStream.range(0, graveyard.size()).boxed().toList();
+        List<Integer> validIndices = IntStream.range(0, graveyard.size())
+                .filter(i -> excludedCard == null || graveyard.get(i) != excludedCard)
+                .boxed().toList();
 
         interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                 .builder(playerId, validIndices, GraveyardChoiceDestination.EXILE,

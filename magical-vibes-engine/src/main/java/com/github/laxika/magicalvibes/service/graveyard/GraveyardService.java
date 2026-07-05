@@ -363,6 +363,9 @@ public class GraveyardService {
      * When inside a batch ({@link #beginGraveyardLeaveBatch}), defers until the batch ends.
      */
     public void notifyCardsLeftGraveyard(GameData gameData, UUID ownerId) {
+        // Record that one or more cards left this player's graveyard this turn (regardless of
+        // batching), for "if one or more cards left your graveyard this turn" effects.
+        gameData.playersWhoseCardsLeftGraveyardThisTurn.add(ownerId);
         if (gameData.graveyardLeaveNotificationDepth > 0) {
             gameData.graveyardLeaveNotificationPendingOwners.add(ownerId);
             return;

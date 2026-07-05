@@ -29,6 +29,19 @@ public class TapTargetPermanentEffectHandler implements NormalEffectHandlerBean 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // Mixed multi-target spell: this effect is bound to a single-target group that is
+        // only one of several target groups (e.g. Vibrant Outburst: "3 damage to any target.
+        // Tap up to one target creature."). EffectResolutionService has already set
+        // entry.targetId to this group's chosen target (or null if the optional target was
+        // omitted), so tap only that target rather than every target in the spell.
+        if (entry.getCard() != null && isSingleTargetGroupInMultiGroupSpell(entry, effect)) {
+            Permanent boundTarget = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            if (boundTarget != null) {
+                tapTarget(gameData, entry, boundTarget);
+            }
+            return;
+        }
+
         // Multi-target: tap each valid target
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
             for (UUID targetId : entry.getTargetIds()) {
@@ -50,11 +63,23 @@ public class TapTargetPermanentEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
+        tapTarget(gameData, entry, target);
+    }
+
+    private void tapTarget(GameData gameData, StackEntry entry, Permanent target) {
         tapUntapSupport.tapPermanent(gameData, target);
 
         String logEntry = entry.getCard().getName() + " taps " + target.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
         log.info("Game {} - {} taps {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
+    }
+
+    private boolean isSingleTargetGroupInMultiGroupSpell(StackEntry entry, CardEffect effect) {
+        int targetIdx = entry.getCard().getEffectTargetIndex(effect);
+        return targetIdx >= 0
+                && entry.getCard().getSpellTargets().size() > 1
+                && targetIdx < entry.getCard().getSpellTargets().size()
+                && entry.getCard().getSpellTargets().get(targetIdx).getMaxTargets() == 1;
     }
 }

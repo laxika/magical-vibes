@@ -458,6 +458,9 @@ public class GameBroadcastService {
         playable.removeIf(i -> {
             Card card = hand.get(i);
             if (card.hasType(CardType.LAND)) return false;
+            // Spells whose declared targets are all optional ("up to one/N target …") can always be
+            // cast by choosing zero targets, even if no legal target exists (e.g. Stress Dream).
+            if (!card.getSpellTargets().isEmpty() && card.getMinTargets() == 0) return false;
             return EffectResolution.needsSpellCastTarget(card) && !validTargetService.hasValidTargetsForSpell(gameData, card, playerId);
         });
 
