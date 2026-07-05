@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
@@ -35,8 +36,8 @@ class BladeTribeBerserkersTest extends BaseCardTest {
                 (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
         assertThat(boost.wrapped()).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect boostEffect = (BoostSelfEffect) boost.wrapped();
-        assertThat(boostEffect.powerBoost()).isEqualTo(3);
-        assertThat(boostEffect.toughnessBoost()).isEqualTo(3);
+        assertThat(boostEffect.powerBoost()).isEqualTo(new Fixed(3));
+        assertThat(boostEffect.toughnessBoost()).isEqualTo(new Fixed(3));
 
         ConditionalEffect haste =
                 (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1);

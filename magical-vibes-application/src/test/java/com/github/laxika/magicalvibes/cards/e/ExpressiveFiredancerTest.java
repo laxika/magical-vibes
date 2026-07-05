@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -52,8 +53,8 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(ConditionalEffect.class);
 
         BoostSelfEffect boost = (BoostSelfEffect) trigger.resolvedEffects().get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
 
         ConditionalEffect conditional = (ConditionalEffect) trigger.resolvedEffects().get(1);
         assertThat(((SpellManaSpentAtLeast) conditional.condition()).minMana()).isEqualTo(5);

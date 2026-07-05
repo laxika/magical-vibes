@@ -6,7 +6,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOtherControlledSubtypeEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,12 +26,12 @@ class RatColonyTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfPerOtherControlledSubtypeEffect.class);
-        BoostSelfPerOtherControlledSubtypeEffect effect =
-                (BoostSelfPerOtherControlledSubtypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.RAT);
-        assertThat(effect.powerPerPermanent()).isEqualTo(1);
-        assertThat(effect.toughnessPerPermanent()).isEqualTo(0);
+                .isInstanceOf(BoostSelfEffect.class);
+        BoostSelfEffect effect =
+                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.powerBoost()).isEqualTo(new PermanentCount(
+                new PermanentHasSubtypePredicate(CardSubtype.RAT), CountScope.CONTROLLER, true));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     @Test

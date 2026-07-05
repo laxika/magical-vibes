@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -52,8 +53,8 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         assertThat(((SpellManaSpentAtLeast) replacement.condition()).minMana()).isEqualTo(5);
 
         BoostSelfEffect boost = (BoostSelfEffect) replacement.baseEffect();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(3));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
 
         PutCountersOnSelfEffect counters = (PutCountersOnSelfEffect) replacement.upgradedEffect();
         assertThat(counters.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);

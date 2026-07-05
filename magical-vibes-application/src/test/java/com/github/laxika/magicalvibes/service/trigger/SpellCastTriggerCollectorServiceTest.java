@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastFromGraveyardTriggerEffect;
@@ -33,6 +35,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -65,6 +68,9 @@ class SpellCastTriggerCollectorServiceTest {
 
     @Mock
     private GameBroadcastService gameBroadcastService;
+
+    @Mock
+    private AmountEvaluationService amountEvaluationService;
 
     @InjectMocks
     private SpellCastTriggerCollectorService sut;
@@ -181,6 +187,27 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("snapshots spell mana spent into xValue when a resolved amount references X")
+        void snapshotsSpellManaSpentForXValueAmounts() {
+            Permanent perm = createPermanent("Aberrant Manawurm");
+            var innerEffect = new BoostSelfEffect(new XValue(), new Fixed(0));
+            var effect = new SpellCastTriggerEffect(null, List.of(innerEffect));
+            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null), eq(null), any(), any())).thenReturn(true);
+            when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
+            gd.addSpellCastManaSpent(spellCard.getId(), 3);
+
+            registry.dispatch(
+                    match(perm, player1Id, effect),
+                    EffectSlot.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
         }
 
         @Test

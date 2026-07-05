@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,13 +34,13 @@ class HellkiteIgniterTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{R}");
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostSelfPerControlledPermanentEffect.class);
+                .isInstanceOf(BoostSelfEffect.class);
 
-        BoostSelfPerControlledPermanentEffect effect =
-                (BoostSelfPerControlledPermanentEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerPerPermanent()).isEqualTo(1);
-        assertThat(effect.toughnessPerPermanent()).isEqualTo(0);
-        assertThat(effect.filter()).isInstanceOf(PermanentIsArtifactPredicate.class);
+        BoostSelfEffect effect =
+                (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
+        assertThat(effect.powerBoost()).isEqualTo(new PermanentCount(
+                new PermanentIsArtifactPredicate(), CountScope.CONTROLLER));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     // ===== Activating ability =====

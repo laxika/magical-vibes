@@ -32,7 +32,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChosenSubtypeSpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfBySpellManaSpentEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCa
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +69,7 @@ public class SpellCastTriggerCollectorService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
     private final TargetLegalityService targetLegalityService;
+    private final AmountEvaluationService amountEvaluationService;
 
     // ── ON_ANY_PLAYER_CASTS_SPELL ──────────────────────────────────────
 
@@ -609,7 +611,9 @@ public class SpellCastTriggerCollectorService {
     }
 
     private boolean effectNeedsSpellManaSpentX(CardEffect effect) {
-        if (effect instanceof BoostSelfBySpellManaSpentEffect) {
+        if (effect instanceof BoostSelfEffect boost
+                && (amountEvaluationService.referencesXValue(boost.powerBoost())
+                || amountEvaluationService.referencesXValue(boost.toughnessBoost()))) {
             return true;
         }
         if (effect instanceof ConditionalEffect conditional) {

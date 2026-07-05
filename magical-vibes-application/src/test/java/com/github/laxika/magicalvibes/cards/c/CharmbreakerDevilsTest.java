@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -52,8 +53,8 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         assertThat(castTrigger.resolvedEffects()).hasSize(1);
         assertThat(castTrigger.resolvedEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect boost = (BoostSelfEffect) castTrigger.resolvedEffects().getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(4));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     // ===== Upkeep trigger: return random instant or sorcery =====

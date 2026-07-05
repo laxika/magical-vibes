@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -27,8 +28,8 @@ class KilnWalkerTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(3);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(3));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     // ===== Attack trigger fires =====

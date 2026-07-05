@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
@@ -45,8 +46,8 @@ class RiverSneakTest extends BaseCardTest {
         assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
 
         BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
     }
 
     // ===== Can't be blocked =====

@@ -15,7 +15,7 @@ All paths relative to `cards/`.
 | Own boost + opponent debuff | `e/EleshNornGrandCenobite.java` | STATIC StaticBoostEffect(2, 2, OWN_CREATURES) + StaticBoostEffect(-2, -2, OPPONENT_CREATURES) |
 | Color keyword lord | `b/BellowingTanglewurm.java` | STATIC GrantKeywordEffect with PermanentColorInPredicate filter, OWN_CREATURES scope |
 | Keyword lord + spell trigger | `h/HandOfThePraetors.java` | STATIC StaticBoostEffect with PermanentHasKeywordPredicate(INFECT) filter, OWN_CREATURES scope + ON_ANY_PLAYER_CASTS_SPELL GiveTargetPlayerPoisonCountersEffect with CardAllOfPredicate(CREATURE, INFECT) |
-| Attachment self-buff | `c/ChampionOfTheFlame.java` | STATIC BoostSelfPerAttachmentEffect(2, 2, true, true) — +2/+2 for each Aura and Equipment attached. Use BoostSelfPerEquipmentAttachedEffect for Equipment-only (Goblin Gaveleer) |
+| Attachment self-buff | `c/ChampionOfTheFlame.java` | STATIC BoostSelfEffect(Scaled(AttachmentsOnSource(true, true), 2), same) — +2/+2 for each Aura and Equipment attached. Equipment-only: AttachmentsOnSource(false, true) (Goblin Gaveleer) |
 | Tribal combat trigger (subtype counter lord) | `r/RakishHeir.java` | ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER PutCountersOnDamageDealerEffect(1,1,1, PermanentHasSubtypePredicate(VAMPIRE)) — when a Vampire you control deals combat damage to a player, put +1/+1 counter on it |
 | Choose subtype + grant to own | `x/Xenograft.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC GrantChosenSubtypeToOwnCreaturesEffect |
 | Choose subtype + lord boost + cast draw | `v/VanquishersBanner.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC BoostCreaturesOfChosenSubtypeEffect(1,1) + ON_CONTROLLER_CASTS_SPELL ChosenSubtypeSpellCastTriggerEffect(DrawCardEffect) — choose type on enter, +1/+1 to own creatures of that type, draw on casting creature of that type |
@@ -51,10 +51,10 @@ All paths relative to `cards/`.
 | P/T = subtype | `n/Nightmare.java` | STATIC PowerToughnessEqualToControlledPermanentCountEffect(PermanentHasSubtypePredicate) |
 | P/T = GY creatures | `m/Mortivore.java` | STATIC PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect |
 | P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC PowerToughnessEqualToCardsInHandEffect + ON_CONTROLLER_DRAWS EachOpponentLosesLifeEffect |
-| Self boost per lands + GY lands | `m/MultaniYavimayasAvatar.java` | STATIC BoostSelfPerControlledPermanentEffect(1, 1, PermanentIsLandPredicate) + BoostSelfPerCardsInControllerGraveyardEffect(CardTypePredicate(LAND), 1, 1) — +1/+1 per land you control and per land card in your graveyard |
+| Self boost per lands + GY lands | `m/MultaniYavimayasAvatar.java` | STATIC BoostSelfEffect(PermanentCount(PermanentIsLandPredicate, CONTROLLER), same) + BoostSelfEffect(CardsInGraveyard(CardTypePredicate(LAND), CONTROLLER), same) — +1/+1 per land you control and per land card in your graveyard |
 | Gain GY creature abilities | `n/NecroticOoze.java` | STATIC GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect — selfOnly, gains all activated abilities of all creature cards in all graveyards |
 | +1/+1 per same name | `r/RelentlessRats.java` | STATIC BoostByOtherCreaturesWithSameNameEffect |
-| +1/+0 per other subtype you control | `r/RatColony.java` | STATIC BoostSelfPerOtherControlledSubtypeEffect(RAT, 1, 0) |
+| +1/+0 per other subtype you control | `r/RatColony.java` | STATIC BoostSelfEffect(PermanentCount(PermanentHasSubtypePredicate(RAT), CONTROLLER, excludeSource=true), Fixed(0)) |
 | Cost reduction | `a/AvatarOfMight.java` | STATIC ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect |
 | Subtype cost reduction | `d/DanithaCapashenParagon.java` | STATIC ReduceCastCostForMatchingSpellsEffect(CardAnyOfPredicate(CardSubtypePredicate(AURA), CardSubtypePredicate(EQUIPMENT)), 1, SELF) — from battlefield permanent |
 | Cost reduction per creature card in graveyard | `g/Ghoultree.java` | STATIC ReduceOwnCastCostPerCreatureCardInGraveyardEffect(1) — this spell costs {1} less per creature card in your graveyard |

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -33,8 +34,8 @@ class SepticRatsTest extends BaseCardTest {
                 (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
         assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
     }
 
     // ===== Attack trigger fires =====

@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,12 +25,13 @@ class ScourgeOfGeierReachTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfPerOpponentPermanentEffect.class);
-        BoostSelfPerOpponentPermanentEffect effect =
-                (BoostSelfPerOpponentPermanentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsCreaturePredicate.class);
-        assertThat(effect.powerPerPermanent()).isEqualTo(1);
-        assertThat(effect.toughnessPerPermanent()).isEqualTo(1);
+                .isInstanceOf(BoostSelfEffect.class);
+        BoostSelfEffect effect =
+                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        PermanentCount opponentCreatures =
+                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS);
+        assertThat(effect.powerBoost()).isEqualTo(opponentCreatures);
+        assertThat(effect.toughnessBoost()).isEqualTo(opponentCreatures);
     }
 
     // ===== Base stats without opponent creatures =====

@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfOpponentAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -15,7 +17,8 @@ public class ShannaSisaysLegacy extends Card {
         addEffect(EffectSlot.STATIC, new CantBeTargetOfOpponentAbilitiesEffect());
 
         // Shanna gets +1/+1 for each creature you control.
-        addEffect(EffectSlot.STATIC, new BoostSelfPerControlledPermanentEffect(1, 1,
-                new PermanentIsCreaturePredicate()));
+        PermanentCount creaturesYouControl =
+                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
+        addEffect(EffectSlot.STATIC, new BoostSelfEffect(creaturesYouControl, creaturesYouControl));
     }
 }

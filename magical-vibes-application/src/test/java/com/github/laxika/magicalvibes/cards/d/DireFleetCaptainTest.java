@@ -8,7 +8,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOtherAttackingSubtypeEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,16 +27,22 @@ class DireFleetCaptainTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has ON_ATTACK trigger with BoostSelfPerOtherAttackingSubtypeEffect(PIRATE, 1, 1)")
+    @DisplayName("Has ON_ATTACK trigger boosting per other attacking Pirate")
     void hasCorrectStructure() {
         DireFleetCaptain card = new DireFleetCaptain();
 
         assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostSelfPerOtherAttackingSubtypeEffect.class);
-        BoostSelfPerOtherAttackingSubtypeEffect effect = (BoostSelfPerOtherAttackingSubtypeEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.PIRATE);
-        assertThat(effect.powerPerCreature()).isEqualTo(1);
-        assertThat(effect.toughnessPerCreature()).isEqualTo(1);
+        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostSelfEffect.class);
+        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
+        PermanentCount otherAttackingPirates = new PermanentCount(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsAttackingPredicate(),
+                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE)
+                )),
+                CountScope.CONTROLLER,
+                true);
+        assertThat(effect.powerBoost()).isEqualTo(otherAttackingPirates);
+        assertThat(effect.toughnessBoost()).isEqualTo(otherAttackingPirates);
     }
 
     // ===== Attack trigger fires =====

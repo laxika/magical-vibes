@@ -54,7 +54,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Planeswalker with discard/sacrifice/pile separation | `l/LilianaOfTheVeil.java` | +1 EachPlayerDiscardsEffect, -2 SacrificeCreatureEffect (targets player), -6 SeparatePermanentsIntoPilesAndSacrificeEffect |
-| Planeswalker with opponent reveal choice + silver counter exile + artifact-scaling token | `k/KarnScionOfUrza.java` | +1 KarnScionRevealTwoOpponentChoosesEffect, -1 KarnScionReturnSilverCounterCardEffect, -2 CreateTokenEffect with STATIC BoostSelfPerControlledPermanentEffect(1,1,PermanentIsArtifactPredicate) via tokenEffects map |
+| Planeswalker with opponent reveal choice + silver counter exile + artifact-scaling token | `k/KarnScionOfUrza.java` | +1 KarnScionRevealTwoOpponentChoosesEffect, -1 KarnScionReturnSilverCounterCardEffect, -2 CreateTokenEffect with STATIC BoostSelfEffect(PermanentCount(PermanentIsArtifactPredicate, CONTROLLER), same) via tokenEffects map |
 | Planeswalker with draw + delayed untap + tuck + emblem | `t/TeferiHeroOfDominaria.java` | +1 DrawCardEffect + RegisterDelayedUntapPermanentsEffect(2), -3 PutTargetPermanentIntoLibraryNFromTopEffect(2) with nonland filter, -8 TeferiHeroEmblemEffect. Emblem triggers ExileTargetOpponentPermanentOnDrawEffect on each draw |
 | Variable loyalty (-X) | `c/ChandraNalaar.java` | `ActivatedAbility.variableLoyaltyAbility(effects, desc, filter)` — loyalty cost is -X chosen by player, X stored in xValue |
 | Loyalty + mana + player damage | `c/ChandraBoldPyromancer.java` | +1 with AwardManaEffect + DealDamageToTargetPlayerEffect, -3 DealDamageToTargetCreatureOrPlaneswalkerEffect, -7 DealDamageToTargetPlayerEffect + DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect |

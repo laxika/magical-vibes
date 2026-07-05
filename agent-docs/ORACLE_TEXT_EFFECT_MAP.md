@@ -38,6 +38,11 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "creatures you control get +X/+Y until end of turn" (with predicate) | `BoostAllOwnCreaturesEffect(X, Y, predicate)` | SPELL | Filtered |
 | "all creatures get +X/+Y until end of turn" | `BoostAllCreaturesEffect(X, Y)` | SPELL | Affects all |
 | "CARDNAME gets +X/+Y until end of turn" | `BoostSelfEffect(X, Y)` | ability effect | Self-pump |
+| "CARDNAME gets +N/+M for each [permanent] you control" | `BoostSelfEffect(new PermanentCount(predicate, CountScope.CONTROLLER), ...)` | STATIC (or ability/trigger for until-EOT) | Any "for each" self-boost = `BoostSelfEffect` + `DynamicAmount` (see EFFECTS_INDEX "Dynamic amounts") — never a new effect class. "each *other*" → `excludeSource=true`; opponents' → `CountScope.OPPONENTS`; whole battlefield → `ANY_PLAYER` |
+| "CARDNAME gets +N/+M for each [card] in your graveyard" | `BoostSelfEffect(new CardsInGraveyard(cardPredicate, CountScope.CONTROLLER), ...)` | STATIC | Multani, Yavimaya's Avatar |
+| "CARDNAME gets +N/+M for each Aura/Equipment attached to it" | `BoostSelfEffect(new Scaled(new AttachmentsOnSource(auras, equipment), N), ...)` | STATIC | Champion of the Flame, Goblin Gaveleer |
+| "CARDNAME gets +X/+0 until end of turn, where X is the mana spent to cast that spell" | `BoostSelfEffect(new XValue(), new Fixed(0))` inside `SpellCastTriggerEffect` | ON_CONTROLLER_CASTS_SPELL | Aberrant Manawurm; collector snapshots xValue for amounts referencing X |
+| "Whenever CARDNAME becomes blocked, it gets +N/+N for each creature blocking it" | `BoostSelfEffect(new CreaturesBlockingSource(), new CreaturesBlockingSource())` | ON_BECOMES_BLOCKED | Elvish Berserker |
 | "CARDNAME's power and toughness are each equal to the number of lands you control" | `PowerToughnessEqualToControlledLandCountEffect()` | STATIC | |
 | "CARDNAME's power and toughness are each equal to the number of creatures you control" | `PowerToughnessEqualToControlledCreatureCountEffect()` | STATIC | |
 | "switch target creature's power and toughness" | `SwitchPowerToughnessEffect()` | SPELL | |

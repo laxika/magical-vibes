@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,8 +32,8 @@ class ChandrasSpitfireTest extends BaseCardTest {
                 .isInstanceOf(BoostSelfEffect.class);
 
         BoostSelfEffect boost = (BoostSelfEffect) card.getEffects(EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(3));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     // ===== Triggering =====

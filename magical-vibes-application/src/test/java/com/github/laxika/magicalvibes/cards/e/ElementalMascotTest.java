@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
@@ -58,8 +59,8 @@ class ElementalMascotTest extends BaseCardTest {
         assertThat(trigger.resolvedEffects()).hasSize(2);
         assertThat(trigger.resolvedEffects().get(0)).isInstanceOf(BoostSelfEffect.class);
         BoostSelfEffect boost = (BoostSelfEffect) trigger.resolvedEffects().get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isZero();
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
 
         assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(ConditionalEffect.class);
         ConditionalEffect conditional = (ConditionalEffect) trigger.resolvedEffects().get(1);

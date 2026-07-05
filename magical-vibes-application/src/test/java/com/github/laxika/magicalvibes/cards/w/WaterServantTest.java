@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -30,14 +31,14 @@ class WaterServantTest extends BaseCardTest {
 
         // First ability: +1/-1
         BoostSelfEffect firstEffect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(firstEffect.powerBoost()).isEqualTo(1);
-        assertThat(firstEffect.toughnessBoost()).isEqualTo(-1);
+        assertThat(firstEffect.powerBoost()).isEqualTo(new Fixed(1));
+        assertThat(firstEffect.toughnessBoost()).isEqualTo(new Fixed(-1));
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{U}");
 
         // Second ability: -1/+1
         BoostSelfEffect secondEffect = (BoostSelfEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(secondEffect.powerBoost()).isEqualTo(-1);
-        assertThat(secondEffect.toughnessBoost()).isEqualTo(1);
+        assertThat(secondEffect.powerBoost()).isEqualTo(new Fixed(-1));
+        assertThat(secondEffect.toughnessBoost()).isEqualTo(new Fixed(1));
         assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{U}");
     }
 

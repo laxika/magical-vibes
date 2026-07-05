@@ -22,6 +22,15 @@ Static/continuous effects (P/T bonuses, keyword grants, conditionals computed du
 - `testutil/GameTestDoublesConfig` + `GameTestEngineContext` — card tests load the same `GameEngineConfig` graph via a cached Spring test context.
 - `ai/simulation/HeadlessSimulationDoublesConfig` + `HeadlessSimulationContext` — MCTS loads the same engine graph headlessly (no WebSocket broadcasts).
 
+## Dynamic-amount self boosts
+
+`BoostSelfEffect(DynamicAmount, DynamicAmount)` in the `STATIC` slot is handled by the single
+generic `BoostSelfSelfEffectHandler` (selfOnly), which evaluates the amounts via
+`AmountEvaluationService` — do NOT add per-derivation `BoostSelfPer*` handlers. New count
+sources become new `model/amount/DynamicAmount` records with a case in
+`AmountEvaluationService.evaluate` (recursion-safe in static contexts: predicates are matched
+with a null `FilterContext`).
+
 ## Conditional static effects
 
 Conditional static effects (`ConditionalEffect(condition, wrapped)`) are handled by exactly two

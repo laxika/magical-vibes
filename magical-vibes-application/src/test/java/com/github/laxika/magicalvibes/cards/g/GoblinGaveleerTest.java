@@ -5,7 +5,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerEquipmentAttachedEffect;
+import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,11 +28,11 @@ class GoblinGaveleerTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfPerEquipmentAttachedEffect.class);
-        BoostSelfPerEquipmentAttachedEffect effect =
-                (BoostSelfPerEquipmentAttachedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerPerEquipment()).isEqualTo(2);
-        assertThat(effect.toughnessPerEquipment()).isEqualTo(0);
+                .isInstanceOf(BoostSelfEffect.class);
+        BoostSelfEffect effect =
+                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(effect.powerBoost()).isEqualTo(new Scaled(new AttachmentsOnSource(false, true), 2));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     // ===== Base stats without equipment =====

@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerOpponentPoisonCounterEffect;
+import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,18 +15,18 @@ class MycosynthFiendTest extends BaseCardTest {
     // ===== Card structure =====
 
     @Test
-    @DisplayName("Has STATIC BoostSelfPerOpponentPoisonCounterEffect(1, 1)")
+    @DisplayName("Has STATIC BoostSelfEffect scaling with opponent poison counters")
     void hasCorrectEffect() {
         MycosynthFiend card = new MycosynthFiend();
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfPerOpponentPoisonCounterEffect.class);
+                .isInstanceOf(BoostSelfEffect.class);
 
-        BoostSelfPerOpponentPoisonCounterEffect boost =
-                (BoostSelfPerOpponentPoisonCounterEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerPerCounter()).isEqualTo(1);
-        assertThat(boost.toughnessPerCounter()).isEqualTo(1);
+        BoostSelfEffect boost =
+                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        assertThat(boost.powerBoost()).isEqualTo(new OpponentPoisonCounters());
+        assertThat(boost.toughnessBoost()).isEqualTo(new OpponentPoisonCounters());
     }
 
     // ===== No poison counters =====

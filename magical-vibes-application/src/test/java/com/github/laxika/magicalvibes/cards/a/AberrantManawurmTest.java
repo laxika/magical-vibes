@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfBySpellManaSpentEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -47,12 +49,12 @@ class AberrantManawurmTest extends BaseCardTest {
         SpellCastTriggerEffect trigger =
                 (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
         assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(BoostSelfBySpellManaSpentEffect.class);
+        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
 
-        BoostSelfBySpellManaSpentEffect boost =
-                (BoostSelfBySpellManaSpentEffect) trigger.resolvedEffects().getFirst();
-        assertThat(boost.powerMultiplier()).isEqualTo(1);
-        assertThat(boost.toughnessMultiplier()).isEqualTo(0);
+        BoostSelfEffect boost =
+                (BoostSelfEffect) trigger.resolvedEffects().getFirst();
+        assertThat(boost.powerBoost()).isEqualTo(new XValue());
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     @Test

@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerCardsInControllerGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
@@ -23,12 +25,14 @@ public class MultaniYavimayasAvatar extends Card {
         // Reach, trample — auto-loaded from Scryfall
 
         // Multani, Yavimaya's Avatar gets +1/+1 for each land you control
-        addEffect(EffectSlot.STATIC, new BoostSelfPerControlledPermanentEffect(
-                1, 1, new PermanentIsLandPredicate()));
+        PermanentCount landsYouControl =
+                new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
+        addEffect(EffectSlot.STATIC, new BoostSelfEffect(landsYouControl, landsYouControl));
 
         // ... and each land card in your graveyard.
-        addEffect(EffectSlot.STATIC, new BoostSelfPerCardsInControllerGraveyardEffect(
-                new CardTypePredicate(CardType.LAND), 1, 1));
+        CardsInGraveyard landCardsInGraveyard =
+                new CardsInGraveyard(new CardTypePredicate(CardType.LAND), CountScope.CONTROLLER);
+        addEffect(EffectSlot.STATIC, new BoostSelfEffect(landCardsInGraveyard, landCardsInGraveyard));
 
         // {1}{G}, Return two lands you control to their owner's hand:
         // Return Multani, Yavimaya's Avatar from your graveyard to your hand.

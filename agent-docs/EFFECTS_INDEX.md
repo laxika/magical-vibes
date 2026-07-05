@@ -99,6 +99,37 @@ compile error). New conditions: add the record to `model/condition/`, add it to 
 list on `Condition`, and add its case to `ConditionEvaluationService.isMet`. Never add a new
 per-condition wrapper effect class.
 
+### Dynamic amounts (the `DynamicAmount` model)
+
+Dynamically computed quantities are **data** too — the numeric sibling of `Condition`. The
+sealed interface `model/amount/DynamicAmount` has one small record per derivation:
+
+- `Fixed(int value)` — a constant (`new BoostSelfEffect(2, 2)` is sugar for two `Fixed`s)
+- `XValue()` — the stack entry's snapshotted `xValue` (mana spent to cast the triggering
+  spell, X paid, …)
+- `Scaled(DynamicAmount amount, int factor)` — base amount × constant ("+2/+0 per Equipment"
+  = `Scaled(count, 2)`)
+- `PermanentCount(PermanentPredicate filter, CountScope scope[, boolean excludeSource])` —
+  matching battlefield permanents; `CountScope` is `CONTROLLER` / `OPPONENTS` / `ANY_PLAYER`;
+  `excludeSource=true` models "each *other* …" wordings
+- `CardsInGraveyard(CardPredicate filter, CountScope scope)` — matching non-token cards in
+  the graveyard(s) in scope
+- `AttachmentsOnSource(boolean countAuras, boolean countEquipment)` — Auras/Equipment
+  attached to the source
+- `CreaturesBlockingSource()` — creatures currently blocking the source
+- `OpponentPoisonCounters()` — total poison counters on opponents
+- `ImprintedCreaturePower()` / `ImprintedCreatureToughness()` — the imprinted creature
+  card's P/T (0 if nothing imprinted)
+
+All amounts are evaluated in one place, the engine's `AmountEvaluationService` (exhaustive
+switch, parallel to `ConditionEvaluationService`; contexts built via
+`AmountContext.forStackEntry` / `forStaticEffect`). Effects that only differ in HOW A NUMBER
+IS COMPUTED must be a single record parameterized with `DynamicAmount` — see
+`BoostSelfEffect(DynamicAmount, DynamicAmount)`, which replaced the entire `BoostSelfPer*`
+family. New amounts: add the record to `model/amount/`, add it to the `permits` list on
+`DynamicAmount`, and add its case to `AmountEvaluationService.evaluate`. Never add a new
+per-derivation effect record.
+
 
 | Effect | Constructor | Description |
 |--------|-------------|-------------|
@@ -804,8 +835,7 @@ Pass `null` as filter to allow any card.
 | `BoostTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | target creature gets +X/+Y until end of turn |
 | `BoostTargetCreaturePerControlledPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | target creature gets +N/+N per controlled permanent matching filter until end of turn |
 | `BoostTargetCreaturePerCardsInControllerGraveyardEffect` | `(CardPredicate filter, int basePower, int powerPerCard, int baseToughness, int toughnessPerCard)` | target creature gets +(base + count×powerPer)/+(base + count×toughPer) until end of turn, where count = matching cards in controller's graveyard at resolution. Used by Ancestral Anger with `CardNamedPredicate` |
-| `BoostSelfEffect` | `(int powerBoost, int toughnessBoost)` | this creature gets +X/+Y until end of turn |
-| `BoostSelfBySpellManaSpentEffect` | `(int powerMultiplier, int toughnessMultiplier)` | source permanent gets +(multiplier×X)/+(multiplier×X) until end of turn, where X is mana spent to cast the triggering instant/sorcery spell. Used inside `SpellCastTriggerEffect` on `ON_CONTROLLER_CASTS_SPELL`; trigger collector sets stack entry `xValue` from `GameData.spellCastManaSpent`. Used by Aberrant Manawurm |
+| `BoostSelfEffect` | `(DynamicAmount powerBoost, DynamicAmount toughnessBoost)` — convenience `(int, int)` ctor wraps in `Fixed` | this creature gets +X/+Y. One-shot (until end of turn) in triggered/activated slots, continuous when placed in `STATIC` (selfOnly static handler). **All "gets +N/+M for each …" wordings use this one effect with `DynamicAmount` parameters** — see the Dynamic amounts section. Examples: `(new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER), new Fixed(0))` "+1/+0 for each artifact you control" (Hellkite Igniter, Karn token, Deadeye Plunderers); `PermanentCount(..., CONTROLLER, true)` "+1/+0 for each *other* Rat you control" (Rat Colony); `PermanentCount(..., OPPONENTS)` "for each creature your opponents control" (Scourge of Geier Reach); `PermanentCount(new PermanentIsEnchantmentPredicate(), ANY_PLAYER)` "for each enchantment on the battlefield" (Yavimaya Enchantress); `PermanentCount(AllOf(IsAttacking, HasSubtype(PIRATE)), CONTROLLER, true)` "for each other attacking Pirate" (Dire Fleet Captain, ON_ATTACK); `CardsInGraveyard(new CardTypePredicate(LAND), CONTROLLER)` "for each land card in your graveyard" (Multani); `Scaled(new AttachmentsOnSource(true, true), 2)` "+2/+2 for each Aura and Equipment attached" (Champion of the Flame; equipment-only: `AttachmentsOnSource(false, true)`, Goblin Gaveleer); `CreaturesBlockingSource()` "for each creature blocking it" (Elvish Berserker, ON_BECOMES_BLOCKED); `OpponentPoisonCounters()` (Mycosynth Fiend); `ImprintedCreaturePower()`/`ImprintedCreatureToughness()` (Phyrexian Ingester); `XValue()` "+X/+0 where X is the mana spent to cast that spell" inside `SpellCastTriggerEffect` — the trigger collector snapshots `xValue` for any amount that references X (Aberrant Manawurm) |
 | `ConditionalEffect(new SpellManaSpentAtLeast(minMana), wrapped)` | see construction shape | wraps a resolved effect inside `SpellCastTriggerEffect`; resolves only if at least `minMana` was spent to cast the triggering spell. Trigger collector snapshots mana spent into stack entry `xValue`. Used by Colorstorm Stallion (5+ mana → `CreateTokenCopyOfSourceEffect`) |
 | `IncrementTriggerEffect` | `()` | Increment keyword (SOS). **Keyword-driven — do NOT add to a card.** Any creature with the Scryfall-loaded `Keyword.INCREMENT` automatically triggers via `TriggerCollectionService.collectIncrementTriggers`: whenever its controller casts a spell, if the mana spent is greater than the source's current power **or** toughness, put a +1/+1 counter on it. The collector snapshots mana spent into the stack entry `xValue` and does the intervening-if check at trigger time; this effect is the resolution entry whose handler re-checks against current P/T (CR 603.4). Self-targeting. Used by Ambitious Augmenter |
 | `DoubleSelfPowerToughnessEffect` | `()` | double this creature's power and toughness until end of turn. Per CR 701.9a/b, adds current effective P/T as modifier |
@@ -827,18 +857,7 @@ Pass `null` as filter to allow any card.
 | `BoostBySharedCreatureTypeEffect` | `()` | +1/+1 for each other creature sharing a creature type (static) |
 | `BoostFirstTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | first target creature in multi-target spell gets +X/+Y until end of turn |
 | `BoostSecondTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | second target creature in multi-target spell gets +X/+Y until end of turn |
-| `BoostSelfPerAttachmentEffect` | `(int power, int toughness, boolean countAuras, boolean countEquipment)` | +X/+Y per Aura and/or Equipment attached to this creature (static, selfOnly). Use `countAuras=true, countEquipment=true` for "each Aura and Equipment" (Champion of the Flame), or one flag for subsets |
-| `BoostSelfPerEnchantmentOnBattlefieldEffect` | `(int powerPerEnchantment, int toughnessPerEnchantment)` | +X/+Y per enchantment on battlefield (static) |
-| `BoostSelfPerEquipmentAttachedEffect` | `(int powerPerEquipment, int toughnessPerEquipment)` | +X/+Y per Equipment attached to this creature (static, selfOnly). Used by Goblin Gaveleer |
-| `BoostSelfPerOpponentPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | +X/+Y per permanent opponents control matching the filter (static, selfOnly). Use `PermanentIsCreaturePredicate` for creatures, etc. |
 | `ConditionalEffect(new AnyPlayerControlsPermanent(filter), wrapped)` | see construction shape | conditional wrapper: "as long as any player controls a permanent matching [filter]". Wraps StaticBoostEffect, GrantKeywordEffect, ProtectionFromColorsEffect, or GrantEffectEffect (selfOnly handler). Use `PermanentColorInPredicate(Set.of(...))` for color cases. Used by Knight of Malice and Knight of Grace |
-| `BoostSelfPerOpponentPoisonCounterEffect` | `(int powerPerCounter, int toughnessPerCounter)` | +X/+Y per poison counter on opponents (static). Counts total poison counters across all opponents, excludes controller's own counters |
-| `BoostSelfByImprintedCreaturePTEffect` | `()` | +X/+Y where X is the imprinted creature card's power and Y is its toughness (static, selfOnly). Used by Phyrexian Ingester |
-| `BoostSelfPerBlockingCreatureEffect` | `(int powerPerBlockingCreature, int toughnessPerBlockingCreature)` | +X/+Y for each creature blocking this (combat trigger) |
-| `BoostSelfPerOtherAttackingSubtypeEffect` | `(CardSubtype subtype, int powerPerCreature, int toughnessPerCreature)` | +X/+Y for each *other* attacking creature with subtype you control, excludes self (ON_ATTACK trigger). Used by Dire Fleet Captain |
-| `BoostSelfPerControlledPermanentEffect` | `(int powerPerPermanent, int toughnessPerPermanent, PermanentPredicate filter)` | +X/+Y for each permanent you control matching the filter (static, selfOnly, or activated ability). Use `PermanentHasSubtypePredicate(...)` for subtype cases. Used by Earth Servant, Multani, Yavimaya's Avatar, Benalish Honor Guard, Deadeye Plunderers, Hellkite Igniter, Shanna, Sisay's Legacy, Tempest Djinn |
-| `BoostSelfPerOtherControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerPermanent, int toughnessPerPermanent)` | +X/+Y for each *other* permanent with subtype you control, excludes self (static, selfOnly). Used by Rat Colony |
-| `BoostSelfPerCardsInControllerGraveyardEffect` | `(CardPredicate filter, int powerPerCard, int toughnessPerCard)` | +X/+Y for each card in controller's graveyard matching the filter (static, selfOnly). Use `new CardTypePredicate(CardType.LAND)` for lands. Used by Multani, Yavimaya's Avatar |
 | `BoostSelfWhenBlockingKeywordEffect` | `(Keyword requiredKeyword, int powerBoost, int toughnessBoost)` | +X/+Y when blocking a creature with the required keyword (e.g. flying). Place in `ON_BLOCK` slot. CombatService converts to BoostSelfEffect at trigger time |
 | `TapSubtypeBoostSelfAndDamageDefenderEffect` | `(CardSubtype subtype)` | when this creature attacks, you may tap any number of untapped creatures of subtype you control → gets +X/+0 until end of turn and deals X damage to defending player. Place in `ON_ATTACK` slot. Prompts multi-permanent choice for eligible untapped creatures |
 

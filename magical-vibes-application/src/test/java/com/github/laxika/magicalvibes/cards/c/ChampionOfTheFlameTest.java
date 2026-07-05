@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfPerAttachmentEffect;
+import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,13 +28,12 @@ class ChampionOfTheFlameTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfPerAttachmentEffect.class);
-        BoostSelfPerAttachmentEffect effect =
-                (BoostSelfPerAttachmentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.countAuras()).isTrue();
-        assertThat(effect.countEquipment()).isTrue();
+                .isInstanceOf(BoostSelfEffect.class);
+        BoostSelfEffect effect =
+                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
+        Scaled twicePerAttachment = new Scaled(new AttachmentsOnSource(true, true), 2);
+        assertThat(effect.powerBoost()).isEqualTo(twicePerAttachment);
+        assertThat(effect.toughnessBoost()).isEqualTo(twicePerAttachment);
     }
 
     // ===== Base stats without attachments =====

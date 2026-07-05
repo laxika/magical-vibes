@@ -54,6 +54,8 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 import java.util.Comparator;
@@ -68,10 +70,12 @@ public class SpellEvaluator {
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final AmountEvaluationService amountEvaluationService;
     private final BoardEvaluator boardEvaluator;
 
     public SpellEvaluator(GameQueryService gameQueryService, BoardEvaluator boardEvaluator) {
         this.predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
+        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService);
         this.gameQueryService = gameQueryService;
         this.boardEvaluator = boardEvaluator;
     }
@@ -100,7 +104,9 @@ public class SpellEvaluator {
                                          List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
         // Self-pump (e.g. Shivan Dragon's {R}: +1/+0)
         if (effect instanceof BoostSelfEffect boost) {
-            return boost.powerBoost() * 2.0 + boost.toughnessBoost();
+            AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
+            return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) * 2.0
+                    + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
         }
         // Regenerate (shield from destruction)
         if (effect instanceof RegenerateEffect) {
