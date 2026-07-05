@@ -1394,11 +1394,13 @@ public class AbilityActivationService {
         ManaPool pool = gameData.playerManaPools.get(playerId);
         boolean hasRestricted = artifactContext || myrContext;
 
-        // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols
-        // before generic costs consume it
+        // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols before
+        // generic costs consume it — but only where the rest of the cost stays payable,
+        // falling back to life otherwise (the legality pre-check assumes life is an option)
         int phyrexianLifeCost = 0;
         if (cost.hasPhyrexianMana()) {
-            phyrexianLifeCost = cost.payPhyrexianMana(pool);
+            int restDemand = cost.hasX() ? effectiveXValue + additionalCost : additionalCost;
+            phyrexianLifeCost = cost.payPhyrexianManaAuto(pool, restDemand);
         }
 
         if (cost.hasX()) {

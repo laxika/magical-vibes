@@ -462,7 +462,7 @@ class HardAiDecisionEngineTest {
         }
 
         private HardAiDecisionEngine createEngine() {
-            Mockito.when(mockCastingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+            AiTestPlayabilityStub.install(mockGameBroadcastService, mockCastingCostService);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
@@ -744,7 +744,7 @@ class HardAiDecisionEngineTest {
         }
 
         private HardAiDecisionEngine createEngine() {
-            Mockito.when(mockCastingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+            AiTestPlayabilityStub.install(mockGameBroadcastService, mockCastingCostService);
             HardAiDecisionEngine engine = new HardAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,
@@ -1356,6 +1356,9 @@ class HardAiDecisionEngineTest {
     void castsPacifismWhenCanAffordTargetingTax() {
         HardAiDecisionEngine ai = createHardAi(player1);
         giveAiPriority(player1);
+        // Postcombat main with a single castable spell takes the deterministic evaluator path;
+        // this test pins the targeting-tax affordability gate, not the MCTS policy choice
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         givePlayerPlains(player1, 4); // 4 mana — enough for {1}{W} + {2} tax
 
         Permanent kopala = new Permanent(new com.github.laxika.magicalvibes.cards.k.KopalaWardenOfWaves());

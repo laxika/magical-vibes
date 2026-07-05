@@ -449,7 +449,7 @@ class MediumAiDecisionEngineTest {
         }
 
         private MediumAiDecisionEngine createEngine() {
-            Mockito.when(mockCastingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+            AiTestPlayabilityStub.install(mockGameBroadcastService, mockCastingCostService);
             MediumAiDecisionEngine engine = new MediumAiDecisionEngine(
                     mockGd.id, mockAiPlayer, mockGameRegistry, mockMessageHandler,
                     mockGameQueryService, mockCombatAttackService, mockGameBroadcastService,

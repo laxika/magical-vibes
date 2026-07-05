@@ -47,6 +47,69 @@ class ManaCostTest {
     }
 
     @Nested
+    @DisplayName("payPhyrexianManaAuto")
+    class PayPhyrexianManaAuto {
+
+        @Test
+        @DisplayName("pays with mana when the rest of the cost stays payable")
+        void paysWithManaWhenRestStaysPayable() {
+            // Birthing Pod ability: {1}{G/P} with {G}{G} in pool — pay {G/P} with one G, {1} with the other
+            ManaCost cost = new ManaCost("{1}{G/P}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 2);
+
+            int lifeCost = cost.payPhyrexianManaAuto(pool, 0);
+
+            assertThat(lifeCost).isZero();
+            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(cost.canPay(pool, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("pays with life when spending mana would starve the generic part")
+        void paysWithLifeWhenManaWouldStarveGeneric() {
+            // {1}{G/P} with a single G: greedily spending the G on {G/P} would leave the
+            // {1} unpayable although canPay accepted the cost ({G/P} via 2 life)
+            ManaCost cost = new ManaCost("{1}{G/P}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.GREEN, 1);
+            assertThat(cost.canPay(pool, 0)).isTrue();
+
+            int lifeCost = cost.payPhyrexianManaAuto(pool, 0);
+
+            assertThat(lifeCost).isEqualTo(2);
+            assertThat(pool.get(ManaColor.GREEN)).isEqualTo(1);
+            assertThat(cost.canPay(pool, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("pays with life when the pool has no matching mana")
+        void paysWithLifeWhenNoMatchingMana() {
+            ManaCost cost = new ManaCost("{G/P}");
+            ManaPool pool = new ManaPool();
+
+            assertThat(cost.payPhyrexianManaAuto(pool, 0)).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("reserves colored requirements before spending mana on Phyrexian symbols")
+        void reservesColoredCosts() {
+            // Dismember-style {1}{B/P}{B/P} with {B}{B}: one B can cover one Phyrexian
+            // symbol, but the other B must stay reserved for the generic {1}
+            ManaCost cost = new ManaCost("{1}{B/P}{B/P}");
+            ManaPool pool = new ManaPool();
+            pool.add(ManaColor.BLACK, 2);
+            assertThat(cost.canPay(pool, 0)).isTrue();
+
+            int lifeCost = cost.payPhyrexianManaAuto(pool, 0);
+
+            assertThat(lifeCost).isEqualTo(2);
+            assertThat(pool.get(ManaColor.BLACK)).isEqualTo(1);
+            assertThat(cost.canPay(pool, 0)).isTrue();
+        }
+    }
+
+    @Nested
     @DisplayName("canPay for X costs")
     class CanPayForXCosts {
 

@@ -262,6 +262,29 @@ public class SpellCastingService {
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices, boolean kicked) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
+                ? hand.get(cardIndex) : null;
+        try {
+            playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
+                    convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
+                    alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // CR 730: an illegal cast rewinds. The internal flow removes the card from hand before
+            // some validations run (e.g. target-based cost reduction) — if the failed cast left the
+            // card in no zone, return it to its place in hand instead of losing it forever.
+            if (attempted != null && !hand.contains(attempted)
+                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
+                hand.add(Math.min(cardIndex, hand.size()), attempted);
+            }
+            throw e;
+        }
+    }
+
+    private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
+                  List<Integer> exileGraveyardCardIndices, boolean kicked) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -1883,11 +1906,18 @@ public class SpellCastingService {
             }
         }
 
-        // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols
-        // before generic costs consume it
+        // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols before
+        // generic costs consume it. Without an explicit player choice, use mana only where the
+        // rest of the cost stays payable, falling back to life otherwise (playability assumes
+        // life is always an option).
         int phyrexianLifeCost = 0;
         if (cost.hasPhyrexianMana()) {
-            phyrexianLifeCost = cost.payPhyrexianMana(pool, phyrexianLifeCount);
+            if (phyrexianLifeCount != null) {
+                phyrexianLifeCost = cost.payPhyrexianMana(pool, phyrexianLifeCount);
+            } else {
+                int restDemand = cost.hasX() ? effectiveXValue + additionalCost : additionalCost;
+                phyrexianLifeCost = cost.payPhyrexianManaAuto(pool, restDemand);
+            }
         }
 
         if (convokeContributions != null && !convokeContributions.isEmpty()) {

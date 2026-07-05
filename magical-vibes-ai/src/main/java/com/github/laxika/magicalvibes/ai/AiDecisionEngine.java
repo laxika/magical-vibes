@@ -436,12 +436,16 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Returns true if the card can be cast considering mana affordability (with cost
-     * modifiers), non-mana restrictions (spell limit, type restrictions, etc.),
-     * sacrifice costs, and graveyard requirements.
+     * Returns true if the card can be cast right now. Legality comes from the engine's own
+     * playability check ({@code GameBroadcastService.isCardPlayable}: timing, permissions,
+     * spell limits, affordability with every cost modifier and alternative-cost route, target
+     * availability, legendary-sorcery rule) evaluated against the AI's virtual pool, so the
+     * AI can never disagree with the server. On top of that, the AI plans ahead for cast-time
+     * additional costs the playable check defers (sacrifice and graveyard-exile costs) and
+     * skips spells whose X or modal choice would be pointless.
      */
     protected boolean isSpellCastable(GameData gameData, Card card, ManaPool virtualPool) {
-        if (!castingPermissionService.isSpellCastingAllowed(gameData, aiPlayer.getId(), card)) {
+        if (!canAffordSpell(gameData, card, virtualPool)) {
             return false;
         }
         if (!canPaySacrificeCosts(gameData, card)) {
@@ -455,9 +459,6 @@ public abstract class AiDecisionEngine {
         if (cost.hasX() && getMaxXForGraveyardRequirements(gameData, card) <= 0) {
             return false;
         }
-        if (!canAffordSpell(gameData, card, virtualPool)) {
-            return false;
-        }
         // For modal spells, ensure at least one mode has valid targets
         if (!hasValidModalMode(gameData, card)) {
             return false;
@@ -466,29 +467,22 @@ public abstract class AiDecisionEngine {
     }
 
     /**
-     * Checks if the card's mana cost (including cost modifiers from battlefield effects)
-     * can be paid from the given mana pool.
+     * Checks if the card could be played with the given mana pool, using the engine's own
+     * playability check (all cost modifiers and alternative-cost routes included).
      */
     protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool) {
         return canAffordSpell(gameData, card, virtualPool, 0);
     }
 
     /**
-     * Checks if the card's mana cost (including cost modifiers and an extra cost such as
-     * targeting tax) can be paid from the given mana pool.
+     * Checks if the card could be played with the given mana pool and an extra generic cost
+     * (such as targeting tax), using the engine's own playability check. AI policy on top of
+     * engine legality: an X spell is only worth casting if X can be at least 1.
      */
     protected boolean canAffordSpell(GameData gameData, Card card, ManaPool virtualPool, int extraCost) {
-        ManaCost cost = new ManaCost(card.getManaCost());
-        int modifier = castingCostService.getCastCostModifier(gameData, aiPlayer.getId(), card) + extraCost;
-        if (cost.hasX()) {
-            if (!cost.canPay(virtualPool, Math.max(0, 1 + modifier))) return false;
-        } else {
-            if (!cost.canPay(virtualPool, modifier)) return false;
-        }
-        if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool, modifier)) {
-            return false;
-        }
-        return true;
+        int minXPolicy = new ManaCost(card.getManaCost()).hasX() ? 1 : 0;
+        return gameBroadcastService.isCardPlayable(gameData, aiPlayer.getId(), card, virtualPool,
+                extraCost + minXPolicy);
     }
 
     /**

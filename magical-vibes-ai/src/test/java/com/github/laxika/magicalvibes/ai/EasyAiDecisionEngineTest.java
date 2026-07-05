@@ -104,7 +104,7 @@ class EasyAiDecisionEngineTest {
     }
 
     private EasyAiDecisionEngine createEngine() {
-        Mockito.lenient().when(castingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+        AiTestPlayabilityStub.install(gameBroadcastService, castingCostService);
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,
                 gameQueryService, combatAttackService, gameBroadcastService,
@@ -513,7 +513,7 @@ class EasyAiDecisionEngineTest {
     }
 
     @Test
-    @DisplayName("Easy AI does not cast spell when isSpellCastingAllowed returns false")
+    @DisplayName("Easy AI does not cast spell when the engine playability check returns false")
     void doesNotCastWhenSpellCastingNotAllowed() throws Exception {
         Card creature = new Card();
         creature.setName("Test Bear");
@@ -527,8 +527,9 @@ class EasyAiDecisionEngineTest {
         pool.add(ManaColor.GREEN, 1);
         pool.add(ManaColor.COLORLESS, 1);
 
-        // Spell casting not allowed (e.g. spell limit reached, type restricted, silenced)
-        when(castingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(false);
+        // Engine says not playable (e.g. spell limit reached, type restricted, silenced)
+        when(gameBroadcastService.isCardPlayable(any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt()))
+                .thenReturn(false);
 
         EasyAiDecisionEngine engine = new EasyAiDecisionEngine(
                 gd.id, aiPlayer, gameRegistry, messageHandler,

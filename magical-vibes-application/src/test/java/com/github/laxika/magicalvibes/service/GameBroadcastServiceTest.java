@@ -91,6 +91,82 @@ class GameBroadcastServiceTest {
     }
 
     @Nested
+    @DisplayName("isCardPlayable — pure single-card query")
+    class IsCardPlayableTests {
+
+        private Card simpleCreature(String name, String manaCost) {
+            Card card = new Card();
+            card.setName(name);
+            card.setType(CardType.CREATURE);
+            card.setManaCost(manaCost);
+            return card;
+        }
+
+        @Test
+        @DisplayName("Checks affordability against the provided pool, not the player's actual pool")
+        void usesProvidedPool() {
+            Card creature = simpleCreature("Centaur Courser", "{2}{G}");
+            // Player's actual pool is empty
+
+            ManaPool hypothetical = new ManaPool();
+            hypothetical.add(com.github.laxika.magicalvibes.model.ManaColor.GREEN);
+            hypothetical.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+
+            assertThat(svc.isCardPlayable(gd, player1Id, creature, hypothetical, 0)).isTrue();
+            assertThat(svc.isCardPlayable(gd, player1Id, creature,
+                    gd.playerManaPools.get(player1Id), 0)).isFalse();
+            // The query never spends from the provided pool
+            assertThat(hypothetical.getTotal()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("additionalGenericCost is added on top of the mana cost (targeting tax)")
+        void additionalGenericCostApplies() {
+            Card creature = simpleCreature("Centaur Courser", "{2}{G}");
+
+            ManaPool exactPool = new ManaPool();
+            exactPool.add(com.github.laxika.magicalvibes.model.ManaColor.GREEN);
+            exactPool.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+
+            assertThat(svc.isCardPlayable(gd, player1Id, creature, exactPool, 0)).isTrue();
+            assertThat(svc.isCardPlayable(gd, player1Id, creature, exactPool, 1)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Does not apply priority gating — callers evaluate hypothetical states")
+        void noPriorityGating() {
+            // getPriorityPlayerId is never stubbed: the single-card query must not consult it
+            Card creature = simpleCreature("Centaur Courser", "{2}{G}");
+
+            ManaPool pool = new ManaPool();
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.GREEN);
+            pool.add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 2);
+
+            assertThat(svc.isCardPlayable(gd, player1Id, creature, pool, 0)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Agrees with getPlayableCardIndices membership for every hand card")
+        void agreesWithPlayableList() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+
+            gd.playerHands.get(player1Id).add(simpleCreature("Affordable", "{G}"));
+            gd.playerHands.get(player1Id).add(simpleCreature("Unaffordable", "{5}{G}"));
+            gd.playerManaPools.get(player1Id).add(com.github.laxika.magicalvibes.model.ManaColor.GREEN);
+
+            List<Integer> playable = svc.getPlayableCardIndices(gd, player1Id, 0);
+
+            for (int i = 0; i < gd.playerHands.get(player1Id).size(); i++) {
+                assertThat(svc.isCardPlayable(gd, player1Id, gd.playerHands.get(player1Id).get(i),
+                        gd.playerManaPools.get(player1Id), 0))
+                        .as("card %d agrees with playable list", i)
+                        .isEqualTo(playable.contains(i));
+            }
+            assertThat(playable).containsExactly(0);
+        }
+    }
+
+    @Nested
     @DisplayName("getPlayableCardIndices — uses casting services for cost modifiers")
     class GetPlayableCardIndicesTests {
 

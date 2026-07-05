@@ -177,6 +177,58 @@ public class ManaCost {
         return phyrexianCosts.values().stream().mapToInt(Integer::intValue).sum();
     }
 
+    /**
+     * Auto-pays Phyrexian symbols, choosing per symbol: colored mana from the pool when the rest
+     * of this cost (colored + hybrid + generic + X) stays payable afterwards, otherwise 2 life.
+     * {@link #canPay} treats Phyrexian symbols as always satisfiable (paying life is always an
+     * option), so auto-payment must never spend mana that the approved payment plan needs
+     * elsewhere — a greedy mana-first assignment could otherwise starve the generic part of a
+     * cost the pre-check already accepted.
+     *
+     * @param xValue same semantics as the second argument of {@link #canPay(ManaPool, int)}
+     * @return the total life that must be paid
+     */
+    public int payPhyrexianManaAuto(ManaPool pool, int xValue) {
+        Map<ManaColor, Integer> reserved = new EnumMap<>(ManaColor.class);
+        int lifeCost = 0;
+        for (Map.Entry<ManaColor, Integer> entry : phyrexianCosts.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                reserved.merge(entry.getKey(), 1, Integer::sum);
+                if (!canPayRestWithReserved(pool, xValue, reserved)) {
+                    reserved.merge(entry.getKey(), -1, Integer::sum);
+                    lifeCost += 2;
+                }
+            }
+        }
+        for (Map.Entry<ManaColor, Integer> entry : reserved.entrySet()) {
+            for (int i = 0; i < entry.getValue(); i++) {
+                pool.remove(entry.getKey());
+            }
+        }
+        return lifeCost;
+    }
+
+    /** {@link #canPay(ManaPool, int)} for the non-Phyrexian part, with pool mana pre-reserved for Phyrexian symbols. */
+    private boolean canPayRestWithReserved(ManaPool pool, int xValue, Map<ManaColor, Integer> reserved) {
+        Map<ManaColor, Integer> available = availableByColor(pool);
+        for (Map.Entry<ManaColor, Integer> entry : reserved.entrySet()) {
+            int left = available.get(entry.getKey()) - entry.getValue();
+            if (left < 0) {
+                return false;
+            }
+            available.put(entry.getKey(), left);
+        }
+        if (!reserveColoredCosts(available)) {
+            return false;
+        }
+        int[] extraGeneric = {0};
+        if (!assignHybrids(available, extraGeneric)) {
+            return false;
+        }
+        int remaining = totalOf(available) - residualFlexibleOvercount(pool);
+        return remaining >= genericCost + extraGeneric[0] + xValue * effectiveXMultiplier();
+    }
+
     public boolean canPayCreatureOnly(ManaPool pool) {
         return canPayCreatureOnly(pool, 0);
     }

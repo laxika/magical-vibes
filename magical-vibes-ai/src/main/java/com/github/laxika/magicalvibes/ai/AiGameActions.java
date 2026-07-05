@@ -79,7 +79,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.passPriority(gameData, aiPlayer);
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected passPriority in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -88,7 +89,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.keepHand(gameData, aiPlayer);
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected keepHand in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -97,7 +99,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.mulligan(gameData, aiPlayer);
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected mulligan in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -106,7 +109,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.bottomCards(gameData, aiPlayer, request.cardIndices());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected bottomCards in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -205,7 +209,8 @@ public class AiGameActions {
                 }
             }
             gameService.declareAttackers(gameData, aiPlayer, request.attackerIndices(), attackTargets);
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected declareAttackers in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -214,7 +219,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.declareBlockers(gameData, aiPlayer, request.blockerAssignments());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected declareBlockers in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -223,7 +229,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleCardChosen(gameData, aiPlayer, request.cardIndex());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected cardChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -232,7 +239,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleGraveyardCardChosen(gameData, aiPlayer, request.cardIndex());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected graveyardCardChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -241,7 +249,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handlePermanentChosen(gameData, aiPlayer, request.permanentId());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected permanentChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -250,7 +259,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleMultiplePermanentsChosen(gameData, aiPlayer, request.permanentIds());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected multiplePermanentsChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -259,7 +269,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleMultipleCardsChosen(gameData, aiPlayer, request.cardIds());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected multipleCardsChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -268,7 +279,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleListChoice(gameData, aiPlayer, request.choice());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected listChoice in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -277,7 +289,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleMayAbilityChosen(gameData, aiPlayer, request.accepted());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected mayAbilityChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -286,7 +299,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleXValueChosen(gameData, aiPlayer, request.chosenValue());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected xValueChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -295,7 +309,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleScryCompleted(gameData, aiPlayer, request.topCardOrder(), request.bottomCardOrder());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected scryCompleted in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -304,7 +319,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleLibraryCardsReordered(gameData, aiPlayer, request.cardOrder());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected libraryCardsReordered in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -313,7 +329,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleLibraryCardChosen(gameData, aiPlayer, request.cardIndex());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected libraryCardChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -322,7 +339,8 @@ public class AiGameActions {
         if (gameData == null) return;
         try {
             gameService.handleHandTopBottomChosen(gameData, aiPlayer, request.handCardIndex(), request.topCardIndex());
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected handTopBottomChosen in game {}: {}", gameId, e.getMessage());
         }
     }
 
@@ -335,7 +353,8 @@ public class AiGameActions {
                 assignments.put(UUID.fromString(entry.getKey()), entry.getValue());
             }
             gameService.handleCombatDamageAssigned(gameData, aiPlayer, request.attackerIndex(), assignments);
-        } catch (IllegalArgumentException | IllegalStateException ignored) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.info("AI: engine rejected combatDamageAssigned in game {}: {}", gameId, e.getMessage());
         }
     }
 }

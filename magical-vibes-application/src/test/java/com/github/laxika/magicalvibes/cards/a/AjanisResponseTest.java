@@ -81,6 +81,32 @@ class AjanisResponseTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Rejected cast (target does not qualify for reduction) returns the card to hand")
+    void rejectedCastReturnsCardToHand() {
+        // A tapped creature exists, so the playability check optimistically allows the cast
+        // with the cost reduction — but the chosen target is untapped, so the reduction does
+        // not apply and the cast is rejected mid-flight, after the card already left the hand.
+        Permanent tappedCreature = new Permanent(new GrizzlyBears());
+        tappedCreature.tap();
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(tappedCreature);
+        Permanent untappedCreature = new Permanent(new GrizzlyBears());
+        harness.getGameData().playerBattlefields.get(player2.getId()).add(untappedCreature);
+
+        harness.setHand(player1, List.of(new AjanisResponse()));
+        harness.addMana(player1, ManaColor.WHITE, 2); // covers only the reduced cost
+
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, untappedCreature.getId()))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("target does not qualify");
+
+        // CR 730: the illegal cast rewinds — the card must return to hand, not vanish
+        GameData gd = harness.getGameData();
+        assertThat(gd.playerHands.get(player1.getId()))
+                .anyMatch(c -> c.getName().equals("Ajani's Response"));
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("Full cost works when targeting an untapped creature with enough mana")
     void fullCostUntappedWithEnoughMana() {
         Permanent untappedCreature = new Permanent(new GrizzlyBears());

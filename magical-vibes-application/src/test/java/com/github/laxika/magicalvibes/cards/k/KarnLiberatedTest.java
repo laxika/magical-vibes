@@ -305,6 +305,12 @@ class KarnLiberatedTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
 
+            // ...and must have LEFT exile — a card can only exist in one zone
+            assertThat(gd.getPlayerExiledCards(player1.getId()))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+            assertThat(gd.getPlayerExiledCards(player2.getId()))
+                    .noneMatch(c -> c.getName().equals("Grizzly Bears"));
+
             // Controller goes first
             assertThat(gd.activePlayerId).isEqualTo(player1.getId());
         }

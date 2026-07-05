@@ -204,6 +204,9 @@ public class MulliganService {
             UUID controllerId = karnRestart.controllerId();
             String controllerName = gameData.playerIdToName.get(controllerId);
             for (Card card : karnRestart.cards()) {
+                // The card changes zones: it must leave exile as it hits the battlefield,
+                // or it would exist in both zones at once
+                gameData.removeFromExile(card.getId());
                 Permanent perm = new Permanent(card);
                 perm.setSummoningSick(false);
                 battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
