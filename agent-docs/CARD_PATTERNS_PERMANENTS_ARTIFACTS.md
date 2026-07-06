@@ -6,7 +6,7 @@ All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| Targeted ETB + activated ability | `c/ContagionClasp.java` | ON_ENTER_BATTLEFIELD PutMinusOneMinusOneCounterOnTargetCreatureEffect + tap+mana ProliferateEffect activated ability |
+| Targeted ETB + activated ability | `c/ContagionClasp.java` | ON_ENTER_BATTLEFIELD PutCounterOnTargetPermanentEffect(MINUS_ONE_MINUS_ONE) + tap+mana ProliferateEffect activated ability |
 | Sac creature for counter + sac self for draw | `c/CullingDais.java` | Two abilities: tap+SacrificeCreatureCost+PutCountersOnSelfEffect(CHARGE), mana+SacrificeSelfCost+DrawCardEffect(CountersOnSource(CHARGE)) |
 | ETB + death draw (simple) | `i/IchorWellspring.java` | ON_ENTER_BATTLEFIELD DrawCardEffect + ON_DEATH DrawCardEffect — draws on ETB and when destroyed/sacrificed |
 | Spellbomb (sac for effect + may-pay draw) | `f/FlightSpellbomb.java` | Tap+SacrificeSelfCost+GrantKeywordEffect(TARGET) ability + ON_DEATH MayPayManaEffect("{U}", DrawCardEffect(1)) — Spellbomb cycle pattern |

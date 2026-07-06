@@ -44,7 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
@@ -120,11 +120,15 @@ public class SpellEvaluator {
             long creatureCount = aiBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
                     .count();
-            return creatureCount * counters.count() * 3.5;
+            int per = amountEvaluationService.evaluate(gameData, counters.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            return creatureCount * per * 3.5;
         }
         // +1/+1 counter on target creature
-        if (effect instanceof PutPlusOnePlusOneCounterOnTargetCreatureEffect counters) {
-            return counters.count() * 3.5;
+        if (effect instanceof PutCounterOnTargetPermanentEffect counters
+                && counters.counterType() == CounterType.PLUS_ONE_PLUS_ONE) {
+            return amountEvaluationService.evaluate(gameData, counters.amount(),
+                    AmountContext.forEstimation(aiPlayerId)) * 3.5;
         }
         // Tap target permanent
         if (effect instanceof TapTargetPermanentEffect) {

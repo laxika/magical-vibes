@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -37,8 +36,7 @@ class VedalkenAnatomistTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}{U}");
         assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
         assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
+        // The -1/-1 counter placement is asserted behaviorally below.
         assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
                 .isInstanceOf(MayEffect.class);
         MayEffect mayEffect = (MayEffect) card.getActivatedAbilities().get(0).getEffects().get(1);

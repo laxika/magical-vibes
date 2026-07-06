@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutXPlusOnePlusOneCountersOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -23,7 +25,7 @@ public class WakerOfTheWilds extends Card {
                 false,
                 "{X}{G}{G}",
                 List.of(
-                        new PutXPlusOnePlusOneCountersOnTargetPermanentEffect(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()),
                         new AnimateTargetPermanentEffect(
                                 0, 0,
                                 List.of(CardSubtype.ELEMENTAL),

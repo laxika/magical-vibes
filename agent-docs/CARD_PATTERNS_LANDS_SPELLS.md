@@ -11,7 +11,7 @@ All paths relative to `cards/`.
 | Creature land (manland) | `t/TreetopVillage.java` | STATIC `EntersTappedEffect` + ON_TAP mana + AnimateLandEffect ability |
 | Creature land (artifact) | `i/InkmothNexus.java` | manland that becomes artifact creature (uses 6-arg AnimateLandEffect with grantedCardTypes) |
 | Creature land + sub-ability | `s/SpawningPool.java` | manland + regenerate with `ONLY_WHILE_CREATURE` restriction |
-| X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutXPlusOnePlusOneCountersOnTargetPermanentEffect + AnimateTargetPermanentEffect(0, 0, ELEMENTAL, HASTE) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
+| X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, new XValue()) + AnimateTargetPermanentEffect(0, 0, ELEMENTAL, HASTE) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
 | Check land | `d/DragonskullSummit.java` | STATIC EntersTappedUnlessControlsPermanentEffect(PermanentHasAnySubtypePredicate) + 2 mana abilities |
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC EntersTappedUnlessFewLandsEffect(2) + 2 mana abilities |
 | Slow land | `d/DeathcapGlade.java` | STATIC EntersTappedUnlessManyLandsEffect(2) + 2 mana abilities |

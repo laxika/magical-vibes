@@ -35,6 +35,11 @@ public class PutPlusOnePlusOneCounterOnFirstTargetEffectHandler implements Norma
             return;
         }
 
+        if (e.requiredSupertype() != null
+                && !firstTarget.getCard().getSupertypes().contains(e.requiredSupertype())) {
+            return;
+        }
+
         if (gameQueryService.cantHaveCounters(gameData, firstTarget)) {
             return;
         }

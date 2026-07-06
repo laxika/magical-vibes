@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -48,11 +47,7 @@ class DerangedOutcastTest extends BaseCardTest {
                 "Sacrifice a Human",
                 false
         ));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counterEffect =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) ability.getEffects().get(1);
-        assertThat(counterEffect.count()).isEqualTo(2);
+        // The two +1/+1 counters landing on the target is asserted behaviorally below.
     }
 
     // ===== Sacrifice a Human, put two +1/+1 counters on target =====

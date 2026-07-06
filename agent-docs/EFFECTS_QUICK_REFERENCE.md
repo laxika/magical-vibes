@@ -354,10 +354,10 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutCountersOnSourceEffect(int power, int toughness, int amount)` — counters on self
 - `PutCountersOnSelfEffect(CounterType)` — one counter of a type on self (charge, +1/+1, study, etc.)
 - `PutCountersOnSelfEffect(CounterType, int count)` — N counters of a type on self (e.g. Withengar Unbound: 13 +1/+1)
-- `PutPlusOnePlusOneCounterOnTargetCreatureEffect(int)` — +1/+1 on target
+- `PutCounterOnTargetPermanentEffect(CounterType, int)` — counters on target permanent (`PLUS_ONE_PLUS_ONE`/`MINUS_ONE_MINUS_ONE`/…); `(…, new XValue())` for "X counters"; `(…, count, boolean regenerateIfSurvives)` (Gore Vassal); `withTargetRestriction(…, targetPredicate)` to restrict legal targets; `(…, count, PermanentPredicate)` for a non-targeting own-permanent choice
 - `PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect()` — +1/+1 on each creature the first target player controls (multi-target: player at `targetIds[0]`)
-- `PutMinusOneMinusOneCounterOnTargetCreatureEffect(int)` — -1/-1 on target
 - `PutCounterOnEachControlledPermanentEffect(CounterType, int, PermanentPredicate)` — counters on each own permanent matching predicate (use `PermanentIsCreaturePredicate` for "each creature you control")
+- `PutCounterOnEachMatchingPermanentEffect(CounterType, int|DynamicAmount, PermanentPredicate, EachPermanentScope)` — counters on each matching permanent across `ALL_PLAYERS`/`TARGET_PLAYER` (each attacking / other / all creatures; each creature target player controls)
 - `PutCounterOnEnchantedCreatureEffect(CounterType)` or `(CounterType, int)` — counter(s) on enchanted creature
 - `EnterWithCountersEffect(CounterType, DynamicAmount)` — "enters the battlefield with … counters" (as-enters replacement effect): fixed = `Fixed(n)`, X paid = `XValue()`, "for each …" = a counting amount (`CreatureDeathsThisTurn`, `Sum(PermanentCount(...), CardsInGraveyard(...))`, …). "If kicked" / "Raid —" variants wrap it in `ConditionalEffect(new Kicked()/new Raid(), …)`
 - Increment keyword — keyword-driven (`Keyword.INCREMENT`, auto-loaded from Scryfall): +1/+1 counter on self when mana spent on a cast spell exceeds self's current power or toughness. Add nothing to the card; behavior lives in `TriggerCollectionService.collectIncrementTriggers` (resolution effect: `IncrementTriggerEffect`). E.g. Ambitious Augmenter

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.FirstTargetFightsSecondTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnFirstTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,7 +32,7 @@ public class AncientAnimus extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature you don't control"
-        )).addEffect(EffectSlot.SPELL, new PutPlusOnePlusOneCounterOnFirstTargetIfSupertypeEffect(CardSupertype.LEGENDARY, 1))
+        )).addEffect(EffectSlot.SPELL, new PutPlusOnePlusOneCounterOnFirstTargetEffect(1, CardSupertype.LEGENDARY))
           .addEffect(EffectSlot.SPELL, new FirstTargetFightsSecondTargetEffect());
     }
 }

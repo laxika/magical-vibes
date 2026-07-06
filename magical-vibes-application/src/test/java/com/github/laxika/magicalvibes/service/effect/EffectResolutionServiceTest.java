@@ -751,7 +751,7 @@ class EffectResolutionServiceTest {
 
     // =========================================================================
     // ConditionalReplacementEffect
-    // (ElderCathar: ConditionalReplacementEffect(PermanentHasSubtypePredicate(HUMAN), PutPlusOnePlusOneCounterOnTargetCreatureEffect(1), PutPlusOnePlusOneCounterOnTargetCreatureEffect(2)))
+    // (ElderCathar: ConditionalReplacementEffect(PermanentHasSubtypePredicate(HUMAN), PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 1), PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 2)))
     // =========================================================================
 
     @Nested

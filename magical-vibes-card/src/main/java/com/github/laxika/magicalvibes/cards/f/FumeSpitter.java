@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutMinusOneMinusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -18,7 +19,7 @@ public class FumeSpitter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new PutMinusOneMinusOneCounterOnTargetCreatureEffect()),
+                List.of(new SacrificeSelfCost(), new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE)),
                 "Sacrifice Fume Spitter: Put a -1/-1 counter on target creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

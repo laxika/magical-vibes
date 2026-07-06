@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class ShapersOfNature extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}",
-                List.of(new PutPlusOnePlusOneCounterOnTargetCreatureEffect(1)),
+                List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)),
                 "{3}{G}: Put a +1/+1 counter on target creature."
         ));
 

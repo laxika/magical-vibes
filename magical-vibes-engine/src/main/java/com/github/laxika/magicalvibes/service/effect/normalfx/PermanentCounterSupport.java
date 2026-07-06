@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -119,7 +119,7 @@ public class PermanentCounterSupport {
     }
 
     public void resolveCounterOnOwnPermanent(GameData gameData, StackEntry entry,
-                                            PutCounterOnTargetPermanentEffect effect) {
+                                            CounterType counterType, int count, PermanentPredicate predicate) {
         UUID controllerId = entry.getControllerId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return;
@@ -130,7 +130,7 @@ public class PermanentCounterSupport {
 
         List<UUID> eligibleIds = new ArrayList<>();
         for (Permanent p : battlefield) {
-            if (predicateEvaluationService.matchesPermanentPredicate(p, effect.predicate(), filterContext)) {
+            if (predicateEvaluationService.matchesPermanentPredicate(p, predicate, filterContext)) {
                 eligibleIds.add(p.getId());
             }
         }
@@ -145,14 +145,14 @@ public class PermanentCounterSupport {
         if (eligibleIds.size() == 1) {
             Permanent target = gameQueryService.findPermanentById(gameData, eligibleIds.getFirst());
             if (target != null && !gameQueryService.cantHaveCounters(gameData, target)) {
-                placeCounterOnPermanent(gameData, entry, target, effect.counterType(), effect.count());
+                placeCounterOnPermanent(gameData, entry, target, counterType, count);
             }
         } else {
             // Multiple eligible — controller must choose one
-            String counterName = counterTypeName(effect.counterType());
+            String counterName = counterTypeName(counterType);
             playerInputService.beginMultiPermanentChoice(gameData, controllerId, eligibleIds,
-                    1, new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(effect.counterType(), effect.count()),
-                    "Choose a permanent to put " + effect.count() + " " + counterName + " counter(s) on.");
+                    1, new MultiPermanentChoiceContext.OwnPermanentCounterPlacement(counterType, count),
+                    "Choose a permanent to put " + count + " " + counterName + " counter(s) on.");
         }
     }
 
