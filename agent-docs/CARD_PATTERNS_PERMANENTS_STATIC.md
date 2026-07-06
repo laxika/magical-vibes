@@ -55,9 +55,10 @@ All paths relative to `cards/`.
 | Gain GY creature abilities | `n/NecroticOoze.java` | STATIC GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect — selfOnly, gains all activated abilities of all creature cards in all graveyards |
 | +1/+1 per same name | `r/RelentlessRats.java` | STATIC BoostByOtherCreaturesWithSameNameEffect |
 | +1/+0 per other subtype you control | `r/RatColony.java` | STATIC BoostSelfEffect(PermanentCount(PermanentHasSubtypePredicate(RAT), CONTROLLER, excludeSource=true), Fixed(0)) |
-| Cost reduction | `a/AvatarOfMight.java` | STATIC ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect |
+| Cost reduction if opponent has more creatures | `a/AvatarOfMight.java` | STATIC ConditionalEffect(OpponentControlsMoreCreatures(4), ReduceOwnCastCostEffect(Fixed(6))) — costs {6} less if an opponent controls 4+ more creatures than you |
 | Subtype cost reduction | `d/DanithaCapashenParagon.java` | STATIC ReduceCastCostForMatchingSpellsEffect(CardAnyOfPredicate(CardSubtypePredicate(AURA), CardSubtypePredicate(EQUIPMENT)), 1, SELF) — from battlefield permanent |
-| Cost reduction per creature card in graveyard | `g/Ghoultree.java` | STATIC ReduceOwnCastCostPerCreatureCardInGraveyardEffect(1) — this spell costs {1} less per creature card in your graveyard |
+| Cost reduction per creature card in graveyard | `g/Ghoultree.java` | STATIC ReduceOwnCastCostEffect(CardsInGraveyard(CardTypePredicate(CREATURE), CONTROLLER)) — this spell costs {1} less per creature card in your graveyard |
+| Cost reduction per creature on battlefield | `b/BlasphemousAct.java` | STATIC ReduceOwnCastCostEffect(PermanentCount(PermanentIsCreaturePredicate, ANY_PLAYER)) — this spell costs {1} less for each creature on the battlefield |
 | Creature mana only | `m/MyrSuperion.java` | setRequiresCreatureMana(true) — can only be cast with mana produced by creatures |
 | No max hand size | `s/Spellbook.java` | STATIC NoMaximumHandSizeEffect |
 | Toughness as combat damage (controller) | `b/BelligerentBrontodon.java` | STATIC AssignCombatDamageWithToughnessEffect(ALL_OWN_CREATURES) — all your creatures assign combat damage equal to toughness |

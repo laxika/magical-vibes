@@ -58,4 +58,13 @@ public record AmountContext(
     public static AmountContext forEstimation(UUID controllerId) {
         return new AmountContext(controllerId, null, null, 0, 0, false);
     }
+
+    /**
+     * Context for computing a spell's cast cost, before any stack entry exists. A spell being
+     * cast from hand has no source permanent; only player-relative counting amounts
+     * (graveyard/battlefield counts) are meaningful here.
+     */
+    public static AmountContext forCasting(UUID castingPlayerId) {
+        return new AmountContext(castingPlayerId, null, null, 0, 0, false);
+    }
 }

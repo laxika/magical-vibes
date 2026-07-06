@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
+import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CastNotFromHand;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -35,6 +36,7 @@ import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
+import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
@@ -168,7 +170,40 @@ public class ConditionEvaluationService {
                     countBlockersOfSource(gameData, ctx) >= c.minBlockers();
             case ImprintedCardNameMatchesEnteringPermanent ignored ->
                     imprintedCardNameMatches(gameData, ctx);
+            case OpponentControlsMoreCreatures c ->
+                    anyOpponentControlsAtLeastNMoreCreatures(gameData, ctx.controllerId(), c.minimumCreatureDifference());
+            case CardsLeftGraveyardThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.playersWhoseCardsLeftGraveyardThisTurn.contains(ctx.controllerId());
         };
+    }
+
+    /**
+     * True if any opponent controls at least {@code minimumDifference} more creatures than the
+     * controller (Avatar of Might's cast-cost reduction).
+     */
+    private boolean anyOpponentControlsAtLeastNMoreCreatures(GameData gameData, UUID controllerId, int minimumDifference) {
+        if (controllerId == null) return false;
+        int yourCreatures = countCreaturesControlled(gameData, controllerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(controllerId)) continue;
+            if (countCreaturesControlled(gameData, candidateOpponentId) >= yourCreatures + minimumDifference) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int countCreaturesControlled(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**

@@ -96,8 +96,9 @@ public class ExampleCard extends Card {
   - use `addEffect(EffectSlot.ON_OPPONENT_DRAWS, new DealDamageToTargetPlayerEffect(N))` when the effect should hit the player who drew
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/u/UnderworldDreams.java`
 
-- Conditional self cast-cost reduction:
-  - add static effect on the card itself (in hand-relevant card logic): `addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect(M, N))`
+- Conditional self cast-cost reduction ("this spell costs {N} less to cast if …"):
+  - wrap the single `ReduceOwnCastCostEffect` in a `ConditionalEffect`: `addEffect(EffectSlot.STATIC, new ConditionalEffect(new OpponentControlsMoreCreatures(M), new ReduceOwnCastCostEffect(new Fixed(N))))`
+  - reuse an existing `Condition` (Metalcraft, ControlsPermanent, OpponentControlsMoreCreatures, CardsLeftGraveyardThisTurn, …); "for each …" reductions instead pass a counting `DynamicAmount` directly to `ReduceOwnCastCostEffect`. **Never add a per-variant `ReduceOwnCastCostIf*`/`Per*` record** — see `COST_MODIFICATION_HANDLERS.md`.
   - Example: `magical-vibes-card/src/main/java/com/github/laxika/magicalvibes/cards/a/AvatarOfMight.java`
 
 - Attacker blocked-only-by-flying-or-subtype:

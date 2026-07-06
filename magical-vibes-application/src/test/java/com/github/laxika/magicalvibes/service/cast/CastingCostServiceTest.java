@@ -9,18 +9,25 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfControlsPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostPerCreatureOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -178,7 +185,7 @@ class CastingCostServiceTest {
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), 2));
+                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(2)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
@@ -206,7 +213,7 @@ class CastingCostServiceTest {
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), 2));
+                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(2)));
             gd.playerBattlefields.get(player2Id).add(new Permanent(reducer));
 
             Card creature = new Card();
@@ -300,7 +307,8 @@ class CastingCostServiceTest {
             retort.setType(CardType.INSTANT);
             retort.setManaCost("{1}{U}{U}");
             var predicate = new PermanentHasSubtypePredicate(CardSubtype.WIZARD);
-            retort.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostIfControlsPermanentEffect(predicate, 1));
+            retort.addEffect(EffectSlot.STATIC, new ConditionalEffect(
+                    new ControlsPermanent(predicate), new ReduceOwnCastCostEffect(new Fixed(1))));
 
             when(predicateEvaluationService.matchesPermanentPredicate(gd, wizardPermanent, predicate)).thenReturn(true);
 
@@ -321,13 +329,15 @@ class CastingCostServiceTest {
             opponentCreature.setType(CardType.CREATURE);
             gd.playerBattlefields.get(player2Id).add(new Permanent(opponentCreature));
 
-            when(gameQueryService.isCreature(any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             Card blasphemousAct = new Card();
             blasphemousAct.setName("Blasphemous Act");
             blasphemousAct.setType(CardType.SORCERY);
             blasphemousAct.setManaCost("{8}{R}");
-            blasphemousAct.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostPerCreatureOnBattlefieldEffect(1));
+            blasphemousAct.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+                    new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
 
             assertThat(svc.getCastCostModifier(gd, player1Id, blasphemousAct)).isEqualTo(-2);
         }
@@ -450,7 +460,7 @@ class CastingCostServiceTest {
             reducer.setName("Big Reducer");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), 5));
+                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(5)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
@@ -468,7 +478,7 @@ class CastingCostServiceTest {
         @Test
         @DisplayName("Spell-self reduction is applied via the spell, not collected into the battlefield snapshot")
         void spellSelfReductionNotDoubleCountedInSnapshot() {
-            // ReduceOwnCastCostPerCreatureOnBattlefield is an onSpellItself() effect: it lives on the
+            // ReduceOwnCastCostEffect is an onSpellItself() effect: it lives on the
             // spell being cast, so it must NOT be picked up as a battlefield modifier (which would
             // double-count it), yet must still reduce the cost through the spell-self path.
             Card ownCreature = new Card();
@@ -476,13 +486,15 @@ class CastingCostServiceTest {
             ownCreature.setType(CardType.CREATURE);
             gd.playerBattlefields.get(player1Id).add(new Permanent(ownCreature));
 
-            when(gameQueryService.isCreature(any(), any())).thenReturn(true);
+            when(predicateEvaluationService.matchesPermanentPredicate(
+                    any(Permanent.class), any(PermanentPredicate.class), any(FilterContext.class))).thenReturn(true);
 
             Card blasphemousAct = new Card();
             blasphemousAct.setName("Blasphemous Act");
             blasphemousAct.setType(CardType.SORCERY);
             blasphemousAct.setManaCost("{8}{R}");
-            blasphemousAct.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostPerCreatureOnBattlefieldEffect(1));
+            blasphemousAct.addEffect(EffectSlot.STATIC, new ReduceOwnCastCostEffect(
+                    new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
 
             var snapshot = svc.buildCostModifierSnapshot(gd, player1Id);
 

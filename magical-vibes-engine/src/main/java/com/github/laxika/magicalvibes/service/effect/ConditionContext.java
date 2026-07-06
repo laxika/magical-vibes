@@ -57,6 +57,15 @@ public record ConditionContext(
                 source.getCard(), source.isKicked(), null, 0, null, null, true);
     }
 
+    /**
+     * Context for gating a spell's cast cost on a condition, before any stack entry exists.
+     * A spell being cast from hand has no source permanent; only controller-relative conditions
+     * (metalcraft, controls-a-permanent, opponent creature counts) are meaningful here.
+     */
+    public static ConditionContext forCasting(UUID castingPlayerId) {
+        return new ConditionContext(castingPlayerId, null, null, null, false, null, 0, null, null, false);
+    }
+
     /** Returns a copy with the given snapshotted numeric value (attacker count, mana spent). */
     public ConditionContext withXValue(int newXValue) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,

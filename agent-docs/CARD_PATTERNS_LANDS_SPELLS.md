@@ -72,7 +72,7 @@ All paths relative to `cards/`.
 | Counter (filtered) + draw | `b/BoneToAsh.java` | CounterSpellEffect + DrawCardEffect + creature-spell filter via target() chain |
 | Counter (filtered) + life loss | `p/PsychicBarrier.java` | TargetSpellControllerLosesLifeEffect(1) + CounterSpellEffect + creature-spell filter. Life loss placed before counter so target is still on stack |
 | Counter-unless-pay + discard | `f/FrightfulDelusion.java` | TargetSpellControllerDiscardsEffect(1) + CounterUnlessPaysEffect(1). Discard placed before counter so target is still on stack |
-| Counter + metalcraft cost reduction | `s/StoicRebuttal.java` | CounterSpellEffect + ReduceOwnCastCostIfMetalcraftEffect(1) — costs {1} less with 3+ artifacts |
+| Counter + metalcraft cost reduction | `s/StoicRebuttal.java` | CounterSpellEffect + STATIC ConditionalEffect(Metalcraft(), ReduceOwnCastCostEffect(Fixed(1))) — costs {1} less with 3+ artifacts |
 | Counter (conditional, poisoned) | `c/CorruptedResolve.java` | CounterSpellIfControllerPoisonedEffect — counters only if target spell's controller is poisoned |
 | Counter spell/ability (sac creature) | `s/SirenStormtamer.java` | Activated: {U}+SacrificeSelfCost+CounterSpellEffect with StackEntryAllOfPredicate(StackEntryHasTargetPredicate, StackEntryTargetsYouOrCreatureYouControlPredicate) — counters spells OR abilities that target you or a creature you control. HasTargetPredicate enables ability targeting |
 | Counter + may cast from hand | `c/Counterlash.java` | CounterlashEffect — counters target spell, then queues per-eligible-card MayCastFromHandWithoutPayingManaCostEffect may abilities for cards sharing a type |

@@ -332,6 +332,21 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "if you've cast another instant or sorcery spell this turn, [effect]" | `ConditionalEffect(new ControllerCastAnotherSpellThisTurn(CardAnyOfPredicate(INSTANT, SORCERY)), innerEffect)` | SPELL | Excludes the resolving spell; checked at resolution time |
 | "if [base], [effect]. If kicked, [upgraded effect] instead" | `ConditionalReplacementEffect(new Kicked(), baseEffect, upgradedEffect)(base, kicked)` | Kicker replaces |
 | "if this spell was kicked, [additional effect]" | `ConditionalEffect(new Kicked(), innerEffect)` | Kicker adds |
+
+## Own cast-cost reduction ("This spell costs {N} less to cast …")
+
+All spell-self cost reductions use the single `ReduceOwnCastCostEffect(DynamicAmount)` on `EffectSlot.STATIC`. **Never add a per-variant `ReduceOwnCastCostIf*`/`Per*` record.** See `COST_MODIFICATION_HANDLERS.md`.
+
+| Oracle text phrase | Effect (EffectSlot.STATIC) | Notes |
+|---|---|---|
+| "costs {N} less to cast" (flat) | `ReduceOwnCastCostEffect(new Fixed(N))` | |
+| "costs {N} less to cast for each creature card in your graveyard" | `ReduceOwnCastCostEffect(new CardsInGraveyard(new CardTypePredicate(CREATURE), CountScope.CONTROLLER))` | N=1 → the amount already counts once per card; use `Scaled` for N>1. Ghoultree |
+| "costs {N} less to cast for each creature on the battlefield" | `ReduceOwnCastCostEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER))` | Blasphemous Act. Use `CONTROLLER`/`OPPONENTS` scope for "you control"/"an opponent controls" wordings |
+| "costs {N} less to cast if you control a [permanent]" | `ConditionalEffect(new ControlsPermanent(predicate), new ReduceOwnCastCostEffect(new Fixed(N)))` | Academy Journeymage / Wizard's Retort / Wizard's Lightning (WIZARD), Lookout's Dispersal (PIRATE) |
+| "costs {N} less to cast if you control three or more artifacts" | `ConditionalEffect(new Metalcraft(), new ReduceOwnCastCostEffect(new Fixed(N)))` | Stoic Rebuttal |
+| "costs {N} less to cast if an opponent controls at least M more creatures than you" | `ConditionalEffect(new OpponentControlsMoreCreatures(M), new ReduceOwnCastCostEffect(new Fixed(N)))` | Avatar of Might (M=4, N=6) |
+| "costs {N} less to cast if one or more cards left your graveyard this turn" | `ConditionalEffect(new CardsLeftGraveyardThisTurn(), new ReduceOwnCastCostEffect(new Fixed(N)))` | Wilt in the Heat |
+| "costs {N} less to cast if it targets [permanent/spell]" | `ReduceOwnCastCostIfTargetingPermanentEffect` / `…IfTargetingControlledPermanentEffect` / `…IfTargetingStackEntryEffect` | **Kept as their own records** — the reduction gates on the being-cast spell's chosen first target (resolved inline in `CastingCostService.computeTargetBasedCostReduction`). Ajani's Response, Savage Stomp, Brush Off |
 | "if you control a [subtype], [effect]" | `ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(subtype)), innerEffect)` | Permanent predicate check |
 | "if you control a [matching permanent], [effect]" | `ConditionalEffect(new ControlsPermanent(predicate), innerEffect)` | Permanent check |
 | "if you control a [subtype], [upgraded effect] instead" | `ConditionalReplacementEffect(new ControlsPermanent(filter), baseEffect, upgradedEffect)(new PermanentHasSubtypePredicate(subtype), baseEffect, upgradedEffect)` | Resolution-time replacement |

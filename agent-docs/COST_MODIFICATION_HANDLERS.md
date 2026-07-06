@@ -38,11 +38,52 @@ Never re-add per-effect `instanceof` chains in `GameBroadcastService` or `SpellC
    all `CostModificationHandlerBean` components after singletons are created and registers them
    into `CostModificationHandlerRegistry` (routing by `onSpellItself()`).
 
+## Spell-self cost reductions: use `ReduceOwnCastCostEffect` — never a per-variant record
+
+"This spell costs {N} less to cast …" reductions are **all** modeled with the single effect
+`ReduceOwnCastCostEffect(DynamicAmount amount)` (handled by `ReduceOwnCastCostEffectHandler`,
+`onSpellItself() == true`). The handler evaluates the amount through `AmountEvaluationService`
+with a cast-time `AmountContext.forCasting(castingPlayerId)` and returns it as a negative
+generic-mana delta.
+
+- **Flat reduction** ("costs {2} less"): `new ReduceOwnCastCostEffect(new Fixed(2))`.
+- **"For each …" reduction**: pass a counting `DynamicAmount` — e.g. Ghoultree
+  `new CardsInGraveyard(new CardTypePredicate(CREATURE), CountScope.CONTROLLER)`, Blasphemous Act
+  `new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)`.
+- **Conditional reduction** ("costs {N} less to cast **if** …"): wrap it in the generic
+  `ConditionalEffect(condition, new ReduceOwnCastCostEffect(new Fixed(N)))`. The
+  `ConditionalCostModificationHandler` (mirrors `ConditionalStaticEffectHandler`) evaluates the
+  `Condition` via `ConditionEvaluationService` against `ConditionContext.forCasting(...)` and, when
+  met, delegates to the wrapped effect's registered spell-self handler. Reuse existing conditions
+  (`Metalcraft`, `ControlsPermanent`, `OpponentControlsMoreCreatures`, `CardsLeftGraveyardThisTurn`,
+  …); add a new `Condition` (sealed permit + `ConditionEvaluationService.isMet`) only for a genuinely
+  new game-state check — never a new cost effect.
+
+**Forbidden:** adding a new `ReduceOwnCastCostIf<Condition>Effect` or
+`ReduceOwnCastCostPer<Thing>Effect` record + bespoke handler. Those collapse onto the two shapes
+above (amount axis → `DynamicAmount`, condition axis → `ConditionalEffect`). The
+`ReduceOwnCastCostFor*` battlefield-source effects (Heartless Summoning, Semblance Anvil) keep their
+own handlers because they filter *which other spells* are discounted, but their reduction quantity is
+still a `DynamicAmount`.
+
+**Exception — target-gated reductions.** `ReduceOwnCastCostIfTargetingPermanentEffect`,
+`ReduceOwnCastCostIfTargetingControlledPermanentEffect`, and `ReduceOwnCastCostIfTargetingStackEntryEffect`
+stay as their own records. Their reduction depends on the being-cast spell's **chosen first target**,
+which the generic cost-modifier path (and `ConditionContext.forCasting`) does not carry; they are
+resolved inline in `CastingCostService.computeTargetBasedCostReduction(gameData, player, card, targetIds)`,
+not through the handler registry.
+
 ## Infrastructure
 
 - `cast/CostModificationHandlerBean.java` — interface.
 - `cast/CostModificationHandlerRegistry.java` — two maps keyed by effect class
   (`battlefieldHandlers`, `spellSelfHandlers`); `register(...)` routes by `onSpellItself()`.
+- `cast/costmod/ReduceOwnCastCostEffectHandler.java` — spell-self handler for
+  `ReduceOwnCastCostEffect(DynamicAmount)`; evaluates via `AmountEvaluationService`.
+- `cast/costmod/ConditionalCostModificationHandler.java` — spell-self handler for
+  `ConditionalEffect`; evaluates the `Condition` via `ConditionEvaluationService` and delegates to
+  the wrapped effect's registered spell-self handler (it injects the registry, like
+  `ConditionalStaticEffectHandler` injects `StaticEffectHandlerRegistry`).
 - `cast/CostModificationContext.java` — `record(GameData gameData, UUID castingPlayerId, Card spell)`.
 - `cast/CostModificationSource.java` — `record(Permanent sourcePermanent, UUID controllerId)`
   with `SPELL_ITSELF` constant and `controlledBy(UUID)`.
@@ -64,7 +105,13 @@ Never re-add per-effect `instanceof` chains in `GameBroadcastService` or `SpellC
 
 ## Adding a new cost-modifier card
 
-1. Add the effect record in `magical-vibes-domain/.../model/effect/` if it does not exist.
+**First check whether it's a spell-self reduction** ("this spell costs {N} less to cast …"). If so,
+do NOT add a record or handler — use `ReduceOwnCastCostEffect(DynamicAmount)`, optionally wrapped in
+`ConditionalEffect`, per the section above. Only the steps below apply to genuinely new *shapes*
+(a new battlefield-source tax/discount, or a new `Condition` for the wrapper).
+
+1. Add the effect record in `magical-vibes-domain/.../model/effect/` if it does not exist (or a new
+   `Condition` in `model/condition/`, wired into `ConditionEvaluationService.isMet`).
 2. Create the handler class in `costmod/` following the naming convention above; decide
    `onSpellItself()` and do the scoping inside `modifyCost`.
 3. Register it in `CostModificationTestRegistry.build(...)` so unit tests exercise real dispatch.

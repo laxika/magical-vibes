@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCastCostEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
@@ -178,7 +179,7 @@ class GameBroadcastServiceTest {
             reducer.setName("Heartless Summoning");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), 2));
+                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(2)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             // Player has {G} and a {2}{G} creature — with -2 reduction, effective cost is {G} only
@@ -205,7 +206,7 @@ class GameBroadcastServiceTest {
             reducer.setName("Big Reducer");
             reducer.setType(CardType.ENCHANTMENT);
             reducer.addEffect(EffectSlot.STATIC,
-                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), 5));
+                    new ReduceOwnCastCostForCardTypeEffect(Set.of(CardType.CREATURE), new Fixed(5)));
             gd.playerBattlefields.get(player1Id).add(new Permanent(reducer));
 
             Card creature = new Card();

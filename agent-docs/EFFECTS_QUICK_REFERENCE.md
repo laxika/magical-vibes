@@ -449,13 +449,13 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `NoMaximumHandSizeEffect()` — no max hand size (static)
 - `IncreaseOpponentCastCostEffect(Set<CardType>, int)` — opponents' spells cost more
 - `IncreaseOpponentCostForTargetingControlledPermanentEffect(PermanentPredicate, int)` — opponent spells/abilities targeting your matching permanent cost more
-- `ReduceOwnCastCostForCardTypeEffect(Set<CardType>, int)` — own spells cost less
+- `ReduceOwnCastCostEffect(DynamicAmount)` — **THE spell-self cost reduction.** `Fixed(N)` for a flat amount; a counting amount for "for each …" (Ghoultree `CardsInGraveyard(CardTypePredicate(CREATURE), CONTROLLER)`, Blasphemous Act `PermanentCount(PermanentIsCreaturePredicate, ANY_PLAYER)`). Conditional reductions wrap it: `ConditionalEffect(condition, ReduceOwnCastCostEffect(Fixed(N)))` — Metalcraft (Stoic Rebuttal), ControlsPermanent (Academy Journeymage / Wizard's Retort / Wizard's Lightning / Lookout's Dispersal), OpponentControlsMoreCreatures (Avatar of Might), CardsLeftGraveyardThisTurn (Wilt in the Heat). **Never add a per-variant record for this.**
+- `ReduceOwnCastCostForCardTypeEffect(Set<CardType>, DynamicAmount)` — own spells of the given types cost less (battlefield permanent, Heartless Summoning)
+- `ReduceOwnCastCostForSharedCardTypeWithImprintEffect(DynamicAmount)` — controller's spells sharing a card type with the imprinted card cost less (Semblance Anvil)
 - `ReduceCastCostForMatchingSpellsEffect(CardPredicate, int, CostModificationScope)` — matching spells cost less (SELF = yours, OPPONENT = opponents'; e.g. CardSubtypePredicate, CardIsHistoricPredicate, CardAnyOfPredicate)
-- `ReduceOwnCastCostIfControlsPermanentEffect(PermanentPredicate, int)` — this spell costs less if you control a matching permanent
-- `ReduceOwnCastCostIfTargetingControlledPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target is your matching permanent
-- `ReduceOwnCastCostIfTargetingStackEntryEffect(StackEntryPredicate, int)` — this spell costs less if first target is a spell on the stack matching the predicate
-- `ReduceOwnCastCostIfTargetingPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target matches predicate (any controller)
-- `ReduceOwnCastCostPerCreatureCardInGraveyardEffect(int)` — this spell costs N less per creature card in your graveyard (Ghoultree)
+- `ReduceOwnCastCostIfTargetingControlledPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target is your matching permanent (kept as its own record — target-gated)
+- `ReduceOwnCastCostIfTargetingStackEntryEffect(StackEntryPredicate, int)` — this spell costs less if first target is a spell on the stack matching the predicate (kept — target-gated)
+- `ReduceOwnCastCostIfTargetingPermanentEffect(PermanentPredicate, int)` — this spell costs less if first target matches predicate, any controller (kept — target-gated)
 - `LimitSpellsPerTurnEffect(int)` — max spells per turn (all players)
 - `LimitSpellsForEnchantedPlayerEffect(int)` — max spells per turn for the enchanted player (Curse Aura)
 - `CantSearchLibrariesEffect()` — can't search (static)
