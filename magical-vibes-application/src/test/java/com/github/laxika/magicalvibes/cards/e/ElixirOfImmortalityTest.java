@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ElixirOfImmortalityTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Elixir of Immortality has correct activated ability")
-    void hasCorrectAbility() {
-        ElixirOfImmortality card = new ElixirOfImmortality();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof GainLifeEffect ge && ge.amount().equals(new Fixed(5)))
-                .anyMatch(e -> e instanceof ShuffleSelfAndGraveyardIntoLibraryEffect);
-    }
-
     // ===== Activation =====
 
     @Test

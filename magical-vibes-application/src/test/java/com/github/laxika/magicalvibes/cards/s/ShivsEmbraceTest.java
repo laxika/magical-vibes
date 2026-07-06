@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShivsEmbraceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Shiv's Embrace has correct card properties")
-    void hasCorrectProperties() {
-        ShivsEmbrace card = new ShivsEmbrace();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect flyingEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(flyingEffect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(flyingEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantActivatedAbilityEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

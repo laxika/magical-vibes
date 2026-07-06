@@ -23,17 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CivicWayfinderTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Civic Wayfinder has correct card properties")
-    void hasCorrectProperties() {
-        CivicWayfinder card = new CivicWayfinder();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Civic Wayfinder creates may prompt")

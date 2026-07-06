@@ -19,25 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlueSunsZenithTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Blue Sun's Zenith has correct effects")
-    void hasCorrectEffects() {
-        BlueSunsZenith card = new BlueSunsZenith();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isEqualTo(new DrawCardForTargetPlayerEffect(new XValue(), false, true));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
-    }
-
-    @Test
-    @DisplayName("Blue Sun's Zenith targets a player")
-    void targetsPlayer() {
-        assertThat(EffectResolution.needsTarget(new BlueSunsZenith())).isTrue();
-    }
-
     // ===== Casting =====
 
     @Test

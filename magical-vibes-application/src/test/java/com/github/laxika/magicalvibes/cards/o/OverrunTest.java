@@ -25,20 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OverrunTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Overrun has correct card properties")
-    void hasCorrectProperties() {
-        Overrun card = new Overrun();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("Resolving Overrun gives own creatures +3/+3 and trample")

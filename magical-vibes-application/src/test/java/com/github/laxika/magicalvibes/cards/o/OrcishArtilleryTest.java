@@ -35,31 +35,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrcishArtilleryTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Orcish Artillery has correct card properties")
-    void hasCorrectProperties() {
-        OrcishArtillery card = new OrcishArtillery();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect targetEffect =
-                (DealDamageToAnyTargetEffect) card.getActivatedAbilities().get(0).getEffects().get(0);
-        assertThat(targetEffect.damage()).isEqualTo(new Fixed(2));
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(DealDamageToControllerEffect.class);
-        DealDamageToControllerEffect controllerEffect =
-                (DealDamageToControllerEffect) card.getActivatedAbilities().get(0).getEffects().get(1);
-        assertThat(controllerEffect.damage()).isEqualTo(3);
-    }
-
     // ===== Activating ability =====
 
     @Test

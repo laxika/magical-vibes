@@ -26,18 +26,6 @@ class VigilForTheLostTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Vigil for the Lost has ON_ALLY_CREATURE_DIES effect with PayXManaGainXLifeEffect")
-    void hasCorrectEffects() {
-        VigilForTheLost card = new VigilForTheLost();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(PayXManaGainXLifeEffect.class);
-    }
-
     // ===== Triggering =====
 
     @Test

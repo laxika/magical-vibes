@@ -20,20 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AzizaMageTowerCaptainTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_CONTROLLER_CASTS_SPELL copy trigger with tap-three-creatures cost")
-    void hasCopyTriggerWithTapCost() {
-        AzizaMageTowerCaptain card = new AzizaMageTowerCaptain();
-
-        var effects = card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CopyControllerCastSpellOnSpellCastEffect.class);
-
-        CopyControllerCastSpellOnSpellCastEffect trigger =
-                (CopyControllerCastSpellOnSpellCastEffect) effects.getFirst();
-        assertThat(trigger.tapCost()).isInstanceOf(TapMultiplePermanentsCost.class);
-        assertThat(trigger.tapCost().count()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Casting an instant triggers copy ability on the stack")

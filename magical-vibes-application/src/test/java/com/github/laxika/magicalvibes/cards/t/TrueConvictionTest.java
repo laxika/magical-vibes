@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TrueConvictionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has two static grant keyword effects for double strike and lifelink")
-    void hasCorrectEffects() {
-        TrueConviction card = new TrueConviction();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .toList();
-        assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
-                .containsExactlyInAnyOrder(Keyword.DOUBLE_STRIKE, Keyword.LIFELINK);
-        assertThat(keywordEffects).allMatch(e -> e.scope() == GrantScope.OWN_CREATURES);
-    }
-
     // ===== Casting =====
 
     @Test

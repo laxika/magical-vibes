@@ -25,26 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PhyresisTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyresis has correct effects")
-    void hasCorrectEffects() {
-        Phyresis card = new Phyresis();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .toList();
-        assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.INFECT);
-        assertThat(keywordEffects.getFirst().scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-    }
-
     // ===== Casting =====
 
     @Test

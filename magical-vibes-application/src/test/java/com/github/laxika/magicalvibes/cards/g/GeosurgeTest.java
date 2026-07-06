@@ -21,20 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GeosurgeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Geosurge has correct spell effect")
-    void hasCorrectEffect() {
-        Geosurge card = new Geosurge();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(AwardRestrictedManaEffect.class);
-        AwardRestrictedManaEffect effect =
-                (AwardRestrictedManaEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.color()).isEqualTo(ManaColor.RED);
-        assertThat(effect.amount()).isEqualTo(7);
-        assertThat(effect.allowedSpellTypes()).containsExactlyInAnyOrder(CardType.CREATURE, CardType.ARTIFACT);
-    }
+    
 
     @Test
     @DisplayName("Geosurge adds 7 restricted red mana on resolution")

@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class YawgmothsVileOfferingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effects: reanimate, destroy, exile self")
-    void hasCorrectEffects() {
-        YawgmothsVileOffering card = new YawgmothsVileOffering();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(ExileSpellEffect.class);
-    }
-
     // ===== Legendary sorcery restriction =====
 
     @Test

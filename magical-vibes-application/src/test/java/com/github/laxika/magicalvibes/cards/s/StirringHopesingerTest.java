@@ -21,17 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StirringHopesingerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Repartee trigger puts a counter on each controlled creature, gated on targeting a creature")
-    void hasCorrectStructure() {
-        StirringHopesinger card = new StirringHopesinger();
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.resolvedEffects()).singleElement()
-                .isInstanceOf(PutPlusOnePlusOneCounterOnEachControlledPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting an instant that targets a creature adds a counter to each creature you control")

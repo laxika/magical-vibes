@@ -17,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MoltenNoteTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has mana-spent damage and untap creatures effects")
-    void hasCorrectStructure() {
-        MoltenNote card = new MoltenNote();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isEqualTo(new DealDamageToTargetCreatureEffect(new ManaSpentToCast()));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(UntapAllControlledPermanentsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Deals damage equal to total mana spent and untaps your creatures")

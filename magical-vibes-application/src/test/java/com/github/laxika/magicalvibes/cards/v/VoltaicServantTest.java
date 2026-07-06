@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VoltaicServantTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct controller end-step triggered effect")
-    void hasCorrectEffect() {
-        VoltaicServant card = new VoltaicServant();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(UntapTargetPermanentEffect.class);
-        UntapTargetPermanentEffect effect = (UntapTargetPermanentEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(effect.targetPredicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
-
     // ===== Untapping artifacts at end step =====
 
     @Test

@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MortalCombatTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
@@ -33,21 +32,6 @@ class MortalCombatTest extends BaseCardTest {
             creatures.add(new GrizzlyBears());
         }
         return creatures;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mortal Combat has correct card properties")
-    void hasCorrectProperties() {
-        MortalCombat card = new MortalCombat();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(WinGameIfCreaturesInGraveyardEffect.class);
-        WinGameIfCreaturesInGraveyardEffect effect =
-                (WinGameIfCreaturesInGraveyardEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.threshold()).isEqualTo(20);
     }
 
     // ===== Trigger with 20+ creatures =====

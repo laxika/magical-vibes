@@ -19,43 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CopperlineGorgeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Copperline Gorge has conditional enters-tapped effect")
-    void hasConditionalEntersTappedEffect() {
-        CopperlineGorge card = new CopperlineGorge();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .hasSize(1);
-        EntersTappedUnlessFewLandsEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .map(e -> (EntersTappedUnlessFewLandsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.maxOtherLands()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Copperline Gorge has two mana abilities for red and green")
-    void hasManaAbilities() {
-        CopperlineGorge card = new CopperlineGorge();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {R}.
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.RED));
-
-        // Second ability: {T}: Add {G}.
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-    }
-
     // ===== Enters the battlefield: untapped (few lands) =====
 
     @Test

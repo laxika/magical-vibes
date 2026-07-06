@@ -23,29 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeeprootWatersTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Deeproot Waters has SpellCastTriggerEffect with Merfolk filter and token creation")
-    void hasCorrectStructure() {
-        DeeprootWaters card = new DeeprootWaters();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.manaCost()).isNull();
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) trigger.resolvedEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Merfolk");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.BLUE);
-        assertThat(tokenEffect.subtypes()).contains(CardSubtype.MERFOLK);
-        assertThat(tokenEffect.keywords()).contains(Keyword.HEXPROOF);
-    }
-
     // ===== Trigger fires on Merfolk cast =====
 
     @Test

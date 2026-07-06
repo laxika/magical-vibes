@@ -19,18 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ScrapdiverSerpentTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Scrapdiver Serpent has correct static effect")
-    void hasCorrectProperties() {
-        ScrapdiverSerpent card = new ScrapdiverSerpent();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantBeBlockedIfDefenderControlsMatchingPermanentEffect.class);
-        CantBeBlockedIfDefenderControlsMatchingPermanentEffect effect =
-                (CantBeBlockedIfDefenderControlsMatchingPermanentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.defenderPermanentPredicate()).isEqualTo(new PermanentIsArtifactPredicate());
-    }
+    
 
     @Test
     @DisplayName("Scrapdiver Serpent can't be blocked when defending player controls an artifact")

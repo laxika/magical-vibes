@@ -46,20 +46,6 @@ class WhiteKnightTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("White Knight has protection from black static effect")
-    void hasCorrectProperties() {
-        WhiteKnight card = new WhiteKnight();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromColorsEffect.class);
-
-        ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(protection.colors()).containsExactly(CardColor.BLACK);
-    }
-
     // ===== Casting =====
 
     @Test

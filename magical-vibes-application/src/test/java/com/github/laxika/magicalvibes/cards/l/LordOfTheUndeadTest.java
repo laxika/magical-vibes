@@ -26,45 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LordOfTheUndeadTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Lord of the Undead has static boost effect for Zombies")
-    void hasStaticBoostEffect() {
-        LordOfTheUndead card = new LordOfTheUndead();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).isEmpty();
-        assertThat(effect.filter()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("Lord of the Undead has activated ability to return Zombie from graveyard")
-    void hasActivatedAbility() {
-        LordOfTheUndead card = new LordOfTheUndead();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{B}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) ability.getEffects().getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) effect.filter()).subtype()).isEqualTo(CardSubtype.ZOMBIE);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -515,5 +476,4 @@ class LordOfTheUndeadTest extends BaseCardTest {
         return perm;
     }
 }
-
 

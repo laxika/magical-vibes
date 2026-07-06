@@ -30,24 +30,6 @@ class ThopterAssemblyTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Thopter Assembly has upkeep triggered ability with conditional wrapper")
-    void hasUpkeepTriggeredAbility() {
-        ThopterAssembly card = new ThopterAssembly();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(((NoOtherPermanent) conditional.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) ((NoOtherPermanent) conditional.condition()).filter()).subtype()).isEqualTo(CardSubtype.THOPTER);
-        assertThat(conditional.wrapped()).isInstanceOf(ReturnSelfToHandAndCreateTokensEffect.class);
-    }
-
     // ===== Trigger fires when no other Thopters =====
 
     @Test

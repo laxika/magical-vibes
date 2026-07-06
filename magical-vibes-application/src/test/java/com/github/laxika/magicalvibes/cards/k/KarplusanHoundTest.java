@@ -43,24 +43,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KarplusanHoundTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with ConditionalEffect(CHANDRA) wrapping DealDamageToAnyTargetEffect(2)")
-    void hasCorrectStructure() {
-        KarplusanHound card = new KarplusanHound();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(((ControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.CHANDRA));
-        assertThat(conditional.wrapped()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect damage = (DealDamageToAnyTargetEffect) conditional.wrapped();
-        assertThat(damage.damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Trigger fires when controlling Chandra =====
 
     @Test
@@ -139,7 +121,6 @@ class KarplusanHoundTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private Permanent addPlaneswalker(Player player, Card card) {
         Permanent perm = new Permanent(card);

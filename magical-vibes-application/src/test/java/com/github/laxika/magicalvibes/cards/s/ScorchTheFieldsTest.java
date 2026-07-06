@@ -29,26 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ScorchTheFieldsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effects: destroy target land and 1 damage to each Human creature")
-    void hasCorrectEffects() {
-        ScorchTheFields card = new ScorchTheFields();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(MassDamageEffect.class);
-
-        MassDamageEffect massDamage = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(massDamage.damage()).isEqualTo(1);
-        assertThat(massDamage.damagesPlayers()).isFalse();
-        assertThat(massDamage.damagesPlaneswalkers()).isFalse();
-        assertThat(massDamage.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) massDamage.filter()).subtype())
-                .isEqualTo(CardSubtype.HUMAN);
-    }
+    
 
     @Test
     @DisplayName("Casting targets a land and puts spell on the stack")

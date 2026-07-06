@@ -37,23 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShivanHellkiteTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Shivan Hellkite has correct card properties")
-    void hasCorrectProperties() {
-        ShivanHellkite card = new ShivanHellkite();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect =
-                (DealDamageToAnyTargetEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack")

@@ -35,20 +35,6 @@ class TimeWarpTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Time Warp has correct card properties")
-    void hasCorrectProperties() {
-        TimeWarp card = new TimeWarp();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExtraTurnEffect.class);
-        ExtraTurnEffect effect = (ExtraTurnEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.count()).isEqualTo(1);
-    }
-
     // ===== Casting =====
 
     @Test

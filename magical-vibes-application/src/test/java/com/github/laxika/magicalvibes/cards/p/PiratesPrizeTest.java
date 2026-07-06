@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PiratesPrizeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has draw 2 and treasure creation effects on SPELL slot")
-    void hasCorrectSpellEffects() {
-        PiratesPrize card = new PiratesPrize();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(DrawCardEffect.class);
-                    assertThat(((DrawCardEffect) effects.get(0)).amount()).isEqualTo(new Fixed(2));
-                    assertThat(effects.get(1)).isInstanceOf(CreateTokenEffect.class);
-                });
-    }
-
     // ===== Casting =====
 
     @Test
@@ -110,7 +94,5 @@ class PiratesPrizeTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Pirate's Prize"));
         assertThat(gd.stack).isEmpty();
     }
-
-    // ===== Helpers =====
 
 }

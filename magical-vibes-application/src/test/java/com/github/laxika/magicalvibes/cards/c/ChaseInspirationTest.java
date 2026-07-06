@@ -24,22 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChaseInspirationTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Chase Inspiration has correct card structure")
-    void hasCorrectStructure() {
-        ChaseInspiration card = new ChaseInspiration();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(0));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(3));
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Casting Chase Inspiration puts it on the stack")

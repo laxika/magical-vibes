@@ -22,29 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MyrsmithTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Myrsmith has MayEffect wrapping SpellCastTriggerEffect with cost and token")
-    void hasCorrectStructure() {
-        Myrsmith card = new Myrsmith();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
-        assertThat(trigger.manaCost()).isEqualTo("{1}");
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) trigger.resolvedEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Myr");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.additionalTypes()).contains(CardType.ARTIFACT);
-    }
-
     // ===== Trigger fires on artifact cast =====
 
     @Test

@@ -17,18 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MindcrankTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mindcrank has correct triggered effect")
-    void hasCorrectProperties() {
-        Mindcrank card = new Mindcrank();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LOSES_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LOSES_LIFE).getFirst())
-                .isInstanceOf(MillOpponentOnLifeLossEffect.class);
-    }
-
     // ===== Trigger on spell damage =====
 
     @Test

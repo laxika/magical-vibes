@@ -22,16 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RecollectTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Recollect has correct card properties")
-    void hasCorrectCardProperties() {
-        Recollect card = new Recollect();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Recollect puts a graveyard-targeted spell on the stack")

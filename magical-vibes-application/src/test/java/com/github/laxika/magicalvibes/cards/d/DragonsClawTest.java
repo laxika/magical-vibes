@@ -24,25 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DragonsClawTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dragon's Claw has correct card properties")
-    void hasCorrectProperties() {
-        DragonsClaw card = new DragonsClaw();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
-        assertThat(trigger.spellFilter()).isEqualTo(new CardColorPredicate(CardColor.RED));
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(GainLifeEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -231,5 +212,4 @@ class DragonsClawTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
     }
 }
-
 

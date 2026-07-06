@@ -25,19 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArgentMutationTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effect structure")
-    void hasCorrectEffects() {
-        ArgentMutation card = new ArgentMutation();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(AddCardTypeToTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-
-        AddCardTypeToTargetPermanentEffect typeEffect = (AddCardTypeToTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(typeEffect.cardType()).isEqualTo(CardType.ARTIFACT);
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack with target")

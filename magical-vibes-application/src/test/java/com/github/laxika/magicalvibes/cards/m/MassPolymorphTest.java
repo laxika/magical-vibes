@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MassPolymorphTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mass Polymorph has correct effect")
-    void hasCorrectEffect() {
-        MassPolymorph card = new MassPolymorph();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

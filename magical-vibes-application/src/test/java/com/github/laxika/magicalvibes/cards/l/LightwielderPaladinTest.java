@@ -36,17 +36,7 @@ class LightwielderPaladinTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has MayEffect-wrapped ExilePermanentDamagedPlayerControlsEffect combat damage trigger")
-    void hasCorrectEffect() {
-        LightwielderPaladin card = new LightwielderPaladin();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ExilePermanentDamagedPlayerControlsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice when defender has black permanent")

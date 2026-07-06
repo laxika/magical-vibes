@@ -27,18 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArchaicsAgonyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has converge damage and excess-damage exile effects")
-    void hasCorrectStructure() {
-        ArchaicsAgony card = new ArchaicsAgony();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isEqualTo(new DealDamageToTargetCreatureEffect(new XValue()));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Converge X equals number of colors spent to cast")

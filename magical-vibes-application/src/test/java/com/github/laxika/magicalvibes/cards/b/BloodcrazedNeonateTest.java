@@ -29,21 +29,6 @@ class BloodcrazedNeonateTest extends BaseCardTest {
         return perm;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has MustAttackEffect and PutCountersOnSourceEffect")
-    void hasCorrectEffects() {
-        BloodcrazedNeonate card = new BloodcrazedNeonate();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustAttackEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-    }
-
     // ===== Must attack =====
 
     @Test

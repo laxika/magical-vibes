@@ -29,29 +29,9 @@ class GavonyTownshipTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability is a mana ability producing colorless")
-    void firstAbilityIsColorlessMana() {
-        GavonyTownship card = new GavonyTownship();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-    }
-
-    @Test
-    @DisplayName("Second ability puts +1/+1 counters on each creature you control")
-    void secondAbilityPutsCounters() {
-        GavonyTownship card = new GavonyTownship();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}{G}{W}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-    }
+    
 
     // ===== Mana ability =====
 

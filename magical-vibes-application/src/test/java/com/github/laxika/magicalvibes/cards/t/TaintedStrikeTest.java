@@ -23,20 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TaintedStrikeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tainted Strike has correct effects")
-    void hasCorrectEffects() {
-        TaintedStrike card = new TaintedStrike();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Resolving Tainted Strike gives +1/+0 and infect")

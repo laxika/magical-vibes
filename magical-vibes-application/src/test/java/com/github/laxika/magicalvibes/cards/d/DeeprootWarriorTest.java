@@ -19,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeeprootWarriorTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Deeproot Warrior has ON_BECOMES_BLOCKED effect with BoostSelfEffect +1/+1")
-    void hasOnBecomesBlockedEffect() {
-        DeeprootWarrior card = new DeeprootWarrior();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("When Deeproot Warrior becomes blocked, a triggered ability is pushed onto the stack")

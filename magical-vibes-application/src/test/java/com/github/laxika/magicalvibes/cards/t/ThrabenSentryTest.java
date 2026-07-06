@@ -22,24 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ThrabenSentryTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        ThrabenSentry card = new ThrabenSentry();
-
-        // Front face: ON_ALLY_CREATURE_DIES may-transform trigger
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists and is vanilla
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("ThrabenMilitia");
-    }
-
     // ===== Transform when allied creature dies (accept) =====
 
     @Test
@@ -149,7 +131,5 @@ class ThrabenSentryTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Thraben Sentry"));
     }
-
-    // ===== Helpers =====
 
 }

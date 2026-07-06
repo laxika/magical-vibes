@@ -47,18 +47,6 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Liege of the Tangle has combat damage trigger effect")
-    void hasCorrectEffect() {
-        LiegeOfTheTangle card = new LiegeOfTheTangle();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutAwakeningCountersOnTargetLandsEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test

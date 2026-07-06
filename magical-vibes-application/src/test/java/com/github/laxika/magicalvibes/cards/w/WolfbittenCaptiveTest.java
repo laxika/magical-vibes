@@ -20,47 +20,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WolfbittenCaptiveTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Front face has pump ability and transform trigger configured")
-    void frontFaceHasCorrectEffects() {
-        WolfbittenCaptive card = new WolfbittenCaptive();
+    
 
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getMaxActivationsPerTurn()).isEqualTo(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(KrallenhordeKiller.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("KrallenhordeKiller");
-    }
-
-    @Test
-    @DisplayName("Back face has pump ability and transform trigger configured")
-    void backFaceHasCorrectEffects() {
-        WolfbittenCaptive card = new WolfbittenCaptive();
-        KrallenhordeKiller backFace = (KrallenhordeKiller) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(1);
-        assertThat(backFace.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}{G}");
-        assertThat(backFace.getActivatedAbilities().getFirst().getMaxActivationsPerTurn()).isEqualTo(1);
-        assertThat(backFace.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Wolfbitten Captive pump ability grants +2/+2 until end of turn")

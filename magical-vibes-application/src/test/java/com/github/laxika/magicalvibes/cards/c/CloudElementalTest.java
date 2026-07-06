@@ -21,18 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CloudElementalTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cloud Elemental has correct card properties")
-    void hasCorrectProperties() {
-        CloudElemental card = new CloudElemental();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -188,5 +176,4 @@ class CloudElementalTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }
-
 

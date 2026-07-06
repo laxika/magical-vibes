@@ -22,30 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeathgorgeScavengerTest extends BaseCardTest {
 
-    // ===== Card structure tests =====
-
-    @Test
-    @DisplayName("Has MayEffect wrapping ExileGraveyardCardWithConditionalBonusEffect on ETB and Attack slots")
-    void hasCorrectEffects() {
-        DeathgorgeScavenger card = new DeathgorgeScavenger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect etbMay = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbMay.wrapped()).isInstanceOf(ExileGraveyardCardWithConditionalBonusEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect attackMay = (MayEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(attackMay.wrapped()).isInstanceOf(ExileGraveyardCardWithConditionalBonusEffect.class);
-
-        ExileGraveyardCardWithConditionalBonusEffect effect =
-                (ExileGraveyardCardWithConditionalBonusEffect) etbMay.wrapped();
-        assertThat(effect.creatureLifeGain()).isEqualTo(2);
-        assertThat(effect.noncreaturePowerBoost()).isEqualTo(1);
-        assertThat(effect.noncreatureToughnessBoost()).isEqualTo(1);
-    }
-
     // ===== ETB trigger tests =====
 
     @Nested

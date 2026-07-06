@@ -26,23 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TwitchTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Twitch has correct card properties")
-    void hasCorrectProperties() {
-        Twitch card = new Twitch();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(TapOrUntapTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter targetFilter = (PermanentPredicateTargetFilter) card.getTargetFilter();
-        assertThat(targetFilter.predicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-    }
-
     // ===== Casting =====
 
     @Test

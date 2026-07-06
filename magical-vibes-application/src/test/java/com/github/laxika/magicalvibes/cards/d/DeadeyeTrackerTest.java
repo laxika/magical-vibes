@@ -23,23 +23,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class DeadeyeTrackerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has activated ability with ExileTargetCardsFromOpponentGraveyardEffect and ExploreEffect")
-    void hasActivatedAbility() {
-        DeadeyeTracker card = new DeadeyeTracker();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{B}");
-        assertThat(ability.getEffects())
-                .anyMatch(e -> e instanceof ExileTargetCardsFromOpponentGraveyardEffect ex && ex.count() == 2)
-                .anyMatch(e -> e instanceof ExploreEffect);
-    }
-
     // ===== Activated ability: exile two target cards from opponent's graveyard =====
 
     @Test

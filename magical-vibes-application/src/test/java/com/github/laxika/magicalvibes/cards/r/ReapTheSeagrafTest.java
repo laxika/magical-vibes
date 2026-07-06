@@ -23,26 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReapTheSeagrafTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has spell token creation effect and flashback cost")
-    void hasCorrectEffectsAndFlashbackCost() {
-        ReapTheSeagraf card = new ReapTheSeagraf();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Zombie");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.BLACK);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.ZOMBIE);
-        assertThat(effect.tapped()).isFalse();
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{4}{U}");
-    }
+    
 
     @Test
     @DisplayName("Casting Reap the Seagraf creates one 2/2 black Zombie token")

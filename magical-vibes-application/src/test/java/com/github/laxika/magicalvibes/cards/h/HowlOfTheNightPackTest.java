@@ -20,23 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HowlOfTheNightPackTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has CreateTokenEffect counting controlled Forests on resolution")
-    void hasCorrectEffect() {
-        HowlOfTheNightPack card = new HowlOfTheNightPack();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect effect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(
-                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER));
-        assertThat(effect.tokenName()).isEqualTo("Wolf");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Creates one 2/2 Wolf token per Forest controlled")

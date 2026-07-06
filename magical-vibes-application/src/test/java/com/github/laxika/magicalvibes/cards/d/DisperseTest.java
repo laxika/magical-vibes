@@ -21,18 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DisperseTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Disperse has bounce spell effect and needs a target")
-    void hasCorrectStructure() {
-        Disperse card = new Disperse();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).singleElement()
-                .isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
     // ===== Can target nonland permanents =====
 
     @Test

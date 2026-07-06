@@ -23,28 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SerpentOfTheEndlessSeaTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Serpent of the Endless Sea has correct static effects")
-    void hasCorrectProperties() {
-        SerpentOfTheEndlessSea card = new SerpentOfTheEndlessSea();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(PowerToughnessEqualToControlledPermanentCountEffect.class);
-        PowerToughnessEqualToControlledPermanentCountEffect ptEffect =
-                (PowerToughnessEqualToControlledPermanentCountEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(ptEffect.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(CantAttackUnlessDefenderControlsMatchingPermanentEffect.class);
-        CantAttackUnlessDefenderControlsMatchingPermanentEffect attackEffect =
-                (CantAttackUnlessDefenderControlsMatchingPermanentEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(attackEffect.defenderPermanentPredicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

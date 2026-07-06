@@ -19,18 +19,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SunriseSeekerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD ExploreEffect")
-    void hasCorrectEffect() {
-        SunriseSeeker card = new SunriseSeeker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExploreEffect.class);
-    }
-
     // ===== Explore reveals a land — put into hand =====
 
     @Test

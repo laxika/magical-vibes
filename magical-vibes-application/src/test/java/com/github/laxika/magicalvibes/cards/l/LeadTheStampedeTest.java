@@ -24,20 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LeadTheStampedeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Lead the Stampede has correct effect structure")
-    void hasCorrectProperties() {
-        LeadTheStampede card = new LeadTheStampede();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-        assertThat(effect.anyNumber()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Lead the Stampede puts it on the stack")

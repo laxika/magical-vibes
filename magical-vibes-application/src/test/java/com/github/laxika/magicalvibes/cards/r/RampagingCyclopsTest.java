@@ -14,16 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RampagingCyclopsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Rampaging Cyclops has ConditionalEffect with minBlockers=2")
-    void hasCorrectEffect() {
-        RampagingCyclops card = new RampagingCyclops();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .singleElement()
-                .isInstanceOfSatisfying(ConditionalEffect.class,
-                        e -> assertThat(((BlockedByMinCreatures) e.condition()).minBlockers()).isEqualTo(2));
-    }
+    
 
     @Test
     @DisplayName("Rampaging Cyclops has full power when not blocked")

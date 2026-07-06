@@ -17,26 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CarapaceForgerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has metalcraft static boost effect with +2/+2")
-    void hasCorrectEffect() {
-        CarapaceForger card = new CarapaceForger();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) metalcraft.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Without metalcraft =====
 
     @Test

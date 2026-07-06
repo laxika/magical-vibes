@@ -20,32 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AntQueenTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ant Queen has correct activated ability")
-    void hasCorrectAbility() {
-        AntQueen card = new AntQueen();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{G}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Insect");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.INSECT);
-        assertThat(tokenEffect.keywords()).isEmpty();
-        assertThat(tokenEffect.additionalTypes()).isEmpty();
-    }
-
     // ===== Token creation via activated ability =====
 
     @Test

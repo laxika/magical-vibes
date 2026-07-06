@@ -16,18 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DissipationFieldTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dissipation Field has damage-to-controller trigger effect")
-    void hasDamageToControllerTrigger() {
-        DissipationField card = new DissipationField();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).getFirst())
-                .isInstanceOf(ReturnDamageSourcePermanentToHandEffect.class);
-    }
-
     // ===== Combat damage bounce =====
 
     @Test

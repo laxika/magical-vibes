@@ -21,28 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BackFromTheBrinkTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability with exile creature from graveyard cost and token copy effect")
-    void hasCorrectAbility() {
-        BackFromTheBrink card = new BackFromTheBrink();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) ability.getEffects().get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(exileCost.payExiledCardManaCost()).isTrue();
-        assertThat(exileCost.imprintOnSource()).isTrue();
-        assertThat(ability.getEffects().get(1)).isInstanceOf(CreateTokenCopyOfExiledCostCardEffect.class);
-    }
-
     // ===== Ability activation =====
 
     @Test

@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PainfulQuandaryTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has spell-cast triggered LoseLifeUnlessDiscardEffect with 5 life loss")
-    void hasCorrectEffect() {
-        PainfulQuandary card = new PainfulQuandary();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(LoseLifeUnlessDiscardEffect.class);
-        LoseLifeUnlessDiscardEffect effect =
-                (LoseLifeUnlessDiscardEffect) card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(5);
-    }
-
     // ===== Trigger only on opponent's spells =====
 
     @Test

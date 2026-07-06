@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CryptoplasmTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Cryptoplasm has upkeep triggered copy ability")
-    void hasCorrectAbilityStructure() {
-        Cryptoplasm card = new Cryptoplasm();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(BecomeCopyOfTargetCreatureEffect.class);
-    }
-
     // ===== Upkeep trigger: mandatory target selection =====
 
     @Test

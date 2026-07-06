@@ -35,36 +35,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RepeatingBarrageTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has deal 3 damage to any target spell effect")
-    void hasCorrectSpellEffect() {
-        RepeatingBarrage card = new RepeatingBarrage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(3));
-    }
-
-    @Test
-    @DisplayName("Has graveyard activated ability with raid restriction")
-    void hasGraveyardAbilityWithRaid() {
-        RepeatingBarrage card = new RepeatingBarrage();
-
-        assertThat(card.getGraveyardActivatedAbilities()).hasSize(1);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}{R}{R}");
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.RAID);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .first()
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Spell: deals 3 damage =====
 
     @Nested

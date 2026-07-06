@@ -21,24 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LyraDawnbringerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lyra Dawnbringer has static boost effect for Angels with lifelink")
-    void hasCorrectStaticEffect() {
-        LyraDawnbringer card = new LyraDawnbringer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).containsExactly(Keyword.LIFELINK);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
     // ===== Static effect: buffs other Angels you control =====
 
     @Test
@@ -185,7 +167,5 @@ class LyraDawnbringerTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, serra)).isEqualTo(5);
         assertThat(gqs.hasKeyword(gd, serra, Keyword.LIFELINK)).isTrue();
     }
-
-    // ===== Helper methods =====
 
 }

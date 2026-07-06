@@ -23,25 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AdamantWillTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Adamant Will has correct card properties")
-    void hasCorrectProperties() {
-        AdamantWill card = new AdamantWill();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(2));
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

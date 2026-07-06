@@ -25,29 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TragedyFeasterTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has Ward—Discard and an Infusion end-step 'sacrifice unless you gained life' downside")
-    void hasCorrectStructure() {
-        TragedyFeaster card = new TragedyFeaster();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL))
-                .singleElement().isInstanceOf(CounterUnlessDiscardsEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED))
-                .singleElement().isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(conditional.condition()).isInstanceOf(DidntGainLifeThisTurn.class);
-        assertThat(conditional.wrapped()).isInstanceOf(SacrificePermanentThenEffect.class);
-
-        SacrificePermanentThenEffect sac = (SacrificePermanentThenEffect) conditional.wrapped();
-        assertThat(sac.filter()).isInstanceOf(PermanentTruePredicate.class);
-        assertThat(sac.thenEffect()).isNull(); // bare "sacrifice a permanent", no follow-up
-    }
-
     // ===== Infusion: end-step sacrifice unless you gained life =====
 
     @Test

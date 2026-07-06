@@ -19,19 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ToxicNimTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Toxic Nim has regenerate activated ability")
-    void hasRegenerateAbility() {
-        ToxicNim card = new ToxicNim();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{B}");
-    }
-
     // ===== Casting =====
 
     @Test

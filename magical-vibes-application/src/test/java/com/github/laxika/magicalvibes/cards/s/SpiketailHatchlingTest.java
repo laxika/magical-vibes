@@ -20,22 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpiketailHatchlingTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spiketail Hatchling has correct card properties")
-    void hasCorrectProperties() {
-        SpiketailHatchling card = new SpiketailHatchling();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsSpellTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getActivatedAbilities().getFirst().getEffects().get(1)).amount()).isEqualTo(1);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -322,5 +306,4 @@ class SpiketailHatchlingTest extends BaseCardTest {
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
     }
 }
-
 

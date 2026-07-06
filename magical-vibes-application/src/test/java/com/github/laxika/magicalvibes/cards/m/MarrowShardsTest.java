@@ -21,18 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MarrowShardsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Marrow Shards has correct effect configuration")
-    void hasCorrectEffect() {
-        MarrowShards card = new MarrowShards();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(1);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Deals 1 damage to each attacking creature but does not kill 2-toughness attackers")

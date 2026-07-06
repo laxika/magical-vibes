@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DemystifyTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Demystify has correct card properties")
-    void hasCorrectProperties() {
-        Demystify card = new Demystify();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

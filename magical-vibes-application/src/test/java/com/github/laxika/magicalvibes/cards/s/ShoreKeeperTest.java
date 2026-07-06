@@ -17,25 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShoreKeeperTest extends BaseCardTest {
 
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Shore Keeper has correct activated ability with tap, sacrifice, and draw 3")
-    void hasCorrectActivatedAbility() {
-        ShoreKeeper card = new ShoreKeeper();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{7}{U}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getActivatedAbilities().getFirst().getEffects().get(1)).amount())
-                .isEqualTo(new Fixed(3));
-    }
-
     // ===== Activation =====
 
     @Test

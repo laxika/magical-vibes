@@ -17,20 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CorruptedResolveTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct card properties")
-    void hasCorrectProperties() {
-        CorruptedResolve card = new CorruptedResolve();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CounterSpellIfControllerPoisonedEffect.class);
-    }
-
     // ===== Counters when controller is poisoned =====
 
     @Test

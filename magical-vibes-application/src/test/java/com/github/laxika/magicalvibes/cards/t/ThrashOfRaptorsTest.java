@@ -22,41 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ThrashOfRaptorsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two STATIC effects: ConditionalEffect(DINOSAUR) wrapping StaticBoostEffect and GrantKeywordEffect")
-    void hasCorrectStaticEffects() {
-        ThrashOfRaptors card = new ThrashOfRaptors();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        // First effect: conditional +2/+0
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect boostConditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(((ControlsAnotherPermanent) boostConditional.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) ((ControlsAnotherPermanent) boostConditional.condition()).filter()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
-        assertThat(boostConditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) boostConditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-
-        // Second effect: conditional trample
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect keywordConditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(((ControlsAnotherPermanent) keywordConditional.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) ((ControlsAnotherPermanent) keywordConditional.condition()).filter()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
-        assertThat(keywordConditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) keywordConditional.wrapped();
-        assertThat(grant.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Conditional boost =====
 
     @Test

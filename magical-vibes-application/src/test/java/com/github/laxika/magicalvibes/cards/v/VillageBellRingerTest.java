@@ -17,15 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VillageBellRingerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD trigger with UntapAllControlledPermanentsEffect")
-    void hasCorrectEffect() {
-        VillageBellRinger card = new VillageBellRinger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(UntapAllControlledPermanentsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB trigger puts triggered ability on the stack")

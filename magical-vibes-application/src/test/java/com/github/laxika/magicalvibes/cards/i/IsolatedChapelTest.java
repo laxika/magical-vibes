@@ -23,34 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IsolatedChapelTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has conditional enters-tapped effect checking for Plains or Swamp")
-    void hasConditionalEntersTappedEffect() {
-        IsolatedChapel card = new IsolatedChapel();
-
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new EntersTappedUnlessControlsPermanentEffect(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLAINS, CardSubtype.SWAMP))));
-    }
-
-    @Test
-    @DisplayName("Has two mana abilities for white and black")
-    void hasManaAbilities() {
-        IsolatedChapel card = new IsolatedChapel();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.WHITE));
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-    }
-
     // ===== Enters tapped (no qualifying lands) =====
 
     @Test

@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FogElementalTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fog Elemental has correct card properties")
-    void hasCorrectProperties() {
-        FogElemental card = new FogElemental();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(SacrificeAtEndOfCombatEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst()).isInstanceOf(SacrificeAtEndOfCombatEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -297,5 +283,4 @@ class FogElementalTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Fog Elemental") && log.contains("sacrificed"));
     }
 }
-
 

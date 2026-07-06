@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeStretchTest extends BaseCardTest {
 
-
     /**
      * Sets auto-stop on PRECOMBAT_MAIN for both players so auto-pass
      * stops predictably once per turn, giving tests manual control
@@ -44,20 +43,6 @@ class TimeStretchTest extends BaseCardTest {
     private void advanceTurn() {
         harness.forceStep(TurnStep.CLEANUP);
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Time Stretch has correct card properties")
-    void hasCorrectProperties() {
-        TimeStretch card = new TimeStretch();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExtraTurnEffect.class);
-        ExtraTurnEffect effect = (ExtraTurnEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.count()).isEqualTo(2);
     }
 
     // ===== Casting =====

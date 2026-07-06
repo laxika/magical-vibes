@@ -22,22 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ReaperFromTheAbyssTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has END_STEP_TRIGGERED effect with ConditionalEffect wrapping DestroyTargetPermanentEffect")
-    void hasCorrectStructure() {
-        ReaperFromTheAbyss card = new ReaperFromTheAbyss();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect morbid =
-                (ConditionalEffect) card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst();
-        assertThat(morbid.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Morbid trigger at end step =====
 
     @Test

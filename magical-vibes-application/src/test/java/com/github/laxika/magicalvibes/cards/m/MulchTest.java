@@ -20,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MulchTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has RevealTopCardsTypeToHandRestToGraveyardEffect on SPELL slot with count=4 and LAND type")
-    void hasCorrectStructure() {
-        Mulch card = new Mulch();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(RevealTopCardsTypeToHandRestToGraveyardEffect.class);
-
-        RevealTopCardsTypeToHandRestToGraveyardEffect effect =
-                (RevealTopCardsTypeToHandRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(4);
-        assertThat(effect.cardTypes()).isEqualTo(Set.of(CardType.LAND));
-    }
-
     // ===== All lands go to hand =====
 
     @Test

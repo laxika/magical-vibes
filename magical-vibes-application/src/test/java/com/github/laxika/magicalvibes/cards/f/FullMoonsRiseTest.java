@@ -26,40 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FullMoonsRiseTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Full Moon's Rise has static boost effect for Werewolves with trample")
-    void hasCorrectStaticEffect() {
-        FullMoonsRise card = new FullMoonsRise();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isZero();
-        assertThat(effect.grantedKeywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
-    @Test
-    @DisplayName("Full Moon's Rise has sacrifice activated ability with regenerate all effect")
-    void hasCorrectActivatedAbility() {
-        FullMoonsRise card = new FullMoonsRise();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateAllOwnCreaturesEffect.class);
-    }
-
     // ===== Static effect: buffs Werewolves you control =====
 
     @Test
@@ -188,7 +154,5 @@ class FullMoonsRiseTest extends BaseCardTest {
         Permanent opponentRanger = findPermanent(player2, "Daybreak Ranger");
         assertThat(opponentRanger.getRegenerationShield()).isZero();
     }
-
-    // ===== Helper methods =====
 
 }

@@ -22,27 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SerraDiscipleTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Serra Disciple has historic spell-cast trigger with +1/+1 boost")
-    void hasCorrectStructure() {
-        SerraDisciple card = new SerraDisciple();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boostEffect = (BoostSelfEffect) trigger.resolvedEffects().getFirst();
-        assertThat(boostEffect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boostEffect.toughnessBoost()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Artifact spell triggers =====
 
     @Test

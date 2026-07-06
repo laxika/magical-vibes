@@ -31,22 +31,6 @@ class SheoldredWhisperingOneTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sheoldred has upkeep graveyard return and opponent upkeep sacrifice effects")
-    void hasCorrectProperties() {
-        SheoldredWhisperingOne card = new SheoldredWhisperingOne();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeCreatureEffect.class);
-    }
-
     // ===== Upkeep trigger: return creature from graveyard =====
 
     @Test

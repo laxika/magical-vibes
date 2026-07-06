@@ -27,18 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BrutalizerExarchTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Brutalizer Exarch has a ChooseOneEffect with two ETB options")
-    void hasCorrectEffects() {
-        BrutalizerExarch card = new BrutalizerExarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(SearchLibraryForCreatureToTopOfLibraryEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(PutTargetOnBottomOfLibraryEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Search library for creature to top")

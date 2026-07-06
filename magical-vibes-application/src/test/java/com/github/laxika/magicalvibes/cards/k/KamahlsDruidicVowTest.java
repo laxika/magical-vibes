@@ -31,22 +31,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class KamahlsDruidicVowTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effect configuration")
-    void hasCorrectEffect() {
-        KamahlsDruidicVow card = new KamahlsDruidicVow();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.class);
-        LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect effect =
-                (LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.alwaysEligiblePredicate()).isInstanceOf(CardTypePredicate.class);
-        assertThat(effect.mvCappedEligiblePredicate()).isInstanceOf(CardAllOfPredicate.class);
-    }
-
     // ===== Legendary sorcery casting restriction =====
 
     @Test

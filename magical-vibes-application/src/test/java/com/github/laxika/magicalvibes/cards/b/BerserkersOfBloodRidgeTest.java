@@ -17,17 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BerserkersOfBloodRidgeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Berserkers of Blood Ridge has MustAttackEffect")
-    void hasCorrectProperties() {
-        BerserkersOfBloodRidge card = new BerserkersOfBloodRidge();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustAttackEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

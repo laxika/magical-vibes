@@ -27,31 +27,9 @@ class CopperCarapaceTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Copper Carapace has static +2/+2 boost effect")
-    void hasStaticBoostEffect() {
-        CopperCarapace card = new CopperCarapace();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Copper Carapace has static equipped creature can't block effect")
-    void hasCantBlockEffect() {
-        CopperCarapace card = new CopperCarapace();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof CantBlockEffect)
-                .hasSize(1);
-    }
+    
 
     @Test
     @DisplayName("Copper Carapace has equip {3} ability with correct properties")

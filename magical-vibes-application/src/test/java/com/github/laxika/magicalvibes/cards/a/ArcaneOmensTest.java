@@ -22,16 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArcaneOmensTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Arcane Omens targets a player and discards by Converge")
-    void hasCorrectEffects() {
-        ArcaneOmens card = new ArcaneOmens();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(TargetPlayerDiscardsByConvergeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting with one color of mana snapshots Converge 1 on the stack")

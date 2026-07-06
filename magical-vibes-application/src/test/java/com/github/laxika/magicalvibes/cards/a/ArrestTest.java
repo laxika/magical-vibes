@@ -24,20 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArrestTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Arrest has correct card properties")
-    void hasCorrectProperties() {
-        Arrest card = new Arrest();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(EnchantedCreatureCantActivateAbilitiesEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

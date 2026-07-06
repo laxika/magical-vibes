@@ -21,27 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DelverOfSecretsTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        DelverOfSecrets card = new DelverOfSecrets();
-
-        // Upkeep transform trigger
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(LookAtTopCardMayRevealTypeTransformEffect.class);
-        LookAtTopCardMayRevealTypeTransformEffect effect =
-                (LookAtTopCardMayRevealTypeTransformEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.cardTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(InsectileAberration.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("InsectileAberration");
-    }
-
     // ===== Transform when instant on top =====
 
     @Test

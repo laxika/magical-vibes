@@ -30,34 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CuratorsWardTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curator's Ward has static hexproof grant and LTB conditional trigger")
-    void hasExpectedEffects() {
-        CuratorsWard card = new CuratorsWard();
-
-        assertThat(card.isAura()).isTrue();
-
-        // Static hexproof
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(grant.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-
-        // LTB conditional trigger
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnchantedPermanentLeavesConditionalEffect.class);
-        EnchantedPermanentLeavesConditionalEffect trigger =
-                (EnchantedPermanentLeavesConditionalEffect) card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD).getFirst();
-        assertThat(trigger.permanentFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) trigger.resolvedEffects().getFirst()).amount()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Hexproof grant =====
 
     @Test

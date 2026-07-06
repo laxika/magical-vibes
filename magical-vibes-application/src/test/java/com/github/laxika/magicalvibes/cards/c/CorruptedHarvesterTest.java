@@ -20,24 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CorruptedHarvesterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Corrupted Harvester has correct activated ability structure")
-    void hasCorrectAbilityStructure() {
-        CorruptedHarvester card = new CorruptedHarvester();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{B}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateEffect.class);
-    }
-
     // ===== Activation: sacrificing a creature =====
 
     @Test

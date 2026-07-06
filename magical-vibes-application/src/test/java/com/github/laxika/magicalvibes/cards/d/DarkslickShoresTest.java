@@ -18,43 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DarkslickShoresTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Darkslick Shores has conditional enters-tapped effect")
-    void hasConditionalEntersTappedEffect() {
-        DarkslickShores card = new DarkslickShores();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .hasSize(1);
-        EntersTappedUnlessFewLandsEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .map(e -> (EntersTappedUnlessFewLandsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.maxOtherLands()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Darkslick Shores has two mana abilities for blue and black")
-    void hasManaAbilities() {
-        DarkslickShores card = new DarkslickShores();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {U}.
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLUE));
-
-        // Second ability: {T}: Add {B}.
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-    }
-
     // ===== Enters the battlefield: untapped (few lands) =====
 
     @Test

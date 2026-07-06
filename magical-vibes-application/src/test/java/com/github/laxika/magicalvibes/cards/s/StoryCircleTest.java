@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StoryCircleTest extends BaseCardTest {
 
-
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
         Card card = new Card();
         card.setName(name);
@@ -34,22 +33,6 @@ class StoryCircleTest extends BaseCardTest {
         card.setPower(power);
         card.setToughness(toughness);
         return card;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Story Circle has correct card properties")
-    void hasCorrectProperties() {
-        StoryCircle card = new StoryCircle();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseColorOnEnterEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PreventNextColorDamageToControllerEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
     }
 
     // ===== Casting =====
@@ -309,5 +292,4 @@ class StoryCircleTest extends BaseCardTest {
         return perm;
     }
 }
-
 

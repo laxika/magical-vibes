@@ -75,9 +75,9 @@ After confirming no existing effect/combination works:
 Skip tests only when the script says **basic land** or **vanilla**. Otherwise add
 `magical-vibes-application/src/test/java/.../cards/{letter}/{ClassName}Test.java` extending `BaseCardTest`.
 
-- Test **engine logic only**: effects, abilities, targeting, interactions. **Never** assert Scryfall metadata (name/type/mana/color/P-T/subtypes/keywords).
+- Test **engine logic only** by observing **behavior through the engine**: effects, abilities, targeting, interactions. **Never** assert Scryfall metadata (name/type/mana/color/P-T/subtypes/keywords), and **never** write white-box "wiring" tests (e.g. `hasCorrectProperties`) that inspect `card.getEffects(...)`, `EffectSlot`, `EffectResolution.needsTarget`, or effect fields by reflection — resolve the card and assert the outcome instead.
 - Use the harness: `setHand`, `addMana`, `addToBattlefield`, `castCreature/castInstant`, `activateAbility`, `passBothPriorities`, `forceStep`, `forceActivePlayer`. See `agent-docs/TEST_RECIPES.md` and `agent-docs/TEST_CREATURES_REFERENCE.md`.
-- Typical cases: structure (slots/effect types), each resolution branch, "wears off at end of turn" for temporary effects, and an illegal-target rejection.
+- Typical cases: each resolution branch, "wears off at end of turn" for temporary effects, and an illegal-target rejection.
 - Model new tests on a recent sibling test such as `cards/t/TragicSlipTest.java`.
 
 ## Step 7 — Run the focused test

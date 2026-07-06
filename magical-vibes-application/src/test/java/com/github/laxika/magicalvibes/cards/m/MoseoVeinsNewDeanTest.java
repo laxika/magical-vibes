@@ -25,45 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MoseoVeinsNewDeanTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("ETB creates a Pest token with a 'whenever it attacks, gain 1 life' trigger")
-    void hasEtbPestTokenStructure() {
-        MoseoVeinsNewDean card = new MoseoVeinsNewDean();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(token.tokenName()).isEqualTo("Pest");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
-        assertThat(token.subtypes()).contains(CardSubtype.PEST);
-        assertThat(token.tokenEffects()).containsKey(EffectSlot.ON_ATTACK);
-        assertThat(token.tokenEffects().get(EffectSlot.ON_ATTACK)).isEqualTo(new GainLifeEffect(1));
-    }
-
-    @Test
-    @DisplayName("Infusion end-step trigger is a gated, life-capped graveyard reanimation")
-    void hasInfusionEndStepStructure() {
-        MoseoVeinsNewDean card = new MoseoVeinsNewDean();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional = (ConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(conditional.condition()).isInstanceOf(GainedLifeThisTurn.class);
-        assertThat(conditional.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect ret = (ReturnCardFromGraveyardEffect) conditional.wrapped();
-        assertThat(ret.targetGraveyard()).isTrue();
-        assertThat(ret.maxManaValueEqualsLifeGainedThisTurn()).isTrue();
-    }
-
     // ===== ETB: create the Pest token =====
 
     @Test

@@ -21,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BlazeTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Blaze has correct card properties")
-    void hasCorrectProperties() {
-        Blaze card = new Blaze();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getXColorRestriction()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isEqualTo(new DealDamageToAnyTargetEffect(new XValue()));
-    }
-
     // ===== Casting =====
 
     @Test

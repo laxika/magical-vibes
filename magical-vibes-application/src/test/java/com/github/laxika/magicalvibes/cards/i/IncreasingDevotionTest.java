@@ -30,32 +30,7 @@ class IncreasingDevotionTest extends BaseCardTest {
                 .toList();
     }
 
-    @Test
-    @DisplayName("Has Human token creation effect and flashback cost")
-    void hasCorrectEffects() {
-        IncreasingDevotion card = new IncreasingDevotion();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(token.amount()).isEqualTo(new Fixed(5));
-        assertThat(token.tokenName()).isEqualTo("Human");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.color()).isEqualTo(CardColor.WHITE);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.HUMAN);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(((CastFromZone) conditional.condition()).sourceZone()).isEqualTo(Zone.GRAVEYARD);
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(new Fixed(5));
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{7}{W}{W}");
-    }
+    
 
     @Test
     @DisplayName("Normal cast creates five 1/1 white Human tokens")

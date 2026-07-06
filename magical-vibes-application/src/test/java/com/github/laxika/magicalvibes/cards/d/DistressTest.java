@@ -24,19 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DistressTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Distress has correct card properties")
-    void hasCorrectProperties() {
-        Distress card = new Distress();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -360,5 +347,4 @@ class DistressTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Grizzly Bears"));
     }
 }
-
 

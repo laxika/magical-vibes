@@ -16,20 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BurdenOfGuiltTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Burden of Guilt has correct card properties")
-    void hasCorrectProperties() {
-        BurdenOfGuilt card = new BurdenOfGuilt();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(TapEnchantedCreatureEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

@@ -22,21 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FathomFleetCutthroatTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fathom Fleet Cutthroat has ETB destroy effect")
-    void hasCorrectProperties() {
-        FathomFleetCutthroat card = new FathomFleetCutthroat();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
-
     // ===== ETB destroys creature dealt damage this turn =====
 
     @Test

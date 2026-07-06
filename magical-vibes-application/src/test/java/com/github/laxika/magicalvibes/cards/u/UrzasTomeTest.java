@@ -19,26 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UrzasTomeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability with DrawCardEffect and DiscardUnlessExileCardFromGraveyardEffect")
-    void hasCorrectAbility() {
-        UrzasTome card = new UrzasTome();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{3}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DiscardUnlessExileCardFromGraveyardEffect.class);
-
-        DiscardUnlessExileCardFromGraveyardEffect effect =
-                (DiscardUnlessExileCardFromGraveyardEffect) ability.getEffects().get(1);
-        assertThat(effect.predicate()).isInstanceOf(CardIsHistoricPredicate.class);
-    }
-
     // ===== No historic card in graveyard — must discard =====
 
     @Test

@@ -17,39 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VillageIronsmithTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        VillageIronsmith card = new VillageIronsmith();
-
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("Ironfang");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        VillageIronsmith card = new VillageIronsmith();
-        Ironfang backFace = (Ironfang) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Werewolf transform: front -> back (no spells cast last turn) =====
 
     @Test
@@ -170,7 +137,5 @@ class VillageIronsmithTest extends BaseCardTest {
         assertThat(ironsmith.isTransformed()).isTrue();
         assertThat(ironsmith.getCard().getName()).isEqualTo("Ironfang");
     }
-
-    // ===== Helpers =====
 
 }

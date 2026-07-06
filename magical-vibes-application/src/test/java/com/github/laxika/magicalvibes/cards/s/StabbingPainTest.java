@@ -20,20 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StabbingPainTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Stabbing Pain has correct effects")
-    void hasCorrectEffects() {
-        StabbingPain card = new StabbingPain();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TapTargetPermanentEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(-1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(-1));
-    }
+    
 
     @Test
     @DisplayName("Resolving gives -1/-1 and taps target creature")

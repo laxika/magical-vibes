@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ForbiddingWatchtowerTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Forbidding Watchtower has correct card properties")
-    void hasCorrectProperties() {
-        ForbiddingWatchtower card = new ForbiddingWatchtower();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{W}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AnimateLandEffect.class);
-    }
-
     // ===== Enters the battlefield tapped =====
 
     @Test

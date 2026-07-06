@@ -21,15 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RunicRepetitionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Runic Repetition has correct effect configuration")
-    void hasCorrectEffectConfiguration() {
-        RunicRepetition card = new RunicRepetition();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnTargetCardFromExileToHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Runic Repetition returns target exiled card with flashback to hand")

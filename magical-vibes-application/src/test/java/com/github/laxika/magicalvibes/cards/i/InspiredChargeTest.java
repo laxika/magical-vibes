@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InspiredChargeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Inspired Charge has correct card properties")
-    void hasCorrectProperties() {
-        InspiredCharge card = new InspiredCharge();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        BoostAllOwnCreaturesEffect effect = (BoostAllOwnCreaturesEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(2);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-    }
-
     // ===== Casting =====
 
     @Test

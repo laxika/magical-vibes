@@ -37,20 +37,6 @@ class KembaKhaRegentTest extends BaseCardTest {
         return equipPerm;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Kemba has upkeep-triggered CreateTokenEffect counting attached Equipment")
-    void hasCorrectProperties() {
-        KembaKhaRegent card = new KembaKhaRegent();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(new AttachmentsOnSource(false, true));
-    }
-
     // ===== No equipment attached =====
 
     @Test

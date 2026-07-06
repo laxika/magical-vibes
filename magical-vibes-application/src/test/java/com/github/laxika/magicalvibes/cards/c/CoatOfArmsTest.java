@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CoatOfArmsTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Coat of Arms has correct card properties")
-    void hasCorrectProperties() {
-        CoatOfArms card = new CoatOfArms();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostBySharedCreatureTypeEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

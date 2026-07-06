@@ -38,43 +38,11 @@ class ElspethTirelTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has GainLifeEffect(PermanentCount(creature, CONTROLLER))")
-    void plusTwoAbilityHasCorrectEffect() {
-        ElspethTirel card = new ElspethTirel();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isEqualTo(new GainLifeEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability creates three Soldier tokens")
-    void minusTwoAbilityHasCorrectEffect() {
-        ElspethTirel card = new ElspethTirel();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(3));
-    }
-
-    @Test
-    @DisplayName("-5 ability destroys all other permanents except lands and tokens")
-    void minusFiveAbilityHasCorrectEffect() {
-        ElspethTirel card = new ElspethTirel();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-5);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-    }
+    
 
     // ===== Casting =====
 

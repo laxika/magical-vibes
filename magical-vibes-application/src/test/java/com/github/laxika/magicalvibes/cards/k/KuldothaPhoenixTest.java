@@ -29,20 +29,7 @@ class KuldothaPhoenixTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has GRAVEYARD_UPKEEP_TRIGGERED effect with ConditionalEffect wrapping MayPayManaEffect")
-    void hasCorrectEffects() {
-        KuldothaPhoenix card = new KuldothaPhoenix();
-
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) metalcraft.wrapped();
-        assertThat(mayPay.manaCost()).isEqualTo("{4}");
-        assertThat(mayPay.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Triggers during upkeep when in graveyard with metalcraft met")

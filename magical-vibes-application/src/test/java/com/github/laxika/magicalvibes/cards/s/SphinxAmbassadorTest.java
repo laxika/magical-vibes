@@ -36,18 +36,6 @@ class SphinxAmbassadorTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has SphinxAmbassadorEffect on ON_COMBAT_DAMAGE_TO_PLAYER slot")
-    void hasCorrectEffect() {
-        SphinxAmbassador card = new SphinxAmbassador();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(SphinxAmbassadorEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test

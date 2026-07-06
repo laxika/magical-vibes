@@ -18,21 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArmyOfTheDamnedTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Army of the Damned has correct effects and flashback cost")
-    void hasCorrectProperties() {
-        ArmyOfTheDamned card = new ArmyOfTheDamned();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(13));
-        assertThat(effect.tapped()).isTrue();
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{7}{B}{B}{B}");
-    }
+    
 
     @Test
     @DisplayName("Casting Army of the Damned creates thirteen tapped 2/2 Zombie tokens")

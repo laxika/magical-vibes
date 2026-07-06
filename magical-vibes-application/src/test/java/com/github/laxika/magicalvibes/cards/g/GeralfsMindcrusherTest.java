@@ -45,20 +45,6 @@ class GeralfsMindcrusherTest extends BaseCardTest {
         harness.getGameService().playCard(gd, player1, 0, 0, targetPlayerId, null);
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Geralf's Mindcrusher has an ETB mill-five effect that needs a target")
-    void hasEtbMillEffect() {
-        GeralfsMindcrusher card = new GeralfsMindcrusher();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        MillTargetPlayerEffect effect =
-                (MillTargetPlayerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-    }
-
     // ===== Resolving creature spell =====
 
     @Test

@@ -22,16 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KopalaWardenOfWavesTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has targeting tax static effect for Merfolk")
-    void hasTargetingTaxEffect() {
-        KopalaWardenOfWaves card = new KopalaWardenOfWaves();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new IncreaseOpponentCostForTargetingControlledPermanentEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.MERFOLK), 2));
-    }
+    
 
     @Nested
     @DisplayName("Spell targeting tax")

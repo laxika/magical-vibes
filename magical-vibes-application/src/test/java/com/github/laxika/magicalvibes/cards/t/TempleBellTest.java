@@ -14,23 +14,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TempleBellTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Temple Bell has correct activated ability")
-    void hasCorrectAbility() {
-        TempleBell card = new TempleBell();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(EachPlayerDrawsCardEffect.class);
-    }
-
     // ===== Activation =====
 
     @Test

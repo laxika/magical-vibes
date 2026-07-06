@@ -18,17 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PlatinumAngelTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Platinum Angel has correct card properties")
-    void hasCorrectProperties() {
-        PlatinumAngel card = new PlatinumAngel();
-
-        assertThat(card.getAdditionalTypes()).contains(CardType.CREATURE);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantLoseGameEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Controller doesn't lose at 0 life with Platinum Angel")

@@ -25,17 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StunTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Stun has correct card properties")
-    void hasCorrectProperties() {
-        Stun card = new Stun();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(TargetCreatureCantBlockThisTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Stun puts it on the stack with target creature")
@@ -150,5 +140,4 @@ class StunTest extends BaseCardTest {
         return perm;
     }
 }
-
 

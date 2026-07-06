@@ -37,26 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KamahlPitFighterTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Kamahl, Pit Fighter has correct card properties")
-    void hasCorrectProperties() {
-        KamahlPitFighter card = new KamahlPitFighter();
-
-        assertThat(card.getSupertypes()).contains(CardSupertype.LEGENDARY);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

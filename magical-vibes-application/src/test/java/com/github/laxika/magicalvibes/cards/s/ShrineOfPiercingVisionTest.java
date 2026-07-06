@@ -25,38 +25,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfPiercingVisionTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Shrine has upkeep trigger, blue spell cast trigger, and activated ability")
-    void hasCorrectAbilityStructure() {
-        ShrineOfPiercingVision card = new ShrineOfPiercingVision();
-
-        // Upkeep triggered ability (mandatory charge counter)
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Spell cast trigger (blue spell -> charge counter)
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        var spellTrigger = card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(spellTrigger).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) spellTrigger;
-        assertThat(trigger.spellFilter()).isInstanceOf(CardColorPredicate.class);
-        assertThat(((CardColorPredicate) trigger.spellFilter()).color()).isEqualTo(CardColor.BLUE);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Activated ability (tap + sacrifice -> look at top X)
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect.class);
-    }
-
     // ===== Upkeep trigger =====
 
     @Test

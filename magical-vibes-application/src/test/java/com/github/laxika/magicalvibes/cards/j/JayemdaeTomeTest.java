@@ -20,26 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JayemdaeTomeTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Jayemdae Tome has correct card properties")
-    void hasCorrectProperties() {
-        JayemdaeTome card = new JayemdaeTome();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{4}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect effect = (DrawCardEffect) ability.getEffects().getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

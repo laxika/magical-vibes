@@ -19,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UnholyStrengthTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Unholy Strength has correct card properties")
-    void hasCorrectProperties() {
-        UnholyStrength card = new UnholyStrength();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Unholy Strength puts it on the stack")

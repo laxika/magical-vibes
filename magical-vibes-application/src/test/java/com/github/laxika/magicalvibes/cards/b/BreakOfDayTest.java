@@ -23,19 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BreakOfDayTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Break of Day has correct card properties")
-    void hasCorrectProperties() {
-        BreakOfDay card = new BreakOfDay();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        BoostAllOwnCreaturesEffect boost = (BoostAllOwnCreaturesEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack as INSTANT_SPELL")

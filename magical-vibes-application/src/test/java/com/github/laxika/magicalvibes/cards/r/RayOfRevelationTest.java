@@ -24,17 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RayOfRevelationTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Ray of Revelation has correct card properties")
-    void hasCorrectProperties() {
-        RayOfRevelation card = new RayOfRevelation();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{G}");
-    }
+    
 
     @Test
     @DisplayName("Casting Ray of Revelation destroys target enchantment")

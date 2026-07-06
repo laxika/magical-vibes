@@ -23,40 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SwordOfVengeanceTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
+    
 
-    @Test
-    @DisplayName("Sword of Vengeance has static +2/+0 boost effect")
-    void hasStaticBoostEffect() {
-        SwordOfVengeance card = new SwordOfVengeance();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Sword of Vengeance grants first strike, vigilance, trample, and haste")
-    void hasKeywordGrantEffects() {
-        SwordOfVengeance card = new SwordOfVengeance();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(4);
-        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
-                .containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.HASTE);
-    }
+    
 
     @Test
     @DisplayName("Sword of Vengeance has equip {3} ability with correct properties")

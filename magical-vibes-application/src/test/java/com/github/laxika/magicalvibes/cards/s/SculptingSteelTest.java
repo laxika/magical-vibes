@@ -22,19 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SculptingSteelTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sculpting Steel has correct card properties")
-    void hasCorrectProperties() {
-        SculptingSteel card = new SculptingSteel();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(CopyPermanentOnEnterEffect.class);
-    }
-
     // ===== Copying a non-creature artifact =====
 
     @Test

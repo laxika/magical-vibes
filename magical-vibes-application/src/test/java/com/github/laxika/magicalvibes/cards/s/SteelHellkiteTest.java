@@ -23,31 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SteelHellkiteTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Steel Hellkite has two activated abilities with correct structure")
-    void hasCorrectAbilityStructure() {
-        SteelHellkite card = new SteelHellkite();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {2}: Steel Hellkite gets +1/+0 until end of turn.
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isFalse();
-        assertThat(ability0.getManaCost()).isEqualTo("{2}");
-        assertThat(ability0.getEffects()).hasSize(1);
-        assertThat(ability0.getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-
-        // Ability 1: {X}: Destroy each nonland permanent with mana value X ...
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isFalse();
-        assertThat(ability1.getManaCost()).isEqualTo("{X}");
-        assertThat(ability1.getEffects()).hasSize(1);
-        assertThat(ability1.getEffects().getFirst()).isInstanceOf(DestroyNonlandPermanentsWithManaValueXDealtCombatDamageEffect.class);
-        assertThat(ability1.getMaxActivationsPerTurn()).isEqualTo(1);
-    }
-
     // ===== Ability 0: Pump =====
 
     @Test

@@ -16,45 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HierophantsChaliceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Hierophant's Chalice needs a target")
-    void needsTarget() {
-        HierophantsChalice card = new HierophantsChalice();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
-    @Test
-    @DisplayName("Has ETB drain life effect with correct amounts")
-    void hasEtbEffect() {
-        HierophantsChalice card = new HierophantsChalice();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect effect =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(1);
-        assertThat(effect.lifeGain()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has activated mana ability that produces colorless mana")
-    void hasManaAbility() {
-        HierophantsChalice card = new HierophantsChalice();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(AwardManaEffect.class);
-        AwardManaEffect manaEffect = (AwardManaEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(manaEffect.color()).isEqualTo(ManaColor.COLORLESS);
-    }
-
     // ===== Casting =====
 
     @Test

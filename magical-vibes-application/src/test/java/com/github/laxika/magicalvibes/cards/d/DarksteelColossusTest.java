@@ -21,17 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DarksteelColossusTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Darksteel Colossus has shuffle-into-library replacement effect")
-    void hasShuffleIntoLibraryReplacementEffect() {
-        DarksteelColossus card = new DarksteelColossus();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
-    }
-
     // ===== Casting =====
 
     @Test

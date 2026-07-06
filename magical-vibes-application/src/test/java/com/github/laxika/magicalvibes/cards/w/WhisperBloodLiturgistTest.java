@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WhisperBloodLiturgistTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Whisper has correct activated ability")
-    void hasCorrectAbility() {
-        WhisperBloodLiturgist card = new WhisperBloodLiturgist();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeMultiplePermanentsCost.class);
-        SacrificeMultiplePermanentsCost sacCost = (SacrificeMultiplePermanentsCost) ability.getEffects().get(0);
-        assertThat(sacCost.count()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

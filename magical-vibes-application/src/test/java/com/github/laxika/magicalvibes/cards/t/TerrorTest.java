@@ -30,26 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TerrorTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Terror has correct card properties")
-    void hasCorrectProperties() {
-        Terror card = new Terror();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentIsArtifactPredicate()),
-                        new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
-                )),
-                "Target must be a nonartifact, nonblack creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Terror targeting a nonartifact nonblack creature puts it on stack")

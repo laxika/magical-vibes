@@ -29,31 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RampagingFerocidonTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has PlayersCantGainLifeEffect as a STATIC effect")
-    void hasPlayersCantGainLifeStaticEffect() {
-        RampagingFerocidon card = new RampagingFerocidon();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PlayersCantGainLifeEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has DealDamageToTargetPlayerEffect(1) on ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD")
-    void hasCreatureEntersTrigger() {
-        RampagingFerocidon card = new RampagingFerocidon();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        DealDamageToTargetPlayerEffect effect =
-                (DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Players can't gain life =====
 
     @Test

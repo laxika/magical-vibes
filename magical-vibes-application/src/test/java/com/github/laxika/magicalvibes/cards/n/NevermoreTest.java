@@ -24,25 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NevermoreTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nevermore has ChooseCardNameOnEnterEffect excluding lands and static casting restriction")
-    void hasCorrectEffects() {
-        Nevermore card = new Nevermore();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseCardNameOnEnterEffect.class);
-        ChooseCardNameOnEnterEffect chooseEffect =
-                (ChooseCardNameOnEnterEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(chooseEffect.excludedTypes()).containsExactly(CardType.LAND);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(SpellsWithChosenNameCantBeCastEffect.class);
-    }
-
     // ===== Casting and card name choice =====
 
     @Test

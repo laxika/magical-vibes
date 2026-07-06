@@ -17,20 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CausticHoundTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Caustic Hound has ON_DEATH effect that makes each player lose 4 life")
-    void hasDeathTriggerEffect() {
-        CausticHound card = new CausticHound();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(EachPlayerLosesLifeEffect.class);
-        EachPlayerLosesLifeEffect effect = (EachPlayerLosesLifeEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(4);
-    }
-
     // ===== Casting =====
 
     @Test

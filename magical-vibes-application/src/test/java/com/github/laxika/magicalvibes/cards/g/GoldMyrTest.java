@@ -12,18 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GoldMyrTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gold Myr has tap-for-white mana ability")
-    void hasTapForWhiteManaAbility() {
-        GoldMyr card = new GoldMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.WHITE));
-    }
-
     // ===== Mana production =====
 
     @Test

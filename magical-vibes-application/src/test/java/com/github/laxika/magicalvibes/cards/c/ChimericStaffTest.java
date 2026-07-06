@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChimericStaffTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chimeric Staff has correct card properties")
-    void hasCorrectProperties() {
-        ChimericStaff card = new ChimericStaff();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{X}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AnimateSelfEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

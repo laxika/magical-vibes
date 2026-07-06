@@ -25,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PlagueWindTest extends BaseCardTest {
 
-
     private static Card indestructibleCreature() {
         Card card = new Card();
         card.setName("Darksteel Bear");
@@ -38,20 +37,7 @@ class PlagueWindTest extends BaseCardTest {
         return card;
     }
 
-
-    @Test
-    @DisplayName("Plague Wind has correct card properties")
-    void hasCorrectProperties() {
-        PlagueWind card = new PlagueWind();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyAllPermanentsEffect.class);
-        DestroyAllPermanentsEffect effect =
-                (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentAllOfPredicate.class);
-        assertThat(effect.cannotBeRegenerated()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Plague Wind puts it on the stack as a sorcery")

@@ -24,26 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AjanisResponseTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has cost reduction and destroy target creature effects")
-    void hasCorrectEffects() {
-        AjanisResponse card = new AjanisResponse();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new ReduceOwnCastCostIfTargetingPermanentEffect(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentIsTappedPredicate()
-                        )), 3));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Costs {1}{W} when targeting a tapped creature")

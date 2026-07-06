@@ -17,24 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MindSpringTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mind Spring has correct effects")
-    void hasCorrectEffects() {
-        MindSpring card = new MindSpring();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isEqualTo(new DrawCardEffect(new XValue()));
-    }
-
-    @Test
-    @DisplayName("Mind Spring does not require a target")
-    void doesNotRequireTarget() {
-        assertThat(EffectResolution.needsTarget(new MindSpring())).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

@@ -19,17 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KuldothaRingleaderTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Kuldotha Ringleader has MustAttackEffect")
-    void hasMustAttackEffect() {
-        KuldothaRingleader card = new KuldothaRingleader();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustAttackEffect.class);
-    }
-
     // ===== Must attack =====
 
     @Test

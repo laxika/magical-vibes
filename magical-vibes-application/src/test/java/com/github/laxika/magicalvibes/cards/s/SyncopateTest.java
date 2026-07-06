@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SyncopateTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Syncopate has correct card properties")
-    void hasCorrectProperties() {
-        Syncopate card = new Syncopate();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        CounterUnlessPaysEffect effect = (CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.useXValue()).isTrue();
-        assertThat(effect.exileIfCountered()).isTrue();
-    }
-
     // ===== Casting =====
 
     @Test

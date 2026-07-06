@@ -20,31 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ViciousOfferingTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has sacrifice kicker and ConditionalReplacementEffect with -2/-2 base and -5/-5 kicked")
-    void hasCorrectEffects() {
-        ViciousOffering card = new ViciousOffering();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof KickerEffect ke && ke.hasSacrificeCost() && !ke.hasManaCost());
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(1)
-                .first()
-                .isInstanceOfSatisfying(ConditionalReplacementEffect.class, kre -> {
-                    assertThat(kre.baseEffect()).isInstanceOfSatisfying(BoostTargetCreatureEffect.class, base -> {
-                        assertThat(base.powerBoost()).isEqualTo(-2);
-                        assertThat(base.toughnessBoost()).isEqualTo(-2);
-                    });
-                    assertThat(kre.upgradedEffect()).isInstanceOfSatisfying(BoostTargetCreatureEffect.class, kicked -> {
-                        assertThat(kicked.powerBoost()).isEqualTo(-5);
-                        assertThat(kicked.toughnessBoost()).isEqualTo(-5);
-                    });
-                });
-    }
-
     // ===== Cast without kicker =====
 
     @Test

@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DryadsFavorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dryad's Favor has correct card properties")
-    void hasCorrectProperties() {
-        DryadsFavor card = new DryadsFavor();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.FORESTWALK);
-        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(card.getActivatedAbilities()).isEmpty();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

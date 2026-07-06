@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OneWithTheWindTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("One With the Wind has correct card properties")
-    void hasCorrectProperties() {
-        OneWithTheWind card = new OneWithTheWind();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(keywordEffect.keywords()).contains(Keyword.FLYING);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

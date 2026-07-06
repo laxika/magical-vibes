@@ -25,25 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MikaeusTheUnhallowedTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has Human damage trigger and non-Human lord static effect")
-    void hasExpectedEffects() {
-        MikaeusTheUnhallowed card = new MikaeusTheUnhallowed();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU))
-                .singleElement()
-                .isInstanceOf(DestroyDamageSourcePermanentEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .singleElement()
-                .satisfies(effect -> {
-                    assertThat(effect).isInstanceOf(StaticBoostEffect.class);
-                    StaticBoostEffect boost = (StaticBoostEffect) effect;
-                    assertThat(boost.powerBoost()).isEqualTo(1);
-                    assertThat(boost.toughnessBoost()).isEqualTo(1);
-                    assertThat(boost.grantedKeywords()).containsExactly(Keyword.UNDYING);
-                });
-    }
+    
 
     @Test
     @DisplayName("Other non-Human creatures you control get +1/+1 and undying")

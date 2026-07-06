@@ -24,28 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SylvanAwakeningTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has AnimateLandEffect with OWN_LANDS scope and UNTIL_YOUR_NEXT_TURN duration")
-    void hasCorrectEffect() {
-        SylvanAwakening card = new SylvanAwakening();
-
-        var effects = card.getEffects(EffectSlot.SPELL);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(AnimateLandEffect.class);
-
-        AnimateLandEffect effect = (AnimateLandEffect) effects.getFirst();
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.grantedSubtypes()).containsExactly(CardSubtype.ELEMENTAL);
-        assertThat(effect.grantedKeywords()).containsExactlyInAnyOrder(
-                Keyword.REACH, Keyword.INDESTRUCTIBLE, Keyword.HASTE
-        );
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_LANDS);
-        assertThat(effect.duration()).isEqualTo(EffectDuration.UNTIL_YOUR_NEXT_TURN);
-    }
-
     // ===== Resolution: lands become creatures =====
 
     @Test

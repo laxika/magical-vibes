@@ -27,21 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThreatenTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Threaten has correct card properties")
-    void hasCorrectProperties() {
-        Threaten card = new Threaten();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(effect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Casting Threaten puts it on the stack with the target creature")
@@ -181,5 +167,4 @@ class ThreatenTest extends BaseCardTest {
         return perm;
     }
 }
-
 

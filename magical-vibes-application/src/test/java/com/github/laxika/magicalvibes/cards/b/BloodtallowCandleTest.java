@@ -16,27 +16,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BloodtallowCandleTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bloodtallow Candle has correct activated ability")
-    void hasCorrectProperties() {
-        BloodtallowCandle card = new BloodtallowCandle();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{6}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) ability.getEffects().get(1);
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-5));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(-5));
-    }
-
     // ===== Ability resolution =====
 
     @Test

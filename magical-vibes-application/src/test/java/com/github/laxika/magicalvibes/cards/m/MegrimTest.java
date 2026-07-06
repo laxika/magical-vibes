@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MegrimTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Megrim has correct card properties")
-    void hasCorrectProperties() {
-        Megrim card = new Megrim();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst())
-                .isInstanceOf(DealDamageToDiscardingPlayerEffect.class);
-        DealDamageToDiscardingPlayerEffect effect =
-                (DealDamageToDiscardingPlayerEffect) card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

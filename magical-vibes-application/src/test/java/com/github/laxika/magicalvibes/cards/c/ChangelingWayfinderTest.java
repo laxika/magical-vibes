@@ -30,21 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChangelingWayfinderTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Changeling Wayfinder has correct card properties")
-    void hasCorrectProperties() {
-        ChangelingWayfinder card = new ChangelingWayfinder();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -322,5 +307,4 @@ class ChangelingWayfinderTest extends BaseCardTest {
         deck.addAll(List.of(new Plains(), new Forest(), new Island(), new GrizzlyBears(), new GrizzlyBears()));
     }
 }
-
 

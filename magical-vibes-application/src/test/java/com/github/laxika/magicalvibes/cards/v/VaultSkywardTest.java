@@ -23,19 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VaultSkywardTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Vault Skyward has correct effects")
-    void hasCorrectEffects() {
-        VaultSkyward card = new VaultSkyward();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(grantEffect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(UntapTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Vault Skyward grants flying and untaps target creature")

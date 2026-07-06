@@ -43,35 +43,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class AshesOfTheAbhorrentTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC effects: PlayersCantCastSpellsFromZonesEffect(GRAVEYARD) and PlayersCantActivateAbilitiesOfGraveyardCardsEffect")
-    void hasStaticEffects() {
-        AshesOfTheAbhorrent card = new AshesOfTheAbhorrent();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof PlayersCantCastSpellsFromZonesEffect)
-                .singleElement()
-                .satisfies(e -> assertThat(((PlayersCantCastSpellsFromZonesEffect) e).zones())
-                        .isEqualTo(Set.of(Zone.GRAVEYARD)));
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PlayersCantActivateAbilitiesOfGraveyardCardsEffect);
-    }
-
-    @Test
-    @DisplayName("Has ON_ANY_CREATURE_DIES effect: GainLifeEffect(1)")
-    void hasDeathTriggerEffect() {
-        AshesOfTheAbhorrent card = new AshesOfTheAbhorrent();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect gainLife = (GainLifeEffect) card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst();
-        assertThat(gainLife.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Life gain when creatures die =====
 
     @Test

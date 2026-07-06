@@ -44,52 +44,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DaybreakRangerTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        DaybreakRanger card = new DaybreakRanger();
-
-        // One activated ability: {T}: deal 2 damage to target creature with flying
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof DealDamageToTargetCreatureEffect d && d.damage().equals(new Fixed(2)));
-
-        // Each-upkeep transform trigger
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("NightfallPredator");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        DaybreakRanger card = new DaybreakRanger();
-        NightfallPredator backFace = (NightfallPredator) card.getBackFaceCard();
-
-        // One activated ability: {R}, {T}: fight target creature
-        assertThat(backFace.getActivatedAbilities()).hasSize(1);
-        assertThat(backFace.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(backFace.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{R}");
-        assertThat(backFace.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof SourceFightsTargetCreatureEffect);
-
-        // Each-upkeep transform trigger
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Front face: {T}: deal 2 damage to target creature with flying =====
 
     @Test
@@ -287,7 +241,6 @@ class DaybreakRangerTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
 
     private int indexOf(Player player, Permanent perm) {
         return gd.playerBattlefields.get(player.getId()).indexOf(perm);

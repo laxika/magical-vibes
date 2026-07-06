@@ -19,24 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VeteranArmorsmithTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Veteran Armorsmith has static boost effect for Soldiers with +0/+1")
-    void hasCorrectStaticEffect() {
-        VeteranArmorsmith card = new VeteranArmorsmith();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(0);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).isEmpty();
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
     // ===== Static effect: buffs other Soldiers you control =====
 
     @Test
@@ -154,7 +136,5 @@ class VeteranArmorsmithTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, soldier)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, soldier)).isEqualTo(2);
     }
-
-    // ===== Helper methods =====
 
 }

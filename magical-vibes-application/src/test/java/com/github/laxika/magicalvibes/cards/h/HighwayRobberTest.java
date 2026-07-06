@@ -15,31 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HighwayRobberTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Highway Robber has correct card properties")
-    void hasCorrectProperties() {
-        HighwayRobber card = new HighwayRobber();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
-    @Test
-    @DisplayName("Has ETB drain life effect")
-    void hasEtbEffect() {
-        HighwayRobber card = new HighwayRobber();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect effect =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(2);
-        assertThat(effect.lifeGain()).isEqualTo(2);
-    }
-
     // ===== Casting =====
 
     @Test

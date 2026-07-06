@@ -33,27 +33,6 @@ class ConciliatorsDuelistTest extends BaseCardTest {
         return perm;
     }
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Has ETB draw + each-player-loses-life effects and a targeted Repartee exile trigger")
-    void hasCorrectEffects() {
-        ConciliatorsDuelist card = new ConciliatorsDuelist();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .anyMatch(e -> e instanceof DrawCardEffect);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .anyMatch(e -> e instanceof EachPlayerLosesLifeEffect);
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.targetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(trigger.resolvedEffects()).singleElement()
-                .isInstanceOf(ExileTargetPermanentAndReturnAtEndStepEffect.class);
-    }
-
     // ===== ETB: draw + each player loses 1 life =====
 
     @Test

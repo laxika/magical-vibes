@@ -21,37 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FeedThePackTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has MayEffect wrapping sacrifice-create-tokens on CONTROLLER_END_STEP_TRIGGERED")
-    void hasCorrectEffect() {
-        FeedThePack card = new FeedThePack();
-
-        var effects = card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) effects.getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SacrificeCreatureToCreateTokensEqualToToughnessEffect.class);
-
-        SacrificeCreatureToCreateTokensEqualToToughnessEffect inner =
-                (SacrificeCreatureToCreateTokensEqualToToughnessEffect) may.wrapped();
-
-        // Token template is a 2/2 green Wolf
-        CreateTokenEffect token = inner.tokenTemplate();
-        assertThat(token.tokenName()).isEqualTo("Wolf");
-        assertThat(token.power()).isEqualTo(2);
-        assertThat(token.toughness()).isEqualTo(2);
-        assertThat(token.color()).isEqualTo(CardColor.GREEN);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.WOLF);
-
-        // Only nontoken creatures may be sacrificed
-        assertThat(inner.filter()).isInstanceOf(PermanentNotPredicate.class);
-        assertThat(((PermanentNotPredicate) inner.filter()).predicate())
-                .isInstanceOf(PermanentIsTokenPredicate.class);
-    }
-
     // ===== Accept: sacrifice creates wolves equal to toughness =====
 
     @Test

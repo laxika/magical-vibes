@@ -20,21 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FieryHellhoundTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fiery Hellhound has correct activated ability")
-    void hasCorrectAbility() {
-        FieryHellhound card = new FieryHellhound();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Casting Fiery Hellhound puts it on the stack")

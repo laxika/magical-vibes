@@ -22,15 +22,7 @@ class PutrefaxTest extends BaseCardTest {
 
     // ===== End-step sacrifice trigger =====
 
-    @Test
-    @DisplayName("Putrefax has end-step sacrifice trigger")
-    void hasEndStepSacrificeTrigger() {
-        Putrefax card = new Putrefax();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Putrefax is sacrificed at end step")

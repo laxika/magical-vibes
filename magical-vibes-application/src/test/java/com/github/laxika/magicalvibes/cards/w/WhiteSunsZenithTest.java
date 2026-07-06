@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WhiteSunsZenithTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("White Sun's Zenith has correct effects")
-    void hasCorrectEffects() {
-        WhiteSunsZenith card = new WhiteSunsZenith();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CreateTokenEffect.class);
-        assertThat(((CreateTokenEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new XValue());
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

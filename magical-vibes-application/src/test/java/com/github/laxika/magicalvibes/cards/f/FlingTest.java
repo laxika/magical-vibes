@@ -22,19 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fling has correct effects")
-    void hasCorrectProperties() {
-        Fling card = new Fling();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isEqualTo(new DealDamageToAnyTargetEffect(new XValue()));
-    }
-
     // ===== Casting =====
 
     @Test

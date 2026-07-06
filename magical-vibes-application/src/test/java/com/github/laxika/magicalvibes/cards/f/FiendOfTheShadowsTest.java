@@ -31,43 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FiendOfTheShadowsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has combat damage trigger that exiles from hand and grants controller play permission")
-    void hasCombatDamageTrigger() {
-        FiendOfTheShadows card = new FiendOfTheShadows();
-
-        List<?> effects = card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(TargetPlayerExilesFromHandEffect.class);
-
-        TargetPlayerExilesFromHandEffect effect = (TargetPlayerExilesFromHandEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.controllerMayPlay()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Has Sacrifice a Human: Regenerate activated ability with no mana cost")
-    void hasRegenerateAbility() {
-        FiendOfTheShadows card = new FiendOfTheShadows();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
-                )),
-                "Sacrifice a Human",
-                false
-        ));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test

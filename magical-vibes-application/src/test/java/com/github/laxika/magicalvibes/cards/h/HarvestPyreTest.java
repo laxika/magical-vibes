@@ -22,19 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HarvestPyreTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Harvest Pyre has correct effects")
-    void hasCorrectEffects() {
-        HarvestPyre card = new HarvestPyre();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileXCardsFromGraveyardCost.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isEqualTo(new DealDamageToTargetCreatureEffect(new XValue()));
-    }
-
     // ===== Casting =====
 
     @Test

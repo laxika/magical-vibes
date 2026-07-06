@@ -42,23 +42,7 @@ class MuseSeekerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has spell-cast trigger with a draw-or-loot ConditionalReplacementEffect")
-    void hasCorrectEffects() {
-        MuseSeeker card = new MuseSeeker();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(ConditionalReplacementEffect.class);
-        ConditionalReplacementEffect replacement =
-                (ConditionalReplacementEffect) trigger.resolvedEffects().getFirst();
-        assertThat(((SpellManaSpentAtLeast) replacement.condition()).minMana()).isEqualTo(5);
-        assertThat(replacement.baseEffect()).isInstanceOf(DrawAndDiscardCardEffect.class);
-        assertThat(replacement.upgradedEffect()).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting a cheap instant draws a card then requires a discard")

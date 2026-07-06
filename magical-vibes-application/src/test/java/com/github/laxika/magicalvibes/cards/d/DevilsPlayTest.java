@@ -23,21 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DevilsPlayTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Devil's Play has correct card properties")
-    void hasCorrectProperties() {
-        DevilsPlay card = new DevilsPlay();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getXColorRestriction()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isEqualTo(new DealDamageToAnyTargetEffect(new XValue()));
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{X}{R}{R}{R}");
-    }
-
     // ===== Casting from hand =====
 
     @Test

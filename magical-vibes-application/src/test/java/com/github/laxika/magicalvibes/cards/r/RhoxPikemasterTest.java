@@ -17,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RhoxPikemasterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has static grant first strike to own Soldier creatures effect")
-    void hasCorrectEffect() {
-        RhoxPikemaster card = new RhoxPikemaster();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.FIRST_STRIKE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isNotNull();
-    }
-
     // ===== Grants first strike to own Soldier creatures =====
 
     @Test
@@ -112,7 +97,5 @@ class RhoxPikemasterTest extends BaseCardTest {
             assertThat(gqs.hasKeyword(gd, pikemaster, Keyword.FIRST_STRIKE)).isTrue();
         }
     }
-
-    // ===== Helper methods =====
 
 }

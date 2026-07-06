@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HypnoticSpecterTest extends BaseCardTest {
 
-
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
         GameData gd = harness.getGameData();
         Permanent perm = new Permanent(card);
@@ -31,17 +30,6 @@ class HypnoticSpecterTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Hypnotic Specter has correct card properties")
-    void hasCorrectProperties() {
-        HypnoticSpecter card = new HypnoticSpecter();
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(TargetPlayerRandomDiscardEffect.class);
     }
 
     // ===== Combat damage trigger =====
@@ -156,5 +144,4 @@ class HypnoticSpecterTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Grizzly Bears") && log.contains("at random"));
     }
 }
-
 

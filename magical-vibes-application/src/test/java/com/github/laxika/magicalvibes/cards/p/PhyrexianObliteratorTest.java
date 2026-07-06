@@ -22,18 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PhyrexianObliteratorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyrexian Obliterator has one ON_DEALT_DAMAGE sacrifice effect")
-    void hasCorrectEffect() {
-        PhyrexianObliterator card = new PhyrexianObliterator();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(DamageSourceControllerSacrificesPermanentsEffect.class);
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

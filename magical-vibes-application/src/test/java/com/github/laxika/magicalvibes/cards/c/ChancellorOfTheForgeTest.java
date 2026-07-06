@@ -24,25 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChancellorOfTheForgeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has opening hand reveal effect and ETB token creation effect")
-    void hasCorrectEffects() {
-        ChancellorOfTheForge card = new ChancellorOfTheForge();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(CreateTokenEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect etbEffect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbEffect.amount())
-                .isEqualTo(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER));
-    }
+    
 
     @Test
     @DisplayName("ETB creates tokens equal to the number of creatures you control (Chancellor + 2 others = 3 tokens)")
@@ -133,19 +115,5 @@ class ChancellorOfTheForgeTest extends BaseCardTest {
         assertThat(battlefield).hasSize(2);
     }
 
-    @Test
-    @DisplayName("Opening hand reveal effect wraps a single Goblin token creation")
-    void openingHandRevealEffectIsCorrect() {
-        MayEffect mayEffect =
-                (MayEffect) new ChancellorOfTheForge().getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        CreateTokenEffect revealEffect = (CreateTokenEffect) mayEffect.wrapped();
-
-        assertThat(revealEffect.amount()).isEqualTo(new Fixed(1));
-        assertThat(revealEffect.tokenName()).isEqualTo("Phyrexian Goblin");
-        assertThat(revealEffect.power()).isEqualTo(1);
-        assertThat(revealEffect.toughness()).isEqualTo(1);
-        assertThat(revealEffect.color()).isEqualTo(CardColor.RED);
-        assertThat(revealEffect.subtypes()).contains(CardSubtype.PHYREXIAN, CardSubtype.GOBLIN);
-        assertThat(revealEffect.keywords()).contains(Keyword.HASTE);
-    }
+    
 }

@@ -16,23 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OneEyedScarecrowTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("One-Eyed Scarecrow has a static boost effect targeting opponent flying creatures")
-    void hasCorrectStaticEffect() {
-        OneEyedScarecrow card = new OneEyedScarecrow();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(-1);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OPPONENT_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasKeywordPredicate.class);
-    }
-
     // ===== Static effect: debuffs opponent's flying creatures =====
 
     @Test
@@ -135,7 +118,5 @@ class OneEyedScarecrowTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, geist)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, geist)).isEqualTo(3);
     }
-
-    // ===== Helper methods =====
 
 }

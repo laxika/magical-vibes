@@ -28,22 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KnowledgePoolTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB and cast trigger effects")
-    void hasCorrectEffects() {
-        KnowledgePool card = new KnowledgePool();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EachPlayerExilesTopCardsToSourceEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
-                .isInstanceOf(KnowledgePoolCastTriggerEffect.class);
-    }
-
     // ===== ETB — each player exiles top 3 =====
 
     @Test

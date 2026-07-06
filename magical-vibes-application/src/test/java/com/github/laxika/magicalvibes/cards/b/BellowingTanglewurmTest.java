@@ -15,21 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BellowingTanglewurmTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has static grant intimidate to own green creatures effect")
-    void hasCorrectEffect() {
-        BellowingTanglewurm card = new BellowingTanglewurm();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.INTIMIDATE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isNotNull();
-    }
-
     // ===== Grants intimidate to own green creatures =====
 
     @Test

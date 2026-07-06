@@ -16,25 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KwendePrideOfFemerefTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static effect granting double strike to creatures with first strike")
-    void hasCorrectEffects() {
-        KwendePrideOfFemeref card = new KwendePrideOfFemeref();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isZero();
-        assertThat(boost.toughnessBoost()).isZero();
-        assertThat(boost.grantedKeywords()).containsExactly(Keyword.DOUBLE_STRIKE);
-        assertThat(boost.scope()).isEqualTo(GrantScope.ALL_OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasKeywordPredicate.class);
-        PermanentHasKeywordPredicate filter = (PermanentHasKeywordPredicate) boost.filter();
-        assertThat(filter.keyword()).isEqualTo(Keyword.FIRST_STRIKE);
-    }
-
     // ===== Static ability: creatures with first strike gain double strike =====
 
     @Test

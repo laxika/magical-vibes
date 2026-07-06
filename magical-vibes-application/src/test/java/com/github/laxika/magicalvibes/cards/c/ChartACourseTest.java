@@ -18,20 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChartACourseTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has DrawCardEffect(2) and DiscardCardUnlessAttackedThisTurnEffect on SPELL slot")
-    void hasCorrectEffects() {
-        ChartACourse card = new ChartACourse();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DiscardCardUnlessAttackedThisTurnEffect.class);
-    }
-
     // ===== Did not attack this turn — must discard =====
 
     @Test

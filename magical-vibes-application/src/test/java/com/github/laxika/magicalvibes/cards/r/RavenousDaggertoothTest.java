@@ -31,20 +31,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class RavenousDaggertoothTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ravenous Daggertooth has one ON_DEALT_DAMAGE effect")
-    void hasCorrectEffect() {
-        RavenousDaggertooth card = new RavenousDaggertooth();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect effect = (GainLifeEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

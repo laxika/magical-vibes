@@ -18,18 +18,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class RestorationSeminarTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has graveyard return to battlefield effect")
-    void hasCorrectStructure() {
-        RestorationSeminar card = new RestorationSeminar();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.targetGraveyard()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Returns targeted nonland permanent from graveyard to battlefield")

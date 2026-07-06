@@ -25,37 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CemeteryReaperTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static boost effect for Zombies you control")
-    void hasStaticBoostEffect() {
-        CemeteryReaper card = new CemeteryReaper();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has activated ability to exile creature card from graveyard and create token")
-    void hasActivatedAbility() {
-        CemeteryReaper card = new CemeteryReaper();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}{B}");
-        assertThat(ability.getEffects())
-                .anyMatch(e -> e instanceof ExileTargetCardFromGraveyardEffect ex
-                        && ex.requiredType() == CardType.CREATURE)
-                .anyMatch(e -> e instanceof CreateTokenEffect);
-    }
-
     // ===== Static effect: buffs own Zombies =====
 
     @Test

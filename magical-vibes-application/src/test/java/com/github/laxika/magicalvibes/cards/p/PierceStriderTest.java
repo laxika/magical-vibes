@@ -17,27 +17,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PierceStriderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Pierce Strider has correct card properties")
-    void hasCorrectProperties() {
-        PierceStrider card = new PierceStrider();
+    
 
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect that makes target opponent lose 3 life")
-    void hasEtbLifeLossEffect() {
-        PierceStrider card = new PierceStrider();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        TargetPlayerLosesLifeEffect effect =
-                (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack with selected opponent target")

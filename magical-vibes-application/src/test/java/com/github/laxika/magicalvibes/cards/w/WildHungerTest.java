@@ -27,25 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WildHungerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Wild Hunger has correct card properties")
-    void hasCorrectProperties() {
-        WildHunger card = new WildHunger();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(3));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
-
-        GrantKeywordEffect trample = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(trample.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(trample.scope()).isEqualTo(GrantScope.TARGET);
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{3}{R}");
-    }
+    
 
     @Test
     @DisplayName("Casting Wild Hunger puts it on the stack")

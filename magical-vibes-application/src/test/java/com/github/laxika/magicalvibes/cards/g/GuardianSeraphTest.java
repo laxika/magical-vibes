@@ -17,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GuardianSeraphTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Guardian Seraph has correct static effect")
-    void hasCorrectStaticEffect() {
-        GuardianSeraph card = new GuardianSeraph();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PreventDamageFromOpponentSourcesEffect.class);
-        PreventDamageFromOpponentSourcesEffect effect =
-                (PreventDamageFromOpponentSourcesEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
     // ===== Prevents 1 damage from opponent spell sources =====
 
     @Test

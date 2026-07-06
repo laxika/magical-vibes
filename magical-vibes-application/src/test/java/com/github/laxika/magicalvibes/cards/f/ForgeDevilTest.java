@@ -37,22 +37,7 @@ class ForgeDevilTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Forge Devil has correct ETB effects")
-    void hasCorrectEffects() {
-        ForgeDevil card = new ForgeDevil();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0))
-                .isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).damage())
-                .isEqualTo(new Fixed(1));
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1))
-                .isInstanceOf(DealDamageToControllerEffect.class);
-        assertThat(((DealDamageToControllerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).damage())
-                .isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Has correct target configuration — mandatory single creature")

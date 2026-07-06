@@ -17,18 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LoyalCatharUnhallowedCatharTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has death trigger and back face cannot block")
-    void hasConfiguredEffects() {
-        LoyalCatharUnhallowedCathar card = new LoyalCatharUnhallowedCathar();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).singleElement()
-                .isInstanceOf(RegisterDelayedReturnSourceTransformedEffect.class);
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("UnhallowedCathar");
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.STATIC)).singleElement()
-                .isInstanceOf(CantBlockEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Returns transformed at the beginning of the next end step")

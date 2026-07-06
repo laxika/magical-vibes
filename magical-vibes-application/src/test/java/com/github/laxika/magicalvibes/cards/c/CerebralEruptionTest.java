@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CerebralEruptionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cerebral Eruption has correct effects")
-    void hasCorrectEffects() {
-        CerebralEruption card = new CerebralEruption();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(RevealTopCardDealManaValueDamageEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

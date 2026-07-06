@@ -23,21 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AngrathsMaraudersTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Angrath's Marauders has correct static effect")
-    void hasCorrectEffect() {
-        AngrathsMarauders card = new AngrathsMarauders();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoubleControllerDamageEffect.class);
-        DoubleControllerDamageEffect effect = (DoubleControllerDamageEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.stackFilter()).isNull();
-        assertThat(effect.appliesToCombatDamage()).isTrue();
-    }
-
     // ===== Doubles spell damage to player =====
 
     @Test

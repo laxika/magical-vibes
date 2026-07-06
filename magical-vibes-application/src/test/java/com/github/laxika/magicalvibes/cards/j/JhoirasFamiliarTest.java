@@ -19,22 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JhoirasFamiliarTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Jhoira's Familiar has correct effects")
-    void hasCorrectEffects() {
-        JhoirasFamiliar card = new JhoirasFamiliar();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.predicate()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
-    }
-
     // ===== Cost reduction: artifact spells =====
 
     @Test

@@ -14,21 +14,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class EvraHalcyonWitnessTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Evra has mana-cost activated ability with ExchangeLifeTotalWithPowerEffect")
-    void hasCorrectAbility() {
-        EvraHalcyonWitness card = new EvraHalcyonWitness();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{4}");
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(ExchangeLifeTotalWithCreatureStatEffect.class);
-    }
-
     // ===== Exchange behavior =====
 
     @Test

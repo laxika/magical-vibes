@@ -33,47 +33,11 @@ class HuatliDinosaurKnightTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has PutPlusOnePlusOneCounterOnTargetCreatureEffect(2) with up-to-one targeting")
-    void plusTwoAbilityHasCorrectEffect() {
-        HuatliDinosaurKnight card = new HuatliDinosaurKnight();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.getMinTargets()).isZero();
-        assertThat(ability.getMaxTargets()).isEqualTo(1);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) ability.getEffects().getFirst()).count()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("-3 ability has FirstTargetDealsPowerDamageToSecondTargetEffect with multi-target")
-    void minusThreeAbilityHasCorrectEffect() {
-        HuatliDinosaurKnight card = new HuatliDinosaurKnight();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(ability.isMultiTarget()).isTrue();
-        assertThat(ability.getMultiTargetFilters()).hasSize(2);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(FirstTargetDealsPowerDamageToSecondTargetEffect.class);
-    }
-
-    @Test
-    @DisplayName("-7 ability has BoostAllOwnCreaturesEffect(4, 4)")
-    void minusSevenAbilityHasCorrectEffect() {
-        HuatliDinosaurKnight card = new HuatliDinosaurKnight();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-7);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        BoostAllOwnCreaturesEffect effect = (BoostAllOwnCreaturesEffect) ability.getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(4);
-        assertThat(effect.toughnessBoost()).isEqualTo(4);
-    }
+    
 
     // ===== Casting =====
 

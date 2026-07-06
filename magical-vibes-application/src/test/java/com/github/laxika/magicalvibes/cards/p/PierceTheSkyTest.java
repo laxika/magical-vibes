@@ -47,24 +47,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PierceTheSkyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Pierce the Sky has correct card properties")
-    void hasCorrectProperties() {
-        PierceTheSky card = new PierceTheSky();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasKeywordPredicate(Keyword.FLYING)
-                )),
-                "Target must be a creature with flying"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect effect = (DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(7));
-    }
+    
 
     @Test
     @DisplayName("Casting Pierce the Sky targeting a creature with flying puts it on stack")

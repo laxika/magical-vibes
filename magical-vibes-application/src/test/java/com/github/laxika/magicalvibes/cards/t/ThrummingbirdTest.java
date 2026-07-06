@@ -32,17 +32,6 @@ class ThrummingbirdTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has proliferate on combat damage to player trigger")
-    void hasCorrectEffect() {
-        Thrummingbird card = new Thrummingbird();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).singleElement()
-                .isInstanceOf(ProliferateEffect.class);
-    }
-
     // ===== Combat damage triggers proliferate =====
 
     @Test

@@ -24,18 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EntomberExarchTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Entomber Exarch has a ChooseOneEffect with two ETB options")
-    void hasCorrectEffects() {
-        EntomberExarch card = new EntomberExarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Return target creature card from your graveyard to your hand")

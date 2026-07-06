@@ -29,21 +29,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class ShatteredAngelTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_LAND_ENTERS_BATTLEFIELD MayEffect wrapping GainLifeEffect(3)")
-    void hasCorrectEffect() {
-        ShatteredAngel card = new ShatteredAngel();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Opponent plays land — accept may =====
 
     @Test

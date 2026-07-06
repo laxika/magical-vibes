@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PurifyTheGraveTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct card properties")
-    void hasCorrectProperties() {
-        PurifyTheGrave card = new PurifyTheGrave();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ExileTargetCardFromGraveyardEffect.class);
-
-        ExileTargetCardFromGraveyardEffect effect = (ExileTargetCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.requiredType()).isNull();
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{W}");
-    }
-
     // ===== Normal cast =====
 
     @Test

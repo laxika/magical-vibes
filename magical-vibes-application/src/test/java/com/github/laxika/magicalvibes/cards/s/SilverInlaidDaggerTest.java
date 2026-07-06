@@ -21,38 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SilverInlaidDaggerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Silver-Inlaid Dagger has unconditional +2/+0 static boost")
-    void hasUnconditionalBoostEffect() {
-        SilverInlaidDagger card = new SilverInlaidDagger();
-
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect sbe && sbe.filter() == null)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Silver-Inlaid Dagger has conditional +1/+0 boost for Humans")
-    void hasConditionalHumanBoostEffect() {
-        SilverInlaidDagger card = new SilverInlaidDagger();
-
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect sbe && sbe.filter() != null)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) boost.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
-    }
-
     // ===== Static effects: power/toughness boost =====
 
     @Test

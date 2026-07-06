@@ -35,21 +35,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class GoldenglowMothTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Goldenglow Moth has MayEffect wrapping GainLifeEffect on ON_BLOCK")
-    void hasCorrectStructure() {
-        GoldenglowMoth card = new GoldenglowMoth();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_BLOCK).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) mayEffect.wrapped()).amount()).isEqualTo(new Fixed(4));
-    }
-
     // ===== Blocking triggers may-gain-life and accepting gains life =====
 
     @Test

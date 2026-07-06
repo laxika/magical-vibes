@@ -17,20 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StoicRebuttalTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has counter spell effect and metalcraft cost reduction")
-    void hasCorrectEffects() {
-        StoicRebuttal card = new StoicRebuttal();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ReduceOwnCastCostIfMetalcraftEffect.class);
-    }
-
     // ===== Resolving =====
 
     @Test

@@ -33,27 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GhituJourneymageTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has controls-another-Wizard conditional ETB damage effect")
-    void hasConditionalEtbEffect() {
-        GhituJourneymage card = new GhituJourneymage();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(((ControlsAnotherPermanent) conditional.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) ((ControlsAnotherPermanent) conditional.condition()).filter()).subtype()).isEqualTo(CardSubtype.WIZARD);
-        assertThat(conditional.wrapped()).isInstanceOf(DealDamageToEachOpponentEffect.class);
-
-        DealDamageToEachOpponentEffect damage = (DealDamageToEachOpponentEffect) conditional.wrapped();
-        assertThat(damage.damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== ETB with another Wizard =====
 
     @Test

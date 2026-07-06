@@ -16,19 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpiritLinkTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spirit Link has correct card properties")
-    void hasCorrectProperties() {
-        SpiritLink card = new SpiritLink();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GainLifeEqualToDamageDealtEffect.class);
-    }
-
     // ===== Unblocked attacker deals damage to player =====
 
     @Test

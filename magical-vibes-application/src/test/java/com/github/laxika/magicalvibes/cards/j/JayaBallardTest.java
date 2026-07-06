@@ -37,49 +37,11 @@ class JayaBallardTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 mana ability has AwardRestrictedManaEffect for instants and sorceries")
-    void plusOneManaAbilityHasCorrectEffect() {
-        JayaBallard card = new JayaBallard();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardRestrictedManaEffect.class);
+    
 
-        AwardRestrictedManaEffect effect = (AwardRestrictedManaEffect) ability.getEffects().getFirst();
-        assertThat(effect.color()).isEqualTo(ManaColor.RED);
-        assertThat(effect.amount()).isEqualTo(3);
-        assertThat(effect.allowedSpellTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-    }
-
-    @Test
-    @DisplayName("+1 rummage ability has DiscardUpToThenDrawThatManyEffect")
-    void plusOneRummageAbilityHasCorrectEffect() {
-        JayaBallard card = new JayaBallard();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DiscardUpToThenDrawThatManyEffect.class);
-
-        DiscardUpToThenDrawThatManyEffect effect = (DiscardUpToThenDrawThatManyEffect) ability.getEffects().getFirst();
-        assertThat(effect.maxDiscard()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("-8 ability has JayaBallardEmblemEffect")
-    void minusEightAbilityHasCorrectEffect() {
-        JayaBallard card = new JayaBallard();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(JayaBallardEmblemEffect.class);
-    }
+    
 
     // ===== +1 mana ability =====
 

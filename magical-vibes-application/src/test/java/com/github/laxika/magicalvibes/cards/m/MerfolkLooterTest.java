@@ -25,24 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MerfolkLooterTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has one activated ability with tap and no mana cost")
-    void hasCorrectAbility() {
-        MerfolkLooter card = new MerfolkLooter();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DiscardCardEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -303,5 +285,4 @@ class MerfolkLooterTest extends BaseCardTest {
         gd.playerDecks.get(player.getId()).addAll(cards);
     }
 }
-
 

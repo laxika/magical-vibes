@@ -21,24 +21,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class RowdyCrewTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has DrawAndRandomDiscardWithSharedTypeCountersEffect(3, 2, 2) on ON_ENTER_BATTLEFIELD")
-    void hasCorrectEffect() {
-        RowdyCrew card = new RowdyCrew();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DrawAndRandomDiscardWithSharedTypeCountersEffect.class);
-
-        DrawAndRandomDiscardWithSharedTypeCountersEffect effect =
-                (DrawAndRandomDiscardWithSharedTypeCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.drawAmount()).isEqualTo(3);
-        assertThat(effect.discardAmount()).isEqualTo(2);
-        assertThat(effect.counterAmount()).isEqualTo(2);
-    }
-
     // ===== ETB: draw and discard =====
 
     @Test

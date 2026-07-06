@@ -28,39 +28,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SongOfFreyaliseTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I grants activated mana ability to own creatures until next turn")
-    void chapterIHasCorrectEffect() {
-        SongOfFreyalise card = new SongOfFreyalise();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(GrantActivatedAbilityEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter II has same effect as chapter I")
-    void chapterIIHasCorrectEffect() {
-        SongOfFreyalise card = new SongOfFreyalise();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(GrantActivatedAbilityEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter III puts +1/+1 counters and grants keywords")
-    void chapterIIIHasCorrectEffects() {
-        SongOfFreyalise card = new SongOfFreyalise();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(GrantKeywordEffect.class);
-    }
-
     // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test

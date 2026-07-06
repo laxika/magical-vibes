@@ -27,20 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ActOfTreasonTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Act of Treason has correct card properties")
-    void hasCorrectProperties() {
-        ActOfTreason card = new ActOfTreason();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(effect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Casting Act of Treason puts it on the stack with the target creature")

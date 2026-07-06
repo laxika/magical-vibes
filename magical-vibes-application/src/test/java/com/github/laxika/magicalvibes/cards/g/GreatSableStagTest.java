@@ -48,23 +48,6 @@ class GreatSableStagTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Great Sable Stag has cant-be-countered and protection from blue and black")
-    void hasCorrectProperties() {
-        GreatSableStag card = new GreatSableStag();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeCounteredEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(ProtectionFromColorsEffect.class);
-
-        ProtectionFromColorsEffect protection = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof ProtectionFromColorsEffect)
-                .map(e -> (ProtectionFromColorsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
-    }
-
     // ===== Can't be countered =====
 
     @Test

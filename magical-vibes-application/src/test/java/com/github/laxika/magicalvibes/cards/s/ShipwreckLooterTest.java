@@ -20,29 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ShipwreckLooterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has raid-conditional ETB MayEffect wrapping DrawAndDiscardCardEffect")
-    void hasRaidEtbLootEffect() {
-        ShipwreckLooter card = new ShipwreckLooter();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) raid.wrapped();
-        assertThat(may.wrapped()).isInstanceOf(DrawAndDiscardCardEffect.class);
-
-        DrawAndDiscardCardEffect loot = (DrawAndDiscardCardEffect) may.wrapped();
-        assertThat(loot.drawAmount()).isEqualTo(1);
-        assertThat(loot.discardAmount()).isEqualTo(1);
-    }
-
     // ===== ETB with raid met — accept may =====
 
     @Test

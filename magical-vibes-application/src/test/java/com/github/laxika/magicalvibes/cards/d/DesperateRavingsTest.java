@@ -19,24 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DesperateRavingsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Desperate Ravings has correct card properties")
-    void hasCorrectProperties() {
-        DesperateRavings card = new DesperateRavings();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerRandomDiscardEffect.class);
-        TargetPlayerRandomDiscardEffect discardEffect = (TargetPlayerRandomDiscardEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(discardEffect.amount()).isEqualTo(1);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{2}{U}");
-    }
-
     // ===== Casting =====
 
     @Test

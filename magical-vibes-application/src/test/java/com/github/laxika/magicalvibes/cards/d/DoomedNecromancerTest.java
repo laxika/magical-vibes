@@ -22,22 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DoomedNecromancerTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Doomed Necromancer has correct card properties")
-    void hasCorrectProperties() {
-        DoomedNecromancer card = new DoomedNecromancer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{B}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -366,5 +350,4 @@ class DoomedNecromancerTest extends BaseCardTest {
         return necromancer;
     }
 }
-
 

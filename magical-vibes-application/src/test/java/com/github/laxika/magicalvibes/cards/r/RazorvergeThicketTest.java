@@ -18,43 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RazorvergeThicketTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Razorverge Thicket has conditional enters-tapped effect")
-    void hasConditionalEntersTappedEffect() {
-        RazorvergeThicket card = new RazorvergeThicket();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .hasSize(1);
-        EntersTappedUnlessFewLandsEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .map(e -> (EntersTappedUnlessFewLandsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.maxOtherLands()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Razorverge Thicket has two mana abilities for green and white")
-    void hasManaAbilities() {
-        RazorvergeThicket card = new RazorvergeThicket();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {G}.
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-
-        // Second ability: {T}: Add {W}.
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.WHITE));
-    }
-
     // ===== Enters the battlefield: untapped (few lands) =====
 
     @Test

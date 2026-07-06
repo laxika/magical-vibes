@@ -21,24 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HarrowingJourneyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effects and targeting")
-    void hasCorrectProperties() {
-        HarrowingJourney card = new HarrowingJourney();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-
-        DrawCardForTargetPlayerEffect drawEffect =
-                (DrawCardForTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        TargetPlayerLosesLifeEffect lifeLossEffect =
-                (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(3));
-        assertThat(lifeLossEffect.amount()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Target player draws three cards and loses 3 life")

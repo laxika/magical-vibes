@@ -24,25 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BitterheartWitchTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bitterheart Witch has correct death trigger effect")
-    void hasCorrectProperties() {
-        BitterheartWitch card = new BitterheartWitch();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(mayEffect.wrapped())
-                .isInstanceOf(SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect.class);
-        SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect effect =
-                (SearchLibraryForSubtypeToBattlefieldAttachedToTargetPlayerEffect) mayEffect.wrapped();
-        assertThat(effect.requiredSubtype()).isEqualTo(CardSubtype.CURSE);
-        assertThat(mayEffect.canTargetPlayer()).isTrue();
-    }
-
     // ===== Death trigger: dies in combat, search for Curse, attach to target player =====
 
     @Test

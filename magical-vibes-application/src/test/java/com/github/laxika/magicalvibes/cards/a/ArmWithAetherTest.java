@@ -45,18 +45,6 @@ class ArmWithAetherTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Arm with Aether has correct effects")
-    void hasCorrectEffects() {
-        ArmWithAether card = new ArmWithAether();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(GrantDamageToOpponentCreatureBounceUntilEndOfTurnEffect.class);
-    }
-
     // ===== Sorcery resolution =====
 
     @Test

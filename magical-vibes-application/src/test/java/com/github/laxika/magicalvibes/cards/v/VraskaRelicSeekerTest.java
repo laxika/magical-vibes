@@ -27,34 +27,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class VraskaRelicSeekerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three loyalty abilities with correct costs")
-    void hasThreeLoyaltyAbilities() {
-        VraskaRelicSeeker card = new VraskaRelicSeeker();
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var plus2 = card.getActivatedAbilities().get(0);
-        assertThat(plus2.getLoyaltyCost()).isEqualTo(2);
-        assertThat(plus2.isNeedsTarget()).isFalse();
-        assertThat(plus2.getEffects()).hasSize(1);
-        assertThat(plus2.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        var minus3 = card.getActivatedAbilities().get(1);
-        assertThat(minus3.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(minus3.isNeedsTarget()).isTrue();
-        assertThat(minus3.getEffects()).hasSize(2);
-        assertThat(minus3.getEffects().get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(minus3.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
-
-        var minus10 = card.getActivatedAbilities().get(2);
-        assertThat(minus10.getLoyaltyCost()).isEqualTo(-10);
-        assertThat(minus10.isNeedsTarget()).isTrue();
-        assertThat(minus10.getEffects()).hasSize(1);
-        assertThat(minus10.getEffects().getFirst()).isInstanceOf(SetTargetPlayerLifeToSpecificValueEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

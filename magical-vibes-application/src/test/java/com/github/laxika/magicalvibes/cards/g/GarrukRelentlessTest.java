@@ -32,40 +32,6 @@ class GarrukRelentlessTest extends BaseCardTest {
     // ==========================================================================
     // Card structure
     // ==========================================================================
-
-    @Test
-    @DisplayName("Front face has two 0-loyalty abilities and a state trigger")
-    void frontFaceStructure() {
-        GarrukRelentless card = new GarrukRelentless();
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getLoyaltyCost()).isEqualTo(0);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PlaneswalkerDealDamageAndReceivePowerDamageEffect.class);
-        assertThat(card.getActivatedAbilities().get(1).getLoyaltyCost()).isEqualTo(0);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("GarrukTheVeilCursed");
-    }
-
-    @Test
-    @DisplayName("Back face has +1, -1, -3 loyalty abilities")
-    void backFaceStructure() {
-        GarrukTheVeilCursed backFace = new GarrukTheVeilCursed();
-        assertThat(backFace.getActivatedAbilities()).hasSize(3);
-        assertThat(backFace.getActivatedAbilities().get(0).getLoyaltyCost()).isEqualTo(1);
-        assertThat(backFace.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        assertThat(backFace.getActivatedAbilities().get(1).getLoyaltyCost()).isEqualTo(-1);
-        assertThat(backFace.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(SacrificeCreatureSearchLibraryForCreatureToHandEffect.class);
-        assertThat(backFace.getActivatedAbilities().get(2).getLoyaltyCost()).isEqualTo(-3);
-        assertThat(backFace.getActivatedAbilities().get(2).getEffects())
-                .anyMatch(e -> e instanceof GrantKeywordEffect)
-                .anyMatch(e -> e instanceof BoostAllOwnCreaturesByCreatureCardsInGraveyardEffect);
-    }
-
-    // ==========================================================================
     // Front face — 0: Deal 3 damage to target creature; it deals power back
     // ==========================================================================
 

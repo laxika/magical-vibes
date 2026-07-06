@@ -27,20 +27,7 @@ class InfiltrationLensTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Infiltration Lens has ON_BECOMES_BLOCKED MayEffect with DrawCardEffect(2)")
-    void hasOnBecomesBlockedEffect() {
-        InfiltrationLens card = new InfiltrationLens();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) mayEffect.wrapped()).amount()).isEqualTo(new Fixed(2));
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).getFirst().triggerMode())
-                .isEqualTo(TriggerMode.PER_BLOCKER);
-    }
+    
 
     @Test
     @DisplayName("Infiltration Lens has equip {1} ability")

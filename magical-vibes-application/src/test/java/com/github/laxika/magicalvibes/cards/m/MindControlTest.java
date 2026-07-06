@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MindControlTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mind Control has correct card properties")
-    void hasCorrectProperties() {
-        MindControl card = new MindControl();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ControlEnchantedCreatureEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

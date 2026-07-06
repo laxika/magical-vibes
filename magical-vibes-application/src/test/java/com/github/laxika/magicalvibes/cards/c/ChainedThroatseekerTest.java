@@ -17,18 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChainedThroatseekerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC CantAttackUnlessDefenderPoisonedEffect")
-    void hasCorrectStructure() {
-        ChainedThroatseeker card = new ChainedThroatseeker();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantAttackUnlessDefenderPoisonedEffect.class);
-    }
-
     // ===== Attack restriction =====
 
     @Test
@@ -97,7 +85,6 @@ class ChainedThroatseekerTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

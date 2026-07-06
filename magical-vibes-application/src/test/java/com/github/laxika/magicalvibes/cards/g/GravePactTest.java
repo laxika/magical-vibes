@@ -25,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GravePactTest extends BaseCardTest {
 
-
     /**
      * Makes player2 the active player in main phase 1, ready to cast sorceries.
      */
@@ -63,18 +62,6 @@ class GravePactTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Grave Pact has correct card properties")
-    void hasCorrectProperties() {
-        GravePact card = new GravePact();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(EachOpponentSacrificesCreatureEffect.class);
     }
 
     // ===== Casting =====
@@ -367,5 +354,4 @@ class GravePactTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("no creatures to sacrifice"));
     }
 }
-
 

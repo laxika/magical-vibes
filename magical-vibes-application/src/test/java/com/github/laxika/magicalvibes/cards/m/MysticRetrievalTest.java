@@ -24,20 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MysticRetrievalTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Mystic Retrieval has graveyard return effect and flashback")
-    void hasEffectAndFlashback() {
-        MysticRetrieval card = new MysticRetrieval();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.targetGraveyard()).isTrue();
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{2}{R}");
-    }
+    
 
     @Test
     @DisplayName("Returns target instant card from your graveyard to your hand")

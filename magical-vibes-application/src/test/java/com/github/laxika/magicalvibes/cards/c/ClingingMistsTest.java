@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ClingingMistsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Clinging Mists has PreventAllCombatDamageEffect and two fateful hour conditional effects")
-    void hasCorrectEffects() {
-        ClingingMists card = new ClingingMists();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(PreventAllCombatDamageEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

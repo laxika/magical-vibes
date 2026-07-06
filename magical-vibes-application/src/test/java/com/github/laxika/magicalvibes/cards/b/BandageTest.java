@@ -24,20 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BandageTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bandage has correct card properties")
-    void hasCorrectProperties() {
-        Bandage card = new Bandage();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(PreventDamageToTargetEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -19,19 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EfflorescenceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Efflorescence puts two counters and has a conditional keyword grant")
-    void hasCorrectStructure() {
-        Efflorescence card = new Efflorescence();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counters =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(counters.count()).isEqualTo(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Without life gained, only adds two +1/+1 counters")

@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FrenziedRageTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Frenzied Rage has correct card properties")
-    void hasCorrectProperties() {
-        FrenziedRage card = new FrenziedRage();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keywords()).containsExactly(Keyword.MENACE);
-        assertThat(keywordEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

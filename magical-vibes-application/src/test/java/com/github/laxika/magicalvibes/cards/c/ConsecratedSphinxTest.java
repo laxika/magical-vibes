@@ -26,18 +26,7 @@ class ConsecratedSphinxTest extends BaseCardTest {
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
     }
 
-    @Test
-    @DisplayName("Consecrated Sphinx has ON_OPPONENT_DRAWS effect wrapped in MayEffect")
-    void hasCorrectProperties() {
-        ConsecratedSphinx card = new ConsecratedSphinx();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DRAWS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DRAWS).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_DRAWS).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) mayEffect.wrapped();
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(2));
-    }
+    
 
     @Test
     @DisplayName("Opponent draw step triggers may ability for controller")

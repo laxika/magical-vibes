@@ -21,24 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DemonicVigorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Demonic Vigor has static boost and enchanted creature death trigger")
-    void hasCorrectEffects() {
-        DemonicVigor card = new DemonicVigor();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD).getFirst())
-                .isInstanceOf(ReturnEnchantedCreatureToOwnerHandOnDeathEffect.class);
-    }
-
     // ===== Static boost =====
 
     @Test

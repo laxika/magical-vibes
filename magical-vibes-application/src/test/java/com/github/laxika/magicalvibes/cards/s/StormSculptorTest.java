@@ -23,27 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StormSculptorTest extends BaseCardTest {
 
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Has CantBeBlockedEffect as static effect")
-    void hasStaticCantBeBlockedEffect() {
-        StormSculptor card = new StormSculptor();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBeBlockedEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has ReturnTargetPermanentToHandEffect as ETB effect")
-    void hasEtbBounceEffect() {
-        StormSculptor card = new StormSculptor();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
     // ===== ETB bounce =====
 
     @Nested

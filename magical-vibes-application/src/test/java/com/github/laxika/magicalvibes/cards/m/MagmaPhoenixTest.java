@@ -21,31 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MagmaPhoenixTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_DEATH MassDamageEffect dealing 3 damage to each creature and player")
-    void hasDeathTrigger() {
-        MagmaPhoenix card = new MagmaPhoenix();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.damage()).isEqualTo(3);
-        assertThat(effect.damagesPlayers()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Has graveyard activated ability with ReturnCardFromGraveyardEffect")
-    void hasGraveyardAbility() {
-        MagmaPhoenix card = new MagmaPhoenix();
-
-        assertThat(card.getGraveyardActivatedAbilities()).hasSize(1);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}{R}{R}");
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Death trigger =====
 
     @Nested

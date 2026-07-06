@@ -36,45 +36,9 @@ class FalkenrathAristocratTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability: sacrifice a Human for indestructible and a +1/+1 counter")
-    void firstAbilityStructure() {
-        FalkenrathAristocrat card = new FalkenrathAristocrat();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(3);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
-                )),
-                "Sacrifice a Human",
-                false
-        ));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(ability.getEffects().get(2)).isInstanceOf(PutCountersOnSourceEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-    }
-
-    @Test
-    @DisplayName("Second ability: sacrifice a non-Human creature for indestructible only")
-    void secondAbilityStructure() {
-        FalkenrathAristocrat card = new FalkenrathAristocrat();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificePermanentCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-    }
+    
 
     // ===== Sacrifice a Human: indestructible + counter =====
 

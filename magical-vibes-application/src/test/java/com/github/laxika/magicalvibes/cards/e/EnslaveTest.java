@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EnslaveTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Enslave has control and upkeep damage effects")
-    void hasCorrectEffects() {
-        Enslave card = new Enslave();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlEnchantedCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(EnchantedCreatureDealsDamageToItsOwnerEffect.class);
-    }
-
     // ===== Control effect =====
 
     @Test

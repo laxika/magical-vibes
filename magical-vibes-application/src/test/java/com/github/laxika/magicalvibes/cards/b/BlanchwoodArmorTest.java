@@ -20,17 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BlanchwoodArmorTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Blanchwood Armor has correct card properties")
-    void hasCorrectProperties() {
-        BlanchwoodArmor card = new BlanchwoodArmor();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostCreaturePerControlledSubtypeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Blanchwood Armor puts it on the stack")

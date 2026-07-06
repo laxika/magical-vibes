@@ -22,25 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkyshroudRangerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Skyshroud Ranger has correct card properties and activated ability")
-    void hasCorrectProperties() {
-        SkyshroudRanger card = new SkyshroudRanger();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).singleElement().isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) ability.getEffects().getFirst();
-        assertThat(may.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
-        PutCardToBattlefieldEffect wrapped = (PutCardToBattlefieldEffect) may.wrapped();
-        assertThat(wrapped.label()).isEqualTo("land");
-    }
+    
 
     @Test
     @DisplayName("Activating ability taps Skyshroud Ranger and puts ability on stack")

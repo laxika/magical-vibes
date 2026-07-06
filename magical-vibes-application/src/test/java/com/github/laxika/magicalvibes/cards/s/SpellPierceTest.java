@@ -26,25 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpellPierceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spell Pierce has correct card properties")
-    void hasCorrectProperties() {
-        SpellPierce card = new SpellPierce();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryNotPredicate(
-                        new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
-                ),
-                "Target must be a noncreature spell."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).getFirst()).amount()).isEqualTo(2);
-    }
-
     // ===== Targeting restriction =====
 
     @Test

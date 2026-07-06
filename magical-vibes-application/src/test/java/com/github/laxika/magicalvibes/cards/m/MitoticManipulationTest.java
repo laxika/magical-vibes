@@ -21,18 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MitoticManipulationTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Mitotic Manipulation has correct effect structure")
-    void hasCorrectProperties() {
-        MitoticManipulation card = new MitoticManipulation();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect.class);
-        LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect effect =
-                (LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(7);
-    }
+    
 
     @Test
     @DisplayName("Resolves by offering only cards matching permanent names on battlefield")

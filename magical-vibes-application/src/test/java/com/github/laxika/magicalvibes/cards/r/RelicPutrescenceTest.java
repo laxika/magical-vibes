@@ -21,24 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RelicPutrescenceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Relic Putrescence has correct card properties")
-    void hasCorrectProperties() {
-        RelicPutrescence card = new RelicPutrescence();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED).getFirst())
-                .isInstanceOf(GiveEnchantedPermanentControllerPoisonCountersEffect.class);
-        GiveEnchantedPermanentControllerPoisonCountersEffect effect =
-                (GiveEnchantedPermanentControllerPoisonCountersEffect) card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
     // ===== Casting and targeting =====
 
     @Test

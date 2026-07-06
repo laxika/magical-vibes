@@ -23,21 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ContaminatedBondTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Contaminated Bond has correct card properties")
-    void hasCorrectProperties() {
-        ContaminatedBond card = new ContaminatedBond();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(EnchantedCreatureControllerLosesLifeEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst()).isInstanceOf(EnchantedCreatureControllerLosesLifeEffect.class);
-    }
-
     // ===== Attack trigger =====
 
     @Test
@@ -273,5 +258,4 @@ class ContaminatedBondTest extends BaseCardTest {
         gs.declareBlockers(gd, player, assignments);
     }
 }
-
 

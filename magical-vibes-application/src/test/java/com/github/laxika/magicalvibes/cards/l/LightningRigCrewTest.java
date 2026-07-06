@@ -41,39 +41,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LightningRigCrewTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has tap activated ability dealing 1 damage to each opponent")
-    void hasActivatedAbility() {
-        LightningRigCrew card = new LightningRigCrew();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(DealDamageToEachOpponentEffect.class);
-        DealDamageToEachOpponentEffect dmgEffect =
-                (DealDamageToEachOpponentEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(dmgEffect.damage()).isEqualTo(new Fixed(1));
-    }
-
-    @Test
-    @DisplayName("Has Pirate spell-cast trigger with untap self")
-    void hasPirateTrigger() {
-        LightningRigCrew card = new LightningRigCrew();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(UntapSelfEffect.class);
-    }
-
     // ===== Activated ability: {T}: deal 1 damage to each opponent =====
 
     @Test

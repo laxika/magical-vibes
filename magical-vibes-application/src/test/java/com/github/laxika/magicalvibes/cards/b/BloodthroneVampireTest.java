@@ -26,29 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BloodthroneVampireTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bloodthrone Vampire has correct activated ability structure")
-    void hasCorrectAbilityStructure() {
-        BloodthroneVampire card = new BloodthroneVampire();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(BoostSelfEffect.class);
-
-        BoostSelfEffect boost = (BoostSelfEffect) ability.getEffects().get(1);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Casting =====
 
     @Test

@@ -44,19 +44,6 @@ class GeistcatchersRigTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId); // choose target → deal 4 damage
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping DealDamageToTargetCreatureEffect(4) on ETB")
-    void hasCorrectEffects() {
-        GeistcatchersRig card = new GeistcatchersRig();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) mayEffect.wrapped()).damage()).isEqualTo(new Fixed(4));
-    }
-
     // ===== ETB deals 4 damage to creature with flying =====
 
     @Test

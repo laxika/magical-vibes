@@ -26,18 +26,7 @@ class WarlordsAxeTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Warlord's Axe has static +3/+1 boost effect")
-    void hasStaticBoostEffect() {
-        WarlordsAxe card = new WarlordsAxe();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Warlord's Axe has equip {4} ability with correct properties")

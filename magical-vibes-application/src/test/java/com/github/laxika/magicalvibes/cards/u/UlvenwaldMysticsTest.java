@@ -20,49 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UlvenwaldMysticsTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Front face has correct effects configured")
-    void frontFaceHasCorrectEffects() {
-        UlvenwaldMystics card = new UlvenwaldMystics();
-
-        // No activated abilities on front face
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        // Each-upkeep transform trigger
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("UlvenwaldPrimordials");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects and abilities configured")
-    void backFaceHasCorrectEffects() {
-        UlvenwaldMystics card = new UlvenwaldMystics();
-        UlvenwaldPrimordials backFace = (UlvenwaldPrimordials) card.getBackFaceCard();
-
-        // Regeneration activated ability
-        assertThat(backFace.getActivatedAbilities()).hasSize(1);
-        assertThat(backFace.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{G}");
-        assertThat(backFace.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(backFace.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(backFace.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-
-        // Each-upkeep transform trigger
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
     @Test
@@ -256,7 +213,5 @@ class UlvenwaldMysticsTest extends BaseCardTest {
         assertThat(mystics.isTapped()).isTrue();
         assertThat(mystics.getRegenerationShield()).isEqualTo(0);
     }
-
-    // ===== Helpers =====
 
 }

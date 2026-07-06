@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RainOfTearsTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Rain of Tears has correct card properties")
-    void hasCorrectProperties() {
-        RainOfTears card = new RainOfTears();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Rain of Tears puts it on the stack with target")

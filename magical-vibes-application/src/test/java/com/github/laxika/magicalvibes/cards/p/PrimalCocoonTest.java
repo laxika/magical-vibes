@@ -20,26 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class PrimalCocoonTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Primal Cocoon has upkeep counter and attack/block sacrifice effects")
-    void hasCorrectEffects() {
-        PrimalCocoon card = new PrimalCocoon();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutCounterOnEnchantedCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
-
     // ===== Upkeep +1/+1 counter =====
 
     @Test

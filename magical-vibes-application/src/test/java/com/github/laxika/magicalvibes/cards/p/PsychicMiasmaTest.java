@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PsychicMiasmaTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Psychic Miasma has correct effect")
-    void hasCorrectEffect() {
-        PsychicMiasma card = new PsychicMiasma();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(TargetPlayerDiscardsReturnSelfIfCardTypeEffect.class);
-        TargetPlayerDiscardsReturnSelfIfCardTypeEffect effect =
-                (TargetPlayerDiscardsReturnSelfIfCardTypeEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.returnIfType()).isEqualTo(CardType.LAND);
-    }
-
     // ===== Casting =====
 
     @Test

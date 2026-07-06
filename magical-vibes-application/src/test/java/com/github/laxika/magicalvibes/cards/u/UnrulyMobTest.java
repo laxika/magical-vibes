@@ -19,23 +19,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class UnrulyMobTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_DIES effect with PutCountersOnSourceEffect")
-    void hasCorrectStructure() {
-        UnrulyMob card = new UnrulyMob();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-        PutCountersOnSourceEffect effect =
-                (PutCountersOnSourceEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
     // ===== ON_ALLY_CREATURE_DIES: gets +1/+1 counter when an ally creature dies =====
 
     @Test

@@ -27,30 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AngelicOverseerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Angelic Overseer has correct static effects")
-    void hasCorrectProperties() {
-        AngelicOverseer card = new AngelicOverseer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        var effect0 = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(((ControlsPermanent) effect0.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(effect0.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect hexproof = (GrantKeywordEffect) effect0.wrapped();
-        assertThat(hexproof.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(hexproof.scope()).isEqualTo(GrantScope.SELF);
-
-        var effect1 = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(((ControlsPermanent) effect1.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(effect1.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect indestructible = (GrantKeywordEffect) effect1.wrapped();
-        assertThat(indestructible.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(indestructible.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Conditional hexproof and indestructible with Human =====
 
     @Test
@@ -250,7 +226,5 @@ class AngelicOverseerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, overseer, Keyword.HEXPROOF)).isTrue();
         assertThat(gqs.hasKeyword(gd, overseer, Keyword.INDESTRUCTIBLE)).isTrue();
     }
-
-    // ===== Helper methods =====
 
 }

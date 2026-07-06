@@ -20,18 +20,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class GerminationPracticumTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has PutCounterOnEachControlledPermanentEffect on creatures")
-    void hasCorrectStructure() {
-        GerminationPracticum card = new GerminationPracticum();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-        PutCounterOnEachControlledPermanentEffect effect =
-                (PutCounterOnEachControlledPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Puts two +1/+1 counters on each creature you control")

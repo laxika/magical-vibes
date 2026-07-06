@@ -36,17 +36,7 @@ class CreepingCorrosionTest extends BaseCardTest {
         return card;
     }
 
-    @Test
-    @DisplayName("Creeping Corrosion has correct effect configuration")
-    void hasCorrectEffectConfiguration() {
-        CreepingCorrosion card = new CreepingCorrosion();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-        DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsArtifactPredicate.class);
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Creeping Corrosion puts it on the stack as a sorcery")

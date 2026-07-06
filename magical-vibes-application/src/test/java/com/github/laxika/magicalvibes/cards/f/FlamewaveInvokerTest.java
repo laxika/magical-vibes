@@ -30,24 +30,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlamewaveInvokerTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Flamewave Invoker has correct card properties")
-    void hasCorrectProperties() {
-        FlamewaveInvoker card = new FlamewaveInvoker();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{7}{R}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        DealDamageToTargetPlayerEffect effect = (DealDamageToTargetPlayerEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(5));
-    }
-
     // ===== Activation =====
 
     @Test

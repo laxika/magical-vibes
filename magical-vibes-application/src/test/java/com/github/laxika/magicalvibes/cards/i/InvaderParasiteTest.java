@@ -37,27 +37,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InvaderParasiteTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB exile-and-imprint effect and opponent-land-enters trigger")
-    void hasCorrectEffects() {
-        InvaderParasite card = new InvaderParasite();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetPermanentAndImprintEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect trigger =
-                (ConditionalEffect)
-                        card.getEffects(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(trigger.wrapped()).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) trigger.wrapped()).damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== ETB: exile target land =====
 
     @Test

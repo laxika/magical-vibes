@@ -48,32 +48,6 @@ class ChancellorOfTheSpiresTest {
         // Do NOT call skipMulligan() here — opening hand tests need to set hand first
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chancellor has ON_OPENING_HAND_REVEAL MayEffect wrapping EachOpponentMillsEffect(7)")
-    void hasOpeningHandMillEffect() {
-        ChancellorOfTheSpires card = new ChancellorOfTheSpires();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(EachOpponentMillsEffect.class);
-        EachOpponentMillsEffect effect = (EachOpponentMillsEffect) may.wrapped();
-        assertThat(effect.count()).isEqualTo(7);
-    }
-
-    @Test
-    @DisplayName("Chancellor has ON_ENTER_BATTLEFIELD CastTargetInstantOrSorceryFromGraveyardEffect")
-    void hasETBCastFromGraveyardEffect() {
-        ChancellorOfTheSpires card = new ChancellorOfTheSpires();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CastTargetInstantOrSorceryFromGraveyardEffect.class);
-    }
-
     // ===== Opening hand trigger: mill =====
 
     @Test

@@ -28,20 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RampantGrowthTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Rampant Growth has correct card properties")
-    void hasCorrectProperties() {
-        RampantGrowth card = new RampantGrowth();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-        SearchLibraryForCardTypesToBattlefieldEffect effect =
-                (SearchLibraryForCardTypesToBattlefieldEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(CardPredicateUtils.describeFilter(effect.filter())).isEqualTo("basic land card");
-        assertThat(effect.entersTapped()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Rampant Growth puts it on the stack")

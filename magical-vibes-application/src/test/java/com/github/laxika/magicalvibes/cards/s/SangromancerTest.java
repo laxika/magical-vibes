@@ -41,34 +41,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class SangromancerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CREATURE_DIES MayEffect wrapping GainLifeEffect(3)")
-    void hasCorrectDeathTrigger() {
-        Sangromancer card = new Sangromancer();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(new Fixed(3));
-    }
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_DISCARDS MayEffect wrapping GainLifeEffect(3)")
-    void hasCorrectDiscardTrigger() {
-        Sangromancer card = new Sangromancer();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Opponent creature dies — accept may =====
 
     @Test

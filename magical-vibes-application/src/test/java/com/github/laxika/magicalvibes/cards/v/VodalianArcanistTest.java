@@ -19,22 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VodalianArcanistTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Vodalian Arcanist has one activated ability")
-    void hasCorrectAbility() {
-        VodalianArcanist card = new VodalianArcanist();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardRestrictedManaEffect.class);
-    }
-
     // ===== Mana production =====
 
     @Test

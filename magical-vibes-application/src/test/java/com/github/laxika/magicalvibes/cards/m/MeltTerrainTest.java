@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MeltTerrainTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct card properties")
-    void hasCorrectProperties() {
-        MeltTerrain card = new MeltTerrain();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyTargetLandAndDamageControllerEffect.class);
-
-        DestroyTargetLandAndDamageControllerEffect effect =
-                (DestroyTargetLandAndDamageControllerEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-    }
-
     // ===== Casting =====
 
     @Test

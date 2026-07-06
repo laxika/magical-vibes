@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BeaconOfImmortalityTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Beacon of Immortality has correct card properties")
-    void hasCorrectProperties() {
-        BeaconOfImmortality card = new BeaconOfImmortality();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DoubleTargetPlayerLifeEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

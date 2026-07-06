@@ -22,19 +22,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class InstillInfectionTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has -1/-1 counter and draw card spell effects")
-    void hasCorrectEffects() {
-        InstillInfection card = new InstillInfection();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Resolution =====
 
     @Test

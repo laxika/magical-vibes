@@ -39,20 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FiresOfUndeathTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fires of Undeath has correct effect structure")
-    void hasCorrectEffectStructure() {
-        FiresOfUndeath card = new FiresOfUndeath();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(2));
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{5}{B}");
-    }
+    
 
     @Test
     @DisplayName("Fires of Undeath deals 2 damage to target player")

@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BeguilerOfWillsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Beguiler of Wills has correct activated ability")
-    void hasCorrectActivatedAbility() {
-        BeguilerOfWills card = new BeguilerOfWills();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GainControlOfTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter()).isNotNull();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

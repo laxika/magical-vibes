@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FrightfulDelusionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Frightful Delusion has correct effects")
-    void hasCorrectEffects() {
-        FrightfulDelusion card = new FrightfulDelusion();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(TargetSpellControllerDiscardsEffect.class);
-        assertThat(((TargetSpellControllerDiscardsEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount()).isEqualTo(1);
-    }
-
     // ===== Opponent cannot pay — spell is countered, opponent discards =====
 
     @Test

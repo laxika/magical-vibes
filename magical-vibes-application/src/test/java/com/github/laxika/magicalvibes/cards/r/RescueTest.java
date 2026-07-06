@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RescueTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rescue has correct card properties")
-    void hasCorrectProperties() {
-        Rescue card = new Rescue();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-        assertThat(card.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DarkNourishmentTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dark Nourishment has correct card properties")
-    void hasCorrectProperties() {
-        DarkNourishment card = new DarkNourishment();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToAnyTargetAndGainLifeEffect.class);
-        DealDamageToAnyTargetAndGainLifeEffect effect = (DealDamageToAnyTargetAndGainLifeEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(3);
-        assertThat(effect.lifeGain()).isEqualTo(3);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -19,18 +19,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChokingFumesTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has correct effect and does not need a target")
-    void hasCorrectProperties() {
-        ChokingFumes card = new ChokingFumes();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).singleElement()
-                .isInstanceOf(PutMinusOneMinusOneCounterOnEachAttackingCreatureEffect.class);
-    }
-
     // ===== Resolution =====
 
     @Test

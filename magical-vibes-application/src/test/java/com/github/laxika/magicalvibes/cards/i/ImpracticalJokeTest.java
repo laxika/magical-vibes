@@ -19,24 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ImpracticalJokeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has damage-can't-be-prevented + 3 damage (up to one) effects")
-    void cardStructure() {
-        ImpracticalJoke card = new ImpracticalJoke();
-        var effects = card.getEffects(EffectSlot.SPELL);
-
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(DamageCantBePreventedThisTurnEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(DealDamageToTargetCreatureOrPlaneswalkerEffect.class);
-        assertThat(((DealDamageToTargetCreatureOrPlaneswalkerEffect) effects.get(1)).damage()).isEqualTo(3);
-
-        assertThat(card.getSpellTargets()).hasSize(1);
-        assertThat(card.getSpellTargets().getFirst().getMinTargets()).isZero();
-        assertThat(card.getSpellTargets().getFirst().getMaxTargets()).isEqualTo(1);
-    }
-
     // ===== Damage + prevention flag =====
 
     @Test

@@ -19,24 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MemorialToGeniusTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Memorial to Genius has correct card structure")
-    void hasCorrectProperties() {
-        MemorialToGenius card = new MemorialToGenius();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(0);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isEqualTo("{4}{U}");
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Enters the battlefield tapped =====
 
     @Test

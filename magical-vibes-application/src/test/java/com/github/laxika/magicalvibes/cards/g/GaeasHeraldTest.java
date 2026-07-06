@@ -17,16 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GaeasHeraldTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Gaea's Herald has correct card properties")
-    void hasCorrectProperties() {
-        GaeasHerald card = new GaeasHerald();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CreatureSpellsCantBeCounteredEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Creature spells are not countered while Gaea's Herald is on battlefield")

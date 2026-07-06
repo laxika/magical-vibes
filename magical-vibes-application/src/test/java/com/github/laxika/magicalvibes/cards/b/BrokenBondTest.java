@@ -26,21 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BrokenBondTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Broken Bond has correct effects")
-    void hasCorrectProperties() {
-        BrokenBond card = new BrokenBond();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(may.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
-        PutCardToBattlefieldEffect put = (PutCardToBattlefieldEffect) may.wrapped();
-        assertThat(put.label()).isEqualTo("land");
-    }
+    
 
     @Test
     @DisplayName("Casting Broken Bond puts it on the stack with target")

@@ -35,42 +35,11 @@ class VenserTheSojournerTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has ExileTargetPermanentAndReturnAtEndStepEffect with owned permanent filter")
-    void plusTwoAbilityHasCorrectEffects() {
-        VenserTheSojourner card = new VenserTheSojourner();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ExileTargetPermanentAndReturnAtEndStepEffect.class);
-        assertThat(ability.getTargetFilter()).isInstanceOf(OwnedPermanentPredicateTargetFilter.class);
-    }
+    
 
-    @Test
-    @DisplayName("-1 ability has MakeAllCreaturesUnblockableEffect")
-    void minusOneAbilityHasCorrectEffect() {
-        VenserTheSojourner card = new VenserTheSojourner();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(MakeAllCreaturesUnblockableEffect.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability has VenserEmblemEffect")
-    void minusEightAbilityHasCorrectEffect() {
-        VenserTheSojourner card = new VenserTheSojourner();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(VenserEmblemEffect.class);
-    }
+    
 
     // ===== Casting =====
 

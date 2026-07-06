@@ -39,18 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TurnToSlagTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Turn to Slag has correct effects")
-    void hasCorrectEffects() {
-        TurnToSlag card = new TurnToSlag();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyEquipmentAttachedToTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect damageEffect = (DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(damageEffect.damage()).isEqualTo(new Fixed(5));
-    }
+    
 
     @Test
     @DisplayName("Turn to Slag deals 5 damage and kills a small creature")

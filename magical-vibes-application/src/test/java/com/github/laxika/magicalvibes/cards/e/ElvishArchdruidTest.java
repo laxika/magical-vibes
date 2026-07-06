@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ElvishArchdruidTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Elvish Archdruid has static boost and tap mana ability")
-    void hasCorrectProperties() {
-        ElvishArchdruid card = new ElvishArchdruid();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddManaPerControlledPermanentEffect.class);
-    }
-
     // ===== Static effect: buffs other Elves you control =====
 
     @Test

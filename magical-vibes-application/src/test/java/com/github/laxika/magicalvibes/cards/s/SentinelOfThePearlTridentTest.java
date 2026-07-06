@@ -25,37 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SentinelOfThePearlTridentTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping ExileTargetPermanentAndReturnAtEndStepEffect on ETB")
-    void hasCorrectEffects() {
-        SentinelOfThePearlTrident card = new SentinelOfThePearlTrident();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetPermanentAndReturnAtEndStepEffect.class);
-    }
-
-    @Test
-    @DisplayName("Target filter requires historic permanent controlled by source controller")
-    void hasCorrectTargetFilter() {
-        SentinelOfThePearlTrident card = new SentinelOfThePearlTrident();
-
-        assertThat(card.getSpellTargets()).hasSize(1);
-        assertThat(card.getSpellTargets().getFirst().getFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) card.getSpellTargets().getFirst().getFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate allOf = (PermanentAllOfPredicate) filter.predicate();
-        assertThat(allOf.predicates()).hasSize(2);
-        assertThat(allOf.predicates()).anySatisfy(p ->
-                assertThat(p).isInstanceOf(PermanentControlledBySourceControllerPredicate.class));
-        assertThat(allOf.predicates()).anySatisfy(p ->
-                assertThat(p).isInstanceOf(PermanentIsHistoricPredicate.class));
-    }
-
     // ===== ETB with artifact (historic) =====
 
     @Test

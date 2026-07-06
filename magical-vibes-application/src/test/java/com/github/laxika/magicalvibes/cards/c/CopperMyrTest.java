@@ -12,18 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CopperMyrTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Copper Myr has tap-for-green mana ability")
-    void hasTapForGreenManaAbility() {
-        CopperMyr card = new CopperMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-    }
-
     // ===== Mana production =====
 
     @Test

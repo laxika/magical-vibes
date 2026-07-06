@@ -37,30 +37,6 @@ class DelugeVirtuosoTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Has ETB tap + skip-untap effects and an Opus spell-cast boost trigger")
-    void hasCorrectEffects() {
-        DelugeVirtuoso card = new DelugeVirtuoso();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .anyMatch(e -> e instanceof TapTargetPermanentEffect);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .anyMatch(e -> e instanceof SkipNextUntapOnTargetEffect);
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().get(0)).isInstanceOf(BoostSelfEffect.class);
-        assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional = (ConditionalEffect) trigger.resolvedEffects().get(1);
-        assertThat(((SpellManaSpentAtLeast) conditional.condition()).minMana()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
-    }
-
     // ===== ETB: tap + stun (skip untap) =====
 
     @Test

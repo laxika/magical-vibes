@@ -19,19 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MoxAmberTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has tap activated ability with AwardManaOfColorsAmongControlledEffect")
-    void hasCorrectAbility() {
-        MoxAmber card = new MoxAmber();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardManaOfColorsAmongControlledEffect.class);
-        assertThat(ability.getTimingRestriction()).isNull();
-    }
+    
 
     @Test
     @DisplayName("Produces no mana when no legendary creatures or planeswalkers are controlled")

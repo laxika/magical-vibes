@@ -21,19 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpreadingRotTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spreading Rot has correct effect structure")
-    void hasCorrectEffectStructure() {
-        SpreadingRot card = new SpreadingRot();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentAndControllerLosesLifeEffect.class);
-
-        DestroyTargetPermanentAndControllerLosesLifeEffect effect =
-                (DestroyTargetPermanentAndControllerLosesLifeEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.lifeLoss()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting Spreading Rot puts it on the stack with target")

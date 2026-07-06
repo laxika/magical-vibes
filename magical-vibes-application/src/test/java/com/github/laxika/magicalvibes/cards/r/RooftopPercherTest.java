@@ -25,22 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RooftopPercherTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rooftop Percher has correct card properties")
-    void hasCorrectProperties() {
-        RooftopPercher card = new RooftopPercher();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileCardsFromGraveyardEffect.class);
-        ExileCardsFromGraveyardEffect effect = (ExileCardsFromGraveyardEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.maxTargets()).isEqualTo(2);
-        assertThat(effect.lifeGain()).isEqualTo(3);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -363,5 +347,4 @@ class RooftopPercherTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
     }
 }
-
 

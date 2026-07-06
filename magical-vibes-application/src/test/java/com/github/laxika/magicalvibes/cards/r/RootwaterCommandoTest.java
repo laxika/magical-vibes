@@ -20,9 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RootwaterCommandoTest extends BaseCardTest {
 
 
-    // ===== Card properties =====
-
-
     // ===== Casting and resolving =====
 
     @Test

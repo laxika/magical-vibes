@@ -28,46 +28,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class FallOfTheThranTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has destroy all lands effect")
-    void chapterIHasDestroyAllLandsEffect() {
-        FallOfTheThran card = new FallOfTheThran();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-        DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) effects.getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsLandPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Chapter II has each player returns up to two land cards effect")
-    void chapterIIHasReturnLandsEffect() {
-        FallOfTheThran card = new FallOfTheThran();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.class);
-        EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect effect =
-                (EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect) effects.getFirst();
-        assertThat(effect.maxCount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Chapter III has same effect as chapter II")
-    void chapterIIIHasReturnLandsEffect() {
-        FallOfTheThran card = new FallOfTheThran();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect.class);
-        EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect effect =
-                (EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect) effects.getFirst();
-        assertThat(effect.maxCount()).isEqualTo(2);
-    }
-
     // ===== Chapter I: Destroy all lands =====
 
     @Test

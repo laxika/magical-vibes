@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ManicVandalTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Manic Vandal has correct card properties")
-    void hasCorrectProperties() {
-        ManicVandal card = new ManicVandal();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

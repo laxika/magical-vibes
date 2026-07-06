@@ -19,22 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FieryCannonadeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fiery Cannonade has correct effect configuration")
-    void hasCorrectEffect() {
-        FieryCannonade card = new FieryCannonade();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isInstanceOf(PermanentNotPredicate.class);
-        PermanentNotPredicate notPred = (PermanentNotPredicate) effect.filter();
-        assertThat(notPred.predicate()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        PermanentHasSubtypePredicate subtypePred = (PermanentHasSubtypePredicate) notPred.predicate();
-        assertThat(subtypePred.subtype()).isEqualTo(CardSubtype.PIRATE);
-    }
+    
 
     @Test
     @DisplayName("Fiery Cannonade kills non-Pirate creatures with toughness 2 or less on both sides")

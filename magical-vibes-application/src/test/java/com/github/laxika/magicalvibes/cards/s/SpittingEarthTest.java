@@ -25,18 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpittingEarthTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Spitting Earth has correct card properties")
-    void hasCorrectProperties() {
-        SpittingEarth card = new SpittingEarth();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isEqualTo(new DealDamageToTargetCreatureEffect(new PermanentCount(
-                        new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER)));
-    }
+    
 
     @Test
     @DisplayName("Casting Spitting Earth targeting a creature puts it on the stack")

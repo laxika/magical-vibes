@@ -23,18 +23,7 @@ class CreepyDollTest extends BaseCardTest {
         return perm;
     }
 
-    @Test
-    @DisplayName("Has FlipCoinWinEffect wrapping DestroyTargetPermanentEffect on combat damage to creature")
-    void hasCorrectEffects() {
-        CreepyDoll card = new CreepyDoll();
-
-        var effects = card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(FlipCoinWinEffect.class);
-
-        FlipCoinWinEffect flipEffect = (FlipCoinWinEffect) effects.getFirst();
-        assertThat(flipEffect.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Combat damage to creature triggers coin flip — blocker destroyed on win or survives on loss")

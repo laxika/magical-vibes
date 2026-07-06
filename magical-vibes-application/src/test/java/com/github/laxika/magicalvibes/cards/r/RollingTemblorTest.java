@@ -24,28 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RollingTemblorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effect configuration")
-    void hasCorrectEffect() {
-        RollingTemblor card = new RollingTemblor();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isInstanceOf(PermanentNotPredicate.class);
-        PermanentNotPredicate notPred = (PermanentNotPredicate) effect.filter();
-        assertThat(notPred.predicate()).isInstanceOf(PermanentHasKeywordPredicate.class);
-        PermanentHasKeywordPredicate keywordPred = (PermanentHasKeywordPredicate) notPred.predicate();
-        assertThat(keywordPred.keyword()).isEqualTo(Keyword.FLYING);
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{4}{R}{R}");
-    }
-
     // ===== Normal cast =====
 
     @Test

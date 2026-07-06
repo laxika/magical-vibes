@@ -20,19 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TezzeretsGambitTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has draw two cards and proliferate effects")
-    void hasCorrectEffects() {
-        TezzeretsGambit card = new TezzeretsGambit();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ProliferateEffect.class);
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

@@ -22,20 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VampireNocturnusTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Vampire Nocturnus has correct card properties")
-    void hasCorrectProperties() {
-        VampireNocturnus card = new VampireNocturnus();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(PlayWithTopCardRevealedEffect.class);
-        // Other Vampires (filtered) and the self-buff (names itself) are modeled as two conditional boosts.
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(ConditionalEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

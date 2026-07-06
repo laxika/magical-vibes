@@ -27,32 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RevelInRichesTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CREATURE_DIES CreateTokenEffect and UPKEEP_TRIGGERED win condition")
-    void hasCorrectStructure() {
-        RevelInRiches card = new RevelInRiches();
-
-        // Death trigger: create Treasure token
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst();
-        assertThat(tokenEffect.primaryType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(1));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Treasure");
-
-        // Upkeep trigger: win if 10+ Treasures
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect winCondition =
-                (ConditionalEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(((ControlsPermanentCount) winCondition.condition()).minCount()).isEqualTo(10);
-        assertThat(winCondition.wrapped()).isInstanceOf(WinGameEffect.class);
-    }
-
     // ===== Death trigger: create Treasure =====
 
     @Test

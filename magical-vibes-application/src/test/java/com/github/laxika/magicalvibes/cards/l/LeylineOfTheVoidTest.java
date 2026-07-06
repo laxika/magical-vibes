@@ -44,30 +44,6 @@ class LeylineOfTheVoidTest {
         // Do NOT call skipMulligan() here — leyline tests need to set hand first
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Leyline of the Void has ExileOpponentCardsInsteadOfGraveyardEffect as static effect")
-    void hasExileReplacementStaticEffect() {
-        LeylineOfTheVoid card = new LeylineOfTheVoid();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ExileOpponentCardsInsteadOfGraveyardEffect.class);
-    }
-
-    @Test
-    @DisplayName("Leyline of the Void has ON_OPENING_HAND_REVEAL MayEffect wrapping LeylineStartOnBattlefieldEffect")
-    void hasOpeningHandLeylineEffect() {
-        LeylineOfTheVoid card = new LeylineOfTheVoid();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(LeylineStartOnBattlefieldEffect.class);
-    }
-
     // ===== Leyline opening hand mechanic =====
 
     @Test

@@ -24,20 +24,7 @@ class HelmOfTheHostTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Helm of the Host has beginning of combat triggered effect")
-    void hasBeginningOfCombatTriggeredEffect() {
-        HelmOfTheHost card = new HelmOfTheHost();
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenCopyOfEquippedCreatureEffect.class);
-
-        CreateTokenCopyOfEquippedCreatureEffect effect =
-                (CreateTokenCopyOfEquippedCreatureEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
-        assertThat(effect.removeLegendary()).isTrue();
-        assertThat(effect.grantHaste()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Helm of the Host has equip {5} ability")

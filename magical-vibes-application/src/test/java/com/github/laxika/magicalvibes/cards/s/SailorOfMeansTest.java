@@ -17,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SailorOfMeansTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one ON_ENTER_BATTLEFIELD effect that creates one Treasure token")
-    void hasCorrectEffect() {
-        SailorOfMeans card = new SailorOfMeans();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.TREASURE);
-    }
-
     // ===== Casting =====
 
     @Test

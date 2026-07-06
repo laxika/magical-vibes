@@ -43,32 +43,6 @@ class LeylineOfAnticipationTest {
         // Do NOT call skipMulligan() here — leyline tests need to set hand first
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Leyline of Anticipation has GrantFlashToCardTypeEffect with null (all types)")
-    void hasGrantFlashStaticEffect() {
-        LeylineOfAnticipation card = new LeylineOfAnticipation();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantFlashToCardTypeEffect.class);
-        GrantFlashToCardTypeEffect effect = (GrantFlashToCardTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isNull();
-    }
-
-    @Test
-    @DisplayName("Leyline of Anticipation has ON_OPENING_HAND_REVEAL MayEffect wrapping LeylineStartOnBattlefieldEffect")
-    void hasOpeningHandLeylineEffect() {
-        LeylineOfAnticipation card = new LeylineOfAnticipation();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(LeylineStartOnBattlefieldEffect.class);
-    }
-
     // ===== Leyline opening hand mechanic (CR 103.6) =====
 
     @Test

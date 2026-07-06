@@ -18,18 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EleshNornGrandCenobiteTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Elesh Norn has two static boost effects")
-    void hasCorrectProperties() {
-        EleshNornGrandCenobite card = new EleshNornGrandCenobite();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(StaticBoostEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

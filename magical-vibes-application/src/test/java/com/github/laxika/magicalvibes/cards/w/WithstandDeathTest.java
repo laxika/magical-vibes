@@ -21,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WithstandDeathTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Withstand Death has correct card properties")
-    void hasCorrectProperties() {
-        WithstandDeath card = new WithstandDeath();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

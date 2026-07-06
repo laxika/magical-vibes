@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TreetopVillageTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Treetop Village has correct card properties")
-    void hasCorrectProperties() {
-        TreetopVillage card = new TreetopVillage();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{G}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AnimateLandEffect.class);
-    }
-
     // ===== Enters the battlefield tapped =====
 
     @Test

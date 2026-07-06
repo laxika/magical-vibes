@@ -22,18 +22,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class HellriderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has per-creature attack trigger that deals 1 damage to the attacked target")
-    void hasCorrectEffect() {
-        Hellrider card = new Hellrider();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS).getFirst())
-                .isInstanceOf(DealDamageToAttackedTargetEffect.class);
-        DealDamageToAttackedTargetEffect effect =
-                (DealDamageToAttackedTargetEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS).getFirst();
-        assertThat(effect.damage()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Triggers once for each creature you control that attacks")

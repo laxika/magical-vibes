@@ -21,18 +21,6 @@ class PhyrexianVatmotherTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyrexian Vatmother has upkeep poison trigger")
-    void hasUpkeepPoisonTrigger() {
-        PhyrexianVatmother card = new PhyrexianVatmother();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(GiveControllerPoisonCountersEffect.class);
-    }
-
     // ===== Upkeep poison trigger =====
 
     @Test

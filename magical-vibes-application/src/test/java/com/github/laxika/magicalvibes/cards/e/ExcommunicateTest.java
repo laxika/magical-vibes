@@ -22,18 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ExcommunicateTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Excommunicate has correct effects")
-    void hasCorrectEffects() {
-        Excommunicate card = new Excommunicate();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(PutTargetOnTopOfLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

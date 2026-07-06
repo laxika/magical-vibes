@@ -27,19 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ApostlesBlessingTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Apostle's Blessing has correct effects")
-    void hasCorrectEffects() {
-        ApostlesBlessing card = new ApostlesBlessing();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GrantProtectionChoiceUntilEndOfTurnEffect.class);
-
-        GrantProtectionChoiceUntilEndOfTurnEffect effect =
-                (GrantProtectionChoiceUntilEndOfTurnEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.includeArtifacts()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Resolving triggers color/artifact choice, choosing a color grants protection from that color")

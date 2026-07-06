@@ -24,24 +24,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ArborArmamentTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Arbor Armament has correct effects")
-    void hasCorrectEffects() {
-        ArborArmament card = new ArborArmament();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counter =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(counter.count()).isEqualTo(1);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.REACH);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Resolving Arbor Armament puts a +1/+1 counter and grants reach to target creature")

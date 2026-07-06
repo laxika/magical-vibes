@@ -17,25 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MoonveilDragonTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has red activated ability that boosts own creatures")
-    void hasCorrectAbility() {
-        MoonveilDragon card = new MoonveilDragon();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(BoostAllOwnCreaturesEffect.class);
-
-        BoostAllOwnCreaturesEffect effect = (BoostAllOwnCreaturesEffect)
-                card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
-        assertThat(effect.filter()).isNull();
-    }
+    
 
     @Test
     @DisplayName("Activating ability puts it on the stack")

@@ -18,31 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NavigatorsRuinTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping MillTargetPlayerEffect(4) on CONTROLLER_END_STEP_TRIGGERED")
-    void hasCorrectEffect() {
-        NavigatorsRuin card = new NavigatorsRuin();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect mill = (MillTargetPlayerEffect) raid.wrapped();
-        assertThat(mill.count()).isEqualTo(4);
-    }
-
-    @Test
-    @DisplayName("Has PlayerPredicateTargetFilter restricting to opponents")
-    void hasOpponentTargetFilter() {
-        NavigatorsRuin card = new NavigatorsRuin();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
     // ===== Raid met — mills target opponent =====
 
     @Test

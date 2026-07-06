@@ -43,23 +43,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class FangrenMarauderTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fangren Marauder has the any-artifact-to-graveyard triggered ability as a MayEffect")
-    void hasCorrectEffects() {
-        FangrenMarauder card = new FangrenMarauder();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(new Fixed(5));
-        assertThat(may.prompt()).isEqualTo("Gain 5 life?");
-    }
-
     // ===== Triggering =====
 
     @Test

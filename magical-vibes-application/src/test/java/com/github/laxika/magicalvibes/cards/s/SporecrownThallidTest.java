@@ -19,24 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SporecrownThallidTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sporecrown Thallid has static boost effect for Fungus and Saproling")
-    void hasCorrectStaticEffect() {
-        SporecrownThallid card = new SporecrownThallid();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).isEmpty();
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
     // ===== Static effect: buffs other Fungus/Saproling you control =====
 
     @Test
@@ -165,7 +147,5 @@ class SporecrownThallidTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, deathbloom)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, deathbloom)).isEqualTo(2);
     }
-
-    // ===== Helper methods =====
 
 }

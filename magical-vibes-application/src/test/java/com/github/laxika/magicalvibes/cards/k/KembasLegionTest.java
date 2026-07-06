@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KembasLegionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Kemba's Legion has GrantAdditionalBlockPerEquipmentEffect")
-    void hasCorrectEffect() {
-        KembasLegion card = new KembasLegion();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantAdditionalBlockPerEquipmentEffect.class);
-    }
-
     // ===== Blocking with no equipment =====
 
     @Test

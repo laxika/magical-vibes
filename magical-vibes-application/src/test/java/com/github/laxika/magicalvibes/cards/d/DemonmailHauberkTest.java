@@ -24,46 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DemonmailHauberkTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +4/+2 boost for equipped creature")
-    void hasStaticBoost() {
-        DemonmailHauberk card = new DemonmailHauberk();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Has equip ability with sacrifice creature cost")
-    void hasEquipAbilityWithSacrificeCreatureCost() {
-        DemonmailHauberk card = new DemonmailHauberk();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(SacrificeCreatureCost.class);
-                    assertThat(effects.get(1)).isInstanceOf(EquipEffect.class);
-                });
-    }
-
     // ===== Equip by sacrificing a creature =====
 
     @Test
@@ -155,7 +115,6 @@ class DemonmailHauberkTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
 
     private Card createTokenCreature(String name) {
         Card card = new Card();

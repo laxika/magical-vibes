@@ -23,19 +23,7 @@ class TravelPreparationsTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has one SPELL effect: put +1/+1 counter on target creature")
-    void hasCorrectEffects() {
-        TravelPreparations card = new TravelPreparations();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect effect =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.count()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Has flashback cost {1}{W}")

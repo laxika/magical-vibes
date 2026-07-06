@@ -23,25 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PerilousVoyageTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has bounce-with-conditional-scry effect on SPELL slot")
-    void hasCorrectSpellEffects() {
-        PerilousVoyage card = new PerilousVoyage();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnTargetPermanentToHandWithManaValueConditionalEffect.class);
-
-        ReturnTargetPermanentToHandWithManaValueConditionalEffect effect =
-                (ReturnTargetPermanentToHandWithManaValueConditionalEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.maxManaValue()).isEqualTo(2);
-        assertThat(effect.conditionalEffect()).isInstanceOf(ScryEffect.class);
-        assertThat(((ScryEffect) effect.conditionalEffect()).count()).isEqualTo(2);
-    }
-
     // ===== Bounce + scry (MV ≤ 2) =====
 
     @Test

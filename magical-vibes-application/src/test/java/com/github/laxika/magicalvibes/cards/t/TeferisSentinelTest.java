@@ -20,28 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TeferisSentinelTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC ConditionalEffect(TEFERI) wrapping StaticBoostEffect(4, 0, SELF)")
-    void hasCorrectStructure() {
-        TeferisSentinel card = new TeferisSentinel();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(((ControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.TEFERI));
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== With Teferi planeswalker =====
 
     @Test

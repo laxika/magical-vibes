@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AuraOfSilenceTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Aura of Silence has correct card properties")
-    void hasCorrectProperties() {
-        AuraOfSilence card = new AuraOfSilence();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(IncreaseOpponentCastCostEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_SACRIFICE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SACRIFICE).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

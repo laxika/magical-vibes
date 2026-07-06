@@ -26,25 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LegacyWeaponTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Legacy Weapon has correct card properties")
-    void hasCorrectProperties() {
-        LegacyWeapon card = new LegacyWeapon();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{W}{U}{B}{R}{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(ExileTargetPermanentEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

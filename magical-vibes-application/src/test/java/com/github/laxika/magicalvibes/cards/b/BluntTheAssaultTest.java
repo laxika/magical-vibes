@@ -21,18 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BluntTheAssaultTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Blunt the Assault has correct effects")
-    void hasCorrectEffects() {
-        BluntTheAssault card = new BluntTheAssault();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isEqualTo(new GainLifeEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER)));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(PreventAllCombatDamageEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

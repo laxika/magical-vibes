@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GnathosaurTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has sacrifice-an-artifact activated ability that grants trample")
-    void hasCorrectAbilityStructure() {
-        Gnathosaur card = new Gnathosaur();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeArtifactCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-    }
-
     // ===== Activation: sacrifice an artifact to gain trample =====
 
     @Test

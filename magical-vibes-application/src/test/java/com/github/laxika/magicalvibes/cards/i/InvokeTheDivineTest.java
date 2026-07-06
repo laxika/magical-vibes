@@ -23,16 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class InvokeTheDivineTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Invoke the Divine has correct card properties")
-    void hasCorrectProperties() {
-        InvokeTheDivine card = new InvokeTheDivine();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Invoke the Divine puts it on the stack with target")

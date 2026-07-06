@@ -25,35 +25,9 @@ class AccordersShieldTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Accorder's Shield has static +0/+3 boost effect")
-    void hasStaticBoostEffect() {
-        AccordersShield card = new AccordersShield();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(0);
-        assertThat(boost.toughnessBoost()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Accorder's Shield has static vigilance keyword grant effect")
-    void hasVigilanceGrantEffect() {
-        AccordersShield card = new AccordersShield();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.VIGILANCE);
-    }
+    
 
     @Test
     @DisplayName("Accorder's Shield has equip {3} ability with correct properties")

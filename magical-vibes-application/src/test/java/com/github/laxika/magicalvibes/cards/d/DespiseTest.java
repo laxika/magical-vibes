@@ -24,17 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DespiseTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Despise has correct effect with creature and planeswalker included types")
-    void hasCorrectProperties() {
-        Despise card = new Despise();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        ChooseCardFromTargetHandToDiscardEffect effect =
-                (ChooseCardFromTargetHandToDiscardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.includedTypes()).containsExactlyInAnyOrder(CardType.CREATURE, CardType.PLANESWALKER);
-    }
+    
 
     @Test
     @DisplayName("Resolving reveals hand and prompts for creature/planeswalker choice")

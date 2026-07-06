@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SageOwlTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sage Owl has correct card properties")
-    void hasCorrectProperties() {
-        SageOwl card = new SageOwl();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ReorderTopCardsOfLibraryEffect.class);
-        ReorderTopCardsOfLibraryEffect effect = (ReorderTopCardsOfLibraryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(4);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -211,5 +196,4 @@ class SageOwlTest extends BaseCardTest {
                         && p.getCard().getKeywords().contains(Keyword.FLYING));
     }
 }
-
 

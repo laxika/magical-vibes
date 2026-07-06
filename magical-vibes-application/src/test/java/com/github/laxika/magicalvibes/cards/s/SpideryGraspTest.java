@@ -25,23 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpideryGraspTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spidery Grasp has correct effects")
-    void hasCorrectEffects() {
-        SpideryGrasp card = new SpideryGrasp();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(4));
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(grant.keywords()).containsExactly(Keyword.REACH);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Resolving Spidery Grasp untaps, boosts, and grants reach to target creature")

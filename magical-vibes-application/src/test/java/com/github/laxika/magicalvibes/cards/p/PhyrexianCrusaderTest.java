@@ -47,20 +47,6 @@ class PhyrexianCrusaderTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyrexian Crusader has protection from red and white")
-    void hasCorrectProtection() {
-        PhyrexianCrusader card = new PhyrexianCrusader();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromColorsEffect.class);
-
-        ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
-    }
-
     // ===== Casting =====
 
     @Test

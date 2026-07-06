@@ -21,15 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AbundanceTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Abundance has correct card properties")
-    void hasCorrectProperties() {
-        Abundance card = new Abundance();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AbundanceDrawReplacementEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Can replace draw step draw with nonland card")

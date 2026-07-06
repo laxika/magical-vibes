@@ -19,24 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IcatianPriestTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Icatian Priest has correct card properties")
-    void hasCorrectProperties() {
-        IcatianPriest card = new IcatianPriest();
-
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(1));
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{W}{W}");
-    }
-
     // ===== Activation =====
 
     @Test

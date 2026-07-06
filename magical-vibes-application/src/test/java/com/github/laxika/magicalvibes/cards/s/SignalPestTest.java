@@ -22,20 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SignalPestTest extends BaseCardTest {
 
-    // ===== Static effect properties =====
-
-    @Test
-    @DisplayName("Signal Pest has CanBeBlockedOnlyByFilter static effect for flying or reach")
-    void hasCorrectBlockingRestriction() {
-        SignalPest card = new SignalPest();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CanBeBlockedOnlyByFilterEffect.class);
-        CanBeBlockedOnlyByFilterEffect effect = (CanBeBlockedOnlyByFilterEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.blockerPredicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-        assertThat(effect.allowedBlockersDescription()).isEqualTo("creatures with flying or reach");
-    }
-
     // ===== Blocking restrictions =====
 
     @Test

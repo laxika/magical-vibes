@@ -17,24 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SageOfLatNamTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has tap + sacrifice artifact cost with draw card activated ability")
-    void hasCorrectAbility() {
-        SageOfLatNam card = new SageOfLatNam();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(SacrificeArtifactCost.class);
-                    assertThat(effects.get(1)).isInstanceOf(DrawCardEffect.class);
-                });
-    }
-
     // ===== Sacrifice cost =====
 
     @Test
@@ -151,7 +133,5 @@ class SageOfLatNamTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, null))
                 .isInstanceOf(IllegalStateException.class);
     }
-
-    // ===== Helpers =====
 
 }

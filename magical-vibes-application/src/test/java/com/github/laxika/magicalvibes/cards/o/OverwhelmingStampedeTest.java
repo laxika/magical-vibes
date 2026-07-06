@@ -23,19 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OverwhelmingStampedeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Overwhelming Stampede has correct card properties")
-    void hasCorrectProperties() {
-        OverwhelmingStampede card = new OverwhelmingStampede();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllOwnCreaturesByGreatestPowerEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("Boost is based on the greatest power among controlled creatures")

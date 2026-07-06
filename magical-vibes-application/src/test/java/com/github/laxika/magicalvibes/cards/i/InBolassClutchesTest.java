@@ -22,21 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InBolassClutchesTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("In Bolas's Clutches has correct effects")
-    void hasCorrectEffects() {
-        InBolassClutches card = new InBolassClutches();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anySatisfy(e -> assertThat(e).isInstanceOf(ControlEnchantedCreatureEffect.class))
-                .anySatisfy(e -> assertThat(e).isInstanceOf(GrantSupertypeToEnchantedPermanentEffect.class));
-    }
-
     // ===== Stealing creatures =====
 
     @Test

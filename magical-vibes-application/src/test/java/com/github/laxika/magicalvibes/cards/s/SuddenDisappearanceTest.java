@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SuddenDisappearanceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Sudden Disappearance has correct effect configuration")
-    void hasCorrectEffectConfiguration() {
-        SuddenDisappearance card = new SuddenDisappearance();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExilePermanentsTargetPlayerControlsAndReturnAtStepEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack as SORCERY_SPELL targeting a player")

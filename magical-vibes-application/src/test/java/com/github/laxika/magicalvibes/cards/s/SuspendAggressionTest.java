@@ -34,21 +34,6 @@ class SuspendAggressionTest extends BaseCardTest {
         return top;
     }
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Has two SPELL effects and needs a target")
-    void hasCorrectStructure() {
-        SuspendAggression card = new SuspendAggression();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ExileTargetPermanentMayPlayUntilNextTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ExileTopCardsMayPlayUntilNextTurnEffect.class);
-    }
-
     // ===== Resolution =====
 
     @Test

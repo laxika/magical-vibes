@@ -18,26 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class InfantryVeteranTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Infantry Veteran has tap ability with BoostTargetCreatureEffect targeting attacking creatures")
-    void hasCorrectProperties() {
-        InfantryVeteran card = new InfantryVeteran();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter()).isNotNull();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Activation on attacking creature =====
 
     @Test

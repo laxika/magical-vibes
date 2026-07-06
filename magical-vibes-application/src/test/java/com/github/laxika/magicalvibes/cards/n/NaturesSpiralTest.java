@@ -23,15 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NaturesSpiralTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Nature's Spiral has correct effect configuration")
-    void hasCorrectEffectConfiguration() {
-        NaturesSpiral card = new NaturesSpiral();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Nature's Spiral returns target creature card from graveyard to hand")

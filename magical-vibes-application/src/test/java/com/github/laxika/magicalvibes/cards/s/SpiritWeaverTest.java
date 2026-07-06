@@ -29,31 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpiritWeaverTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spirit Weaver has correct card properties")
-    void hasCorrectProperties() {
-        SpiritWeaver card = new SpiritWeaver();
-
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(0));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(1));
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.BLUE))
-                )),
-                "Target must be a green or blue creature"
-        ));
-    }
-
     // ===== Activation =====
 
     @Test

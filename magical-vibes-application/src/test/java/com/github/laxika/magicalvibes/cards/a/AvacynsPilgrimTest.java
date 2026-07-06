@@ -12,18 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AvacynsPilgrimTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Avacyn's Pilgrim has tap-for-white mana ability")
-    void hasTapForWhiteManaAbility() {
-        AvacynsPilgrim card = new AvacynsPilgrim();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.WHITE));
-    }
-
     // ===== Mana production =====
 
     @Test

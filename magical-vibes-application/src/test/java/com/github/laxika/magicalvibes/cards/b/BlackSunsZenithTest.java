@@ -24,18 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class BlackSunsZenithTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Black Sun's Zenith has correct effects")
-    void hasCorrectEffects() {
-        BlackSunsZenith card = new BlackSunsZenith();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(PutXMinusOneMinusOneCountersOnEachCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

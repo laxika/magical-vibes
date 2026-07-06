@@ -27,20 +27,6 @@ class PhyrexianSwarmlordTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has UPKEEP_TRIGGERED CreateTokenEffect counting opponent poison counters")
-    void hasCorrectEffect() {
-        PhyrexianSwarmlord card = new PhyrexianSwarmlord();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(new OpponentPoisonCounters());
-    }
-
     // ===== No poison counters =====
 
     @Test

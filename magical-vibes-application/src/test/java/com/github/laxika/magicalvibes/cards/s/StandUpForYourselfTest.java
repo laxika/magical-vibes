@@ -19,16 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StandUpForYourselfTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has a single destroy target permanent effect")
-    void hasCorrectEffect() {
-        StandUpForYourself card = new StandUpForYourself();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Destroys a creature with power 3 or greater")

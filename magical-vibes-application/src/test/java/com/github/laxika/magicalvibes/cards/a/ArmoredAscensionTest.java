@@ -22,17 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArmoredAscensionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Armored Ascension has correct card properties")
-    void hasCorrectProperties() {
-        ArmoredAscension card = new ArmoredAscension();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(BoostCreaturePerControlledSubtypeEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Armored Ascension puts it on the stack")

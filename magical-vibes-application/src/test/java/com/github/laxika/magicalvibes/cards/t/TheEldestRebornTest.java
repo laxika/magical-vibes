@@ -33,57 +33,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheEldestRebornTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has EachOpponentSacrificesPermanentsEffect for creature or planeswalker")
-    void chapterIHasCorrectEffect() {
-        TheEldestReborn card = new TheEldestReborn();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(EachOpponentSacrificesPermanentsEffect.class);
-        EachOpponentSacrificesPermanentsEffect effect = (EachOpponentSacrificesPermanentsEffect) effects.getFirst();
-        assertThat(effect.count()).isEqualTo(1);
-        assertThat(effect.filter()).isInstanceOf(PermanentAnyOfPredicate.class);
-        PermanentAnyOfPredicate filter = (PermanentAnyOfPredicate) effect.filter();
-        assertThat(filter.predicates()).hasSize(2);
-        assertThat(filter.predicates().get(0)).isInstanceOf(PermanentIsCreaturePredicate.class);
-        assertThat(filter.predicates().get(1)).isInstanceOf(PermanentIsPlaneswalkerPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Chapter II has EachOpponentDiscardsEffect for 1 card")
-    void chapterIIHasCorrectEffect() {
-        TheEldestReborn card = new TheEldestReborn();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(EachOpponentDiscardsEffect.class);
-        EachOpponentDiscardsEffect effect = (EachOpponentDiscardsEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Chapter III has ReturnCardFromGraveyardEffect for creature or planeswalker from any graveyard")
-    void chapterIIIHasCorrectEffect() {
-        TheEldestReborn card = new TheEldestReborn();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) effects.getFirst();
-        assertThat(effect.destination()).isEqualTo(GraveyardChoiceDestination.BATTLEFIELD);
-        assertThat(effect.source()).isEqualTo(GraveyardSearchScope.ALL_GRAVEYARDS);
-        assertThat(effect.filter()).isInstanceOf(CardAnyOfPredicate.class);
-        CardAnyOfPredicate filter = (CardAnyOfPredicate) effect.filter();
-        assertThat(filter.predicates()).hasSize(2);
-        assertThat(filter.predicates().get(0)).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) filter.predicates().get(0)).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(filter.predicates().get(1)).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) filter.predicates().get(1)).cardType()).isEqualTo(CardType.PLANESWALKER);
-    }
-
     // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test

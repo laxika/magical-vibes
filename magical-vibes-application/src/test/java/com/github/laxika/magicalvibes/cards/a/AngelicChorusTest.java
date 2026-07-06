@@ -35,16 +35,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class AngelicChorusTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Angelic Chorus has correct card properties")
-    void angelicChorusHasCorrectProperties() {
-        AngelicChorus card = new AngelicChorus();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEqualToToughnessEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Angelic Chorus puts it on the stack as an enchantment spell")

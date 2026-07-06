@@ -21,30 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MortisDogsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with BoostSelfEffect(2, 0)")
-    void hasAttackTrigger() {
-        MortisDogs card = new MortisDogs();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
-
-    @Test
-    @DisplayName("Has ON_DEATH trigger with TargetPlayerLosesLifeEqualToPowerEffect")
-    void hasDeathTrigger() {
-        MortisDogs card = new MortisDogs();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeEqualToPowerEffect.class);
-    }
-
     // ===== Attack trigger =====
 
     @Test
@@ -148,7 +124,6 @@ class MortisDogsTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

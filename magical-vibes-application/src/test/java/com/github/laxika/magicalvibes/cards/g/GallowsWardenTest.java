@@ -15,24 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GallowsWardenTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gallows Warden has static boost effect for Spirits")
-    void hasCorrectStaticEffect() {
-        GallowsWarden card = new GallowsWarden();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(0);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).isEmpty();
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
     // ===== Static effect: buffs other Spirits you control =====
 
     @Test
@@ -126,7 +108,5 @@ class GallowsWardenTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, ghostWarden)).isEqualTo(1);
         assertThat(gqs.getEffectiveToughness(gd, ghostWarden)).isEqualTo(1);
     }
-
-    // ===== Helper methods =====
 
 }

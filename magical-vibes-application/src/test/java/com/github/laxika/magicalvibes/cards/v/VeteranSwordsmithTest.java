@@ -19,24 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VeteranSwordsmithTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Veteran Swordsmith has static boost effect for own Soldiers")
-    void hasCorrectProperties() {
-        VeteranSwordsmith card = new VeteranSwordsmith();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
-        assertThat(effect.grantedKeywords()).isEmpty();
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isNotNull();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

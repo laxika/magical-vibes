@@ -23,27 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThallidSoothsayerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Thallid Soothsayer has correct activated ability structure")
-    void hasCorrectAbilityStructure() {
-        ThallidSoothsayer card = new ThallidSoothsayer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-
-        DrawCardEffect draw = (DrawCardEffect) ability.getEffects().get(1);
-        assertThat(draw.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Activation: sacrificing a creature and drawing =====
 
     @Test

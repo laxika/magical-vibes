@@ -23,40 +23,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HinterlandHermitTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Front face has correct transform trigger configured")
-    void frontFaceHasCorrectEffects() {
-        HinterlandHermit card = new HinterlandHermit();
+    
 
-        assertThat(card.getActivatedAbilities()).isEmpty();
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(HinterlandScourge.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("HinterlandScourge");
-    }
-
-    @Test
-    @DisplayName("Back face has correct static ability and transform trigger configured")
-    void backFaceHasCorrectEffects() {
-        HinterlandHermit card = new HinterlandHermit();
-        HinterlandScourge backFace = (HinterlandScourge) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-        assertThat(backFace.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MustBeBlockedIfAbleEffect.class);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Transforms to Hinterland Scourge when no spells were cast last turn")

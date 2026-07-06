@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BishopOfRebirthTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Bishop of Rebirth has MayEffect wrapping ReturnCardFromGraveyardEffect on attack only")
-    void hasCorrectEffects() {
-        BishopOfRebirth card = new BishopOfRebirth();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect attackMay = (MayEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(attackMay.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        // Should NOT have an ETB trigger (unlike Sun Titan)
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).isEmpty();
-    }
-
     // ===== Attack trigger =====
 
     @Nested

@@ -24,21 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OxiddaScrapmelterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Oxidda Scrapmelter has correct card properties")
-    void hasCorrectProperties() {
-        OxiddaScrapmelter card = new OxiddaScrapmelter();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

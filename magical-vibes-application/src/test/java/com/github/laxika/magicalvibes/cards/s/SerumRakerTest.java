@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SerumRakerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Serum Raker has ON_DEATH effect that makes each player discard a card")
-    void hasDeathTriggerEffect() {
-        SerumRaker card = new SerumRaker();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(EachPlayerDiscardsEffect.class);
-        EachPlayerDiscardsEffect effect = (EachPlayerDiscardsEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
     // ===== Casting =====
 
     @Test

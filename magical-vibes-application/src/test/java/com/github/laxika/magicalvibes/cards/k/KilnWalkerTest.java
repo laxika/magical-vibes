@@ -18,20 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KilnWalkerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with BoostSelfEffect(3, 0)")
-    void hasCorrectStructure() {
-        KilnWalker card = new KilnWalker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(3));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
-
     // ===== Attack trigger fires =====
 
     @Test
@@ -77,7 +63,6 @@ class KilnWalkerTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

@@ -28,28 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CaravanVigilTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ConditionalReplacementEffect wrapping search-to-hand base and search-to-battlefield morbid")
-    void hasCorrectStructure() {
-        CaravanVigil card = new CaravanVigil();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect =
-                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        assertThat(effect.upgradedEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-
-        SearchLibraryForCardTypesToBattlefieldEffect morbidEffect =
-                (SearchLibraryForCardTypesToBattlefieldEffect) effect.upgradedEffect();
-        assertThat(CardPredicateUtils.describeFilter(morbidEffect.filter())).isEqualTo("basic land card");
-        assertThat(morbidEffect.entersTapped()).isFalse();
-    }
-
     // ===== Without morbid — basic land goes to hand =====
 
     @Test

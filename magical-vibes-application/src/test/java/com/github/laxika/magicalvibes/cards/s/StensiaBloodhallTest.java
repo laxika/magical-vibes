@@ -38,19 +38,7 @@ class StensiaBloodhallTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability taps for colorless mana with no cost")
-    void firstAbilityProperties() {
-        StensiaBloodhall card = new StensiaBloodhall();
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.COLORLESS);
-    }
+    
 
     @Test
     @DisplayName("Second ability costs {3}{B}{R} and deals 2 damage to target player or planeswalker")

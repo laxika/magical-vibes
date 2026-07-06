@@ -25,18 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SunbirdsInvocationTest extends BaseCardTest {
 
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Has ON_CONTROLLER_CASTS_SPELL trigger effect")
-    void hasCorrectEffect() {
-        SunbirdsInvocation card = new SunbirdsInvocation();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SunbirdsInvocationTriggerEffect.class);
-    }
-
     // ===== Trigger fires on spell from hand =====
 
     @Test

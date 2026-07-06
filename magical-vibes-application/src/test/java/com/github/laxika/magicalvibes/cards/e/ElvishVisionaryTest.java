@@ -15,15 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ElvishVisionaryTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Elvish Visionary has ETB draw card effect")
-    void hasEtbDrawEffect() {
-        ElvishVisionary card = new ElvishVisionary();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Elvish Visionary puts it on stack as creature spell")

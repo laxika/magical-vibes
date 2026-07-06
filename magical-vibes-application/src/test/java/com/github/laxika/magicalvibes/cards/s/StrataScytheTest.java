@@ -29,32 +29,9 @@ class StrataScytheTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has imprint ETB search effect for land cards")
-    void hasImprintEtbEffect() {
-        StrataScythe card = new StrataScythe();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(SearchLibraryForCardTypeToExileAndImprintEffect.class);
-        var etb = (SearchLibraryForCardTypeToExileAndImprintEffect)
-                card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etb.cardTypes()).containsExactly(CardType.LAND);
-    }
-
-    @Test
-    @DisplayName("Has static boost effect per matching land name")
-    void hasStaticBoostEffect() {
-        StrataScythe card = new StrataScythe();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostCreaturePerMatchingLandNameEffect.class);
-        var boost = (BoostCreaturePerMatchingLandNameEffect)
-                card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerPerMatch()).isEqualTo(1);
-        assertThat(boost.toughnessPerMatch()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Has equip {3} ability with sorcery-speed restriction")

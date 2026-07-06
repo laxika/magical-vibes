@@ -18,38 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StormcarvedCoastTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Stormcarved Coast has conditional enters-tapped effect")
-    void hasConditionalEntersTappedEffect() {
-        StormcarvedCoast card = new StormcarvedCoast();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof EntersTappedUnlessManyLandsEffect)
-                .hasSize(1);
-        EntersTappedUnlessManyLandsEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EntersTappedUnlessManyLandsEffect)
-                .map(e -> (EntersTappedUnlessManyLandsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.minOtherLands()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Stormcarved Coast has two mana abilities for blue and red")
-    void hasManaAbilities() {
-        StormcarvedCoast card = new StormcarvedCoast();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLUE));
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.RED));
-    }
+    
 
     @Test
     @DisplayName("Enters tapped when you control zero other lands")

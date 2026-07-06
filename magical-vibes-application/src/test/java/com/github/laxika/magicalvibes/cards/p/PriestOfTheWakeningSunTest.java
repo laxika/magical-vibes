@@ -46,38 +46,9 @@ class PriestOfTheWakeningSunTest extends BaseCardTest {
 
     // ── Card structure ────────────────────────────────────────────────
 
-    @Test
-    @DisplayName("Has upkeep triggered MayRevealSubtypeFromHandEffect for Dinosaur")
-    void hasUpkeepTrigger() {
-        PriestOfTheWakeningSun card = new PriestOfTheWakeningSun();
+    
 
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayRevealSubtypeFromHandEffect.class);
-        MayRevealSubtypeFromHandEffect effect =
-                (MayRevealSubtypeFromHandEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.DINOSAUR);
-        assertThat(effect.thenEffect()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) effect.thenEffect()).amount()).isEqualTo(new Fixed(2));
-    }
-
-    @Test
-    @DisplayName("Has activated ability with sacrifice cost and Dinosaur search")
-    void hasActivatedAbility() {
-        PriestOfTheWakeningSun card = new PriestOfTheWakeningSun();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{3}{W}{W}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect search =
-                (SearchLibraryForCardsToHandEffect) ability.getEffects().get(1);
-        assertThat(search.filter()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) search.filter()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
-    }
+    
 
     // ── Upkeep trigger ────────────────────────────────────────────────
 

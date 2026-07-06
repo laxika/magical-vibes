@@ -39,23 +39,6 @@ class WildgrowthWalkerTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
 
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_EXPLORES effects: PutCountersOnSelfEffect and GainLifeEffect")
-    void hasExploreTriggeredEffects() {
-        WildgrowthWalker card = new WildgrowthWalker();
-
-        var effects = card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect counterEffect = (PutCountersOnSelfEffect) effects.get(0);
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(effects.get(1)).isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect lifeEffect = (GainLifeEffect) effects.get(1);
-        assertThat(lifeEffect.amount()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Explore triggers — land on top =====
 
     @Test

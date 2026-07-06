@@ -23,22 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HereticsPunishmentTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability with correct structure")
-    void hasCorrectAbility() {
-        HereticsPunishment card = new HereticsPunishment();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}{R}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(MillControllerAndDealDamageByHighestManaValueEffect.class);
-    }
-
     // ===== Activation =====
 
     @Test

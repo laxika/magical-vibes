@@ -30,35 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RavenousDemonTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has front activated ability and back upkeep forced sacrifice effect")
-    void hasConfiguredEffects() {
-        RavenousDemon card = new RavenousDemon();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).isEmpty();
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).hasSize(2);
-        SacrificePermanentCost sacrificeHuman = new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
-                )),
-                "Sacrifice a Human",
-                false
-        );
-        assertThat(ability.getEffects().get(0)).isEqualTo(sacrificeHuman);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        ForcedCostOrElseEffect back =
-                (ForcedCostOrElseEffect) card.getBackFaceCard()
-                        .getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(back.forcedCost()).isEqualTo(sacrificeHuman);
-        assertThat(back.elseEffects()).containsExactly(new TapSelfEffect(), new DealDamageToControllerEffect(9));
-    }
+    
 
     @Test
     @DisplayName("Front face does not trigger during upkeep")

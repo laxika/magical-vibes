@@ -37,21 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GeistflameTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Geistflame has correct card properties")
-    void hasCorrectProperties() {
-        Geistflame card = new Geistflame();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect =
-                (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{3}{R}");
-    }
+    
 
     @Test
     @DisplayName("Geistflame deals 1 damage to target player")

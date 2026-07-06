@@ -24,24 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MemorialToUnityTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Memorial to Unity has correct activated ability")
-    void hasCorrectActivatedAbility() {
-        MemorialToUnity card = new MemorialToUnity();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}{G}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) ability.getEffects().get(1);
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-    }
+    
 
     @Test
     @DisplayName("Activating ability sacrifices Memorial to Unity and offers creature cards from top five")

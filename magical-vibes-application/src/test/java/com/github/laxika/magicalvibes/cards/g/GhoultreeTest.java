@@ -19,15 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GhoultreeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Ghoultree has correct effects")
-    void hasCorrectEffects() {
-        Ghoultree card = new Ghoultree();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOwnCastCostPerCreatureCardInGraveyardEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Cost reduction")

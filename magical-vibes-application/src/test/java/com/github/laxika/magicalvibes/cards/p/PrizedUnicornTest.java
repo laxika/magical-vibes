@@ -17,14 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PrizedUnicornTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Prized Unicorn has MustBeBlockedByAllCreaturesEffect as static effect")
-    void hasCorrectEffect() {
-        PrizedUnicorn card = new PrizedUnicorn();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustBeBlockedByAllCreaturesEffect.class);
-    }
+    
 
     @Test
     @DisplayName("All able creatures must block Prized Unicorn")

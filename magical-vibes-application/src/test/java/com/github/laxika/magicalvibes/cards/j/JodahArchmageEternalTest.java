@@ -19,22 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JodahArchmageEternalTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Jodah has AlternativeCostForSpellsEffect with WUBRG cost and no filter")
-    void hasCorrectEffects() {
-        JodahArchmageEternal card = new JodahArchmageEternal();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(AlternativeCostForSpellsEffect.class);
-        AlternativeCostForSpellsEffect effect =
-                (AlternativeCostForSpellsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.manaCost()).isEqualTo("{W}{U}{B}{R}{G}");
-        assertThat(effect.filter()).isNull();
-    }
-
     // ===== Casting Jodah =====
 
     @Test

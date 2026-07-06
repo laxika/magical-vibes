@@ -29,24 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DoomBladeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Doom Blade has correct card properties")
-    void hasCorrectProperties() {
-        DoomBlade card = new DoomBlade();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK)))
-                )),
-                "Target must be a nonblack creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Doom Blade targeting a nonblack creature puts it on stack")

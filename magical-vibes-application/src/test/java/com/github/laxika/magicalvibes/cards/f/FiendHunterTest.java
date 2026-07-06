@@ -47,20 +47,6 @@ class FiendHunterTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping ExileTargetPermanentUntilSourceLeavesEffect")
-    void hasCorrectEffects() {
-        FiendHunter card = new FiendHunter();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetPermanentUntilSourceLeavesEffect.class);
-    }
-
     // ===== ETB exile =====
 
     @Test

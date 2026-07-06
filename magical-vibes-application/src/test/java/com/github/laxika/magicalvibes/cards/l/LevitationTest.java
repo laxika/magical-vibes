@@ -21,17 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LevitationTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Levitation has correct static effect")
-    void hasCorrectProperties() {
-        Levitation card = new Levitation();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("Casting Levitation puts it on the stack as an enchantment spell")

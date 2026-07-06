@@ -17,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WeightOfMemoryTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Weight of Memory has correct effects")
-    void hasCorrectEffects() {
-        WeightOfMemory card = new WeightOfMemory();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new Fixed(3));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MillTargetPlayerEffect.class);
-        assertThat(((MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(1)).count()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Draw effect =====
 
     @Test

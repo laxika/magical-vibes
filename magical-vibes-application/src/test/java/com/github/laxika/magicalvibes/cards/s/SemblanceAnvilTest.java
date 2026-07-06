@@ -22,27 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SemblanceAnvilTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB imprint MayEffect and static cost reduction effect")
-    void hasCorrectStructure() {
-        SemblanceAnvil card = new SemblanceAnvil();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ExileFromHandToImprintEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOwnCastCostForSharedCardTypeWithImprintEffect.class);
-        ReduceOwnCastCostForSharedCardTypeWithImprintEffect effect =
-                (ReduceOwnCastCostForSharedCardTypeWithImprintEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
-
     // ===== ETB imprint =====
 
     @Test

@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UndeadAlchemistTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Undead Alchemist has the replacement and triggered effects")
-    void hasCorrectEffects() {
-        UndeadAlchemist card = new UndeadAlchemist();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof ReplaceCombatDamageWithMillEffect)
-                .hasSize(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_CARD_MILLED))
-                .hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_CARD_MILLED).getFirst())
-                .isInstanceOf(ExileMilledCreatureAndCreateTokenEffect.class);
-    }
-
     // ===== Replacement effect: Zombie combat damage → mill =====
 
     @Nested

@@ -15,24 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MakeAWishTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has spell effect that returns two random cards from graveyard to hand")
-    void hasCorrectEffect() {
-        MakeAWish card = new MakeAWish();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.returnAtRandom()).isTrue();
-        assertThat(effect.randomCount()).isEqualTo(2);
-        assertThat(effect.filter()).isNull();
-    }
-
     // ===== Resolution =====
 
     @Test

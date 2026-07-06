@@ -28,19 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AuraGraftTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Aura Graft has correct card properties")
-    void hasCorrectProperties() {
-        AuraGraft card = new AuraGraft();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GainControlOfTargetAuraEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -439,5 +426,4 @@ class AuraGraftTest extends BaseCardTest {
         return perm;
     }
 }
-
 

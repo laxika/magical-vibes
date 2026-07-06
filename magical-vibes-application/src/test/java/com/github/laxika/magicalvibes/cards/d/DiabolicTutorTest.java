@@ -24,19 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DiabolicTutorTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Diabolic Tutor has correct card properties")
-    void hasCorrectProperties() {
-        DiabolicTutor card = new DiabolicTutor();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -217,5 +204,4 @@ class DiabolicTutorTest extends BaseCardTest {
         deck.addAll(List.of(new Plains(), new Swamp(), new GrizzlyBears(), new GrizzlyBears()));
     }
 }
-
 

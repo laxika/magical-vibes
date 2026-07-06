@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NecroticPlagueTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Necrotic Plague is an aura with upkeep sacrifice and death return triggers")
-    void hasCorrectEffects() {
-        NecroticPlague card = new NecroticPlague();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeEnchantedCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD).getFirst())
-                .isInstanceOf(ReturnSourceAuraToOpponentCreatureOnDeathEffect.class);
-    }
-
     // ===== Upkeep sacrifice trigger =====
 
     @Test

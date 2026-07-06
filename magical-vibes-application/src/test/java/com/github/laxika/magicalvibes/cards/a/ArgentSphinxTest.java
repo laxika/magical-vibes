@@ -20,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArgentSphinxTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Argent Sphinx has metalcraft activated ability")
-    void hasMetalcraftAbility() {
-        ArgentSphinx card = new ArgentSphinx();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{U}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ExileSelfAndReturnAtEndStepEffect.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.METALCRAFT);
-    }
-
     // ===== Metalcraft restriction =====
 
     @Test

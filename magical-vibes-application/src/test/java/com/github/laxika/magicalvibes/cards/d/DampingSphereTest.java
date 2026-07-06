@@ -21,20 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DampingSphereTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Damping Sphere has correct static effects")
-    void hasCorrectProperties() {
-        DampingSphere card = new DampingSphere();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(ReplaceLandExcessManaWithColorlessEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(IncreaseEachPlayerCastCostPerSpellThisTurnEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

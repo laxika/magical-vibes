@@ -23,21 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TishanaVoiceOfThunderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tishana has correct effects registered")
-    void hasCorrectEffects() {
-        TishanaVoiceOfThunder card = new TishanaVoiceOfThunder();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(PowerToughnessEqualToCardsInHandEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(NoMaximumHandSizeEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isEqualTo(new DrawCardEffect(
-                        new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
-    }
+    
 
     @Test
     @DisplayName("P/T equals number of cards in controller's hand")

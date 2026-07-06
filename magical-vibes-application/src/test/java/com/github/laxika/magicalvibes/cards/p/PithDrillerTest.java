@@ -19,22 +19,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class PithDrillerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB that puts one -1/-1 counter on target creature")
-    void hasCorrectEffects() {
-        PithDriller card = new PithDriller();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
-
-        PutMinusOneMinusOneCounterOnTargetCreatureEffect effect =
-                (PutMinusOneMinusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(1);
-    }
-
     // ===== ETB: put one -1/-1 counter on target creature =====
 
     @Test

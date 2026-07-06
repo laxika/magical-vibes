@@ -18,17 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WreathOfGeistsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Wreath of Geists has correct card properties")
-    void hasCorrectProperties() {
-        WreathOfGeists card = new WreathOfGeists();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostCreaturePerCardsInControllerGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Wreath of Geists puts it on the stack")

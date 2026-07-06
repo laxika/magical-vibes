@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FranticSalvageTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Frantic Salvage has correct effects")
-    void hasCorrectEffects() {
-        FranticSalvage card = new FranticSalvage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutTargetCardsFromGraveyardOnTopOfLibraryEffect.class);
-        PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect =
-                (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Casting with artifact cards in graveyard =====
 
     @Test

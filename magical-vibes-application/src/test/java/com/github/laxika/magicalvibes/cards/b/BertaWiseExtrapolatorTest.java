@@ -34,30 +34,7 @@ class BertaWiseExtrapolatorTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has counter trigger and X-cost Fractal token activated ability (Increment is keyword-driven)")
-    void hasCorrectEffects() {
-        BertaWiseExtrapolator card = new BertaWiseExtrapolator();
-
-        assertThat(card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT).getFirst())
-                .isInstanceOf(AwardAnyColorManaEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{X}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateXTokenWithXCountersEffect.class);
-
-        CreateXTokenWithXCountersEffect tokenEffect =
-                (CreateXTokenWithXCountersEffect) ability.getEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Fractal");
-        assertThat(tokenEffect.power()).isZero();
-        assertThat(tokenEffect.toughness()).isZero();
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.FRACTAL);
-        assertThat(tokenEffect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-    }
+    
 
     @Nested
     @DisplayName("Counter trigger")

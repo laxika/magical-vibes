@@ -39,26 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UnsubtleMockeryTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Needs a target and has 4 damage + surveil 1 spell effects")
-    void hasCorrectSpellEffects() {
-        UnsubtleMockery card = new UnsubtleMockery();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-                    assertThat(((DealDamageToTargetCreatureEffect) e).damage()).isEqualTo(new Fixed(4));
-                })
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(SurveilEffect.class);
-                    assertThat(((SurveilEffect) e).count()).isEqualTo(1);
-                });
-    }
-
     // ===== Damage =====
 
     @Test

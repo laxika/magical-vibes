@@ -15,14 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ThornElementalTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Thorn Elemental has AssignCombatDamageAsThoughUnblockedEffect as static effect")
-    void hasCorrectStaticEffect() {
-        ThornElemental card = new ThornElemental();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AssignCombatDamageAsThoughUnblockedEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Blocked Thorn Elemental can assign combat damage to defending player")

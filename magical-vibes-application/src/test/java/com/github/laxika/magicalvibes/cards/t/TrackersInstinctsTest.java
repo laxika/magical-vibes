@@ -23,26 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TrackersInstinctsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tracker's Instincts has correct effect and flashback cost")
-    void hasCorrectProperties() {
-        TrackersInstincts card = new TrackersInstincts();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsChooseNToHandRestToGraveyardEffect.class);
-
-        LookAtTopCardsChooseNToHandRestToGraveyardEffect effect =
-                (LookAtTopCardsChooseNToHandRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(4);
-        assertThat(effect.toHandCount()).isEqualTo(1);
-        assertThat(effect.handChoicePredicate()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.handChoicePredicate()).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(effect.reveal()).isTrue();
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{2}{U}");
-    }
+    
 
     @Test
     @DisplayName("Resolving enters library reveal choice when multiple creatures are revealed")

@@ -22,29 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpineOfIshSahTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB destroy target permanent effect")
-    void hasEtbDestroyEffect() {
-        SpineOfIshSah card = new SpineOfIshSah();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has death trigger to return self from graveyard to hand")
-    void hasDeathReturnToHandEffect() {
-        SpineOfIshSah card = new SpineOfIshSah();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== ETB: casting and resolving =====
 
     @Test

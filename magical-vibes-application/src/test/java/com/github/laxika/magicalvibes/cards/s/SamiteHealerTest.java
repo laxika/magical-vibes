@@ -17,19 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SamiteHealerTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Samite Healer has correct card properties")
-    void hasCorrectProperties() {
-        SamiteHealer card = new SamiteHealer();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst()).isInstanceOf(PreventNextDamageEffect.class);
-    }
-
     // ===== Activation =====
 
     @Test

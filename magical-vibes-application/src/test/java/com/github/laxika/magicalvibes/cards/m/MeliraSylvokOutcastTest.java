@@ -23,29 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MeliraSylvokOutcastTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has three static effects: poison prevention, -1/-1 counter prevention, and infect removal")
-    void hasCorrectEffects() {
-        MeliraSylvokOutcast card = new MeliraSylvokOutcast();
-
-        var statics = card.getEffects(EffectSlot.STATIC);
-        assertThat(statics).hasSize(3);
-
-        assertThat(statics.get(0)).isInstanceOf(PlayerCantGetPoisonCountersEffect.class);
-
-        assertThat(statics.get(1)).isInstanceOf(GrantEffectEffect.class);
-        GrantEffectEffect grantEffect = (GrantEffectEffect) statics.get(1);
-        assertThat(grantEffect.effect()).isInstanceOf(CantHaveMinusOneMinusOneCountersEffect.class);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-
-        assertThat(statics.get(2)).isInstanceOf(RemoveKeywordEffect.class);
-        RemoveKeywordEffect removeKeyword = (RemoveKeywordEffect) statics.get(2);
-        assertThat(removeKeyword.keyword()).isEqualTo(Keyword.INFECT);
-        assertThat(removeKeyword.scope()).isEqualTo(GrantScope.OPPONENT_CREATURES);
-    }
-
     // ===== Ability 1: You can't get poison counters =====
 
     @Test

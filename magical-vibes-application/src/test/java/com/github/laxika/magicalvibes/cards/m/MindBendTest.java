@@ -28,19 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MindBendTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mind Bend has correct card properties")
-    void hasCorrectProperties() {
-        MindBend card = new MindBend();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChangeColorTextEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -368,5 +355,4 @@ class MindBendTest extends BaseCardTest {
                 .isInstanceOf(IllegalArgumentException.class);
     }
 }
-
 

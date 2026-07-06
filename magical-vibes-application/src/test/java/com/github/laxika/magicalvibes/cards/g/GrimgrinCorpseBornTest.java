@@ -24,47 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GrimgrinCorpseBornTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has EntersTappedEffect and DoesntUntapDuringUntapStepEffect as static effects")
-    void hasStaticEffects() {
-        GrimgrinCorpseBorn card = new GrimgrinCorpseBorn();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .hasSize(2)
-                .anySatisfy(e -> assertThat(e).isInstanceOf(EntersTappedEffect.class))
-                .anySatisfy(e -> assertThat(e).isInstanceOf(DoesntUntapDuringUntapStepEffect.class));
-    }
-
-    @Test
-    @DisplayName("Has sacrifice-another-creature activated ability with untap and counter effects")
-    void hasActivatedAbility() {
-        GrimgrinCorpseBorn card = new GrimgrinCorpseBorn();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(3);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        SacrificeCreatureCost sacCost = (SacrificeCreatureCost) ability.getEffects().get(0);
-        assertThat(sacCost.excludeSelf()).isTrue();
-        assertThat(ability.getEffects().get(1)).isInstanceOf(UntapSelfEffect.class);
-        assertThat(ability.getEffects().get(2)).isInstanceOf(PutCountersOnSourceEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has ON_ATTACK effects: destroy target permanent and put counter on source")
-    void hasOnAttackEffects() {
-        GrimgrinCorpseBorn card = new GrimgrinCorpseBorn();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK))
-                .hasSize(2)
-                .anySatisfy(e -> assertThat(e).isInstanceOf(DestroyTargetPermanentEffect.class))
-                .anySatisfy(e -> assertThat(e).isInstanceOf(PutCountersOnSourceEffect.class));
-    }
-
     // ===== Doesn't untap during untap step =====
 
     @Test

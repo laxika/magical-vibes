@@ -18,16 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WanderOffTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has a single exile target permanent effect")
-    void hasCorrectEffect() {
-        WanderOff card = new WanderOff();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Exiles target creature — not to graveyard")

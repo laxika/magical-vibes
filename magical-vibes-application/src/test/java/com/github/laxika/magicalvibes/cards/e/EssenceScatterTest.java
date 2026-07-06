@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EssenceScatterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Essence Scatter has correct card properties")
-    void hasCorrectProperties() {
-        EssenceScatter card = new EssenceScatter();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
-                "Target must be a creature spell."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

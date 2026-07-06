@@ -37,16 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WarpWorldTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Warp World has correct card properties")
-    void hasCorrectProperties() {
-        WarpWorld card = new WarpWorld();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(WarpWorldEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting puts Warp World on stack as a sorcery with no target")
@@ -454,5 +445,4 @@ class WarpWorldTest extends BaseCardTest {
         return card;
     }
 }
-
 

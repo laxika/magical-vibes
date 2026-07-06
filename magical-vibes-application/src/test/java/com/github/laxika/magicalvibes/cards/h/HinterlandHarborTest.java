@@ -23,34 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HinterlandHarborTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has conditional enters-tapped effect checking for Forest or Island")
-    void hasConditionalEntersTappedEffect() {
-        HinterlandHarbor card = new HinterlandHarbor();
-
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new EntersTappedUnlessControlsPermanentEffect(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FOREST, CardSubtype.ISLAND))));
-    }
-
-    @Test
-    @DisplayName("Has two mana abilities for green and blue")
-    void hasManaAbilities() {
-        HinterlandHarbor card = new HinterlandHarbor();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLUE));
-    }
-
     // ===== Enters tapped (no qualifying lands) =====
 
     @Test

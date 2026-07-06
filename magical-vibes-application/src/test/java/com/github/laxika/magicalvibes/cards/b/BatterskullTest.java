@@ -29,37 +29,9 @@ class BatterskullTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Batterskull has living weapon ETB effect")
-    void hasLivingWeaponEffect() {
-        Batterskull card = new Batterskull();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(LivingWeaponEffect.class);
-    }
-
-    @Test
-    @DisplayName("Batterskull has static +4/+4 boost, vigilance, and lifelink")
-    void hasStaticBoostAndKeywords() {
-        Batterskull card = new Batterskull();
-
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(4);
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
-                .containsExactlyInAnyOrder(Keyword.VIGILANCE, Keyword.LIFELINK);
-    }
+    
 
     @Test
     @DisplayName("Batterskull has {3} return to hand ability and equip {5} ability")

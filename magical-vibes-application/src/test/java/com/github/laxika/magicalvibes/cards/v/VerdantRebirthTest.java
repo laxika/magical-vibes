@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VerdantRebirthTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Verdant Rebirth has correct effect structure")
-    void hasCorrectEffects() {
-        VerdantRebirth card = new VerdantRebirth();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(GrantEffectToTargetUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Casting and resolution =====
 
     @Test

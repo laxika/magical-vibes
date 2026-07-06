@@ -22,27 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HellkiteIgniterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Hellkite Igniter has correct activated ability")
-    void hasCorrectActivatedAbility() {
-        HellkiteIgniter card = new HellkiteIgniter();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{R}");
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-
-        BoostSelfEffect effect =
-                (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new PermanentCount(
-                new PermanentIsArtifactPredicate(), CountScope.CONTROLLER));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
-
     // ===== Activating ability =====
 
     @Test

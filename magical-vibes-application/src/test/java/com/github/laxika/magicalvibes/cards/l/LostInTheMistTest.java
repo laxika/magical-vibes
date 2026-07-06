@@ -21,20 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LostInTheMistTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lost in the Mist has counter and bounce spell effects")
-    void hasCorrectProperties() {
-        LostInTheMist card = new LostInTheMist();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CounterSpellEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -29,29 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GhostQuarterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Ghost Quarter has correct abilities")
-    void hasCorrectAbilities() {
-        GhostQuarter card = new GhostQuarter();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {C}
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        // Second ability: {T}, Sacrifice: Destroy target land...
-        var destroyAbility = card.getActivatedAbilities().get(1);
-        assertThat(destroyAbility.isRequiresTap()).isTrue();
-        assertThat(destroyAbility.getManaCost()).isNull();
-        assertThat(destroyAbility.getEffects()).hasSize(2);
-        assertThat(destroyAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(destroyAbility.getEffects().get(1))
-                .isInstanceOf(DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Activating destroy ability sacrifices Ghost Quarter and puts ability on stack")

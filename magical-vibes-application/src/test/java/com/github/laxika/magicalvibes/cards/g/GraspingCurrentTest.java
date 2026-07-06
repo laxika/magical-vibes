@@ -21,28 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GraspingCurrentTest extends BaseCardTest {
 
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Has correct effects")
-    void hasCorrectEffects() {
-        GraspingCurrent card = new GraspingCurrent();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(SearchLibraryAndOrGraveyardForNamedCardToHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Search effect targets Jace, Ingenious Mind-Mage by name")
-    void searchEffectTargetsCorrectName() {
-        GraspingCurrent card = new GraspingCurrent();
-
-        SearchLibraryAndOrGraveyardForNamedCardToHandEffect searchEffect =
-                (SearchLibraryAndOrGraveyardForNamedCardToHandEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(searchEffect.cardName()).isEqualTo("Jace, Ingenious Mind-Mage");
-    }
-
     // ===== Bounce two creatures =====
 
     @Test

@@ -19,23 +19,7 @@ class LudevicsTestSubjectTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has one activated ability with correct effect")
-    void hasCorrectAbility() {
-        LudevicsTestSubject card = new LudevicsTestSubject();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{U}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutCounterOnSelfThenTransformIfThresholdEffect.class);
-
-        var effect = (PutCounterOnSelfThenTransformIfThresholdEffect) ability.getEffects().getFirst();
-        assertThat(effect.counterType()).isEqualTo(CounterType.HATCHLING);
-        assertThat(effect.threshold()).isEqualTo(5);
-    }
+    
 
     @Test
     @DisplayName("Has a back face card configured")

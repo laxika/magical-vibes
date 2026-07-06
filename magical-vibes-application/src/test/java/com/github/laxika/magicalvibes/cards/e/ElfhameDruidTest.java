@@ -18,28 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ElfhameDruidTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Elfhame Druid has two activated abilities")
-    void hasCorrectAbilities() {
-        ElfhameDruid card = new ElfhameDruid();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        ActivatedAbility first = card.getActivatedAbilities().get(0);
-        assertThat(first.isRequiresTap()).isTrue();
-        assertThat(first.getManaCost()).isNull();
-        assertThat(first.getEffects()).hasSize(1);
-        assertThat(first.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        ActivatedAbility second = card.getActivatedAbilities().get(1);
-        assertThat(second.isRequiresTap()).isTrue();
-        assertThat(second.getManaCost()).isNull();
-        assertThat(second.getEffects()).hasSize(1);
-        assertThat(second.getEffects().getFirst()).isInstanceOf(AwardKickedOnlyManaEffect.class);
-    }
-
     // ===== First ability: {T}: Add {G} =====
 
     @Test

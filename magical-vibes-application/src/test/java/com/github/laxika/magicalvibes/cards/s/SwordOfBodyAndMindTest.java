@@ -29,54 +29,11 @@ class SwordOfBodyAndMindTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Sword of Body and Mind has static +2/+2 boost effect")
-    void hasStaticBoostEffect() {
-        SwordOfBodyAndMind card = new SwordOfBodyAndMind();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("Sword of Body and Mind has static protection from green and blue")
-    void hasProtectionEffect() {
-        SwordOfBodyAndMind card = new SwordOfBodyAndMind();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof ProtectionFromColorsEffect)
-                .hasSize(1);
-        ProtectionFromColorsEffect protection = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof ProtectionFromColorsEffect)
-                .map(e -> (ProtectionFromColorsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
-    }
-
-    @Test
-    @DisplayName("Sword of Body and Mind has combat damage token and mill effects")
-    void hasCombatDamageEffects() {
-        SwordOfBodyAndMind card = new SwordOfBodyAndMind();
-
-        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects =
-                card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        assertThat(effects).hasSize(2);
-        assertThat(effects).filteredOn(e -> e instanceof CreateTokenEffect).hasSize(1);
-        assertThat(effects).filteredOn(e -> e instanceof MillTargetPlayerEffect).hasSize(1);
-
-        MillTargetPlayerEffect mill = effects.stream()
-                .filter(e -> e instanceof MillTargetPlayerEffect)
-                .map(e -> (MillTargetPlayerEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(mill.count()).isEqualTo(10);
-    }
+    
 
     @Test
     @DisplayName("Sword of Body and Mind has equip {2} ability")

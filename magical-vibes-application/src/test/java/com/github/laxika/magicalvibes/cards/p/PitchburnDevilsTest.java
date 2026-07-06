@@ -63,19 +63,6 @@ class PitchburnDevilsTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Pitchburn Devils has ON_DEATH DealDamageToAnyTargetEffect(3)")
-    void hasCorrectProperties() {
-        PitchburnDevils card = new PitchburnDevils();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect dmg = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(dmg.damage()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Casting =====
 
     @Test

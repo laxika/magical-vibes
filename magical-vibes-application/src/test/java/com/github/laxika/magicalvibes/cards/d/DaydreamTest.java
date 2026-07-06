@@ -25,34 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DaydreamTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has flicker-with-counter effect on SPELL slot and flashback casting option")
-    void hasCorrectCardStructure() {
-        Daydream card = new Daydream();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileTargetPermanentAndReturnImmediatelyEffect.class);
-        ExileTargetPermanentAndReturnImmediatelyEffect effect =
-                (ExileTargetPermanentAndReturnImmediatelyEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.plusOnePlusOneCountersOnReturn()).isEqualTo(1);
-
-        assertThat(card.getSpellTargets()).hasSize(1);
-        assertThat(card.getSpellTargets().getFirst().getFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter =
-                (PermanentPredicateTargetFilter) card.getSpellTargets().getFirst().getFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate allOf = (PermanentAllOfPredicate) filter.predicate();
-        assertThat(allOf.predicates()).anySatisfy(p ->
-                assertThat(p).isInstanceOf(PermanentControlledBySourceControllerPredicate.class));
-        assertThat(allOf.predicates()).anySatisfy(p ->
-                assertThat(p).isInstanceOf(PermanentIsCreaturePredicate.class));
-
-        assertThat(card.getCastingOptions()).hasSize(1);
-        assertThat(card.getCastingOptions().getFirst()).isInstanceOf(FlashbackCast.class);
-        assertThat(((FlashbackCast) card.getCastingOptions().getFirst()).getCost(ManaCastingCost.class).orElseThrow().manaCost())
-                .isEqualTo("{2}{W}");
-    }
+    
 
     @Test
     @DisplayName("Flickers target creature and returns it with a +1/+1 counter")

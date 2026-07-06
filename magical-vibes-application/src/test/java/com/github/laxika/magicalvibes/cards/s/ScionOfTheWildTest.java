@@ -18,16 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScionOfTheWildTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Scion of the Wild has correct card properties")
-    void hasCorrectProperties() {
-        ScionOfTheWild card = new ScionOfTheWild();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToControlledCreatureCountEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Scion of the Wild puts it on the stack")

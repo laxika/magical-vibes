@@ -19,18 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CopperhornScoutTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger to untap other creatures")
-    void hasCorrectEffect() {
-        CopperhornScout card = new CopperhornScout();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(UntapEachOtherCreatureYouControlEffect.class);
-    }
-
     // ===== Attack trigger fires =====
 
     @Test
@@ -106,7 +94,6 @@ class CopperhornScoutTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

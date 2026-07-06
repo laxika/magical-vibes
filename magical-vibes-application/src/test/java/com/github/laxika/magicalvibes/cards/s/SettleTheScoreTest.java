@@ -20,31 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SettleTheScoreTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has two SPELL effects: ExileTargetPermanentEffect and PutCounterOnTargetPermanentEffect")
-    void hasCorrectEffects() {
-        SettleTheScore card = new SettleTheScore();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
-
-        PutCounterOnTargetPermanentEffect counterEffect =
-                (PutCounterOnTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.LOYALTY);
-        assertThat(counterEffect.count()).isEqualTo(2);
-        assertThat(counterEffect.predicate()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("Targets creatures")
-    void targetsCreatures() {
-        SettleTheScore card = new SettleTheScore();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
     // ===== Exile target creature =====
 
     @Test

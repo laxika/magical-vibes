@@ -41,21 +41,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class VoltChargeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has deal 3 damage and proliferate effects")
-    void hasCorrectEffects() {
-        VoltCharge card = new VoltCharge();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect dmg = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(dmg.damage()).isEqualTo(new Fixed(3));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ProliferateEffect.class);
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
     // ===== Damage to player =====
 
     @Test

@@ -24,18 +24,6 @@ class DarkTutelageTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dark Tutelage has upkeep trigger effect")
-    void hasCorrectProperties() {
-        DarkTutelage card = new DarkTutelage();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(RevealTopCardPutIntoHandAndLoseLifeEffect.class);
-    }
-
     // ===== Triggering =====
 
     @Test

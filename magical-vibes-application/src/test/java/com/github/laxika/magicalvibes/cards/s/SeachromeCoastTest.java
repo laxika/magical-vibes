@@ -18,43 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SeachromeCoastTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Seachrome Coast has conditional enters-tapped effect")
-    void hasConditionalEntersTappedEffect() {
-        SeachromeCoast card = new SeachromeCoast();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .hasSize(1);
-        EntersTappedUnlessFewLandsEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EntersTappedUnlessFewLandsEffect)
-                .map(e -> (EntersTappedUnlessFewLandsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.maxOtherLands()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Seachrome Coast has two mana abilities for white and blue")
-    void hasManaAbilities() {
-        SeachromeCoast card = new SeachromeCoast();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {W}.
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.WHITE));
-
-        // Second ability: {T}: Add {U}.
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLUE));
-    }
-
     // ===== Enters the battlefield: untapped (few lands) =====
 
     @Test

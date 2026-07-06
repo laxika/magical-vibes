@@ -23,26 +23,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class VillageCannibalsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ANY_CREATURE_DIES effect with Human predicate wrapping PutCountersOnSourceEffect")
-    void hasCorrectStructure() {
-        VillageCannibals card = new VillageCannibals();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect filtered =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst();
-        assertThat(filtered.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(filtered.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
-        PutCountersOnSourceEffect counter = (PutCountersOnSourceEffect) filtered.wrapped();
-        assertThat(counter.powerModifier()).isEqualTo(1);
-        assertThat(counter.toughnessModifier()).isEqualTo(1);
-        assertThat(counter.amount()).isEqualTo(1);
-    }
-
     // ===== Trigger: gets +1/+1 counter when another Human creature dies =====
 
     @Test

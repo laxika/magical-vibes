@@ -22,27 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ShimmeringWingsTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Shimmering Wings has correct card properties")
-    void hasCorrectProperties() {
-        ShimmeringWings card = new ShimmeringWings();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{U}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(ReturnSelfToHandEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -278,5 +257,4 @@ class ShimmeringWingsTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Shimmering Wings"));
     }
 }
-
 

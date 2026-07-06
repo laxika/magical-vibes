@@ -20,27 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SomberwaldSpiderTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping PutCountersOnSourceEffect in ON_ENTER_BATTLEFIELD")
-    void hasCorrectStructure() {
-        SomberwaldSpider card = new SomberwaldSpider();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect morbid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(morbid.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect counters = (PutCountersOnSourceEffect) morbid.wrapped();
-        assertThat(counters.powerModifier()).isEqualTo(1);
-        assertThat(counters.toughnessModifier()).isEqualTo(1);
-        assertThat(counters.amount()).isEqualTo(2);
-    }
-
     // ===== Without morbid =====
 
     @Test

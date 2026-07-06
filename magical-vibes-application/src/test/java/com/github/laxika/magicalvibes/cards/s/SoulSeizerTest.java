@@ -36,21 +36,7 @@ class SoulSeizerTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Soul Seizer has MayEffect combat damage trigger and Ghastly Haunting back face")
-    void hasConfiguredEffects() {
-        SoulSeizer card = new SoulSeizer();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("GhastlyHaunting");
-        assertThat(card.getBackFaceCard()).isInstanceOf(GhastlyHaunting.class);
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ControlEnchantedCreatureEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")

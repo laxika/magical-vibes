@@ -27,22 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScoldingAdministratorTest extends BaseCardTest {
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Repartee puts a +1/+1 counter on itself; death trigger moves its counters")
-    void hasCorrectStructure() {
-        ScoldingAdministrator card = new ScoldingAdministrator();
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.resolvedEffects()).singleElement().isInstanceOf(PutCountersOnSelfEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).singleElement()
-                .isInstanceOf(MoveDyingSourceCountersToTargetCreatureEffect.class);
-    }
-
     // ===== Repartee: +1/+1 counter on itself =====
 
     @Test

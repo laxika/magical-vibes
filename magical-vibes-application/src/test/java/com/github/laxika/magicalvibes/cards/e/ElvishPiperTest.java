@@ -21,22 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ElvishPiperTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Elvish Piper has correct card properties and activated ability")
-    void hasCorrectProperties() {
-        ElvishPiper card = new ElvishPiper();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).singleElement()
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
-        PutCardToBattlefieldEffect wrapped = (PutCardToBattlefieldEffect) mayEffect.wrapped();
-        assertThat(wrapped.label()).isEqualTo("creature");
-    }
+    
 
     @Test
     @DisplayName("Activated ability taps Piper, spends mana, and goes on stack")

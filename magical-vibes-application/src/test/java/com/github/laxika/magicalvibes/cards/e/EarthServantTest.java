@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EarthServantTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +0/+1 per Mountain effect")
-    void hasCorrectEffect() {
-        EarthServant card = new EarthServant();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect =
-                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(0));
-        assertThat(effect.toughnessBoost()).isEqualTo(new PermanentCount(
-                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER));
-    }
-
     // ===== Base stats without Mountains =====
 
     @Test

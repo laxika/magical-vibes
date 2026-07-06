@@ -18,22 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HorseshoeCrabTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Horseshoe Crab has correct card properties")
-    void hasCorrectProperties() {
-        HorseshoeCrab card = new HorseshoeCrab();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(UntapSelfEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{U}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

@@ -25,20 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HeadGamesTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Head Games has correct card properties")
-    void hasCorrectProperties() {
-        HeadGames card = new HeadGames();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(HeadGamesEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -404,5 +390,4 @@ class HeadGamesTest extends BaseCardTest {
         deck.addAll(List.of(new Plains(), new Swamp()));
     }
 }
-
 

@@ -19,23 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkulduggeryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has BoostFirstTargetCreatureEffect(+1/+1) and BoostSecondTargetCreatureEffect(-1/-1)")
-    void cardHasCorrectEffects() {
-        Skulduggery card = new Skulduggery();
-        var effects = card.getEffects(EffectSlot.SPELL);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(BoostFirstTargetCreatureEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(BoostSecondTargetCreatureEffect.class);
-
-        BoostFirstTargetCreatureEffect boost = (BoostFirstTargetCreatureEffect) effects.get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        BoostSecondTargetCreatureEffect debuff = (BoostSecondTargetCreatureEffect) effects.get(1);
-        assertThat(debuff.powerBoost()).isEqualTo(-1);
-        assertThat(debuff.toughnessBoost()).isEqualTo(-1);
-    }
+    
 
     @Test
     @DisplayName("Target creature you control gets +1/+1 and target opponent creature gets -1/-1")

@@ -16,25 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DrudgeSentinelTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has activated ability with TapSelfEffect and GrantKeywordEffect(INDESTRUCTIBLE, SELF)")
-    void hasActivatedAbility() {
-        DrudgeSentinel card = new DrudgeSentinel();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{3}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(TapSelfEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Activated ability =====
 
     @Test

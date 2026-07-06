@@ -20,19 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FleetSwallowerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fleet Swallower has ON_ATTACK MillHalfLibraryEffect with roundUp=true")
-    void hasCorrectEffects() {
-        FleetSwallower card = new FleetSwallower();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(MillHalfLibraryEffect.class);
-        MillHalfLibraryEffect effect = (MillHalfLibraryEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.roundUp()).isTrue();
-    }
-
     // ===== Attack trigger =====
 
     @Nested

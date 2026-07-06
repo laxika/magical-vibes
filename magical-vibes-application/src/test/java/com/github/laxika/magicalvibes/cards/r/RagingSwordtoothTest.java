@@ -16,18 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RagingSwordtoothTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ETB MassDamageEffect with 'each other creature' filter")
-    void hasCorrectEtbEffect() {
-        RagingSwordtooth card = new RagingSwordtooth();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.damage()).isEqualTo(1);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isNotNull();
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack as a creature spell")

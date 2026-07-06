@@ -25,41 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SirensRuseTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Card has ExileTargetPermanentAndReturnImmediatelyEffect with Pirate bonus on SPELL slot")
-    void hasCorrectEffect() {
-        SirensRuse card = new SirensRuse();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileTargetPermanentAndReturnImmediatelyEffect.class);
-        ExileTargetPermanentAndReturnImmediatelyEffect effect =
-                (ExileTargetPermanentAndReturnImmediatelyEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.bonusSubtype()).isEqualTo(CardSubtype.PIRATE);
-        assertThat(effect.bonusEffect()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) effect.bonusEffect()).amount()).isEqualTo(new Fixed(1));
-    }
-
-    @Test
-    @DisplayName("Target filter requires creature controlled by source controller")
-    void hasCorrectTargetFilter() {
-        SirensRuse card = new SirensRuse();
-
-        assertThat(card.getSpellTargets()).hasSize(1);
-        assertThat(card.getSpellTargets().getFirst().getFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter =
-                (PermanentPredicateTargetFilter) card.getSpellTargets().getFirst().getFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate allOf = (PermanentAllOfPredicate) filter.predicate();
-        assertThat(allOf.predicates()).hasSize(2);
-        assertThat(allOf.predicates()).anySatisfy(p ->
-                assertThat(p).isInstanceOf(PermanentControlledBySourceControllerPredicate.class));
-        assertThat(allOf.predicates()).anySatisfy(p ->
-                assertThat(p).isInstanceOf(PermanentIsCreaturePredicate.class));
-    }
-
     // ===== Flicker non-Pirate creature =====
 
     @Test

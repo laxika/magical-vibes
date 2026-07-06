@@ -23,33 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChancellorOfTheAnnexTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CASTS_SPELL CounterUnlessPaysEffect(1)")
-    void hasCorrectBattlefieldEffect() {
-        ChancellorOfTheAnnex card = new ChancellorOfTheAnnex();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst()).amount())
-                .isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has ON_OPENING_HAND_REVEAL MayEffect wrapping RegisterDelayedCounterTriggerEffect(1)")
-    void hasCorrectOpeningHandEffect() {
-        ChancellorOfTheAnnex card = new ChancellorOfTheAnnex();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(RegisterDelayedCounterTriggerEffect.class);
-        assertThat(((RegisterDelayedCounterTriggerEffect) may.wrapped()).genericManaAmount()).isEqualTo(1);
-    }
-
     // ===== Battlefield: triggers on opponent's spell =====
 
     @Test

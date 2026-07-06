@@ -16,18 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InquisitorExarchTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Inquisitor Exarch has a ChooseOneEffect with two ETB options")
-    void hasCorrectEffects() {
-        InquisitorExarch card = new InquisitorExarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(GainLifeEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: You gain 2 life")

@@ -25,31 +25,9 @@ class SickleslicerTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Sickleslicer has living weapon ETB effect")
-    void hasLivingWeaponEffect() {
-        Sickleslicer card = new Sickleslicer();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(LivingWeaponEffect.class);
-    }
-
-    @Test
-    @DisplayName("Sickleslicer has static +2/+2 boost")
-    void hasStaticBoost() {
-        Sickleslicer card = new Sickleslicer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Sickleslicer has equip {4} ability")

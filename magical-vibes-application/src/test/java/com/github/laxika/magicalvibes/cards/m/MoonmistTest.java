@@ -23,30 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MoonmistTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Moonmist has correct effects")
-    void hasCorrectEffects() {
-        Moonmist card = new Moonmist();
-
-        List<?> spellEffects = card.getEffects(EffectSlot.SPELL);
-        assertThat(spellEffects).hasSize(2);
-        assertThat(spellEffects.get(0)).isInstanceOf(TransformAllEffect.class);
-        TransformAllEffect transformEffect = (TransformAllEffect) spellEffects.get(0);
-        assertThat(transformEffect.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        PermanentHasSubtypePredicate humanFilter = (PermanentHasSubtypePredicate) transformEffect.filter();
-        assertThat(humanFilter.subtype()).isEqualTo(CardSubtype.HUMAN);
-
-        assertThat(spellEffects.get(1)).isInstanceOf(PreventCombatDamageExceptBySubtypesEffect.class);
-        PreventCombatDamageExceptBySubtypesEffect preventEffect =
-                (PreventCombatDamageExceptBySubtypesEffect) spellEffects.get(1);
-        assertThat(preventEffect.exemptPredicate()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-        PermanentHasAnySubtypePredicate exemptFilter =
-                (PermanentHasAnySubtypePredicate) preventEffect.exemptPredicate();
-        assertThat(exemptFilter.subtypes()).containsExactlyInAnyOrder(CardSubtype.WEREWOLF, CardSubtype.WOLF);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -231,7 +207,5 @@ class MoonmistTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card.getName().equals("Moonmist"));
     }
-
-    // ===== Helper methods =====
 
 }

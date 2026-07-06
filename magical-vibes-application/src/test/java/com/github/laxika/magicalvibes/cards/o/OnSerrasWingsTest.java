@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OnSerrasWingsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("On Serra's Wings has correct card properties")
-    void hasCorrectProperties() {
-        OnSerrasWings card = new OnSerrasWings();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keywords()).containsExactlyInAnyOrder(Keyword.FLYING, Keyword.VIGILANCE, Keyword.LIFELINK);
-        assertThat(keywordEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantSupertypeToEnchantedPermanentEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

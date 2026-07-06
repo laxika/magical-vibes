@@ -21,18 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EchocastingSymposiumTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has player and creature targets with token copy effect")
-    void hasCorrectStructure() {
-        EchocastingSymposium card = new EchocastingSymposium();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isEqualTo(2);
-        assertThat(card.getMaxTargets()).isEqualTo(2);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokenCopyOfTargetCreatureForTargetPlayerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Target player creates a token copy of target creature you control")

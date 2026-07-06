@@ -21,15 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StormboundGeistTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has block-only-flying static effect")
-    void hasBlockOnlyFlyingEffect() {
-        StormboundGeist card = new StormboundGeist();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Stormbound Geist can block a creature with flying")

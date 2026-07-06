@@ -25,39 +25,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class OliviaVoldarenTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("First ability has correct effects: damage, grant subtype, +1/+1 counter")
-    void firstAbilityHasCorrectEffects() {
-        OliviaVoldaren card = new OliviaVoldaren();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-        var firstAbility = card.getActivatedAbilities().get(0);
-        assertThat(firstAbility.getManaCost()).isEqualTo("{1}{R}");
-        assertThat(firstAbility.isRequiresTap()).isFalse();
-        assertThat(firstAbility.getEffects())
-                .hasSize(3)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-                    assertThat(effects.get(1)).isInstanceOf(GrantSubtypeToTargetCreatureEffect.class);
-                    assertThat(effects.get(2)).isInstanceOf(PutCountersOnSelfEffect.class);
-                });
-    }
-
-    @Test
-    @DisplayName("Second ability has correct effects: gain control while source")
-    void secondAbilityHasCorrectEffects() {
-        OliviaVoldaren card = new OliviaVoldaren();
-
-        var secondAbility = card.getActivatedAbilities().get(1);
-        assertThat(secondAbility.getManaCost()).isEqualTo("{3}{B}{B}");
-        assertThat(secondAbility.isRequiresTap()).isFalse();
-        assertThat(secondAbility.getEffects())
-                .hasSize(1)
-                .first().isInstanceOf(GainControlOfTargetPermanentWhileSourceEffect.class);
-    }
-
     // ===== First ability: {1}{R} ping + Vampire + counter =====
 
     @Nested

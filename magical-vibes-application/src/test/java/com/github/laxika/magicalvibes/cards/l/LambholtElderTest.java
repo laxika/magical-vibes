@@ -20,40 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LambholtElderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        LambholtElder card = new LambholtElder();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isEqualTo(new DrawCardEffect(1));
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect frontTransform =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(frontTransform.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(SilverpeltWerewolf.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("SilverpeltWerewolf");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        LambholtElder card = new LambholtElder();
-        SilverpeltWerewolf backFace = (SilverpeltWerewolf) card.getBackFaceCard();
-
-        assertThat(backFace.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isEqualTo(new DrawCardEffect(2));
-
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Lambholt Elder draws a card when dealing combat damage to a player")

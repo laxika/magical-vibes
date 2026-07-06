@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OculusTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Oculus has correct death trigger effect")
-    void hasCorrectProperties() {
-        Oculus card = new Oculus();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(may.prompt()).isEqualTo("Draw a card?");
-    }
-
     // ===== Death trigger: combat (blocker dies) =====
 
     @Test

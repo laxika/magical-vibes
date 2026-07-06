@@ -29,30 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TreetopBracersTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Treetop Bracers has correct card properties")
-    void hasCorrectProperties() {
-        TreetopBracers card = new TreetopBracers();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(CanBeBlockedOnlyByFilterEffect.class);
-
-        CanBeBlockedOnlyByFilterEffect restriction = (CanBeBlockedOnlyByFilterEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(restriction.blockerPredicate()).isEqualTo(new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(),
-                new PermanentHasKeywordPredicate(Keyword.FLYING)
-        )));
-        assertThat(restriction.allowedBlockersDescription()).isEqualTo("creatures with flying");
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ));
-    }
+    
 
     @Test
     @DisplayName("Casting Treetop Bracers puts it on the stack")

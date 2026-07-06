@@ -19,27 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GeistHonoredMonkTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Geist-Honored Monk has correct effects")
-    void hasCorrectEffects() {
-        GeistHonoredMonk card = new GeistHonoredMonk();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToControlledCreatureCountEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Spirit");
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.FLYING);
-    }
-
     // ===== ETB: creates two Spirit tokens with flying =====
 
     @Test

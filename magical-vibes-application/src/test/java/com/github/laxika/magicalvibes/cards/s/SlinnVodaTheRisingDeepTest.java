@@ -32,17 +32,7 @@ class SlinnVodaTheRisingDeepTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{1}{U}"));
     }
 
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping ReturnCreaturesToOwnersHandEffect on ETB")
-    void hasKickedConditionalETBEffect() {
-        SlinnVodaTheRisingDeep card = new SlinnVodaTheRisingDeep();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        var conditional = (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(ReturnCreaturesToOwnersHandEffect.class);
-    }
+    
 
     // ===== Cast without kicker — no ETB bounce =====
 

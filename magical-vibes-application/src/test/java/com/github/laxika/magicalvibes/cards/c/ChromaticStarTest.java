@@ -21,27 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChromaticStarTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chromatic Star has correct card properties")
-    void hasCorrectProperties() {
-        ChromaticStar card = new ChromaticStar();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AwardAnyColorManaEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Mana ability resolves immediately (CR 605.3a) =====
 
     @Test
@@ -164,5 +143,4 @@ class ChromaticStarTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Chromatic Star"));
     }
 }
-
 

@@ -27,29 +27,6 @@ class AnointedDeaconTest extends BaseCardTest {
         harness.passBothPriorities(); // advance to BEGINNING_OF_COMBAT, triggers fire
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Anointed Deacon has beginning-of-combat triggered MayEffect wrapping BoostTargetCreatureEffect")
-    void hasCorrectEffect() {
-        AnointedDeacon card = new AnointedDeacon();
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(BoostTargetCreatureEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) mayEffect.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-
-        // Target filter is set on the card (used at resolution time), but the card itself
-        // does not need a target when cast — targeting happens on the triggered ability.
-        assertThat(card.getTargetFilter()).isNotNull();
-    }
-
     // ===== Accepting the may ability and targeting a Vampire =====
 
     @Test

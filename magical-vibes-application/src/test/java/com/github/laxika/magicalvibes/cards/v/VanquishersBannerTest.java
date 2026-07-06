@@ -37,34 +37,6 @@ class VanquishersBannerTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ChooseSubtypeOnEnterEffect, BoostCreaturesOfChosenSubtypeEffect, and ChosenSubtypeSpellCastTriggerEffect")
-    void hasCorrectEffects() {
-        VanquishersBanner card = new VanquishersBanner();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseSubtypeOnEnterEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostCreaturesOfChosenSubtypeEffect.class);
-        BoostCreaturesOfChosenSubtypeEffect boost =
-                (BoostCreaturesOfChosenSubtypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(ChosenSubtypeSpellCastTriggerEffect.class);
-        ChosenSubtypeSpellCastTriggerEffect trigger =
-                (ChosenSubtypeSpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Entering the battlefield =====
 
     @Test

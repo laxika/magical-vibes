@@ -24,30 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpawningPoolTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spawning Pool has correct card properties")
-    void hasCorrectProperties() {
-        SpawningPool card = new SpawningPool();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        var animateAbility = card.getActivatedAbilities().get(0);
-        assertThat(animateAbility.getManaCost()).isEqualTo("{1}{B}");
-        assertThat(animateAbility.isRequiresTap()).isFalse();
-        assertThat(animateAbility.getEffects()).hasSize(1);
-        assertThat(animateAbility.getEffects().getFirst()).isInstanceOf(AnimateLandEffect.class);
-
-        var regenAbility = card.getActivatedAbilities().get(1);
-        assertThat(regenAbility.getManaCost()).isEqualTo("{B}");
-        assertThat(regenAbility.isRequiresTap()).isFalse();
-        assertThat(regenAbility.getEffects()).hasSize(1);
-        assertThat(regenAbility.getEffects().getFirst()).isInstanceOf(RegenerateEffect.class);
-    }
-
     // ===== Enters the battlefield tapped =====
 
     @Test

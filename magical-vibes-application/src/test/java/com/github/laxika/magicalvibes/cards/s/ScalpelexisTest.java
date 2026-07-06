@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScalpelexisTest extends BaseCardTest {
 
-
     private Permanent addReadyCreature(Player player, Card card) {
         GameData gd = harness.getGameData();
         Permanent perm = new Permanent(card);
@@ -37,20 +36,6 @@ class ScalpelexisTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Scalpelexis has correct card properties")
-    void hasCorrectProperties() {
-        Scalpelexis card = new Scalpelexis();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(ExileTopCardsRepeatOnDuplicateEffect.class);
-        assertThat(((ExileTopCardsRepeatOnDuplicateEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst()).count())
-                .isEqualTo(4);
     }
 
     // ===== Combat damage trigger =====

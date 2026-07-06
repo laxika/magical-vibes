@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DivineOfferingTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Divine Offering has correct effect")
-    void hasCorrectEffect() {
-        DivineOffering card = new DivineOffering();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DestroyTargetPermanentAndGainLifeEqualToManaValueEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Divine Offering puts it on the stack with target")

@@ -31,16 +31,7 @@ class UntamedKavuTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{3}"));
     }
 
-    @Test
-    @DisplayName("Has kicked-conditional EnterWithCountersEffect with count 3")
-    void hasKickedETBEffect() {
-        UntamedKavu card = new UntamedKavu();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new ConditionalEffect(new Kicked(),
-                        new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
-    }
+    
 
     // ===== Casting without kicker =====
 

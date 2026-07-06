@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HighGroundTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("High Ground has correct card properties")
-    void hasCorrectProperties() {
-        HighGround card = new HighGround();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantAdditionalBlockEffect.class);
-        GrantAdditionalBlockEffect effect = (GrantAdditionalBlockEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.additionalBlocks()).isEqualTo(1);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -446,5 +431,4 @@ class HighGroundTest extends BaseCardTest {
                 .hasMessageContaining("too many times");
     }
 }
-
 

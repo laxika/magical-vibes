@@ -22,29 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RoyalAssassinTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Royal Assassin has correct card properties")
-    void hasCorrectProperties() {
-        RoyalAssassin card = new RoyalAssassin();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentIsTappedPredicate()
-                )),
-                "Target must be a tapped creature"
-        ));
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect =
-                (DestroyTargetPermanentEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Activating ability targeting a tapped creature puts it on the stack")

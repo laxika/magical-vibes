@@ -27,29 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GrafdiggersCageTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two STATIC effects: can't-enter and can't-cast-from-zones (graveyards + libraries)")
-    void hasStaticEffects() {
-        GrafdiggersCage card = new GrafdiggersCage();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof CardsCantEnterBattlefieldFromZonesEffect)
-                .singleElement()
-                .satisfies(e -> {
-                    CardsCantEnterBattlefieldFromZonesEffect effect = (CardsCantEnterBattlefieldFromZonesEffect) e;
-                    assertThat(effect.filter()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-                    assertThat(effect.zones()).isEqualTo(Set.of(Zone.GRAVEYARD, Zone.LIBRARY));
-                });
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof PlayersCantCastSpellsFromZonesEffect)
-                .singleElement()
-                .satisfies(e -> assertThat(((PlayersCantCastSpellsFromZonesEffect) e).zones())
-                        .isEqualTo(Set.of(Zone.GRAVEYARD, Zone.LIBRARY)));
-    }
-
     // ===== Players can't cast spells from graveyards =====
 
     @Test

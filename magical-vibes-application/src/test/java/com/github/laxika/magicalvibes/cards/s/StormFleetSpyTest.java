@@ -16,22 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StormFleetSpyTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has raid-conditional ETB draw effect")
-    void hasRaidEtbDrawEffect() {
-        StormFleetSpy card = new StormFleetSpy();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== ETB with raid met =====
 
     @Test

@@ -20,28 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WaterServantTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Water Servant has two activated abilities")
-    void hasTwoAbilities() {
-        WaterServant card = new WaterServant();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: +1/-1
-        BoostSelfEffect firstEffect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(firstEffect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(firstEffect.toughnessBoost()).isEqualTo(new Fixed(-1));
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{U}");
-
-        // Second ability: -1/+1
-        BoostSelfEffect secondEffect = (BoostSelfEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(secondEffect.powerBoost()).isEqualTo(new Fixed(-1));
-        assertThat(secondEffect.toughnessBoost()).isEqualTo(new Fixed(1));
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{U}");
-    }
-
     // ===== Casting =====
 
     @Test

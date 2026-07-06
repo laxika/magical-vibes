@@ -18,23 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DuskLegionDreadnoughtTest extends BaseCardTest {
 
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has Crew 2 activated ability with CrewCost and AnimateSelfAsCreatureEffect")
-    void hasCrewAbility() {
-        DuskLegionDreadnought card = new DuskLegionDreadnought();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CrewCost.class);
-        assertThat(((CrewCost) ability.getEffects().get(0)).requiredPower()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AnimateSelfAsCreatureEffect.class);
-    }
-
     // ===== Crew mechanic =====
 
     @Test

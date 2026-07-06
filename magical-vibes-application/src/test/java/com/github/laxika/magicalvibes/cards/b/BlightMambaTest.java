@@ -20,21 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class BlightMambaTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Blight Mamba has correct activated ability")
-    void hasCorrectActivatedAbility() {
-        BlightMamba card = new BlightMamba();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -63,19 +63,6 @@ class PerilousMyrTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Perilous Myr has ON_DEATH DealDamageToAnyTargetEffect(2)")
-    void hasCorrectProperties() {
-        PerilousMyr card = new PerilousMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect dmg = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(dmg.damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Casting =====
 
     @Test

@@ -20,21 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FathomFleetFirebrandTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fathom Fleet Firebrand has correct activated ability")
-    void hasCorrectAbility() {
-        FathomFleetFirebrand card = new FathomFleetFirebrand();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Casting Fathom Fleet Firebrand puts it on the stack")

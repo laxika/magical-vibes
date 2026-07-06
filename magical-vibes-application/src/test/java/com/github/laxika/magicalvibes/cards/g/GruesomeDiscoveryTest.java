@@ -27,21 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GruesomeDiscoveryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has morbid replacement from target discard to caster choice discard")
-    void hasCorrectStructure() {
-        GruesomeDiscovery card = new GruesomeDiscovery();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect = (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) effect.baseEffect()).amount()).isEqualTo(new Fixed(2));
-        assertThat(effect.upgradedEffect()).isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
-        assertThat(((ChooseCardFromTargetHandToDiscardEffect) effect.upgradedEffect()).count()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting puts Gruesome Discovery on the stack targeting a player")

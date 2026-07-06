@@ -19,23 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PaladinOfTheBloodstainedTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Paladin of the Bloodstained has one ON_ENTER_BATTLEFIELD token creation effect")
-    void hasCorrectEffect() {
-        PaladinOfTheBloodstained card = new PaladinOfTheBloodstained();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Vampire");
-        assertThat(effect.power()).isEqualTo(1);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.VAMPIRE);
-        assertThat(effect.keywords()).containsExactly(Keyword.LIFELINK);
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
+    
 
     @Test
     @DisplayName("Casting Paladin of the Bloodstained puts it on the battlefield and triggers ETB")

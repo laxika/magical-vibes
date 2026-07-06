@@ -21,27 +21,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ChimericMassTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Chimeric Mass has EnterWithCountersEffect and AnimateSelfByChargeCounters ability")
-    void hasCorrectProperties() {
-        ChimericMass card = new ChimericMass();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AnimateSelfByChargeCountersEffect.class);
-    }
-
     // ===== Casting with X charge counters =====
 
     @Test

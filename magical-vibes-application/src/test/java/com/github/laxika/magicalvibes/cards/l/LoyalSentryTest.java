@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LoyalSentryTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Loyal Sentry has correct card properties")
-    void hasCorrectProperties() {
-        LoyalSentry card = new LoyalSentry();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst()).isInstanceOf(DestroyBlockedCreatureAndSelfEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -337,5 +325,4 @@ class LoyalSentryTest extends BaseCardTest {
         assertThat(perm.isSummoningSick()).isTrue();
     }
 }
-
 

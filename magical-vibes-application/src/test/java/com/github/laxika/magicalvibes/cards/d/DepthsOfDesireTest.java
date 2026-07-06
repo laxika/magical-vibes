@@ -23,20 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DepthsOfDesireTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has bounce effect and treasure creation effect on SPELL slot")
-    void hasCorrectSpellEffects() {
-        DepthsOfDesire card = new DepthsOfDesire();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .anySatisfy(e -> assertThat(e).isInstanceOf(ReturnTargetPermanentToHandEffect.class))
-                .anySatisfy(e -> assertThat(e).isInstanceOf(CreateTokenEffect.class));
-    }
-
     // ===== Bounce + Treasure =====
 
     @Test
@@ -149,7 +135,5 @@ class DepthsOfDesireTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(c -> c.getName().equals("Depths of Desire"));
     }
-
-    // ===== Helpers =====
 
 }

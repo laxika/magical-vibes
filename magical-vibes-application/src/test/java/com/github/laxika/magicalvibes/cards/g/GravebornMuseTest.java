@@ -15,23 +15,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GravebornMuseTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Graveborn Muse has correct card properties")
-    void hasCorrectProperties() {
-        GravebornMuse card = new GravebornMuse();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst()).isInstanceOf(DrawAndLoseLifePerSubtypeEffect.class);
     }
 
     // ===== Triggering =====

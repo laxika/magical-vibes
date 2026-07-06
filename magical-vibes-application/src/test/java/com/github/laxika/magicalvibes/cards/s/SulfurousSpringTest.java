@@ -14,32 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SulfurousSpringTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Sulfurous Springs has correct card properties")
-    void hasCorrectProperties() {
-        SulfurousSpring card = new SulfurousSpring();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var colorless = card.getActivatedAbilities().get(0);
-        assertThat(colorless.isRequiresTap()).isTrue();
-        assertThat(colorless.getManaCost()).isNull();
-        assertThat(colorless.getEffects()).hasSize(1);
-        assertThat(colorless.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        var black = card.getActivatedAbilities().get(1);
-        assertThat(black.isRequiresTap()).isTrue();
-        assertThat(black.getEffects()).hasSize(2);
-        assertThat(black.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(black.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-
-        var red = card.getActivatedAbilities().get(2);
-        assertThat(red.isRequiresTap()).isTrue();
-        assertThat(red.getEffects()).hasSize(2);
-        assertThat(red.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(red.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Tapping for colorless mana adds {C} and deals no damage")

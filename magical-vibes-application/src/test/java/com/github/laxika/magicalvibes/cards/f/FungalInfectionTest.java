@@ -20,20 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FungalInfectionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fungal Infection has correct effects")
-    void hasCorrectEffects() {
-        FungalInfection card = new FungalInfection();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CreateTokenEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(-1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(-1));
-    }
+    
 
     @Test
     @DisplayName("Resolving Fungal Infection gives -1/-1 and creates a Saproling token")

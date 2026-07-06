@@ -24,16 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TwistedImageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Twisted Image has correct card properties")
-    void hasCorrectProperties() {
-        TwistedImage card = new TwistedImage();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(SwitchPowerToughnessEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Twisted Image puts it on the stack with target creature")

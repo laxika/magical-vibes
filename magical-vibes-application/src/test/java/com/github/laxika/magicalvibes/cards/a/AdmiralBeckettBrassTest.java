@@ -62,30 +62,9 @@ class AdmiralBeckettBrassTest extends BaseCardTest {
     @DisplayName("Card properties")
     class CardProperties {
 
-        @Test
-        @DisplayName("Has static lord effect for other Pirates")
-        void hasStaticLordEffect() {
-            AdmiralBeckettBrass card = new AdmiralBeckettBrass();
+        
 
-            assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-            StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-            assertThat(boost.powerBoost()).isEqualTo(1);
-            assertThat(boost.toughnessBoost()).isEqualTo(1);
-            assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-            assertThat(boost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-        }
-
-        @Test
-        @DisplayName("Has controller end-step triggered effect")
-        void hasEndStepTrigger() {
-            AdmiralBeckettBrass card = new AdmiralBeckettBrass();
-
-            assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-            GainControlIfSubtypesDealtCombatDamageEffect effect =
-                    (GainControlIfSubtypesDealtCombatDamageEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-            assertThat(effect.subtype()).isEqualTo(CardSubtype.PIRATE);
-            assertThat(effect.threshold()).isEqualTo(3);
-        }
+        
     }
 
     // ===== Lord effect =====

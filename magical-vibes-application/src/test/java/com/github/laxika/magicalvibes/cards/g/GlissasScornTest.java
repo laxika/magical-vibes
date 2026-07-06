@@ -19,16 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GlissasScornTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Glissa's Scorn has correct effect")
-    void hasCorrectEffect() {
-        GlissasScorn card = new GlissasScorn();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DestroyTargetPermanentAndControllerLosesLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Glissa's Scorn destroys target artifact and its controller loses 1 life")

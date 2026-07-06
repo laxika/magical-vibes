@@ -23,20 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JayasImmolatingInfernoTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct targeting and effect")
-    void hasCorrectProperties() {
-        JayasImmolatingInferno card = new JayasImmolatingInferno();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isEqualTo(1);
-        assertThat(card.getMaxTargets()).isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isEqualTo(new DealDamageToEachTargetEffect(new XValue()));
-    }
-
     // ===== Legendary sorcery restriction =====
 
     @Test

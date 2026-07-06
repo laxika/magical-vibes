@@ -25,25 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TriumphOfTheHordesTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Triumph of the Hordes has correct effects")
-    void hasCorrectEffects() {
-        TriumphOfTheHordes card = new TriumphOfTheHordes();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect trampleGrant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(trampleGrant.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(trampleGrant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-
-        GrantKeywordEffect infectGrant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(infectGrant.keywords()).containsExactly(Keyword.INFECT);
-        assertThat(infectGrant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("Resolving gives own creatures +1/+1, trample, and infect")

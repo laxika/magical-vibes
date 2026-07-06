@@ -24,26 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TesharAncestorsApostleTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has historic spell-cast trigger with graveyard-targeting return effect")
-    void hasCorrectStructure() {
-        TesharAncestorsApostle card = new TesharAncestorsApostle();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) trigger.resolvedEffects().getFirst();
-        assertThat(returnEffect.targetGraveyard()).isTrue();
-    }
-
     // ===== Historic trigger: graveyard return =====
 
     @Test

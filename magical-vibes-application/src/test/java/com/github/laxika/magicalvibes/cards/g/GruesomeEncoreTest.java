@@ -26,16 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GruesomeEncoreTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gruesome Encore has correct effects")
-    void hasCorrectEffects() {
-        GruesomeEncore card = new GruesomeEncore();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Gruesome Encore puts it on the stack with graveyard target")

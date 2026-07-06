@@ -18,25 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VedalkenInfuserTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Vedalken Infuser has upkeep triggered may ability targeting artifacts")
-    void hasCorrectAbilityStructure() {
-        VedalkenInfuser card = new VedalkenInfuser();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
-        assertThat(((PutCounterOnTargetPermanentEffect) mayEffect.wrapped()).counterType()).isEqualTo(CounterType.CHARGE);
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
-
     // ===== Upkeep triggered ability =====
 
     @Test

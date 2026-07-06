@@ -14,19 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class YavimayaEnchantressTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Yavimaya Enchantress has correct card properties")
-    void hasCorrectProperties() {
-        YavimayaEnchantress card = new YavimayaEnchantress();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-    }
-
     // ===== Static boost =====
 
     @Test

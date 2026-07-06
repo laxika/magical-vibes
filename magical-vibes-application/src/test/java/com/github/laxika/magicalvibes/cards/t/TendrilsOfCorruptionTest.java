@@ -26,18 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TendrilsOfCorruptionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tendrils of Corruption has correct effect configuration")
-    void hasCorrectEffect() {
-        TendrilsOfCorruption card = new TendrilsOfCorruption();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        PermanentCount swampCount = new PermanentCount(
-                new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER);
-        assertThat(card.getEffects(EffectSlot.SPELL)).containsExactly(
-                new DealDamageToTargetCreatureEffect(swampCount),
-                new GainLifeEffect(swampCount));
-    }
+    
 
     @Test
     @DisplayName("Casting Tendrils of Corruption targeting a creature puts it on the stack")

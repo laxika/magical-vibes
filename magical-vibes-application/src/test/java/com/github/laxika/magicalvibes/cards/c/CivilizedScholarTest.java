@@ -126,28 +126,6 @@ class CivilizedScholarTest extends BaseCardTest {
         assertThat(brute.isTapped()).isFalse();
     }
 
-    // ===== Configuration tests =====
-
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        CivilizedScholar card = new CivilizedScholar();
-
-        // One activated ability on front face (tap to loot)
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof DrawDiscardTransformIfCreatureDiscardedEffect);
-
-        // Back face should exist
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(HomicidalBrute.class);
-
-        // Back face has end step trigger with conditional
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED))
-                .anyMatch(e -> e instanceof ConditionalEffect);
-    }
-
     // ===== Helpers =====
 
     /**
@@ -173,7 +151,6 @@ class CivilizedScholarTest extends BaseCardTest {
         assertThat(scholar.isTransformed()).isTrue();
         return scholar;
     }
-
 
     private int findCardIndexByType(List<Card> hand, CardType type) {
         for (int i = 0; i < hand.size(); i++) {

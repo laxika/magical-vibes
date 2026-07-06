@@ -22,21 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BeastWithinTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has destroy target permanent and create token effect")
-    void hasCorrectEffect() {
-        BeastWithin card = new BeastWithin();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.tokenForController()).isNotNull();
-    }
-
     // ===== Destroy creature and give opponent a Beast token =====
 
     @Test

@@ -27,35 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShadowedCaravelTest extends BaseCardTest {
 
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_EXPLORES PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE)")
-    void hasExploreTriggeredCounterEffect() {
-        ShadowedCaravel card = new ShadowedCaravel();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect effect = (PutCountersOnSelfEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst();
-        assertThat(effect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-    }
-
-    @Test
-    @DisplayName("Has Crew 2 activated ability with CrewCost and AnimateSelfAsCreatureEffect")
-    void hasCrewAbility() {
-        ShadowedCaravel card = new ShadowedCaravel();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CrewCost.class);
-        assertThat(((CrewCost) ability.getEffects().get(0)).requiredPower()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AnimateSelfAsCreatureEffect.class);
-    }
-
     // ===== Explore triggers — land on top =====
 
     @Test
@@ -213,7 +184,6 @@ class ShadowedCaravelTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void castExplorerAndResolveExplore() {
         harness.setHand(player1, List.of(new BrazenBuccaneers()));

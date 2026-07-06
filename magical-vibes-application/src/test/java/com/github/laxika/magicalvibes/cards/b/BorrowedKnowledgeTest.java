@@ -22,20 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BorrowedKnowledgeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Borrowed Knowledge has a ChooseOneEffect with two options")
-    void hasCorrectEffects() {
-        BorrowedKnowledge card = new BorrowedKnowledge();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect())
-                .isInstanceOf(DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect.class);
-        assertThat(effect.options().get(1).effect())
-                .isInstanceOf(DiscardOwnHandThenDrawThatManyEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: draw equal to target opponent's hand size")

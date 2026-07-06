@@ -19,26 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MyrSireTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Myr Sire has one ON_DEATH token creation effect")
-    void hasCorrectEffect() {
-        MyrSire card = new MyrSire();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Phyrexian Myr");
-        assertThat(effect.power()).isEqualTo(1);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isNull();
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.MYR);
-        assertThat(effect.keywords()).isEmpty();
-        assertThat(effect.additionalTypes()).containsExactly(CardType.ARTIFACT);
-    }
-
     // ===== Casting =====
 
     @Test

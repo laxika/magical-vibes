@@ -19,25 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MillstoneTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Millstone has correct card properties")
-    void hasCorrectProperties() {
-        Millstone card = new Millstone();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect effect = (MillTargetPlayerEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.count()).isEqualTo(2);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

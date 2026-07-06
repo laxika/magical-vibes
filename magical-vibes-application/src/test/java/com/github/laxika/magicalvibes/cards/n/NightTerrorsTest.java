@@ -24,18 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NightTerrorsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Night Terrors has correct card properties")
-    void hasCorrectProperties() {
-        NightTerrors card = new NightTerrors();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ChooseCardFromTargetHandToExileEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

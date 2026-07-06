@@ -30,20 +30,7 @@ class SilverquillCharmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
     }
 
-    @Test
-    @DisplayName("Has a ChooseOneEffect with three options")
-    void hasCorrectEffects() {
-        SilverquillCharm card = new SilverquillCharm();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(3);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(ExileTargetPermanentEffect.class);
-        assertThat(effect.options().get(2).effects()).hasSize(2);
-        assertThat(effect.options().get(2).effects().get(0)).isInstanceOf(EachOpponentLosesLifeEffect.class);
-        assertThat(effect.options().get(2).effects().get(1)).isInstanceOf(GainLifeEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: Two +1/+1 counters on target creature")

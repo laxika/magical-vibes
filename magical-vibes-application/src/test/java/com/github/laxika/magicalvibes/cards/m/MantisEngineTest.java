@@ -20,42 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MantisEngineTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Mantis Engine has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        MantisEngine card = new MantisEngine();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {2} grants flying
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect flying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(flying.keywords())
-                .containsExactly(Keyword.FLYING);
-        assertThat(flying.scope()).isEqualTo(GrantScope.SELF);
-
-        // Second ability: {2} grants first strike
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(1).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect firstStrike = (GrantKeywordEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(firstStrike.keywords())
-                .containsExactly(Keyword.FIRST_STRIKE);
-        assertThat(firstStrike.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -387,5 +351,4 @@ class MantisEngineTest extends BaseCardTest {
         return perm;
     }
 }
-
 

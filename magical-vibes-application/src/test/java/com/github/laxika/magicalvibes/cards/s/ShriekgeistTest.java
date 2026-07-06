@@ -35,19 +35,7 @@ class ShriekgeistTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has combat damage mill effect for 2 cards")
-    void hasCorrectEffect() {
-        Shriekgeist card = new Shriekgeist();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MillTargetPlayerEffect.class);
-
-        MillTargetPlayerEffect mill =
-                (MillTargetPlayerEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(mill.count()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Dealing combat damage mills 2 cards")

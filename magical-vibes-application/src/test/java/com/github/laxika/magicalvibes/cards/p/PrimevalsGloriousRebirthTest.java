@@ -36,28 +36,6 @@ class PrimevalsGloriousRebirthTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effect: return all legendary permanents from graveyard")
-    void hasCorrectEffects() {
-        PrimevalsGloriousRebirth card = new PrimevalsGloriousRebirth();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.returnAll()).isTrue();
-        assertThat(effect.filter()).isInstanceOf(CardAllOfPredicate.class);
-
-        CardAllOfPredicate allOf = (CardAllOfPredicate) effect.filter();
-        assertThat(allOf.predicates()).hasSize(2);
-        assertThat(allOf.predicates().get(0)).isInstanceOf(CardSupertypePredicate.class);
-        assertThat(((CardSupertypePredicate) allOf.predicates().get(0)).supertype()).isEqualTo(CardSupertype.LEGENDARY);
-        assertThat(allOf.predicates().get(1)).isInstanceOf(CardIsPermanentPredicate.class);
-    }
-
     // ===== Legendary sorcery restriction =====
 
     @Test

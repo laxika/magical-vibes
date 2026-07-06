@@ -20,19 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SeverTheBloodlineTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Sever the Bloodline has correct card properties")
-    void hasCorrectProperties() {
-        SeverTheBloodline card = new SeverTheBloodline();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileTargetCreatureAndAllWithSameNameEffect.class);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost())
-                .isEqualTo("{5}{B}{B}");
-    }
+    
 
     @Test
     @DisplayName("Exiles target creature")

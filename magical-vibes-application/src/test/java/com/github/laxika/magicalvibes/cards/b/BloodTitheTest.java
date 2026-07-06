@@ -17,22 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BloodTitheTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has correct effect type and does not need a target")
-    void hasCorrectProperties() {
-        BloodTithe card = new BloodTithe();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(EachOpponentLosesLifeAndControllerGainsLifeLostEffect.class);
-        EachOpponentLosesLifeAndControllerGainsLifeLostEffect effect =
-                (EachOpponentLosesLifeAndControllerGainsLifeLostEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(3);
-    }
-
     // ===== Casting =====
 
     @Test

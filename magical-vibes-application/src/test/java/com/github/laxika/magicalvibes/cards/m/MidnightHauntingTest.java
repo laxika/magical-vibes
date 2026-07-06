@@ -18,27 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MidnightHauntingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Midnight Haunting has spell effect that creates two 1/1 white Spirit tokens with flying")
-    void hasCorrectProperties() {
-        MidnightHaunting card = new MidnightHaunting();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Spirit");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.FLYING);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

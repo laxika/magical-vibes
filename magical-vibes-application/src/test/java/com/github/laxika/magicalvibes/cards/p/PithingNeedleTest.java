@@ -27,22 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PithingNeedleTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Pithing Needle has correct card properties")
-    void hasCorrectProperties() {
-        PithingNeedle card = new PithingNeedle();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseCardNameOnEnterEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ActivatedAbilitiesOfChosenNameCantBeActivatedEffect.class);
-    }
-
     // ===== Casting and card name choice =====
 
     @Test

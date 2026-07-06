@@ -18,19 +18,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class StormFleetAerialistTest extends BaseCardTest {
 
-    // ===== Card setup =====
-
-    @Test
-    @DisplayName("Has raid-conditional EnterWithCountersEffect with count 1")
-    void hasRaidETBCounterEffect() {
-        StormFleetAerialist card = new StormFleetAerialist();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new ConditionalEffect(new Raid(),
-                        new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
-    }
-
     // ===== Casting without raid =====
 
     @Test

@@ -34,18 +34,6 @@ class XathridDemonTest extends BaseCardTest {
         return perm;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Xathrid Demon has correct upkeep trigger effect")
-    void hasCorrectEffect() {
-        XathridDemon card = new XathridDemon();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeOtherCreatureOpponentsLoseLifeOrTapAndLoseLifeEffect.class);
-    }
-
     // ===== No other creatures — tap and lose 7 life =====
 
     @Test

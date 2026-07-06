@@ -16,23 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SunspearShikariTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two static ConditionalEffect wrapping GrantKeywordEffect for first strike and lifelink")
-    void hasCorrectEffects() {
-        SunspearShikari card = new SunspearShikari();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .allSatisfy(e -> assertThat(e).isInstanceOf(ConditionalEffect.class));
-
-        var keywords = card.getEffects(EffectSlot.STATIC).stream()
-                .flatMap(e -> ((GrantKeywordEffect) ((ConditionalEffect) e).wrapped()).keywords().stream())
-                .toList();
-        assertThat(keywords).containsExactlyInAnyOrder(Keyword.FIRST_STRIKE, Keyword.LIFELINK);
-    }
-
     // ===== Without equipment =====
 
     @Test

@@ -21,20 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FreshMeatTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fresh Meat has correct effect")
-    void hasCorrectEffect() {
-        FreshMeat card = new FreshMeat();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.amount()).isEqualTo(new CreatureDeathsThisTurn(CountScope.CONTROLLER));
-    }
-
     // ===== Resolution =====
 
     @Test

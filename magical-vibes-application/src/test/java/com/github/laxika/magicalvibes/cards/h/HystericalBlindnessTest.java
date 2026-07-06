@@ -18,20 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HystericalBlindnessTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has BoostAllCreaturesEffect with -4/0 and opponent filter")
-    void hasCorrectStructure() {
-        HystericalBlindness card = new HystericalBlindness();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostAllCreaturesEffect.class);
-
-        BoostAllCreaturesEffect boost = (BoostAllCreaturesEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(-4);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.filter()).isInstanceOf(PermanentNotPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Gives -4/-0 to opponent's creatures")

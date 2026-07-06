@@ -17,39 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GrizzledOutcastsTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        GrizzledOutcasts card = new GrizzledOutcasts();
-
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("KrallenhordeWantons");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        GrizzledOutcasts card = new GrizzledOutcasts();
-        KrallenhordeWantons backFace = (KrallenhordeWantons) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Werewolf transform: front -> back (no spells cast last turn) =====
 
     @Test
@@ -170,7 +137,5 @@ class GrizzledOutcastsTest extends BaseCardTest {
         assertThat(outcasts.isTransformed()).isTrue();
         assertThat(outcasts.getCard().getName()).isEqualTo("Krallenhorde Wantons");
     }
-
-    // ===== Helpers =====
 
 }

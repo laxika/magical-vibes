@@ -24,23 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeadlyAllureTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Deadly Allure has correct effects")
-    void hasCorrectEffects() {
-        DeadlyAllure card = new DeadlyAllure();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(grant.keywords()).containsExactly(Keyword.DEATHTOUCH);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MustBeBlockedIfAbleThisTurnEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

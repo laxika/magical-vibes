@@ -20,25 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WallOfTanglecordTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Wall of Tanglecord has one activated ability granting reach")
-    void hasReachActivatedAbility() {
-        WallOfTanglecord card = new WallOfTanglecord();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{G}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect reach = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(reach.keywords()).containsExactly(Keyword.REACH);
-        assertThat(reach.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Casting =====
 
     @Test

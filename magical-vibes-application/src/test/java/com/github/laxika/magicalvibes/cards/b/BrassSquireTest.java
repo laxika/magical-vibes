@@ -20,26 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BrassSquireTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Brass Squire has one activated ability with multi-target")
-    void hasMultiTargetActivatedAbility() {
-        BrassSquire card = new BrassSquire();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).isMultiTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getMinTargets()).isEqualTo(2);
-        assertThat(card.getActivatedAbilities().get(0).getMaxTargets()).isEqualTo(2);
-        assertThat(card.getActivatedAbilities().get(0).getMultiTargetFilters()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AttachTargetEquipmentToTargetCreatureEffect.class);
-    }
-
     // ===== Attach equipment to creature (happy path) =====
 
     @Test

@@ -29,19 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FurnaceOfRathTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Furnace of Rath has correct card properties")
-    void hasCorrectProperties() {
-        FurnaceOfRath card = new FurnaceOfRath();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(DoubleDamageEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -513,5 +500,4 @@ class FurnaceOfRathTest extends BaseCardTest {
         gs.declareAttackers(gd, player, attackerIndices);
     }
 }
-
 

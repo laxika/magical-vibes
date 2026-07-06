@@ -18,19 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TelepathyTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Telepathy has correct card properties")
-    void hasCorrectProperties() {
-        Telepathy card = new Telepathy();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(RevealOpponentHandsEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

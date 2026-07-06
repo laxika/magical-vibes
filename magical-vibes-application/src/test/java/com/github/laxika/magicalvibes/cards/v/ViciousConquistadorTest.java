@@ -16,21 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ViciousConquistadorTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has EachOpponentLosesLifeEffect(1) on ON_ATTACK")
-    void hasAttackTrigger() {
-        ViciousConquistador card = new ViciousConquistador();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(EachOpponentLosesLifeEffect.class);
-        EachOpponentLosesLifeEffect effect =
-                (EachOpponentLosesLifeEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
     // ===== ON_ATTACK — each opponent loses 1 life =====
 
     @Test
@@ -113,7 +98,6 @@ class ViciousConquistadorTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

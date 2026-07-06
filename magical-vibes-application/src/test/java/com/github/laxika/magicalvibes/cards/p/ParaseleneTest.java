@@ -22,23 +22,6 @@ class ParaseleneTest extends BaseCardTest {
 
     private static final int STARTING_LIFE = 20;
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Paraselene has correct effect configuration")
-    void hasCorrectEffectConfiguration() {
-        Paraselene card = new Paraselene();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyAllPermanentsAndGainLifePerDestroyedEffect.class);
-        DestroyAllPermanentsAndGainLifePerDestroyedEffect effect =
-                (DestroyAllPermanentsAndGainLifePerDestroyedEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsEnchantmentPredicate.class);
-        assertThat(effect.lifePerDestroyed()).isEqualTo(1);
-    }
-
     // ===== Resolution =====
 
     @Test

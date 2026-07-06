@@ -20,18 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SnapcasterMageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD GrantFlashbackToTargetGraveyardCardEffect for instants and sorceries")
-    void hasCorrectETBEffect() {
-        SnapcasterMage card = new SnapcasterMage();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GrantFlashbackToTargetGraveyardCardEffect.class);
-        GrantFlashbackToTargetGraveyardCardEffect effect =
-                (GrantFlashbackToTargetGraveyardCardEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.cardTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-    }
+    
 
     @Test
     @DisplayName("ETB with instant in controller's graveyard prompts graveyard choice")

@@ -19,26 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class YavimayaSapherdTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Yavimaya Sapherd has one ON_ENTER_BATTLEFIELD token creation effect")
-    void hasCorrectEffect() {
-        YavimayaSapherd card = new YavimayaSapherd();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Saproling");
-        assertThat(effect.power()).isEqualTo(1);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.SAPROLING);
-        assertThat(effect.keywords()).isEmpty();
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
-
     // ===== Casting =====
 
     @Test

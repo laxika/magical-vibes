@@ -45,58 +45,11 @@ class SorinLordOfInnistradTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability creates a 1/1 black Vampire token with lifelink")
-    void plusOneAbilityHasCorrectEffect() {
-        SorinLordOfInnistrad card = new SorinLordOfInnistrad();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
+    
 
-        CreateTokenEffect token = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(token.tokenName()).isEqualTo("Vampire");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.color()).isEqualTo(CardColor.BLACK);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.VAMPIRE);
-        assertThat(token.keywords()).containsExactly(Keyword.LIFELINK);
-    }
-
-    @Test
-    @DisplayName("-2 ability has SorinLordOfInnistradEmblemEffect")
-    void minusTwoAbilityHasCorrectEffect() {
-        SorinLordOfInnistrad card = new SorinLordOfInnistrad();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SorinLordOfInnistradEmblemEffect.class);
-    }
-
-    @Test
-    @DisplayName("-6 ability destroys up to three creatures and/or other planeswalkers then returns them")
-    void minusSixAbilityHasCorrectEffect() {
-        SorinLordOfInnistrad card = new SorinLordOfInnistrad();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-6);
-        assertThat(ability.getMinTargets()).isZero();
-        assertThat(ability.getMaxTargets()).isEqualTo(3);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DestroyUpToTargetsThenReturnFromGraveyardEffect.class);
-        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsPlaneswalkerPredicate(),
-                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                        ))
-                )),
-                "Target must be a creature or another planeswalker"
-        ));
-    }
+    
 
     // ===== Casting =====
 

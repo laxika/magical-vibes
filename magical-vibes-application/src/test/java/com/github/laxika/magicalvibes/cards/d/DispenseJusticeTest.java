@@ -24,18 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DispenseJusticeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has correct effect type and needs target")
-    void hasCorrectProperties() {
-        DispenseJustice card = new DispenseJustice();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(SacrificeAttackingCreaturesEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

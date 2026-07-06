@@ -22,25 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HoardSmelterDragonTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has activated ability with destroy-artifact-and-boost effect and artifact target filter")
-    void hasCorrectAbility() {
-        HoardSmelterDragon card = new HoardSmelterDragon();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{3}{R}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).singleElement()
-                .isInstanceOf(DestroyTargetPermanentAndBoostSelfByManaValueEffect.class);
-        assertThat(ability.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) ability.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
-
     // ===== Destroy artifact and boost =====
 
     @Test

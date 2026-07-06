@@ -17,24 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpiralingDuelistTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has metalcraft double strike static effect")
-    void hasMetalcraftDoubleStrikeEffect() {
-        SpiralingDuelist card = new SpiralingDuelist();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) metalcraft.wrapped();
-        assertThat(grant.keywords()).containsExactly(Keyword.DOUBLE_STRIKE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Metalcraft behavior =====
 
     @Test

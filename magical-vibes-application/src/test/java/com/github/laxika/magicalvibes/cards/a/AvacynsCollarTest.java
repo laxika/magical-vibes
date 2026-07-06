@@ -27,40 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AvacynsCollarTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +1/+0 boost and vigilance for equipped creature")
-    void hasStaticEffects() {
-        AvacynsCollar card = new AvacynsCollar();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect vigilance = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(vigilance.keywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(vigilance.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Has Human triggering-card conditional death trigger wrapping CreateTokenEffect")
-    void hasDeathTrigger() {
-        AvacynsCollar card = new AvacynsCollar();
-
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect conditional = (TriggeringCardConditionalEffect)
-                card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-    }
-
     // ===== Static boost =====
 
     @Test

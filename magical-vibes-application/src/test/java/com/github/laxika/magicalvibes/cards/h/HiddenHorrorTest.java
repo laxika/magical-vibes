@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HiddenHorrorTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Has ETB sacrifice-unless-discard effect")
-    void hasEtbEffect() {
-        HiddenHorror card = new HiddenHorror();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(SacrificeUnlessDiscardCardTypeEffect.class);
-        SacrificeUnlessDiscardCardTypeEffect effect =
-                (SacrificeUnlessDiscardCardTypeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.requiredType()).isEqualTo(CardType.CREATURE);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -340,5 +323,4 @@ class HiddenHorrorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId()).isEqualTo(player1.getId());
     }
 }
-
 

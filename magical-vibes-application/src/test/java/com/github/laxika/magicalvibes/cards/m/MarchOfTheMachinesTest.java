@@ -20,19 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MarchOfTheMachinesTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("March of the Machines has correct card properties")
-    void hasCorrectProperties() {
-        MarchOfTheMachines card = new MarchOfTheMachines();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AnimateNoncreatureArtifactsEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

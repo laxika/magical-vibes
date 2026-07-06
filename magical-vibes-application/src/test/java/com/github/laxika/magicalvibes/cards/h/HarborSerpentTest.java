@@ -19,22 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HarborSerpentTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Harbor Serpent has CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect for 5 Islands")
-    void hasCorrectEffect() {
-        HarborSerpent card = new HarborSerpent();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect.class);
-        CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect effect =
-                (CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.permanentPredicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
-        assertThat(effect.minimumCount()).isEqualTo(5);
-    }
-
     // ===== Attack restriction =====
 
     @Test

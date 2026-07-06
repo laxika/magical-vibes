@@ -32,18 +32,7 @@ class ImpalerShrikeTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Impaler Shrike has MayEffect-wrapped combat damage trigger")
-    void hasCorrectEffect() {
-        ImpalerShrike card = new ImpalerShrike();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SacrificeSelfAndDrawCardsEffect.class);
-        assertThat(((SacrificeSelfAndDrawCardsEffect) may.wrapped()).amount()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")

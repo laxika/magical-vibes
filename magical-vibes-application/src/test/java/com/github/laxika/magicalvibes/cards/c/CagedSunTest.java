@@ -37,29 +37,6 @@ class CagedSunTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Caged Sun has correct effects")
-    void hasCorrectEffects() {
-        CagedSun card = new CagedSun();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseColorOnEnterEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostCreaturesOfChosenColorEffect.class);
-        BoostCreaturesOfChosenColorEffect boost = (BoostCreaturesOfChosenColorEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).getFirst())
-                .isInstanceOf(AddExtraManaOfChosenColorOnLandTapEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

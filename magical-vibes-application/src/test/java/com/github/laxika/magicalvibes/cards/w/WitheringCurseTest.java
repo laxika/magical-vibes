@@ -17,15 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WitheringCurseTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Withering Curse has a single conditional SPELL effect")
-    void hasCorrectStructure() {
-        WitheringCurse card = new WitheringCurse();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Without life gained, all creatures get -2/-2 (kills the 2/2, spares the 3/3)")

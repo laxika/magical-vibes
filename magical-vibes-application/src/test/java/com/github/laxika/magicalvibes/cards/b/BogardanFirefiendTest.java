@@ -38,7 +38,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BogardanFirefiendTest extends BaseCardTest {
 
-
     /**
      * Sets up combat where Bogardan Firefiend (player1) attacks and is blocked by a 3/3 creature (player2).
      * Firefiend (2/1) will die from combat damage.
@@ -62,19 +61,6 @@ class BogardanFirefiendTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bogardan Firefiend has correct card properties")
-    void hasCorrectProperties() {
-        BogardanFirefiend card = new BogardanFirefiend();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect dmg = (DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(dmg.damage()).isEqualTo(new Fixed(2));
     }
 
     // ===== Casting =====
@@ -286,5 +272,4 @@ class BogardanFirefiendTest extends BaseCardTest {
                 && e.getTargetId().equals(bearsId));
     }
 }
-
 

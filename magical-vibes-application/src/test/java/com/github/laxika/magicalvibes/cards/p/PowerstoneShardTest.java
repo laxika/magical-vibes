@@ -12,19 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PowerstoneShardTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Powerstone Shard has one tap-for-mana activated ability")
-    void hasCorrectAbility() {
-        PowerstoneShard card = new PowerstoneShard();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddManaPerControlledPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("With one Powerstone Shard, tapping adds 1 colorless mana")

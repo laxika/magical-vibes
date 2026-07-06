@@ -24,26 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SavingGraspTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has bounce effect on SPELL slot and flashback casting option")
-    void hasCorrectCardStructure() {
-        SavingGrasp card = new SavingGrasp();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-        assertThat(card.getTargetFilter()).isInstanceOf(OwnedPermanentPredicateTargetFilter.class);
-
-        OwnedPermanentPredicateTargetFilter filter = (OwnedPermanentPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsCreaturePredicate.class);
-
-        assertThat(card.getCastingOptions()).hasSize(1);
-        assertThat(card.getCastingOptions().getFirst()).isInstanceOf(FlashbackCast.class);
-        assertThat(((FlashbackCast) card.getCastingOptions().getFirst()).costs()).hasSize(1);
-    }
-
     // ===== Casting =====
 
     @Test

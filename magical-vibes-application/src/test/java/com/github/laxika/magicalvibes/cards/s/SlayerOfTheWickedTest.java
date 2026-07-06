@@ -53,20 +53,6 @@ class SlayerOfTheWickedTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId); // choose target -> ETB on stack
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Slayer of the Wicked has correct ETB may destroy effect")
-    void hasCorrectProperties() {
-        SlayerOfTheWicked card = new SlayerOfTheWicked();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

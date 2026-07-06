@@ -19,26 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RustedRelicTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has metalcraft static AnimateSelfWithStatsEffect with 5/5 Golem")
-    void hasCorrectEffect() {
-        RustedRelic card = new RustedRelic();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(AnimateSelfWithStatsEffect.class);
-
-        AnimateSelfWithStatsEffect animate = (AnimateSelfWithStatsEffect) metalcraft.wrapped();
-        assertThat(animate.power()).isEqualTo(5);
-        assertThat(animate.toughness()).isEqualTo(5);
-        assertThat(animate.grantedSubtypes()).containsExactly(CardSubtype.GOLEM);
-    }
-
     // ===== Without metalcraft =====
 
     @Test

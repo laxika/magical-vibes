@@ -21,18 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SilentDepartureTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Silent Departure has correct effects")
-    void hasCorrectEffects() {
-        SilentDeparture card = new SilentDeparture();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

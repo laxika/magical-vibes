@@ -21,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VolitionReinsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Volition Reins has correct effects")
-    void hasCorrectEffects() {
-        VolitionReins card = new VolitionReins();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ControlEnchantedCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(UntapTargetPermanentEffect.class);
-    }
-
     // ===== Stealing creatures =====
 
     @Test

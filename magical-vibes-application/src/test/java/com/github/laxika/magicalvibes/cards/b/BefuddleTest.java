@@ -25,20 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BefuddleTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Befuddle has correct card properties")
-    void hasCorrectCardProperties() {
-        Befuddle card = new Befuddle();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-4));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Casting Befuddle puts it on stack with target creature")

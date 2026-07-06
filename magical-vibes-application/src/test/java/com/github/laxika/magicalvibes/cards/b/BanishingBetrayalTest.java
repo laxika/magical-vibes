@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BanishingBetrayalTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Needs a target and has bounce + surveil 1 spell effects")
-    void hasCorrectSpellEffects() {
-        BanishingBetrayal card = new BanishingBetrayal();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .anySatisfy(e -> assertThat(e).isInstanceOf(ReturnTargetPermanentToHandEffect.class))
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(SurveilEffect.class);
-                    assertThat(((SurveilEffect) e).count()).isEqualTo(1);
-                });
-    }
-
     // ===== Bounce + surveil accepted =====
 
     @Test

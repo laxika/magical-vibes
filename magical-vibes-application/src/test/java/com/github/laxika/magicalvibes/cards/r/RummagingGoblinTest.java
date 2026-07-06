@@ -25,25 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RummagingGoblinTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has one activated ability with tap, no mana cost, discard cost then draw")
-    void hasCorrectAbility() {
-        RummagingGoblin card = new RummagingGoblin();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        DiscardCardTypeCost discardCost = (DiscardCardTypeCost) ability.getEffects().get(0);
-        assertThat(discardCost.predicate()).isNull();
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Activated ability — discard cost =====
 
     @Test

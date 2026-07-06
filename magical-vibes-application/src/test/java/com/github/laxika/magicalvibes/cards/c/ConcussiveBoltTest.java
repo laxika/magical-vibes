@@ -45,22 +45,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ConcussiveBoltTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has DealDamageToTargetPlayerEffect(4) + ConditionalEffect wrapping TargetPlayerCreaturesCantBlockThisTurnEffect")
-    void hasCorrectStructure() {
-        ConcussiveBolt card = new ConcussiveBolt();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0)).damage()).isEqualTo(new Fixed(4));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(metalcraft.wrapped()).isInstanceOf(TargetPlayerCreaturesCantBlockThisTurnEffect.class);
-    }
-
     // ===== Without metalcraft =====
 
     @Test

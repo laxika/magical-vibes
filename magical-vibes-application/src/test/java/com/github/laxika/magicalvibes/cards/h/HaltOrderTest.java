@@ -24,23 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HaltOrderTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Halt Order has correct card properties")
-    void hasCorrectProperties() {
-        HaltOrder card = new HaltOrder();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(StackEntryType.ARTIFACT_SPELL)),
-                "Target must be an artifact spell."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CounterSpellEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

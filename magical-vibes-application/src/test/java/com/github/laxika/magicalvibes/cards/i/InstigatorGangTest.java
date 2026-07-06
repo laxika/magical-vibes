@@ -24,68 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InstigatorGangTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        InstigatorGang card = new InstigatorGang();
-
-        // No activated abilities
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        // Static boost: Attacking creatures you control get +1/+0 (OWN_CREATURES + SELF)
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        StaticBoostEffect othersBoost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(othersBoost.powerBoost()).isEqualTo(1);
-        assertThat(othersBoost.toughnessBoost()).isEqualTo(0);
-        assertThat(othersBoost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(othersBoost.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-        StaticBoostEffect selfBoost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(selfBoost.powerBoost()).isEqualTo(1);
-        assertThat(selfBoost.scope()).isEqualTo(GrantScope.SELF);
-        assertThat(selfBoost.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-
-        // Each-upkeep transform trigger
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("WildbloodPack");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        InstigatorGang card = new InstigatorGang();
-        WildbloodPack backFace = (WildbloodPack) card.getBackFaceCard();
-
-        // No activated abilities
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-
-        // Static boost: Attacking creatures you control get +3/+0 (OWN_CREATURES + SELF)
-        assertThat(backFace.getEffects(EffectSlot.STATIC)).hasSize(2);
-        StaticBoostEffect othersBoost = (StaticBoostEffect) backFace.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(othersBoost.powerBoost()).isEqualTo(3);
-        assertThat(othersBoost.toughnessBoost()).isEqualTo(0);
-        assertThat(othersBoost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(othersBoost.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-        StaticBoostEffect selfBoost = (StaticBoostEffect) backFace.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(selfBoost.powerBoost()).isEqualTo(3);
-        assertThat(selfBoost.scope()).isEqualTo(GrantScope.SELF);
-        assertThat(selfBoost.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-
-        // Each-upkeep transform trigger
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
     @Test
@@ -289,7 +227,6 @@ class InstigatorGangTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());

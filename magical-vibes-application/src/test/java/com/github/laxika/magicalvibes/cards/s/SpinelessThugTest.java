@@ -20,15 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpinelessThugTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Spineless Thug has correct card properties and static effect")
-    void hasCorrectProperties() {
-        SpinelessThug card = new SpinelessThug();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBlockEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Spineless Thug puts it on the stack as a creature spell")

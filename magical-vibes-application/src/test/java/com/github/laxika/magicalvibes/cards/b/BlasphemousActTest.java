@@ -21,18 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BlasphemousActTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Blasphemous Act has correct effects")
-    void hasCorrectEffects() {
-        BlasphemousAct card = new BlasphemousAct();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOwnCastCostPerCreatureOnBattlefieldEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(MassDamageEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Cost reduction")

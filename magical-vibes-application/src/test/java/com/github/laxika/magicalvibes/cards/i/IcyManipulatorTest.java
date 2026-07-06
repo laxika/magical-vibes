@@ -24,26 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IcyManipulatorTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Icy Manipulator has correct card properties")
-    void hasCorrectProperties() {
-        IcyManipulator card = new IcyManipulator();
-
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter targetFilter =
-                (PermanentPredicateTargetFilter) card.getActivatedAbilities().get(0).getTargetFilter();
-        assertThat(targetFilter.predicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
-    }
-
     // ===== Casting and resolving =====
 
     @Test

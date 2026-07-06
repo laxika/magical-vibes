@@ -22,21 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AdeptWatershaperTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Adept Watershaper has correct card properties")
-    void hasCorrectProperties() {
-        AdeptWatershaper card = new AdeptWatershaper();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_TAPPED_CREATURES);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -453,8 +438,5 @@ class AdeptWatershaperTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, tappedBears, Keyword.INDESTRUCTIBLE)).isTrue();
     }
 
-    // ===== Helper methods =====
-
 }
-
 

@@ -23,25 +23,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class PhylacteryLichTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Phylactery Lich has non-targeting ETB phylactery counter effect and state trigger")
-    void hasCorrectAbilityStructure() {
-        PhylacteryLich card = new PhylacteryLich();
-
-        // Per MTG rulings: "Phylactery Lich's first ability doesn't target the artifact."
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(PutPhylacteryCounterOnTargetPermanentEffect.class);
-
-        // State-triggered sacrifice ability (rule 603.8)
-        assertThat(card.getEffects(EffectSlot.STATE_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATE_TRIGGERED).getFirst())
-                .isInstanceOf(StateTriggerEffect.class);
-    }
-
     // ===== ETB phylactery counter placement =====
 
     @Test

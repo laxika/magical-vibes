@@ -15,42 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScreechingBatTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        ScreechingBat card = new ScreechingBat();
-
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}{B}{B}");
-        assertThat(mayPay.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("StalkingVampire");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        ScreechingBat card = new ScreechingBat();
-        StalkingVampire backFace = (StalkingVampire) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-
-        assertThat(backFace.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) backFace.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}{B}{B}");
-        assertThat(mayPay.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
-
     // ===== Transform front → back (pay mana) =====
 
     @Test
@@ -148,7 +112,5 @@ class ScreechingBatTest extends BaseCardTest {
         assertThat(bat.isTransformed()).isFalse();
         assertThat(bat.getCard().getName()).isEqualTo("Screeching Bat");
     }
-
-    // ===== Helpers =====
 
 }

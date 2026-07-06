@@ -17,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HuntersFeastTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Hunters' Feast has correct effect setup")
-    void hasCorrectEffects() {
-        HuntersFeast card = new HuntersFeast();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isZero();
-        assertThat(card.getMaxTargets()).isEqualTo(99);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(EachTargetPlayerGainsLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting targeting both players puts spell on the stack")

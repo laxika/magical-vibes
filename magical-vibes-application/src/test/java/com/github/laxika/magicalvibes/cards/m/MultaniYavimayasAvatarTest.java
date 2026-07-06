@@ -25,18 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MultaniYavimayasAvatarTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct static effects configured")
-    void hasCorrectEffects() {
-        MultaniYavimayasAvatar card = new MultaniYavimayasAvatar();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(BoostSelfEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(BoostSelfEffect.class);
-        assertThat(card.getGraveyardActivatedAbilities()).hasSize(1);
-    }
+    
 
     @Nested
     @DisplayName("Power/Toughness boost")

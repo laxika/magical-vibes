@@ -23,25 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UnnaturalPredationTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Unnatural Predation has correct card properties")
-    void hasCorrectProperties() {
-        UnnaturalPredation card = new UnnaturalPredation();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

@@ -23,15 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CallToMindTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Call to Mind has correct effect configuration")
-    void hasCorrectEffectConfiguration() {
-        CallToMind card = new CallToMind();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Call to Mind returns target instant from graveyard to hand")

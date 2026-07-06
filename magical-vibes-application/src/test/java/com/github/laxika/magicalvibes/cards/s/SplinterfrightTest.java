@@ -24,32 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SplinterfrightTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Splinterfright has static P/T effect counting creature cards in controller's graveyard")
-    void hasCorrectStaticEffect() {
-        Splinterfright card = new Splinterfright();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToCardsInControllerGraveyardEffect.class);
-        var effect = (PowerToughnessEqualToCardsInControllerGraveyardEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-    }
-
-    @Test
-    @DisplayName("Splinterfright has upkeep-triggered mill 2 effect")
-    void hasUpkeepMillEffect() {
-        Splinterfright card = new Splinterfright();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MillControllerEffect.class);
-        var effect = (MillControllerEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.count()).isEqualTo(2);
-    }
-
     // ===== Casting =====
 
     @Test

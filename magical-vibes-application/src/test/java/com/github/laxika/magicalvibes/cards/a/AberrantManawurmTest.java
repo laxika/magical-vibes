@@ -37,25 +37,7 @@ class AberrantManawurmTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has spell-cast trigger that boosts self by mana spent on the cast spell")
-    void hasCorrectEffects() {
-        AberrantManawurm card = new AberrantManawurm();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-
-        BoostSelfEffect boost =
-                (BoostSelfEffect) trigger.resolvedEffects().getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(new XValue());
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Casting a one-mana instant gives +1/+0 until end of turn")

@@ -24,19 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CruelEdictTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cruel Edict has correct card properties")
-    void hasCorrectProperties() {
-        CruelEdict card = new CruelEdict();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(SacrificeCreatureEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -154,5 +141,4 @@ class CruelEdictTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Cruel Edict"));
     }
 }
-
 

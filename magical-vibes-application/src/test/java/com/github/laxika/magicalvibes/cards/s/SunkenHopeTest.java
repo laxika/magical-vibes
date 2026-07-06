@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SunkenHopeTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
@@ -34,17 +33,6 @@ class SunkenHopeTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sunken Hope has correct card properties")
-    void hasCorrectProperties() {
-        SunkenHope card = new SunkenHope();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(BounceCreatureOnUpkeepEffect.class);
     }
 
     // ===== Triggering during controller's upkeep =====
@@ -211,5 +199,4 @@ class SunkenHopeTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).doesNotContain(theirCreature.getId());
     }
 }
-
 

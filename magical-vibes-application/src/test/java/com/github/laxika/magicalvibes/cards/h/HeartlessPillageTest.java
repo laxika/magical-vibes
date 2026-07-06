@@ -29,32 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HeartlessPillageTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has discard effect and raid conditional treasure effect targeting opponent")
-    void hasCorrectStructure() {
-        HeartlessPillage card = new HeartlessPillage();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(TargetPlayerDiscardsEffect.class);
-        TargetPlayerDiscardsEffect discard =
-                (TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(discard.amount()).isEqualTo(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(raid.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect treasure = (CreateTokenEffect) raid.wrapped();
-        assertThat(treasure.primaryType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(treasure.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Casting =====
 
     @Test

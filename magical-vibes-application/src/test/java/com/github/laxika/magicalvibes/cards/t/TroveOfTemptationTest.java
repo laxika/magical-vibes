@@ -25,31 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TroveOfTemptationTest extends BaseCardTest {
 
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Has OpponentsMustAttackControllerEffect on STATIC slot")
-    void hasCorrectStaticEffect() {
-        TroveOfTemptation card = new TroveOfTemptation();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(OpponentsMustAttackControllerEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has CreateTokenEffect (Treasure) on CONTROLLER_END_STEP_TRIGGERED slot")
-    void hasCorrectEndStepEffect() {
-        TroveOfTemptation card = new TroveOfTemptation();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-    }
-
     // ===== Casting =====
 
     @Test

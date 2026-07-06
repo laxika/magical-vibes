@@ -22,21 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FireServantTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fire Servant has correct static effect")
-    void hasCorrectEffect() {
-        FireServant card = new FireServant();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoubleControllerDamageEffect.class);
-        DoubleControllerDamageEffect effect = (DoubleControllerDamageEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.stackFilter()).isNotNull();
-        assertThat(effect.appliesToCombatDamage()).isFalse();
-    }
-
     // ===== Doubles red instant damage =====
 
     @Test

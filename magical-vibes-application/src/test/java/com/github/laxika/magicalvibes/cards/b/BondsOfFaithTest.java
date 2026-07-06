@@ -25,23 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BondsOfFaithTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bonds of Faith has correct effects")
-    void hasCorrectProperties() {
-        BondsOfFaith card = new BondsOfFaith();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        var effect = (EnchantedPermanentConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) effect.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
-        assertThat(effect.ifMatch()).isInstanceOf(StaticBoostEffect.class);
-        assertThat(effect.ifNotMatch()).isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

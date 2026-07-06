@@ -22,17 +22,7 @@ class DreamTwistTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has one SPELL effect: mill 3")
-    void hasCorrectEffects() {
-        DreamTwist card = new DreamTwist();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(MillTargetPlayerEffect.class);
-
-        MillTargetPlayerEffect mill = (MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(mill.count()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Has flashback cost {1}{U}")
@@ -43,13 +33,7 @@ class DreamTwistTest extends BaseCardTest {
         assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{1}{U}");
     }
 
-    @Test
-    @DisplayName("Needs target (auto-derived from player-targeting effect)")
-    void needsTarget() {
-        DreamTwist card = new DreamTwist();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
+    
 
     // ===== Casting normally =====
 

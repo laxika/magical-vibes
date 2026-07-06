@@ -24,33 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class CullingDaisTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Culling Dais has two activated abilities with correct effect types")
-    void hasCorrectAbilityStructure() {
-        CullingDais card = new CullingDais();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {T}, Sacrifice a creature: Put a charge counter on Culling Dais.
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isTrue();
-        assertThat(ability0.getManaCost()).isNull();
-        assertThat(ability0.getEffects()).hasSize(2);
-        assertThat(ability0.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability0.getEffects().get(1)).isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Ability 1: {1}, Sacrifice Culling Dais: Draw a card for each charge counter on Culling Dais.
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isFalse();
-        assertThat(ability1.getManaCost()).isEqualTo("{1}");
-        assertThat(ability1.getEffects()).hasSize(2);
-        assertThat(ability1.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability1.getEffects().get(1))
-                .isEqualTo(new DrawCardEffect(new CountersOnSource(CounterType.CHARGE)));
-    }
-
     // ===== Ability 0: Sacrifice creature to add charge counter =====
 
     @Test

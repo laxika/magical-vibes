@@ -45,31 +45,6 @@ class GeralfsMessengerTest extends BaseCardTest {
         harness.getGameService().playCard(gd, player1, 0, 0, player2.getId(), null);
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Geralf's Messenger enters tapped")
-    void hasEntersTappedEffect() {
-        GeralfsMessenger card = new GeralfsMessenger();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof EntersTappedEffect);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect that makes target opponent lose 2 life")
-    void hasEtbLifeLossEffect() {
-        GeralfsMessenger card = new GeralfsMessenger();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        TargetPlayerLosesLifeEffect effect =
-                (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
-
     // ===== Enters tapped =====
 
     @Test

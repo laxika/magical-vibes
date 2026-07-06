@@ -17,16 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FoolishFateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Foolish Fate targets a creature and has a single conditional SPELL effect")
-    void hasCorrectStructure() {
-        FoolishFate card = new FoolishFate();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Without life gained this turn, only destroys the target creature")

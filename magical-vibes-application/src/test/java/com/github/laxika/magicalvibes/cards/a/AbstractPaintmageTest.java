@@ -20,24 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AbstractPaintmageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has two precombat main AwardRestrictedManaEffects for instants and sorceries")
-    void hasPrecombatMainRestrictedManaEffects() {
-        AbstractPaintmage card = new AbstractPaintmage();
-
-        assertThat(card.getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED))
-                .allMatch(AwardRestrictedManaEffect.class::isInstance);
-
-        AwardRestrictedManaEffect blue = (AwardRestrictedManaEffect) card.getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED).get(0);
-        AwardRestrictedManaEffect red = (AwardRestrictedManaEffect) card.getEffects(EffectSlot.PRECOMBAT_MAIN_TRIGGERED).get(1);
-        assertThat(blue.color()).isEqualTo(ManaColor.BLUE);
-        assertThat(blue.amount()).isEqualTo(1);
-        assertThat(red.color()).isEqualTo(ManaColor.RED);
-        assertThat(red.amount()).isEqualTo(1);
-        assertThat(blue.allowedSpellTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-        assertThat(red.allowedSpellTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-    }
+    
 
     @Test
     @DisplayName("Precombat main trigger adds one instant/sorcery-only blue and red mana")

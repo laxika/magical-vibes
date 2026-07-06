@@ -23,16 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CreepingMoldTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Creeping Mold has correct card properties")
-    void hasCorrectProperties() {
-        CreepingMold card = new CreepingMold();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Creeping Mold puts it on stack with target")

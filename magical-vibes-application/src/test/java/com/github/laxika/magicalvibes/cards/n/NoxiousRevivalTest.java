@@ -21,15 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NoxiousRevivalTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Noxious Revival has correct card properties")
-    void hasCorrectCardProperties() {
-        NoxiousRevival card = new NoxiousRevival();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting puts a graveyard-targeted instant on the stack")

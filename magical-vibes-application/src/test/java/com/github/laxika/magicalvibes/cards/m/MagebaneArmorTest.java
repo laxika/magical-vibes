@@ -28,40 +28,11 @@ class MagebaneArmorTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Magebane Armor has static +2/+4 boost effect")
-    void hasStaticBoostEffect() {
-        MagebaneArmor card = new MagebaneArmor();
+    
 
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(4);
-    }
+    
 
-    @Test
-    @DisplayName("Magebane Armor has static remove flying effect for equipped creature")
-    void hasRemoveFlyingEffect() {
-        MagebaneArmor card = new MagebaneArmor();
-
-        RemoveKeywordEffect remove = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof RemoveKeywordEffect)
-                .map(e -> (RemoveKeywordEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(remove.keyword()).isEqualTo(Keyword.FLYING);
-        assertThat(remove.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Magebane Armor has noncombat damage prevention effect")
-    void hasNoncombatDamagePreventionEffect() {
-        MagebaneArmor card = new MagebaneArmor();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PreventAllNoncombatDamageToAttachedCreatureEffect);
-    }
+    
 
     @Test
     @DisplayName("Magebane Armor has equip {2} ability")

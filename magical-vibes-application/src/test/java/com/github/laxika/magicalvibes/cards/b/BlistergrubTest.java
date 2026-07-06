@@ -18,22 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlistergrubTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Blistergrub has ON_DEATH effect that makes each opponent lose 2 life")
-    void hasDeathTriggerEffect() {
-        Blistergrub card = new Blistergrub();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(EachOpponentLosesLifeEffect.class);
-        EachOpponentLosesLifeEffect effect = (EachOpponentLosesLifeEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
-
     // ===== Casting =====
 
     @Test

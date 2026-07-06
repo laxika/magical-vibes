@@ -22,20 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GravepurgeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gravepurge has creature graveyard-to-library effect then draw")
-    void hasCorrectEffects() {
-        Gravepurge card = new Gravepurge();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutTargetCardsFromGraveyardOnTopOfLibraryEffect.class);
-        PutTargetCardsFromGraveyardOnTopOfLibraryEffect effect =
-                (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting with creature cards in graveyard prompts for target selection")

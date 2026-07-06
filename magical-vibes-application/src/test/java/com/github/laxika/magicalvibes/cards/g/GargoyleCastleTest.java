@@ -18,40 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GargoyleCastleTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gargoyle Castle has correct card properties")
-    void hasCorrectProperties() {
-        GargoyleCastle card = new GargoyleCastle();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.isNeedsTarget()).isFalse();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(1);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isEqualTo("{5}");
-        assertThat(sacrificeAbility.isNeedsTarget()).isFalse();
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) sacrificeAbility.getEffects().get(1);
-        assertThat(tokenEffect.tokenName()).isEqualTo("Gargoyle");
-        assertThat(tokenEffect.power()).isEqualTo(3);
-        assertThat(tokenEffect.toughness()).isEqualTo(4);
-        assertThat(tokenEffect.color()).isNull();
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.GARGOYLE);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(tokenEffect.additionalTypes()).containsExactly(CardType.ARTIFACT);
-    }
-
     // ===== Mana ability =====
 
     @Test

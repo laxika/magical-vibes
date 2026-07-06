@@ -19,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WakeningSunsAvatarTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Wakening Sun's Avatar has correct ETB effect wrapped in cast-from-hand conditional")
-    void hasCorrectProperties() {
-        WakeningSunsAvatar card = new WakeningSunsAvatar();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional = (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(DestroyAllPermanentsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("When cast from hand, all non-Dinosaur creatures are destroyed")

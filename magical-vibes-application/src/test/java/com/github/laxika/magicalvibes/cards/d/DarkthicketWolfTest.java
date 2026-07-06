@@ -17,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DarkthicketWolfTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Darkthicket Wolf has correct activated ability")
-    void hasCorrectProperties() {
-        DarkthicketWolf card = new DarkthicketWolf();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{2}{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getMaxActivationsPerTurn()).isEqualTo(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Darkthicket Wolf puts it on the stack")

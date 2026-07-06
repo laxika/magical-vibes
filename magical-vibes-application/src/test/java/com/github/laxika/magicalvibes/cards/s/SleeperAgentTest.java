@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SleeperAgentTest extends BaseCardTest {
 
-
     private void castSleeperAgent(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new SleeperAgent()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -33,20 +32,7 @@ class SleeperAgentTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    @Test
-    @DisplayName("Sleeper Agent has correct card properties and effects")
-    void hasCorrectProperties() {
-        SleeperAgent card = new SleeperAgent();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerGainsControlOfSourceCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(DealDamageToControllerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB trigger gives control to target opponent")

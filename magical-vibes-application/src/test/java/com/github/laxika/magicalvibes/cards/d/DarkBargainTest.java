@@ -21,28 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DarkBargainTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dark Bargain has correct effect structure")
-    void hasCorrectProperties() {
-        DarkBargain card = new DarkBargain();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(LookAtTopCardsChooseNToHandRestToGraveyardEffect.class);
-        LookAtTopCardsChooseNToHandRestToGraveyardEffect lookEffect =
-                (LookAtTopCardsChooseNToHandRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(lookEffect.count()).isEqualTo(3);
-        assertThat(lookEffect.toHandCount()).isEqualTo(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(DealDamageToControllerEffect.class);
-        DealDamageToControllerEffect dmgEffect =
-                (DealDamageToControllerEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(dmgEffect.damage()).isEqualTo(2);
-    }
-
     // ===== Casting =====
 
     @Test

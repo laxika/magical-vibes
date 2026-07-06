@@ -19,22 +19,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SkinrenderTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB that puts three -1/-1 counters on target creature")
-    void hasCorrectEffects() {
-        Skinrender card = new Skinrender();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
-
-        PutMinusOneMinusOneCounterOnTargetCreatureEffect effect =
-                (PutMinusOneMinusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
-
     // ===== ETB: put three -1/-1 counters on target creature =====
 
     @Test

@@ -22,15 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UrgentExorcismTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Urgent Exorcism has correct card properties")
-    void hasCorrectProperties() {
-        UrgentExorcism card = new UrgentExorcism();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Urgent Exorcism puts it on stack with target")

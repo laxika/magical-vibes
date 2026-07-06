@@ -22,19 +22,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class FuelForTheCauseTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fuel for the Cause has CounterSpellEffect and ProliferateEffect")
-    void hasCorrectProperties() {
-        FuelForTheCause card = new FuelForTheCause();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CounterSpellEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ProliferateEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

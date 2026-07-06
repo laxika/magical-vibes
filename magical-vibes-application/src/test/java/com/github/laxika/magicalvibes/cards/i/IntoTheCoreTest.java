@@ -23,21 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IntoTheCoreTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Into the Core has correct card properties")
-    void hasCorrectProperties() {
-        IntoTheCore card = new IntoTheCore();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isEqualTo(2);
-        assertThat(card.getMaxTargets()).isEqualTo(2);
-        assertThat(card.getTargetFilter()).isNotNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileTargetPermanentEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

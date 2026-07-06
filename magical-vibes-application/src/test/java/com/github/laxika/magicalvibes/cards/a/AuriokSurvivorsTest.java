@@ -39,22 +39,6 @@ class AuriokSurvivorsTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Auriok Survivors has ETB MayEffect returning Equipment from graveyard")
-    void hasCorrectProperties() {
-        AuriokSurvivors card = new AuriokSurvivors();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) mayEffect.wrapped();
-        assertThat(returnEffect.attachToSource()).isTrue();
-    }
-
     // ===== ETB may ability =====
 
     @Test

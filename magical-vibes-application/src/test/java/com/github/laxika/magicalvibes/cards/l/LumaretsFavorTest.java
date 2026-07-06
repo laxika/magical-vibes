@@ -20,20 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LumaretsFavorTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Lumaret's Favor has a boost effect and a self-cast copy trigger")
-    void hasCorrectProperties() {
-        LumaretsFavor card = new LumaretsFavor();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(4));
-
-        assertThat(card.getEffects(EffectSlot.ON_SELF_CAST)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_CAST).getFirst())
-                .isInstanceOf(CopyThisSpellIfConditionEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Without gaining life, no copy is made and target gets +2/+4")

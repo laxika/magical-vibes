@@ -24,17 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AggressiveUrgeTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Aggressive Urge has correct card properties")
-    void hasCorrectCardProperties() {
-        AggressiveUrge card = new AggressiveUrge();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Aggressive Urge puts it on stack with target creature")

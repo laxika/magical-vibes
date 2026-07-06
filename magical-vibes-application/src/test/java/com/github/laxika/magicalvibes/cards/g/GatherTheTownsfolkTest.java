@@ -25,33 +25,6 @@ class GatherTheTownsfolkTest extends BaseCardTest {
                 .count();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gather the Townsfolk creates two 1/1 white Human tokens with a fateful hour clause")
-    void hasCorrectProperties() {
-        GatherTheTownsfolk card = new GatherTheTownsfolk();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect base = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(base.amount()).isEqualTo(new Fixed(2));
-        assertThat(base.tokenName()).isEqualTo("Human");
-        assertThat(base.power()).isEqualTo(1);
-        assertThat(base.toughness()).isEqualTo(1);
-        assertThat(base.color()).isEqualTo(CardColor.WHITE);
-        assertThat(base.subtypes()).containsExactly(CardSubtype.HUMAN);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(((ControllerLifeAtMost) conditional.condition()).threshold()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-        assertThat(((CreateTokenEffect) conditional.wrapped()).amount()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

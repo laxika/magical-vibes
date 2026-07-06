@@ -47,26 +47,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RubbleRouserTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB rummage may-effect and a mana ability with exile cost + opponent damage")
-    void cardStructure() {
-        RubbleRouser card = new RubbleRouser();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DiscardAndDrawCardEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getEffects().get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AwardManaEffect.class);
-        assertThat(ability.getEffects().get(2)).isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) ability.getEffects().get(2)).damage()).isEqualTo(new Fixed(1));
-    }
-
     // ===== ETB rummage =====
 
     @Test

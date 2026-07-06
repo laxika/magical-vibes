@@ -21,20 +21,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class RotWolfTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rot Wolf has correct ON_DAMAGED_CREATURE_DIES effect")
-    void hasCorrectProperties() {
-        RotWolf card = new RotWolf();
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(may.prompt()).isEqualTo("Draw a card?");
-    }
-
     // ===== Combat: infect kills blocker, accept may =====
 
     @Test

@@ -23,24 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EmbersmithTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Embersmith has MayEffect wrapping SpellCastTriggerEffect with cost and damage")
-    void hasCorrectStructure() {
-        Embersmith card = new Embersmith();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
-        assertThat(trigger.manaCost()).isEqualTo("{1}");
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-    }
-
     // ===== Trigger fires on artifact cast =====
 
     @Test

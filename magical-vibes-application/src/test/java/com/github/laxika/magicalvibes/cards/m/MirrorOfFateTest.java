@@ -20,24 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MirrorOfFateTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Mirror of Fate has correct ability structure")
-    void hasCorrectAbilityStructure() {
-        MirrorOfFate card = new MirrorOfFate();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof SacrificeSelfCost)
-                .anyMatch(e -> e instanceof MirrorOfFateEffect);
-    }
-
     // ===== No exiled cards: library gets exiled entirely =====
 
     @Test

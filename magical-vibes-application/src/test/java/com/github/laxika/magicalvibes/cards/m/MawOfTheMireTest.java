@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MawOfTheMireTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Maw of the Mire has correct card properties")
-    void hasCorrectProperties() {
-        MawOfTheMire card = new MawOfTheMire();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Maw of the Mire puts it on the stack with target")

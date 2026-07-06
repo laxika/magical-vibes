@@ -22,19 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DemolishTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Demolish has correct card properties")
-    void hasCorrectProperties() {
-        Demolish card = new Demolish();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

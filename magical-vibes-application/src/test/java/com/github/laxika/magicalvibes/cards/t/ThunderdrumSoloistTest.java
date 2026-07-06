@@ -50,23 +50,7 @@ class ThunderdrumSoloistTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has spell-cast trigger with a 1-or-3 damage-to-each-opponent ConditionalReplacementEffect")
-    void hasCorrectEffects() {
-        ThunderdrumSoloist card = new ThunderdrumSoloist();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(ConditionalReplacementEffect.class);
-        ConditionalReplacementEffect replacement =
-                (ConditionalReplacementEffect) trigger.resolvedEffects().getFirst();
-        assertThat(((SpellManaSpentAtLeast) replacement.condition()).minMana()).isEqualTo(5);
-        assertThat(((DealDamageToEachOpponentEffect) replacement.baseEffect()).damage()).isEqualTo(new Fixed(1));
-        assertThat(((DealDamageToEachOpponentEffect) replacement.upgradedEffect()).damage()).isEqualTo(new Fixed(3));
-    }
+    
 
     @Test
     @DisplayName("Casting a cheap instant deals 1 damage to each opponent")

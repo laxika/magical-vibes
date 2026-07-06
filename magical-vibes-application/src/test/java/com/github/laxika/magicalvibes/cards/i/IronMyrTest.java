@@ -12,18 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IronMyrTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Iron Myr has tap-for-red mana ability")
-    void hasTapForRedManaAbility() {
-        IronMyr card = new IronMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.RED));
-    }
-
     // ===== Mana production =====
 
     @Test

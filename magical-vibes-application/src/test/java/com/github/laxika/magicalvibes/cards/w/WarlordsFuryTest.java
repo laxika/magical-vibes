@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WarlordsFuryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Warlord's Fury has correct effects configured")
-    void hasCorrectEffects() {
-        WarlordsFury card = new WarlordsFury();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Warlord's Fury grants first strike to all controlled creatures and draws a card")

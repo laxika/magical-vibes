@@ -26,32 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PuresteelPaladinTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has equipment entering triggered MayEffect(DrawCardEffect)")
-    void hasEquipmentEntersTrigger() {
-        PuresteelPaladin card = new PuresteelPaladin();
-
-        var effects = card.getEffects(EffectSlot.ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) effects.getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has metalcraft static effect wrapping GrantActivatedAbilityEffect")
-    void hasMetalcraftEquipEffect() {
-        PuresteelPaladin card = new PuresteelPaladin();
-
-        var effects = card.getEffects(EffectSlot.STATIC);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect mc = (ConditionalEffect) effects.getFirst();
-        assertThat(mc.wrapped()).isInstanceOf(GrantActivatedAbilityEffect.class);
-    }
-
     // ===== Equipment entering draw trigger =====
 
     @Nested

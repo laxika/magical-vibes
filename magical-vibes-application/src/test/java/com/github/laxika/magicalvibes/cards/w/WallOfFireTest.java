@@ -20,22 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WallOfFireTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Wall of Fire has correct card properties")
-    void hasCorrectProperties() {
-        WallOfFire card = new WallOfFire();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Casting Wall of Fire puts it on the stack")

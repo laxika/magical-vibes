@@ -22,20 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ViridianCorrupterTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Viridian Corrupter has correct card properties")
-    void hasCorrectProperties() {
-        ViridianCorrupter card = new ViridianCorrupter();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

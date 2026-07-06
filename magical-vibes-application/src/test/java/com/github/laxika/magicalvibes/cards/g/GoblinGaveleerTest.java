@@ -19,22 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GoblinGaveleerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +2/+0 per equipment effect")
-    void hasCorrectEffect() {
-        GoblinGaveleer card = new GoblinGaveleer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect =
-                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Scaled(new AttachmentsOnSource(false, true), 2));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
-
     // ===== Base stats without equipment =====
 
     @Test

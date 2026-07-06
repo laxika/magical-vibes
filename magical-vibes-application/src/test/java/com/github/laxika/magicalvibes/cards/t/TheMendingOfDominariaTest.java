@@ -29,62 +29,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheMendingOfDominariaTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has mill 2 and return creature from graveyard effects")
-    void chapterIHasCorrectEffects() {
-        TheMendingOfDominaria card = new TheMendingOfDominaria();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(2);
-
-        assertThat(effects.get(0)).isInstanceOf(MillControllerEffect.class);
-        assertThat(((MillControllerEffect) effects.get(0)).count()).isEqualTo(2);
-
-        assertThat(effects.get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) effects.get(1);
-        assertThat(returnEffect.destination()).isEqualTo(GraveyardChoiceDestination.HAND);
-        assertThat(returnEffect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) returnEffect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-    }
-
-    @Test
-    @DisplayName("Chapter II has same effects as chapter I")
-    void chapterIIHasCorrectEffects() {
-        TheMendingOfDominaria card = new TheMendingOfDominaria();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(2);
-
-        assertThat(effects.get(0)).isInstanceOf(MillControllerEffect.class);
-        assertThat(((MillControllerEffect) effects.get(0)).count()).isEqualTo(2);
-
-        assertThat(effects.get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) effects.get(1);
-        assertThat(returnEffect.destination()).isEqualTo(GraveyardChoiceDestination.HAND);
-        assertThat(returnEffect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) returnEffect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-    }
-
-    @Test
-    @DisplayName("Chapter III has return all lands and shuffle graveyard effects")
-    void chapterIIIHasCorrectEffects() {
-        TheMendingOfDominaria card = new TheMendingOfDominaria();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(2);
-
-        assertThat(effects.get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) effects.get(0);
-        assertThat(returnEffect.destination()).isEqualTo(GraveyardChoiceDestination.BATTLEFIELD);
-        assertThat(returnEffect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) returnEffect.filter()).cardType()).isEqualTo(CardType.LAND);
-        assertThat(returnEffect.returnAll()).isTrue();
-
-        assertThat(effects.get(1)).isInstanceOf(ShuffleGraveyardIntoLibraryEffect.class);
-    }
-
     // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test

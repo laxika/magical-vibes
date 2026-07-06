@@ -25,35 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlechLoafingPestTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_CONTROLLER_GAINS_LIFE trigger with subtype-filtered counter effect")
-    void hasCorrectProperties() {
-        BlechLoafingPest card = new BlechLoafingPest();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-
-        PutCounterOnEachControlledPermanentEffect effect =
-                (PutCounterOnEachControlledPermanentEffect)
-                        card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst();
-        assertThat(effect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(effect.count()).isEqualTo(1);
-        assertThat(effect.predicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-
-        PermanentAnyOfPredicate anyOf = (PermanentAnyOfPredicate) effect.predicate();
-        assertThat(anyOf.predicates()).hasSize(5);
-        assertThat(anyOf.predicates()).allMatch(PermanentHasSubtypePredicate.class::isInstance);
-        assertThat(anyOf.predicates().stream()
-                .map(p -> ((PermanentHasSubtypePredicate) p).subtype())
-                .toList()).containsExactlyInAnyOrder(
-                CardSubtype.PEST,
-                CardSubtype.BAT,
-                CardSubtype.INSECT,
-                CardSubtype.SNAKE,
-                CardSubtype.SPIDER
-        );
-    }
+    
 
     @Test
     @DisplayName("Puts +1/+1 counters on each matching creature you control when you gain life")

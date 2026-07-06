@@ -20,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EzurisArchersTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Ezuri's Archers has BoostSelfWhenBlockingKeywordEffect for flying")
-    void hasCorrectStructure() {
-        EzurisArchers card = new EzurisArchers();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst())
-                .isInstanceOf(BoostSelfWhenBlockingKeywordEffect.class);
-        BoostSelfWhenBlockingKeywordEffect effect =
-                (BoostSelfWhenBlockingKeywordEffect) card.getEffects(EffectSlot.ON_BLOCK).getFirst();
-        assertThat(effect.requiredKeyword()).isEqualTo(Keyword.FLYING);
-        assertThat(effect.powerBoost()).isEqualTo(3);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
-    }
-
     // ===== Blocking a flying creature triggers boost =====
 
     @Test

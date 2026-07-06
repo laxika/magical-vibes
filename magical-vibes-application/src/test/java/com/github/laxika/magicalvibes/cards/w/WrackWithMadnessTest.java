@@ -20,16 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WrackWithMadnessTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Wrack with Madness has correct card properties")
-    void hasCorrectProperties() {
-        WrackWithMadness card = new WrackWithMadness();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(TargetCreatureDealsPowerDamageToSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Wrack with Madness targeting a creature puts it on the stack")

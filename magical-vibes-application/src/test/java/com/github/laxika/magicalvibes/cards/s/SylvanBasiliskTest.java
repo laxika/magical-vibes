@@ -19,16 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SylvanBasiliskTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Sylvan Basilisk has correct card properties")
-    void hasCorrectProperties() {
-        SylvanBasilisk card = new SylvanBasilisk();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst())
-                .isInstanceOf(DestroyCreatureBlockingThisEffect.class);
-    }
+    
 
     @Test
     @DisplayName("When Sylvan Basilisk becomes blocked, it creates a non-targeting trigger for that blocker")

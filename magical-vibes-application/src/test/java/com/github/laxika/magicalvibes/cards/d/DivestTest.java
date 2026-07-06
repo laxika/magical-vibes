@@ -24,17 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DivestTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Divest has correct effect with artifact and creature included types")
-    void hasCorrectProperties() {
-        Divest card = new Divest();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        ChooseCardFromTargetHandToDiscardEffect effect =
-                (ChooseCardFromTargetHandToDiscardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.includedTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.CREATURE);
-    }
+    
 
     @Test
     @DisplayName("Resolving reveals hand and prompts for artifact/creature choice")

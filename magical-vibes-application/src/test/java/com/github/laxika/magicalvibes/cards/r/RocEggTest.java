@@ -22,26 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RocEggTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_DEATH CreateTokenEffect creating a 3/3 white Bird token with flying")
-    void hasCorrectEffects() {
-        RocEgg card = new RocEgg();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Bird");
-        assertThat(effect.power()).isEqualTo(3);
-        assertThat(effect.toughness()).isEqualTo(3);
-        assertThat(effect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.BIRD);
-        assertThat(effect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
-
     // ===== Death trigger =====
 
     @Nested

@@ -26,18 +26,6 @@ class AngelOfFlightAlabasterTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Angel of Flight Alabaster has upkeep-triggered graveyard return effect")
-    void hasCorrectEffects() {
-        AngelOfFlightAlabaster card = new AngelOfFlightAlabaster();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Upkeep trigger: return Spirit from graveyard to hand =====
 
     @Test

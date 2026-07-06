@@ -20,19 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GrimAfflictionTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has put -1/-1 counter and proliferate effects")
-    void hasCorrectEffects() {
-        GrimAffliction card = new GrimAffliction();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ProliferateEffect.class);
-    }
-
     // ===== -1/-1 counter + Proliferate =====
 
     @Test

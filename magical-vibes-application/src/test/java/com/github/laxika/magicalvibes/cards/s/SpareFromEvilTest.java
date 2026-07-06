@@ -45,22 +45,6 @@ class SpareFromEvilTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spare from Evil has correct effect")
-    void hasCorrectEffect() {
-        SpareFromEvil card = new SpareFromEvil();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect.class);
-        GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect effect =
-                (GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.excludedSubtype()).isEqualTo(CardSubtype.HUMAN);
-    }
-
     // ===== Casting =====
 
     @Test

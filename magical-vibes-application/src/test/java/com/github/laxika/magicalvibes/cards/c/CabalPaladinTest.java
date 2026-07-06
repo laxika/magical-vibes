@@ -37,26 +37,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CabalPaladinTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Cabal Paladin has historic spell-cast trigger with deal 2 damage to each opponent")
-    void hasCorrectStructure() {
-        CabalPaladin card = new CabalPaladin();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DealDamageToEachOpponentEffect.class);
-        DealDamageToEachOpponentEffect damageEffect = (DealDamageToEachOpponentEffect) trigger.resolvedEffects().getFirst();
-        assertThat(damageEffect.damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Artifact spell triggers =====
 
     @Test

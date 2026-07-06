@@ -24,28 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OgreGeargrabberTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ogre Geargrabber has ON_ATTACK gain control of equipment effect")
-    void hasOnAttackEffect() {
-        OgreGeargrabber card = new OgreGeargrabber();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).get(0))
-                .isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).get(1))
-                .isInstanceOf(AttachTargetToSourcePermanentEffect.class);
-    }
-
-    @Test
-    @DisplayName("Ogre Geargrabber has target filter for opponent's Equipment")
-    void hasTargetFilter() {
-        OgreGeargrabber card = new OgreGeargrabber();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-    }
-
     // ===== Attack trigger: target selection =====
 
     @Test

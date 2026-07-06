@@ -14,19 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LanternSpiritTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lantern Spirit has the return-to-hand activated ability")
-    void hasCorrectAbility() {
-        LanternSpirit card = new LanternSpirit();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{U}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(ReturnSelfToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

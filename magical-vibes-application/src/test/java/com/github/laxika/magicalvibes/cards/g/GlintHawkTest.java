@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GlintHawkTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB sacrifice-unless-return-artifact effect")
-    void hasCorrectEffect() {
-        GlintHawk card = new GlintHawk();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(SacrificeUnlessReturnOwnPermanentTypeToHandEffect.class);
-        SacrificeUnlessReturnOwnPermanentTypeToHandEffect effect =
-                (SacrificeUnlessReturnOwnPermanentTypeToHandEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.permanentType()).isEqualTo(CardType.ARTIFACT);
-    }
-
     // ===== No artifacts — auto-sacrifice =====
 
     @Test

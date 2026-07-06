@@ -25,21 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SeaMonsterTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sea Monster has correct card properties")
-    void hasCorrectProperties() {
-        SeaMonster card = new SeaMonster();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantAttackUnlessDefenderControlsMatchingPermanentEffect.class);
-        CantAttackUnlessDefenderControlsMatchingPermanentEffect effect =
-                (CantAttackUnlessDefenderControlsMatchingPermanentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.defenderPermanentPredicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ISLAND));
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -167,5 +152,4 @@ class SeaMonsterTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(14);
     }
 }
-
 

@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StampedingWildebeestsTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
@@ -33,15 +32,7 @@ class StampedingWildebeestsTest extends BaseCardTest {
         return permanent;
     }
 
-    @Test
-    @DisplayName("Stampeding Wildebeests has correct card properties")
-    void hasCorrectProperties() {
-        StampedingWildebeests card = new StampedingWildebeests();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(BounceCreatureOnUpkeepEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Triggers only during its controller upkeep")

@@ -31,25 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FirecannonBlastTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ConditionalReplacementEffect wrapping 3-damage base and 6-damage raid")
-    void hasCorrectStructure() {
-        FirecannonBlast card = new FirecannonBlast();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect =
-                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(effect.upgradedEffect()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) effect.baseEffect()).damage()).isEqualTo(new Fixed(3));
-        assertThat(((DealDamageToTargetCreatureEffect) effect.upgradedEffect()).damage()).isEqualTo(new Fixed(6));
-    }
-
     // ===== Without raid =====
 
     @Test

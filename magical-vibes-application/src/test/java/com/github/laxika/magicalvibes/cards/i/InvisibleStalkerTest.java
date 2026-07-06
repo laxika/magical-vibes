@@ -18,17 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class InvisibleStalkerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Invisible Stalker has CantBeBlockedEffect as static effect")
-    void hasStaticCantBeBlockedEffect() {
-        InvisibleStalker card = new InvisibleStalker();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBeBlockedEffect.class);
-    }
-
     // ===== Can't be blocked =====
 
     @Test

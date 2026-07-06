@@ -21,32 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RegisaurAlphaTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static GrantKeywordEffect for haste and ETB token effect")
-    void hasCorrectEffects() {
-        RegisaurAlpha card = new RegisaurAlpha();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(grant.filter()).isNotNull();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(1));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Dinosaur");
-        assertThat(tokenEffect.power()).isEqualTo(3);
-        assertThat(tokenEffect.toughness()).isEqualTo(3);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.TRAMPLE);
-    }
-
     // ===== ETB: creates a 3/3 green Dinosaur token with trample =====
 
     @Test

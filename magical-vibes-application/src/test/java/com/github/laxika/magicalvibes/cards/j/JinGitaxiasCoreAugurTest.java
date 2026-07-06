@@ -22,26 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class JinGitaxiasCoreAugurTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Jin-Gitaxias has correct effects")
-    void hasCorrectEffects() {
-        JinGitaxiasCoreAugur card = new JinGitaxiasCoreAugur();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect draw = (DrawCardEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(draw.amount()).isEqualTo(new Fixed(7));
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOpponentMaxHandSizeEffect.class);
-        ReduceOpponentMaxHandSizeEffect reduce = (ReduceOpponentMaxHandSizeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(reduce.reduction()).isEqualTo(7);
-    }
-
     // ===== End step draw trigger =====
 
     @Test

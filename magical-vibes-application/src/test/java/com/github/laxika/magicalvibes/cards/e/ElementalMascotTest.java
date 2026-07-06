@@ -47,27 +47,7 @@ class ElementalMascotTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has spell-cast trigger with +1/+0 boost and a conditional impulse exile")
-    void hasCorrectEffects() {
-        ElementalMascot card = new ElementalMascot();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().get(0)).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) trigger.resolvedEffects().get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-
-        assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional = (ConditionalEffect) trigger.resolvedEffects().get(1);
-        assertThat(((SpellManaSpentAtLeast) conditional.condition()).minMana()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(ExileTopCardsMayPlayUntilNextTurnEffect.class);
-        assertThat(((ExileTopCardsMayPlayUntilNextTurnEffect) conditional.wrapped()).count()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Casting a cheap instant gives +1/+0 and exiles nothing")

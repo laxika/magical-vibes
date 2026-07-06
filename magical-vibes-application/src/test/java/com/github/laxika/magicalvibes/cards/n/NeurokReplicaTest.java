@@ -19,26 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NeurokReplicaTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Neurok Replica has correct activated ability")
-    void hasCorrectProperties() {
-        NeurokReplica card = new NeurokReplica();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{U}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-    }
-
     // ===== Activation =====
 
     @Test

@@ -21,18 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GraspOfPhantomsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Grasp of Phantoms has correct effects")
-    void hasCorrectEffects() {
-        GraspOfPhantoms card = new GraspOfPhantoms();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(PutTargetOnTopOfLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

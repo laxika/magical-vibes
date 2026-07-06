@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KinjallisCallerTest extends BaseCardTest {
 
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Kinjalli's Caller has the cost reduction effect for Dinosaur subtype")
-    void hasCorrectEffects() {
-        KinjallisCaller card = new KinjallisCaller();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.predicate()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) effect.predicate()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
-    }
-
     // ===== Cost reduction =====
 
     @Test

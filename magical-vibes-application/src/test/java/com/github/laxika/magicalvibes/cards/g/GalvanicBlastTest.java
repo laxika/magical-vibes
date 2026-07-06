@@ -31,25 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GalvanicBlastTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ConditionalReplacementEffect wrapping 2-damage base and 4-damage metalcraft")
-    void hasCorrectStructure() {
-        GalvanicBlast card = new GalvanicBlast();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect =
-                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(effect.upgradedEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) effect.baseEffect()).damage()).isEqualTo(new Fixed(2));
-        assertThat(((DealDamageToAnyTargetEffect) effect.upgradedEffect()).damage()).isEqualTo(new Fixed(4));
-    }
-
     // ===== Without metalcraft =====
 
     @Test

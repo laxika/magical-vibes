@@ -23,18 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GraduationDayTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Repartee trigger targets a creature you control, gated on the spell targeting a creature")
-    void hasCorrectStructure() {
-        GraduationDay card = new GraduationDay();
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.targetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(trigger.resolvedEffects()).singleElement()
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting an instant that targets a creature puts a +1/+1 counter on a chosen creature you control")

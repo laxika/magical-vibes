@@ -15,15 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KavuClimberTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Kavu Climber has ETB draw card effect")
-    void hasEtbDrawEffect() {
-        KavuClimber card = new KavuClimber();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Kavu Climber puts it on stack as creature spell")

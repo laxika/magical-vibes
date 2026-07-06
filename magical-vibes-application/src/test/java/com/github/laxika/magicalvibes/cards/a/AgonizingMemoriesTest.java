@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AgonizingMemoriesTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Agonizing Memories has correct card properties")
-    void hasCorrectProperties() {
-        AgonizingMemories card = new AgonizingMemories();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ChooseCardsFromTargetHandToTopOfLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -286,5 +273,4 @@ class AgonizingMemoriesTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("chooses") && log.contains("Grizzly Bears"));
     }
 }
-
 

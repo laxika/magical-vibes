@@ -24,34 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MyrBattlesphereTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Myr Battlesphere has ETB token creation and ON_ATTACK trigger")
-    void hasCorrectEffects() {
-        MyrBattlesphere card = new MyrBattlesphere();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(4));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Myr");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isNull();
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.MYR);
-        assertThat(tokenEffect.additionalTypes()).containsExactly(CardType.ARTIFACT);
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(TapSubtypeBoostSelfAndDamageDefenderEffect.class);
-        TapSubtypeBoostSelfAndDamageDefenderEffect attackEffect =
-                (TapSubtypeBoostSelfAndDamageDefenderEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(attackEffect.subtype()).isEqualTo(CardSubtype.MYR);
-    }
-
     // ===== ETB token creation =====
 
     @Test

@@ -21,28 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FleshEaterImpTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one activated ability with SacrificeCreatureCost and BoostSelfEffect(1,1)")
-    void hasCorrectAbilityStructure() {
-        FleshEaterImp card = new FleshEaterImp();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(BoostSelfEffect.class);
-
-        BoostSelfEffect boost = (BoostSelfEffect) ability.getEffects().get(1);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Activation: sacrificing a creature =====
 
     @Test

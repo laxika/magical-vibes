@@ -26,22 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AdventurousImpulseTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Adventurous Impulse has correct effect configuration")
-    void hasCorrectEffect() {
-        AdventurousImpulse card = new AdventurousImpulse();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-        assertThat(effect.predicate()).isInstanceOf(CardAnyOfPredicate.class);
-        CardAnyOfPredicate anyOf = (CardAnyOfPredicate) effect.predicate();
-        assertThat(anyOf.predicates()).containsExactlyInAnyOrder(
-                new CardTypePredicate(CardType.CREATURE), new CardTypePredicate(CardType.LAND));
-    }
+    
 
     @Test
     @DisplayName("Casting Adventurous Impulse puts it on the stack")

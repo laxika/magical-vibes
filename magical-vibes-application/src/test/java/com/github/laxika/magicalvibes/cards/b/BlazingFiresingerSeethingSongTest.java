@@ -16,23 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlazingFiresingerSeethingSongTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD BecomePreparedEffect and Seething Song back face")
-    void hasCorrectStructure() {
-        BlazingFiresingerSeethingSong card = new BlazingFiresingerSeethingSong();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(BecomePreparedEffect.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("SeethingSong");
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getName()).isEqualTo("Seething Song");
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(AwardManaEffect.class);
-        AwardManaEffect manaEffect = (AwardManaEffect) card.getBackFaceCard().getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(manaEffect.color()).isEqualTo(ManaColor.RED);
-        assertThat(manaEffect.amount()).isEqualTo(5);
-    }
+    
 
     @Test
     @DisplayName("Entering the battlefield prepares Blazing Firesinger and exiles a castable Seething Song copy")

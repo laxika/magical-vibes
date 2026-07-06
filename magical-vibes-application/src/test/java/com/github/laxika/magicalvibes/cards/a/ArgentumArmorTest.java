@@ -27,31 +27,9 @@ class ArgentumArmorTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Argentum Armor has static +6/+6 boost effect")
-    void hasStaticBoostEffect() {
-        ArgentumArmor card = new ArgentumArmor();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(6);
-        assertThat(boost.toughnessBoost()).isEqualTo(6);
-    }
-
-    @Test
-    @DisplayName("Argentum Armor has ON_ATTACK destroy target permanent effect")
-    void hasOnAttackDestroyEffect() {
-        ArgentumArmor card = new ArgentumArmor();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Argentum Armor has equip {6} ability with correct properties")

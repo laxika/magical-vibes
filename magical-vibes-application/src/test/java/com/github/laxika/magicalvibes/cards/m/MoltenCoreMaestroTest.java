@@ -37,27 +37,7 @@ class MoltenCoreMaestroTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has spell-cast trigger with self counter and conditional mana-equal-to-power")
-    void hasCorrectEffects() {
-        MoltenCoreMaestro card = new MoltenCoreMaestro();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().get(0)).isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect counter = (PutCountersOnSelfEffect) trigger.resolvedEffects().get(0);
-        assertThat(counter.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-
-        assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional = (ConditionalEffect) trigger.resolvedEffects().get(1);
-        assertThat(((SpellManaSpentAtLeast) conditional.condition()).minMana()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(AwardManaEqualToSourcePowerEffect.class);
-        AwardManaEqualToSourcePowerEffect mana = (AwardManaEqualToSourcePowerEffect) conditional.wrapped();
-        assertThat(mana.color()).isEqualTo(ManaColor.RED);
-    }
+    
 
     @Test
     @DisplayName("Casting a cheap instant adds a +1/+1 counter but no mana")

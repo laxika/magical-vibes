@@ -20,22 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class PlaguemawBeastTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has tap + sacrifice creature cost + proliferate activated ability")
-    void hasCorrectAbilityStructure() {
-        PlaguemawBeast card = new PlaguemawBeast();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(ProliferateEffect.class);
-    }
-
     // ===== Sacrifice + Proliferate =====
 
     @Test

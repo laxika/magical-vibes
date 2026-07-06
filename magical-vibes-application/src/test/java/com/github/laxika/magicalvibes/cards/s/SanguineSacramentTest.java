@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SanguineSacramentTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has GainLifeEffect(Scaled(XValue, 2)) and PutSelfOnBottomOfOwnersLibraryEffect")
-    void hasCorrectEffects() {
-        SanguineSacrament card = new SanguineSacrament();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isEqualTo(new GainLifeEffect(new Scaled(new XValue(), 2)));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(PutSelfOnBottomOfOwnersLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

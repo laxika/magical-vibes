@@ -21,15 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShatterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Shatter has correct card properties")
-    void hasCorrectProperties() {
-        Shatter card = new Shatter();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Shatter puts it on the stack with target")

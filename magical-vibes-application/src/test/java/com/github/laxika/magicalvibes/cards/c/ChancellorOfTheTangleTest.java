@@ -41,23 +41,6 @@ class ChancellorOfTheTangleTest {
         // Do NOT call skipMulligan() here — opening hand tests need to set hand first
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chancellor of the Tangle has ON_OPENING_HAND_REVEAL MayEffect wrapping RegisterDelayedManaTriggerEffect")
-    void hasOpeningHandTriggeredEffect() {
-        ChancellorOfTheTangle card = new ChancellorOfTheTangle();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(RegisterDelayedManaTriggerEffect.class);
-        RegisterDelayedManaTriggerEffect effect = (RegisterDelayedManaTriggerEffect) may.wrapped();
-        assertThat(effect.color()).isEqualTo(ManaColor.GREEN);
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
     // ===== Opening hand trigger =====
 
     @Test

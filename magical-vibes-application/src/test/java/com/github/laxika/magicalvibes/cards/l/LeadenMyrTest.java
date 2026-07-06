@@ -12,18 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LeadenMyrTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Leaden Myr has tap-for-black mana ability")
-    void hasTapForBlackManaAbility() {
-        LeadenMyr card = new LeadenMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-    }
-
     // ===== Mana production =====
 
     @Test

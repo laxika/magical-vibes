@@ -54,27 +54,6 @@ class ElderCatharTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_DEATH ConditionalReplacementEffect(HUMAN) wrapping PutPlusOnePlusOneCounterOnTargetCreatureEffect")
-    void hasCorrectEffects() {
-        ElderCathar card = new ElderCathar();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect wrapper =
-                (ConditionalReplacementEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(((TargetPermanentMatches) wrapper.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) ((TargetPermanentMatches) wrapper.condition()).filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
-        assertThat(wrapper.baseEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) wrapper.baseEffect()).count()).isEqualTo(1);
-        assertThat(wrapper.upgradedEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) wrapper.upgradedEffect()).count()).isEqualTo(2);
-    }
-
     // ===== Death trigger =====
 
     @Nested

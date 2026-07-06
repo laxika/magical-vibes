@@ -37,21 +37,6 @@ class BlindingFogTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Blinding Fog has correct effects")
-    void hasCorrectEffects() {
-        BlindingFog card = new BlindingFog();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PreventAllDamageToAllCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

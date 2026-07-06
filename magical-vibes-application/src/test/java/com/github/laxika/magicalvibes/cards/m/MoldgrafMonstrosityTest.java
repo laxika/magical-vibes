@@ -22,27 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MoldgrafMonstrosityTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_DEATH effect that exiles self and returns two random creatures to battlefield")
-    void hasCorrectEffect() {
-        MoldgrafMonstrosity card = new MoldgrafMonstrosity();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.destination()).isEqualTo(GraveyardChoiceDestination.BATTLEFIELD);
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(effect.returnAtRandom()).isTrue();
-        assertThat(effect.randomCount()).isEqualTo(2);
-        assertThat(effect.exileSourceFromGraveyard()).isTrue();
-    }
-
     // ===== Death trigger =====
 
     @Nested

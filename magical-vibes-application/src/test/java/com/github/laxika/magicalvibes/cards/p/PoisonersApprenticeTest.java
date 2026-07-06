@@ -16,15 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PoisonersApprenticeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Poisoner's Apprentice has a single conditional ETB effect")
-    void hasCorrectStructure() {
-        PoisonersApprentice card = new PoisonersApprentice();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
+    
 
     @Test
     @DisplayName("With life gained, the ETB gives an opponent's creature -4/-4 (killing a 3/3)")

@@ -24,25 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IntangibleVirtueTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Intangible Virtue has correct static boost effect for tokens with vigilance")
-    void hasCorrectStaticEffect() {
-        IntangibleVirtue card = new IntangibleVirtue();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isInstanceOf(PermanentIsTokenPredicate.class);
-    }
-
     // ===== Static effect: buffs own creature tokens =====
 
     @Test

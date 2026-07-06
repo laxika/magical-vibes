@@ -19,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpitefulShadowsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spiteful Shadows has ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger effect")
-    void hasCorrectEffects() {
-        SpitefulShadows card = new SpitefulShadows();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_CREATURE_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("When enchanted creature is dealt non-combat damage, it deals that much to its controller")

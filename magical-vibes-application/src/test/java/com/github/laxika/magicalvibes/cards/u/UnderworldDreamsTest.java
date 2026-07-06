@@ -33,7 +33,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UnderworldDreamsTest extends BaseCardTest {
 
-
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
@@ -42,18 +41,7 @@ class UnderworldDreamsTest extends BaseCardTest {
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
     }
 
-    @Test
-    @DisplayName("Underworld Dreams has correct card properties")
-    void hasCorrectProperties() {
-        UnderworldDreams card = new UnderworldDreams();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DRAWS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DRAWS).getFirst())
-                .isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        DealDamageToTargetPlayerEffect effect =
-                (DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.ON_OPPONENT_DRAWS).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Opponent draw step draw causes 1 life loss")

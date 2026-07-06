@@ -74,47 +74,6 @@ class LeylineOfVitalityTest {
         // Do NOT call skipMulligan() here — leyline tests need to set hand first
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Leyline of Vitality has leyline opening hand effect")
-    void hasOpeningHandLeylineEffect() {
-        LeylineOfVitality card = new LeylineOfVitality();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(LeylineStartOnBattlefieldEffect.class);
-    }
-
-    @Test
-    @DisplayName("Leyline of Vitality has StaticBoostEffect +0/+1 for own creatures")
-    void hasStaticBoostEffect() {
-        LeylineOfVitality card = new LeylineOfVitality();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(0);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
-
-    @Test
-    @DisplayName("Leyline of Vitality has MayEffect wrapping GainLifeEffect(1) on ally creature enters")
-    void hasCreatureEntersLifeGainEffect() {
-        LeylineOfVitality card = new LeylineOfVitality();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) may.wrapped()).amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Leyline opening hand mechanic (CR 103.6) =====
 
     @Test

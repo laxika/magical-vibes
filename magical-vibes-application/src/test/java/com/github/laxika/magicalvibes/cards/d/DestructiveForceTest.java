@@ -36,25 +36,6 @@ class DestructiveForceTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Destructive Force has sacrifice-lands and mass-damage effects")
-    void hasCorrectEffects() {
-        DestructiveForce card = new DestructiveForce();
-
-        List<?> effects = card.getEffects(EffectSlot.SPELL);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(EachPlayerSacrificesPermanentsEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(MassDamageEffect.class);
-
-        EachPlayerSacrificesPermanentsEffect sacrificeEffect = (EachPlayerSacrificesPermanentsEffect) effects.get(0);
-        assertThat(sacrificeEffect.count()).isEqualTo(5);
-
-        MassDamageEffect damageEffect = (MassDamageEffect) effects.get(1);
-        assertThat(damageEffect.damage()).isEqualTo(5);
-    }
-
     // ===== Sacrifice lands =====
 
     @Test

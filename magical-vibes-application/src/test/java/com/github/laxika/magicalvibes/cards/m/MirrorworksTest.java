@@ -18,19 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MirrorworksTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Mirrorworks has correct effect structure")
-    void hasCorrectEffectStructure() {
-        Mirrorworks card = new Mirrorworks();
-
-        var effects = card.getEffects(EffectSlot.ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(MayPayManaEffect.class);
-
-        MayPayManaEffect mayPay = (MayPayManaEffect) effects.getFirst();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}");
-        assertThat(mayPay.wrapped()).isInstanceOf(CreateTokenCopyOfTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting another artifact triggers may-pay ability")

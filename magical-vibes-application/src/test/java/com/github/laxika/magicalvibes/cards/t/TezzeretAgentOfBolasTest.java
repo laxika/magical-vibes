@@ -35,54 +35,11 @@ class TezzeretAgentOfBolasTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability looks at top 5 cards for an artifact")
-    void plusOneAbilityHasCorrectEffect() {
-        TezzeretAgentOfBolas card = new TezzeretAgentOfBolas();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        var effect = (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) ability.getEffects().getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isEqualTo(new CardTypePredicate(CardType.ARTIFACT));
-    }
+    
 
-    @Test
-    @DisplayName("-1 ability animates target artifact to 5/5 creature")
-    void minusOneAbilityHasCorrectEffect() {
-        TezzeretAgentOfBolas card = new TezzeretAgentOfBolas();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AnimateTargetPermanentEffect.class);
-        var effect = (AnimateTargetPermanentEffect) ability.getEffects().getFirst();
-        assertThat(effect.power()).isEqualTo(5);
-        assertThat(effect.toughness()).isEqualTo(5);
-        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsArtifactPredicate(),
-                "Target must be an artifact"
-        ));
-    }
-
-    @Test
-    @DisplayName("-4 ability drains life per artifact controlled")
-    void minusFourAbilityHasCorrectEffect() {
-        TezzeretAgentOfBolas card = new TezzeretAgentOfBolas();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-4);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DrainLifePerControlledPermanentEffect.class);
-        var effect = (DrainLifePerControlledPermanentEffect) ability.getEffects().getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsArtifactPredicate.class);
-        assertThat(effect.multiplier()).isEqualTo(2);
-    }
+    
 
     // ===== Casting =====
 

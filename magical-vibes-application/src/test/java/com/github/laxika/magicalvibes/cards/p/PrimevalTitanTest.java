@@ -26,27 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PrimevalTitanTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Primeval Titan has MayEffect wrapping SearchLibraryForCardTypesToBattlefieldEffect on ETB and attack")
-    void hasCorrectEffects() {
-        PrimevalTitan card = new PrimevalTitan();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect etbMay = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbMay.wrapped()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-        SearchLibraryForCardTypesToBattlefieldEffect searchEffect =
-                (SearchLibraryForCardTypesToBattlefieldEffect) etbMay.wrapped();
-        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("land card");
-        assertThat(searchEffect.entersTapped()).isTrue();
-        assertThat(searchEffect.maxCount()).isEqualTo(2);
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(MayEffect.class);
-    }
-
     // ===== ETB trigger =====
 
     @Nested

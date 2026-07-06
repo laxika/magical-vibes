@@ -20,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RustedSlasherTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has sacrifice-an-artifact activated ability that grants regeneration")
-    void hasCorrectAbilityStructure() {
-        RustedSlasher card = new RustedSlasher();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeArtifactCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegenerateEffect.class);
-    }
-
     // ===== Activation: sacrifice an artifact to regenerate =====
 
     @Test

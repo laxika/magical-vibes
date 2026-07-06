@@ -25,30 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StormFleetArsonistTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has raid-conditional ETB sacrifice effect targeting opponent")
-    void hasRaidEtbSacrificeEffect() {
-        StormFleetArsonist card = new StormFleetArsonist();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(TargetPlayerSacrificesPermanentsEffect.class);
-
-        TargetPlayerSacrificesPermanentsEffect sacrifice =
-                (TargetPlayerSacrificesPermanentsEffect) raid.wrapped();
-        assertThat(sacrifice.count()).isEqualTo(1);
-        assertThat(sacrifice.filter()).isInstanceOf(PermanentTruePredicate.class);
-    }
-
     // ===== ETB with raid met =====
 
     @Test

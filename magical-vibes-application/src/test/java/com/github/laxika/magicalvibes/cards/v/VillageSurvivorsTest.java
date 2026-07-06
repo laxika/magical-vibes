@@ -16,27 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VillageSurvivorsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has fateful-hour static vigilance grant to other creatures at 5 or less life")
-    void hasCorrectEffect() {
-        VillageSurvivors card = new VillageSurvivors();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(((ControllerLifeAtMost) conditional.condition()).threshold()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
-        assertThat(grant.keywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
-
     // ===== Above threshold (default 20 life) =====
 
     @Test

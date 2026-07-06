@@ -18,19 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KjeldoranRoyalGuardTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Kjeldoran Royal Guard has correct card properties")
-    void hasCorrectProperties() {
-        KjeldoranRoyalGuard card = new KjeldoranRoyalGuard();
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RedirectUnblockedCombatDamageToSelfEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

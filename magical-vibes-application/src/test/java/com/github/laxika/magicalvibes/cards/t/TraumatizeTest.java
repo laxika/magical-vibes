@@ -15,19 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TraumatizeTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Traumatize has correct card properties")
-    void hasCorrectProperties() {
-        Traumatize card = new Traumatize();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MillHalfLibraryEffect.class);
-    }
-
     // ===== Milling =====
 
     @Test

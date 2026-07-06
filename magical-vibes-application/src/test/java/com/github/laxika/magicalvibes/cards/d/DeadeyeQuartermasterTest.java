@@ -22,19 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeadeyeQuartermasterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Deadeye Quartermaster has ETB may search for Equipment or Vehicle")
-    void hasCorrectProperties() {
-        DeadeyeQuartermaster card = new DeadeyeQuartermaster();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect searchEffect =
-                (SearchLibraryForCardsToHandEffect) mayEffect.wrapped();
-        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("Equipment or Vehicle card");
-    }
+    
 
     @Test
     @DisplayName("Resolving Deadeye Quartermaster creates may prompt")

@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GhostlyPossessionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ghostly Possession has correct effects")
-    void hasCorrectEffects() {
-        GhostlyPossession card = new GhostlyPossession();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect flyingEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(flyingEffect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(flyingEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(PreventAllCombatDamageToAndByEnchantedCreatureEffect.class);
-    }
-
     // ===== Targeting restriction =====
 
     @Test

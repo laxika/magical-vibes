@@ -20,38 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DeathHoodCobraTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Death-Hood Cobra has two activated abilities granting reach and deathtouch")
-    void hasTwoActivatedAbilities() {
-        DeathHoodCobra card = new DeathHoodCobra();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: reach
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{G}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect reach = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(reach.keywords()).containsExactly(Keyword.REACH);
-        assertThat(reach.scope()).isEqualTo(GrantScope.SELF);
-
-        // Second ability: deathtouch
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{1}{G}");
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(1).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect deathtouch = (GrantKeywordEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(deathtouch.keywords()).containsExactly(Keyword.DEATHTOUCH);
-        assertThat(deathtouch.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Reach ability =====
 
     @Test

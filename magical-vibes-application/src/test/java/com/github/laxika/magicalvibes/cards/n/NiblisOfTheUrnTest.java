@@ -21,17 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NiblisOfTheUrnTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has optional ON_ATTACK TapTargetPermanentEffect")
-    void hasOptionalAttackTapEffect() {
-        NiblisOfTheUrn card = new NiblisOfTheUrn();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(TapTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Attacking queues attack trigger for creature target selection")

@@ -19,20 +19,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class DearlyDepartedTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has STATIC GraveyardEnterWithAdditionalCountersEffect for HUMAN subtype")
-    void hasCorrectEffect() {
-        DearlyDeparted card = new DearlyDeparted();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GraveyardEnterWithAdditionalCountersEffect.class);
-
-        GraveyardEnterWithAdditionalCountersEffect effect =
-                (GraveyardEnterWithAdditionalCountersEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.HUMAN);
-        assertThat(effect.count()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Human creature enters with +1/+1 counter when Dearly Departed is in graveyard")

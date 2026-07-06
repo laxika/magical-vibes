@@ -20,26 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TormentorExarchTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tormentor Exarch has a ChooseOneEffect with two ETB options")
-    void hasCorrectEffects() {
-        TormentorExarch card = new TormentorExarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(BoostTargetCreatureEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) effect.options().get(0).effect();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-
-        BoostTargetCreatureEffect debuff = (BoostTargetCreatureEffect) effect.options().get(1).effect();
-        assertThat(debuff.powerBoost()).isEqualTo(new Fixed(0));
-        assertThat(debuff.toughnessBoost()).isEqualTo(new Fixed(-2));
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Target creature gets +2/+0 until end of turn")

@@ -27,19 +27,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class WindgraceAcolyteTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Windgrace Acolyte has ETB mill controller and gain life effects")
-    void hasCorrectEffects() {
-        WindgraceAcolyte card = new WindgraceAcolyte();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).isInstanceOf(MillControllerEffect.class);
-        assertThat(((MillControllerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).count())
-                .isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).amount())
-                .isEqualTo(new Fixed(3));
-    }
+    
 
     @Test
     @DisplayName("Casting Windgrace Acolyte puts it on stack as creature spell")

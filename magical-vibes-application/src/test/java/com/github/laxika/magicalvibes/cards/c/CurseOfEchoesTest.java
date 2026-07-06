@@ -31,23 +31,6 @@ class CurseOfEchoesTest extends BaseCardTest {
         return auraPerm;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Echoes registers an optional copy-spell trigger filtered by instant/sorcery cast by the enchanted player")
-    void hasCorrectEffects() {
-        CurseOfEchoes card = new CurseOfEchoes();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        CopySpellForEachOtherPlayerEffect effect =
-                (CopySpellForEachOtherPlayerEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).get(0);
-        assertThat(effect.optional()).isTrue();
-        assertThat(effect.spellFilter()).isInstanceOf(StackEntryAllOfPredicate.class);
-        StackEntryAllOfPredicate filter = (StackEntryAllOfPredicate) effect.spellFilter();
-        assertThat(filter.predicates()).hasAtLeastOneElementOfType(StackEntryTypeInPredicate.class);
-        assertThat(filter.predicates()).hasAtLeastOneElementOfType(StackEntryControlledByEnchantedPlayerPredicate.class);
-    }
-
     // ===== Trigger fires only for the enchanted player =====
 
     @Test

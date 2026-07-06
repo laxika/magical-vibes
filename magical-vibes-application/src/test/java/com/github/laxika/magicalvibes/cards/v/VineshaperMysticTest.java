@@ -21,14 +21,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class VineshaperMysticTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has one PutPlusOnePlusOneCounterOnTargetCreatureEffect on ETB")
-    void hasCorrectEffects() {
-        VineshaperMystic card = new VineshaperMystic();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("ETB — put a +1/+1 counter on each of up to two target Merfolk you control")

@@ -23,20 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DiscombobulateTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Discombobulate has correct card properties")
-    void hasCorrectProperties() {
-        Discombobulate card = new Discombobulate();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CounterSpellEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ReorderTopCardsOfLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -391,5 +377,4 @@ class DiscombobulateTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("puts") && log.contains("cards back on top"));
     }
 }
-
 

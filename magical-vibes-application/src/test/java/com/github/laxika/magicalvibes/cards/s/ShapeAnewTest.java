@@ -24,19 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShapeAnewTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Shape Anew has correct card properties")
-    void hasCorrectProperties() {
-        ShapeAnew card = new ShapeAnew();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(SacrificeTargetThenRevealUntilTypeToBattlefieldEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LurkingPredatorsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CASTS_SPELL triggered RevealTopCardCreatureToBattlefieldOrMayBottomEffect")
-    void hasCorrectEffect() {
-        LurkingPredators card = new LurkingPredators();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(RevealTopCardCreatureToBattlefieldOrMayBottomEffect.class);
-    }
-
     // ===== Trigger fires on opponent's spell =====
 
     @Test

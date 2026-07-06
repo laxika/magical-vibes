@@ -27,20 +27,7 @@ class MemorysJourneyTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has one SPELL effect: shuffle up to 3 target cards from graveyard into library")
-    void hasCorrectEffects() {
-        MemorysJourney card = new MemorysJourney();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class);
-
-        ShuffleTargetCardsFromGraveyardIntoLibraryEffect effect =
-                (ShuffleTargetCardsFromGraveyardIntoLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.maxTargets()).isEqualTo(3);
-        assertThat(effect.filter()).isNull(); // any card
-    }
+    
 
     @Test
     @DisplayName("Has flashback cost {G}")
@@ -51,13 +38,7 @@ class MemorysJourneyTest extends BaseCardTest {
         assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{G}");
     }
 
-    @Test
-    @DisplayName("Needs target (auto-derived from player-targeting effect)")
-    void needsTarget() {
-        MemorysJourney card = new MemorysJourney();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
+    
 
     // ===== Casting normally — targeting own graveyard =====
 

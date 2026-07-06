@@ -12,21 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MyrPropagatorTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has activated ability with tap and mana cost")
-    void hasCorrectStructure() {
-        MyrPropagator card = new MyrPropagator();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .anyMatch(e -> e instanceof CreateTokenCopyOfSourceEffect);
-    }
-
     // ===== Token creation =====
 
     @Test

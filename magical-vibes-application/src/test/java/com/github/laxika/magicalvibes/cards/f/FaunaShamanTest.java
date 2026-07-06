@@ -27,21 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FaunaShamanTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fauna Shaman has correct activated ability")
-    void hasCorrectProperties() {
-        FaunaShaman card = new FaunaShaman();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect searchEffect =
-                (SearchLibraryForCardsToHandEffect) card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("creature card");
-    }
+    
 
     @Test
     @DisplayName("Activating ability starts discard-cost choice for creature cards")

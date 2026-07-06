@@ -23,20 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CostOfBrillianceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effects and targeting")
-    void hasCorrectProperties() {
-        CostOfBrilliance card = new CostOfBrilliance();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(card.getMinTargets()).isEqualTo(1);
-        assertThat(card.getMaxTargets()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Target player draws two cards and loses 2 life")

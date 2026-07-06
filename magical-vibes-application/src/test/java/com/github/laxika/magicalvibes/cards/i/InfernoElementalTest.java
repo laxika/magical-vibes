@@ -19,19 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InfernoElementalTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has DealDamageToTargetCreatureEffect(3) on both ON_BLOCK and ON_BECOMES_BLOCKED")
-    void hasCorrectEffects() {
-        InfernoElemental card = new InfernoElemental();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).singleElement()
-                .isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).singleElement()
-                .isInstanceOf(DealDamageToTargetCreatureEffect.class);
-    }
-
     // ===== When Inferno Elemental blocks =====
 
     @Test

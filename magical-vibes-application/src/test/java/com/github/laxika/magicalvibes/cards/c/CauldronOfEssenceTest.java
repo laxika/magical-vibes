@@ -53,42 +53,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class CauldronOfEssenceTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_DIES effects for opponent life loss and controller life gain")
-    void hasCorrectDeathTriggerStructure() {
-        CauldronOfEssence card = new CauldronOfEssence();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(0))
-                .isInstanceOf(EachOpponentLosesLifeEffect.class);
-        assertThat(((EachOpponentLosesLifeEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(0)).amount())
-                .isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(1))
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(1)).amount())
-                .isEqualTo(new Fixed(1));
-    }
-
-    @Test
-    @DisplayName("Has sorcery-speed activated ability with sacrifice cost and graveyard return")
-    void hasCorrectActivatedAbility() {
-        CauldronOfEssence card = new CauldronOfEssence();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{B}{G}");
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect =
-                (ReturnCardFromGraveyardEffect) ability.getEffects().get(1);
-        assertThat(returnEffect.targetGraveyard()).isTrue();
-    }
-
     // ===== Death trigger =====
 
     @Test

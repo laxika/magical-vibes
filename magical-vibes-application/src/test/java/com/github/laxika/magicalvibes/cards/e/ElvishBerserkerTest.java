@@ -19,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ElvishBerserkerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Elvish Berserker has correct card properties and trigger effect")
-    void hasCorrectProperties() {
-        ElvishBerserker card = new ElvishBerserker();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).isEmpty();
-    }
+    
 
     @Test
     @DisplayName("Becoming blocked creates one becomes-blocked trigger")

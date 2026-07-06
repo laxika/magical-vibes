@@ -25,27 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PrecognitionFieldTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct static effects and activated ability")
-    void hasCorrectEffects() {
-        PrecognitionField card = new PrecognitionField();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(LookAtTopCardOfOwnLibraryEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(AllowCastFromTopOfLibraryEffect.class);
-
-        AllowCastFromTopOfLibraryEffect castEffect = (AllowCastFromTopOfLibraryEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(castEffect.castableTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(ExileTopCardOfOwnLibraryEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

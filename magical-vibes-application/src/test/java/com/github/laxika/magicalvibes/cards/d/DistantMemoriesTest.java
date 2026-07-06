@@ -22,18 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DistantMemoriesTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Distant Memories has DistantMemoriesEffect on SPELL slot")
-    void hasCorrectEffect() {
-        DistantMemories card = new DistantMemories();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DistantMemoriesEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

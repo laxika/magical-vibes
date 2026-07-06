@@ -20,9 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class BenalishKnightTest extends BaseCardTest {
 
 
-    // ===== Card properties =====
-
-
     // ===== Casting during main phase =====
 
     @Test

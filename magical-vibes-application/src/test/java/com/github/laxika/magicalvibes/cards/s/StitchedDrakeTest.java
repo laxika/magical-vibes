@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StitchedDrakeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Stitched Drake has exile creature from graveyard cost")
-    void hasCorrectEffects() {
-        StitchedDrake card = new StitchedDrake();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(exileCost.trackExiledPower()).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

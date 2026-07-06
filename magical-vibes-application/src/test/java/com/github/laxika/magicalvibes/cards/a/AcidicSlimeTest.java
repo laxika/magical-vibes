@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AcidicSlimeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Acidic Slime has correct card properties")
-    void hasCorrectProperties() {
-        AcidicSlime card = new AcidicSlime();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== ETB destroys artifact =====
 
     @Test

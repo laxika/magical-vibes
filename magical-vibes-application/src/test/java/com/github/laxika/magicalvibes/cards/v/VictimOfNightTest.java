@@ -44,25 +44,7 @@ class VictimOfNightTest extends BaseCardTest {
         return card;
     }
 
-    @Test
-    @DisplayName("Victim of Night has correct card properties")
-    void hasCorrectProperties() {
-        VictimOfNight card = new VictimOfNight();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentHasAnySubtypePredicate(
-                                Set.of(CardSubtype.VAMPIRE, CardSubtype.WEREWOLF, CardSubtype.ZOMBIE)))
-                )),
-                "Target must be a non-Vampire, non-Werewolf, non-Zombie creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Victim of Night targeting a valid creature puts it on stack")

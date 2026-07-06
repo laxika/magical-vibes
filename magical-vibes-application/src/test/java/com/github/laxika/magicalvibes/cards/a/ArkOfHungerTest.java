@@ -41,30 +41,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class ArkOfHungerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has leave-graveyard trigger and mill-and-play activated ability")
-    void hasCorrectEffects() {
-        ArkOfHunger card = new ArkOfHunger();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(0))
-                .isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(0)).damage())
-                .isEqualTo(new Fixed(1));
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(1))
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(1)).amount())
-                .isEqualTo(new Fixed(1));
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(MillControllerAndMayPlayFromGraveyardThisTurnEffect.class);
-    }
-
     // ===== Leave graveyard trigger =====
 
     @Test

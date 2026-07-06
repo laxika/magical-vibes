@@ -24,30 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WakedancerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping CreateTokenEffect in ON_ENTER_BATTLEFIELD")
-    void hasCorrectStructure() {
-        Wakedancer card = new Wakedancer();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect morbid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(morbid.wrapped()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) morbid.wrapped();
-        assertThat(token.amount()).isEqualTo(new Fixed(1));
-        assertThat(token.tokenName()).isEqualTo("Zombie");
-        assertThat(token.power()).isEqualTo(2);
-        assertThat(token.toughness()).isEqualTo(2);
-        assertThat(token.color()).isEqualTo(CardColor.BLACK);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.ZOMBIE);
-    }
-
     // ===== Without morbid =====
 
     @Test

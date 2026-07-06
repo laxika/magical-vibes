@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HollowhengeSpiritTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Hollowhenge Spirit has a targeted ETB remove-from-combat effect")
-    void hasCorrectProperties() {
-        HollowhengeSpirit card = new HollowhengeSpirit();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(RemoveTargetFromCombatEffect.class);
-    }
-
     // ===== Removing an attacker =====
 
     @Test

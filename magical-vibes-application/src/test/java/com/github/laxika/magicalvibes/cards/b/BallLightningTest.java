@@ -20,15 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BallLightningTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Ball Lightning has end-step sacrifice trigger")
-    void hasEndStepSacrificeTrigger() {
-        BallLightning card = new BallLightning();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Can attack immediately due to haste and deals 6 damage")

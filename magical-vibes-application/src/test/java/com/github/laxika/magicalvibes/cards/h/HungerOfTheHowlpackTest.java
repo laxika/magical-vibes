@@ -21,23 +21,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class HungerOfTheHowlpackTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has morbid replacement from one counter to three counters")
-    void hasCorrectStructure() {
-        HungerOfTheHowlpack card = new HungerOfTheHowlpack();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect =
-                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(effect.upgradedEffect()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) effect.baseEffect()).count()).isEqualTo(1);
-        assertThat(((PutPlusOnePlusOneCounterOnTargetCreatureEffect) effect.upgradedEffect()).count()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Puts one +1/+1 counter on target creature without morbid")

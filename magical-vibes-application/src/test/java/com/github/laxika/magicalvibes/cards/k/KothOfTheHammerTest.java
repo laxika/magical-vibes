@@ -37,46 +37,11 @@ class KothOfTheHammerTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has UntapTargetPermanentEffect and AnimateLandEffect targeting Mountains")
-    void plusOneAbilityHasCorrectEffects() {
-        KothOfTheHammer card = new KothOfTheHammer();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AnimateLandEffect.class);
-        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN),
-                "Target must be a Mountain"
-        ));
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability adds mana per controlled Mountain")
-    void minusTwoAbilityHasCorrectEffect() {
-        KothOfTheHammer card = new KothOfTheHammer();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddManaPerControlledPermanentEffect.class);
-    }
-
-    @Test
-    @DisplayName("-5 ability is the emblem effect")
-    void minusFiveAbilityHasCorrectEffect() {
-        KothOfTheHammer card = new KothOfTheHammer();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-5);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(KothEmblemEffect.class);
-    }
+    
 
     // ===== Casting =====
 

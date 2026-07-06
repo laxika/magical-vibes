@@ -17,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ThoughtScourTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Thought Scour has correct effects")
-    void hasCorrectEffects() {
-        ThoughtScour card = new ThoughtScour();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(MillTargetPlayerEffect.class);
-        assertThat(((MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0)).count()).isEqualTo(new Fixed(2));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Mill effect =====
 
     @Test

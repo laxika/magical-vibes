@@ -39,23 +39,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FurnaceCelebrationTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has MayPayManaEffect wrapping DealDamageToAnyTargetEffect on ON_ALLY_PERMANENT_SACRIFICED")
-    void hasCorrectStructure() {
-        FurnaceCelebration card = new FurnaceCelebration();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst())
-                .isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}");
-        assertThat(mayPay.wrapped()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect damage = (DealDamageToAnyTargetEffect) mayPay.wrapped();
-        assertThat(damage.damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Sacrifice triggers may ability =====
 
     @Test

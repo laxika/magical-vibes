@@ -18,49 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HanweirWatchkeepTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        HanweirWatchkeep card = new HanweirWatchkeep();
-
-        // No activated abilities
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        // Each-upkeep transform trigger
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("BaneOfHanweir");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        HanweirWatchkeep card = new HanweirWatchkeep();
-        BaneOfHanweir backFace = (BaneOfHanweir) card.getBackFaceCard();
-
-        // No activated abilities
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-
-        // Must attack static effect
-        assertThat(backFace.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MustAttackEffect.class);
-
-        // Each-upkeep transform trigger
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
     @Test
@@ -185,7 +142,5 @@ class HanweirWatchkeepTest extends BaseCardTest {
         assertThat(watchkeep.isTransformed()).isTrue();
         assertThat(watchkeep.getCard().getName()).isEqualTo("Bane of Hanweir");
     }
-
-    // ===== Helpers =====
 
 }

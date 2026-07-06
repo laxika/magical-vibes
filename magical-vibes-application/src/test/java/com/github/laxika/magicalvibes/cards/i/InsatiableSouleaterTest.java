@@ -19,25 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InsatiableSouleaterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Insatiable Souleater has one activated ability granting trample with Phyrexian green cost")
-    void hasTrampleActivatedAbility() {
-        InsatiableSouleater card = new InsatiableSouleater();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{G/P}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect trample = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(trample.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(trample.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Activated ability: grant trample paying green mana =====
 
     @Test

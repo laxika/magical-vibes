@@ -21,38 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SharpenedPitchforkTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sharpened Pitchfork has static first strike keyword grant effect")
-    void hasFirstStrikeGrantEffect() {
-        SharpenedPitchfork card = new SharpenedPitchfork();
-
-        GrantKeywordEffect grant = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.keywords().contains(Keyword.FIRST_STRIKE))
-                .findFirst().orElseThrow();
-        assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(grant.filter()).isNull();
-    }
-
-    @Test
-    @DisplayName("Sharpened Pitchfork has conditional +1/+1 boost for Humans")
-    void hasConditionalHumanBoostEffect() {
-        SharpenedPitchfork card = new SharpenedPitchfork();
-
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) boost.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
-    }
-
     // ===== Static effects: first strike =====
 
     @Test

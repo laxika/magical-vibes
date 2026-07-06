@@ -17,25 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PestilentSouleaterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Pestilent Souleater has one activated ability granting infect with Phyrexian black cost")
-    void hasInfectActivatedAbility() {
-        PestilentSouleater card = new PestilentSouleater();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B/P}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect infect = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(infect.keywords()).containsExactly(Keyword.INFECT);
-        assertThat(infect.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Activated ability: grant infect paying black mana =====
 
     @Test

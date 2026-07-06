@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NumbingDoseTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Numbing Dose has correct effects")
-    void hasCorrectEffects() {
-        NumbingDose card = new NumbingDose();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(AttachedCreatureDoesntUntapEffect.class);
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(EnchantedCreatureControllerLosesLifeEffect.class);
-    }
-
     // ===== Targeting =====
 
     @Test

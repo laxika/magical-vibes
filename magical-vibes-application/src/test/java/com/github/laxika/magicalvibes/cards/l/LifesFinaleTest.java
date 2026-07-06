@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LifesFinaleTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Life's Finale has destroy all creatures and library search effects")
-    void hasCorrectEffects() {
-        LifesFinale card = new LifesFinale();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyAllPermanentsEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(SearchTargetLibraryForCardsToGraveyardEffect.class);
-    }
-
     // ===== Board wipe =====
 
     @Test

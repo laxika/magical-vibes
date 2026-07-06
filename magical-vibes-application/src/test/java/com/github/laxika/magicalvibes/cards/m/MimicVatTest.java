@@ -24,26 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MimicVatTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has imprint trigger and activated ability")
-    void hasCorrectStructure() {
-        MimicVat card = new MimicVat();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ImprintDyingCreatureEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .anyMatch(e -> e instanceof CreateTokenCopyOfImprintedCardEffect);
-    }
-
     // ===== Imprint trigger =====
 
     @Test

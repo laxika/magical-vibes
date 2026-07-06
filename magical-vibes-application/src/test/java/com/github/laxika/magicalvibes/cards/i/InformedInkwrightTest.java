@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InformedInkwrightTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Repartee trigger creates an Inkling token, gated on targeting a creature")
-    void hasCorrectStructure() {
-        InformedInkwright card = new InformedInkwright();
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.resolvedEffects()).singleElement().isInstanceOf(CreateTokenEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting an instant that targets a creature creates a 1/1 flying Inkling token")

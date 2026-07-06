@@ -37,25 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RodOfRuinTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rod of Ruin has correct card properties")
-    void hasCorrectProperties() {
-        RodOfRuin card = new RodOfRuin();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

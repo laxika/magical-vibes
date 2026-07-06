@@ -37,27 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MoggFanaticTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mogg Fanatic has correct card properties")
-    void hasCorrectProperties() {
-        MoggFanatic card = new MoggFanatic();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Casting =====
 
     @Test

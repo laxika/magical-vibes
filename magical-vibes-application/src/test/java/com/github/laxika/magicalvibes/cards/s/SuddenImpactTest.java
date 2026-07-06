@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SuddenImpactTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Sudden Impact has correct card properties")
-    void hasCorrectProperties() {
-        SuddenImpact card = new SuddenImpact();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToTargetPlayerByHandSizeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Sudden Impact targeting a player puts it on the stack")

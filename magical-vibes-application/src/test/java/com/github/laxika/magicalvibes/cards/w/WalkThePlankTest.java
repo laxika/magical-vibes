@@ -27,27 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WalkThePlankTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Walk the Plank has correct card properties")
-    void hasCorrectProperties() {
-        WalkThePlank card = new WalkThePlank();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK))
-                )),
-                "Target must be a non-Merfolk creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

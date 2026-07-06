@@ -22,25 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RobeOfMirrorsTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Robe of Mirrors has correct card properties")
-    void hasCorrectProperties() {
-        RobeOfMirrors card = new RobeOfMirrors();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect =
-                (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.SHROUD);
-        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -233,5 +214,4 @@ class RobeOfMirrorsTest extends BaseCardTest {
                         && p.getAttachedTo().equals(bearsPerm.getId()));
     }
 }
-
 

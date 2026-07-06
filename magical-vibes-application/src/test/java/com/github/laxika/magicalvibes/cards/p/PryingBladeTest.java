@@ -27,32 +27,9 @@ class PryingBladeTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Prying Blade has static +1/+0 boost effect")
-    void hasStaticBoostEffect() {
-        PryingBlade card = new PryingBlade();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Prying Blade has combat damage treasure token effect")
-    void hasCombatDamageTreasureEffect() {
-        PryingBlade card = new PryingBlade();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
-                .hasSize(1)
-                .first()
-                .isInstanceOf(CreateTokenEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Prying Blade has equip {2} ability")

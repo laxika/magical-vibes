@@ -24,30 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ProteanHydraTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has EnterWithCountersEffect as ETB effect")
-    void hasCorrectETBEffect() {
-        ProteanHydra card = new ProteanHydra();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-    }
-
-    @Test
-    @DisplayName("Has PreventDamageAndRemovePlusOnePlusOneCountersEffect and DelayedPlusOnePlusOneCounterRegrowthEffect as static effects")
-    void hasCorrectStaticEffects() {
-        ProteanHydra card = new ProteanHydra();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PreventDamageAndRemovePlusOnePlusOneCountersEffect);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect);
-    }
-
     // ===== Enters with X +1/+1 counters =====
 
     @Test

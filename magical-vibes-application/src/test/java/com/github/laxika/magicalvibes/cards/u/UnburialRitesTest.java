@@ -23,14 +23,7 @@ class UnburialRitesTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has one SPELL effect: ReturnCardFromGraveyardEffect")
-    void hasCorrectEffects() {
-        UnburialRites card = new UnburialRites();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has flashback cost {3}{W}")

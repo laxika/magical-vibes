@@ -24,21 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UndyingEvilTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Undying Evil has correct card properties")
-    void hasCorrectProperties() {
-        UndyingEvil card = new UndyingEvil();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.UNDYING);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

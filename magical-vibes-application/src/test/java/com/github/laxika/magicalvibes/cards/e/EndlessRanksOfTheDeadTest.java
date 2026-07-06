@@ -38,29 +38,6 @@ class EndlessRanksOfTheDeadTest extends BaseCardTest {
                 .toList();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effect configuration")
-    void hasCorrectProperties() {
-        EndlessRanksOfTheDead card = new EndlessRanksOfTheDead();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Divided(new PermanentCount(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))),
-                CountScope.CONTROLLER), 2));
-        assertThat(effect.tokenName()).isEqualTo("Zombie");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.BLACK);
-    }
-
     // ===== Zero Zombies =====
 
     @Test

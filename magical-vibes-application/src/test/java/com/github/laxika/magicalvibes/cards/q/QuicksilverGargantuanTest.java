@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class QuicksilverGargantuanTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Quicksilver Gargantuan has correct effect configuration")
-    void hasCorrectProperties() {
-        QuicksilverGargantuan card = new QuicksilverGargantuan();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(CopyPermanentOnEnterEffect.class);
-
-        CopyPermanentOnEnterEffect effect = (CopyPermanentOnEnterEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.powerOverride()).isEqualTo(7);
-        assertThat(effect.toughnessOverride()).isEqualTo(7);
-    }
-
     // ===== Copying with P/T override =====
 
     @Test

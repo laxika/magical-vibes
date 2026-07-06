@@ -37,18 +37,6 @@ class FlayerOfTheHateboundTest extends BaseCardTest {
                 .findFirst().orElse(null);
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Flayer has an ON_CREATURE_ENTERS_FROM_GRAVEYARD deal-power-damage effect")
-    void hasEntersFromGraveyardEffect() {
-        FlayerOfTheHatebound card = new FlayerOfTheHatebound();
-
-        assertThat(card.getEffects(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CREATURE_ENTERS_FROM_GRAVEYARD).getFirst())
-                .isEqualTo(new DealDamageToAnyTargetEffect(new SourcePower()));
-    }
-
     // ===== Undying =====
 
     @Test

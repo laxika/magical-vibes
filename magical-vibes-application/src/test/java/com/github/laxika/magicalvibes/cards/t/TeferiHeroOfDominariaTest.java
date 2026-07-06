@@ -40,48 +40,11 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has DrawCardEffect and RegisterDelayedUntapPermanentsEffect")
-    void plusOneAbilityHasCorrectEffects() {
-        TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().get(0)).amount()).isEqualTo(new Fixed(1));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(RegisterDelayedUntapPermanentsEffect.class);
-        assertThat(((RegisterDelayedUntapPermanentsEffect) ability.getEffects().get(1)).count()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("-3 ability has PutTargetPermanentIntoLibraryNFromTopEffect(2) with nonland filter")
-    void minusThreeAbilityHasCorrectEffect() {
-        TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(PutTargetPermanentIntoLibraryNFromTopEffect.class);
-        assertThat(((PutTargetPermanentIntoLibraryNFromTopEffect) ability.getEffects().getFirst()).position()).isEqualTo(2);
-        assertThat(ability.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) ability.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentNotPredicate.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability has TeferiHeroEmblemEffect")
-    void minusEightAbilityHasCorrectEffect() {
-        TeferiHeroOfDominaria card = new TeferiHeroOfDominaria();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(TeferiHeroEmblemEffect.class);
-    }
+    
 
     // ===== +1 ability: Draw a card + delayed untap =====
 

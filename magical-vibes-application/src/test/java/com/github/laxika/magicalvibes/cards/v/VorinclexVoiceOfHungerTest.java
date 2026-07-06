@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VorinclexVoiceOfHungerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Vorinclex has correct effects")
-    void hasCorrectEffects() {
-        VorinclexVoiceOfHunger card = new VorinclexVoiceOfHunger();
-
-        List<?> landTapEffects = card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND);
-        assertThat(landTapEffects).hasSize(2);
-        assertThat(landTapEffects).anySatisfy(e ->
-                assertThat(e).isInstanceOf(AddOneOfEachManaTypeProducedByLandEffect.class));
-        assertThat(landTapEffects).anySatisfy(e ->
-                assertThat(e).isInstanceOf(OpponentTappedLandDoesntUntapEffect.class));
-    }
-
     // ===== Mana doubling for controller =====
 
     @Test

@@ -19,29 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HeadlessSkaabTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ExileNCardsFromGraveyardCost(1, CREATURE) as additional cost")
-    void hasExileOneCreatureCost() {
-        HeadlessSkaab card = new HeadlessSkaab();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileNCardsFromGraveyardCost.class);
-        ExileNCardsFromGraveyardCost cost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(cost.count()).isEqualTo(1);
-        assertThat(cost.requiredType()).isEqualTo(CardType.CREATURE);
-    }
-
-    @Test
-    @DisplayName("Has EntersTappedEffect as a static effect")
-    void hasEntersTappedEffect() {
-        HeadlessSkaab card = new HeadlessSkaab();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anySatisfy(e -> assertThat(e).isInstanceOf(EntersTappedEffect.class));
-    }
-
     // ===== Casting =====
 
     @Test

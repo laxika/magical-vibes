@@ -21,20 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WhipflareTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Whipflare has correct effect configuration")
-    void hasCorrectEffect() {
-        Whipflare card = new Whipflare();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-        assertThat(effect.damagesPlayers()).isFalse();
-        assertThat(effect.filter()).isInstanceOf(PermanentNotPredicate.class);
-        PermanentNotPredicate notPred = (PermanentNotPredicate) effect.filter();
-        assertThat(notPred.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Whipflare kills nonartifact creatures with toughness 2 or less on both sides")

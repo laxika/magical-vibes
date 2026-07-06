@@ -16,23 +16,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UndeadSlayerTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Undead Slayer has a tap + mana activated ability that exiles")
-    void hasCorrectAbility() {
-        UndeadSlayer card = new UndeadSlayer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{W}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects())
-                .hasSize(1)
-                .first().isInstanceOf(ExileTargetPermanentEffect.class);
-    }
-
     // ===== Resolution =====
 
     @Test

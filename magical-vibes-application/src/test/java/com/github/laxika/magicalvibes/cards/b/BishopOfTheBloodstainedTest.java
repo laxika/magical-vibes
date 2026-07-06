@@ -18,27 +18,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BishopOfTheBloodstainedTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Bishop of the Bloodstained has correct card properties")
-    void hasCorrectProperties() {
-        BishopOfTheBloodstained card = new BishopOfTheBloodstained();
+    
 
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect that makes target opponent lose life per Vampire")
-    void hasEtbLifeLossPerVampireEffect() {
-        BishopOfTheBloodstained card = new BishopOfTheBloodstained();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifePerControlledPermanentEffect.class);
-        TargetPlayerLosesLifePerControlledPermanentEffect effect =
-                (TargetPlayerLosesLifePerControlledPermanentEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.multiplier()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("ETB trigger targets opponent and goes on stack")

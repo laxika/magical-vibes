@@ -38,21 +38,6 @@ class CathedralMembraneTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cathedral Membrane has ON_DEATH DealDamageToBlockedAttackersOnDeathEffect(6)")
-    void hasCorrectEffect() {
-        CathedralMembrane card = new CathedralMembrane();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(DealDamageToBlockedAttackersOnDeathEffect.class);
-        DealDamageToBlockedAttackersOnDeathEffect effect =
-                (DealDamageToBlockedAttackersOnDeathEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.damage()).isEqualTo(6);
-    }
-
     // ===== Death trigger during combat =====
 
     @Test

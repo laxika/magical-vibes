@@ -21,25 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ImmerwolfTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Immerwolf has a Wolf/Werewolf anthem and a transform-prevention static effect")
-    void hasCorrectStaticEffects() {
-        Immerwolf card = new Immerwolf();
-
-        List<?> staticEffects = card.getEffects(EffectSlot.STATIC);
-        assertThat(staticEffects).hasSize(2);
-
-        StaticBoostEffect boost = (StaticBoostEffect) staticEffects.get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-
-        assertThat(staticEffects.get(1)).isInstanceOf(PreventTransformEffect.class);
-    }
-
     // ===== Static effect: buffs Wolves and Werewolves you control =====
 
     @Test

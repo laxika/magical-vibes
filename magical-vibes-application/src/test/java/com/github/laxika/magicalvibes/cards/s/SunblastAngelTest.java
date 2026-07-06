@@ -21,19 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SunblastAngelTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Sunblast Angel has correct ETB effect")
-    void hasCorrectProperties() {
-        SunblastAngel card = new SunblastAngel();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyAllPermanentsEffect.class);
-        DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentAllOfPredicate.class);
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("ETB destroys tapped creatures on both sides")

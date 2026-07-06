@@ -18,18 +18,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class PlagueMyrTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Plague Myr has tap-for-colorless mana ability")
-    void hasTapForColorlessManaAbility() {
-        PlagueMyr card = new PlagueMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.COLORLESS));
-    }
-
     // ===== Mana production =====
 
     @Test

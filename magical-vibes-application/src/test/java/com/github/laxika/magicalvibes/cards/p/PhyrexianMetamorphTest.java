@@ -23,18 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PhyrexianMetamorphTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyrexian Metamorph has CopyPermanentOnEnterEffect")
-    void hasCorrectProperties() {
-        PhyrexianMetamorph card = new PhyrexianMetamorph();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(CopyPermanentOnEnterEffect.class);
-    }
-
     // ===== Copying a creature — should gain artifact type =====
 
     @Test

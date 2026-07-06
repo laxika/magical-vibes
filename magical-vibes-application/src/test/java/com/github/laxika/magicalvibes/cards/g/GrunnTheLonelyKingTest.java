@@ -36,28 +36,9 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{3}"));
     }
 
-    @Test
-    @DisplayName("Has kicked-conditional EnterWithCountersEffect with count 5")
-    void hasKickedETBEffect() {
-        GrunnTheLonelyKing card = new GrunnTheLonelyKing();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new ConditionalEffect(new Kicked(),
-                        new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5))));
-    }
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with ConditionalEffect wrapping DoubleSelfPowerToughnessEffect")
-    void hasAttacksAloneTrigger() {
-        GrunnTheLonelyKing card = new GrunnTheLonelyKing();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        var conditional = (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(DoubleSelfPowerToughnessEffect.class);
-    }
+    
 
     // ===== Casting without kicker =====
 
@@ -165,7 +146,6 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CloneShellTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has imprint ETB effect and dies trigger effect")
-    void hasCorrectEffects() {
-        CloneShell card = new CloneShell();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ImprintFromTopCardsEffect.class);
-        ImprintFromTopCardsEffect etb = (ImprintFromTopCardsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etb.count()).isEqualTo(4);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(PutImprintedCreatureOntoBattlefieldEffect.class);
-    }
-
     // ===== ETB imprint =====
 
     @Test

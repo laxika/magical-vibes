@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KessigWolfRunTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Kessig Wolf Run has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        KessigWolfRun card = new KessigWolfRun();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{X}{R}{G}");
-        assertThat(card.getActivatedAbilities().get(1).getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-                    assertThat(effects.get(1)).isInstanceOf(GrantKeywordEffect.class);
-                });
-    }
-
     // ===== Mana ability =====
 
     @Test

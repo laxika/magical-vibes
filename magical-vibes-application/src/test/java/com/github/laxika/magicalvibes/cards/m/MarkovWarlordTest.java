@@ -21,15 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MarkovWarlordTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ETB target creatures can't block effect")
-    void hasEtbEffect() {
-        MarkovWarlord card = new MarkovWarlord();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetCreatureCantBlockThisTurnEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB makes up to two target creatures unable to block this turn")

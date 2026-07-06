@@ -29,30 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UnwindTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Unwind has correct card properties")
-    void hasCorrectProperties() {
-        Unwind card = new Unwind();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryNotPredicate(
-                        new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
-                ),
-                "Target must be a noncreature spell."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CounterSpellEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(UntapUpToControlledPermanentsEffect.class);
-
-        UntapUpToControlledPermanentsEffect untapEffect =
-                (UntapUpToControlledPermanentsEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(untapEffect.count()).isEqualTo(3);
-        assertThat(untapEffect.filter()).isInstanceOf(PermanentIsLandPredicate.class);
-    }
-
     // ===== Casting =====
 
     @Test

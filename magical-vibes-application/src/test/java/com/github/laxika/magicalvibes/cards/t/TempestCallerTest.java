@@ -21,30 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TempestCallerTest extends BaseCardTest {
 
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Has ETB TapPermanentsOfTargetPlayerEffect with creature filter")
-    void hasEtbTapEffect() {
-        TempestCaller card = new TempestCaller();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TapPermanentsOfTargetPlayerEffect.class);
-        TapPermanentsOfTargetPlayerEffect effect =
-                (TapPermanentsOfTargetPlayerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsCreaturePredicate.class);
-    }
-
-    @Test
-    @DisplayName("Needs target and has opponent-only target filter")
-    void needsTargetWithOpponentFilter() {
-        TempestCaller card = new TempestCaller();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
     // ===== ETB trigger =====
 
     @Test

@@ -37,29 +37,7 @@ class SpectacularSkywhaleTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has spell-cast trigger with a +3/+0-or-three-counters ConditionalReplacementEffect")
-    void hasCorrectEffects() {
-        SpectacularSkywhale card = new SpectacularSkywhale();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(ConditionalReplacementEffect.class);
-        ConditionalReplacementEffect replacement =
-                (ConditionalReplacementEffect) trigger.resolvedEffects().getFirst();
-        assertThat(((SpellManaSpentAtLeast) replacement.condition()).minMana()).isEqualTo(5);
-
-        BoostSelfEffect boost = (BoostSelfEffect) replacement.baseEffect();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(3));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-
-        PutCountersOnSelfEffect counters = (PutCountersOnSelfEffect) replacement.upgradedEffect();
-        assertThat(counters.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(counters.count()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Casting a cheap instant grants +3/+0 until end of turn and no counters")

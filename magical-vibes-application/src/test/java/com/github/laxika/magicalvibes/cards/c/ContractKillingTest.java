@@ -24,23 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ContractKillingTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has destroy target creature and create two treasure tokens effects")
-    void hasCorrectEffects() {
-        ContractKilling card = new ContractKilling();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect treasureEffect = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(treasureEffect.primaryType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(treasureEffect.amount()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Destroy + Treasure creation =====
 
     @Test

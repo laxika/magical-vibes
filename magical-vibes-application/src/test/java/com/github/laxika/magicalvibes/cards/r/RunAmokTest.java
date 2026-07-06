@@ -24,25 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RunAmokTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Run Amok has correct card properties")
-    void hasCorrectProperties() {
-        RunAmok card = new RunAmok();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(3));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(3));
-
-        GrantKeywordEffect trample = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(trample.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(trample.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

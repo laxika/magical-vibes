@@ -17,24 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GhoulraiserTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB effect that returns a random Zombie from graveyard to hand")
-    void hasCorrectEffect() {
-        Ghoulraiser card = new Ghoulraiser();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.returnAtRandom()).isTrue();
-        assertThat(effect.filter()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) effect.filter()).subtype()).isEqualTo(CardSubtype.ZOMBIE);
-    }
-
     // ===== ETB trigger: return random Zombie =====
 
     @Test

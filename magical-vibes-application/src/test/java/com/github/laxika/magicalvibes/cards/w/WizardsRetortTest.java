@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WizardsRetortTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Wizard's Retort has correct card properties")
-    void hasCorrectProperties() {
-        WizardsRetort card = new WizardsRetort();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new ReduceOwnCastCostIfControlsPermanentEffect(
-                        new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.WIZARD), 1));
-    }
-
     // ===== Countering =====
 
     @Test

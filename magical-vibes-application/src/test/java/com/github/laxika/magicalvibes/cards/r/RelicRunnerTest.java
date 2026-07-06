@@ -18,15 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RelicRunnerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Relic Runner has correct static effect")
-    void hasCorrectEffect() {
-        RelicRunner card = new RelicRunner();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Relic Runner can be blocked when no historic spell was cast this turn")

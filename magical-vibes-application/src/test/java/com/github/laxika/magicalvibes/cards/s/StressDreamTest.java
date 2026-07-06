@@ -43,25 +43,6 @@ class StressDreamTest extends BaseCardTest {
         harness.addMana(p, ManaColor.GREEN, 3); // 3 generic
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has 5 damage (up to one) + look-two-choose-one-to-hand effects")
-    void cardStructure() {
-        StressDream card = new StressDream();
-        var effects = card.getEffects(EffectSlot.SPELL);
-
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) effects.get(0)).damage()).isEqualTo(new Fixed(5));
-        assertThat(effects.get(1)).isInstanceOf(LookAtTopCardsChooseOneToHandRestOnBottomEffect.class);
-        assertThat(((LookAtTopCardsChooseOneToHandRestOnBottomEffect) effects.get(1)).count()).isEqualTo(2);
-
-        assertThat(card.getSpellTargets()).hasSize(1);
-        assertThat(card.getSpellTargets().getFirst().getMinTargets()).isZero();
-        assertThat(card.getSpellTargets().getFirst().getMaxTargets()).isEqualTo(1);
-    }
-
     // ===== Damage + card selection =====
 
     @Test

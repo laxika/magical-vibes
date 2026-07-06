@@ -18,23 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VerdantForceTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Verdant Force has correct card properties")
-    void hasCorrectProperties() {
-        VerdantForce card = new VerdantForce();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(CreateTokenEffect.class);
     }
 
     // ===== Triggering during controller's upkeep =====

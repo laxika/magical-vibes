@@ -24,26 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DiligentExcavatorTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Diligent Excavator has historic spell-cast trigger with mill target player effect")
-    void hasCorrectStructure() {
-        DiligentExcavator card = new DiligentExcavator();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.targetFilter()).isNull();
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(MillTargetPlayerEffect.class);
-        assertThat(((MillTargetPlayerEffect) trigger.resolvedEffects().getFirst()).count()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Artifact spell triggers target selection =====
 
     @Test

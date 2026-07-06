@@ -21,31 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HandOfThePraetorsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static boost for own infect creatures and spell cast trigger")
-    void hasCorrectEffects() {
-        HandOfThePraetors card = new HandOfThePraetors();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasKeywordPredicate.class);
-        PermanentHasKeywordPredicate filter = (PermanentHasKeywordPredicate) boost.filter();
-        assertThat(filter.keyword()).isEqualTo(Keyword.INFECT);
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(GiveTargetPlayerPoisonCountersEffect.class);
-        GiveTargetPlayerPoisonCountersEffect trigger = (GiveTargetPlayerPoisonCountersEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.amount()).isEqualTo(1);
-        assertThat(trigger.spellFilter()).isNotNull();
-    }
-
     // ===== Static boost: other creatures with infect get +1/+1 =====
 
     @Test

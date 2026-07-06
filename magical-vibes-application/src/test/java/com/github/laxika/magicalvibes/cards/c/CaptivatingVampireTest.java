@@ -221,20 +221,7 @@ class CaptivatingVampireTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
     }
 
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        CaptivatingVampire card = new CaptivatingVampire();
-
-        // Static boost effect
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        // Activated ability with gain control effect
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof GainControlOfTargetPermanentEffect);
-    }
+    
 
     // ===== Helpers =====
 

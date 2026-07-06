@@ -18,20 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PracticedOffenseTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has player and creature target effects with keyword choice")
-    void hasCorrectStructure() {
-        PracticedOffense card = new PracticedOffense();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(GrantChosenKeywordToSecondTargetEffect.class);
-        GrantChosenKeywordToSecondTargetEffect keywordEffect =
-                (GrantChosenKeywordToSecondTargetEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(keywordEffect.options()).containsExactly(Keyword.DOUBLE_STRIKE, Keyword.LIFELINK);
-    }
+    
 
     @Test
     @DisplayName("Puts +1/+1 on each creature target player controls and grants chosen keyword")

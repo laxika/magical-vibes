@@ -27,44 +27,11 @@ class ForebearsBladeTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Forebear's Blade has static +3/+0 boost effect for equipped creature")
-    void hasStaticBoostEffect() {
-        ForebearsBlade card = new ForebearsBlade();
+    
 
-        List<StaticBoostEffect> boosts = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .toList();
-        assertThat(boosts).hasSize(1);
-        assertThat(boosts.getFirst().powerBoost()).isEqualTo(3);
-        assertThat(boosts.getFirst().toughnessBoost()).isEqualTo(0);
-        assertThat(boosts.getFirst().scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
+    
 
-    @Test
-    @DisplayName("Forebear's Blade grants vigilance and trample to equipped creature")
-    void hasKeywordGrantEffects() {
-        ForebearsBlade card = new ForebearsBlade();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect gke && gke.scope() == GrantScope.EQUIPPED_CREATURE)
-                .map(e -> (GrantKeywordEffect) e)
-                .toList();
-        assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
-                .containsExactlyInAnyOrder(Keyword.VIGILANCE, Keyword.TRAMPLE);
-    }
-
-    @Test
-    @DisplayName("Forebear's Blade has equipped creature death trigger with attach effect")
-    void hasEquippedCreatureDeathTrigger() {
-        ForebearsBlade card = new ForebearsBlade();
-
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_EQUIPPED_CREATURE_DIES).getFirst())
-                .isInstanceOf(AttachSourceEquipmentToTargetCreatureEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Forebear's Blade has equip {3} ability")

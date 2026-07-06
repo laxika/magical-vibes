@@ -24,21 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BackToNatureTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Back to Nature has correct card properties")
-    void hasCorrectProperties() {
-        BackToNature card = new BackToNature();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-        DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsEnchantmentPredicate.class);
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

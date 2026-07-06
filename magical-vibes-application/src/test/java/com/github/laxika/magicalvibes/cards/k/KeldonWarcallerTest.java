@@ -21,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KeldonWarcallerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK effect: PutLoreCounterOnTargetPermanentEffect")
-    void hasOnAttackEffect() {
-        KeldonWarcaller card = new KeldonWarcaller();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK))
-                .hasSize(1)
-                .allSatisfy(e -> {
-                    assertThat(e).isInstanceOf(PutCounterOnTargetPermanentEffect.class);
-                    assertThat(((PutCounterOnTargetPermanentEffect) e).counterType()).isEqualTo(CounterType.LORE);
-                });
-    }
-
     // ===== Attack trigger: put lore counter on target Saga =====
 
     @Test

@@ -23,22 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlowstoneSlideTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Flowstone Slide has correct card properties")
-    void hasCorrectProperties() {
-        FlowstoneSlide card = new FlowstoneSlide();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(BoostAllCreaturesXEffect.class);
-        BoostAllCreaturesXEffect effect = (BoostAllCreaturesXEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerMultiplier()).isEqualTo(1);
-        assertThat(effect.toughnessMultiplier()).isEqualTo(-1);
-    }
-
     // ===== Casting =====
 
     @Test

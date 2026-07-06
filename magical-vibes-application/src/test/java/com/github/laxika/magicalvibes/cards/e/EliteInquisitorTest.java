@@ -52,21 +52,6 @@ class EliteInquisitorTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Elite Inquisitor has protection from Vampires, Werewolves, and Zombies")
-    void hasProtectionFromVampiresWerewolvesAndZombies() {
-        EliteInquisitor card = new EliteInquisitor();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromSubtypesEffect.class);
-
-        ProtectionFromSubtypesEffect protection = (ProtectionFromSubtypesEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(protection.subtypes()).containsExactlyInAnyOrder(
-                CardSubtype.VAMPIRE, CardSubtype.WEREWOLF, CardSubtype.ZOMBIE);
-    }
-
     // ===== Protection - blocking =====
 
     @Test

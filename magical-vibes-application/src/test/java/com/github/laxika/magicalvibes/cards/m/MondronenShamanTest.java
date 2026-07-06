@@ -41,39 +41,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MondronenShamanTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Front face has the no-spells upkeep transform trigger")
-    void frontFaceHasCorrectEffects() {
-        MondronenShaman card = new MondronenShaman();
+    
 
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(TovolarsMagehunter.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("TovolarsMagehunter");
-    }
-
-    @Test
-    @DisplayName("Back face damages opponents who cast spells and has the two-spells transform trigger")
-    void backFaceHasCorrectEffects() {
-        MondronenShaman card = new MondronenShaman();
-        TovolarsMagehunter backFace = (TovolarsMagehunter) card.getBackFaceCard();
-
-        assertThat(backFace.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        DealDamageToTargetPlayerEffect damage =
-                (DealDamageToTargetPlayerEffect) backFace.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst();
-        assertThat(damage.damage()).isEqualTo(new Fixed(2));
-
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Transforms to Tovolar's Magehunter when no spells were cast last turn")

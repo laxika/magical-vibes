@@ -34,41 +34,11 @@ class HuatliWarriorPoetTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has GainLifeEffect(GreatestPowerAmongControlled)")
-    void plusTwoAbilityHasCorrectEffect() {
-        HuatliWarriorPoet card = new HuatliWarriorPoet();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isEqualTo(new GainLifeEffect(new GreatestPowerAmongControlled()));
-    }
+    
 
-    @Test
-    @DisplayName("0 ability has CreateTokenEffect for 3/3 green Dinosaur with trample")
-    void zeroAbilityHasCorrectEffect() {
-        HuatliWarriorPoet card = new HuatliWarriorPoet();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(0);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-    }
-
-    @Test
-    @DisplayName("-X ability has DealXDamageDividedAmongTargetCreaturesCantBlockEffect and is variable loyalty cost")
-    void minusXAbilityHasCorrectEffect() {
-        HuatliWarriorPoet card = new HuatliWarriorPoet();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.isVariableLoyaltyCost()).isTrue();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealXDamageDividedAmongTargetCreaturesCantBlockEffect.class);
-    }
+    
 
     // ===== Casting =====
 

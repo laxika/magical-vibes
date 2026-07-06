@@ -23,16 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BorderlandRangerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Borderland Ranger has correct effects")
-    void hasCorrectEffects() {
-        BorderlandRanger card = new BorderlandRanger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Borderland Ranger creates may prompt")

@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FaerieConclaveTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Faerie Conclave has correct card properties")
-    void hasCorrectProperties() {
-        FaerieConclave card = new FaerieConclave();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{U}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AnimateLandEffect.class);
-    }
-
     // ===== Enters the battlefield tapped =====
 
     @Test

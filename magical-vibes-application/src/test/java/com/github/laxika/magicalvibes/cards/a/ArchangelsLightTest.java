@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArchangelsLightTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Archangel's Light does not target")
-    void doesNotTarget() {
-        ArchangelsLight card = new ArchangelsLight();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isEqualTo(new GainLifeEffect(new Scaled(new CardsInGraveyard(null, CountScope.CONTROLLER), 2)));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleGraveyardIntoLibraryEffect.class);
-    }
-
     // ===== Life gain =====
 
     @Test

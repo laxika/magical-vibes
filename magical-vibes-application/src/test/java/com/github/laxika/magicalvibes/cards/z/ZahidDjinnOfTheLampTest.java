@@ -20,16 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ZahidDjinnOfTheLampTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has alternate casting cost configured")
-    void hasAlternateCastingCost() {
-        ZahidDjinnOfTheLamp card = new ZahidDjinnOfTheLamp();
-
-        AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class).orElseThrow();
-        assertThat(altCast.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{3}{U}");
-        assertThat(altCast.getCost(TapUntappedPermanentsCost.class).orElseThrow().count()).isEqualTo(1);
-        assertThat(altCast.getCost(TapUntappedPermanentsCost.class).orElseThrow().filter()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Can be cast using alternate cost: pay {3}{U} and tap an untapped artifact")

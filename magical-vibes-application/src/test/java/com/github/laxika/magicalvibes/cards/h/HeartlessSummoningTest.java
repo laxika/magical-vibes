@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HeartlessSummoningTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Heartless Summoning has correct effects")
-    void hasCorrectEffects() {
-        HeartlessSummoning card = new HeartlessSummoning();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceOwnCastCostForCardTypeEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(StaticBoostEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

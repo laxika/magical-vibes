@@ -27,24 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TraitorousBloodTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Traitorous Blood has correct card properties")
-    void hasCorrectProperties() {
-        TraitorousBlood card = new TraitorousBlood();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(4);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect trampleEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(trampleEffect.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(trampleEffect.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(3)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect hasteEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(3);
-        assertThat(hasteEffect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(hasteEffect.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Resolving Traitorous Blood untaps target, gains control, and grants trample and haste")

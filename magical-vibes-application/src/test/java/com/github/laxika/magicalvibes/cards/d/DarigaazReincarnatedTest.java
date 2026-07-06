@@ -20,17 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DarigaazReincarnatedTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Darigaaz Reincarnated has exile-with-egg-counters replacement effect")
-    void hasExileWithEggCountersReplacementEffect() {
-        DarigaazReincarnated card = new DarigaazReincarnated();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof ExileWithEggCountersInsteadOfDyingEffect egg && egg.count() == 3);
-    }
-
     // ===== Casting =====
 
     @Test

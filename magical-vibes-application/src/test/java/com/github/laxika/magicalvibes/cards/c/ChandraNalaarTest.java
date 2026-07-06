@@ -34,43 +34,11 @@ class ChandraNalaarTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has DealDamageToAnyTargetEffect(1)")
-    void plusOneAbilityHasCorrectEffect() {
-        ChandraNalaar card = new ChandraNalaar();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) ability.getEffects().getFirst()).damage()).isEqualTo(new Fixed(1));
-    }
+    
 
-    @Test
-    @DisplayName("-X ability has DealXDamageToTargetCreatureEffect and is variable loyalty cost")
-    void minusXAbilityHasCorrectEffect() {
-        ChandraNalaar card = new ChandraNalaar();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.isVariableLoyaltyCost()).isTrue();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isEqualTo(new DealDamageToTargetCreatureEffect(new XValue()));
-    }
-
-    @Test
-    @DisplayName("-8 ability has DealDamageToTargetAndTheirCreaturesEffect(10)")
-    void minusEightAbilityHasCorrectEffect() {
-        ChandraNalaar card = new ChandraNalaar();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetAndTheirCreaturesEffect.class);
-        assertThat(((DealDamageToTargetAndTheirCreaturesEffect) ability.getEffects().getFirst()).damage()).isEqualTo(10);
-    }
+    
 
     // ===== Casting =====
 

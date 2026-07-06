@@ -20,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GrimCaptainsCallTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has spell effect that returns one of each subtype from graveyard to hand")
-    void hasCorrectEffect() {
-        GrimCaptainsCall card = new GrimCaptainsCall();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnOneOfEachSubtypeFromGraveyardToHandEffect.class);
-
-        ReturnOneOfEachSubtypeFromGraveyardToHandEffect effect =
-                (ReturnOneOfEachSubtypeFromGraveyardToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.subtypes()).containsExactly(
-                CardSubtype.PIRATE, CardSubtype.VAMPIRE, CardSubtype.DINOSAUR, CardSubtype.MERFOLK);
-    }
-
     // ===== Resolution: all four subtypes present with single matches =====
 
     @Test

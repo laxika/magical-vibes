@@ -22,26 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ElgaudInquisitorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_DEATH CreateTokenEffect creating a 1/1 white Spirit token with flying")
-    void hasCorrectEffects() {
-        ElgaudInquisitor card = new ElgaudInquisitor();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Spirit");
-        assertThat(effect.power()).isEqualTo(1);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(effect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
-
     // ===== Death trigger =====
 
     @Nested

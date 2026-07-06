@@ -35,23 +35,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class ViridianHarvestTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Viridian Harvest has enchanted permanent death trigger with GainLifeEffect(6)")
-    void hasEnchantedPermanentDeathTrigger() {
-        ViridianHarvest card = new ViridianHarvest();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect gainLife = (GainLifeEffect) card.getEffects(EffectSlot.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD).getFirst();
-        assertThat(gainLife.amount()).isEqualTo(new Fixed(6));
-    }
-
     // ===== Trigger fires when enchanted artifact is destroyed =====
 
     @Test

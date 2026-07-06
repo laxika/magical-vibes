@@ -26,22 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PostmortemLungeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Postmortem Lunge has correct effects")
-    void hasCorrectEffects() {
-        PostmortemLunge card = new PostmortemLunge();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.grantHaste()).isTrue();
-        assertThat(effect.exileAtEndStep()).isTrue();
-        assertThat(effect.requiresManaValueEqualsX()).isTrue();
-        assertThat(effect.targetGraveyard()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Postmortem Lunge puts it on the stack with graveyard target")

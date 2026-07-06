@@ -19,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LureTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Lure has correct card properties")
-    void hasCorrectProperties() {
-        Lure card = new Lure();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustBeBlockedByAllCreaturesEffect.class);
-    }
+    
 
     @Test
     @DisplayName("All able creatures must block enchanted attacker")

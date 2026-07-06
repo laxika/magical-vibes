@@ -19,19 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EngulfingSlagwurmTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has destroy-and-gain-life effect on both ON_BLOCK and ON_BECOMES_BLOCKED")
-    void hasCorrectEffects() {
-        EngulfingSlagwurm card = new EngulfingSlagwurm();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).singleElement()
-                .isInstanceOf(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).singleElement()
-                .isInstanceOf(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class);
-    }
-
     // ===== When Slagwurm blocks =====
 
     @Test

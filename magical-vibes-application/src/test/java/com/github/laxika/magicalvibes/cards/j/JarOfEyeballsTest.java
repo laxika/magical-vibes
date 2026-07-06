@@ -25,34 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class JarOfEyeballsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has death trigger that puts two eyeball counters and a tap+remove activated ability")
-    void hasCorrectStructure() {
-        JarOfEyeballs card = new JarOfEyeballs();
-
-        // Death trigger: put two eyeball counters
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        var deathEffect = card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        assertThat(deathEffect).isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect counters = (PutCountersOnSelfEffect) deathEffect;
-        assertThat(counters.counterType()).isEqualTo(CounterType.EYEBALL);
-        assertThat(counters.count()).isEqualTo(2);
-
-        // Activated ability: {3}, {T}, Remove all eyeball counters: look at top X
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{3}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(RemoveAllCountersAsCostEffect.class);
-        assertThat(((RemoveAllCountersAsCostEffect) ability.getEffects().get(0)).counterType())
-                .isEqualTo(CounterType.EYEBALL);
-        assertThat(ability.getEffects().get(1))
-                .isInstanceOf(LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect.class);
-    }
-
     // ===== Death trigger =====
 
     @Test

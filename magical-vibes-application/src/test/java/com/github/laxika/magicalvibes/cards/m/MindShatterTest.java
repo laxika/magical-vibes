@@ -22,21 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MindShatterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mind Shatter has correct card properties")
-    void hasCorrectProperties() {
-        MindShatter card = new MindShatter();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(TargetPlayerRandomDiscardEffect.class);
-        TargetPlayerRandomDiscardEffect discard = (TargetPlayerRandomDiscardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(discard.amount()).isEqualTo(new XValue());
-        assertThat(discard.causedByOpponent()).isTrue();
-    }
-
     // ===== Casting =====
 
     @Test

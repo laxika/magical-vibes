@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HurkylsRecallTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Hurkyl's Recall has correct card properties")
-    void hasCorrectProperties() {
-        HurkylsRecall card = new HurkylsRecall();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnArtifactsTargetPlayerOwnsToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

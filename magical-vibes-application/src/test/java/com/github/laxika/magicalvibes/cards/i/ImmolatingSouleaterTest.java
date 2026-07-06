@@ -16,21 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ImmolatingSouleaterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Immolating Souleater has correct activated ability")
-    void hasCorrectActivatedAbility() {
-        ImmolatingSouleater card = new ImmolatingSouleater();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{R/P}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Activating ability puts it on the stack")

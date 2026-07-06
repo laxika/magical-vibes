@@ -19,36 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DauntlessBodyguardTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ChooseAnotherCreatureOnEnterEffect in ETB slot")
-    void hasChooseCreatureOnEnterEffect() {
-        DauntlessBodyguard card = new DauntlessBodyguard();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseAnotherCreatureOnEnterEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has sacrifice ability with GrantKeywordToChosenCreatureUntilEndOfTurnEffect")
-    void hasSacrificeAbility() {
-        DauntlessBodyguard card = new DauntlessBodyguard();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordToChosenCreatureUntilEndOfTurnEffect.class);
-        GrantKeywordToChosenCreatureUntilEndOfTurnEffect grant =
-                (GrantKeywordToChosenCreatureUntilEndOfTurnEffect) ability.getEffects().get(1);
-        assertThat(grant.keyword()).isEqualTo(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.chosenCreatureId()).isNull();
-    }
-
     // ===== ETB: choose another creature =====
 
     @Test

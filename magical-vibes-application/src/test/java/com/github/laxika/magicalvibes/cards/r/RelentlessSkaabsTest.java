@@ -28,20 +28,6 @@ class RelentlessSkaabsTest extends BaseCardTest {
         }
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has exile creature from graveyard additional cost")
-    void hasExileCreatureCost() {
-        RelentlessSkaabs card = new RelentlessSkaabs();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(exileCost.trackExiledPower()).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EchoCircletTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Echo Circlet has GrantAdditionalBlockEffect and equip ability")
-    void hasCorrectProperties() {
-        EchoCirclet card = new EchoCirclet();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantAdditionalBlockEffect.class);
-        GrantAdditionalBlockEffect effect = (GrantAdditionalBlockEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.additionalBlocks()).isEqualTo(1);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(EquipEffect.class::isInstance);
-    }
-
     // ===== Equipped creature can block two attackers =====
 
     @Test

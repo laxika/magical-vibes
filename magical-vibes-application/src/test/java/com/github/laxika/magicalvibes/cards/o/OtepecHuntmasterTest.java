@@ -34,44 +34,6 @@ class OtepecHuntmasterTest extends BaseCardTest {
         huntmaster.setSummoningSick(false);
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has cost reduction static effect for Dinosaurs")
-    void hasCorrectStaticEffect() {
-        OtepecHuntmaster card = new OtepecHuntmaster();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.predicate()).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) effect.predicate()).subtype()).isEqualTo(CardSubtype.DINOSAUR);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
-    }
-
-    @Test
-    @DisplayName("Has tap activated ability that grants haste to target Dinosaur")
-    void hasCorrectActivatedAbility() {
-        OtepecHuntmaster card = new OtepecHuntmaster();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        ActivatedAbility ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-    }
-
     // ===== Cost reduction =====
 
     @Test

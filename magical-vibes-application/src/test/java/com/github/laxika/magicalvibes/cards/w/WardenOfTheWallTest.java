@@ -21,34 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WardenOfTheWallTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has EntersTappedEffect, mana ability, and opponent-turn animate effect")
-    void hasCorrectEffects() {
-        WardenOfTheWall card = new WardenOfTheWall();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .hasSize(2)
-                .anySatisfy(e -> assertThat(e).isInstanceOf(EntersTappedEffect.class))
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(ConditionalEffect.class);
-                    ConditionalEffect conditional = (ConditionalEffect) e;
-                    assertThat(conditional.wrapped()).isInstanceOf(AnimateSelfWithStatsEffect.class);
-
-                    AnimateSelfWithStatsEffect animate = (AnimateSelfWithStatsEffect) conditional.wrapped();
-                    assertThat(animate.power()).isEqualTo(2);
-                    assertThat(animate.toughness()).isEqualTo(3);
-                    assertThat(animate.grantedSubtypes()).containsExactly(CardSubtype.GARGOYLE);
-                    assertThat(animate.grantedKeywords()).containsExactly(Keyword.FLYING);
-                });
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(AwardManaEffect.class);
-    }
-
     // ===== Enters tapped =====
 
     @Test

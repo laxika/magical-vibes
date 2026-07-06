@@ -29,47 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FellFlagshipTest extends BaseCardTest {
 
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has static +1/+0 boost for Pirates")
-    void hasStaticPirateBoost() {
-        FellFlagship card = new FellFlagship();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.ALL_OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER discard effect")
-    void hasCombatDamageDiscardTrigger() {
-        FellFlagship card = new FellFlagship();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        TargetPlayerDiscardsEffect effect =
-                (TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has Crew 3 activated ability with CrewCost and AnimateSelfAsCreatureEffect")
-    void hasCrewAbility() {
-        FellFlagship card = new FellFlagship();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CrewCost.class);
-        assertThat(((CrewCost) ability.getEffects().get(0)).requiredPower()).isEqualTo(3);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AnimateSelfAsCreatureEffect.class);
-    }
-
     // ===== Lord effect — Pirates you control get +1/+0 =====
 
     @Test
@@ -243,7 +202,6 @@ class FellFlagshipTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void resolveCombat() {
         harness.forceActivePlayer(player1);

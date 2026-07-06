@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DireFleetHoarderTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one ON_DEATH effect that creates a Treasure token")
-    void hasCorrectEffect() {
-        DireFleetHoarder card = new DireFleetHoarder();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.TREASURE);
-    }
-
     // ===== Casting =====
 
     @Test

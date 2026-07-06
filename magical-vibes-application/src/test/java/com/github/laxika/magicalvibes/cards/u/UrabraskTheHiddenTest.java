@@ -20,25 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UrabraskTheHiddenTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Urabrask has correct static effects")
-    void hasCorrectEffects() {
-        UrabraskTheHidden card = new UrabraskTheHidden();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        GrantKeywordEffect hasteEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .findFirst().orElseThrow();
-        assertThat(hasteEffect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(hasteEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-
-        EnterPermanentsOfTypesTappedEffect enterTapped = (EnterPermanentsOfTypesTappedEffect) card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EnterPermanentsOfTypesTappedEffect)
-                .findFirst().orElseThrow();
-        assertThat(enterTapped.cardTypes()).containsExactly(CardType.CREATURE);
-        assertThat(enterTapped.opponentsOnly()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Controller's creatures have haste")

@@ -43,32 +43,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class SanctumSeekerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has Vampire-conditional EachOpponentLosesLifeEffect and GainLifeEffect on ON_ALLY_CREATURE_ATTACKS")
-    void hasCorrectEffects() {
-        SanctumSeeker card = new SanctumSeeker();
-
-        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects =
-                card.getEffects(EffectSlot.ON_ALLY_CREATURE_ATTACKS);
-        assertThat(effects).hasSize(2);
-
-        // First effect: opponent life loss
-        assertThat(effects.get(0)).isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect lossConditional = (TriggeringCardConditionalEffect) effects.get(0);
-        assertThat(lossConditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.VAMPIRE));
-        assertThat(lossConditional.wrapped()).isInstanceOf(EachOpponentLosesLifeEffect.class);
-        assertThat(((EachOpponentLosesLifeEffect) lossConditional.wrapped()).amount()).isEqualTo(1);
-
-        // Second effect: controller life gain
-        assertThat(effects.get(1)).isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect gainConditional = (TriggeringCardConditionalEffect) effects.get(1);
-        assertThat(gainConditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.VAMPIRE));
-        assertThat(gainConditional.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) gainConditional.wrapped()).amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Trigger: Vampire attacks =====
 
     @Test

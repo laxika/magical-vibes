@@ -19,15 +19,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class RiverHeraldsBoonTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has two PutPlusOnePlusOneCounterOnTargetCreatureEffect effects")
-    void cardHasCorrectEffects() {
-        RiverHeraldsBoon card = new RiverHeraldsBoon();
-        long counterEffects = card.getEffects(EffectSlot.SPELL).stream()
-                .filter(e -> e instanceof PutPlusOnePlusOneCounterOnTargetCreatureEffect)
-                .count();
-        assertThat(counterEffects).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Puts +1/+1 counter on target creature and target Merfolk")

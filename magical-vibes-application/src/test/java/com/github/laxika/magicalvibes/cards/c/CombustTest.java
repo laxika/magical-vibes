@@ -68,18 +68,7 @@ class CombustTest extends BaseCardTest {
         return card;
     }
 
-    @Test
-    @DisplayName("Has correct effects — unpreventable DealDamageToTargetCreatureEffect and cant be countered")
-    void hasCorrectEffects() {
-        Combust card = new Combust();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeCounteredEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect effect = (DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(5));
-        assertThat(effect.unpreventable()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Deals 5 damage to target white creature and kills it")

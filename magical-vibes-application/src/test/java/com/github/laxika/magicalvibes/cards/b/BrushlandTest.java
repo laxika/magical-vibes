@@ -14,32 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BrushlandTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Brushland has correct card properties")
-    void hasCorrectProperties() {
-        Brushland card = new Brushland();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var colorless = card.getActivatedAbilities().get(0);
-        assertThat(colorless.isRequiresTap()).isTrue();
-        assertThat(colorless.getManaCost()).isNull();
-        assertThat(colorless.getEffects()).hasSize(1);
-        assertThat(colorless.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        var green = card.getActivatedAbilities().get(1);
-        assertThat(green.isRequiresTap()).isTrue();
-        assertThat(green.getEffects()).hasSize(2);
-        assertThat(green.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(green.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-
-        var white = card.getActivatedAbilities().get(2);
-        assertThat(white.isRequiresTap()).isTrue();
-        assertThat(white.getEffects()).hasSize(2);
-        assertThat(white.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(white.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Tapping for colorless mana adds {C} and deals no damage")

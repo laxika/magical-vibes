@@ -23,17 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SilenceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Silence has correct effect")
-    void hasCorrectEffect() {
-        Silence card = new Silence();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(OpponentsCantCastSpellsThisTurnEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

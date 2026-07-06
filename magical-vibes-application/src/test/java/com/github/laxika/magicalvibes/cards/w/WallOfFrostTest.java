@@ -18,18 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WallOfFrostTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Wall of Frost has SkipNextUntapOnTargetEffect in ON_BLOCK slot")
-    void hasCorrectProperties() {
-        WallOfFrost card = new WallOfFrost();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst())
-                .isInstanceOf(SkipNextUntapOnTargetEffect.class);
-    }
-
     // ===== Block trigger pushes onto stack =====
 
     @Test

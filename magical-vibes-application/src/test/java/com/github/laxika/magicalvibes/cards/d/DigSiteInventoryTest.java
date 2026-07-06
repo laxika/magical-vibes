@@ -18,18 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DigSiteInventoryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has counter and vigilance effects with flashback")
-    void hasCorrectStructure() {
-        DigSiteInventory card = new DigSiteInventory();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getCastingOption(com.github.laxika.magicalvibes.model.FlashbackCast.class)).isPresent();
-    }
+    
 
     @Test
     @DisplayName("Puts a +1/+1 counter and grants vigilance to target creature you control")

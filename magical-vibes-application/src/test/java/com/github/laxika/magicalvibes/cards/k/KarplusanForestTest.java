@@ -14,32 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KarplusanForestTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Karplusan Forest has correct card properties")
-    void hasCorrectProperties() {
-        KarplusanForest card = new KarplusanForest();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var colorless = card.getActivatedAbilities().get(0);
-        assertThat(colorless.isRequiresTap()).isTrue();
-        assertThat(colorless.getManaCost()).isNull();
-        assertThat(colorless.getEffects()).hasSize(1);
-        assertThat(colorless.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        var red = card.getActivatedAbilities().get(1);
-        assertThat(red.isRequiresTap()).isTrue();
-        assertThat(red.getEffects()).hasSize(2);
-        assertThat(red.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(red.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-
-        var green = card.getActivatedAbilities().get(2);
-        assertThat(green.isRequiresTap()).isTrue();
-        assertThat(green.getEffects()).hasSize(2);
-        assertThat(green.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(green.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Tapping for colorless mana adds {C} and deals no damage")

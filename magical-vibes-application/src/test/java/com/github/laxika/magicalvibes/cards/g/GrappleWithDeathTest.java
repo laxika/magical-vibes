@@ -35,18 +35,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class GrappleWithDeathTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has a destroy effect and a gain 1 life effect")
-    void hasCorrectEffects() {
-        GrappleWithDeath card = new GrappleWithDeath();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect lifeEffect = (GainLifeEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(lifeEffect.amount()).isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Destroys target creature and controller gains 1 life")

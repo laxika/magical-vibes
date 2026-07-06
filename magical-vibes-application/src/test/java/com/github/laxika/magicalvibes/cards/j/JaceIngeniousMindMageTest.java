@@ -34,45 +34,11 @@ class JaceIngeniousMindMageTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 draw ability has DrawCardEffect(1)")
-    void plusOneDrawAbilityHasCorrectEffect() {
-        JaceIngeniousMindMage card = new JaceIngeniousMindMage();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().getFirst()).amount()).isEqualTo(new Fixed(1));
-    }
+    
 
-    @Test
-    @DisplayName("+1 untap ability has UntapAllControlledPermanentsEffect with creature filter")
-    void plusOneUntapAbilityHasCorrectEffect() {
-        JaceIngeniousMindMage card = new JaceIngeniousMindMage();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(UntapAllControlledPermanentsEffect.class);
-        UntapAllControlledPermanentsEffect effect = (UntapAllControlledPermanentsEffect) ability.getEffects().getFirst();
-        assertThat(effect.filter()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("-9 ability has GainControlOfTargetPermanentEffect with up-to-three targeting")
-    void minusNineAbilityHasCorrectEffect() {
-        JaceIngeniousMindMage card = new JaceIngeniousMindMage();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-9);
-        assertThat(ability.getMinTargets()).isZero();
-        assertThat(ability.getMaxTargets()).isEqualTo(3);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GainControlOfTargetPermanentEffect.class);
-    }
+    
 
     // ===== Casting =====
 

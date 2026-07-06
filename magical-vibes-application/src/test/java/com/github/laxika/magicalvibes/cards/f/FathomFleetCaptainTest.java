@@ -29,44 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FathomFleetCaptainTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ConditionalEffect(PIRATE and nontoken) wrapping MayPayManaEffect")
-    void hasCorrectStructure() {
-        FathomFleetCaptain card = new FathomFleetCaptain();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(((ControlsAnotherPermanent) conditional.condition()).filter()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate filter = (PermanentAllOfPredicate) ((ControlsAnotherPermanent) conditional.condition()).filter();
-        assertThat(filter.predicates()).anySatisfy(predicate -> {
-            assertThat(predicate).isInstanceOf(PermanentHasSubtypePredicate.class);
-            assertThat(((PermanentHasSubtypePredicate) predicate).subtype()).isEqualTo(CardSubtype.PIRATE);
-        });
-        assertThat(filter.predicates()).anySatisfy(predicate -> {
-            assertThat(predicate).isInstanceOf(PermanentNotPredicate.class);
-            assertThat(((PermanentNotPredicate) predicate).predicate()).isInstanceOf(PermanentIsTokenPredicate.class);
-        });
-        assertThat(conditional.wrapped()).isInstanceOf(MayPayManaEffect.class);
-
-        MayPayManaEffect mayPay = (MayPayManaEffect) conditional.wrapped();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}");
-        assertThat(mayPay.wrapped()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) mayPay.wrapped();
-        assertThat(token.tokenName()).isEqualTo("Pirate");
-        assertThat(token.power()).isEqualTo(2);
-        assertThat(token.toughness()).isEqualTo(2);
-        assertThat(token.color()).isEqualTo(CardColor.BLACK);
-        assertThat(token.subtypes()).contains(CardSubtype.PIRATE);
-        assertThat(token.keywords()).contains(Keyword.MENACE);
-    }
-
     // ===== Trigger fires and creates token when condition met =====
 
     @Test
@@ -196,7 +158,6 @@ class FathomFleetCaptainTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void addPirateCreature(Player player) {
         Card pirate = new Card();

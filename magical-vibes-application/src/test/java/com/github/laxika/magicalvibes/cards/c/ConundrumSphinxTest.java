@@ -22,18 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ConundrumSphinxTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with EachPlayerNameCardRevealTopEffect")
-    void hasCorrectStructure() {
-        ConundrumSphinx card = new ConundrumSphinx();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(EachPlayerNameCardRevealTopEffect.class);
-    }
-
     // ===== Attack trigger =====
 
     @Test
@@ -249,7 +237,6 @@ class ConundrumSphinxTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

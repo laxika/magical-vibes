@@ -38,42 +38,11 @@ class LilianaVessTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has TargetPlayerDiscardsEffect(1)")
-    void plusOneAbilityHasCorrectEffect() {
-        LilianaVess card = new LilianaVess();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) ability.getEffects().getFirst()).amount()).isEqualTo(new Fixed(1));
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability has SearchLibraryForCardToTopOfLibraryEffect")
-    void minusTwoAbilityHasCorrectEffect() {
-        LilianaVess card = new LilianaVess();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SearchLibraryForCardToTopOfLibraryEffect.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability has ReturnCardFromGraveyardEffect for all creatures from all graveyards")
-    void minusEightAbilityHasCorrectEffect() {
-        LilianaVess card = new LilianaVess();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     // ===== Casting =====
 

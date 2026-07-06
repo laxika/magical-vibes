@@ -18,19 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BalefireDragonTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER effect")
-    void hasCombatDamageToPlayerEffect() {
-        BalefireDragon card = new BalefireDragon();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
-                .hasSize(1)
-                .first()
-                .isInstanceOf(DealDamageToEachCreatureDamagedPlayerControlsEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test
@@ -164,7 +151,6 @@ class BalefireDragonTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void resolveCombat() {
         harness.forceActivePlayer(player1);

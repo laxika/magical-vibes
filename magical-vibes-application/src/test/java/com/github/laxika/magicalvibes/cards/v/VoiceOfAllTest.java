@@ -31,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VoiceOfAllTest extends BaseCardTest {
 
-
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
         Card card = new Card();
         card.setName(name);
@@ -57,18 +56,6 @@ class VoiceOfAllTest extends BaseCardTest {
         card.setColor(color);
         card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
         return card;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Voice of All has correct card properties")
-    void hasCorrectProperties() {
-        VoiceOfAll card = new VoiceOfAll();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ProtectionFromChosenColorEffect.class);
     }
 
     // ===== Casting =====
@@ -466,5 +453,4 @@ class VoiceOfAllTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Voice of All"));
     }
 }
-
 

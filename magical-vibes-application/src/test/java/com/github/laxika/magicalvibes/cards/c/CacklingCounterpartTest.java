@@ -30,17 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CacklingCounterpartTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Cackling Counterpart has correct effect structure")
-    void hasCorrectEffectStructure() {
-        CacklingCounterpart card = new CacklingCounterpart();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenCopyOfTargetPermanentEffect.class);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{5}{U}{U}");
-    }
+    
 
     @Test
     @DisplayName("Creates a token copy of target creature you control")

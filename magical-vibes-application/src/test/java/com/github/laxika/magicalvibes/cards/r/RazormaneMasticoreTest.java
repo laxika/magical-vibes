@@ -35,7 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RazormaneMasticoreTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
@@ -49,35 +48,6 @@ class RazormaneMasticoreTest extends BaseCardTest {
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
-    }
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Has upkeep sacrifice-unless-discard effect")
-    void hasUpkeepEffect() {
-        RazormaneMasticore card = new RazormaneMasticore();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeUnlessDiscardCardTypeEffect.class);
-        SacrificeUnlessDiscardCardTypeEffect effect =
-                (SacrificeUnlessDiscardCardTypeEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.requiredType()).isNull(); // any card type
-    }
-
-    @Test
-    @DisplayName("Has draw step may-deal-damage effect")
-    void hasDrawStepEffect() {
-        RazormaneMasticore card = new RazormaneMasticore();
-
-        assertThat(card.getEffects(EffectSlot.DRAW_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.DRAW_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.DRAW_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) may.wrapped()).damage()).isEqualTo(new Fixed(3));
     }
 
     // ===== Upkeep — sacrifice unless discard any card =====

@@ -23,26 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ImperialAerosaurTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Imperial Aerosaur has correct ETB effects")
-    void hasCorrectProperties() {
-        ImperialAerosaur card = new ImperialAerosaur();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0))
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.FLYING);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

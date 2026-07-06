@@ -17,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StalkingTigerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Stalking Tiger has correct card properties")
-    void hasCorrectProperties() {
-        StalkingTiger card = new StalkingTiger();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .singleElement()
-                .isInstanceOfSatisfying(CanBeBlockedByAtMostNCreaturesEffect.class,
-                        e -> assertThat(e.maxBlockers()).isEqualTo(1));
-    }
+    
 
     @Test
     @DisplayName("Stalking Tiger can be blocked by one creature")

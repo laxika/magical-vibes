@@ -20,14 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VampireInterloperTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Vampire Interloper has the static can't block effect")
-    void hasCorrectProperties() {
-        VampireInterloper card = new VampireInterloper();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBlockEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Vampire Interloper puts it on the stack as a creature spell")

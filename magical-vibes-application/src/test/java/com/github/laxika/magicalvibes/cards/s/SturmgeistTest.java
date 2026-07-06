@@ -15,19 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SturmgeistTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Sturmgeist has correct effects registered")
-    void hasCorrectEffects() {
-        Sturmgeist card = new Sturmgeist();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToCardsInHandEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("P/T equals number of cards in controller's hand")

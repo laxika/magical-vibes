@@ -16,23 +16,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DreambornMuseTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dreamborn Muse has correct card properties")
-    void hasCorrectProperties() {
-        DreambornMuse card = new DreambornMuse();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MillByHandSizeEffect.class);
     }
 
     // ===== Triggering =====

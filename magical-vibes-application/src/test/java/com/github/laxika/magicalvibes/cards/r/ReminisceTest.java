@@ -22,19 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReminisceTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Reminisce has correct card properties")
-    void hasCorrectProperties() {
-        Reminisce card = new Reminisce();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ShuffleGraveyardIntoLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

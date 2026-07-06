@@ -22,20 +22,6 @@ class BloodgiftDemonTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bloodgift Demon has correct upkeep trigger effects")
-    void hasCorrectEffects() {
-        BloodgiftDemon card = new BloodgiftDemon();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(0))
-                .isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(1))
-                .isInstanceOf(TargetPlayerLosesLifeEffect.class);
-    }
-
     // ===== Targeting self =====
 
     @Test

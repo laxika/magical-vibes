@@ -17,23 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BelligerentBrontodonTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has AssignCombatDamageWithToughnessEffect with ALL_OWN_CREATURES scope")
-    void hasCorrectStaticEffect() {
-        BelligerentBrontodon card = new BelligerentBrontodon();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof AssignCombatDamageWithToughnessEffect)
-                .hasSize(1);
-        AssignCombatDamageWithToughnessEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof AssignCombatDamageWithToughnessEffect)
-                .map(e -> (AssignCombatDamageWithToughnessEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.scope()).isEqualTo(GrantScope.ALL_OWN_CREATURES);
-    }
-
     // ===== Brontodon itself uses toughness =====
 
     @Test

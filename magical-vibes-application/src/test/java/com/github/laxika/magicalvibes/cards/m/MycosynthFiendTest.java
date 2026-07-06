@@ -12,23 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MycosynthFiendTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC BoostSelfEffect scaling with opponent poison counters")
-    void hasCorrectEffect() {
-        MycosynthFiend card = new MycosynthFiend();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-
-        BoostSelfEffect boost =
-                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(new OpponentPoisonCounters());
-        assertThat(boost.toughnessBoost()).isEqualTo(new OpponentPoisonCounters());
-    }
-
     // ===== No poison counters =====
 
     @Test

@@ -29,23 +29,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class BogwaterLumaretTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has GainLifeEffect(1) on both ETB slots")
-    void hasCorrectEffectStructure() {
-        BogwaterLumaret card = new BogwaterLumaret();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).amount())
-                .isEqualTo(new Fixed(1));
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst()).amount())
-                .isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Entering the battlefield triggers self life gain")

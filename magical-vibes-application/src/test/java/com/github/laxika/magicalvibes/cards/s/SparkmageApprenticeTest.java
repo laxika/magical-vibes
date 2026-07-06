@@ -35,21 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SparkmageApprenticeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sparkmage Apprentice has correct card properties")
-    void hasCorrectProperties() {
-        SparkmageApprentice card = new SparkmageApprentice();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

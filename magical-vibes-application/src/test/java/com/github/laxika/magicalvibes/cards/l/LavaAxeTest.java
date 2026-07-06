@@ -33,21 +33,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LavaAxeTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lava Axe has correct card properties")
-    void hasCorrectProperties() {
-        LavaAxe card = new LavaAxe();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        DealDamageToTargetPlayerEffect effect = (DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(5));
-    }
-
     // ===== Casting =====
 
     @Test

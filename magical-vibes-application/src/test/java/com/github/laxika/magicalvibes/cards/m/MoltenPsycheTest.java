@@ -21,25 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MoltenPsycheTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ShuffleHandIntoLibraryAndDrawEffect and MetalcraftConditional damage effect")
-    void hasCorrectStructure() {
-        MoltenPsyche card = new MoltenPsyche();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ShuffleHandIntoLibraryAndDrawEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft =
-                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(metalcraft.wrapped())
-                .isInstanceOf(DealDamageToEachOpponentEqualToCardsDrawnThisTurnEffect.class);
-    }
-
     // ===== Wheel effect =====
 
     @Test

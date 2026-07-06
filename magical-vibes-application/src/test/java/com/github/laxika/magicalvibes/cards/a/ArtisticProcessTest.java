@@ -26,24 +26,7 @@ class ArtisticProcessTest extends BaseCardTest {
 
     private static final int MANA_NEEDED = 5;
 
-    @Test
-    @DisplayName("Has a ChooseOneEffect with three options")
-    void hasCorrectEffects() {
-        ArtisticProcess card = new ArtisticProcess();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseOneEffect.class);
-
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(3);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(MassDamageEffect.class);
-        assertThat(effect.options().get(2).effect()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) effect.options().get(2).effect();
-        assertThat(tokenEffect.keywords()).contains(Keyword.FLYING);
-        assertThat(tokenEffect.grantedKeywordsUntilEndOfTurn()).containsExactly(Keyword.HASTE);
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: 6 damage to target creature")

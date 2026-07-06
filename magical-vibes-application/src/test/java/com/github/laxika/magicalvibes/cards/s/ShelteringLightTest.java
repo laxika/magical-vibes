@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ShelteringLightTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has GrantKeywordEffect(INDESTRUCTIBLE, TARGET) and ScryEffect(1) on SPELL slot")
-    void hasCorrectProperties() {
-        ShelteringLight card = new ShelteringLight();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-
-        ScryEffect scry = (ScryEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(scry.count()).isEqualTo(1);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

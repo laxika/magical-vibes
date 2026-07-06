@@ -24,32 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RiverSneakTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has CantBeBlockedEffect as static effect and Merfolk-conditional boost trigger")
-    void hasCorrectEffects() {
-        RiverSneak card = new RiverSneak();
-
-        // Static: can't be blocked
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBeBlockedEffect.class);
-
-        // Trigger: Merfolk ETB gives +1/+1 until end of turn
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-
-        TriggeringCardConditionalEffect conditional =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.MERFOLK));
-        assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
-
-        BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Can't be blocked =====
 
     @Test

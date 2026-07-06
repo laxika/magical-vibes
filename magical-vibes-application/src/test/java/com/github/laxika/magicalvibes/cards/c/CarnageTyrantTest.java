@@ -24,16 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CarnageTyrantTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Carnage Tyrant has cant-be-countered static effect")
-    void hasCantBeCounteredEffect() {
-        CarnageTyrant card = new CarnageTyrant();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeCounteredEffect.class);
-    }
-
     // ===== Can't be countered =====
 
     @Test

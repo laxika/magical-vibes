@@ -25,21 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EvilPresenceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Evil Presence has correct card properties")
-    void hasCorrectProperties() {
-        EvilPresence card = new EvilPresence();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(EnchantedPermanentBecomesTypeEffect.class);
-        EnchantedPermanentBecomesTypeEffect effect =
-                (EnchantedPermanentBecomesTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.SWAMP);
-    }
+    
 
     @Test
     @DisplayName("Casting Evil Presence puts it on the stack")

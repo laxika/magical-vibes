@@ -20,19 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AngelicArbiterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Angelic Arbiter has correct static effects")
-    void hasCorrectEffects() {
-        AngelicArbiter card = new AngelicArbiter();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .hasSize(2)
-                .anySatisfy(e -> assertThat(e).isInstanceOf(OpponentsCantAttackIfCastSpellThisTurnEffect.class))
-                .anySatisfy(e -> assertThat(e).isInstanceOf(OpponentsCantCastSpellsIfAttackedThisTurnEffect.class));
-    }
-
     // ===== Can't attack if cast a spell =====
 
     @Test

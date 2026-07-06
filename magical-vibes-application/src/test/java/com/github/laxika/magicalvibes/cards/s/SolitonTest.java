@@ -18,21 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SolitonTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Soliton has correct activated ability")
-    void hasCorrectProperties() {
-        Soliton card = new Soliton();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(UntapSelfEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{U}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

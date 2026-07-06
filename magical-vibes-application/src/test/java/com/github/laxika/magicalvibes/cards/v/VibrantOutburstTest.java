@@ -35,20 +35,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VibrantOutburstTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has 3-damage any-target effect and a tap effect")
-    void cardStructure() {
-        VibrantOutburst card = new VibrantOutburst();
-        var effects = card.getEffects(EffectSlot.SPELL);
-
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) effects.get(0)).damage()).isEqualTo(new Fixed(3));
-        assertThat(effects.get(1)).isInstanceOf(TapTargetPermanentEffect.class);
-    }
-
     // ===== Damage a creature + tap another creature =====
 
     @Test

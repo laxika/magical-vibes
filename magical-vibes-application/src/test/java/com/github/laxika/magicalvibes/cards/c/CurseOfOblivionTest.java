@@ -19,18 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CurseOfOblivionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Oblivion has correct effects")
-    void hasCorrectEffects() {
-        CurseOfOblivion card = new CurseOfOblivion();
-
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ExileCardsFromOwnGraveyardEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

@@ -23,21 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MindRotTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mind Rot has correct card properties")
-    void hasCorrectProperties() {
-        MindRot card = new MindRot();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        TargetPlayerDiscardsEffect effect = (TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -251,5 +236,4 @@ class MindRotTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("discards") && log.contains("Peek"));
     }
 }
-
 

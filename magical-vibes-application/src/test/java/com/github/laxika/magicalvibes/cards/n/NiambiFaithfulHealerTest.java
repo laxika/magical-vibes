@@ -17,25 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NiambiFaithfulHealerTest extends BaseCardTest {
 
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Has MayEffect wrapping SearchLibraryAndOrGraveyardForNamedCardToHandEffect on ETB")
-    void hasCorrectEffects() {
-        NiambiFaithfulHealer card = new NiambiFaithfulHealer();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryAndOrGraveyardForNamedCardToHandEffect.class);
-
-        SearchLibraryAndOrGraveyardForNamedCardToHandEffect searchEffect =
-                (SearchLibraryAndOrGraveyardForNamedCardToHandEffect) mayEffect.wrapped();
-        assertThat(searchEffect.cardName()).isEqualTo("Teferi, Timebender");
-    }
-
     // ===== ETB triggers may prompt =====
 
     @Test

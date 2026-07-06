@@ -18,22 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BurningInquiryTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Burning Inquiry has correct effects")
-    void hasCorrectEffects() {
-        BurningInquiry card = new BurningInquiry();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(EachPlayerDrawsCardEffect.class);
-        EachPlayerDrawsCardEffect drawEffect = (EachPlayerDrawsCardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(drawEffect.amount()).isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(EachPlayerRandomDiscardEffect.class);
-        EachPlayerRandomDiscardEffect discardEffect = (EachPlayerRandomDiscardEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(discardEffect.amount()).isEqualTo(3);
-    }
-
     // ===== Casting =====
 
     @Test

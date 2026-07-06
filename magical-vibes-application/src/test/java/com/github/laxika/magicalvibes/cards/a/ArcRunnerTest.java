@@ -17,15 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArcRunnerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Arc Runner has end-step sacrifice trigger")
-    void hasEndStepSacrificeTrigger() {
-        ArcRunner card = new ArcRunner();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Can attack immediately due to haste")

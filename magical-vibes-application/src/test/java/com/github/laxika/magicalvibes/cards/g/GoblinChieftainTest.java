@@ -18,24 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GoblinChieftainTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Goblin Chieftain has static boost effect for own Goblins")
-    void hasCorrectProperties() {
-        GoblinChieftain card = new GoblinChieftain();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).containsExactly(Keyword.HASTE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(effect.filter()).isNotNull();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

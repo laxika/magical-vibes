@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ConsumeSpiritTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Consume Spirit has correct card properties")
-    void hasCorrectProperties() {
-        ConsumeSpirit card = new ConsumeSpirit();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getXColorRestriction()).isEqualTo(ManaColor.BLACK);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealXDamageToAnyTargetAndGainXLifeEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -15,7 +15,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AdarkarWastesTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
     @Test
@@ -26,51 +25,11 @@ class AdarkarWastesTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("First ability taps for colorless mana with no damage")
-    void firstAbilityProperties() {
-        AdarkarWastes card = new AdarkarWastes();
+    
 
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.COLORLESS);
-    }
+    
 
-    @Test
-    @DisplayName("Second ability taps for white mana and deals 1 damage")
-    void secondAbilityProperties() {
-        AdarkarWastes card = new AdarkarWastes();
-
-        var ability = card.getActivatedAbilities().get(1);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.WHITE);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-        assertThat(((DealDamageToControllerEffect) ability.getEffects().get(1)).damage()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Third ability taps for blue mana and deals 1 damage")
-    void thirdAbilityProperties() {
-        AdarkarWastes card = new AdarkarWastes();
-
-        var ability = card.getActivatedAbilities().get(2);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.BLUE);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-        assertThat(((DealDamageToControllerEffect) ability.getEffects().get(1)).damage()).isEqualTo(1);
-    }
+    
 
     // ===== Tapping for colorless mana =====
 

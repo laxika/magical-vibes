@@ -32,21 +32,6 @@ class InklingMascotTest extends BaseCardTest {
         return perm;
     }
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Repartee grants self flying and surveils 1, gated on targeting a creature")
-    void hasCorrectStructure() {
-        InklingMascot card = new InklingMascot();
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().get(0)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(SurveilEffect.class);
-    }
-
     // ===== Repartee: gains flying + surveil =====
 
     @Test

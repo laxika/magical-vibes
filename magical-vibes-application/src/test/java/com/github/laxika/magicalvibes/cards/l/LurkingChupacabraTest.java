@@ -21,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LurkingChupacabraTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURE_EXPLORES BoostTargetCreatureEffect(-2, -2)")
-    void hasCorrectEffect() {
-        LurkingChupacabra card = new LurkingChupacabra();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst())
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-2));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(-2));
-    }
-
     // ===== Explore land — trigger fires, target gets -2/-2 =====
 
     @Test

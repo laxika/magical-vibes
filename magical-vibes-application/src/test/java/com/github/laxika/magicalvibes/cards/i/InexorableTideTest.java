@@ -20,20 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class InexorableTideTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has proliferate on spell cast trigger")
-    void hasProliferateOnSpellCastEffect() {
-        InexorableTide card = new InexorableTide();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).singleElement()
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isNull();
-        assertThat(trigger.resolvedEffects()).singleElement().isInstanceOf(ProliferateEffect.class);
-    }
-
     // ===== Triggered ability: proliferate on own spell cast =====
 
     @Test

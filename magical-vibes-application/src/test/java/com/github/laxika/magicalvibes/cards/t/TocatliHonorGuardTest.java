@@ -18,18 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TocatliHonorGuardTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC CreatureEnteringDontCauseTriggersEffect")
-    void hasCorrectStaticEffect() {
-        TocatliHonorGuard card = new TocatliHonorGuard();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CreatureEnteringDontCauseTriggersEffect.class);
-    }
-
     // ===== Suppresses creature's own ETB triggered ability =====
 
     @Test

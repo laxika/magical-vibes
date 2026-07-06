@@ -23,19 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GriptideTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Griptide has correct card properties")
-    void hasCorrectCardProperties() {
-        Griptide card = new Griptide();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(PutTargetOnTopOfLibraryEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Griptide targeting a creature puts it on the stack")

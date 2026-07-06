@@ -25,20 +25,7 @@ class SplatterTechniqueTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2 + extraRed);
     }
 
-    @Test
-    @DisplayName("Has a ChooseOneEffect with two options")
-    void hasCorrectEffects() {
-        SplatterTechnique card = new SplatterTechnique();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseOneEffect.class);
-
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(2);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(DrawCardEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(MassDamageEffect.class);
-        assertThat(((DrawCardEffect) effect.options().get(0).effect()).amount()).isEqualTo(new Fixed(4));
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: Draw four cards")

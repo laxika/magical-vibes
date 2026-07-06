@@ -23,16 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SliceInTwainTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Slice in Twain has correct card properties")
-    void hasCorrectProperties() {
-        SliceInTwain card = new SliceInTwain();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Slice in Twain puts it on the stack with target")

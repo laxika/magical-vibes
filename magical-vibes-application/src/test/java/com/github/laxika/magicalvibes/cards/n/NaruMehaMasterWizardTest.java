@@ -28,36 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NaruMehaMasterWizardTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has CopySpellEffect ETB and StaticBoostEffect for Wizards")
-    void hasCorrectEffects() {
-        NaruMehaMasterWizard card = new NaruMehaMasterWizard();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CopySpellEffect.class);
-        CopySpellEffect copyEffect = (CopySpellEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(copyEffect.spellFilter()).isNotNull();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(boost.filter()).isEqualTo(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WIZARD)));
-    }
-
-    @Test
-    @DisplayName("Does not require spell target at cast time (creature)")
-    void doesNotRequireSpellTargetAtCastTime() {
-        NaruMehaMasterWizard card = new NaruMehaMasterWizard();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isFalse();
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
-
     // ===== ETB spell copy — targeting =====
 
     @Test

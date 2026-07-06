@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RuleOfLawTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rule of Law has correct card properties")
-    void hasCorrectProperties() {
-        RuleOfLaw card = new RuleOfLaw();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(LimitSpellsPerTurnEffect.class);
-        LimitSpellsPerTurnEffect effect = (LimitSpellsPerTurnEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.maxSpells()).isEqualTo(1);
-    }
-
     // ===== Spell limiting =====
 
     @Test

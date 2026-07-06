@@ -24,21 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ForumNecroscribeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has Ward—Discard and a creature-targeting Repartee graveyard-return trigger")
-    void hasCorrectStructure() {
-        ForumNecroscribe card = new ForumNecroscribe();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL))
-                .singleElement().isInstanceOf(CounterUnlessDiscardsEffect.class);
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        ReturnCardFromGraveyardEffect ret =
-                (ReturnCardFromGraveyardEffect) trigger.resolvedEffects().getFirst();
-        assertThat(ret.targetGraveyard()).isTrue();
-    }
+    
 
     // ===== Repartee: reanimate a creature from your graveyard =====
 

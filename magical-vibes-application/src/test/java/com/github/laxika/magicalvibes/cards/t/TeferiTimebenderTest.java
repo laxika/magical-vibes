@@ -50,46 +50,11 @@ class TeferiTimebenderTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+2 ability has UntapTargetPermanentEffect with minTargets=0")
-    void plusTwoAbilityHasCorrectEffect() {
-        TeferiTimebender card = new TeferiTimebender();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(2);
-        assertThat(ability.getMinTargets()).isZero();
-        assertThat(ability.getMaxTargets()).isEqualTo(1);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(UntapTargetPermanentEffect.class);
-    }
+    
 
-    @Test
-    @DisplayName("-3 ability has GainLifeEffect(2) and DrawCardEffect(2)")
-    void minusThreeAbilityHasCorrectEffects() {
-        TeferiTimebender card = new TeferiTimebender();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) ability.getEffects().get(0)).amount()).isEqualTo(new Fixed(2));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) ability.getEffects().get(1)).amount()).isEqualTo(new Fixed(2));
-    }
-
-    @Test
-    @DisplayName("-9 ability has ControllerExtraTurnEffect(1)")
-    void minusNineAbilityHasCorrectEffect() {
-        TeferiTimebender card = new TeferiTimebender();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-9);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ControllerExtraTurnEffect.class);
-        assertThat(((ControllerExtraTurnEffect) ability.getEffects().getFirst()).count()).isEqualTo(1);
-    }
+    
 
     // ===== +2 ability: Untap up to one target artifact or creature =====
 

@@ -21,17 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NiblisOfTheMistTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has optional ETB TapTargetPermanentEffect")
-    void hasOptionalEtbTapEffect() {
-        NiblisOfTheMist card = new NiblisOfTheMist();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(TapTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving ETB trigger prompts for may choice")

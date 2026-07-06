@@ -26,23 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlashfreezeTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Flashfreeze has correct card properties")
-    void hasCorrectProperties() {
-        Flashfreeze card = new Flashfreeze();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryColorInPredicate(Set.of(CardColor.RED, CardColor.GREEN)),
-                "Target spell must be red or green."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

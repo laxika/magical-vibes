@@ -23,25 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EtchedChampionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Etched Champion has metalcraft conditional protection from all colors")
-    void hasCorrectProperties() {
-        EtchedChampion card = new EtchedChampion();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(ProtectionFromColorsEffect.class);
-
-        ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) metalcraft.wrapped();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(
-                CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED, CardColor.GREEN
-        );
-    }
-
     // ===== Metalcraft active: protection from all colors =====
 
     @Test

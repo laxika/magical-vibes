@@ -14,29 +14,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HowlingMineTest extends BaseCardTest {
 
-
     private void advanceToDraw(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         gd.turnNumber = 2; // avoid first-turn draw skip
         harness.forceStep(TurnStep.UPKEEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Howling Mine has correct card properties")
-    void hasCorrectProperties() {
-        HowlingMine card = new HowlingMine();
-
-        assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED).getFirst())
-                .isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        DrawCardForTargetPlayerEffect effect =
-                (DrawCardForTargetPlayerEffect) card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.requireSourceUntapped()).isTrue();
     }
 
     // ===== Triggering =====

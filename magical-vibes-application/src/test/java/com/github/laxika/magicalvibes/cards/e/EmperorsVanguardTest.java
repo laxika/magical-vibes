@@ -20,18 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class EmperorsVanguardTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER ExploreEffect")
-    void hasCorrectEffect() {
-        EmperorsVanguard card = new EmperorsVanguard();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(ExploreEffect.class);
-    }
-
     // ===== Explore on combat damage to player — land on top =====
 
     @Test

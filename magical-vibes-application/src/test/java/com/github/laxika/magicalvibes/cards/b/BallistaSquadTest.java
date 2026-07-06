@@ -21,20 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BallistaSquadTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ballista Squad has correct card properties")
-    void hasCorrectProperties() {
-        BallistaSquad card = new BallistaSquad();
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new DealDamageToTargetCreatureEffect(new XValue()));
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{X}{W}");
-    }
-
     // ===== Casting =====
 
     @Test

@@ -18,29 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CarrionCallTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Carrion Call has spell effect that creates two 1/1 green Phyrexian Insect tokens with infect")
-    void hasCorrectProperties() {
-        CarrionCall card = new CarrionCall();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Phyrexian Insect");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(tokenEffect.subtypes()).containsExactlyInAnyOrder(CardSubtype.PHYREXIAN, CardSubtype.INSECT);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.INFECT);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

@@ -23,24 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MycosynthWellspringTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB and death may-search effects")
-    void hasCorrectEffects() {
-        MycosynthWellspring card = new MycosynthWellspring();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect etbEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect deathEffect = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
-
     // ===== ETB trigger =====
 
     @Test

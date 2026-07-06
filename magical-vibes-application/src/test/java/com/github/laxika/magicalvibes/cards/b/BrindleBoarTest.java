@@ -29,26 +29,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class BrindleBoarTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Brindle Boar has correct activated ability structure")
-    void hasCorrectAbilityStructure() {
-        BrindleBoar card = new BrindleBoar();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GainLifeEffect.class);
-
-        GainLifeEffect gainLife = (GainLifeEffect) ability.getEffects().get(1);
-        assertThat(gainLife.amount()).isEqualTo(new Fixed(4));
-    }
-
     // ===== Casting =====
 
     @Test

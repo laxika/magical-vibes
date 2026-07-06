@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UntamedMightTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Untamed Might has correct card properties")
-    void hasCorrectProperties() {
-        UntamedMight card = new UntamedMight();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getXColorRestriction()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new XValue());
-        assertThat(effect.toughnessBoost()).isEqualTo(new XValue());
-    }
-
     // ===== Casting =====
 
     @Test

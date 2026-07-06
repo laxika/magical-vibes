@@ -17,18 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JackalFamiliarTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Jackal Familiar has CantAttackOrBlockAloneEffect")
-    void hasCorrectProperties() {
-        JackalFamiliar card = new JackalFamiliar();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantAttackOrBlockAloneEffect.class);
-    }
-
     // ===== Can't attack alone =====
 
     @Test

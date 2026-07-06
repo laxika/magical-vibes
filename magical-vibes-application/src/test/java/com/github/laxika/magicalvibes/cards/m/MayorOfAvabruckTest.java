@@ -29,72 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MayorOfAvabruckTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Front face has correct effects configured")
-    void hasCorrectEffects() {
-        MayorOfAvabruck card = new MayorOfAvabruck();
-
-        // No activated abilities
-        assertThat(card.getActivatedAbilities()).isEmpty();
-
-        // Static boost: Other Human creatures you control get +1/+1
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect humanBoost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(humanBoost.powerBoost()).isEqualTo(1);
-        assertThat(humanBoost.toughnessBoost()).isEqualTo(1);
-        assertThat(humanBoost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(humanBoost.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-
-        // Each-upkeep transform trigger
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("HowlpackAlpha");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        MayorOfAvabruck card = new MayorOfAvabruck();
-        HowlpackAlpha backFace = (HowlpackAlpha) card.getBackFaceCard();
-
-        // No activated abilities
-        assertThat(backFace.getActivatedAbilities()).isEmpty();
-
-        // Static boost: Each other Werewolf or Wolf you control gets +1/+1
-        assertThat(backFace.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect wolfBoost = (StaticBoostEffect) backFace.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(wolfBoost.powerBoost()).isEqualTo(1);
-        assertThat(wolfBoost.toughnessBoost()).isEqualTo(1);
-        assertThat(wolfBoost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(wolfBoost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-
-        // Controller end step token creation
-        assertThat(backFace.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) backFace.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Wolf");
-        assertThat(tokenEffect.power()).isEqualTo(2);
-        assertThat(tokenEffect.toughness()).isEqualTo(2);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.WOLF);
-
-        // Each-upkeep transform trigger
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
-
     // ===== Werewolf transform: front → back (no spells cast last turn) =====
 
     @Test
@@ -372,8 +306,5 @@ class MayorOfAvabruckTest extends BaseCardTest {
                 .count();
         assertThat(wolfCount).isZero();
     }
-
-    // ===== Helper methods =====
-
 
 }

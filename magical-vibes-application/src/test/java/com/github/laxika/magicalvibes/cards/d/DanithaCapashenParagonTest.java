@@ -23,28 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DanithaCapashenParagonTest extends BaseCardTest {
 
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Danitha has the cost reduction effect for Aura and Equipment subtypes")
-    void hasCorrectEffects() {
-        DanithaCapashenParagon card = new DanithaCapashenParagon();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-
-        ReduceCastCostForMatchingSpellsEffect effect = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.predicate()).isInstanceOf(CardAnyOfPredicate.class);
-        CardAnyOfPredicate predicate = (CardAnyOfPredicate) effect.predicate();
-        assertThat(predicate.predicates()).hasSize(2);
-        assertThat(predicate.predicates().get(0)).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) predicate.predicates().get(0)).subtype()).isEqualTo(CardSubtype.AURA);
-        assertThat(predicate.predicates().get(1)).isInstanceOf(CardSubtypePredicate.class);
-        assertThat(((CardSubtypePredicate) predicate.predicates().get(1)).subtype()).isEqualTo(CardSubtype.EQUIPMENT);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(CostModificationScope.SELF);
-    }
-
     // ===== Aura cost reduction =====
 
     @Test

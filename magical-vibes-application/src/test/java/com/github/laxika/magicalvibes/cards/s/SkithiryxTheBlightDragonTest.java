@@ -20,28 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkithiryxTheBlightDragonTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Skithiryx has two activated abilities with correct effects")
-    void hasCorrectAbilities() {
-        SkithiryxTheBlightDragon card = new SkithiryxTheBlightDragon();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {B}: gains haste
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}");
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-
-        // Second ability: {B}{B}: regenerate
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{B}{B}");
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

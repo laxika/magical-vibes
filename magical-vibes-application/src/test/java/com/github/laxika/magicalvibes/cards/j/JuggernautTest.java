@@ -23,22 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JuggernautTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Juggernaut has correct card properties")
-    void hasCorrectProperties() {
-        Juggernaut card = new Juggernaut();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof MustAttackEffect);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof CanBeBlockedOnlyByFilterEffect c
-                        && c.blockerPredicate().equals(new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL))));
-    }
-
     // ===== Casting =====
 
     @Test
@@ -139,5 +123,4 @@ class JuggernautTest extends BaseCardTest {
         assertThat(bears.isBlocking()).isTrue();
     }
 }
-
 

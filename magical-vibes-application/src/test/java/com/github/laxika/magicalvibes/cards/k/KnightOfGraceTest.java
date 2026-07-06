@@ -26,22 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KnightOfGraceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Knight of Grace has hexproof from black and conditional boost effects")
-    void hasCorrectEffects() {
-        KnightOfGrace card = new KnightOfGrace();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(HexproofFromColorsEffect.class);
-        assertThat(((HexproofFromColorsEffect) card.getEffects(EffectSlot.STATIC).get(0)).colors())
-                .containsExactly(CardColor.BLACK);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(((AnyPlayerControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentColorInPredicate(Set.of(CardColor.BLACK)));
-    }
+    
 
     @Test
     @DisplayName("Black spells from opponent cannot target Knight of Grace")

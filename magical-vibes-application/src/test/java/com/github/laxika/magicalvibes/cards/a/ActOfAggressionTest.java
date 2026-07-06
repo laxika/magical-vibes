@@ -27,20 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ActOfAggressionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Act of Aggression has correct card properties")
-    void hasCorrectProperties() {
-        ActOfAggression card = new ActOfAggression();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(effect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
-    }
+    
 
     @Test
     @DisplayName("Casting Act of Aggression puts it on the stack with the target creature")

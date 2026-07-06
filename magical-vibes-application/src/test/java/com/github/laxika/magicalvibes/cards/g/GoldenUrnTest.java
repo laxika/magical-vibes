@@ -18,31 +18,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GoldenUrnTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Golden Urn has upkeep triggered ability and activated ability")
-    void hasCorrectAbilityStructure() {
-        GoldenUrn card = new GoldenUrn();
-
-        // Upkeep triggered ability (may put charge counter)
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Activated ability (tap + sacrifice to gain life)
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1))
-                .isEqualTo(new GainLifeEffect(new CountersOnSource(CounterType.CHARGE)));
-    }
-
     // ===== Upkeep triggered ability =====
 
     @Test

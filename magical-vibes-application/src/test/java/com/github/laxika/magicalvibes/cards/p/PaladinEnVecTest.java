@@ -26,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PaladinEnVecTest extends BaseCardTest {
 
-
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
         Card card = new Card();
         card.setName(name);
@@ -46,20 +45,6 @@ class PaladinEnVecTest extends BaseCardTest {
         card.setColor(color);
         card.addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(1));
         return card;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Paladin en-Vec has correct card properties")
-    void hasCorrectProperties() {
-        PaladinEnVec card = new PaladinEnVec();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromColorsEffect.class);
-
-        ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
     }
 
     // ===== Casting =====
@@ -411,5 +396,4 @@ class PaladinEnVecTest extends BaseCardTest {
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Holy Strength");
     }
 }
-
 

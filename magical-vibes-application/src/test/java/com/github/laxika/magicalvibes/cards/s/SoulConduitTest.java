@@ -18,25 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SoulConduitTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Soul Conduit has one activated ability with multi-target player targeting")
-    void hasMultiTargetActivatedAbility() {
-        SoulConduit card = new SoulConduit();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{6}");
-        assertThat(card.getActivatedAbilities().get(0).isMultiTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getMinTargets()).isEqualTo(2);
-        assertThat(card.getActivatedAbilities().get(0).getMaxTargets()).isEqualTo(2);
-        assertThat(card.getActivatedAbilities().get(0).getMultiTargetFilters()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(ExchangeTargetPlayersLifeTotalsEffect.class);
-    }
-
     // ===== Exchange life totals =====
 
     @Test

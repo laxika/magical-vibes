@@ -28,29 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FaithsShieldTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Faith's Shield has correct effects")
-    void hasCorrectEffects() {
-        FaithsShield card = new FaithsShield();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect normal =
-                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(((ControllerLifeAtLeast) normal.condition()).threshold()).isEqualTo(6);
-        assertThat(normal.wrapped()).isInstanceOf(GrantProtectionChoiceUntilEndOfTurnEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect fateful =
-                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(((ControllerLifeAtMost) fateful.condition()).threshold()).isEqualTo(5);
-        assertThat(fateful.wrapped())
-                .isInstanceOf(GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect.class);
-    }
+    
 
     @Test
     @DisplayName("With 6+ life, only the targeted permanent gains protection from the chosen color")

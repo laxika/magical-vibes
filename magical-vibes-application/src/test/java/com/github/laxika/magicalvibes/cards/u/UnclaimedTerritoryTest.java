@@ -35,42 +35,6 @@ class UnclaimedTerritoryTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ChooseSubtypeOnEnterEffect on ON_ENTER_BATTLEFIELD")
-    void hasChooseSubtypeEffect() {
-        UnclaimedTerritory card = new UnclaimedTerritory();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseSubtypeOnEnterEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has two activated abilities: colorless mana and restricted any-color mana")
-    void hasTwoActivatedAbilities() {
-        UnclaimedTerritory card = new UnclaimedTerritory();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {C}
-        var colorlessAbility = card.getActivatedAbilities().get(0);
-        assertThat(colorlessAbility.isRequiresTap()).isTrue();
-        assertThat(colorlessAbility.getManaCost()).isNull();
-        assertThat(colorlessAbility.getEffects()).hasSize(1);
-        assertThat(colorlessAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) colorlessAbility.getEffects().getFirst()).color()).isEqualTo(ManaColor.COLORLESS);
-
-        // Second ability: {T}: Add one mana of any color (restricted)
-        var restrictedAbility = card.getActivatedAbilities().get(1);
-        assertThat(restrictedAbility.isRequiresTap()).isTrue();
-        assertThat(restrictedAbility.getManaCost()).isNull();
-        assertThat(restrictedAbility.getEffects()).hasSize(1);
-        assertThat(restrictedAbility.getEffects().getFirst())
-                .isInstanceOf(AwardAnyColorChosenSubtypeCreatureManaEffect.class);
-    }
-
     // ===== Colorless mana ability =====
 
     @Test

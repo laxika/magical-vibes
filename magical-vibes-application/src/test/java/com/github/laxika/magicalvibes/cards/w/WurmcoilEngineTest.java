@@ -19,36 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WurmcoilEngineTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Wurmcoil Engine has two ON_DEATH token creation effects")
-    void hasCorrectEffects() {
-        WurmcoilEngine card = new WurmcoilEngine();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(2);
-
-        CreateTokenEffect deathtouch = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(0);
-        assertThat(deathtouch.amount()).isEqualTo(new Fixed(1));
-        assertThat(deathtouch.tokenName()).isEqualTo("Phyrexian Wurm");
-        assertThat(deathtouch.power()).isEqualTo(3);
-        assertThat(deathtouch.toughness()).isEqualTo(3);
-        assertThat(deathtouch.color()).isNull();
-        assertThat(deathtouch.subtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.WURM);
-        assertThat(deathtouch.keywords()).containsExactly(Keyword.DEATHTOUCH);
-        assertThat(deathtouch.additionalTypes()).containsExactly(CardType.ARTIFACT);
-
-        CreateTokenEffect lifelink = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).get(1);
-        assertThat(lifelink.amount()).isEqualTo(new Fixed(1));
-        assertThat(lifelink.tokenName()).isEqualTo("Phyrexian Wurm");
-        assertThat(lifelink.power()).isEqualTo(3);
-        assertThat(lifelink.toughness()).isEqualTo(3);
-        assertThat(lifelink.color()).isNull();
-        assertThat(lifelink.subtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.WURM);
-        assertThat(lifelink.keywords()).containsExactly(Keyword.LIFELINK);
-        assertThat(lifelink.additionalTypes()).containsExactly(CardType.ARTIFACT);
-    }
-
     // ===== Casting =====
 
     @Test

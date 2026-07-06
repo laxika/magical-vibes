@@ -19,20 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RatColonyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Rat Colony has correct static effect")
-    void hasCorrectEffect() {
-        RatColony card = new RatColony();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect =
-                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new PermanentCount(
-                new PermanentHasSubtypePredicate(CardSubtype.RAT), CountScope.CONTROLLER, true));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Rat Colony is 2/1 with no other Rats")

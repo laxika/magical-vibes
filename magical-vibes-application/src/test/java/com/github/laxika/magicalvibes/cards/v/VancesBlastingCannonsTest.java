@@ -49,69 +49,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VancesBlastingCannonsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Front face has upkeep exile trigger")
-    void frontFaceHasUpkeepTrigger() {
-        VancesBlastingCannons card = new VancesBlastingCannons();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ExileTopCardMayCastNonlandThisTurnEffect.class);
-    }
-
-    @Test
-    @DisplayName("Front face has third-spell-cast may-transform trigger")
-    void frontFaceHasThirdSpellTrigger() {
-        VancesBlastingCannons card = new VancesBlastingCannons();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        var mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(NthSpellCastTriggerEffect.class);
-        var nthTrigger = (NthSpellCastTriggerEffect) mayEffect.wrapped();
-        assertThat(nthTrigger.spellNumber()).isEqualTo(3);
-        assertThat(nthTrigger.resolvedEffects()).hasSize(1);
-        assertThat(nthTrigger.resolvedEffects().getFirst()).isInstanceOf(TransformSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has back face configured as Spitfire Bastion")
-    void hasBackFace() {
-        VancesBlastingCannons card = new VancesBlastingCannons();
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(SpitfireBastion.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("SpitfireBastion");
-    }
-
-    @Test
-    @DisplayName("Back face has mana ability and damage ability")
-    void backFaceHasCorrectAbilities() {
-        VancesBlastingCannons card = new VancesBlastingCannons();
-        SpitfireBastion backFace = (SpitfireBastion) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(2);
-
-        // {T}: Add {R}.
-        var manaAbility = backFace.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) manaAbility.getEffects().getFirst()).color()).isEqualTo(ManaColor.RED);
-
-        // {2}{R}, {T}: Spitfire Bastion deals 3 damage to any target.
-        var damageAbility = backFace.getActivatedAbilities().get(1);
-        assertThat(damageAbility.isRequiresTap()).isTrue();
-        assertThat(damageAbility.getManaCost()).isEqualTo("{2}{R}");
-        assertThat(damageAbility.getEffects()).hasSize(1);
-        assertThat(damageAbility.getEffects().getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) damageAbility.getEffects().getFirst()).damage()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Upkeep exile trigger =====
 
     @Test

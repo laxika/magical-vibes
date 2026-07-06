@@ -18,30 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SkirkProspectorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Skirk Prospector has sacrifice-goblin mana ability")
-    void hasCorrectAbility() {
-        SkirkProspector card = new SkirkProspector();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
-                )),
-                "Sacrifice a Goblin",
-                false
-        ));
-        assertThat(ability.getEffects().get(1)).isEqualTo(new AwardManaEffect(ManaColor.RED));
-    }
-
     // ===== Mana ability behavior =====
 
     @Test

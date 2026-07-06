@@ -20,32 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HorrifyingRevelationTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has two SPELL effects: discard then mill")
-    void hasCorrectEffects() {
-        HorrifyingRevelation card = new HorrifyingRevelation();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MillTargetPlayerEffect.class);
-
-        TargetPlayerDiscardsEffect discard = (TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(discard.amount()).isEqualTo(1);
-
-        MillTargetPlayerEffect mill = (MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(mill.count()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Needs target (auto-derived from player-targeting effects)")
-    void needsTarget() {
-        HorrifyingRevelation card = new HorrifyingRevelation();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
     // ===== Resolving against opponent =====
 
     @Test

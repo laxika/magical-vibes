@@ -28,25 +28,7 @@ class WarcryPhoenixTest extends BaseCardTest {
         gs.declareAttackers(gd, player1, attackerIndices);
     }
 
-    @Test
-    @DisplayName("Has GRAVEYARD_ON_ALLY_CREATURES_ATTACK effect with ConditionalEffect wrapping MayPayManaEffect")
-    void hasCorrectEffects() {
-        WarcryPhoenix card = new WarcryPhoenix();
-
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect mac = (ConditionalEffect)
-                card.getEffects(EffectSlot.GRAVEYARD_ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(((MinimumAttackers) mac.condition()).minimumAttackers()).isEqualTo(3);
-        assertThat(mac.wrapped()).isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) mac.wrapped();
-        assertThat(mayPay.manaCost()).isEqualTo("{2}{R}");
-        assertThat(mayPay.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect = (ReturnCardFromGraveyardEffect) mayPay.wrapped();
-        assertThat(returnEffect.enterTapped()).isTrue();
-        assertThat(returnEffect.enterAttacking()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Triggers when attacking with 3 creatures and Phoenix is in graveyard")

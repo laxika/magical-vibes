@@ -15,9 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SkyhunterSkirmisherTest extends BaseCardTest {
 
 
-    // ===== Card properties =====
-
-
     // ===== Double strike deals damage in both phases =====
 
     @Test

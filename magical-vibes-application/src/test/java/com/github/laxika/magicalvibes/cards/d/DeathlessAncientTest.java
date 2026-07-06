@@ -20,25 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DeathlessAncientTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has graveyard activated ability with TapMultiplePermanentsCost and ReturnCardFromGraveyardEffect")
-    void hasGraveyardAbility() {
-        DeathlessAncient card = new DeathlessAncient();
-
-        assertThat(card.getGraveyardActivatedAbilities()).hasSize(1);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof TapMultiplePermanentsCost c
-                        && c.count() == 3
-                        && c.filter() instanceof com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate p
-                        && p.subtype() == CardSubtype.VAMPIRE);
-        assertThat(card.getGraveyardActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof ReturnCardFromGraveyardEffect);
-    }
-
     // ===== Graveyard activated ability =====
 
     @Nested

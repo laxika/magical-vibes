@@ -19,17 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DarkslickDrakeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Darkslick Drake has ON_DEATH DrawCardEffect")
-    void hasCorrectProperties() {
-        DarkslickDrake card = new DarkslickDrake();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Death trigger: combat (blocker dies) =====
 
     @Test

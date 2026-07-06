@@ -24,26 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GishathSunsAvatarTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER effect with Dinosaur creature predicate")
-    void hasCombatDamageToPlayerEffect() {
-        GishathSunsAvatar card = new GishathSunsAvatar();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
-                .hasSize(1)
-                .first()
-                .isInstanceOf(LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect.class);
-
-        LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect effect =
-                (LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect)
-                        card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(effect.remainingToBottomRandom()).isTrue();
-        assertThat(effect.alwaysEligiblePredicate()).isNotNull();
-        assertThat(effect.mvCappedEligiblePredicate()).isNull();
-    }
-
     // ===== Combat damage trigger: reveals correct number of cards =====
 
     @Test
@@ -269,7 +249,6 @@ class GishathSunsAvatarTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void resolveCombatWithGishath() {
         Permanent gishath = addGishathReady(player1);

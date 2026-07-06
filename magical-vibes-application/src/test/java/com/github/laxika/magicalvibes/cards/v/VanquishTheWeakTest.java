@@ -26,24 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VanquishTheWeakTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Vanquish the Weak has correct effect structure")
-    void hasCorrectProperties() {
-        VanquishTheWeak card = new VanquishTheWeak();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentPowerAtMostPredicate(3)
-                )),
-                "Target must be a creature with power 3 or less"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Vanquish the Weak targeting a creature with power 3 or less puts it on stack")

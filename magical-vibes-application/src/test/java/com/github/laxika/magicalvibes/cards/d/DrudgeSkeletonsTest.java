@@ -22,20 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DrudgeSkeletonsTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Drudge Skeletons has correct card properties")
-    void hasCorrectProperties() {
-        DrudgeSkeletons card = new DrudgeSkeletons();
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}");
-    }
-
     // ===== Casting =====
 
     @Test

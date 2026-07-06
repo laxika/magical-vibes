@@ -33,61 +33,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArguelsBloodFastTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Front face has correct effects configured")
-    void frontFaceHasCorrectEffects() {
-        ArguelsBloodFast card = new ArguelsBloodFast();
-
-        // One activated ability: {1}{B}, Pay 2 life: Draw a card
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{B}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(PayLifeCost.class);
-        assertThat(((PayLifeCost) ability.getEffects().get(0)).amount()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-
-        // Upkeep trigger: if you have 5 or less life, you may transform
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        var conditional = (ConditionalEffect)
-                card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(((ControllerLifeAtMost) conditional.condition()).threshold()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) conditional.wrapped();
-        assertThat(may.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("TempleOfAclazotz");
-    }
-
-    @Test
-    @DisplayName("Back face has correct effects configured")
-    void backFaceHasCorrectEffects() {
-        ArguelsBloodFast card = new ArguelsBloodFast();
-        TempleOfAclazotz backFace = (TempleOfAclazotz) card.getBackFaceCard();
-
-        // {T}: Add {B}
-        assertThat(backFace.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.ON_TAP).getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        // Activated ability: {T}, Sacrifice a creature: gain life equal to toughness
-        assertThat(backFace.getActivatedAbilities()).hasSize(1);
-        var ability = backFace.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        SacrificeCreatureCost sacCost = (SacrificeCreatureCost) ability.getEffects().get(0);
-        assertThat(sacCost.trackSacrificedToughness()).isTrue();
-        assertThat(ability.getEffects().get(1)).isEqualTo(new GainLifeEffect(new XValue()));
-    }
-
     // ===== Front face: {1}{B}, Pay 2 life: Draw a card =====
 
     @Test
@@ -277,7 +222,6 @@ class ArguelsBloodFastTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private Card createCreature(String name, int power, int toughness) {
         Card card = new Card();

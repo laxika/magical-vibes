@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CurseOfTheBloodyTomeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of the Bloody Tome has correct effects")
-    void hasCorrectEffects() {
-        CurseOfTheBloodyTome card = new CurseOfTheBloodyTome();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.isEnchantPlayer()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect effect = (MillTargetPlayerEffect) card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.count()).isEqualTo(2);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

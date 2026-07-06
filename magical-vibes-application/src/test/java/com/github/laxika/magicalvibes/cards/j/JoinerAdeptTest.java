@@ -10,21 +10,12 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JoinerAdeptTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Joiner Adept has correct card properties")
-    void hasCorrectProperties() {
-        JoinerAdept card = new JoinerAdept();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantActivatedAbilityEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Lands you control gain tap ability to add one mana of any color")

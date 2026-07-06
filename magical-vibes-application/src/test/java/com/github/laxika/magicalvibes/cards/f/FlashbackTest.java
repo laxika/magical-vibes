@@ -19,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FlashbackTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Grants flashback to target instant or sorcery in your graveyard")
-    void hasCorrectStructure() {
-        Flashback card = new Flashback();
-
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(GrantFlashbackToTargetGraveyardCardEffect.class);
-        GrantFlashbackToTargetGraveyardCardEffect effect =
-                (GrantFlashbackToTargetGraveyardCardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cardTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-    }
+    
 
     @Test
     @DisplayName("Resolving grants flashback to target instant in graveyard")

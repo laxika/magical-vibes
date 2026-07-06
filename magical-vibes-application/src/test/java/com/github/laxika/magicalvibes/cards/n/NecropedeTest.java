@@ -49,20 +49,6 @@ class NecropedeTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Necropede has ON_DEATH MayEffect wrapping PutMinusOneMinusOneCounterOnTargetCreatureEffect")
-    void hasCorrectProperties() {
-        Necropede card = new Necropede();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
-        assertThat(may.prompt()).isEqualTo("Put a -1/-1 counter on target creature?");
-    }
-
     // ===== Casting =====
 
     @Test

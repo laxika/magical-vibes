@@ -33,19 +33,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class VerdantSunsAvatarTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Verdant Sun's Avatar has effects on both ETB slots")
-    void hasCorrectEffectStructure() {
-        VerdantSunsAvatar card = new VerdantSunsAvatar();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEqualToToughnessEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEqualToToughnessEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Verdant Sun's Avatar puts it on the stack")

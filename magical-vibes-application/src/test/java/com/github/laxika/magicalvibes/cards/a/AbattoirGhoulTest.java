@@ -17,15 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AbattoirGhoulTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Abattoir Ghoul has correct ON_DAMAGED_CREATURE_DIES effect")
-    void hasCorrectProperties() {
-        AbattoirGhoul card = new AbattoirGhoul();
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst())
-                .isInstanceOf(GainLifeEqualToToughnessEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Gains life equal to dying creature's toughness when it kills in combat")

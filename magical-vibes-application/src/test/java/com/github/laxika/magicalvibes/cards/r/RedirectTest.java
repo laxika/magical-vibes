@@ -24,21 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RedirectTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Redirect has correct card properties")
-    void hasCorrectProperties() {
-        Redirect card = new Redirect();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ChooseNewTargetsForTargetSpellEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

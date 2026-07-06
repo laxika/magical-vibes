@@ -31,23 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TwincastTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Twincast has correct card properties")
-    void hasCorrectProperties() {
-        Twincast card = new Twincast();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CopySpellEffect.class);
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
-                "Target must be an instant or sorcery spell."
-        ));
-    }
-
     // ===== Casting =====
 
     @Test
@@ -683,5 +666,4 @@ class TwincastTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds()).contains(player2.getId());
     }
 }
-
 

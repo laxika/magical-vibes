@@ -20,16 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SteelSabotageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Steel Sabotage has a ChooseOneEffect with two options")
-    void hasCorrectEffects() {
-        SteelSabotage card = new SteelSabotage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(2);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Counter target artifact spell")

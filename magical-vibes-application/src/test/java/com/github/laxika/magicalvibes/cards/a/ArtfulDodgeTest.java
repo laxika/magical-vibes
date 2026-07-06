@@ -23,18 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArtfulDodgeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Artful Dodge has correct effects")
-    void hasCorrectEffects() {
-        ArtfulDodge card = new ArtfulDodge();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MakeCreatureUnblockableEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -19,14 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AesthirGliderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Aesthir Glider has static CantBlockEffect")
-    void hasStaticCantBlockEffect() {
-        AesthirGlider card = new AesthirGlider();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBlockEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Aesthir Glider puts it on the battlefield")

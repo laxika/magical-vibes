@@ -31,27 +31,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class BloodshotTraineeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has tap ability that deals 4 damage to target creature with power restriction")
-    void hasCorrectAbility() {
-        BloodshotTrainee card = new BloodshotTrainee();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.POWER_4_OR_GREATER);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageToTargetCreatureEffect.class);
-
-        DealDamageToTargetCreatureEffect effect =
-                (DealDamageToTargetCreatureEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(4));
-    }
-
     // ===== Activation with sufficient power =====
 
     @Test

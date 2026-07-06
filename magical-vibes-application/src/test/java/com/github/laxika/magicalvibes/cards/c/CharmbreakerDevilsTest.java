@@ -31,32 +31,6 @@ class CharmbreakerDevilsTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has upkeep-triggered random graveyard return and spell cast trigger boost")
-    void hasCorrectEffects() {
-        CharmbreakerDevils card = new CharmbreakerDevils();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect returnEffect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(returnEffect.returnAtRandom()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect castTrigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(castTrigger.resolvedEffects()).hasSize(1);
-        assertThat(castTrigger.resolvedEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) castTrigger.resolvedEffects().getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(4));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
-
     // ===== Upkeep trigger: return random instant or sorcery =====
 
     @Test

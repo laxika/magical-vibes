@@ -24,42 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheMirariConjectureTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I returns target instant from graveyard to hand")
-    void chapterIHasCorrectEffects() {
-        TheMirariConjecture card = new TheMirariConjecture();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) effects.getFirst();
-        assertThat(effect.targetGraveyard()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Chapter II returns target sorcery from graveyard to hand")
-    void chapterIIHasCorrectEffects() {
-        TheMirariConjecture card = new TheMirariConjecture();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        ReturnCardFromGraveyardEffect effect = (ReturnCardFromGraveyardEffect) effects.getFirst();
-        assertThat(effect.targetGraveyard()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Chapter III grants spell copy until end of turn")
-    void chapterIIIHasCorrectEffects() {
-        TheMirariConjecture card = new TheMirariConjecture();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(GrantInstantSorceryCopyUntilEndOfTurnEffect.class);
-    }
-
     // ===== Chapter I: graveyard targeting for instants =====
 
     @Test

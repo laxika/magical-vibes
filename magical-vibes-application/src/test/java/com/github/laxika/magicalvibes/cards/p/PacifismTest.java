@@ -23,20 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PacifismTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Pacifism has correct card properties")
-    void hasCorrectProperties() {
-        Pacifism card = new Pacifism();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -398,5 +384,4 @@ class PacifismTest extends BaseCardTest {
         assertThat(bearsPerm.isAttacking()).isFalse();
     }
 }
-
 

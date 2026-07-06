@@ -21,22 +21,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class QuirionDryadTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Quirion Dryad has correct card properties")
-    void hasCorrectProperties() {
-        QuirionDryad card = new QuirionDryad();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class);
-
-        PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger =
-                (PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.triggerColors()).isEqualTo(Set.of(CardColor.WHITE, CardColor.BLUE, CardColor.BLACK, CardColor.RED));
-        assertThat(trigger.amount()).isEqualTo(1);
-        assertThat(trigger.onlyOwnSpells()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting a white spell makes Quirion Dryad get a +1/+1 counter")

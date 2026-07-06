@@ -19,22 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DemonlordBelzenlokTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Demonlord Belzenlok has ETB exile-until-nonland effect")
-    void hasEtbEffect() {
-        DemonlordBelzenlok card = new DemonlordBelzenlok();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(ExileUntilNonlandToHandRepeatIfHighMVEffect.class);
-
-        ExileUntilNonlandToHandRepeatIfHighMVEffect effect =
-                (ExileUntilNonlandToHandRepeatIfHighMVEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.manaValueThreshold()).isEqualTo(4);
-        assertThat(effect.damagePerCard()).isEqualTo(1);
-    }
-
     // ===== ETB trigger behavior =====
 
     @Test

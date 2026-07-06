@@ -23,19 +23,7 @@ class ExecutionersHoodTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Executioner's Hood has static intimidate keyword grant effect")
-    void hasKeywordGrantEffect() {
-        ExecutionersHood card = new ExecutionersHood();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(1);
-        assertThat(keywordEffects.getFirst().keywords()).containsExactly(Keyword.INTIMIDATE);
-    }
+    
 
     @Test
     @DisplayName("Executioner's Hood has equip {2} ability with correct properties")

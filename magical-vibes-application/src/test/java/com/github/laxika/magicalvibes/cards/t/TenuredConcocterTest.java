@@ -23,24 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TenuredConcocterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has a becomes-target may-draw trigger and an infusion static boost")
-    void hasCorrectStructure() {
-        TenuredConcocter card = new TenuredConcocter();
-
-        var targetEffects = card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_OPPONENT_SPELL);
-        assertThat(targetEffects).hasSize(1);
-        assertThat(targetEffects.getFirst()).isInstanceOf(MayEffect.class);
-        assertThat(((MayEffect) targetEffects.getFirst()).wrapped()).isInstanceOf(DrawCardEffect.class);
-
-        var staticEffects = card.getEffects(EffectSlot.STATIC);
-        assertThat(staticEffects).hasSize(1);
-        ConditionalEffect conditional = (ConditionalEffect) staticEffects.getFirst();
-        assertThat(conditional.condition()).isInstanceOf(GainedLifeThisTurn.class);
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
+    
 
     @Test
     @DisplayName("No infusion bonus when you have not gained life this turn")

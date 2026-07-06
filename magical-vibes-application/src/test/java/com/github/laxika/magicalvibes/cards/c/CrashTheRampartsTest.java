@@ -23,25 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CrashTheRampartsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Crash the Ramparts has correct card properties")
-    void hasCorrectProperties() {
-        CrashTheRamparts card = new CrashTheRamparts();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(3));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(3));
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

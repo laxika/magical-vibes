@@ -23,25 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RallyTheForcesTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Rally the Forces has correct effects configured")
-    void hasCorrectEffects() {
-        RallyTheForces card = new RallyTheForces();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllCreaturesEffect.class);
-        BoostAllCreaturesEffect boost = (BoostAllCreaturesEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.FIRST_STRIKE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.ALL_CREATURES);
-        assertThat(grant.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Rally the Forces boosts attacking creatures with +1/+0 and first strike")

@@ -15,20 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TomeScourTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Tome Scour has correct card properties")
-    void hasCorrectProperties() {
-        TomeScour card = new TomeScour();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect effect = (MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-    }
-
     // ===== Milling =====
 
     @Test

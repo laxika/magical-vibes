@@ -21,18 +21,7 @@ class DarksteelPlateTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Darksteel Plate has static grant indestructible to equipped creature effect")
-    void hasGrantIndestructibleEffect() {
-        DarksteelPlate card = new DarksteelPlate();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
+    
 
     @Test
     @DisplayName("Darksteel Plate has equip {2} ability with sorcery-speed restriction")

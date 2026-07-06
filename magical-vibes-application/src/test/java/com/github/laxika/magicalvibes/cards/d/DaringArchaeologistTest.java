@@ -27,33 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DaringArchaeologistTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB may-return-artifact and historic spell-cast trigger with +1/+1 counter")
-    void hasCorrectStructure() {
-        DaringArchaeologist card = new DaringArchaeologist();
-
-        // ETB: MayEffect wrapping ReturnCardFromGraveyardEffect
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        // Historic trigger: SpellCastTriggerEffect with PutCountersOnSelfEffect
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect counterEffect = (PutCountersOnSelfEffect) trigger.resolvedEffects().getFirst();
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-    }
-
     // ===== ETB: return artifact from graveyard =====
 
     @Test

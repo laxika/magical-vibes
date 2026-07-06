@@ -16,23 +16,31 @@ protected GameQueryService gqs;
 protected GameData gd;
 ```
 
-Minimal test class:
+Minimal test class — assert **behavior through the engine**, never a card's effect wiring:
 
 ```java
 class ExampleCardTest extends BaseCardTest {
 
     @Test
-    @DisplayName("ExampleCard has correct effects")
-    void hasCorrectProperties() {
-        ExampleCard card = new ExampleCard();
+    @DisplayName("Casting ExampleCard deals 3 damage to the target")
+    void dealsDamageToTarget() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new ExampleCard()));
+        harness.addMana(player1, ManaColor.RED, 3);
 
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(SomeEffect.class);
+        UUID targetId = harness.getPermanentId(player2, "Grizzly Bears");
+        gs.playCard(gd, player1, 0, 0, targetId, null);
+        harness.passBothPriorities(); // resolve
+
+        // assert the observable outcome, not card.getEffects(...)
+        assertThat(/* target's state after resolution */).isTrue();
     }
 }
 ```
 
-**Do NOT test Scryfall metadata** (name, type, mana cost, color, power, toughness, subtypes, keywords) — it is auto-loaded from Scryfall. Only test engine logic: effects, abilities, targeting, game interactions.
+**Do NOT test Scryfall metadata** (name, type, mana cost, color, power, toughness, subtypes, keywords) — it is auto-loaded from Scryfall.
+
+**Do NOT write white-box "wiring" tests** (e.g. a `hasCorrectProperties` that constructs the card and asserts on `card.getEffects(EffectSlot.…)`, `EffectResolution.needsTarget(card)`, effect `instanceof`, or effect field values). They duplicate the behavioral tests and break on every effect refactor. Only test engine logic by observing behavior: effects, abilities, targeting, game interactions.
 
 ## Adding mana in tests
 

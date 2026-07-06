@@ -27,35 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SiegeGangCommanderTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Siege-Gang Commander has correct card properties and ability structure")
-    void hasCorrectProperties() {
-        SiegeGangCommander card = new SiegeGangCommander();
-
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(3));
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{R}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isEqualTo(new SacrificePermanentCost(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)
-                )),
-                "Sacrifice a Goblin",
-                false
-        ));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB creates three 1/1 red Goblin tokens")
@@ -183,5 +155,4 @@ class SiegeGangCommanderTest extends BaseCardTest {
                 .getId();
     }
 }
-
 

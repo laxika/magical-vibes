@@ -20,21 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThrabenHereticTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has tap activated ability to exile creature card from graveyard")
-    void hasActivatedAbility() {
-        ThrabenHeretic card = new ThrabenHeretic();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects())
-                .hasSize(1)
-                .allMatch(e -> e instanceof ExileTargetCardFromGraveyardEffect ex
-                        && ex.requiredType() == CardType.CREATURE);
-    }
+    
 
     @Test
     @DisplayName("Exiles creature card from controller's graveyard")

@@ -12,16 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UpwellingTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Upwelling has correct card properties")
-    void hasCorrectProperties() {
-        Upwelling card = new Upwelling();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PreventManaDrainEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Mana is preserved when step advances with Upwelling on battlefield")

@@ -28,19 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CloneTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Clone has correct card properties")
-    void hasCorrectProperties() {
-        Clone card = new Clone();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(CopyPermanentOnEnterEffect.class);
-    }
-
     // ===== Copying a creature =====
 
     @Test
@@ -401,5 +388,4 @@ class CloneTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }
-
 

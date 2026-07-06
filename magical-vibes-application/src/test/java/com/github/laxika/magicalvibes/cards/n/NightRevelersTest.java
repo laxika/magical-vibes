@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NightRevelersTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Night Revelers has correct static effect")
-    void hasCorrectProperties() {
-        NightRevelers card = new NightRevelers();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-
-        var effect = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(((OpponentControlsPermanent) effect.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.HUMAN));
-        assertThat(effect.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect haste = (GrantKeywordEffect) effect.wrapped();
-        assertThat(haste.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(haste.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Conditional haste with opponent's Human =====
 
     @Test
@@ -142,7 +125,5 @@ class NightRevelersTest extends BaseCardTest {
         // Static haste should still be computed
         assertThat(gqs.hasKeyword(gd, revelers, Keyword.HASTE)).isTrue();
     }
-
-    // ===== Helper methods =====
 
 }

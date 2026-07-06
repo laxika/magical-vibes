@@ -16,14 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PlatinumEmperionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has LifeTotalCantChangeEffect as static effect")
-    void hasStaticEffect() {
-        PlatinumEmperion card = new PlatinumEmperion();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(LifeTotalCantChangeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Damage does not change controller's life total")

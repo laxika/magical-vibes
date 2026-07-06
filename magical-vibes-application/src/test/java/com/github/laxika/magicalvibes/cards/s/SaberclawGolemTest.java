@@ -20,27 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SaberclawGolemTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Saberclaw Golem has one activated ability granting first strike")
-    void hasOneActivatedAbility() {
-        SaberclawGolem card = new SaberclawGolem();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{R}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect effect = (GrantKeywordEffect) ability.getEffects().getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.FIRST_STRIKE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Casting =====
 
     @Test

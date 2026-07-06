@@ -21,26 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FiresongAndSunspeakerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Firesong and Sunspeaker has correct effects registered")
-    void hasCorrectEffects() {
-        FiresongAndSunspeaker card = new FiresongAndSunspeaker();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantLifelinkToControllerSpellsByColorEffect.class);
-        GrantLifelinkToControllerSpellsByColorEffect staticEffect =
-                (GrantLifelinkToControllerSpellsByColorEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(staticEffect.color()).isEqualTo(CardColor.RED);
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(DealDamageOnSpellLifeGainEffect.class);
-        DealDamageOnSpellLifeGainEffect triggerEffect =
-                (DealDamageOnSpellLifeGainEffect) card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst();
-        assertThat(triggerEffect.damage()).isEqualTo(3);
-        assertThat(triggerEffect.triggeringColor()).isEqualTo(CardColor.WHITE);
-    }
+    
 
     @Test
     @DisplayName("Red instant targeting player: deals damage + controller gains life from spell lifelink")

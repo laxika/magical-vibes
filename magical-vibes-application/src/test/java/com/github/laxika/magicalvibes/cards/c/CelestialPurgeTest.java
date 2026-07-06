@@ -21,15 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CelestialPurgeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Celestial Purge has correct card properties")
-    void hasCorrectProperties() {
-        CelestialPurge card = new CelestialPurge();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ExileTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Celestial Purge puts it on the stack with target")

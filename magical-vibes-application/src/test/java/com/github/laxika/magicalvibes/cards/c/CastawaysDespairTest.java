@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CastawaysDespairTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Castaway's Despair has correct effects")
-    void hasCorrectEffects() {
-        CastawaysDespair card = new CastawaysDespair();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(AttachedCreatureDoesntUntapEffect.class);
-    }
-
     // ===== ETB tap effect =====
 
     @Test

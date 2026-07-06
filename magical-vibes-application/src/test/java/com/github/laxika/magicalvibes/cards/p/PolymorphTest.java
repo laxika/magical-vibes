@@ -20,19 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PolymorphTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Polymorph has correct effects")
-    void hasCorrectProperties() {
-        Polymorph card = new Polymorph();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyTargetThenRevealUntilTypeToBattlefieldEffect.class);
-    }
-
     // ===== Targeting =====
 
     @Test

@@ -35,29 +35,7 @@ class TackleArtistTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has spell-cast trigger with a 1-or-2 +1/+1 counter ConditionalReplacementEffect")
-    void hasCorrectEffects() {
-        TackleArtist card = new TackleArtist();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(ConditionalReplacementEffect.class);
-        ConditionalReplacementEffect replacement =
-                (ConditionalReplacementEffect) trigger.resolvedEffects().getFirst();
-        assertThat(((SpellManaSpentAtLeast) replacement.condition()).minMana()).isEqualTo(5);
-
-        PutCountersOnSelfEffect base = (PutCountersOnSelfEffect) replacement.baseEffect();
-        assertThat(base.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(base.count()).isEqualTo(1);
-
-        PutCountersOnSelfEffect upgraded = (PutCountersOnSelfEffect) replacement.upgradedEffect();
-        assertThat(upgraded.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(upgraded.count()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting a cheap instant adds one +1/+1 counter")

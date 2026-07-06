@@ -23,20 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TrollAsceticTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Troll Ascetic has correct card properties")
-    void hasCorrectProperties() {
-        TrollAscetic card = new TrollAscetic();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{G}");
-    }
-
     // ===== Casting =====
 
     @Test

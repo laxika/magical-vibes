@@ -24,29 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PhyrexianVaultTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Phyrexian Vault has correct activated ability structure")
-    void hasCorrectAbilityStructure() {
-        PhyrexianVault card = new PhyrexianVault();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-
-        DrawCardEffect draw = (DrawCardEffect) ability.getEffects().get(1);
-        assertThat(draw.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

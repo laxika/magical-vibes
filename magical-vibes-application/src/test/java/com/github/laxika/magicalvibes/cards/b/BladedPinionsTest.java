@@ -22,24 +22,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BladedPinionsTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
-
-    @Test
-    @DisplayName("Bladed Pinions has static flying and first strike keyword grant effects")
-    void hasKeywordGrantEffects() {
-        BladedPinions card = new BladedPinions();
-
-        List<GrantKeywordEffect> keywordEffects = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .filter(e -> e.scope() == GrantScope.EQUIPPED_CREATURE)
-                .toList();
-        assertThat(keywordEffects).hasSize(2);
-        assertThat(keywordEffects).flatExtracting(GrantKeywordEffect::keywords)
-                .containsExactlyInAnyOrder(Keyword.FLYING, Keyword.FIRST_STRIKE);
-    }
+    
 
     @Test
     @DisplayName("Bladed Pinions has equip {2} ability with correct properties")

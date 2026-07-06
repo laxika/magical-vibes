@@ -20,18 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TorporOrbTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC CreatureEnteringDontCauseTriggersEffect")
-    void hasCorrectStaticEffect() {
-        TorporOrb card = new TorporOrb();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CreatureEnteringDontCauseTriggersEffect.class);
-    }
-
     // ===== Suppresses creature's own ETB triggered ability =====
 
     @Test

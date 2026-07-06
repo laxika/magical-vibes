@@ -22,18 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CapriciousEfreetTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Capricious Efreet has upkeep triggered destroy-one-at-random ability")
-    void hasCorrectAbilityStructure() {
-        CapriciousEfreet card = new CapriciousEfreet();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(DestroyOneOfTargetsAtRandomEffect.class);
-    }
-
     // ===== Trigger: own target selection (step 1) =====
 
     @Test

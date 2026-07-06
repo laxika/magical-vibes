@@ -30,48 +30,11 @@ class SwordOfWarAndPeaceTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Sword of War and Peace has static +2/+2 boost effect")
-    void hasStaticBoostEffect() {
-        SwordOfWarAndPeace card = new SwordOfWarAndPeace();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("Sword of War and Peace has static protection from red and white")
-    void hasProtectionEffect() {
-        SwordOfWarAndPeace card = new SwordOfWarAndPeace();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof ProtectionFromColorsEffect)
-                .hasSize(1);
-        ProtectionFromColorsEffect protection = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof ProtectionFromColorsEffect)
-                .map(e -> (ProtectionFromColorsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
-    }
-
-    @Test
-    @DisplayName("Sword of War and Peace has combat damage hand-size damage and life gain effects")
-    void hasCombatDamageEffects() {
-        SwordOfWarAndPeace card = new SwordOfWarAndPeace();
-
-        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects =
-                card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        assertThat(effects).hasSize(2);
-        assertThat(effects).filteredOn(e -> e instanceof DealDamageToTargetPlayerByHandSizeEffect).hasSize(1);
-        assertThat(effects).filteredOn(e -> e.equals(new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)))).hasSize(1);
-    }
+    
 
     @Test
     @DisplayName("Sword of War and Peace has equip {2} ability")

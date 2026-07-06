@@ -19,21 +19,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class HexParasiteTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Hex Parasite has correct activated ability")
-    void hasCorrectActivatedAbility() {
-        HexParasite card = new HexParasite();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{X}{B/P}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RemoveCountersFromTargetAndBoostSelfEffect.class);
-    }
-
     // ===== Activate ability =====
 
     @Test

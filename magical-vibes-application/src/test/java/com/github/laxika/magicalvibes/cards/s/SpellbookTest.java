@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpellbookTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spellbook has correct card properties")
-    void hasCorrectProperties() {
-        Spellbook card = new Spellbook();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(NoMaximumHandSizeEffect.class);
-    }
-
     // ===== Hand limit enforcement =====
 
     @Test

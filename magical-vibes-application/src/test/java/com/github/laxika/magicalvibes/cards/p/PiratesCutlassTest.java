@@ -21,34 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PiratesCutlassTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Pirate's Cutlass has ETB attach effect")
-    void hasEtbAttachEffect() {
-        PiratesCutlass card = new PiratesCutlass();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(AttachSourceEquipmentToTargetCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("Pirate's Cutlass has static +2/+1 boost")
-    void hasStaticBoost() {
-        PiratesCutlass card = new PiratesCutlass();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-    }
-
     // ===== ETB attach to Pirate =====
 
     @Test

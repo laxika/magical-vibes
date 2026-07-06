@@ -35,21 +35,7 @@ class BurningSunsAvatarTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Burning Sun's Avatar has correct ETB effects")
-    void hasCorrectEffects() {
-        BurningSunsAvatar card = new BurningSunsAvatar();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0))
-                .isInstanceOf(DealDamageToTargetOpponentOrPlaneswalkerEffect.class);
-        assertThat(((DealDamageToTargetOpponentOrPlaneswalkerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).damage())
-                .isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1))
-                .isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).damage())
-                .isEqualTo(new Fixed(3));
-    }
+    
 
     @Test
     @DisplayName("Has correct target configuration — mandatory opponent/planeswalker + optional creature")

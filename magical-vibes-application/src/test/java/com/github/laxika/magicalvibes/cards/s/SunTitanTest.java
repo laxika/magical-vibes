@@ -23,22 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SunTitanTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Sun Titan has MayEffect wrapping ReturnCardFromGraveyardEffect on ETB and attack")
-    void hasCorrectEffects() {
-        SunTitan card = new SunTitan();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect etbMay = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbMay.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(MayEffect.class);
-    }
-
     // ===== ETB trigger =====
 
     @Nested

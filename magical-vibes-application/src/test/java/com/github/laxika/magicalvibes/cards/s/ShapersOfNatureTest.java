@@ -21,35 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShapersOfNatureTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two activated abilities with correct effects")
-    void hasCorrectAbilities() {
-        ShapersOfNature card = new ShapersOfNature();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {3}{G}: Put a +1/+1 counter on target creature.
-        var counterAbility = card.getActivatedAbilities().get(0);
-        assertThat(counterAbility.isRequiresTap()).isFalse();
-        assertThat(counterAbility.getManaCost()).isEqualTo("{3}{G}");
-        assertThat(counterAbility.getEffects()).singleElement()
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-
-        // Ability 1: {2}{U}, Remove a +1/+1 counter from a creature you control: Draw a card.
-        var drawAbility = card.getActivatedAbilities().get(1);
-        assertThat(drawAbility.isRequiresTap()).isFalse();
-        assertThat(drawAbility.getManaCost()).isEqualTo("{2}{U}");
-        assertThat(drawAbility.getEffects()).hasSize(2);
-        assertThat(drawAbility.getEffects().get(0)).isInstanceOf(RemoveCounterFromControlledCreatureCost.class);
-        RemoveCounterFromControlledCreatureCost removeCost =
-                (RemoveCounterFromControlledCreatureCost) drawAbility.getEffects().get(0);
-        assertThat(removeCost.count()).isEqualTo(1);
-        assertThat(removeCost.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-        assertThat(drawAbility.getEffects().get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Ability 0: Put a +1/+1 counter on target creature =====
 
     @Test

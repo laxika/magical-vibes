@@ -18,15 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MidnightGuardTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has trigger to untap itself when another creature enters")
-    void hasCorrectEffect() {
-        MidnightGuard card = new MidnightGuard();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(UntapSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Untaps when controller's other creature enters")

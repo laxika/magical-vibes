@@ -19,28 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EzurisBrigadeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has metalcraft static boost effect with +4/+4 and trample")
-    void hasCorrectEffect() {
-        EzurisBrigade card = new EzurisBrigade();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) metalcraft.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(4);
-        assertThat(boost.grantedKeywords()).isEqualTo(Set.of(Keyword.TRAMPLE));
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Without metalcraft =====
 
     @Test

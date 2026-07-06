@@ -21,29 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BladeTribeBerserkersTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two metalcraft-conditional ETB effects: boost and haste")
-    void hasMetalcraftEffects() {
-        BladeTribeBerserkers card = new BladeTribeBerserkers();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .allSatisfy(e -> assertThat(e).isInstanceOf(ConditionalEffect.class));
-
-        ConditionalEffect boost =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(boost.wrapped()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boostEffect = (BoostSelfEffect) boost.wrapped();
-        assertThat(boostEffect.powerBoost()).isEqualTo(new Fixed(3));
-        assertThat(boostEffect.toughnessBoost()).isEqualTo(new Fixed(3));
-
-        ConditionalEffect haste =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1);
-        assertThat(haste.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-    }
-
     // ===== ETB with metalcraft met =====
 
     @Test

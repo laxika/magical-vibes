@@ -36,28 +36,6 @@ class IxalansBindingTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has ExileTargetPermanentUntilSourceLeavesEffect(imprint=true) on ETB and opponents-only static restriction")
-    void hasCorrectEffects() {
-        IxalansBinding card = new IxalansBinding();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetPermanentUntilSourceLeavesEffect.class);
-        ExileTargetPermanentUntilSourceLeavesEffect exileEffect =
-                (ExileTargetPermanentUntilSourceLeavesEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(exileEffect.imprint()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantCastSpellsWithSameNameAsExiledCardEffect.class);
-        CantCastSpellsWithSameNameAsExiledCardEffect staticEffect =
-                (CantCastSpellsWithSameNameAsExiledCardEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(staticEffect.opponentsOnly()).isTrue();
-    }
-
     // ===== ETB exile =====
 
     @Test

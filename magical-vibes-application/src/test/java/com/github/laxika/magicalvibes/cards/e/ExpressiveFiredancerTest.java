@@ -39,30 +39,7 @@ class ExpressiveFiredancerTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has instant/sorcery spell-cast trigger with +1/+1 and conditional double strike grant")
-    void hasCorrectEffects() {
-        ExpressiveFiredancer card = new ExpressiveFiredancer();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().get(0)).isInstanceOf(BoostSelfEffect.class);
-        assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(ConditionalEffect.class);
-
-        BoostSelfEffect boost = (BoostSelfEffect) trigger.resolvedEffects().get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
-
-        ConditionalEffect conditional = (ConditionalEffect) trigger.resolvedEffects().get(1);
-        assertThat(((SpellManaSpentAtLeast) conditional.condition()).minMana()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-        assertThat(grant.keywords()).containsExactly(Keyword.DOUBLE_STRIKE);
-    }
+    
 
     @Test
     @DisplayName("Casting a one-mana instant gives +1/+1 and no double strike")

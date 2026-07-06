@@ -22,33 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ComfortingCounselTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has life-gain trigger and counter-threshold anthem static effect")
-    void hasCorrectEffects() {
-        ComfortingCounsel card = new ComfortingCounsel();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect counterEffect =
-                (PutCountersOnSelfEffect) card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst();
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.GROWTH);
-        assertThat(counterEffect.count()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(((SourceCounterThreshold) conditional.condition()).threshold()).isEqualTo(5);
-        assertThat(((SourceCounterThreshold) conditional.condition()).counterType()).isEqualTo(CounterType.GROWTH);
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(3);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("Puts a growth counter on itself when controller gains life")

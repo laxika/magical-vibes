@@ -54,43 +54,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class HuntmasterOfTheFellsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Front and back faces have correct effects configured")
-    void hasCorrectEffectsConfigured() {
-        HuntmasterOfTheFells card = new HuntmasterOfTheFells();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(token.tokenName()).isEqualTo("Wolf");
-        assertThat(token.power()).isEqualTo(2);
-        assertThat(token.toughness()).isEqualTo(2);
-        assertThat(token.color()).isEqualTo(CardColor.GREEN);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.WOLF);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1))
-                .isInstanceOfSatisfying(GainLifeEffect.class, e -> assertThat(e.amount()).isEqualTo(new Fixed(2)));
-
-        assertThat(card.getEffects(EffectSlot.ON_TRANSFORM_TO_FRONT_FACE)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect frontTransform =
-                (ConditionalEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(frontTransform.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        assertThat(card.getBackFaceCard()).isInstanceOf(RavagerOfTheFells.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("RavagerOfTheFells");
-
-        RavagerOfTheFells backFace = (RavagerOfTheFells) card.getBackFaceCard();
-        assertThat(backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE)).hasSize(1);
-        assertThat(backFace.getEffects(EffectSlot.ON_TRANSFORM_TO_BACK_FACE).getFirst())
-                .isInstanceOfSatisfying(DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect.class, e -> {
-                    assertThat(e.opponentDamage()).isEqualTo(2);
-                    assertThat(e.creatureDamage()).isEqualTo(2);
-                    assertThat(e.maxCreatureTargets()).isEqualTo(1);
-                });
-        assertThat(backFace.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB creates a Wolf token and controller gains 2 life")

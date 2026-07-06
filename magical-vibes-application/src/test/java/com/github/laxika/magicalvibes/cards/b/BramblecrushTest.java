@@ -24,15 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BramblecrushTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Bramblecrush has correct card properties")
-    void hasCorrectProperties() {
-        Bramblecrush card = new Bramblecrush();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Bramblecrush puts it on stack with target")

@@ -17,18 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BloodcrazedGoblinTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC CantAttackUnlessOpponentDealtDamageThisTurnEffect")
-    void hasCorrectStructure() {
-        BloodcrazedGoblin card = new BloodcrazedGoblin();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantAttackUnlessOpponentDealtDamageThisTurnEffect.class);
-    }
-
     // ===== Attack restriction =====
 
     @Test
@@ -77,7 +65,6 @@ class BloodcrazedGoblinTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

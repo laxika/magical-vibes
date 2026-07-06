@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FearTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fear has correct card properties")
-    void hasCorrectProperties() {
-        Fear card = new Fear();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.FEAR);
-        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -280,5 +263,4 @@ class FearTest extends BaseCardTest {
                 .hasMessageContaining("(fear)");
     }
 }
-
 

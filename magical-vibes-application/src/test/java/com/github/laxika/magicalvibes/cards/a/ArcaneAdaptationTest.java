@@ -35,26 +35,6 @@ class ArcaneAdaptationTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Arcane Adaptation has correct effects with affectsAllZones = true")
-    void hasCorrectEffects() {
-        ArcaneAdaptation card = new ArcaneAdaptation();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseSubtypeOnEnterEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantChosenSubtypeToOwnCreaturesEffect.class);
-
-        GrantChosenSubtypeToOwnCreaturesEffect effect =
-                (GrantChosenSubtypeToOwnCreaturesEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.affectsAllZones()).isTrue();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

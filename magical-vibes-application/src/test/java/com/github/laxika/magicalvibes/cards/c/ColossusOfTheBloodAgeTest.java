@@ -35,29 +35,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class ColossusOfTheBloodAgeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB damage and life gain plus ON_DEATH discard-draw trigger")
-    void hasCorrectStructure() {
-        ColossusOfTheBloodAge card = new ColossusOfTheBloodAge();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .hasAtLeastOneElementOfType(DealDamageToEachOpponentEffect.class)
-                .hasAtLeastOneElementOfType(GainLifeEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).damage())
-                .isEqualTo(new Fixed(3));
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).amount())
-                .isEqualTo(new Fixed(3));
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        DiscardUpToThenDrawThatManyEffect deathEffect =
-                (DiscardUpToThenDrawThatManyEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathEffect.maxDiscard()).isEqualTo(DiscardUpToThenDrawThatManyEffect.ANY_NUMBER);
-        assertThat(deathEffect.extraDraw()).isEqualTo(1);
-    }
-
     // ===== ETB =====
 
     @Test

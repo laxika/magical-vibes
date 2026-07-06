@@ -31,21 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RadiatingLightningTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has DealDamageToTargetPlayerEffect(3) + DealDamageToAllCreaturesTargetControlsEffect(1)")
-    void hasCorrectEffects() {
-        RadiatingLightning card = new RadiatingLightning();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(0)).damage()).isEqualTo(new Fixed(3));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DealDamageToAllCreaturesTargetControlsEffect.class);
-        assertThat(((DealDamageToAllCreaturesTargetControlsEffect) card.getEffects(EffectSlot.SPELL).get(1)).damage()).isEqualTo(1);
-    }
-
     // ===== Damage to player =====
 
     @Test

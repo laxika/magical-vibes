@@ -20,17 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OrchardSpiritTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Orchard Spirit has correct static effect")
-    void hasCorrectEffect() {
-        OrchardSpirit card = new OrchardSpirit();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CanBeBlockedOnlyByFilterEffect.class);
-        CanBeBlockedOnlyByFilterEffect effect = (CanBeBlockedOnlyByFilterEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.blockerPredicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-        assertThat(effect.allowedBlockersDescription()).isEqualTo("creatures with flying or reach");
-    }
+    
 
     @Test
     @DisplayName("Orchard Spirit cannot be blocked by a creature without flying or reach")

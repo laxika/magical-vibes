@@ -20,29 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LumengridDrakeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has metalcraft-conditional ETB bounce effect")
-    void hasMetalcraftEtbEffect() {
-        LumengridDrake card = new LumengridDrake();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Card needs target (delegates from metalcraft wrapper)")
-    void needsTarget() {
-        LumengridDrake card = new LumengridDrake();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
     // ===== ETB with metalcraft met =====
 
     @Test

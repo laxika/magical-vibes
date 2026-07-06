@@ -21,23 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UlvenwaldBearTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping PutPlusOnePlusOneCounterOnTargetCreatureEffect in ON_ENTER_BATTLEFIELD")
-    void hasCorrectStructure() {
-        UlvenwaldBear card = new UlvenwaldBear();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect morbid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(morbid.wrapped()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counters =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) morbid.wrapped();
-        assertThat(counters.count()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("No ETB trigger without morbid")

@@ -18,17 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DrogskolReaverTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_CONTROLLER_GAINS_LIFE trigger with DrawCardEffect(1)")
-    void hasCorrectProperties() {
-        DrogskolReaver card = new DrogskolReaver();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst()).amount())
-                .isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Draws a card when controller gains life")

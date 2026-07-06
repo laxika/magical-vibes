@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DenizenOfTheDeepTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Denizen of the Deep has correct card properties")
-    void hasCorrectProperties() {
-        DenizenOfTheDeep card = new DenizenOfTheDeep();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ReturnCreaturesToOwnersHandEffect.class);
-    }
-
     // ===== ETB trigger =====
 
     @Test

@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LiquimetalCoatingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct activated ability structure")
-    void hasCorrectAbility() {
-        LiquimetalCoating card = new LiquimetalCoating();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AddCardTypeToTargetPermanentEffect.class);
-        AddCardTypeToTargetPermanentEffect effect = (AddCardTypeToTargetPermanentEffect) ability.getEffects().getFirst();
-        assertThat(effect.cardType()).isEqualTo(CardType.ARTIFACT);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

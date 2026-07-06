@@ -31,17 +31,7 @@ class SkizzikTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{R}"));
     }
 
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping SacrificeSelfEffect on END_STEP_TRIGGERED")
-    void hasEndStepSacrificeTrigger() {
-        Skizzik card = new Skizzik();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        assertThat(((ConditionalEffect) card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst()).wrapped())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
+    
 
     // ===== Cast without kicker =====
 

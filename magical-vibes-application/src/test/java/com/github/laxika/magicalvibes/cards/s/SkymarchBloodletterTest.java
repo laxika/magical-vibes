@@ -31,32 +31,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class SkymarchBloodletterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ETB effects for opponent life loss and controller life gain")
-    void hasEtbEffects() {
-        SkymarchBloodletter card = new SkymarchBloodletter();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0))
-                .isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        TargetPlayerLosesLifeEffect loseEffect =
-                (TargetPlayerLosesLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(loseEffect.amount()).isEqualTo(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1))
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect gainEffect =
-                (GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1);
-        assertThat(gainEffect.amount()).isEqualTo(new Fixed(1));
-    }
-
-    @Test
-    @DisplayName("Needs target and has opponent-only target filter")
-    void needsTargetWithOpponentFilter() {
-        SkymarchBloodletter card = new SkymarchBloodletter();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack with selected opponent target")

@@ -35,28 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StormFleetPyromancerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has raid-conditional ETB deal 2 damage to any target effect")
-    void hasRaidEtbDamageEffect() {
-        StormFleetPyromancer card = new StormFleetPyromancer();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-
-        DealDamageToAnyTargetEffect damage = (DealDamageToAnyTargetEffect) raid.wrapped();
-        assertThat(damage.damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== ETB with raid met — damage to creature =====
 
     @Test

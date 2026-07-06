@@ -19,18 +19,7 @@ class DarksteelAxeTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Darksteel Axe has static +2/+0 boost effect")
-    void hasStaticBoostEffect() {
-        DarksteelAxe card = new DarksteelAxe();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
+    
 
     @Test
     @DisplayName("Darksteel Axe has equip {2} ability with sorcery-speed restriction")

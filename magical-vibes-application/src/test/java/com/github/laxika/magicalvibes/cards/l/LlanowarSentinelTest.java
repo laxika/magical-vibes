@@ -17,18 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LlanowarSentinelTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Llanowar Sentinel has correct card properties")
-    void hasCorrectProperties() {
-        LlanowarSentinel card = new LlanowarSentinel();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PayManaAndSearchLibraryForCardNamedToBattlefieldEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Llanowar Sentinel creates may prompt")

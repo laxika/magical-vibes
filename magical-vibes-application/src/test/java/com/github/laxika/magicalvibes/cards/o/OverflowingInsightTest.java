@@ -19,16 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class OverflowingInsightTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effects and targeting")
-    void hasCorrectProperties() {
-        OverflowingInsight card = new OverflowingInsight();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardForTargetPlayerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Target player draws seven cards")

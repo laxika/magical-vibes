@@ -22,25 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MasterOfTheWildHuntTest extends BaseCardTest {
 
-    // ===== Card setup =====
-
-    @Test
-    @DisplayName("Has upkeep token trigger and tap activated ability")
-    void hasCorrectAbilities() {
-        MasterOfTheWildHunt card = new MasterOfTheWildHunt();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(PackHuntEffect.class);
-    }
-
     // ===== Upkeep trigger: token creation =====
 
     @Test

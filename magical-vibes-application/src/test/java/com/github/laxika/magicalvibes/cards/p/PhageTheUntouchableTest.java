@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PhageTheUntouchableTest extends BaseCardTest {
 
-
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
         Permanent perm = new Permanent(card);
         perm.setSummoningSick(false);
@@ -30,15 +29,7 @@ class PhageTheUntouchableTest extends BaseCardTest {
         return perm;
     }
 
-    @Test
-    @DisplayName("Phage the Untouchable has correct card properties")
-    void hasCorrectProperties() {
-        PhageTheUntouchable card = new PhageTheUntouchable();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(LoseGameIfNotCastFromHandEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_CREATURE).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(TargetPlayerLosesGameEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Phage from hand does not make its controller lose the game")

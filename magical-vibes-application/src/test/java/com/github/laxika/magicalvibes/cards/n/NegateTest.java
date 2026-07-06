@@ -25,24 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NegateTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Negate has correct card properties")
-    void hasCorrectProperties() {
-        Negate card = new Negate();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryNotPredicate(
-                        new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL))
-                ),
-                "Target must be a noncreature spell."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

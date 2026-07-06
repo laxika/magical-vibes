@@ -28,34 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DreamcallerSirenTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has blocking restriction static effect")
-    void hasBlockingRestrictionEffect() {
-        DreamcallerSiren card = new DreamcallerSiren();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CanBlockOnlyIfAttackerMatchesPredicateEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has controls-another-Pirate conditional ETB tap effect")
-    void hasConditionalEtbEffect() {
-        DreamcallerSiren card = new DreamcallerSiren();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(((ControlsAnotherPermanent) conditional.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) ((ControlsAnotherPermanent) conditional.condition()).filter()).subtype()).isEqualTo(CardSubtype.PIRATE);
-        assertThat(conditional.wrapped()).isInstanceOf(TapTargetPermanentEffect.class);
-    }
-
     // ===== ETB with another Pirate =====
 
     @Nested

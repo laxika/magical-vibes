@@ -37,26 +37,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class PiousInterdictionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Pious Interdiction has correct card properties")
-    void hasCorrectProperties() {
-        PiousInterdiction card = new PiousInterdiction();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect lifeEffect =
-                (GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(lifeEffect.amount()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

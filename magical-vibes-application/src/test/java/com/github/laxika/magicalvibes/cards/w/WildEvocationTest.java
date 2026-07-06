@@ -31,18 +31,6 @@ class WildEvocationTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Wild Evocation has EACH_UPKEEP_TRIGGERED with RevealRandomHandCardAndPlayEffect")
-    void hasCorrectProperties() {
-        WildEvocation card = new WildEvocation();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(RevealRandomHandCardAndPlayEffect.class);
-    }
-
     // ===== Land in hand =====
 
     @Test

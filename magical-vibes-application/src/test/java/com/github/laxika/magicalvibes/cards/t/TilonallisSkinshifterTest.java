@@ -21,26 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TilonallisSkinshifterTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with BecomeCopyOfTargetCreatureUntilEndOfTurnEffect")
-    void hasCorrectAbilityStructure() {
-        TilonallisSkinshifter card = new TilonallisSkinshifter();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(BecomeCopyOfTargetCreatureUntilEndOfTurnEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has target filter for another nonlegendary attacking creature")
-    void hasCorrectTargetFilter() {
-        TilonallisSkinshifter card = new TilonallisSkinshifter();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-    }
-
     // ===== Attack trigger: target selection =====
 
     @Test

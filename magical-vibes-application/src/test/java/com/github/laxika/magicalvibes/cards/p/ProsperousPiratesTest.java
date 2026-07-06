@@ -17,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ProsperousPiratesTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one ON_ENTER_BATTLEFIELD effect that creates two Treasure tokens")
-    void hasCorrectEffect() {
-        ProsperousPirates card = new ProsperousPirates();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-        assertThat(effect.amount()).isEqualTo(new Fixed(2));
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.TREASURE);
-    }
-
     // ===== Casting =====
 
     @Test

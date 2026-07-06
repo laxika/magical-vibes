@@ -23,36 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ColossusOfSardiaTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Colossus of Sardia has DoesntUntapDuringUntapStepEffect as static effect")
-    void hasDoesntUntapStaticEffect() {
-        ColossusOfSardia card = new ColossusOfSardia();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoesntUntapDuringUntapStepEffect.class);
-    }
-
-    @Test
-    @DisplayName("Colossus of Sardia has activated ability with upkeep timing restriction")
-    void hasActivatedAbilityWithTimingRestriction() {
-        ColossusOfSardia card = new ColossusOfSardia();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{9}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.ONLY_DURING_YOUR_UPKEEP);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(UntapSelfEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

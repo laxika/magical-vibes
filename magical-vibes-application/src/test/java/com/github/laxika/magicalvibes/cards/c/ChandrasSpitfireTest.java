@@ -20,22 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChandrasSpitfireTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chandra's Spitfire has the noncombat damage triggered ability")
-    void hasCorrectEffects() {
-        ChandrasSpitfire card = new ChandrasSpitfire();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-
-        BoostSelfEffect boost = (BoostSelfEffect) card.getEffects(EffectSlot.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(3));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
-
     // ===== Triggering =====
 
     @Test

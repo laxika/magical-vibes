@@ -16,18 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PhantomBeastTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phantom Beast has ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY SacrificeSelfEffect")
-    void hasCorrectEffect() {
-        PhantomBeast card = new PhantomBeast();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
-
     // ===== Sacrifice when targeted by opponent's spell =====
 
     @Test

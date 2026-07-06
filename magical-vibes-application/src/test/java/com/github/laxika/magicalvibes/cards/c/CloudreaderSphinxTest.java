@@ -18,20 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CloudreaderSphinxTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cloudreader Sphinx has scry 2 ETB effect")
-    void hasCorrectProperties() {
-        CloudreaderSphinx card = new CloudreaderSphinx();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ScryEffect.class);
-        ScryEffect effect = (ScryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(2);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

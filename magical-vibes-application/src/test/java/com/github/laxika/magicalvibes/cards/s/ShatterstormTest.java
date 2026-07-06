@@ -26,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ShatterstormTest extends BaseCardTest {
 
-
     private static Card indestructibleArtifact() {
         Card card = new Card();
         card.setName("Darksteel Relic");
@@ -37,18 +36,7 @@ class ShatterstormTest extends BaseCardTest {
         return card;
     }
 
-
-    @Test
-    @DisplayName("Shatterstorm has correct card properties")
-    void hasCorrectProperties() {
-        Shatterstorm card = new Shatterstorm();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-        DestroyAllPermanentsEffect effect = (DestroyAllPermanentsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentIsArtifactPredicate.class);
-        assertThat(effect.cannotBeRegenerated()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Casting Shatterstorm puts it on the stack as a sorcery")

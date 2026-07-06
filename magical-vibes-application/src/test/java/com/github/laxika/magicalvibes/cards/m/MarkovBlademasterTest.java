@@ -14,15 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MarkovBlademasterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER trigger with PutCountersOnSourceEffect")
-    void hasCorrectEffects() {
-        MarkovBlademaster card = new MarkovBlademaster();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Gets two +1/+1 counters and deals 3 damage from double strike")

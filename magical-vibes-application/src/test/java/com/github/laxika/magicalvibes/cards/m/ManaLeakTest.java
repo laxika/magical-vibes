@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ManaLeakTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mana Leak has correct card properties")
-    void hasCorrectProperties() {
-        ManaLeak card = new ManaLeak();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).getFirst()).amount()).isEqualTo(3);
-    }
-
     // ===== Casting =====
 
     @Test

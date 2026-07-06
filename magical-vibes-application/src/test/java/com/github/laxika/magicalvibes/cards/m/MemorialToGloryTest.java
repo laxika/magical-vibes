@@ -21,24 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MemorialToGloryTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Memorial to Glory has correct card structure")
-    void hasCorrectProperties() {
-        MemorialToGlory card = new MemorialToGlory();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(0);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isEqualTo("{3}{W}");
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(CreateTokenEffect.class);
-    }
-
     // ===== Enters the battlefield tapped =====
 
     @Test

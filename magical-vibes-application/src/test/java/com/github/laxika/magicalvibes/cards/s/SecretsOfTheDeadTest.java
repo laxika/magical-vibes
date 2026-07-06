@@ -18,20 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SecretsOfTheDeadTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has cast-from-graveyard draw trigger effect")
-    void hasCorrectEffect() {
-        SecretsOfTheDead card = new SecretsOfTheDead();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(CastFromGraveyardTriggerEffect.class);
-
-        CastFromGraveyardTriggerEffect trigger =
-                (CastFromGraveyardTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isEqualTo(new DrawCardEffect(1));
-    }
+    
 
     @Test
     @DisplayName("Draws a card when casting a flashback spell")

@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TrainingDroneTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has CantAttackOrBlockUnlessEquippedEffect as static effect")
-    void hasCorrectEffect() {
-        TrainingDrone card = new TrainingDrone();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantAttackOrBlockUnlessEquippedEffect.class);
-    }
-
     // ===== Cannot attack without equipment =====
 
     @Test

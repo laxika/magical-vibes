@@ -24,18 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NecroticOozeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Necrotic Ooze has static effect to gain activated abilities from graveyard creatures")
-    void hasCorrectStaticEffect() {
-        NecroticOoze card = new NecroticOoze();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect.class);
-    }
-
     // ===== Gaining abilities from graveyard creatures =====
 
     @Test

@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RighteousnessTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Righteousness has correct card properties")
-    void hasCorrectProperties() {
-        Righteousness card = new Righteousness();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(7));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(7));
-    }
-
     // ===== Casting =====
 
     @Test

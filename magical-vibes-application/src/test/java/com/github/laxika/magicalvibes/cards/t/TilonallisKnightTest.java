@@ -23,25 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TilonallisKnightTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with ConditionalEffect(DINOSAUR) wrapping BoostSelfEffect(1, 1)")
-    void hasCorrectStructure() {
-        TilonallisKnight card = new TilonallisKnight();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(((ControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
-        assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Trigger fires when controlling a Dinosaur =====
 
     @Test
@@ -118,7 +99,6 @@ class TilonallisKnightTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private Card createDinosaur() {
         Card card = new GrizzlyBears();

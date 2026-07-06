@@ -15,20 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DarksteelJuggernautTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has P/T equal to controlled artifacts and must attack static effects")
-    void hasCorrectEffects() {
-        DarksteelJuggernaut card = new DarksteelJuggernaut();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(PowerToughnessEqualToControlledPermanentCountEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(MustAttackEffect.class);
-    }
-
     // ===== P/T = number of artifacts you control =====
 
     @Test

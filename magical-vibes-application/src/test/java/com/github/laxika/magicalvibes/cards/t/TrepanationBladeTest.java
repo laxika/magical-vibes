@@ -26,15 +26,7 @@ class TrepanationBladeTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Trepanation Blade has ON_ATTACK reveal-until-land effect")
-    void hasOnAttackEffect() {
-        TrepanationBlade card = new TrepanationBlade();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(RevealUntilTypeMillAndBoostAttackerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Trepanation Blade has equip {2} ability")

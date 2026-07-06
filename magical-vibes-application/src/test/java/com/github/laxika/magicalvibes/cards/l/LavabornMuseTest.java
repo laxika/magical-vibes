@@ -15,23 +15,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LavabornMuseTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advances to UPKEEP
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lavaborn Muse has correct card properties")
-    void hasCorrectProperties() {
-        LavabornMuse card = new LavabornMuse();
-
-        assertThat(card.getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.OPPONENT_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(DealDamageIfFewCardsInHandEffect.class);
     }
 
     // ===== Triggering =====

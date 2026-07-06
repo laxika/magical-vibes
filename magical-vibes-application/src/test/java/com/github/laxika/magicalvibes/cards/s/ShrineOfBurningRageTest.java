@@ -25,38 +25,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfBurningRageTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Shrine of Burning Rage has upkeep trigger, red spell trigger, and activated ability")
-    void hasCorrectAbilityStructure() {
-        ShrineOfBurningRage card = new ShrineOfBurningRage();
-
-        // Upkeep triggered ability (mandatory charge counter)
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Red spell cast trigger (mandatory charge counter)
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardColorPredicate.class);
-        assertThat(((CardColorPredicate) trigger.spellFilter()).color()).isEqualTo(CardColor.RED);
-
-        // Activated ability ({3}, {T}, sacrifice: deal damage equal to charge counters to any target)
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{3}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1))
-                .isEqualTo(new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE)));
-        assertThat(ability.isNeedsTarget()).isTrue();
-    }
-
     // ===== Upkeep trigger =====
 
     @Test

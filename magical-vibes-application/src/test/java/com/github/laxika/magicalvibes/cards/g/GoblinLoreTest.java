@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GoblinLoreTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Goblin Lore has correct card properties")
-    void hasCorrectProperties() {
-        GoblinLore card = new GoblinLore();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(4));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerRandomDiscardEffect.class);
-        TargetPlayerRandomDiscardEffect discardEffect = (TargetPlayerRandomDiscardEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(discardEffect.amount()).isEqualTo(3);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -128,5 +111,4 @@ class GoblinLoreTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
     }
 }
-
 

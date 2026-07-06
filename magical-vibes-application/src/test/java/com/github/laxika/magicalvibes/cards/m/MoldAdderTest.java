@@ -22,25 +22,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class MoldAdderTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Mold Adder has correct effect configuration")
-    void hasCorrectEffects() {
-        MoldAdder card = new MoldAdder();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect.class);
-
-        PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect trigger =
-                (PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect) mayEffect.wrapped();
-        assertThat(trigger.triggerColors()).isEqualTo(Set.of(CardColor.BLUE, CardColor.BLACK));
-        assertThat(trigger.amount()).isEqualTo(1);
-        assertThat(trigger.onlyOwnSpells()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Opponent casting a blue spell triggers may ability and accepting adds counter")

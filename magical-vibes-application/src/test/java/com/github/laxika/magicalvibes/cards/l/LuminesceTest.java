@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LuminesceTest extends BaseCardTest {
 
-
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
         Card card = new Card();
         card.setName(name);
@@ -33,21 +32,6 @@ class LuminesceTest extends BaseCardTest {
         card.setPower(power);
         card.setToughness(toughness);
         return card;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Luminesce has correct card properties")
-    void hasCorrectProperties() {
-        Luminesce card = new Luminesce();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(PreventDamageFromColorsEffect.class);
-
-        PreventDamageFromColorsEffect effect = (PreventDamageFromColorsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.RED);
     }
 
     // ===== Casting =====

@@ -20,21 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FeralRidgewolfTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Feral Ridgewolf has correct activated ability")
-    void hasCorrectAbility() {
-        FeralRidgewolf card = new FeralRidgewolf();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Casting Feral Ridgewolf puts it on the stack")

@@ -21,20 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class EvacuationTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Evacuation has correct card properties")
-    void hasCorrectProperties() {
-        Evacuation card = new Evacuation();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnCreaturesToOwnersHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

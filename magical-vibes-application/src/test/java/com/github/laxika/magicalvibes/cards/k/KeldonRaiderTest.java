@@ -20,19 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class KeldonRaiderTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Keldon Raider has ON_ENTER_BATTLEFIELD MayEffect wrapping DiscardAndDrawCardEffect")
-    void hasCorrectEffect() {
-        KeldonRaider card = new KeldonRaider();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DiscardAndDrawCardEffect.class);
-    }
-
     // ===== ETB trigger: accept may, discard then draw =====
 
     @Test

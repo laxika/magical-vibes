@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GlissaTheTraitorTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CREATURE_DIES trigger with MayEffect wrapping ReturnCardFromGraveyardEffect")
-    void hasCorrectStructure() {
-        GlissaTheTraitor card = new GlissaTheTraitor();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPPONENT_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Trigger fires when opponent's creature dies =====
 
     @Test

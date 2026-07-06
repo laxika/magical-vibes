@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NeurokInvisimancerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Neurok Invisimancer has correct effects")
-    void hasCorrectEffects() {
-        NeurokInvisimancer card = new NeurokInvisimancer();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantBeBlockedEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MakeCreatureUnblockableEffect.class);
-    }
-
     // ===== ETB makes target unblockable =====
 
     @Test

@@ -17,24 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArvadTheCursedTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Arvad the Cursed has static boost effect for legendary creatures")
-    void hasCorrectEffects() {
-        ArvadTheCursed card = new ArvadTheCursed();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasSupertypePredicate.class);
-        PermanentHasSupertypePredicate filter = (PermanentHasSupertypePredicate) boost.filter();
-        assertThat(filter.supertype()).isEqualTo(CardSupertype.LEGENDARY);
-    }
-
     // ===== Static effect: buffs other legendary creatures you control =====
 
     @Test
@@ -126,7 +108,5 @@ class ArvadTheCursedTest extends BaseCardTest {
             assertThat(gqs.getEffectiveToughness(gd, arvad)).isEqualTo(5);
         }
     }
-
-    // ===== Helpers =====
 
 }

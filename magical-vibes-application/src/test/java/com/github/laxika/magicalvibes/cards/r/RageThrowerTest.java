@@ -31,21 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RageThrowerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ANY_CREATURE_DIES effect with DealDamageToTargetPlayerEffect(2)")
-    void hasCorrectStructure() {
-        RageThrower card = new RageThrower();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        DealDamageToTargetPlayerEffect effect =
-                (DealDamageToTargetPlayerEffect) card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Triggered ability: another creature dies =====
 
     @Test

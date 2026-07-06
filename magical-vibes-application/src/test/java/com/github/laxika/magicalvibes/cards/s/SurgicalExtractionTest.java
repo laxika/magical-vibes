@@ -24,18 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SurgicalExtractionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Surgical Extraction has correct card properties")
-    void hasCorrectProperties() {
-        SurgicalExtraction card = new SurgicalExtraction();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ExileTargetGraveyardCardAndSameNameFromZonesEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

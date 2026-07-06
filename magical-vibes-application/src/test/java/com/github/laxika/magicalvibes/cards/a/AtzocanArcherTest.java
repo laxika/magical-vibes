@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AtzocanArcherTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping SourceFightsTargetCreatureEffect on ETB")
-    void hasCorrectEffects() {
-        AtzocanArcher card = new AtzocanArcher();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SourceFightsTargetCreatureEffect.class);
-    }
-
     // ===== ETB fight accepted =====
 
     @Nested

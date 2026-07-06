@@ -25,23 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PsychicBarrierTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Psychic Barrier has correct card properties")
-    void hasCorrectProperties() {
-        PsychicBarrier card = new PsychicBarrier();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
-                "Target must be a creature spell."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(TargetSpellControllerLosesLifeEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(CounterSpellEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

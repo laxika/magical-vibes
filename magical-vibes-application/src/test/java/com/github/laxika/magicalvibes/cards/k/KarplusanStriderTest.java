@@ -23,16 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KarplusanStriderTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Karplusan Strider has correct card properties")
-    void hasCorrectProperties() {
-        KarplusanStrider card = new KarplusanStrider();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new CantBeTargetedBySpellColorsEffect(Set.of(CardColor.BLUE, CardColor.BLACK)));
-    }
+    
 
     @Test
     @DisplayName("Blue spells cannot target Karplusan Strider")

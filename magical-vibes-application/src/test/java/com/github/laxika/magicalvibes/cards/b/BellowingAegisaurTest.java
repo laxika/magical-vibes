@@ -21,18 +21,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class BellowingAegisaurTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bellowing Aegisaur has one ON_DEALT_DAMAGE effect")
-    void hasCorrectEffect() {
-        BellowingAegisaur card = new BellowingAegisaur();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0))
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

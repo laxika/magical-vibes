@@ -19,19 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DissipateTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dissipate has correct card properties")
-    void hasCorrectProperties() {
-        Dissipate card = new Dissipate();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellAndExileEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

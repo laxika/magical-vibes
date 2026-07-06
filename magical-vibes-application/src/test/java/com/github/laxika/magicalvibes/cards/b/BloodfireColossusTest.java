@@ -22,7 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BloodfireColossusTest extends BaseCardTest {
 
-
     /** A 7/7 creature that survives 6 damage. */
     private static Card toughCreature() {
         Card card = new Card();
@@ -46,26 +45,6 @@ class BloodfireColossusTest extends BaseCardTest {
         card.setToughness(2);
         card.setKeywords(Set.of(Keyword.INDESTRUCTIBLE));
         return card;
-    }
-
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bloodfire Colossus has correct card properties")
-    void hasCorrectProperties() {
-        BloodfireColossus card = new BloodfireColossus();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{R}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(MassDamageEffect.class);
-        assertThat(((MassDamageEffect) ability.getEffects().get(1)).damage()).isEqualTo(6);
     }
 
     // ===== Activation and sacrifice =====

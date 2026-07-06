@@ -18,25 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VonaButcherOfMaganTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct activated ability structure")
-    void hasCorrectActivatedAbility() {
-        VonaButcherOfMagan card = new VonaButcherOfMagan();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(PayLifeCost.class);
-        PayLifeCost lifeCost = (PayLifeCost) ability.getEffects().get(0);
-        assertThat(lifeCost.amount()).isEqualTo(7);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.ONLY_DURING_YOUR_TURN);
-    }
-
     // ===== Ability: destroy target nonland permanent =====
 
     @Test

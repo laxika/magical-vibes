@@ -17,22 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SquadronHawkTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Squadron Hawk has ETB may-search effect")
-    void hasCorrectEffect() {
-        SquadronHawk card = new SquadronHawk();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsByNameToHandEffect.class);
-
-        SearchLibraryForCardsByNameToHandEffect searchEffect =
-                (SearchLibraryForCardsByNameToHandEffect) mayEffect.wrapped();
-        assertThat(searchEffect.cardName()).isEqualTo("Squadron Hawk");
-        assertThat(searchEffect.maxCount()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Resolving Squadron Hawk creates may prompt")

@@ -24,31 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CaptivatingCrewTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Captivating Crew has correct activated ability")
-    void hasCorrectProperties() {
-        CaptivatingCrew card = new CaptivatingCrew();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}{R}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().get(0).getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(3);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(UntapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(GainControlOfTargetPermanentUntilEndOfTurnEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().get(2);
-        assertThat(grantEffect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Activating ability =====
 
     @Test

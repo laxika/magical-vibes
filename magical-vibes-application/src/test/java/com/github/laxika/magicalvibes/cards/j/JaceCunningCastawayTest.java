@@ -34,55 +34,11 @@ class JaceCunningCastawayTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has RegisterDelayedCombatDamageLootEffect(1, 1)")
-    void plusOneAbilityHasCorrectEffect() {
-        JaceCunningCastaway card = new JaceCunningCastaway();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(RegisterDelayedCombatDamageLootEffect.class);
-        RegisterDelayedCombatDamageLootEffect effect =
-                (RegisterDelayedCombatDamageLootEffect) ability.getEffects().getFirst();
-        assertThat(effect.drawAmount()).isEqualTo(1);
-        assertThat(effect.discardAmount()).isEqualTo(1);
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability creates 2/2 blue Illusion token with sacrifice-on-target trigger")
-    void minusTwoAbilityHasCorrectEffect() {
-        JaceCunningCastaway card = new JaceCunningCastaway();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) ability.getEffects().getFirst();
-        assertThat(effect.tokenName()).isEqualTo("Illusion");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.BLUE);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.ILLUSION);
-        assertThat(effect.tokenEffects()).containsKey(EffectSlot.ON_BECOMES_TARGET_OF_SPELL);
-        assertThat(effect.tokenEffects().get(EffectSlot.ON_BECOMES_TARGET_OF_SPELL))
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("-5 ability has CreateTokenCopyOfSourceEffect(removeLegendary=true, amount=2)")
-    void minusFiveAbilityHasCorrectEffect() {
-        JaceCunningCastaway card = new JaceCunningCastaway();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-5);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenCopyOfSourceEffect.class);
-        CreateTokenCopyOfSourceEffect effect =
-                (CreateTokenCopyOfSourceEffect) ability.getEffects().getFirst();
-        assertThat(effect.removeLegendary()).isTrue();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
+    
 
     // ===== +1 ability: delayed combat damage loot trigger =====
 

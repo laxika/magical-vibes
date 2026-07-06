@@ -22,19 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NightmareTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Nightmare has correct card properties")
-    void hasCorrectProperties() {
-        Nightmare card = new Nightmare();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToControlledPermanentCountEffect.class);
-        PowerToughnessEqualToControlledPermanentCountEffect effect =
-                (PowerToughnessEqualToControlledPermanentCountEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.SWAMP));
-    }
+    
 
     @Test
     @DisplayName("Casting Nightmare puts it on the stack")

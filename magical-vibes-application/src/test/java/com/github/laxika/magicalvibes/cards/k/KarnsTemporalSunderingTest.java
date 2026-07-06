@@ -40,22 +40,6 @@ class KarnsTemporalSunderingTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effects: extra turn, bounce, exile self")
-    void hasCorrectProperties() {
-        KarnsTemporalSundering card = new KarnsTemporalSundering();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isEqualTo(1);
-        assertThat(card.getMaxTargets()).isEqualTo(2);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExtraTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(ExileSpellEffect.class);
-    }
-
     // ===== Legendary sorcery restriction =====
 
     @Test

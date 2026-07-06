@@ -22,22 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThranTemporalGatewayTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct activated ability structure")
-    void hasCorrectProperties() {
-        ThranTemporalGateway card = new ThranTemporalGateway();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{4}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).singleElement()
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
-        PutCardToBattlefieldEffect wrapped = (PutCardToBattlefieldEffect) mayEffect.wrapped();
-        assertThat(wrapped.predicate()).isNotNull();
-        assertThat(wrapped.label()).isEqualTo("historic permanent");
-    }
+    
 
     @Test
     @DisplayName("Activating ability taps Gateway, spends mana, and goes on stack")

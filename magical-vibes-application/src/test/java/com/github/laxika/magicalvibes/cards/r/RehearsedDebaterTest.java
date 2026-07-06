@@ -21,17 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RehearsedDebaterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Repartee trigger is a SpellCastTriggerEffect gated on targeting a creature")
-    void hasCorrectStructure() {
-        RehearsedDebater card = new RehearsedDebater();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.resolvedEffects()).singleElement().isInstanceOf(BoostSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting an instant that targets a creature gives +1/+1 until end of turn")

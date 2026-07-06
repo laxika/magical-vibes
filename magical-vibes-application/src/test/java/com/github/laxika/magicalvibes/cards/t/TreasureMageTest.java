@@ -23,19 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TreasureMageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Treasure Mage has ETB may search for artifact with MV 6 or greater")
-    void hasCorrectEffects() {
-        TreasureMage card = new TreasureMage();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect searchEffect =
-                (SearchLibraryForCardsToHandEffect) mayEffect.wrapped();
-        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("artifact card with mana value 6 or greater");
-    }
+    
 
     @Test
     @DisplayName("Resolving Treasure Mage creates may prompt")

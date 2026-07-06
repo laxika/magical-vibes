@@ -47,20 +47,6 @@ class MirranCrusaderTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mirran Crusader has protection from black and green")
-    void hasCorrectProperties() {
-        MirranCrusader card = new MirranCrusader();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromColorsEffect.class);
-
-        ProtectionFromColorsEffect protection = (ProtectionFromColorsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
-    }
-
     // ===== Casting =====
 
     @Test

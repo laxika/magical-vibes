@@ -26,20 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SeizeTheInitiativeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Seize the Initiative has correct effects")
-    void hasCorrectEffects() {
-        SeizeTheInitiative card = new SeizeTheInitiative();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Resolving Seize the Initiative gives +1/+1 and first strike")

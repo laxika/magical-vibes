@@ -26,26 +26,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class StarOfExtinctionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has correct effects: DestroyTargetPermanentEffect and MassDamageEffect with planeswalker damage")
-    void hasCorrectEffects() {
-        StarOfExtinction card = new StarOfExtinction();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(MassDamageEffect.class);
-
-        MassDamageEffect massDamage = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(massDamage.damage()).isEqualTo(20);
-        assertThat(massDamage.damagesPlaneswalkers()).isTrue();
-        assertThat(massDamage.damagesPlayers()).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

@@ -54,20 +54,6 @@ class BaneslayerAngelTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Baneslayer Angel has protection from Demons and Dragons")
-    void hasProtectionFromDemonsAndDragons() {
-        BaneslayerAngel card = new BaneslayerAngel();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromSubtypesEffect.class);
-
-        ProtectionFromSubtypesEffect protection = (ProtectionFromSubtypesEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(protection.subtypes()).containsExactlyInAnyOrder(CardSubtype.DEMON, CardSubtype.DRAGON);
-    }
-
     // ===== Protection - blocking =====
 
     @Test

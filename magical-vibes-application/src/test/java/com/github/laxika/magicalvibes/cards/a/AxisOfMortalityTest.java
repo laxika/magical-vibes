@@ -41,20 +41,6 @@ class AxisOfMortalityTest extends BaseCardTest {
         harness.handleMayAbilityChosen(controller, accept);
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Axis of Mortality has correct upkeep trigger with MayEffect wrapping ExchangeTargetPlayersLifeTotalsEffect")
-    void hasCorrectEffects() {
-        AxisOfMortality card = new AxisOfMortality();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ExchangeTargetPlayersLifeTotalsEffect.class);
-    }
-
     // ===== Exchange life totals (accepted) =====
 
     @Test

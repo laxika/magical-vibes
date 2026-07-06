@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GaeasRevengeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gaea's Revenge has cant-be-countered and non-color targeting restriction")
-    void hasCorrectProperties() {
-        GaeasRevenge card = new GaeasRevenge();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeCounteredEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeTargetedByNonColorSourcesEffect.class);
-        CantBeTargetedByNonColorSourcesEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof CantBeTargetedByNonColorSourcesEffect)
-                .map(e -> (CantBeTargetedByNonColorSourcesEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.allowedColor()).isEqualTo(CardColor.GREEN);
-    }
-
     // ===== Can't be countered =====
 
     @Test

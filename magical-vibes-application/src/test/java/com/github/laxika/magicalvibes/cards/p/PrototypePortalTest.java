@@ -23,32 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PrototypePortalTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB imprint MayEffect and activated ability with CreateTokenCopyOfImprintedCardEffect(false, false)")
-    void hasCorrectStructure() {
-        PrototypePortal card = new PrototypePortal();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ExileFromHandToImprintEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{X}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .first()
-                .isInstanceOf(CreateTokenCopyOfImprintedCardEffect.class);
-
-        CreateTokenCopyOfImprintedCardEffect effect = (CreateTokenCopyOfImprintedCardEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.grantHaste()).isFalse();
-        assertThat(effect.exileAtEndStep()).isFalse();
-    }
-
     // ===== ETB imprint =====
 
     @Test

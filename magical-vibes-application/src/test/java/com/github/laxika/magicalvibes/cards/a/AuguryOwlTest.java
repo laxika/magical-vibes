@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AuguryOwlTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Augury Owl has scry 3 ETB effect")
-    void hasCorrectProperties() {
-        AuguryOwl card = new AuguryOwl();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ScryEffect.class);
-        ScryEffect effect = (ScryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

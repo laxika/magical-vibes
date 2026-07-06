@@ -17,20 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IchorWellspringTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB and death draw effects")
-    void hasCorrectEffects() {
-        IchorWellspring card = new IchorWellspring();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(DrawCardEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== ETB trigger =====
 
     @Test

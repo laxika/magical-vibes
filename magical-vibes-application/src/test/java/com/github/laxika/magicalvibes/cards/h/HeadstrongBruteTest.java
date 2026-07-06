@@ -26,29 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HeadstrongBruteTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC CantBlockEffect and ConditionalEffect(PIRATE) wrapping GrantKeywordEffect(MENACE, SELF)")
-    void hasCorrectStaticEffects() {
-        HeadstrongBrute card = new HeadstrongBrute();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(CantBlockEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(((ControlsAnotherPermanent) conditional.condition()).filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) ((ControlsAnotherPermanent) conditional.condition()).filter()).subtype()).isEqualTo(CardSubtype.PIRATE);
-        assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
-        assertThat(grant.keywords()).containsExactly(Keyword.MENACE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Can't block =====
 
     @Test

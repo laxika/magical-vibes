@@ -19,16 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AvatarOfMightTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Avatar of Might has correct card properties")
-    void hasCorrectProperties() {
-        AvatarOfMight card = new AvatarOfMight();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceOwnCastCostIfOpponentControlsMoreCreaturesEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Cannot cast Avatar of Might for {G}{G} without cost reduction")

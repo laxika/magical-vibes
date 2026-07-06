@@ -26,14 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CultivateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Cultivate has SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect as spell effect")
-    void hasCorrectEffect() {
-        Cultivate card = new Cultivate();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Cultivate puts it on the stack as a sorcery")

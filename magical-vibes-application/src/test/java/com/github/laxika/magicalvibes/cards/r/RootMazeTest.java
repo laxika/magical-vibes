@@ -18,17 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RootMazeTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Root Maze has correct card properties")
-    void hasCorrectProperties() {
-        RootMaze card = new RootMaze();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(EnterPermanentsOfTypesTappedEffect.class);
-        EnterPermanentsOfTypesTappedEffect effect = (EnterPermanentsOfTypesTappedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.cardTypes()).containsExactlyInAnyOrder(CardType.ARTIFACT, CardType.LAND);
-    }
+    
 
     @Test
     @DisplayName("Lands enter tapped while Root Maze is on battlefield")

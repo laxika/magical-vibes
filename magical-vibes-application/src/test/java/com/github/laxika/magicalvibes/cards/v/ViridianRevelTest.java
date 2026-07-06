@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ViridianRevelTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Viridian Revel has the opponent artifact-to-graveyard triggered ability")
-    void hasCorrectEffects() {
-        ViridianRevel card = new ViridianRevel();
-
-        assertThat(card.getEffects(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-        assertThat(may.prompt()).isEqualTo("Draw a card?");
-    }
-
     // ===== Triggering =====
 
     @Test

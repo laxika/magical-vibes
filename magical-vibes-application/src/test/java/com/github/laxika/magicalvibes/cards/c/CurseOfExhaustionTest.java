@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CurseOfExhaustionTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Exhaustion has correct effects")
-    void hasCorrectEffects() {
-        CurseOfExhaustion card = new CurseOfExhaustion();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(LimitSpellsForEnchantedPlayerEffect.class);
-        LimitSpellsForEnchantedPlayerEffect effect =
-                (LimitSpellsForEnchantedPlayerEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.maxSpells()).isEqualTo(1);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

@@ -17,20 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SpikeTailedCeratopsTest extends BaseCardTest {
 
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Spike-Tailed Ceratops has GrantAdditionalBlockEffect(1) on STATIC slot")
-    void hasCorrectEffect() {
-        SpikeTailedCeratops card = new SpikeTailedCeratops();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantAdditionalBlockEffect.class);
-        GrantAdditionalBlockEffect effect = (GrantAdditionalBlockEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.additionalBlocks()).isEqualTo(1);
-    }
-
     // ===== Blocking: Ceratops can block two attackers =====
 
     @Test

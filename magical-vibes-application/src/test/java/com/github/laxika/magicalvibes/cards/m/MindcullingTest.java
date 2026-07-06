@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MindcullingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mindculling has correct effects and target filter")
-    void hasCorrectProperties() {
-        Mindculling card = new Mindculling();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new Fixed(2));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Targeting restriction =====
 
     @Test

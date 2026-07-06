@@ -22,16 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NaturalizeTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Naturalize has correct card properties")
-    void hasCorrectProperties() {
-        Naturalize card = new Naturalize();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Naturalize puts it on the stack with target")

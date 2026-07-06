@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RallyingRoarTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rallying Roar has correct effects")
-    void hasCorrectEffects() {
-        RallyingRoar card = new RallyingRoar();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(UntapAllControlledPermanentsEffect.class);
-
-        BoostAllOwnCreaturesEffect boost = (BoostAllOwnCreaturesEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-    }
-
     // ===== Casting =====
 
     @Test

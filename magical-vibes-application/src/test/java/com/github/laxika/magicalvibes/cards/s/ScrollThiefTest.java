@@ -27,18 +27,6 @@ class ScrollThiefTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER DrawCardEffect")
-    void hasCorrectEffect() {
-        ScrollThief card = new ScrollThief();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test

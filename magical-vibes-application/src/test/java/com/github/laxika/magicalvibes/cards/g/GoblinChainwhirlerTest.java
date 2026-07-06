@@ -16,27 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GoblinChainwhirlerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Goblin Chainwhirler does not need a target")
-    void doesNotNeedTarget() {
-        GoblinChainwhirler card = new GoblinChainwhirler();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
-
-    @Test
-    @DisplayName("Has two ETB effects: damage to opponents and damage to their creatures/planeswalkers")
-    void hasEtbEffects() {
-        GoblinChainwhirler card = new GoblinChainwhirler();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .hasAtLeastOneElementOfType(DealDamageToEachOpponentEffect.class)
-                .hasAtLeastOneElementOfType(DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

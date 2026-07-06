@@ -18,20 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StrongholdDisciplineTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Stronghold Discipline has correct card properties")
-    void hasCorrectProperties() {
-        StrongholdDiscipline card = new StrongholdDiscipline();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(EachPlayerLosesLifePerCreatureControlledEffect.class);
-        EachPlayerLosesLifePerCreatureControlledEffect effect =
-                (EachPlayerLosesLifePerCreatureControlledEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.lifePerCreature()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Casting Stronghold Discipline puts it on the stack as a sorcery")

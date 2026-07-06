@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MurderOfCrowsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Murder of Crows has ON_ANY_CREATURE_DIES MayEffect wrapping DrawAndDiscardCardEffect")
-    void hasCorrectEffect() {
-        MurderOfCrows card = new MurderOfCrows();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawAndDiscardCardEffect.class);
-    }
-
     // ===== Trigger: another creature dies, accept may =====
 
     @Test

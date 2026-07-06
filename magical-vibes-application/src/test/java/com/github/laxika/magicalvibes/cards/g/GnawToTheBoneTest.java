@@ -23,18 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GnawToTheBoneTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gnaw to the Bone has correct card properties")
-    void hasCorrectProperties() {
-        GnawToTheBone card = new GnawToTheBone();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isEqualTo(new GainLifeEffect(new Scaled(
-                        new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER), 2)));
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{2}{G}");
-    }
+    
 
     @Test
     @DisplayName("Gains 2 life per creature card in graveyard")

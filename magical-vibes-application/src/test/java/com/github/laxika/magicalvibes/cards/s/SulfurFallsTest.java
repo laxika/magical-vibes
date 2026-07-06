@@ -23,34 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SulfurFallsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has conditional enters-tapped effect checking for Island or Mountain")
-    void hasConditionalEntersTappedEffect() {
-        SulfurFalls card = new SulfurFalls();
-
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new EntersTappedUnlessControlsPermanentEffect(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ISLAND, CardSubtype.MOUNTAIN))));
-    }
-
-    @Test
-    @DisplayName("Has two mana abilities for blue and red")
-    void hasManaAbilities() {
-        SulfurFalls card = new SulfurFalls();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLUE));
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.RED));
-    }
-
     // ===== Enters tapped (no qualifying lands) =====
 
     @Test

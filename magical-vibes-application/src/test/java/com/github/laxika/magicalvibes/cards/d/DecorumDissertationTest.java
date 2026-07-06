@@ -17,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DecorumDissertationTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has draw and life loss effects targeting a player")
-    void hasCorrectStructure() {
-        DecorumDissertation card = new DecorumDissertation();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Target player draws two cards and loses 2 life")

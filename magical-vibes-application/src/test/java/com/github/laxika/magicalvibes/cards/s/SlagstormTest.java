@@ -20,16 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SlagstormTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Slagstorm has a ChooseOneEffect with two options")
-    void hasCorrectEffects() {
-        Slagstorm card = new Slagstorm();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(2);
-    }
+    
 
     @Test
     @DisplayName("Casting Slagstorm puts it on the stack as a sorcery")

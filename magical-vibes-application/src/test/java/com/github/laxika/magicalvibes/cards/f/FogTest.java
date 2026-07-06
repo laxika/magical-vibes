@@ -16,17 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FogTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fog has correct effects")
-    void hasCorrectEffects() {
-        Fog card = new Fog();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(PreventAllCombatDamageEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

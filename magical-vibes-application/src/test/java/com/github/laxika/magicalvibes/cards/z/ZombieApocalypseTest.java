@@ -28,15 +28,7 @@ class ZombieApocalypseTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has graveyard return and destroy all Humans effects")
-    void hasCorrectEffects() {
-        ZombieApocalypse card = new ZombieApocalypse();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DestroyAllPermanentsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Returns all Zombie creature cards from your graveyard to the battlefield tapped")

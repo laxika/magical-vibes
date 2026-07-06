@@ -29,46 +29,11 @@ class LegionsLandingTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Front face has ETB CreateTokenEffect for 1/1 white Vampire with lifelink")
-    void frontFaceHasCorrectETBEffect() {
-        LegionsLanding card = new LegionsLanding();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(token.tokenName()).isEqualTo("Vampire");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.color()).isEqualTo(CardColor.WHITE);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.VAMPIRE);
-        assertThat(token.keywords()).containsExactly(Keyword.LIFELINK);
-    }
+    
 
-    @Test
-    @DisplayName("Front face has ON_ALLY_CREATURES_ATTACK with ConditionalEffect(3) wrapping TransformSelfEffect")
-    void frontFaceHasCorrectAttackTransformTrigger() {
-        LegionsLanding card = new LegionsLanding();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect mac = (ConditionalEffect)
-                card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(((MinimumAttackers) mac.condition()).minimumAttackers()).isEqualTo(3);
-        assertThat(mac.wrapped()).isInstanceOf(TransformSelfEffect.class);
-    }
-
-    @Test
-    @DisplayName("Front face has back face linked")
-    void frontFaceHasBackFace() {
-        LegionsLanding card = new LegionsLanding();
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard()).isInstanceOf(AdantoTheFirstFort.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("AdantoTheFirstFort");
-    }
+    
 
     @Test
     @DisplayName("Back face has two activated abilities: tap for {W} and {2}{W},{T} for vampire token")

@@ -24,25 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TragicSlipTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has morbid replacement from -1/-1 to -13/-13")
-    void hasCorrectStructure() {
-        TragicSlip card = new TragicSlip();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect =
-                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(effect.upgradedEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).powerBoost()).isEqualTo(new Fixed(-1));
-        assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).toughnessBoost()).isEqualTo(new Fixed(-1));
-        assertThat(((BoostTargetCreatureEffect) effect.upgradedEffect()).powerBoost()).isEqualTo(new Fixed(-13));
-        assertThat(((BoostTargetCreatureEffect) effect.upgradedEffect()).toughnessBoost()).isEqualTo(new Fixed(-13));
-    }
+    
 
     @Test
     @DisplayName("Gives target creature -1/-1 without morbid")

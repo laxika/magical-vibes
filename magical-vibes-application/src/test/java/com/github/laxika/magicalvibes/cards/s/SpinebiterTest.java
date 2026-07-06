@@ -15,14 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpinebiterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spinebiter has AssignCombatDamageAsThoughUnblockedEffect as static effect")
-    void hasCorrectStaticEffect() {
-        Spinebiter card = new Spinebiter();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AssignCombatDamageAsThoughUnblockedEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Unblocked Spinebiter deals poison counters instead of life loss")

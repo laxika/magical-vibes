@@ -26,32 +26,9 @@ class VaultOfTheArchangelTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability is a mana ability producing colorless")
-    void firstAbilityIsColorlessMana() {
-        VaultOfTheArchangel card = new VaultOfTheArchangel();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-    }
-
-    @Test
-    @DisplayName("Second ability grants deathtouch and lifelink to creatures you control")
-    void secondAbilityGrantsKeywords() {
-        VaultOfTheArchangel card = new VaultOfTheArchangel();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}{W}{B}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect effect = (GrantKeywordEffect) ability.getEffects().getFirst();
-        assertThat(effect.keywords()).containsExactlyInAnyOrder(Keyword.DEATHTOUCH, Keyword.LIFELINK);
-    }
+    
 
     @Test
     @DisplayName("Tapping for mana adds colorless mana")

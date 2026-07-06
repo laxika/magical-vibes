@@ -23,29 +23,9 @@ class InfernoTitanTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Inferno Titan has ON_ENTER_BATTLEFIELD DealDividedDamageToAnyTargetsEffect(3, 3)")
-    void hasETBEffect() {
-        InfernoTitan card = new InfernoTitan();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DealDividedDamageToAnyTargetsEffect.class);
-        DealDividedDamageToAnyTargetsEffect effect =
-                (DealDividedDamageToAnyTargetsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.totalDamage()).isEqualTo(3);
-        assertThat(effect.maxTargets()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("Inferno Titan has ON_ATTACK DealDividedDamageToAnyTargetsEffect(3, 3)")
-    void hasAttackEffect() {
-        InfernoTitan card = new InfernoTitan();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(DealDividedDamageToAnyTargetsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Inferno Titan has {R}: +1/+0 activated ability")

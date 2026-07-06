@@ -30,21 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FemerefArchersTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Femeref Archers has correct card properties")
-    void hasCorrectProperties() {
-        FemerefArchers card = new FemerefArchers();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect effect =
-                (DealDamageToTargetCreatureEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(4));
-    }
+    
 
     @Test
     @DisplayName("Activating ability targeting attacking flying creature puts ability on stack")

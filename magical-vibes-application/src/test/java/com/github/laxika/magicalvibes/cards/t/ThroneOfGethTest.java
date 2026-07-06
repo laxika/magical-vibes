@@ -23,23 +23,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ThroneOfGethTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has tap + sacrifice artifact cost with proliferate activated ability")
-    void hasCorrectAbility() {
-        ThroneOfGeth card = new ThroneOfGeth();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(SacrificeArtifactCost.class);
-                    assertThat(effects.get(1)).isInstanceOf(ProliferateEffect.class);
-                });
-    }
-
     // ===== Sacrifice cost =====
 
     @Test

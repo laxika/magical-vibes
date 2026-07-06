@@ -30,22 +30,6 @@ class OmenMachineTest extends BaseCardTest {
         harness.passBothPriorities(); // advances from UPKEEP to DRAW
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has static draw prevention and draw step trigger")
-    void hasCorrectEffects() {
-        OmenMachine card = new OmenMachine();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PlayersCannotDrawCardsEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_DRAW_TRIGGERED).getFirst())
-                .isInstanceOf(OmenMachineDrawStepEffect.class);
-    }
-
     // ===== Draw prevention =====
 
     @Test

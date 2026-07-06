@@ -12,28 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CompositeGolemTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Composite Golem has correct card properties")
-    void hasCorrectProperties() {
-        CompositeGolem card = new CompositeGolem();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(6);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isEqualTo(new AwardManaEffect(ManaColor.WHITE));
-        assertThat(ability.getEffects().get(2)).isEqualTo(new AwardManaEffect(ManaColor.BLUE));
-        assertThat(ability.getEffects().get(3)).isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-        assertThat(ability.getEffects().get(4)).isEqualTo(new AwardManaEffect(ManaColor.RED));
-        assertThat(ability.getEffects().get(5)).isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-    }
-
     // ===== Mana ability resolves immediately (CR 605.1a, CR 605.3a) =====
 
     @Test

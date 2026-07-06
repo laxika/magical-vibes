@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IceCageTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ice Cage has correct effects")
-    void hasCorrectEffects() {
-        IceCage card = new IceCage();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(EnchantedCreatureCantAttackOrBlockEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(EnchantedCreatureCantActivateAbilitiesEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY).get(0)).isInstanceOf(DestroySourcePermanentEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

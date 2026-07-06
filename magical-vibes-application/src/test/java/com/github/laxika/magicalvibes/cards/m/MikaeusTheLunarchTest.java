@@ -22,44 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MikaeusTheLunarchTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has EnterWithCountersEffect as ETB effect")
-    void hasCorrectETBEffect() {
-        MikaeusTheLunarch card = new MikaeusTheLunarch();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
-    }
-
-    @Test
-    @DisplayName("Has two activated abilities")
-    void hasTwoActivatedAbilities() {
-        MikaeusTheLunarch card = new MikaeusTheLunarch();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Put a +1/+1 counter on Mikaeus
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-        PutCountersOnSelfEffect selfCounter = (PutCountersOnSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(selfCounter.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-
-        // Second ability: {T}, Remove a +1/+1 counter: Put a +1/+1 counter on each other creature you control
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().get(0))
-                .isInstanceOf(RemoveCounterFromSourceCost.class);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().get(1))
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-    }
-
     // ===== Enters with X +1/+1 counters =====
 
     @Test

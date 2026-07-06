@@ -18,22 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MagneticMineTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Magnetic Mine has the artifact-to-graveyard triggered ability")
-    void hasCorrectEffects() {
-        MagneticMine card = new MagneticMine();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).getFirst())
-                .isInstanceOf(DealDamageToTriggeringPermanentControllerEffect.class);
-
-        DealDamageToTriggeringPermanentControllerEffect effect =
-                (DealDamageToTriggeringPermanentControllerEffect) card.getEffects(EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-    }
-
     // ===== Triggering on opponent's artifact =====
 
     @Test

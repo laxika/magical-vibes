@@ -30,18 +30,7 @@ class QuandrixCharmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
     }
 
-    @Test
-    @DisplayName("Has a ChooseOneEffect with three options")
-    void hasCorrectEffects() {
-        QuandrixCharm card = new QuandrixCharm();
-
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(3);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(effect.options().get(2).effect()).isInstanceOf(SetBasePowerToughnessUntilEndOfTurnEffect.class);
-        assertThat(((CounterUnlessPaysEffect) effect.options().get(0).effect()).amount()).isEqualTo(2);
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: Counter target spell unless controller pays {2}")

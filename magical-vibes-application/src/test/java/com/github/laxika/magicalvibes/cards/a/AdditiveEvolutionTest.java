@@ -34,32 +34,7 @@ class AdditiveEvolutionTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has ETB Fractal token effect and beginning-of-combat counter plus vigilance effects")
-    void hasCorrectEffects() {
-        AdditiveEvolution card = new AdditiveEvolution();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Fractal");
-        assertThat(tokenEffect.power()).isZero();
-        assertThat(tokenEffect.toughness()).isZero();
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(tokenEffect.colors()).containsExactlyInAnyOrder(CardColor.GREEN, CardColor.BLUE);
-        assertThat(tokenEffect.initialPlusOnePlusOneCounters()).isEqualTo(3);
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).get(0))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(card.getTargetFilter()).isNotNull();
-    }
+    
 
     @Test
     @DisplayName("ETB creates a 3/3 Fractal token with three +1/+1 counters")

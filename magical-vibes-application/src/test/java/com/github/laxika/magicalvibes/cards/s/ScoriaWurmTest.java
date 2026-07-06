@@ -12,7 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScoriaWurmTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
@@ -20,15 +19,7 @@ class ScoriaWurmTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Scoria Wurm has correct card properties")
-    void hasCorrectProperties() {
-        ScoriaWurm card = new ScoriaWurm();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnSelfToHandOnCoinFlipLossEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Triggers during controller upkeep")

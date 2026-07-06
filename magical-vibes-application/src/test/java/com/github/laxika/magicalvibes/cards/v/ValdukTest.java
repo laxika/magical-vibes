@@ -51,28 +51,6 @@ class ValdukTest extends BaseCardTest {
                 .toList();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Valduk has beginning-of-combat triggered CreateTokenEffect counting attachments")
-    void hasCorrectEffect() {
-        Valduk card = new Valduk();
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect effect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
-        assertThat(effect.amount()).isEqualTo(new AttachmentsOnSource(true, true));
-        assertThat(effect.exileAtEndStep()).isTrue();
-        assertThat(effect.tokenName()).isEqualTo("Elemental");
-        assertThat(effect.power()).isEqualTo(3);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.RED);
-        assertThat(effect.keywords()).containsExactlyInAnyOrder(Keyword.TRAMPLE, Keyword.HASTE);
-    }
-
     // ===== No attachments =====
 
     @Test

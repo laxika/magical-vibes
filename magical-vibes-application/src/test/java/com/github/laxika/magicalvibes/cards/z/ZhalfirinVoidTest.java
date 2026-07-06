@@ -19,30 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ZhalfirinVoidTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB scry 1 effect")
-    void hasEtbScryEffect() {
-        ZhalfirinVoid card = new ZhalfirinVoid();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ScryEffect.class);
-        ScryEffect effect = (ScryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has tap for colorless mana ability")
-    void hasTapForColorlessManaAbility() {
-        ZhalfirinVoid card = new ZhalfirinVoid();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.COLORLESS));
-    }
-
     // ===== ETB trigger =====
 
     @Test

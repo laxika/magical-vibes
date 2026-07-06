@@ -12,18 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PalladiumMyrTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Palladium Myr has tap-for-two-colorless mana effect")
-    void hasTapForColorlessManaAbility() {
-        PalladiumMyr card = new PalladiumMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.COLORLESS, 2));
-    }
-
     // ===== Mana production =====
 
     @Test

@@ -20,23 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NoRestForTheWickedTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("No Rest for the Wicked has correct card properties and ability structure")
-    void hasCorrectPropertiesAndAbility() {
-        NoRestForTheWicked card = new NoRestForTheWicked();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1))
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Activating the ability sacrifices No Rest for the Wicked and puts the ability on the stack")

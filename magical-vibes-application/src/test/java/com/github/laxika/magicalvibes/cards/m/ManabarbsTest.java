@@ -18,22 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ManabarbsTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Manabarbs has correct card properties")
-    void hasCorrectProperties() {
-        Manabarbs card = new Manabarbs();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).getFirst())
-                .isInstanceOf(DealDamageOnLandTapEffect.class);
-        DealDamageOnLandTapEffect effect = (DealDamageOnLandTapEffect) card.getEffects(EffectSlot.ON_ANY_PLAYER_TAPS_LAND).getFirst();
-        assertThat(effect.damage()).isEqualTo(1);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

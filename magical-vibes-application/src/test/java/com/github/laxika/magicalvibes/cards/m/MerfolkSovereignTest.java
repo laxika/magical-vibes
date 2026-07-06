@@ -16,35 +16,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MerfolkSovereignTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Merfolk Sovereign has static boost effect for Merfolk")
-    void hasStaticBoostEffect() {
-        MerfolkSovereign card = new MerfolkSovereign();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Merfolk Sovereign has tap activated ability with MakeCreatureUnblockableEffect")
-    void hasUnblockableActivatedAbility() {
-        MerfolkSovereign card = new MerfolkSovereign();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(MakeCreatureUnblockableEffect.class);
-    }
-
     // ===== Static effect: buffs other Merfolk you control =====
 
     @Test

@@ -29,36 +29,9 @@ class PrimalAmuletTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Front face has cost reduction static effect")
-    void frontFaceHasCostReduction() {
-        PrimalAmulet card = new PrimalAmulet();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ReduceCastCostForMatchingSpellsEffect.class);
-        var reduction = (ReduceCastCostForMatchingSpellsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(reduction.amount()).isEqualTo(1);
-        assertThat(reduction.scope()).isEqualTo(CostModificationScope.SELF);
-    }
-
-    @Test
-    @DisplayName("Front face has spell cast trigger for charge counters and optional transform")
-    void frontFaceHasSpellCastTrigger() {
-        PrimalAmulet card = new PrimalAmulet();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        var trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst())
-                .isInstanceOf(PutCounterOnSelfThenTransformIfThresholdEffect.class);
-        var counterEffect = (PutCounterOnSelfThenTransformIfThresholdEffect) trigger.resolvedEffects().getFirst();
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.CHARGE);
-        assertThat(counterEffect.threshold()).isEqualTo(4);
-        assertThat(counterEffect.optional()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Has back face configured as Primal Wellspring")
@@ -69,19 +42,7 @@ class PrimalAmuletTest extends BaseCardTest {
         assertThat(card.getBackFaceClassName()).isEqualTo("PrimalWellspring");
     }
 
-    @Test
-    @DisplayName("Back face has mana ability with instant/sorcery copy")
-    void backFaceHasManaAbility() {
-        PrimalAmulet card = new PrimalAmulet();
-        PrimalWellspring backFace = (PrimalWellspring) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(1);
-        var ability = backFace.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardAnyColorManaWithInstantSorceryCopyEffect.class);
-    }
+    
 
     // ===== Cost reduction =====
 

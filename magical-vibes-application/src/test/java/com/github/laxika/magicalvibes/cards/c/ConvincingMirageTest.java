@@ -30,21 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ConvincingMirageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Convincing Mirage has correct card properties")
-    void hasCorrectProperties() {
-        ConvincingMirage card = new ConvincingMirage();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseBasicLandTypeOnEnterEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(EnchantedPermanentBecomesChosenTypeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Convincing Mirage puts it on the stack targeting a land")

@@ -26,26 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SettleTheWreckageTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Settle the Wreckage has correct SPELL effect")
-    void hasCorrectEffect() {
-        SettleTheWreckage card = new SettleTheWreckage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect.class);
-    }
-
-    @Test
-    @DisplayName("Effect can target a player")
-    void effectCanTargetPlayer() {
-        SettleTheWreckage card = new SettleTheWreckage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst().canTargetPlayer()).isTrue();
-    }
-
     // ===== Exile attacking creatures =====
 
     @Test

@@ -32,31 +32,6 @@ class AscendantDustspeakerTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB +1/+1 counter effect and beginning-of-combat graveyard exile effect")
-    void hasCorrectEffects() {
-        AscendantDustspeaker card = new AscendantDustspeaker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counter =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(counter.count()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst())
-                .isInstanceOf(ExileTargetCardFromGraveyardEffect.class);
-        ExileTargetCardFromGraveyardEffect exile =
-                (ExileTargetCardFromGraveyardEffect) card.getEffects(EffectSlot.BEGINNING_OF_COMBAT_TRIGGERED).getFirst();
-        assertThat(exile.requiredType()).isNull();
-        assertThat(exile.canTargetAnyGraveyard()).isTrue();
-
-        assertThat(card.getTargetFilter()).isNotNull();
-    }
-
     // ===== ETB +1/+1 counter =====
 
     @Test

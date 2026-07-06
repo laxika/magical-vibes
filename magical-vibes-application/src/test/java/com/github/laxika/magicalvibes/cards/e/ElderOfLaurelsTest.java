@@ -19,25 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ElderOfLaurelsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has activated ability with correct effect")
-    void hasCorrectAbility() {
-        ElderOfLaurels card = new ElderOfLaurels();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{3}{G}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-
-        var effect = (BoostTargetCreatureEffect) ability.getEffects().getFirst();
-        PermanentCount creaturesYouControl =
-                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
-        assertThat(effect.powerBoost()).isEqualTo(creaturesYouControl);
-        assertThat(effect.toughnessBoost()).isEqualTo(creaturesYouControl);
-    }
+    
 
     @Test
     @DisplayName("Boosts target creature by number of creatures controller controls")

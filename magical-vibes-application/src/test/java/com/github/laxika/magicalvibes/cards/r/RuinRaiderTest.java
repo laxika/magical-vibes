@@ -18,21 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RuinRaiderTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping RevealTopCardPutIntoHandAndLoseLifeEffect on CONTROLLER_END_STEP_TRIGGERED")
-    void hasCorrectEffectConfiguration() {
-        RuinRaider card = new RuinRaider();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(RevealTopCardPutIntoHandAndLoseLifeEffect.class);
-    }
-
     // ===== Raid trigger: reveal top card, draw, lose life =====
 
     @Test

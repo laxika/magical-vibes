@@ -16,24 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScourgeOfGeierReachTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +1/+1 per opponent creature effect")
-    void hasCorrectEffect() {
-        ScourgeOfGeierReach card = new ScourgeOfGeierReach();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect =
-                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        PermanentCount opponentCreatures =
-                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.OPPONENTS);
-        assertThat(effect.powerBoost()).isEqualTo(opponentCreatures);
-        assertThat(effect.toughnessBoost()).isEqualTo(opponentCreatures);
-    }
-
     // ===== Base stats without opponent creatures =====
 
     @Test

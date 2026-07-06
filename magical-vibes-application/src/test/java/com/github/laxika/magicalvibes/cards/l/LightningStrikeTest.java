@@ -37,18 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LightningStrikeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Lightning Strike has correct card properties")
-    void hasCorrectProperties() {
-        LightningStrike card = new LightningStrike();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(3));
-        assertThat(effect.cantRegenerate()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Lightning Strike targeting a player puts it on the stack")

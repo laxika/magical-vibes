@@ -18,17 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HonorOfThePureTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Honor of the Pure has correct card properties")
-    void hasCorrectProperties() {
-        HonorOfThePure card = new HonorOfThePure();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

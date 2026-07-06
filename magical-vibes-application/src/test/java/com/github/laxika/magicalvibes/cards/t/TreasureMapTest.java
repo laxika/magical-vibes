@@ -27,26 +27,7 @@ class TreasureMapTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Front face has activated ability with scry and landmark counter effects")
-    void frontFaceHasActivatedAbility() {
-        TreasureMap card = new TreasureMap();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(ScryEffect.class);
-        assertThat(((ScryEffect) ability.getEffects().get(0)).count()).isEqualTo(1);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(PutCounterOnSelfThenTransformIfThresholdEffect.class);
-        var counterEffect = (PutCounterOnSelfThenTransformIfThresholdEffect) ability.getEffects().get(1);
-        assertThat(counterEffect.counterType()).isEqualTo(CounterType.LANDMARK);
-        assertThat(counterEffect.threshold()).isEqualTo(3);
-        assertThat(counterEffect.optional()).isFalse();
-        assertThat(counterEffect.onTransformEffects()).hasSize(1);
-        assertThat(counterEffect.onTransformEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has back face configured as Treasure Cove")
@@ -57,26 +38,7 @@ class TreasureMapTest extends BaseCardTest {
         assertThat(card.getBackFaceClassName()).isEqualTo("TreasureCove");
     }
 
-    @Test
-    @DisplayName("Back face has two activated abilities")
-    void backFaceHasTwoAbilities() {
-        TreasureMap card = new TreasureMap();
-        TreasureCove backFace = (TreasureCove) card.getBackFaceCard();
-
-        assertThat(backFace.getActivatedAbilities()).hasSize(2);
-
-        // First: {T}: Add {C}.
-        ActivatedAbility manaAbility = backFace.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-
-        // Second: {T}, Sacrifice a Treasure: Draw a card.
-        ActivatedAbility drawAbility = backFace.getActivatedAbilities().get(1);
-        assertThat(drawAbility.isRequiresTap()).isTrue();
-        assertThat(drawAbility.getManaCost()).isNull();
-        assertThat(drawAbility.getEffects()).anyMatch(e -> e instanceof SacrificePermanentCost);
-        assertThat(drawAbility.getEffects()).anyMatch(e -> e instanceof DrawCardEffect);
-    }
+    
 
     // ===== Activating ability =====
 

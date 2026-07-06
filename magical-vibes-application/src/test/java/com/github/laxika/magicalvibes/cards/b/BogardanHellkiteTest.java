@@ -18,22 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BogardanHellkiteTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bogardan Hellkite has ON_ENTER_BATTLEFIELD DealDividedDamageToAnyTargetsEffect(5, 5)")
-    void hasETBEffect() {
-        BogardanHellkite card = new BogardanHellkite();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DealDividedDamageToAnyTargetsEffect.class);
-        DealDividedDamageToAnyTargetsEffect effect =
-                (DealDividedDamageToAnyTargetsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.totalDamage()).isEqualTo(5);
-        assertThat(effect.maxTargets()).isEqualTo(5);
-    }
-
     // ===== ETB trigger: deal 5 divided damage =====
 
     @Nested

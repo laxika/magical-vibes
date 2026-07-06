@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ReaperOfSheoldredTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Reaper of Sheoldred has one ON_DEALT_DAMAGE poison counter effect")
-    void hasCorrectEffect() {
-        ReaperOfSheoldred card = new ReaperOfSheoldred();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(DamageSourceControllerGetsPoisonCounterEffect.class);
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

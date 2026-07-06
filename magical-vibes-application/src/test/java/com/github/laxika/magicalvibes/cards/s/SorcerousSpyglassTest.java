@@ -27,24 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SorcerousSpyglassTest extends BaseCardTest {
 
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Sorcerous Spyglass has choose-card-name-with-look-at-hand ETB and static lock effects")
-    void hasCorrectEffects() {
-        SorcerousSpyglass card = new SorcerousSpyglass();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        ChooseCardNameOnEnterEffect nameEffect = (ChooseCardNameOnEnterEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(nameEffect.excludedTypes()).isEmpty();
-        assertThat(nameEffect.lookAtOpponentHand()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        ActivatedAbilitiesOfChosenNameCantBeActivatedEffect lockEffect =
-                (ActivatedAbilitiesOfChosenNameCantBeActivatedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(lockEffect.blocksManaAbilities()).isFalse();
-    }
-
     // ===== Casting and card name choice =====
 
     @Test

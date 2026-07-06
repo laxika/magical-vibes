@@ -17,20 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CounselOfTheSoratamiTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Counsel of the Soratami has correct card properties")
-    void hasCorrectProperties() {
-        CounselOfTheSoratami card = new CounselOfTheSoratami();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect effect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Casting =====
 
     @Test

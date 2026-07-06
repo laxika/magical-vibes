@@ -31,38 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WeatherlightTest extends BaseCardTest {
 
-    // ===== Card effect configuration =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER effect with historic predicate")
-    void hasCombatDamageTrigger() {
-        Weatherlight card = new Weatherlight();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect)
-                        card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isInstanceOf(CardIsHistoricPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Has Crew 3 activated ability with CrewCost and AnimateSelfAsCreatureEffect")
-    void hasCrewAbility() {
-        Weatherlight card = new Weatherlight();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CrewCost.class);
-        assertThat(((CrewCost) ability.getEffects().get(0)).requiredPower()).isEqualTo(3);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(AnimateSelfAsCreatureEffect.class);
-    }
-
     // ===== Crew mechanic =====
 
     @Test
@@ -253,7 +221,6 @@ class WeatherlightTest extends BaseCardTest {
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
     }
-
 
     private void setupTopCards(List<Card> cards) {
         List<Card> deck = gd.playerDecks.get(player1.getId());

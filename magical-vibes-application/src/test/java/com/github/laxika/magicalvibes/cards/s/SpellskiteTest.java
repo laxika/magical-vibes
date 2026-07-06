@@ -20,23 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpellskiteTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spellskite has correct activated ability")
-    void hasCorrectAbility() {
-        Spellskite card = new Spellskite();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{U/P}");
-        assertThat(ability.isNeedsSpellTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ChangeTargetOfTargetSpellToSourceEffect.class);
-        assertThat(ability.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryHasTargetPredicate(),
-                "Target must be a spell or ability on the stack."
-        ));
-    }
+    
 
     @Test
     @DisplayName("Spellskite redirects a targeted spell to itself")

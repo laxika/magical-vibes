@@ -23,45 +23,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class MarwynTheNurturerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has Elf-conditional ON_ALLY_CREATURE_ENTERS_BATTLEFIELD trigger")
-    void hasCorrectTrigger() {
-        MarwynTheNurturer card = new MarwynTheNurturer();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-
-        TriggeringCardConditionalEffect conditional =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.ELF));
-        assertThat(conditional.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect effect = (PutCountersOnSourceEffect) conditional.wrapped();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has tap mana ability that produces green mana equal to power")
-    void hasCorrectManaAbility() {
-        MarwynTheNurturer card = new MarwynTheNurturer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardManaEqualToSourcePowerEffect.class);
-
-        AwardManaEqualToSourcePowerEffect manaEffect = (AwardManaEqualToSourcePowerEffect) ability.getEffects().getFirst();
-        assertThat(manaEffect.color()).isEqualTo(ManaColor.GREEN);
-    }
-
     // ===== Elf trigger =====
 
     @Test

@@ -12,18 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OgreMenialTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ogre Menial has activated pump ability")
-    void hasActivatedPumpAbility() {
-        OgreMenial card = new OgreMenial();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-    }
-
     // ===== Pump ability =====
 
     @Test

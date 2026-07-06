@@ -20,21 +20,7 @@ class BarbedBattlegearTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Barbed Battlegear has static +4/-1 boost effect")
-    void hasStaticBoostEffect() {
-        BarbedBattlegear card = new BarbedBattlegear();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(4);
-        assertThat(boost.toughnessBoost()).isEqualTo(-1);
-    }
+    
 
     @Test
     @DisplayName("Barbed Battlegear has equip {2} ability with correct properties")

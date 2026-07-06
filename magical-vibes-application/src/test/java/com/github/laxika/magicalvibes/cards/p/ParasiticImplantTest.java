@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ParasiticImplantTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Parasitic Implant is an aura with upkeep trigger")
-    void hasCorrectEffects() {
-        ParasiticImplant card = new ParasiticImplant();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeEnchantedCreatureAndCreateTokenEffect.class);
-    }
-
     // ===== Upkeep trigger — sacrifice and token =====
 
     @Test

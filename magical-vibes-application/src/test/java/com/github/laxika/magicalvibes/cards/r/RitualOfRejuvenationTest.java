@@ -29,19 +29,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class RitualOfRejuvenationTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ritual of Rejuvenation has correct spell effects")
-    void hasCorrectEffects() {
-        RitualOfRejuvenation card = new RitualOfRejuvenation();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new Fixed(4));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -28,23 +28,6 @@ class NitaForumConciliatorTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Has spell-cast trigger and the exile-cast activated ability")
-    void hasCorrectAbilities() {
-        NitaForumConciliator nita = new NitaForumConciliator();
-
-        assertThat(nita.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(nita.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        assertThat(nita.getActivatedAbilities()).hasSize(1);
-        assertThat(nita.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof SacrificeCreatureCost)
-                .anyMatch(e -> e instanceof ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect);
-    }
-
     // ===== Ability 1: cast a spell you don't own =====
 
     @Test

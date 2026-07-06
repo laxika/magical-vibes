@@ -26,58 +26,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TriumphOfGerrardTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has +1/+1 counter effect")
-    void chapterIHasCorrectEffects() {
-        TriumphOfGerrard card = new TriumphOfGerrard();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counterEffect =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) effects.getFirst();
-        assertThat(counterEffect.count()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Chapter II has +1/+1 counter effect")
-    void chapterIIHasCorrectEffects() {
-        TriumphOfGerrard card = new TriumphOfGerrard();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter III grants flying, first strike, and lifelink")
-    void chapterIIIHasCorrectEffects() {
-        TriumphOfGerrard card = new TriumphOfGerrard();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) effects.getFirst();
-        assertThat(grantEffect.keywords()).containsExactlyInAnyOrder(
-                Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
-    @Test
-    @DisplayName("Chapter effects carry greatest-power target predicate")
-    void effectsHaveGreatestPowerTargetPredicate() {
-        TriumphOfGerrard card = new TriumphOfGerrard();
-
-        assertThat(card.getEffects(EffectSlot.SAGA_CHAPTER_I).getFirst().targetPredicate())
-                .isInstanceOf(PermanentHasGreatestPowerAmongControlledCreaturesPredicate.class);
-        assertThat(card.getEffects(EffectSlot.SAGA_CHAPTER_II).getFirst().targetPredicate())
-                .isInstanceOf(PermanentHasGreatestPowerAmongControlledCreaturesPredicate.class);
-        assertThat(card.getEffects(EffectSlot.SAGA_CHAPTER_III).getFirst().targetPredicate())
-                .isInstanceOf(PermanentHasGreatestPowerAmongControlledCreaturesPredicate.class);
-    }
-
     // ===== Chapter I: targeting + resolution =====
 
     @Test

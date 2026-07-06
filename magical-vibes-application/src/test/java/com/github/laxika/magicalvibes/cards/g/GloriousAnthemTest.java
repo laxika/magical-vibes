@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GloriousAnthemTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Glorious Anthem has correct card properties")
-    void hasCorrectProperties() {
-        GloriousAnthem card = new GloriousAnthem();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

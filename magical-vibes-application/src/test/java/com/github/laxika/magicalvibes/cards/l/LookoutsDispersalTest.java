@@ -23,24 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LookoutsDispersalTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lookout's Dispersal has correct card properties")
-    void hasCorrectProperties() {
-        LookoutsDispersal card = new LookoutsDispersal();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterUnlessPaysEffect.class);
-        assertThat(((CounterUnlessPaysEffect) card.getEffects(EffectSlot.SPELL).getFirst()).amount()).isEqualTo(4);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new ReduceOwnCastCostIfControlsPermanentEffect(
-                        new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.PIRATE), 1));
-    }
-
     // ===== Counter-unless-pays: opponent cannot pay =====
 
     @Test

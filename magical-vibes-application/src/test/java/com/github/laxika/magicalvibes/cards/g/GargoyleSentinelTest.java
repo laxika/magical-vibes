@@ -22,31 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GargoyleSentinelTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gargoyle Sentinel has one activated ability with two effects")
-    void hasActivatedAbility() {
-        GargoyleSentinel card = new GargoyleSentinel();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(RemoveKeywordEffect.class);
-        RemoveKeywordEffect removeDefender = (RemoveKeywordEffect) card.getActivatedAbilities().get(0).getEffects().get(0);
-        assertThat(removeDefender.keyword()).isEqualTo(Keyword.DEFENDER);
-        assertThat(removeDefender.scope()).isEqualTo(GrantScope.SELF);
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantFlying = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().get(1);
-        assertThat(grantFlying.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(grantFlying.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Ability resolution =====
 
     @Test

@@ -23,28 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DeadeyeTormentorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has raid-conditional ETB discard effect targeting opponent")
-    void hasRaidEtbDiscardEffect() {
-        DeadeyeTormentor card = new DeadeyeTormentor();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-
-        TargetPlayerDiscardsEffect discard = (TargetPlayerDiscardsEffect) raid.wrapped();
-        assertThat(discard.amount()).isEqualTo(1);
-    }
-
     // ===== ETB with raid met =====
 
     @Test

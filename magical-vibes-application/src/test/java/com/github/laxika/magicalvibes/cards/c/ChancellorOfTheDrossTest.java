@@ -40,23 +40,6 @@ class ChancellorOfTheDrossTest {
         // Do NOT call skipMulligan() here — opening hand tests need to set hand first
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Chancellor of the Dross has ON_OPENING_HAND_REVEAL MayEffect wrapping the drain effect")
-    void hasOpeningHandTriggeredEffect() {
-        ChancellorOfTheDross card = new ChancellorOfTheDross();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_OPENING_HAND_REVEAL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(EachOpponentLosesLifeAndControllerGainsLifeLostEffect.class);
-        EachOpponentLosesLifeAndControllerGainsLifeLostEffect effect =
-                (EachOpponentLosesLifeAndControllerGainsLifeLostEffect) may.wrapped();
-        assertThat(effect.amount()).isEqualTo(3);
-    }
-
     // ===== Opening hand trigger =====
 
     @Test

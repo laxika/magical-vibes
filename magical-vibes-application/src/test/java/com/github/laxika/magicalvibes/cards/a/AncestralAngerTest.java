@@ -28,28 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AncestralAngerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has graveyard-count boost, trample, and draw effects on SPELL slot")
-    void hasCorrectEffects() {
-        AncestralAnger card = new AncestralAnger();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2))
-                .isInstanceOf(DrawCardEffect.class);
-
-        BoostTargetCreatureEffect boost =
-                (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        // X is 1 plus the number of cards named Ancestral Anger in your graveyard; +X/+0.
-        assertThat(boost.powerBoost()).isEqualTo(new Sum(
-                new Fixed(1),
-                new CardsInGraveyard(new CardNamedPredicate("Ancestral Anger"), CountScope.CONTROLLER)));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("With no Ancestral Anger in graveyard, grants +1/+0 and trample")

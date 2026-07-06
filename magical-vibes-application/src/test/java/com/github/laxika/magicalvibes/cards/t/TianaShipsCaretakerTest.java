@@ -32,18 +32,6 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         gd.playerBattlefields.get(ownerPlayerId).add(auraPerm);
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has RegisterDelayedReturnCardFromGraveyardToHandEffect on the correct slot")
-    void hasCorrectStructure() {
-        TianaShipsCaretaker card = new TianaShipsCaretaker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD).getFirst())
-                .isInstanceOf(RegisterDelayedReturnCardFromGraveyardToHandEffect.class);
-    }
-
     // ===== Aura destroyed directly =====
 
     @Test

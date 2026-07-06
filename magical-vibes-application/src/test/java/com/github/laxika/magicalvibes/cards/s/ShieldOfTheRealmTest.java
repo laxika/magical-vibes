@@ -23,18 +23,7 @@ class ShieldOfTheRealmTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Shield of the Realm has prevent 2 damage from each source effect")
-    void hasPreventDamageEffect() {
-        ShieldOfTheRealm card = new ShieldOfTheRealm();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PreventXDamageFromEachSourceToAttachedCreatureEffect.class);
-        PreventXDamageFromEachSourceToAttachedCreatureEffect effect =
-                (PreventXDamageFromEachSourceToAttachedCreatureEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Shield of the Realm has equip {1} ability")

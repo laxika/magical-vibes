@@ -30,31 +30,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class KarnLiberatedTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three activated abilities with correct loyalty costs")
-    void hasThreeAbilities() {
-        KarnLiberated card = new KarnLiberated();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var plus4 = card.getActivatedAbilities().get(0);
-        assertThat(plus4.getLoyaltyCost()).isEqualTo(4);
-        assertThat(plus4.isNeedsTarget()).isTrue();
-        assertThat(plus4.getEffects().getFirst()).isInstanceOf(TargetPlayerExilesFromHandEffect.class);
-
-        var minus3 = card.getActivatedAbilities().get(1);
-        assertThat(minus3.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(minus3.isNeedsTarget()).isTrue();
-        assertThat(minus3.getEffects().getFirst()).isInstanceOf(ExileTargetPermanentAndTrackWithSourceEffect.class);
-
-        var minus14 = card.getActivatedAbilities().get(2);
-        assertThat(minus14.getLoyaltyCost()).isEqualTo(-14);
-        assertThat(minus14.isNeedsTarget()).isFalse();
-        assertThat(minus14.getEffects().getFirst()).isInstanceOf(KarnRestartGameEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -18,20 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ParallelLivesTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Parallel Lives has a static DoubleTokenCreationEffect")
-    void hasCorrectEffects() {
-        ParallelLives card = new ParallelLives();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MultiplyTokenCreationEffect.class);
-        MultiplyTokenCreationEffect effect = (MultiplyTokenCreationEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.multiplier()).isEqualTo(2);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

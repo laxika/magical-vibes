@@ -23,27 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MemorialToWarTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Memorial to War has correct card structure")
-    void hasCorrectProperties() {
-        MemorialToWar card = new MemorialToWar();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(EntersTappedEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(0);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isEqualTo("{4}{R}");
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(sacrificeAbility.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter = (PermanentPredicateTargetFilter) sacrificeAbility.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsLandPredicate.class);
-    }
-
     // ===== Enters the battlefield tapped =====
 
     @Test

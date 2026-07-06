@@ -17,19 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ExsanguinateTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has correct effect type and does not need a target")
-    void hasCorrectProperties() {
-        Exsanguinate card = new Exsanguinate();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(EachOpponentLosesXLifeAndControllerGainsLifeLostEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

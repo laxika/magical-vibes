@@ -17,19 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JacesIngenuityTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Jace's Ingenuity has correct effects")
-    void hasCorrectEffects() {
-        JacesIngenuity card = new JacesIngenuity();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect effect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(3));
-    }
-
     // ===== Casting =====
 
     @Test

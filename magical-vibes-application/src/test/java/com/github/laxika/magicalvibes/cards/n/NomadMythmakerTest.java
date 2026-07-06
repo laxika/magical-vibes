@@ -25,20 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NomadMythmakerTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nomad Mythmaker has correct card properties")
-    void hasCorrectProperties() {
-        NomadMythmaker card = new NomadMythmaker();
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
-    }
-
     // ===== Casting =====
 
     @Test
@@ -422,5 +408,4 @@ class NomadMythmakerTest extends BaseCardTest {
         harness.getGameData().playerGraveyards.get(player.getId()).add(card);
     }
 }
-
 

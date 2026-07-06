@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SparkElementalTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Spark Elemental has correct card properties and end-step trigger")
-    void hasCorrectProperties() {
-        SparkElemental card = new SparkElemental();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack as CREATURE_SPELL")
@@ -135,5 +126,4 @@ class SparkElementalTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Spark Elemental"));
     }
 }
-
 

@@ -22,22 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MindshriekerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability with correct structure")
-    void hasCorrectAbility() {
-        Mindshrieker card = new Mindshrieker();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(MillTargetPlayerAndBoostSelfByManaValueEffect.class);
-    }
-
     // ===== Activation =====
 
     @Test

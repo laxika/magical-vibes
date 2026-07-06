@@ -20,23 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ChelonianTackleTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has +0/+10 boost on first target and optional fight on second target")
-    void hasCorrectStructure() {
-        ChelonianTackle card = new ChelonianTackle();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(BoostFirstTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(FirstTargetFightsSecondTargetEffect.class);
-
-        BoostFirstTargetCreatureEffect boost =
-                (BoostFirstTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isZero();
-        assertThat(boost.toughnessBoost()).isEqualTo(10);
-    }
+    
 
     @Test
     @DisplayName("Boost only — single target creature you control gets +0/+10")

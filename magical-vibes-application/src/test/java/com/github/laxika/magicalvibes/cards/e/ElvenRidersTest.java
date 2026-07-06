@@ -21,18 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ElvenRidersTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Elven Riders has correct card properties")
-    void hasCorrectProperties() {
-        ElvenRiders card = new ElvenRiders();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CanBeBlockedOnlyByFilterEffect.class);
-        CanBeBlockedOnlyByFilterEffect effect = (CanBeBlockedOnlyByFilterEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.blockerPredicate()).isInstanceOf(PermanentAnyOfPredicate.class);
-        assertThat(effect.allowedBlockersDescription()).isEqualTo("creatures with flying or Walls");
-    }
+    
 
     @Test
     @DisplayName("Elven Riders cannot be blocked by non-Wall non-flying creature")

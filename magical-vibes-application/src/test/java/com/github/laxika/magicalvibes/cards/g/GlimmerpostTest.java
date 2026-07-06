@@ -21,29 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GlimmerpostTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB gain life for each Locus effect")
-    void hasEtbGainLifeEffect() {
-        Glimmerpost card = new Glimmerpost();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new GainLifeEffect(new PermanentCount(
-                        new PermanentHasSubtypePredicate(CardSubtype.LOCUS), CountScope.ANY_PLAYER)));
-    }
-
-    @Test
-    @DisplayName("Has tap for colorless mana ability")
-    void hasTapForColorlessManaAbility() {
-        Glimmerpost card = new Glimmerpost();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.COLORLESS));
-    }
-
     // ===== ETB trigger =====
 
     @Test

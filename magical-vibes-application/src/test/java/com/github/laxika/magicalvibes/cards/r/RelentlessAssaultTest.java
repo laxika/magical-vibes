@@ -22,19 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RelentlessAssaultTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Relentless Assault has correct card properties")
-    void hasCorrectProperties() {
-        RelentlessAssault card = new RelentlessAssault();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(UntapAttackedCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(AdditionalCombatMainPhaseEffect.class);
-        AdditionalCombatMainPhaseEffect extra = (AdditionalCombatMainPhaseEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(extra.count()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Casting puts Relentless Assault on the stack as a sorcery with no target")
@@ -146,5 +134,4 @@ class RelentlessAssaultTest extends BaseCardTest {
         harness.getGameService().declareAttackers(gd, attacker, attackers);
     }
 }
-
 

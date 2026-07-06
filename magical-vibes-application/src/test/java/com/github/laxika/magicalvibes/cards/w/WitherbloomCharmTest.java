@@ -26,17 +26,7 @@ class WitherbloomCharmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
     }
 
-    @Test
-    @DisplayName("Has a ChooseOneEffect with three options")
-    void hasCorrectEffects() {
-        WitherbloomCharm card = new WitherbloomCharm();
-
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(3);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(MayEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(GainLifeEffect.class);
-        assertThat(effect.options().get(2).effect()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: You may sacrifice a permanent, if you do draw two")

@@ -45,27 +45,6 @@ class SnoopingPageTest extends BaseCardTest {
         gd.playerDecks.get(player.getId()).addAll(cards);
     }
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Repartee makes itself unblockable; combat damage draws and loses 1 life")
-    void hasCorrectStructure() {
-        SnoopingPage card = new SnoopingPage();
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.resolvedEffects()).singleElement()
-                .isInstanceOf(MakeCreatureUnblockableEffect.class);
-        assertThat(((MakeCreatureUnblockableEffect) trigger.resolvedEffects().getFirst()).selfTargeting()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
-                .anyMatch(e -> e instanceof DrawCardEffect);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER))
-                .anyMatch(e -> e instanceof LoseLifeEffect);
-    }
-
     // ===== Repartee: can't be blocked this turn =====
 
     @Test

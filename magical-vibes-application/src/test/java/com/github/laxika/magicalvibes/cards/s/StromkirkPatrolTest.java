@@ -21,18 +21,6 @@ class StromkirkPatrolTest extends BaseCardTest {
         return perm;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has PutCountersOnSourceEffect on combat damage to player")
-    void hasCorrectEffects() {
-        StromkirkPatrol card = new StromkirkPatrol();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-    }
-
     // ===== Combat damage +1/+1 counter trigger =====
 
     @Test

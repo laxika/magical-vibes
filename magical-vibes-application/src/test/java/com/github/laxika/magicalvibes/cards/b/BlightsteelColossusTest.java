@@ -21,17 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlightsteelColossusTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Blightsteel Colossus has shuffle-into-library replacement effect")
-    void hasShuffleIntoLibraryReplacementEffect() {
-        BlightsteelColossus card = new BlightsteelColossus();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof ShuffleIntoLibraryReplacementEffect);
-    }
-
     // ===== Casting =====
 
     @Test

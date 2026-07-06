@@ -28,23 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RangingRaptorsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ranging Raptors has correct ON_DEALT_DAMAGE enrage effect")
-    void hasCorrectEffect() {
-        RangingRaptors card = new RangingRaptors();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-        SearchLibraryForCardTypesToBattlefieldEffect search =
-                (SearchLibraryForCardTypesToBattlefieldEffect) may.wrapped();
-        assertThat(CardPredicateUtils.describeFilter(search.filter())).isEqualTo("basic land card");
-        assertThat(search.entersTapped()).isTrue();
-    }
-
     // ===== Spell damage trigger: accept =====
 
     @Test

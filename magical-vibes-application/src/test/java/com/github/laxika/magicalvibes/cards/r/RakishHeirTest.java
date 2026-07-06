@@ -39,26 +39,6 @@ class RakishHeirTest extends BaseCardTest {
         return perm;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has PutCountersOnDamageDealerEffect with Vampire predicate")
-    void hasCorrectEffects() {
-        RakishHeir card = new RakishHeir();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutCountersOnDamageDealerEffect.class);
-
-        PutCountersOnDamageDealerEffect effect =
-                (PutCountersOnDamageDealerEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-        assertThat(effect.predicate()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) effect.predicate()).subtype()).isEqualTo(CardSubtype.VAMPIRE);
-    }
-
     // ===== Trigger: Vampire deals combat damage to a player =====
 
     @Test

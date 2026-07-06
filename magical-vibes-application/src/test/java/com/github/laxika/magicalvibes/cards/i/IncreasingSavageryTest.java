@@ -26,30 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IncreasingSavageryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has target creature counter effects and flashback cost")
-    void hasCorrectEffects() {
-        IncreasingSavagery card = new IncreasingSavagery();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect baseEffect =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(baseEffect.count()).isEqualTo(5);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(((CastFromZone) conditional.condition()).sourceZone()).isEqualTo(Zone.GRAVEYARD);
-        assertThat(conditional.wrapped()).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect flashbackExtra =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) conditional.wrapped();
-        assertThat(flashbackExtra.count()).isEqualTo(5);
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{5}{G}{G}");
-    }
+    
 
     @Test
     @DisplayName("Normal cast puts five +1/+1 counters on target creature")

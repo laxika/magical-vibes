@@ -23,30 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GarnaTheBloodflameTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ETB effect that returns creature cards from graveyard put there from anywhere this turn")
-    void hasCorrectETBEffect() {
-        GarnaTheBloodflame card = new GarnaTheBloodflame();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        ReturnCardFromGraveyardEffect etbEffect =
-                (ReturnCardFromGraveyardEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbEffect.returnAll()).isTrue();
-        assertThat(etbEffect.fromAnywhereThisTurn()).isTrue();
-        assertThat(etbEffect.thisTurnOnly()).isFalse();
-    }
-
-    @Test
-    @DisplayName("Has static haste grant for other creatures you control")
-    void hasStaticHasteForOwnCreatures() {
-        GarnaTheBloodflame card = new GarnaTheBloodflame();
-
-        GrantKeywordEffect hasteEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .findFirst().orElseThrow();
-        assertThat(hasteEffect.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(hasteEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("ETB returns creature that died this turn from the battlefield")

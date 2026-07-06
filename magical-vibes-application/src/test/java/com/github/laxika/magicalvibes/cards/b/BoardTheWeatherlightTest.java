@@ -22,19 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BoardTheWeatherlightTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Board the Weatherlight has correct effect configuration")
-    void hasCorrectEffect() {
-        BoardTheWeatherlight card = new BoardTheWeatherlight();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isInstanceOf(CardIsHistoricPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Board the Weatherlight puts it on the stack")

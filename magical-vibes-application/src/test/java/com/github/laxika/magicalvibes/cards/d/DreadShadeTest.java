@@ -20,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DreadShadeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dread Shade has correct activated ability")
-    void hasCorrectActivatedAbility() {
-        DreadShade card = new DreadShade();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(1));
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}");
-    }
-
     // ===== Casting =====
 
     @Test

@@ -28,30 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RequiemAngelTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ally creature dies trigger for non-Spirits creating a white flying Spirit")
-    void hasCorrectEffect() {
-        RequiemAngel card = new RequiemAngel();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-
-        TriggeringCardConditionalEffect conditional =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        assertThat(conditional.predicate())
-                .isEqualTo(new CardNotPredicate(new CardSubtypePredicate(CardSubtype.SPIRIT)));
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) conditional.wrapped();
-        assertThat(token.amount()).isEqualTo(new Fixed(1));
-        assertThat(token.tokenName()).isEqualTo("Spirit");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.color()).isEqualTo(CardColor.WHITE);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(token.keywords()).containsExactly(Keyword.FLYING);
-    }
+    
 
     @Test
     @DisplayName("When another non-Spirit creature you control dies, creates a 1/1 white flying Spirit")

@@ -20,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NightwingShadeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nightwing Shade has correct activated ability")
-    void hasCorrectAbility() {
-        NightwingShade card = new NightwingShade();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(1));
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{B}");
-    }
-
     // ===== Casting =====
 
     @Test

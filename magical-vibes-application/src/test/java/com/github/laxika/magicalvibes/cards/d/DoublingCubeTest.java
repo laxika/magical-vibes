@@ -12,24 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DoublingCubeTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Doubling Cube has correct card properties")
-    void hasCorrectProperties() {
-        DoublingCube card = new DoublingCube();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{3}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DoubleManaPoolEffect.class);
-    }
-
     // ===== Mana ability resolves immediately (CR 605.1a, CR 605.3a) =====
 
     @Test

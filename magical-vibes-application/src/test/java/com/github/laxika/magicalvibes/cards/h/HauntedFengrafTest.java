@@ -21,37 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HauntedFengrafTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Haunted Fengraf has a mana ability and a sacrifice ability")
-    void hasCorrectProperties() {
-        HauntedFengraf card = new HauntedFengraf();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.isNeedsTarget()).isFalse();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        var sacrificeAbility = card.getActivatedAbilities().get(1);
-        assertThat(sacrificeAbility.isRequiresTap()).isTrue();
-        assertThat(sacrificeAbility.getManaCost()).isEqualTo("{3}");
-        assertThat(sacrificeAbility.isNeedsTarget()).isFalse();
-        assertThat(sacrificeAbility.getEffects()).hasSize(2);
-        assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-
-        ReturnCardFromGraveyardEffect effect =
-                (ReturnCardFromGraveyardEffect) sacrificeAbility.getEffects().get(1);
-        assertThat(effect.returnAtRandom()).isTrue();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-    }
-
     // ===== Mana ability =====
 
     @Test

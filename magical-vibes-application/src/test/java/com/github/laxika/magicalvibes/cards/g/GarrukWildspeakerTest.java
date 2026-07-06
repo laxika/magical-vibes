@@ -35,45 +35,11 @@ class GarrukWildspeakerTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has UntapAllTargetPermanentsEffect targeting lands")
-    void plusOneAbilityHasCorrectEffects() {
-        GarrukWildspeaker card = new GarrukWildspeaker();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(UntapAllTargetPermanentsEffect.class);
-        assertThat(ability.getMultiTargetFilters()).hasSize(2);
-        assertThat(ability.getMinTargets()).isEqualTo(2);
-        assertThat(ability.getMaxTargets()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("-1 ability creates a Beast token")
-    void minusOneAbilityHasCorrectEffect() {
-        GarrukWildspeaker card = new GarrukWildspeaker();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CreateTokenEffect.class);
-    }
-
-    @Test
-    @DisplayName("-4 ability boosts creatures and grants trample")
-    void minusFourAbilityHasCorrectEffects() {
-        GarrukWildspeaker card = new GarrukWildspeaker();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-4);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-    }
+    
 
     // ===== Casting =====
 

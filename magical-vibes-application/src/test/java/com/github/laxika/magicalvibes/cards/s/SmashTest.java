@@ -22,17 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SmashTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Smash has correct card properties")
-    void hasCorrectProperties() {
-        Smash card = new Smash();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Smash puts it on the stack with target")

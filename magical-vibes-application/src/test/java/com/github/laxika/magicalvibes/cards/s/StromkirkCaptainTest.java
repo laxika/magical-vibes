@@ -18,23 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class StromkirkCaptainTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Stromkirk Captain has static boost effect for other Vampires")
-    void hasCorrectEffects() {
-        StromkirkCaptain card = new StromkirkCaptain();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.grantedKeywords()).containsExactly(Keyword.FIRST_STRIKE);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasAnySubtypePredicate.class);
-    }
-
     // ===== Static effect: buffs other Vampires you control =====
 
     @Test

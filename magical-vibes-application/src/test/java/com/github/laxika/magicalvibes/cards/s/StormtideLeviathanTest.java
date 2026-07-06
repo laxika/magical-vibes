@@ -23,18 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StormtideLeviathanTest extends BaseCardTest {
 
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Stormtide Leviathan has GrantSubtypeEffect and CreaturesCantAttackUnlessPredicateEffect")
-    void hasCorrectEffects() {
-        StormtideLeviathan card = new StormtideLeviathan();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(GrantSubtypeEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(CreaturesCantAttackUnlessPredicateEffect.class);
-    }
-
     // ===== All lands are Islands =====
 
     @Test

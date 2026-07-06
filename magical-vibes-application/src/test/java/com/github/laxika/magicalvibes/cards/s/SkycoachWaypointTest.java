@@ -16,17 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SkycoachWaypointTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has mana ability and activated prepare ability")
-    void hasCorrectAbilities() {
-        SkycoachWaypoint card = new SkycoachWaypoint();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AwardManaEffect.class);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(MakeTargetCreaturePreparedEffect.class);
-    }
+    
 
     @Test
     @DisplayName("{3}, {T} prepares target creature with a prepare spell")

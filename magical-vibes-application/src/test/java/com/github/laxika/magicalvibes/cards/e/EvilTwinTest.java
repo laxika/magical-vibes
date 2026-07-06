@@ -21,23 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EvilTwinTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Evil Twin has CopyPermanentOnEnterEffect with additional activated ability")
-    void hasCorrectProperties() {
-        EvilTwin card = new EvilTwin();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(CopyPermanentOnEnterEffect.class);
-
-        CopyPermanentOnEnterEffect effect = (CopyPermanentOnEnterEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.additionalActivatedAbilities()).hasSize(1);
-        assertThat(effect.additionalActivatedAbilities().getFirst().getDescription())
-                .contains("Destroy target creature with the same name");
-    }
-
     // ===== Copying a creature =====
 
     @Test

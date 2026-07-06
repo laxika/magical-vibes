@@ -26,17 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RecoverTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Recover has correct card properties")
-    void hasCorrectCardProperties() {
-        Recover card = new Recover();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Recover puts a graveyard-targeted spell on the stack")

@@ -43,25 +43,6 @@ class ScreechingSilcawTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has metalcraft-conditional combat damage mill effect")
-    void hasCorrectEffect() {
-        ScreechingSilcaw card = new ScreechingSilcaw();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(MillTargetPlayerEffect.class);
-
-        MillTargetPlayerEffect mill = (MillTargetPlayerEffect) metalcraft.wrapped();
-        assertThat(mill.count()).isEqualTo(4);
-    }
-
     // ===== Combat damage with metalcraft met =====
 
     @Test

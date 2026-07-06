@@ -31,25 +31,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BrimstoneVolleyTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ConditionalReplacementEffect wrapping 3-damage base and 5-damage morbid")
-    void hasCorrectStructure() {
-        BrimstoneVolley card = new BrimstoneVolley();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect =
-                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.baseEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(effect.upgradedEffect()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) effect.baseEffect()).damage()).isEqualTo(new Fixed(3));
-        assertThat(((DealDamageToAnyTargetEffect) effect.upgradedEffect()).damage()).isEqualTo(new Fixed(5));
-    }
-
     // ===== Without morbid =====
 
     @Test

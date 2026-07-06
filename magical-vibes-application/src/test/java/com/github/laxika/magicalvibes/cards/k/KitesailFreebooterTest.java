@@ -47,22 +47,6 @@ class KitesailFreebooterTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has ChooseCardFromTargetHandToExileEffect with returnOnSourceLeave on ETB")
-    void hasCorrectEffects() {
-        KitesailFreebooter card = new KitesailFreebooter();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseCardFromTargetHandToExileEffect.class);
-        ChooseCardFromTargetHandToExileEffect effect =
-                (ChooseCardFromTargetHandToExileEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.returnOnSourceLeave()).isTrue();
-        assertThat(effect.excludedTypes()).containsExactlyInAnyOrder(CardType.CREATURE, CardType.LAND);
-    }
-
     // ===== ETB exile =====
 
     @Test

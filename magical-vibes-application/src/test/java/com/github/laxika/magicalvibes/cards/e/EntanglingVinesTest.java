@@ -22,19 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EntanglingVinesTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Entangling Vines has correct card properties")
-    void hasCorrectProperties() {
-        EntanglingVines card = new EntanglingVines();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(AttachedCreatureDoesntUntapEffect.class);
-    }
-
     // ===== Targeting restriction: must target tapped creature =====
 
     @Test

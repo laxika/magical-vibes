@@ -22,40 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MitoticSlimeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_DEATH CreateTokenEffect creating two 2/2 Ooze tokens with their own death triggers")
-    void hasCorrectEffects() {
-        MitoticSlime card = new MitoticSlime();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(2));
-        assertThat(effect.tokenName()).isEqualTo("Ooze");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.OOZE);
-        assertThat(effect.keywords()).isEmpty();
-        assertThat(effect.additionalTypes()).isEmpty();
-
-        // The 2/2 tokens should have their own death trigger
-        assertThat(effect.tokenEffects()).hasSize(1);
-        assertThat(effect.tokenEffects()).containsKey(EffectSlot.ON_DEATH);
-        CardEffect tokenDeathEffect = effect.tokenEffects().get(EffectSlot.ON_DEATH);
-        assertThat(tokenDeathEffect).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect innerEffect = (CreateTokenEffect) tokenDeathEffect;
-        assertThat(innerEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(innerEffect.tokenName()).isEqualTo("Ooze");
-        assertThat(innerEffect.power()).isEqualTo(1);
-        assertThat(innerEffect.toughness()).isEqualTo(1);
-        assertThat(innerEffect.color()).isEqualTo(CardColor.GREEN);
-        assertThat(innerEffect.subtypes()).containsExactly(CardSubtype.OOZE);
-    }
-
     // ===== Death trigger =====
 
     @Nested

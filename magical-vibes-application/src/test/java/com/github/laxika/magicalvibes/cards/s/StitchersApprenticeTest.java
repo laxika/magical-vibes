@@ -19,22 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StitchersApprenticeTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Activated ability has CreateTokenEffect and ControllerSacrificesCreatureEffect")
-    void abilityHasCorrectEffects() {
-        StitchersApprentice card = new StitchersApprentice();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{U}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(CreateTokenEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(ControllerSacrificesCreatureEffect.class);
-    }
-
     // ===== Token creation + sacrifice when controller has another creature =====
 
     @Test

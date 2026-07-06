@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CancelTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cancel has correct card properties")
-    void hasCorrectProperties() {
-        Cancel card = new Cancel();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

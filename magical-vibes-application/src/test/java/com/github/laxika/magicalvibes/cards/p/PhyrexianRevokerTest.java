@@ -27,23 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PhyrexianRevokerTest extends BaseCardTest {
 
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Phyrexian Revoker has choose-nonland-card-name ETB and static lock effects")
-    void hasCorrectEffects() {
-        PhyrexianRevoker card = new PhyrexianRevoker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        ChooseCardNameOnEnterEffect nameEffect = (ChooseCardNameOnEnterEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(nameEffect.excludedTypes()).containsExactly(CardType.LAND);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        ActivatedAbilitiesOfChosenNameCantBeActivatedEffect lockEffect =
-                (ActivatedAbilitiesOfChosenNameCantBeActivatedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(lockEffect.blocksManaAbilities()).isTrue();
-    }
-
     // ===== Casting and card name choice =====
 
     @Test

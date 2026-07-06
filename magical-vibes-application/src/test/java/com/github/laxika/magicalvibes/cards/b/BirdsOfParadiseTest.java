@@ -18,20 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BirdsOfParadiseTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Birds of Paradise has correct card properties")
-    void hasCorrectProperties() {
-        BirdsOfParadise card = new BirdsOfParadise();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardAnyColorManaEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Cannot activate Birds of Paradise while it has summoning sickness")

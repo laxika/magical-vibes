@@ -20,20 +20,7 @@ class ContestedWarZoneTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Contested War Zone has damage-to-controller trigger effect")
-    void hasDamageToControllerTrigger() {
-        ContestedWarZone card = new ContestedWarZone();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).getFirst())
-                .isInstanceOf(DamageSourceControllerGainsControlOfThisPermanentEffect.class);
-
-        DamageSourceControllerGainsControlOfThisPermanentEffect effect =
-                (DamageSourceControllerGainsControlOfThisPermanentEffect) card.getEffects(EffectSlot.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).getFirst();
-        assertThat(effect.combatOnly()).isTrue();
-        assertThat(effect.creatureOnly()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Contested War Zone has two activated abilities (mana and boost)")
@@ -43,20 +30,7 @@ class ContestedWarZoneTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("Contested War Zone boost ability uses BoostAllCreaturesEffect with attacking filter")
-    void boostAbilityUsesCorrectEffect() {
-        ContestedWarZone card = new ContestedWarZone();
-
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isInstanceOf(BoostAllCreaturesEffect.class);
-
-        BoostAllCreaturesEffect boost = (BoostAllCreaturesEffect) card.getActivatedAbilities().get(1).getEffects().getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.filter()).isNotNull();
-    }
+    
 
     // ===== Combat damage control change =====
 

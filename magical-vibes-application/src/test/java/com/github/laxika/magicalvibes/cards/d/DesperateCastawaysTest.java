@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DesperateCastawaysTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC CantAttackUnlessControllerControlsMatchingPermanentEffect with artifact predicate")
-    void hasCorrectStructure() {
-        DesperateCastaways card = new DesperateCastaways();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantAttackUnlessControllerControlsMatchingPermanentEffect.class);
-        CantAttackUnlessControllerControlsMatchingPermanentEffect effect =
-                (CantAttackUnlessControllerControlsMatchingPermanentEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.controllerPermanentPredicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
-
     // ===== Attack restriction =====
 
     @Test
@@ -97,7 +82,6 @@ class DesperateCastawaysTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

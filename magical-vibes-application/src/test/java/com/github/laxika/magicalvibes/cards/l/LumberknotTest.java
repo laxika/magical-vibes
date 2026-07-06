@@ -19,23 +19,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class LumberknotTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ANY_CREATURE_DIES effect with PutCountersOnSourceEffect")
-    void hasCorrectStructure() {
-        Lumberknot card = new Lumberknot();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-        PutCountersOnSourceEffect effect =
-                (PutCountersOnSourceEffect) card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
     // ===== ON_ANY_CREATURE_DIES: gets +1/+1 counter when a creature dies =====
 
     @Test

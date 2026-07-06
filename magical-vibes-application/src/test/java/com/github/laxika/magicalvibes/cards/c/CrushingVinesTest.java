@@ -20,16 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CrushingVinesTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Crushing Vines has a ChooseOneEffect with two options")
-    void hasCorrectEffects() {
-        CrushingVines card = new CrushingVines();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChooseOneEffect.class);
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(2);
-    }
+    
 
     @Nested
     @DisplayName("Mode 1: Destroy target creature with flying")

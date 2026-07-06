@@ -20,22 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class JacesErasureTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Jace's Erasure has MayEffect wrapping MillTargetPlayerEffect(1) on ON_CONTROLLER_DRAWS")
-    void hasCorrectEffects() {
-        JacesErasure card = new JacesErasure();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect mill = (MillTargetPlayerEffect) may.wrapped();
-        assertThat(mill.count()).isEqualTo(1);
-    }
-
     // ===== Draw step trigger — accept and target opponent =====
 
     @Test

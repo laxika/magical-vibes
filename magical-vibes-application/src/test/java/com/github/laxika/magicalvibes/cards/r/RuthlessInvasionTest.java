@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RuthlessInvasionTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has SPELL effect with CantBlockThisTurnEffect(PermanentNotPredicate(PermanentIsArtifactPredicate))")
-    void hasCorrectStructure() {
-        RuthlessInvasion card = new RuthlessInvasion();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CantBlockThisTurnEffect.class);
-        CantBlockThisTurnEffect effect =
-                (CantBlockThisTurnEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentNotPredicate.class);
-        PermanentNotPredicate notPredicate = (PermanentNotPredicate) effect.filter();
-        assertThat(notPredicate.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
-
     // ===== Effect resolution =====
 
     @Test

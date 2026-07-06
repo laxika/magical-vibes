@@ -35,22 +35,6 @@ class XenograftTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Xenograft has correct effects")
-    void hasCorrectEffects() {
-        Xenograft card = new Xenograft();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseSubtypeOnEnterEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantChosenSubtypeToOwnCreaturesEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

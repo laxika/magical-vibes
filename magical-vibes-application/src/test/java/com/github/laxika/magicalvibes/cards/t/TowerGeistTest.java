@@ -18,19 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TowerGeistTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tower Geist has ETB look-at-top-2 effect")
-    void hasEtbLookEffect() {
-        TowerGeist card = new TowerGeist();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(LookAtTopCardsChooseNToHandRestToGraveyardEffect.class);
-        LookAtTopCardsChooseNToHandRestToGraveyardEffect effect =
-                (LookAtTopCardsChooseNToHandRestToGraveyardEffect)
-                        card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(2);
-        assertThat(effect.toHandCount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Casting Tower Geist puts it on stack as creature spell")

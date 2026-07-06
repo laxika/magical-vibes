@@ -24,23 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FleshAllergyTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Flesh Allergy has correct effects and targeting")
-    void hasCorrectProperties() {
-        FleshAllergy card = new FleshAllergy();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DestroyTargetAndControllerLosesLifePerCreatureDeathsEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

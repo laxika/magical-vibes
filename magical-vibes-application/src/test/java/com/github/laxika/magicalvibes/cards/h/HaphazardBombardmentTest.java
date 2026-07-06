@@ -22,28 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HaphazardBombardmentTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB effect to choose opponent permanents and put aim counters")
-    void hasCorrectETBEffect() {
-        HaphazardBombardment card = new HaphazardBombardment();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseOpponentPermanentsAndPutCountersEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has controller end step triggered destroy effect")
-    void hasCorrectEndStepEffect() {
-        HaphazardBombardment card = new HaphazardBombardment();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(DestroyRandomOpponentPermanentWithCounterEffect.class);
-    }
-
     // ===== ETB: aim counter placement =====
 
     @Test

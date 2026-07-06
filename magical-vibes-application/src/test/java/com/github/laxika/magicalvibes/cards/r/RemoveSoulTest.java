@@ -24,23 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RemoveSoulTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Remove Soul has correct card properties")
-    void hasCorrectProperties() {
-        RemoveSoul card = new RemoveSoul();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(StackEntryType.CREATURE_SPELL)),
-                "Target must be a creature spell."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

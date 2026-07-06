@@ -20,14 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SightlessGhoulTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has can't-block static effect")
-    void hasCantBlockEffect() {
-        SightlessGhoul card = new SightlessGhoul();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBlockEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Sightless Ghoul cannot be declared as a blocker")

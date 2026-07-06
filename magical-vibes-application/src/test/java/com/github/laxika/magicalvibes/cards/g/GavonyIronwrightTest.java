@@ -14,28 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GavonyIronwrightTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has fateful-hour static boost granting +1/+4 to other creatures at 5 or less life")
-    void hasCorrectEffect() {
-        GavonyIronwright card = new GavonyIronwright();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(((ControllerLifeAtMost) conditional.condition()).threshold()).isEqualTo(5);
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(4);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
-
     // ===== Above threshold (default 20 life) =====
 
     @Test

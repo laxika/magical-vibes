@@ -19,23 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StoneGiantTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Stone Giant has activated ability with correct effects and target filter")
-    void hasCorrectAbility() {
-        StoneGiant card = new StoneGiant();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) ability.getEffects().get(0);
-        assertThat(grantEffect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DestroyTargetPermanentAtEndStepEffect.class);
-        assertThat(ability.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-    }
+    
 
     @Test
     @DisplayName("Grants flying to target creature you control with toughness less than its power")

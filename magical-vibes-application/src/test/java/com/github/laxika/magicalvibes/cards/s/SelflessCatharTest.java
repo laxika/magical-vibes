@@ -20,28 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SelflessCatharTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one activated ability with sacrifice cost and boost effect")
-    void hasCorrectAbility() {
-        SelflessCathar card = new SelflessCathar();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{W}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(BoostAllOwnCreaturesEffect.class);
-
-        BoostAllOwnCreaturesEffect boost = (BoostAllOwnCreaturesEffect)
-                card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-    }
-
     // ===== Activating ability =====
 
     @Test

@@ -25,32 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MobilizationTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mobilization has correct card properties")
-    void hasCorrectProperties() {
-        Mobilization card = new Mobilization();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect staticEffect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(staticEffect.powerBoost()).isEqualTo(0);
-        assertThat(staticEffect.toughnessBoost()).isEqualTo(0);
-        assertThat(staticEffect.grantedKeywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(staticEffect.filter()).isNotNull();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect = (CreateTokenEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(tokenEffect.tokenName()).isEqualTo("Soldier");
-        assertThat(tokenEffect.power()).isEqualTo(1);
-        assertThat(tokenEffect.toughness()).isEqualTo(1);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.SOLDIER);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{2}{W}");
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -271,5 +245,4 @@ class MobilizationTest extends BaseCardTest {
         return perm;
     }
 }
-
 

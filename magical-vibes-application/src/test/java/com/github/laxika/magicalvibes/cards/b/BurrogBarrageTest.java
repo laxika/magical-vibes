@@ -23,20 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BurrogBarrageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Spell has conditional boost and bite effects with multi-target")
-    void cardStructure() {
-        BurrogBarrage card = new BurrogBarrage();
-        var effects = card.getEffects(EffectSlot.SPELL);
-
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(ConditionalEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(FirstTargetDealsPowerDamageToSecondTargetEffect.class);
-
-        var conditional = (ConditionalEffect) effects.get(0);
-        assertThat(conditional.wrapped()).isInstanceOf(BoostFirstTargetCreatureEffect.class);
-        assertThat(((BoostFirstTargetCreatureEffect) conditional.wrapped()).powerBoost()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Without another instant or sorcery cast, bite uses base power and no boost")

@@ -24,26 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NestedGhoulTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nested Ghoul has one ON_DEALT_DAMAGE token creation effect")
-    void hasCorrectEffect() {
-        NestedGhoul card = new NestedGhoul();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0);
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Zombie");
-        assertThat(effect.power()).isEqualTo(2);
-        assertThat(effect.toughness()).isEqualTo(2);
-        assertThat(effect.color()).isEqualTo(CardColor.BLACK);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.PHYREXIAN, CardSubtype.ZOMBIE);
-        assertThat(effect.keywords()).isEmpty();
-        assertThat(effect.additionalTypes()).isEmpty();
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

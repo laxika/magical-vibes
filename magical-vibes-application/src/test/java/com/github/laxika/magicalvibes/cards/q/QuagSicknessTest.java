@@ -20,16 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class QuagSicknessTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Quag Sickness has correct card properties")
-    void hasCorrectProperties() {
-        QuagSickness card = new QuagSickness();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(BoostCreaturePerControlledSubtypeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Quag Sickness puts it on the stack")

@@ -27,34 +27,6 @@ class AbunaAcolyteTest extends BaseCardTest {
         acolyte.setSummoningSick(false);
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two tap activated abilities")
-    void hasCorrectAbilities() {
-        AbunaAcolyte card = new AbunaAcolyte();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        ActivatedAbility ability1 = card.getActivatedAbilities().get(0);
-        assertThat(ability1.isRequiresTap()).isTrue();
-        assertThat(ability1.getManaCost()).isNull();
-        assertThat(ability1.getEffects()).hasSize(1);
-        assertThat(ability1.getEffects().getFirst()).isInstanceOf(PreventDamageToTargetEffect.class);
-        assertThat(((PreventDamageToTargetEffect) ability1.getEffects().getFirst()).amount()).isEqualTo(1);
-        assertThat(ability1.isNeedsTarget()).isTrue();
-        assertThat(ability1.getTargetFilter()).isNull();
-
-        ActivatedAbility ability2 = card.getActivatedAbilities().get(1);
-        assertThat(ability2.isRequiresTap()).isTrue();
-        assertThat(ability2.getManaCost()).isNull();
-        assertThat(ability2.getEffects()).hasSize(1);
-        assertThat(ability2.getEffects().getFirst()).isInstanceOf(PreventDamageToTargetEffect.class);
-        assertThat(((PreventDamageToTargetEffect) ability2.getEffects().getFirst()).amount()).isEqualTo(2);
-        assertThat(ability2.isNeedsTarget()).isTrue();
-        assertThat(ability2.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-    }
-
     // ===== Ability 1: Prevent 1 damage to any target =====
 
     @Test

@@ -27,25 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CitanulFluteTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Citanul Flute has correct card properties")
-    void hasCorrectProperties() {
-        CitanulFlute card = new CitanulFlute();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{X}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst())
-                .isInstanceOf(SearchLibraryForCreatureWithMVXOrLessToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -383,5 +364,4 @@ class CitanulFluteTest extends BaseCardTest {
         deck.addAll(List.of(new LlanowarElves(), new GrizzlyBears(), new AirElemental(), new Plains(), new Swamp()));
     }
 }
-
 

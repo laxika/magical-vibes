@@ -32,18 +32,6 @@ class RaptorHatchlingTest extends BaseCardTest {
                 .count();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Raptor Hatchling has one ON_DEALT_DAMAGE effect")
-    void hasCorrectEffect() {
-        RaptorHatchling card = new RaptorHatchling();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0))
-                .isInstanceOf(CreateTokenEffect.class);
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

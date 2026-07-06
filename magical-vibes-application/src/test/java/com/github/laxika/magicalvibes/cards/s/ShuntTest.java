@@ -28,20 +28,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShuntTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Shunt has correct card properties")
-    void hasCorrectProperties() {
-        Shunt card = new Shunt();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryIsSingleTargetPredicate(),
-                "Target spell must have a single target."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ChangeTargetOfTargetSpellWithSingleTargetEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Shunt requires targeting a spell with a single target")
@@ -205,5 +192,4 @@ class ShuntTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.contains("Cancel") && log.contains("fizzles"));
     }
 }
-
 

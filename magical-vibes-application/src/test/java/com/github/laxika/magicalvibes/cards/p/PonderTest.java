@@ -22,25 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PonderTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ponder has reorder 3, may shuffle, and draw 1 spell effects")
-    void hasCorrectEffects() {
-        Ponder card = new Ponder();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReorderTopCardsOfLibraryEffect.class);
-        ReorderTopCardsOfLibraryEffect reorderEffect = (ReorderTopCardsOfLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(reorderEffect.count()).isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(mayEffect.wrapped()).isInstanceOf(ShuffleLibraryEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Casting =====
 
     @Test

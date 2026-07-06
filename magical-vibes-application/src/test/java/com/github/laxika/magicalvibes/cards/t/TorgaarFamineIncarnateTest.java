@@ -17,22 +17,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TorgaarFamineIncarnateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        TorgaarFamineIncarnate card = new TorgaarFamineIncarnate();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(SacrificeCreaturesForCostReductionEffect.class);
-        SacrificeCreaturesForCostReductionEffect sacEffect =
-                (SacrificeCreaturesForCostReductionEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(sacEffect.reductionPerCreature()).isEqualTo(2);
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(SetTargetPlayerLifeToHalfStartingEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Cast with full mana cost (no sacrifices), ETB sets opponent life to 10")

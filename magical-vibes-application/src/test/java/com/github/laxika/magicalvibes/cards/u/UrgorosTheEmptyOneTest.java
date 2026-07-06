@@ -32,15 +32,7 @@ class UrgorosTheEmptyOneTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Urgoros has TargetPlayerRandomDiscardOrControllerDrawsEffect on ON_COMBAT_DAMAGE_TO_PLAYER")
-    void hasCorrectEffect() {
-        UrgorosTheEmptyOne card = new UrgorosTheEmptyOne();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(TargetPlayerRandomDiscardOrControllerDrawsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Dealing combat damage forces opponent to discard a card at random when they have cards")

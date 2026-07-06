@@ -17,20 +17,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ViralDrakeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has proliferate activated ability that does not require tap")
-    void hasProliferateAbilityWithoutTap() {
-        ViralDrake card = new ViralDrake();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).singleElement()
-                .isInstanceOf(ProliferateEffect.class);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{3}{U}");
-    }
-
     // ===== Proliferate activated ability =====
 
     @Test

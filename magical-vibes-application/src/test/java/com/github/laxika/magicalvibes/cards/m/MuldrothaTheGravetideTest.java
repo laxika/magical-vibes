@@ -24,20 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MuldrothaTheGravetideTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Muldrotha has PlayLandsFromGraveyardEffect and CastPermanentSpellsFromGraveyardEffect")
-    void hasCorrectStaticEffects() {
-        MuldrothaTheGravetide card = new MuldrothaTheGravetide();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof PlayLandsFromGraveyardEffect);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof CastPermanentSpellsFromGraveyardEffect);
-    }
-
     // ===== Casting Muldrotha =====
 
     @Test

@@ -22,25 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VampiresZealTest extends BaseCardTest {
 
-    // ===== Effect structure =====
-
-    @Test
-    @DisplayName("Vampire's Zeal has correct effects")
-    void hasCorrectEffects() {
-        VampiresZeal card = new VampiresZeal();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isEqualTo(new GrantKeywordToTargetIfPermanentEffect(
-                        Keyword.FIRST_STRIKE, new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.VAMPIRE)));
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Non-vampire gets boost but NOT first strike =====
 
     @Test

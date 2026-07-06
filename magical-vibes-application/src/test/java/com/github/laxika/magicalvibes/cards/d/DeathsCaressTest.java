@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeathsCaressTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Death's Caress targets a creature and destroys it with a conditional Human life gain")
-    void hasCorrectProperties() {
-        DeathsCaress card = new DeathsCaress();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsCreaturePredicate(),
-                "Target must be a creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyTargetCreatureAndGainLifeEqualToToughnessEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

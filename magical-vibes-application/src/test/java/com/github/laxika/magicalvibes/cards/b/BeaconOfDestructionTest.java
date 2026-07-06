@@ -37,21 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BeaconOfDestructionTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Beacon of Destruction has correct card properties")
-    void hasCorrectProperties() {
-        BeaconOfDestruction card = new BeaconOfDestruction();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).get(0)).damage()).isEqualTo(new Fixed(5));
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ShuffleIntoLibraryEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -15,16 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ScreechingSkaabTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Screeching Skaab has ETB mill controller effect for 2 cards")
-    void hasEtbMillControllerEffect() {
-        ScreechingSkaab card = new ScreechingSkaab();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(MillControllerEffect.class);
-        assertThat(((MillControllerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).count())
-                .isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting Screeching Skaab puts it on stack as creature spell")

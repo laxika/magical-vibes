@@ -17,26 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DragonWhelpTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Dragon Whelp has pump ability and conditional end-step sacrifice")
-    void hasCorrectProperties() {
-        DragonWhelp card = new DragonWhelp();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional = (ConditionalEffect)
-                card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst();
-        assertThat(((ActivationCount) conditional.condition()).threshold()).isEqualTo(4);
-        assertThat(((ActivationCount) conditional.condition()).abilityIndex()).isEqualTo(0);
-        assertThat(conditional.wrapped()).isInstanceOf(SacrificeSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Activating ability gives +1/+0")

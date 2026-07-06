@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CorrosiveOozeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect on ON_BLOCK and ON_BECOMES_BLOCKED")
-    void hasCorrectEffects() {
-        CorrosiveOoze card = new CorrosiveOoze();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).singleElement()
-                .isInstanceOf(DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).singleElement()
-                .isInstanceOf(DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect.class);
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).getFirst().triggerMode())
-                .isEqualTo(TriggerMode.PER_BLOCKER);
-    }
-
     // ===== Corrosive Ooze blocks an equipped creature =====
 
     @Test

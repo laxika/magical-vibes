@@ -26,38 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GrimoireOfTheDeadTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Grimoire of the Dead has two activated abilities with correct effects")
-    void hasCorrectAbilities() {
-        GrimoireOfTheDead card = new GrimoireOfTheDead();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 1: {1}, {T}, Discard a card: Put a study counter
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isTrue();
-        assertThat(ability0.getManaCost()).isEqualTo("{1}");
-        assertThat(ability0.getEffects()).hasSize(2);
-        assertThat(ability0.getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(((DiscardCardTypeCost) ability0.getEffects().get(0)).predicate()).isNull();
-        assertThat(ability0.getEffects().get(1)).isInstanceOf(PutCountersOnSelfEffect.class);
-        assertThat(((PutCountersOnSelfEffect) ability0.getEffects().get(1)).counterType()).isEqualTo(CounterType.STUDY);
-
-        // Ability 2: {T}, Remove three study counters and sacrifice: Return all creatures
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isTrue();
-        assertThat(ability1.getManaCost()).isNull();
-        assertThat(ability1.getEffects()).hasSize(3);
-        assertThat(ability1.getEffects().get(0)).isInstanceOf(RemoveCounterFromSourceCost.class);
-        RemoveCounterFromSourceCost removeCost = (RemoveCounterFromSourceCost) ability1.getEffects().get(0);
-        assertThat(removeCost.count()).isEqualTo(3);
-        assertThat(removeCost.counterType()).isEqualTo(CounterType.STUDY);
-        assertThat(ability1.getEffects().get(1)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability1.getEffects().get(2)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Ability 1: Put study counter =====
 
     @Test

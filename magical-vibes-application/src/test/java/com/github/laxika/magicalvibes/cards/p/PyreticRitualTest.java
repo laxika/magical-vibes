@@ -14,20 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PyreticRitualTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has spell effect that awards 3 red mana")
-    void hasSpellEffect() {
-        PyreticRitual card = new PyreticRitual();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(AwardManaEffect.class);
-        AwardManaEffect effect = (AwardManaEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.color()).isEqualTo(ManaColor.RED);
-        assertThat(effect.amount()).isEqualTo(3);
-    }
-
     // ===== Casting =====
 
     @Test

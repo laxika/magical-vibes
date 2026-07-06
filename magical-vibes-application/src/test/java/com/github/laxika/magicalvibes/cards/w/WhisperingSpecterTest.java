@@ -35,17 +35,7 @@ class WhisperingSpecterTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Has MayEffect-wrapped combat damage trigger with correct effect type")
-    void hasCorrectEffect() {
-        WhisperingSpecter card = new WhisperingSpecter();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Combat damage trigger presents may ability choice")

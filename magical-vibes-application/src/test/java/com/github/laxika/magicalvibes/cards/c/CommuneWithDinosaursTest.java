@@ -26,24 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CommuneWithDinosaursTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Commune with Dinosaurs has correct effect configuration")
-    void hasCorrectEffect() {
-        CommuneWithDinosaurs card = new CommuneWithDinosaurs();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isInstanceOf(CardAnyOfPredicate.class);
-        CardAnyOfPredicate anyOf = (CardAnyOfPredicate) effect.predicate();
-        assertThat(anyOf.predicates()).containsExactly(
-                new CardSubtypePredicate(CardSubtype.DINOSAUR),
-                new CardTypePredicate(CardType.LAND)
-        );
-    }
+    
 
     @Test
     @DisplayName("Casting Commune with Dinosaurs puts it on the stack")

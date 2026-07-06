@@ -20,13 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AlphaBrawlTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Alpha Brawl has MassFightTargetCreatureEffect")
-    void hasCorrectEffect() {
-        AlphaBrawl card = new AlphaBrawl();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassFightTargetCreatureEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Target creature deals power damage to each other creature, then they deal back")

@@ -21,17 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HavengulLichTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has activated ability targeting a creature card in a graveyard")
-    void hasActivatedAbility() {
-        HavengulLich card = new HavengulLich();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).isEmpty();
-    }
+    
 
     @Test
     @DisplayName("Ability grants permission to cast the targeted creature card from own graveyard")

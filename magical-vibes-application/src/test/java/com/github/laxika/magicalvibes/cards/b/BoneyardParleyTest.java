@@ -23,23 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BoneyardParleyTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Boneyard Parley has correct effects")
-    void hasCorrectEffects() {
-        BoneyardParley card = new BoneyardParley();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileTargetGraveyardCardsAndSeparateIntoPilesEffect.class);
-        ExileTargetGraveyardCardsAndSeparateIntoPilesEffect effect =
-                (ExileTargetGraveyardCardsAndSeparateIntoPilesEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(effect.maxTargets()).isEqualTo(5);
-    }
-
     // ===== Casting and targeting =====
 
     @Test

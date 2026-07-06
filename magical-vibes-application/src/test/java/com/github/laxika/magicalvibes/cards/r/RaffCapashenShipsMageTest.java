@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RaffCapashenShipsMageTest extends BaseCardTest {
 
-    // ===== Static effect registration =====
-
-    @Test
-    @DisplayName("Raff Capashen has GrantFlashToCardTypeEffect with CardIsHistoricPredicate")
-    void hasGrantFlashStaticEffect() {
-        RaffCapashenShipsMage card = new RaffCapashenShipsMage();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantFlashToCardTypeEffect.class);
-        GrantFlashToCardTypeEffect effect = (GrantFlashToCardTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardIsHistoricPredicate.class);
-    }
-
     // ===== Grant flash to artifact spells (historic) =====
 
     @Test

@@ -24,21 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AcademyResearchersTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Academy Researchers has correct card properties")
-    void hasCorrectProperties() {
-        AcademyResearchers card = new AcademyResearchers();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(PutAuraFromHandOntoSelfEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -286,5 +271,4 @@ class AcademyResearchersTest extends BaseCardTest {
         harness.castCreature(player1, 0);
     }
 }
-
 

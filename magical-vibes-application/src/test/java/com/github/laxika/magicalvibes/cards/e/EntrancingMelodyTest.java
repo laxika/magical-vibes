@@ -16,14 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EntrancingMelodyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has correct effects configured")
-    void hasCorrectEffects() {
-        EntrancingMelody card = new EntrancingMelody();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GainControlOfTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Gains control of target creature with mana value equal to X")

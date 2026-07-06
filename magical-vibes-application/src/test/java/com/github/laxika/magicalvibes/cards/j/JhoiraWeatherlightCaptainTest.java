@@ -22,26 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class JhoiraWeatherlightCaptainTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Jhoira has historic spell-cast trigger with draw a card")
-    void hasCorrectStructure() {
-        JhoiraWeatherlightCaptain card = new JhoiraWeatherlightCaptain();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) trigger.resolvedEffects().getFirst();
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Artifact spell triggers =====
 
     @Test

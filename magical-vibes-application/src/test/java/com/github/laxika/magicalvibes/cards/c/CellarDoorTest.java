@@ -22,22 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CellarDoorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cellar Door has correct activated ability")
-    void hasCorrectAbility() {
-        CellarDoor card = new CellarDoor();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(MillBottomOfTargetLibraryConditionalTokenEffect.class);
-    }
-
     // ===== Activating ability =====
 
     @Test

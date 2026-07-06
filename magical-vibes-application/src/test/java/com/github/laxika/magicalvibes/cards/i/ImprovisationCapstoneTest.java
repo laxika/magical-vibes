@@ -17,16 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ImprovisationCapstoneTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ImprovisationCapstoneEffect with threshold 4")
-    void hasCorrectStructure() {
-        ImprovisationCapstone card = new ImprovisationCapstone();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ImprovisationCapstoneEffect.class);
-        assertThat(((ImprovisationCapstoneEffect) card.getEffects(EffectSlot.SPELL).getFirst()).totalManaValueThreshold())
-                .isEqualTo(4);
-    }
+    
 
     @Test
     @DisplayName("Exiles from library until total mana value 4 or greater")

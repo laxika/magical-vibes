@@ -23,27 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PrecursorGolemTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Card has ETB token effect and spell-copy trigger")
-    void hasCorrectEffects() {
-        PrecursorGolem card = new PrecursorGolem();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Golem");
-        assertThat(tokenEffect.power()).isEqualTo(3);
-        assertThat(tokenEffect.toughness()).isEqualTo(3);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.GOLEM);
-        assertThat(tokenEffect.additionalTypes()).containsExactly(CardType.ARTIFACT);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).getFirst())
-                .isInstanceOf(CopySpellForEachOtherSubtypePermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB creates two 3/3 colorless Golem artifact creature tokens")

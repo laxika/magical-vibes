@@ -19,22 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PsychosisCrawlerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Psychosis Crawler has correct effects registered")
-    void hasCorrectEffects() {
-        PsychosisCrawler card = new PsychosisCrawler();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToCardsInHandEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS).getFirst())
-                .isInstanceOf(EachOpponentLosesLifeEffect.class);
-        EachOpponentLosesLifeEffect drawEffect =
-                (EachOpponentLosesLifeEffect) card.getEffects(EffectSlot.ON_CONTROLLER_DRAWS).getFirst();
-        assertThat(drawEffect.amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("P/T equals number of cards in controller's hand")

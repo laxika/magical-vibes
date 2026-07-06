@@ -16,27 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HowlingBansheeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Howling Banshee does not need a target")
-    void doesNotNeedTarget() {
-        HowlingBanshee card = new HowlingBanshee();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
-
-    @Test
-    @DisplayName("Has ETB effects for each player losing life")
-    void hasEtbEffects() {
-        HowlingBanshee card = new HowlingBanshee();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD))
-                .hasAtLeastOneElementOfType(EachOpponentLosesLifeEffect.class)
-                .hasAtLeastOneElementOfType(LoseLifeEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -22,21 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class HeroOfOxidRidgeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger with CantBlockThisTurnEffect(PermanentPowerAtMostPredicate(1))")
-    void hasCorrectStructure() {
-        HeroOfOxidRidge card = new HeroOfOxidRidge();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(CantBlockThisTurnEffect.class);
-        CantBlockThisTurnEffect effect =
-                (CantBlockThisTurnEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.filter()).isInstanceOf(PermanentPowerAtMostPredicate.class);
-    }
-
     // ===== Attack triggers =====
 
     @Test
@@ -138,7 +123,6 @@ class HeroOfOxidRidgeTest extends BaseCardTest {
     // tested in AccorderPaladinTest. No need to duplicate those tests here.
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         harness.forceActivePlayer(player);

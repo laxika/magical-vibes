@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LecturingScornmageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Repartee trigger puts a +1/+1 counter on itself, gated on targeting a creature")
-    void hasCorrectStructure() {
-        LecturingScornmage card = new LecturingScornmage();
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.resolvedEffects()).singleElement().isInstanceOf(PutCountersOnSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting an instant that targets a creature adds a +1/+1 counter")

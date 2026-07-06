@@ -26,51 +26,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheFirstEruptionTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has mass damage 1 effect with 'without flying' filter")
-    void chapterIHasCorrectEffects() {
-        TheFirstEruption card = new TheFirstEruption();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.get(0)).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect massDamage = (MassDamageEffect) effects.get(0);
-        assertThat(massDamage.damage()).isEqualTo(1);
-        assertThat(massDamage.damagesPlayers()).isFalse();
-        assertThat(massDamage.filter()).isInstanceOf(PermanentNotPredicate.class);
-        PermanentNotPredicate notFlying = (PermanentNotPredicate) massDamage.filter();
-        assertThat(notFlying.predicate()).isInstanceOf(PermanentHasKeywordPredicate.class);
-        assertThat(((PermanentHasKeywordPredicate) notFlying.predicate()).keyword()).isEqualTo(Keyword.FLYING);
-    }
-
-    @Test
-    @DisplayName("Chapter II has award 2 red mana effect")
-    void chapterIIHasCorrectEffects() {
-        TheFirstEruption card = new TheFirstEruption();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.get(0)).isInstanceOf(AwardManaEffect.class);
-        AwardManaEffect manaEffect = (AwardManaEffect) effects.get(0);
-        assertThat(manaEffect.color()).isEqualTo(ManaColor.RED);
-        assertThat(manaEffect.amount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Chapter III has sacrifice permanent then mass damage effect")
-    void chapterIIIHasCorrectEffects() {
-        TheFirstEruption card = new TheFirstEruption();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.get(0)).isInstanceOf(SacrificePermanentThenEffect.class);
-        SacrificePermanentThenEffect sacEffect = (SacrificePermanentThenEffect) effects.get(0);
-        assertThat(sacEffect.thenEffect()).isInstanceOf(MassDamageEffect.class);
-        assertThat(((MassDamageEffect) sacEffect.thenEffect()).damage()).isEqualTo(3);
-    }
-
     // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test

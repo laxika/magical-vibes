@@ -24,27 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DireFleetCaptainTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK trigger boosting per other attacking Pirate")
-    void hasCorrectStructure() {
-        DireFleetCaptain card = new DireFleetCaptain();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        PermanentCount otherAttackingPirates = new PermanentCount(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsAttackingPredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.PIRATE)
-                )),
-                CountScope.CONTROLLER,
-                true);
-        assertThat(effect.powerBoost()).isEqualTo(otherAttackingPirates);
-        assertThat(effect.toughnessBoost()).isEqualTo(otherAttackingPirates);
-    }
-
     // ===== Attack trigger fires =====
 
     @Test
@@ -148,7 +127,6 @@ class DireFleetCaptainTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private Card createPirateCard(String name) {
         Card card = new Card() {};

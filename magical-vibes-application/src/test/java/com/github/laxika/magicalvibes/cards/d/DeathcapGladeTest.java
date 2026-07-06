@@ -18,38 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DeathcapGladeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Deathcap Glade has conditional enters-tapped effect")
-    void hasConditionalEntersTappedEffect() {
-        DeathcapGlade card = new DeathcapGlade();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof EntersTappedUnlessManyLandsEffect)
-                .hasSize(1);
-        EntersTappedUnlessManyLandsEffect effect = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof EntersTappedUnlessManyLandsEffect)
-                .map(e -> (EntersTappedUnlessManyLandsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(effect.minOtherLands()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Deathcap Glade has two mana abilities for black and green")
-    void hasManaAbilities() {
-        DeathcapGlade card = new DeathcapGlade();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-    }
+    
 
     @Test
     @DisplayName("Enters tapped when you control zero other lands")

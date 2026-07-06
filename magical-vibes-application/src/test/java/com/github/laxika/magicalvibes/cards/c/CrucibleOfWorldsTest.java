@@ -19,19 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CrucibleOfWorldsTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Crucible of Worlds has correct card properties")
-    void hasCorrectProperties() {
-        CrucibleOfWorlds card = new CrucibleOfWorlds();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PlayLandsFromGraveyardEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

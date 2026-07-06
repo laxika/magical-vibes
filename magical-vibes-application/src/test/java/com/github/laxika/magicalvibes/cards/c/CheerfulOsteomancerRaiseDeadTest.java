@@ -20,20 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CheerfulOsteomancerRaiseDeadTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD BecomePreparedEffect and Raise Dead back face")
-    void hasCorrectStructure() {
-        CheerfulOsteomancerRaiseDead card = new CheerfulOsteomancerRaiseDead();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(BecomePreparedEffect.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("RaiseDead");
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getName()).isEqualTo("Raise Dead");
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Entering the battlefield prepares Cheerful Osteomancer and exiles a castable Raise Dead copy")

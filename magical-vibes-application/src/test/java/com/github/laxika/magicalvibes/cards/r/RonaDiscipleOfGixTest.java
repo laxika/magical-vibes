@@ -29,32 +29,9 @@ class RonaDiscipleOfGixTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has ETB may effect to exile historic card from own graveyard")
-    void hasCorrectETBEffect() {
-        RonaDiscipleOfGix card = new RonaDiscipleOfGix();
+    
 
-        var etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
-        assertThat(etbEffects).hasSize(1);
-        assertThat(etbEffects.getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) etbEffects.getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetCardFromGraveyardAndImprintOnSourceEffect.class);
-
-        ExileTargetCardFromGraveyardAndImprintOnSourceEffect exileEffect =
-                (ExileTargetCardFromGraveyardAndImprintOnSourceEffect) mayEffect.wrapped();
-        assertThat(exileEffect.filter()).isInstanceOf(CardIsHistoricPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Has static effect to cast from exiled cards")
-    void hasCorrectStaticEffect() {
-        RonaDiscipleOfGix card = new RonaDiscipleOfGix();
-
-        var staticEffects = card.getEffects(EffectSlot.STATIC);
-        assertThat(staticEffects).hasSize(1);
-        assertThat(staticEffects.getFirst()).isInstanceOf(AllowCastFromCardsExiledWithSourceEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has activated ability: {4}, {T}: Exile the top card of your library")

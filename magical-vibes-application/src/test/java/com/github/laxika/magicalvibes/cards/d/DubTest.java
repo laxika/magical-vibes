@@ -25,30 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DubTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Dub has correct card properties")
-    void hasCorrectProperties() {
-        Dub card = new Dub();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantSubtypeEffect.class);
-
-        GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keywords()).containsExactly(Keyword.FIRST_STRIKE);
-        assertThat(keywordEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-
-        GrantSubtypeEffect subtypeEffect = (GrantSubtypeEffect) card.getEffects(EffectSlot.STATIC).get(2);
-        assertThat(subtypeEffect.subtype()).isEqualTo(CardSubtype.KNIGHT);
-        assertThat(subtypeEffect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-        assertThat(subtypeEffect.overriding()).isFalse();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

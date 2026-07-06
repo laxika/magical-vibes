@@ -23,18 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PrimalRageTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Primal Rage has correct card properties")
-    void hasCorrectProperties() {
-        PrimalRage card = new PrimalRage();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.TRAMPLE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("Casting Primal Rage puts it on the stack as an enchantment spell")

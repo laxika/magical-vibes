@@ -41,21 +41,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
                 .isEqualTo(new DealDamageToTargetCreatureEffect(new SourceToughness()));
     }
 
-    @Test
-    @DisplayName("Target filter requires creature in combat with source")
-    void hasCorrectTargetFilter() {
-        SteadfastArmasaur card = new SteadfastArmasaur();
-
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter =
-                (PermanentPredicateTargetFilter) card.getActivatedAbilities().getFirst().getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentAllOfPredicate.class);
-        PermanentAllOfPredicate allOf = (PermanentAllOfPredicate) filter.predicate();
-        assertThat(allOf.predicates()).hasSize(2);
-        assertThat(allOf.predicates().get(0)).isInstanceOf(PermanentIsCreaturePredicate.class);
-        assertThat(allOf.predicates().get(1)).isInstanceOf(PermanentInCombatWithSourcePredicate.class);
-    }
+    
 
     // ===== Deals damage when attacking and blocked =====
 

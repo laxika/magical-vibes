@@ -19,14 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GaeasProtectorTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gaea's Protector has MustBeBlockedIfAbleEffect as static effect")
-    void hasCorrectEffect() {
-        GaeasProtector card = new GaeasProtector();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustBeBlockedIfAbleEffect.class);
-    }
+    
 
     @Test
     @DisplayName("At least one creature must block Gaea's Protector if able")

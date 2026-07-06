@@ -20,25 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SelhoffOccultistTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_DEATH and ON_ANY_CREATURE_DIES effects")
-    void hasCorrectStructure() {
-        SelhoffOccultist card = new SelhoffOccultist();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect deathEffect =
-                (MillTargetPlayerEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathEffect.count()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(MillTargetPlayerEffect.class);
-    }
-
     // ===== ON_DEATH: Selhoff Occultist itself dies =====
 
     @Test

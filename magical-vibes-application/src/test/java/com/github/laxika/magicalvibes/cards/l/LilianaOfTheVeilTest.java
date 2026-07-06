@@ -40,42 +40,11 @@ class LilianaOfTheVeilTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has EachPlayerDiscardsEffect(1)")
-    void plusOneAbilityHasCorrectEffect() {
-        LilianaOfTheVeil card = new LilianaOfTheVeil();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(EachPlayerDiscardsEffect.class);
-        assertThat(((EachPlayerDiscardsEffect) ability.getEffects().getFirst()).amount()).isEqualTo(1);
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability has SacrificeCreatureEffect targeting player")
-    void minusTwoAbilityHasCorrectEffect() {
-        LilianaOfTheVeil card = new LilianaOfTheVeil();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SacrificeCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("-6 ability has SeparatePermanentsIntoPilesAndSacrificeEffect targeting player")
-    void minusSixAbilityHasCorrectEffect() {
-        LilianaOfTheVeil card = new LilianaOfTheVeil();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-6);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(SeparatePermanentsIntoPilesAndSacrificeEffect.class);
-    }
+    
 
     // ===== Casting =====
 

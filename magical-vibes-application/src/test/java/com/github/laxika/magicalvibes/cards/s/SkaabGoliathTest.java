@@ -21,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkaabGoliathTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Skaab Goliath has ExileNCardsFromGraveyardCost requiring 2 creature cards")
-    void hasCorrectCostEffect() {
-        SkaabGoliath card = new SkaabGoliath();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileNCardsFromGraveyardCost.class);
-
-        ExileNCardsFromGraveyardCost cost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(cost.count()).isEqualTo(2);
-        assertThat(cost.requiredType()).isEqualTo(CardType.CREATURE);
-    }
-
     // ===== Casting =====
 
     @Test

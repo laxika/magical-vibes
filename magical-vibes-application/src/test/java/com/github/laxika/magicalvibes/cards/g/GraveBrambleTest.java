@@ -46,20 +46,6 @@ class GraveBrambleTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Grave Bramble has protection from Zombies")
-    void hasProtectionFromZombies() {
-        GraveBramble card = new GraveBramble();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ProtectionFromSubtypesEffect.class);
-
-        ProtectionFromSubtypesEffect protection = (ProtectionFromSubtypesEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(protection.subtypes()).containsExactly(CardSubtype.ZOMBIE);
-    }
-
     // ===== Protection - combat damage =====
 
     @Test

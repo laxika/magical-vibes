@@ -37,20 +37,6 @@ class WarPriestOfThuneTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, enchantmentId); // choose target -> ETB on stack
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("War Priest of Thune has correct card properties")
-    void hasCorrectProperties() {
-        WarPriestOfThune card = new WarPriestOfThune();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== ETB may ability =====
 
     @Test

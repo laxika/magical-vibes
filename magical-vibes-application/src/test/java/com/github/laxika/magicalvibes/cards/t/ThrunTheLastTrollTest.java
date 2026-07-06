@@ -26,20 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThrunTheLastTrollTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Thrun has cant-be-countered flag and regenerate ability")
-    void hasCorrectProperties() {
-        ThrunTheLastTroll card = new ThrunTheLastTroll();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasAtLeastOneElementOfType(CantBeCounteredEffect.class);
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{G}");
-    }
-
     // ===== Can't be countered =====
 
     @Test

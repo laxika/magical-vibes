@@ -25,19 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DismemberTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Dismember has correct card properties")
-    void hasCorrectCardProperties() {
-        Dismember card = new Dismember();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-5));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(-5));
-    }
+    
 
     @Test
     @DisplayName("Casting Dismember puts it on stack with target creature")

@@ -19,20 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class OldGrowthEducatorTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has a conditional ETB granting two +1/+1 counters gated on gaining life")
-    void hasCorrectStructure() {
-        OldGrowthEducator card = new OldGrowthEducator();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(conditional.condition()).isInstanceOf(GainedLifeThisTurn.class);
-        PutCountersOnSourceEffect counters = (PutCountersOnSourceEffect) conditional.wrapped();
-        assertThat(counters.powerModifier()).isEqualTo(1);
-        assertThat(counters.toughnessModifier()).isEqualTo(1);
-        assertThat(counters.amount()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Enters without counters if no life was gained this turn")

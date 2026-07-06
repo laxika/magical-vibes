@@ -27,26 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SanctumSpiritTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sanctum Spirit has one activated ability with discard-historic cost granting indestructible")
-    void hasCorrectActivatedAbility() {
-        SanctumSpirit card = new SanctumSpirit();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grantEffect = (GrantKeywordEffect) card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(grantEffect.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Casting =====
 
     @Test

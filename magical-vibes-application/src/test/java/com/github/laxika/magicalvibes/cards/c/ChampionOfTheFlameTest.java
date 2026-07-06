@@ -19,23 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChampionOfTheFlameTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static +2/+2 per Aura and Equipment effect")
-    void hasCorrectEffect() {
-        ChampionOfTheFlame card = new ChampionOfTheFlame();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect =
-                (BoostSelfEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        Scaled twicePerAttachment = new Scaled(new AttachmentsOnSource(true, true), 2);
-        assertThat(effect.powerBoost()).isEqualTo(twicePerAttachment);
-        assertThat(effect.toughnessBoost()).isEqualTo(twicePerAttachment);
-    }
-
     // ===== Base stats without attachments =====
 
     @Test

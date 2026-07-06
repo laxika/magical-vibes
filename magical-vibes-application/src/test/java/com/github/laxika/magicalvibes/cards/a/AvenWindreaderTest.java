@@ -18,21 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AvenWindreaderTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Aven Windreader has correct card properties")
-    void hasCorrectProperties() {
-        AvenWindreader card = new AvenWindreader();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{U}");
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(RevealTopCardOfLibraryEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

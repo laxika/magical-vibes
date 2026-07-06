@@ -21,17 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SoulblastTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Soulblast has correct card properties")
-    void hasCorrectProperties() {
-        Soulblast card = new Soulblast();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(SacrificeAllCreaturesYouControlCost.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isEqualTo(new DealDamageToAnyTargetEffect(new XValue()));
-    }
+    
 
     @Test
     @DisplayName("Casting Soulblast sacrifices all your creatures and stores total power in X")

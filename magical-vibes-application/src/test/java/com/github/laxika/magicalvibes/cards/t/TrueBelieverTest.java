@@ -22,18 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TrueBelieverTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("True Believer has correct card properties")
-    void hasCorrectProperties() {
-        TrueBeliever card = new TrueBeliever();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantControllerShroudEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

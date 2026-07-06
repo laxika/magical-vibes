@@ -18,21 +18,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class AjanisPridemateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_CONTROLLER_GAINS_LIFE trigger with PutCountersOnSourceEffect")
-    void hasCorrectProperties() {
-        AjanisPridemate card = new AjanisPridemate();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect effect =
-                (PutCountersOnSourceEffect) card.getEffects(EffectSlot.ON_CONTROLLER_GAINS_LIFE).getFirst();
-        assertThat(effect.powerModifier()).isEqualTo(1);
-        assertThat(effect.toughnessModifier()).isEqualTo(1);
-        assertThat(effect.amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Gets a +1/+1 counter when controller gains life from ETB effect")

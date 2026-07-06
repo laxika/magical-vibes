@@ -35,32 +35,6 @@ class PillarOfOriginsTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ChooseSubtypeOnEnterEffect on ON_ENTER_BATTLEFIELD")
-    void hasChooseSubtypeEffect() {
-        PillarOfOrigins card = new PillarOfOrigins();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ChooseSubtypeOnEnterEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has activated ability with tap and AwardAnyColorChosenSubtypeCreatureManaEffect")
-    void hasActivatedAbility() {
-        PillarOfOrigins card = new PillarOfOrigins();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(1)
-                .first()
-                .isInstanceOf(AwardAnyColorChosenSubtypeCreatureManaEffect.class);
-    }
-
     // ===== Entering the battlefield =====
 
     @Test

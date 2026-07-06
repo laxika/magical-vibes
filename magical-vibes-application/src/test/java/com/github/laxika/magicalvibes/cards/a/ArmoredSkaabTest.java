@@ -15,16 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArmoredSkaabTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Armored Skaab has ETB mill controller effect for 4 cards")
-    void hasEtbMillControllerEffect() {
-        ArmoredSkaab card = new ArmoredSkaab();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(MillControllerEffect.class);
-        assertThat(((MillControllerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).count())
-                .isEqualTo(4);
-    }
+    
 
     @Test
     @DisplayName("Casting Armored Skaab puts it on stack as creature spell")

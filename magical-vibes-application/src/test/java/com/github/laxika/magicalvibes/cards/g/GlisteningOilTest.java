@@ -23,26 +23,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GlisteningOilTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Glistening Oil has infect grant, upkeep counter, and death return effects")
-    void hasCorrectEffects() {
-        GlisteningOil card = new GlisteningOil();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(PutCounterOnEnchantedCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Infect grant =====
 
     @Test

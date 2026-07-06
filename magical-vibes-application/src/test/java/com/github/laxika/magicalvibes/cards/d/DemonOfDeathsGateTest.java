@@ -22,16 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DemonOfDeathsGateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has alternate casting cost configured")
-    void hasAlternateCastingCost() {
-        DemonOfDeathsGate card = new DemonOfDeathsGate();
-
-        AlternateHandCast altCast = card.getCastingOption(AlternateHandCast.class).orElseThrow();
-        assertThat(altCast.getCost(LifeCastingCost.class).orElseThrow().amount()).isEqualTo(6);
-        assertThat(altCast.getCost(SacrificePermanentsCost.class).orElseThrow().count()).isEqualTo(3);
-        assertThat(altCast.getCost(SacrificePermanentsCost.class).orElseThrow().filter()).isInstanceOf(PermanentAllOfPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Can be cast using alternate cost: sacrifice 3 black creatures and pay 6 life")

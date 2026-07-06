@@ -23,40 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AdantoVanguardTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct static effect: +2/+0 while attacking")
-    void hasCorrectStaticEffect() {
-        AdantoVanguard card = new AdantoVanguard();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-        assertThat(boost.filter()).isInstanceOf(PermanentIsAttackingPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Has correct activated ability: pay 4 life for indestructible")
-    void hasCorrectActivatedAbility() {
-        AdantoVanguard card = new AdantoVanguard();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(PayLifeCost.class);
-        PayLifeCost lifeCost = (PayLifeCost) ability.getEffects().get(0);
-        assertThat(lifeCost.amount()).isEqualTo(4);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) ability.getEffects().get(1);
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Static boost: +2/+0 while attacking =====
 
     @Test
@@ -155,7 +121,6 @@ class AdantoVanguardTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void declareAttackers(Player player, List<Integer> attackerIndices) {
         List<Permanent> battlefield = gd.playerBattlefields.get(player.getId());

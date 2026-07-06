@@ -121,20 +121,5 @@ class ChosenOfMarkovTest extends BaseCardTest {
         assertThat(vamp2.isTapped()).isFalse();
     }
 
-    @Test
-    @DisplayName("Card has correct ability configuration")
-    void hasCorrectAbilityConfiguration() {
-        ChosenOfMarkov card = new ChosenOfMarkov();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .anyMatch(e -> e instanceof TapCreatureCost);
-        assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .anyMatch(e -> e instanceof TransformSelfEffect);
-
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("MarkovsServant");
-    }
+    
 }

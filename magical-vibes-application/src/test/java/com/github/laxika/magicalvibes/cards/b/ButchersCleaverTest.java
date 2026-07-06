@@ -23,36 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ButchersCleaverTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Butcher's Cleaver has static +3/+0 boost effect")
-    void hasStaticBoostEffect() {
-        ButchersCleaver card = new ButchersCleaver();
-
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(3);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Butcher's Cleaver grants lifelink only to equipped Human creatures")
-    void hasConditionalLifelinkEffect() {
-        ButchersCleaver card = new ButchersCleaver();
-
-        GrantKeywordEffect grant = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof GrantKeywordEffect)
-                .map(e -> (GrantKeywordEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(grant.keywords()).containsExactly(Keyword.LIFELINK);
-        assertThat(grant.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(grant.filter()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) grant.filter()).subtype()).isEqualTo(CardSubtype.HUMAN);
-    }
-
     // ===== Static effects: power/toughness boost =====
 
     @Test

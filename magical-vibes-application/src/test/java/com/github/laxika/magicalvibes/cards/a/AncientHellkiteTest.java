@@ -39,25 +39,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AncientHellkiteTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has activated ability with DealDamageToTargetCreatureEffect(1) and ONLY_WHILE_ATTACKING restriction")
-    void hasCorrectStructure() {
-        AncientHellkite card = new AncientHellkite();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.getManaCost()).isEqualTo("{R}");
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.ONLY_WHILE_ATTACKING);
-        assertThat(ability.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        DealDamageToTargetCreatureEffect effect = (DealDamageToTargetCreatureEffect) ability.getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Ability resolves while attacking =====
 
     @Test
@@ -132,7 +113,6 @@ class AncientHellkiteTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void setUpAttacking(Permanent attacker) {
         harness.forceActivePlayer(player1);

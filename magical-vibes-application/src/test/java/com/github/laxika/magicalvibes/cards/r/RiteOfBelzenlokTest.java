@@ -27,65 +27,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class RiteOfBelzenlokTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I creates two 0/1 black Cleric tokens")
-    void chapterIHasCorrectEffects() {
-        RiteOfBelzenlok card = new RiteOfBelzenlok();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(2));
-        assertThat(effect.tokenName()).isEqualTo("Cleric");
-        assertThat(effect.power()).isZero();
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.BLACK);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.CLERIC);
-        assertThat(effect.keywords()).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Chapter II has same token creation as chapter I")
-    void chapterIIHasCorrectEffects() {
-        RiteOfBelzenlok card = new RiteOfBelzenlok();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(2));
-        assertThat(effect.tokenName()).isEqualTo("Cleric");
-        assertThat(effect.power()).isZero();
-        assertThat(effect.toughness()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Chapter III creates a 6/6 black Demon with flying, trample, and upkeep sacrifice trigger")
-    void chapterIIIHasCorrectEffects() {
-        RiteOfBelzenlok card = new RiteOfBelzenlok();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) effects.getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Demon");
-        assertThat(effect.power()).isEqualTo(6);
-        assertThat(effect.toughness()).isEqualTo(6);
-        assertThat(effect.color()).isEqualTo(CardColor.BLACK);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.DEMON);
-        assertThat(effect.keywords()).containsExactlyInAnyOrder(Keyword.FLYING, Keyword.TRAMPLE);
-        assertThat(effect.tokenEffects()).hasSize(1);
-        assertThat(effect.tokenEffects()).containsKey(EffectSlot.UPKEEP_TRIGGERED);
-        assertThat(effect.tokenEffects().get(EffectSlot.UPKEEP_TRIGGERED))
-                .isInstanceOf(SacrificeOtherCreatureOrDamageEffect.class);
-        assertThat(((SacrificeOtherCreatureOrDamageEffect) effect.tokenEffects().get(EffectSlot.UPKEEP_TRIGGERED)).damage())
-                .isEqualTo(6);
-    }
-
     // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test

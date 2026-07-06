@@ -41,24 +41,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class HealingGraceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Healing Grace has correct spell effects")
-    void hasCorrectEffects() {
-        HealingGrace card = new HealingGrace();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PreventDamageToTargetFromChosenSourceEffect.class);
-        assertThat(((PreventDamageToTargetFromChosenSourceEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount())
-                .isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount())
-                .isEqualTo(new Fixed(3));
-    }
-
     // ===== Casting =====
 
     @Test

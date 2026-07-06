@@ -24,23 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ConeOfFlameTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cone of Flame has correct card properties")
-    void hasCorrectProperties() {
-        ConeOfFlame card = new ConeOfFlame();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isEqualTo(3);
-        assertThat(card.getMaxTargets()).isEqualTo(3);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealOrderedDamageToAnyTargetsEffect.class);
-        DealOrderedDamageToAnyTargetsEffect effect = (DealOrderedDamageToAnyTargetsEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.damageAmounts()).containsExactly(1, 2, 3);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -17,16 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GroupProjectTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Creates a Spirit token and has tap-creature flashback cost")
-    void hasCorrectStructure() {
-        GroupProject card = new GroupProject();
-
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(TapUntappedPermanentsCost.class)).isPresent();
-        assertThat(flashback.getCost(TapUntappedPermanentsCost.class).orElseThrow().count()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Resolving creates a 2/2 Spirit token")

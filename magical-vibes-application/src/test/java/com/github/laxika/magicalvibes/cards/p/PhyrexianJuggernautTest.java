@@ -19,17 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PhyrexianJuggernautTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyrexian Juggernaut has MustAttackEffect as static effect")
-    void hasCorrectEffects() {
-        PhyrexianJuggernaut card = new PhyrexianJuggernaut();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustAttackEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

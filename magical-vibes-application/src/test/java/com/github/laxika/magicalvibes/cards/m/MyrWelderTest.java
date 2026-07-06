@@ -28,37 +28,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MyrWelderTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has one activated ability: tap to exile target artifact from a graveyard with imprint")
-    void hasCorrectActivatedAbility() {
-        MyrWelder card = new MyrWelder();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(ExileTargetCardFromGraveyardAndImprintOnSourceEffect.class);
-
-        ExileTargetCardFromGraveyardAndImprintOnSourceEffect effect =
-                (ExileTargetCardFromGraveyardAndImprintOnSourceEffect) ability.getEffects().getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.ARTIFACT);
-    }
-
-    @Test
-    @DisplayName("Has static effect to gain activated abilities of exiled cards")
-    void hasCorrectStaticEffect() {
-        MyrWelder card = new MyrWelder();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GainActivatedAbilitiesOfExiledCardsEffect.class);
-    }
-
     // ===== Imprint ability — exile target artifact from a graveyard =====
 
     @Test

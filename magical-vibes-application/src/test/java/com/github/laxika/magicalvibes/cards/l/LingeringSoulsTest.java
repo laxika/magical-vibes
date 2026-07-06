@@ -24,26 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LingeringSoulsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has spell token creation effect and flashback cost")
-    void hasCorrectEffectsAndFlashbackCost() {
-        LingeringSouls card = new LingeringSouls();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(2));
-        assertThat(effect.tokenName()).isEqualTo("Spirit");
-        assertThat(effect.power()).isEqualTo(1);
-        assertThat(effect.toughness()).isEqualTo(1);
-        assertThat(effect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(effect.subtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(effect.keywords()).containsExactly(Keyword.FLYING);
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{1}{B}");
-    }
+    
 
     @Test
     @DisplayName("Casting Lingering Souls creates two 1/1 white Spirit tokens with flying")

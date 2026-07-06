@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CuriosityTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curiosity has correct effects")
-    void hasCorrectEffects() {
-        Curiosity card = new Curiosity();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test

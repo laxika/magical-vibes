@@ -23,39 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WoodenStakeTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has +1/+0 static boost for equipped creature")
-    void hasStaticBoostEffect() {
-        WoodenStake card = new WoodenStake();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-    }
-
-    @Test
-    @DisplayName("Has DestroySubtypeCombatOpponentEffect on ON_BLOCK and ON_BECOMES_BLOCKED")
-    void hasCombatDestroyEffects() {
-        WoodenStake card = new WoodenStake();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).singleElement()
-                .isInstanceOf(DestroySubtypeCombatOpponentEffect.class);
-        DestroySubtypeCombatOpponentEffect blockEffect =
-                (DestroySubtypeCombatOpponentEffect) card.getEffects(EffectSlot.ON_BLOCK).getFirst();
-        assertThat(blockEffect.requiredSubtype()).isEqualTo(CardSubtype.VAMPIRE);
-        assertThat(blockEffect.cannotBeRegenerated()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).singleElement()
-                .isInstanceOf(DestroySubtypeCombatOpponentEffect.class);
-        assertThat(card.getEffectRegistrations(EffectSlot.ON_BECOMES_BLOCKED).getFirst().triggerMode())
-                .isEqualTo(TriggerMode.PER_BLOCKER);
-    }
-
     // ===== Equipped creature blocks a Vampire =====
 
     @Test

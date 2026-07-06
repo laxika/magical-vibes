@@ -20,17 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PursueThePastTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gains 2 life and optional discard-draw with flashback")
-    void hasCorrectStructure() {
-        PursueThePast card = new PursueThePast();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GainLifeEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(may.wrapped()).isInstanceOf(DiscardAndDrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving gains 2 life without choosing to discard")

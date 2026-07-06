@@ -27,18 +27,6 @@ class PracticedScrollsmithTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature → ETB → graveyard choice
     }
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD exile-and-may-play effect")
-    void hasCorrectEffect() {
-        PracticedScrollsmith card = new PracticedScrollsmith();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect.class);
-    }
-
     // ===== ETB targeting =====
 
     @Test

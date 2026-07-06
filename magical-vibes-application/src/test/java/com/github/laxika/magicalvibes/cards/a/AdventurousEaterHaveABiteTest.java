@@ -17,18 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AdventurousEaterHaveABiteTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ON_ENTER_BATTLEFIELD BecomePreparedEffect and Have a Bite back face")
-    void hasCorrectStructure() {
-        AdventurousEaterHaveABite card = new AdventurousEaterHaveABite();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(BecomePreparedEffect.class);
-        assertThat(card.getBackFaceClassName()).isEqualTo("HaveABite");
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getName()).isEqualTo("Have a Bite");
-    }
+    
 
     @Test
     @DisplayName("Entering the battlefield prepares Adventurous Eater and exiles a castable Have a Bite copy")

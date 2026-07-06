@@ -16,18 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PalaceGuardTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Palace Guard has CanBlockAnyNumberOfCreaturesEffect as static effect")
-    void hasCorrectStaticEffect() {
-        PalaceGuard card = new PalaceGuard();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CanBlockAnyNumberOfCreaturesEffect.class);
-    }
-
     // ===== Blocking multiple attackers =====
 
     @Test

@@ -22,19 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UnsummonTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Unsummon has correct card properties")
-    void hasCorrectProperties() {
-        Unsummon card = new Unsummon();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

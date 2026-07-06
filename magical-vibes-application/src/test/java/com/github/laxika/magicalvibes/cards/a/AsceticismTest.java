@@ -25,26 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AsceticismTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Asceticism has correct card properties")
-    void hasCorrectProperties() {
-        Asceticism card = new Asceticism();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantEffectEffect.class);
-        GrantEffectEffect grantEffect = (GrantEffectEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(grantEffect.effect()).isInstanceOf(CantBeTargetOfSpellsOrAbilitiesEffect.class);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}{G}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-    }
-
     // ===== Casting =====
 
     @Test

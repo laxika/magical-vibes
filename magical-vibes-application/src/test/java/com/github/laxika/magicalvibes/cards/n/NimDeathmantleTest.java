@@ -29,33 +29,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class NimDeathmantleTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Nim Deathmantle has correct static effects")
-    void hasCorrectStaticEffects() {
-        NimDeathmantle card = new NimDeathmantle();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(4);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect keywordEffect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(keywordEffect.keywords()).containsExactly(Keyword.INTIMIDATE);
-        assertThat(keywordEffect.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(GrantColorEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(3)).isInstanceOf(GrantSubtypeEffect.class);
-    }
-
-    @Test
-    @DisplayName("Nim Deathmantle has death trigger")
-    void hasDeathTrigger() {
-        NimDeathmantle card = new NimDeathmantle();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES).getFirst())
-                .isInstanceOf(MayPayManaEffect.class);
-        MayPayManaEffect mayPay = (MayPayManaEffect) card.getEffects(EffectSlot.ON_ANY_NONTOKEN_CREATURE_DIES).getFirst();
-        assertThat(mayPay.manaCost()).isEqualTo("{4}");
-        assertThat(mayPay.wrapped()).isInstanceOf(ReturnDyingCreatureToBattlefieldAndAttachSourceEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Equipped creature gets +2/+2 and intimidate")

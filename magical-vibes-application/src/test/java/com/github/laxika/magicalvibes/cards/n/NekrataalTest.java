@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NekrataalTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nekrataal has correct card properties")
-    void hasCorrectProperties() {
-        Nekrataal card = new Nekrataal();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isTrue();
-    }
-
     // ===== Casting and resolving =====
 
     @Test

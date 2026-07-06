@@ -17,29 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SerraAscendantTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has life threshold static boost effect with +5/+5 and flying at 30 life")
-    void hasCorrectEffect() {
-        SerraAscendant card = new SerraAscendant();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(((ControllerLifeAtLeast) conditional.condition()).threshold()).isEqualTo(30);
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(5);
-        assertThat(boost.toughnessBoost()).isEqualTo(5);
-        assertThat(boost.grantedKeywords()).isEqualTo(Set.of(Keyword.FLYING));
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Below threshold (default 20 life) =====
 
     @Test

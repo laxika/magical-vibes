@@ -26,34 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MavrenFeinDuskApostleTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_CREATURES_ATTACK with ConditionalEffect wrapping CreateTokenEffect")
-    void hasCorrectAttackTrigger() {
-        MavrenFeinDuskApostle card = new MavrenFeinDuskApostle();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURES_ATTACK).getFirst();
-        assertThat(((HasAttacker) conditional.condition()).predicate()).isEqualTo(new PermanentAllOfPredicate(List.of(
-                new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                new PermanentNotPredicate(new PermanentIsTokenPredicate())
-        )));
-        assertThat(conditional.wrapped()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) conditional.wrapped();
-        assertThat(token.tokenName()).isEqualTo("Vampire");
-        assertThat(token.power()).isEqualTo(1);
-        assertThat(token.toughness()).isEqualTo(1);
-        assertThat(token.color()).isEqualTo(CardColor.WHITE);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.VAMPIRE);
-        assertThat(token.keywords()).containsExactly(Keyword.LIFELINK);
-    }
-
     // ===== Trigger: nontoken Vampire attacks =====
 
     @Test

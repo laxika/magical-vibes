@@ -21,27 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GrimBackwoodsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has colorless mana ability and draw ability with sacrifice cost")
-    void hasCorrectActivatedAbilities() {
-        GrimBackwoods card = new GrimBackwoods();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).containsExactly(new AwardManaEffect(ManaColor.COLORLESS));
-
-        var drawAbility = card.getActivatedAbilities().get(1);
-        assertThat(drawAbility.isRequiresTap()).isTrue();
-        assertThat(drawAbility.getManaCost()).isEqualTo("{2}{B}{G}");
-        assertThat(drawAbility.isNeedsTarget()).isFalse();
-        assertThat(drawAbility.getTargetFilter()).isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(drawAbility.getEffects()).hasSize(2);
-        assertThat(drawAbility.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(drawAbility.getEffects().get(1)).isEqualTo(new DrawCardEffect(1));
-    }
+    
 
     @Test
     @DisplayName("Tapping for mana adds colorless mana")

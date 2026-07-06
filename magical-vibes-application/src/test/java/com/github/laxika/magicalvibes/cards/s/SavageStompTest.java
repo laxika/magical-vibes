@@ -24,22 +24,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SavageStompTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effects: cost reduction, +1/+1 counter on first target, fight")
-    void hasCorrectEffects() {
-        SavageStomp card = new SavageStomp();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new ReduceOwnCastCostIfTargetingControlledPermanentEffect(
-                        new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.DINOSAUR), 2));
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutPlusOnePlusOneCounterOnFirstTargetEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(FirstTargetFightsSecondTargetEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Creature gets +1/+1 counter before fighting — counter helps survive")

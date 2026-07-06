@@ -27,24 +27,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class TatyovaBenthicDruidTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_LAND_ENTERS_BATTLEFIELD effects: GainLifeEffect(1) and DrawCardEffect(1)")
-    void hasCorrectEffects() {
-        TatyovaBenthicDruid card = new TatyovaBenthicDruid();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(0))
-                .isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(0)).amount())
-                .isEqualTo(new Fixed(1));
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(1))
-                .isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) card.getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD).get(1)).amount())
-                .isEqualTo(new Fixed(1));
-    }
-
     // ===== Triggers when controller plays a land =====
 
     @Test

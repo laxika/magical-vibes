@@ -19,26 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LilianasSpecterTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ETB effect that makes each opponent discard one card")
-    void hasEtbDiscardEffect() {
-        LilianasSpecter card = new LilianasSpecter();
+    
 
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EachOpponentDiscardsEffect.class);
-        EachOpponentDiscardsEffect effect =
-                (EachOpponentDiscardsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Does not require a target")
-    void doesNotRequireTarget() {
-        LilianasSpecter card = new LilianasSpecter();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack")

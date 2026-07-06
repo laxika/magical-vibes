@@ -17,18 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IllusionaryServantTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Illusionary Servant has ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY SacrificeSelfEffect")
-    void hasCorrectEffect() {
-        IllusionaryServant card = new IllusionaryServant();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY).getFirst())
-                .isInstanceOf(SacrificeSelfEffect.class);
-    }
-
     // ===== Sacrifice when targeted by opponent's spell =====
 
     @Test

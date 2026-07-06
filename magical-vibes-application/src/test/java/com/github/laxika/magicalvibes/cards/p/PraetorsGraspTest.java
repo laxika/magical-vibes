@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PraetorsGraspTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has search-exile-with-play-permission effect and targets opponent")
-    void hasCorrectEffects() {
-        PraetorsGrasp card = new PraetorsGrasp();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(SearchTargetLibraryForCardToExileWithPlayPermissionEffect.class);
-    }
-
     // ===== Library search =====
 
     @Test

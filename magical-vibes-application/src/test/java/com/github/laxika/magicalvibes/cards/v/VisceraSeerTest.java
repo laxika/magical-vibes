@@ -20,25 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VisceraSeerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has sacrifice-a-creature activated ability with scry 1")
-    void hasCorrectAbilityStructure() {
-        VisceraSeer card = new VisceraSeer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeCreatureCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(ScryEffect.class);
-        ScryEffect effect = (ScryEffect) ability.getEffects().get(1);
-        assertThat(effect.count()).isEqualTo(1);
-    }
-
     // ===== Activation: sacrifice a creature to scry 1 =====
 
     @Test

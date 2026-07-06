@@ -21,28 +21,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RavenousRatsTest extends BaseCardTest {
 
+    
 
-    @Test
-    @DisplayName("Ravenous Rats has correct card properties")
-    void hasCorrectProperties() {
-        RavenousRats card = new RavenousRats();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
-    @Test
-    @DisplayName("Has ETB effect that makes target player discard one card")
-    void hasEtbDiscardEffect() {
-        RavenousRats card = new RavenousRats();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(TargetPlayerDiscardsEffect.class);
-        TargetPlayerDiscardsEffect effect =
-                (TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Resolving creature spell puts ETB trigger on stack with selected opponent target")

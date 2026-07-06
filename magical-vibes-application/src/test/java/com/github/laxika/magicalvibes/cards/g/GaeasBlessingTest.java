@@ -24,43 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GaeasBlessingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has SPELL effects: shuffle up to 3 cards from graveyard + draw a card")
-    void hasCorrectSpellEffects() {
-        GaeasBlessing card = new GaeasBlessing();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(ShuffleTargetCardsFromGraveyardIntoLibraryEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(DrawCardEffect.class);
-
-        ShuffleTargetCardsFromGraveyardIntoLibraryEffect shuffleEffect =
-                (ShuffleTargetCardsFromGraveyardIntoLibraryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(shuffleEffect.maxTargets()).isEqualTo(3);
-        assertThat(shuffleEffect.filter()).isNull();
-    }
-
-    @Test
-    @DisplayName("Has ON_SELF_MILLED effect: shuffle graveyard into library")
-    void hasSelfMilledEffect() {
-        GaeasBlessing card = new GaeasBlessing();
-
-        assertThat(card.getEffects(EffectSlot.ON_SELF_MILLED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_MILLED).get(0))
-                .isInstanceOf(ShuffleGraveyardIntoLibraryEffect.class);
-    }
-
-    @Test
-    @DisplayName("Needs target (auto-derived from player-targeting effect)")
-    void needsTarget() {
-        GaeasBlessing card = new GaeasBlessing();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
     // ===== Casting — graveyard targeting + draw =====
 
     @Test

@@ -19,16 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NaturalSpringTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Natural Spring has correct card properties")
-    void hasCorrectProperties() {
-        NaturalSpring card = new NaturalSpring();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(TargetPlayerGainsLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Natural Spring targeting a player puts it on the stack")

@@ -13,21 +13,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IchorRatsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB effect that gives each player a poison counter")
-    void hasCorrectEffects() {
-        IchorRats card = new IchorRats();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GiveEachPlayerPoisonCountersEffect.class);
-        GiveEachPlayerPoisonCountersEffect effect =
-                (GiveEachPlayerPoisonCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(1);
-    }
-
     // ===== ETB: each player gets a poison counter =====
 
     @Test

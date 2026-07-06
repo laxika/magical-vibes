@@ -28,34 +28,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class UnbreathingHordeTest extends BaseCardTest {
 
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Has EnterWithCountersEffect counting other Zombies and graveyard Zombie cards")
-    void hasCorrectETBEffect() {
-        UnbreathingHorde card = new UnbreathingHorde();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new EnterWithCountersEffect(
-                        CounterType.PLUS_ONE_PLUS_ONE,
-                        new Sum(
-                                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER),
-                                new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER))));
-    }
-
-    @Test
-    @DisplayName("Has PreventDamageAndRemovePlusOnePlusOneCountersEffect with removeOneOnly=true")
-    void hasCorrectStaticEffect() {
-        UnbreathingHorde card = new UnbreathingHorde();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PreventDamageAndRemovePlusOnePlusOneCountersEffect.class);
-        var effect = (PreventDamageAndRemovePlusOnePlusOneCountersEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.removeOneOnly()).isTrue();
-    }
-
     // ===== ETB counter placement =====
 
     @Test

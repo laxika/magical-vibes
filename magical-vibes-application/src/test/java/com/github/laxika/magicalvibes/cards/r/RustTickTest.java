@@ -25,39 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RustTickTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rust Tick has MayNotUntapDuringUntapStepEffect as static effect")
-    void hasStaticMayNotUntapEffect() {
-        RustTick card = new RustTick();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(MayNotUntapDuringUntapStepEffect.class);
-    }
-
-    @Test
-    @DisplayName("Rust Tick has activated ability with tap and prevent untap effects")
-    void hasActivatedAbilityWithCorrectEffects() {
-        RustTick card = new RustTick();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(0))
-                .isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().get(1))
-                .isInstanceOf(PreventTargetUntapWhileSourceTappedEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getTargetFilter())
-                .isInstanceOf(PermanentPredicateTargetFilter.class);
-        PermanentPredicateTargetFilter filter =
-                (PermanentPredicateTargetFilter) card.getActivatedAbilities().get(0).getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
-
     // ===== Activated ability: tap target artifact =====
 
     @Test

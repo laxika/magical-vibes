@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReverberateTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Reverberate has correct card properties")
-    void hasCorrectProperties() {
-        Reverberate card = new Reverberate();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(CopySpellEffect.class);
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
-                "Target must be an instant or sorcery spell."
-        ));
-    }
-
     // ===== Casting =====
 
     @Test

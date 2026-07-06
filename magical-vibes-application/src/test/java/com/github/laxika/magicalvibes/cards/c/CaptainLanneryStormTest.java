@@ -24,39 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CaptainLanneryStormTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has CreateTokenEffect (Treasure artifact) on ON_ATTACK")
-    void hasAttackTrigger() {
-        CaptainLanneryStorm card = new CaptainLanneryStorm();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect effect = (CreateTokenEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-        assertThat(effect.tokenName()).isEqualTo("Treasure");
-        assertThat(effect.primaryType()).isEqualTo(CardType.ARTIFACT);
-    }
-
-    @Test
-    @DisplayName("Has TriggeringPermanentConditionalEffect(TREASURE, BoostSelfEffect(1,0)) on ON_ALLY_PERMANENT_SACRIFICED")
-    void hasSacrificeTrigger() {
-        CaptainLanneryStorm card = new CaptainLanneryStorm();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst())
-                .isInstanceOf(TriggeringPermanentConditionalEffect.class);
-        TriggeringPermanentConditionalEffect conditional =
-                (TriggeringPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_PERMANENT_SACRIFICED).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.TREASURE));
-        assertThat(conditional.wrapped()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect boost = (BoostSelfEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
-
     // ===== ON_ATTACK — creates Treasure token =====
 
     @Test
@@ -230,7 +197,6 @@ class CaptainLanneryStormTest extends BaseCardTest {
     }
 
     // ===== Helper methods =====
-
 
     private void addTreasureToken(Player player) {
         Card treasureCard = new Card();

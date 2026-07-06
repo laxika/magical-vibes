@@ -21,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class AssaultStrobeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Assault Strobe has correct card properties")
-    void hasCorrectProperties() {
-        AssaultStrobe card = new AssaultStrobe();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.DOUBLE_STRIKE);
-        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

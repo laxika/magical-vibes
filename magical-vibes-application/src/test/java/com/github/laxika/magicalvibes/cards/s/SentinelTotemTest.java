@@ -25,36 +25,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SentinelTotemTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Sentinel Totem has scry 1 ETB effect")
-    void hasScryEtbEffect() {
-        SentinelTotem card = new SentinelTotem();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ScryEffect.class);
-        ScryEffect effect = (ScryEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Sentinel Totem has tap + exile self activated ability with ExileAllGraveyardsEffect")
-    void hasExileGraveyardsAbility() {
-        SentinelTotem card = new SentinelTotem();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof ExileSelfCost)
-                .anyMatch(e -> e instanceof ExileAllGraveyardsEffect);
-    }
-
     // ===== ETB scry =====
 
     @Test

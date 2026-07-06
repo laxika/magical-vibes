@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpellSwindleTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has counter + treasure creation effect on SPELL slot")
-    void hasCorrectEffectStructure() {
-        SpellSwindle card = new SpellSwindle();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CounterSpellAndCreateTreasureTokensEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -235,7 +222,6 @@ class SpellSwindleTest extends BaseCardTest {
     }
 
     // ===== Helpers =====
-
 
     private List<Permanent> findAllPermanents(Player player, String cardName) {
         return gd.playerBattlefields.get(player.getId()).stream()

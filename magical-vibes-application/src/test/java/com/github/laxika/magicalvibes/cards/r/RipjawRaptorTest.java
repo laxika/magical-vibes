@@ -19,18 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RipjawRaptorTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Ripjaw Raptor has one ON_DEALT_DAMAGE effect of type DrawCardEffect")
-    void hasCorrectEffect() {
-        RipjawRaptor card = new RipjawRaptor();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0))
-                .isInstanceOf(DrawCardEffect.class);
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

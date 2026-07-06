@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BondsOfQuicksilverTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Bonds of Quicksilver has static AttachedCreatureDoesntUntapEffect")
-    void hasCorrectProperties() {
-        BondsOfQuicksilver card = new BondsOfQuicksilver();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(AttachedCreatureDoesntUntapEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

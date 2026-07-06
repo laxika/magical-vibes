@@ -24,19 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BairdStewardOfArgiveTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Baird has static RequirePaymentToAttackEffect with cost 1")
-    void hasCorrectEffects() {
-        BairdStewardOfArgive card = new BairdStewardOfArgive();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(RequirePaymentToAttackEffect.class);
-        RequirePaymentToAttackEffect tax = (RequirePaymentToAttackEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(tax.amountPerAttacker()).isEqualTo(1);
-    }
-
     // ===== Attack tax: opponent must pay {1} per attacking creature =====
 
     @Test

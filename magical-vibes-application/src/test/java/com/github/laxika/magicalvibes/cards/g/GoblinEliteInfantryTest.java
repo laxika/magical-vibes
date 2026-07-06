@@ -20,34 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GoblinEliteInfantryTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-
-    @Test
-    @DisplayName("Goblin Elite Infantry has ON_BLOCK effect with BoostSelfEffect -1/-1")
-    void hasOnBlockEffect() {
-        GoblinEliteInfantry card = new GoblinEliteInfantry();
-
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_BLOCK).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(-1));
-    }
-
-    @Test
-    @DisplayName("Goblin Elite Infantry has ON_BECOMES_BLOCKED effect with BoostSelfEffect -1/-1")
-    void hasOnBecomesBlockedEffect() {
-        GoblinEliteInfantry card = new GoblinEliteInfantry();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(-1));
-    }
-
     // ===== Casting =====
 
     @Test
@@ -307,16 +279,6 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    // ===== No trigger when not in combat =====
-
-    @Test
-    @DisplayName("Goblin Elite Infantry has no ON_ATTACK trigger - only triggers when blocking or becoming blocked")
-    void noTriggerWhenAttacking() {
-        GoblinEliteInfantry card = new GoblinEliteInfantry();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).isEmpty();
-    }
-
     // ===== Game log =====
 
     @Test
@@ -371,5 +333,4 @@ class GoblinEliteInfantryTest extends BaseCardTest {
         return perm;
     }
 }
-
 

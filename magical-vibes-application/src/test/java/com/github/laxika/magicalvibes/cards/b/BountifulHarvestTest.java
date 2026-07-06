@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BountifulHarvestTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has GainLifeEffect(PermanentCount(land, CONTROLLER)) as spell effect")
-    void hasCorrectEffect() {
-        BountifulHarvest card = new BountifulHarvest();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isEqualTo(new GainLifeEffect(new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)));
-    }
-
     // ===== Casting =====
 
     @Test

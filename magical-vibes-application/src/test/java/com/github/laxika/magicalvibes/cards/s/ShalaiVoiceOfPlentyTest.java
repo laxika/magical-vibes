@@ -25,60 +25,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShalaiVoiceOfPlentyTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three static effects")
-    void hasThreeStaticEffects() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(3);
-    }
-
-    @Test
-    @DisplayName("First static effect grants controller hexproof")
-    void firstStaticEffectGrantsControllerHexproof() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(GrantControllerHexproofEffect.class);
-    }
-
-    @Test
-    @DisplayName("Second static effect grants hexproof to own planeswalkers")
-    void secondStaticEffectGrantsPlaneswalkerHexproof() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(effect.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_PERMANENTS);
-        assertThat(effect.filter()).isInstanceOf(PermanentIsPlaneswalkerPredicate.class);
-    }
-
-    @Test
-    @DisplayName("Third static effect grants hexproof to other creatures you control")
-    void thirdStaticEffectGrantsCreatureHexproof() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        GrantKeywordEffect effect = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).get(2);
-        assertThat(effect.keywords()).containsExactly(Keyword.HEXPROOF);
-        assertThat(effect.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
-
-    @Test
-    @DisplayName("Has one activated ability that puts +1/+1 counters")
-    void hasActivatedAbility() {
-        ShalaiVoiceOfPlenty card = new ShalaiVoiceOfPlenty();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{4}{G}{G}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst())
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-    }
-
     // ===== Controller hexproof =====
 
     @Test

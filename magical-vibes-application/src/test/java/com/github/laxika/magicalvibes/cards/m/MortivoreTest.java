@@ -23,18 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MortivoreTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Mortivore has correct card properties")
-    void hasCorrectProperties() {
-        Mortivore card = new Mortivore();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Mortivore has regeneration activated ability costing {B}")

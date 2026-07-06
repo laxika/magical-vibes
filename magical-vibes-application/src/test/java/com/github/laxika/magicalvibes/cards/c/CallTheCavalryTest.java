@@ -18,27 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CallTheCavalryTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Call the Cavalry has spell effect that creates two 2/2 white Knight tokens with vigilance")
-    void hasCorrectProperties() {
-        CallTheCavalry card = new CallTheCavalry();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Knight");
-        assertThat(tokenEffect.power()).isEqualTo(2);
-        assertThat(tokenEffect.toughness()).isEqualTo(2);
-        assertThat(tokenEffect.color()).isEqualTo(CardColor.WHITE);
-        assertThat(tokenEffect.subtypes()).containsExactly(CardSubtype.KNIGHT);
-        assertThat(tokenEffect.keywords()).containsExactly(Keyword.VIGILANCE);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

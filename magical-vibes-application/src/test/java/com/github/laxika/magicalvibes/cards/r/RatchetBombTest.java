@@ -22,32 +22,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class RatchetBombTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Ratchet Bomb has two activated abilities with correct structure")
-    void hasCorrectAbilityStructure() {
-        RatchetBomb card = new RatchetBomb();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {T}: Put a charge counter on Ratchet Bomb.
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isTrue();
-        assertThat(ability0.getManaCost()).isNull();
-        assertThat(ability0.getEffects()).hasSize(1);
-        assertThat(ability0.getEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Ability 1: {T}, Sacrifice Ratchet Bomb: Destroy each nonland permanent with mana value
-        // equal to the number of charge counters on Ratchet Bomb.
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isTrue();
-        assertThat(ability1.getManaCost()).isNull();
-        assertThat(ability1.getEffects()).hasSize(2);
-        assertThat(ability1.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability1.getEffects().get(1)).isInstanceOf(DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect.class);
-    }
-
     // ===== Ability 0: Put a charge counter =====
 
     @Test

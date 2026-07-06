@@ -41,23 +41,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IncinerateTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Incinerate has correct card properties")
-    void hasCorrectProperties() {
-        Incinerate card = new Incinerate();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(3));
-        assertThat(effect.cantRegenerate()).isTrue();
-    }
-
     // ===== Casting =====
 
     @Test

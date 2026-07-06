@@ -18,21 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CurseOfThirstTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Thirst has correct effects")
-    void hasCorrectEffects() {
-        CurseOfThirst card = new CurseOfThirst();
-
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED)).hasSize(1);
-        DealDamageToEnchantedPlayerEffect effect =
-                (DealDamageToEnchantedPlayerEffect) card.getEffects(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED).getFirst();
-        assertThat(effect.damageEqualsAttachedCount()).isInstanceOf(PermanentHasSubtypePredicate.class);
-        assertThat(((PermanentHasSubtypePredicate) effect.damageEqualsAttachedCount()).subtype())
-                .isEqualTo(CardSubtype.CURSE);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

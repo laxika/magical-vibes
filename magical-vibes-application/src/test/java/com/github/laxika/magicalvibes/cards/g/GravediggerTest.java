@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GravediggerTest extends BaseCardTest {
 
-
     /**
      * Casts Gravedigger and resolves it onto the battlefield, then accepts the may ability
      * so the ETB inner effect resolves inline.
@@ -36,20 +35,6 @@ class GravediggerTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve creature spell
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner resolves inline
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Gravedigger has correct card properties")
-    void hasCorrectProperties() {
-        Gravedigger card = new Gravedigger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
     }
 
     // ===== Casting =====
@@ -274,5 +259,4 @@ class GravediggerTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Gravedigger"));
     }
 }
-
 

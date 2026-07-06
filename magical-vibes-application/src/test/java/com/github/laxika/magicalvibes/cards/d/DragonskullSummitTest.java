@@ -23,34 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DragonskullSummitTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has conditional enters-tapped effect checking for Swamp or Mountain")
-    void hasConditionalEntersTappedEffect() {
-        DragonskullSummit card = new DragonskullSummit();
-
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new EntersTappedUnlessControlsPermanentEffect(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SWAMP, CardSubtype.MOUNTAIN))));
-    }
-
-    @Test
-    @DisplayName("Has two mana abilities for black and red")
-    void hasManaAbilities() {
-        DragonskullSummit card = new DragonskullSummit();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.RED));
-    }
-
     // ===== Enters tapped (no qualifying lands) =====
 
     @Test

@@ -22,18 +22,7 @@ class IndestructibilityTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Indestructibility has static grant indestructible effect")
-    void hasCorrectProperties() {
-        Indestructibility card = new Indestructibility();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.INDESTRUCTIBLE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-    }
+    
 
     @Test
     @DisplayName("Indestructibility has no target filter (enchant any permanent)")

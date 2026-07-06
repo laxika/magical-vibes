@@ -27,37 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ArnynDeathbloomBotanistTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has conditional ally-death and self-death drain triggers targeting opponents")
-    void hasCorrectStructure() {
-        ArnynDeathbloomBotanist card = new ArnynDeathbloomBotanist();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-
-        TriggeringPermanentConditionalEffect allyTrigger =
-                (TriggeringPermanentConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        TriggeringPermanentConditionalEffect deathTrigger =
-                (TriggeringPermanentConditionalEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-
-        PermanentAnyOfPredicate predicate = (PermanentAnyOfPredicate) allyTrigger.predicate();
-        assertThat(predicate.predicates()).containsExactly(
-                new PermanentPowerAtMostPredicate(1),
-                new PermanentToughnessAtMostPredicate(1)
-        );
-        assertThat(deathTrigger.predicate()).isEqualTo(allyTrigger.predicate());
-
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect drain =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) allyTrigger.wrapped();
-        assertThat(drain.lifeLoss()).isEqualTo(2);
-        assertThat(drain.lifeGain()).isEqualTo(2);
-        assertThat(deathTrigger.wrapped()).isEqualTo(drain);
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        PlayerPredicateTargetFilter filter = (PlayerPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PlayerRelationPredicate.class);
-        assertThat(((PlayerRelationPredicate) filter.predicate()).relation()).isEqualTo(PlayerRelation.OPPONENT);
-    }
+    
 
     @Test
     @DisplayName("When a 1/1 creature you control dies, target opponent loses 2 life and you gain 2 life")

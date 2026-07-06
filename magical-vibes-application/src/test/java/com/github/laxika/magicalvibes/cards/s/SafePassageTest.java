@@ -34,19 +34,6 @@ class SafePassageTest extends BaseCardTest {
         return card;
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Safe Passage has correct effect")
-    void hasCorrectEffect() {
-        SafePassage card = new SafePassage();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(PreventAllDamageToControllerAndCreaturesEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

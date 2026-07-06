@@ -25,14 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TomeBlastTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has DealDamageToAnyTargetEffect with flashback")
-    void hasCorrectStructure() {
-        TomeBlast card = new TomeBlast();
-
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(((DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst()).damage()).isEqualTo(new Fixed(2));
-    }
+    
 
     @Test
     @DisplayName("Deals 2 damage to target creature")

@@ -23,18 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FinalPartingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Final Parting has SearchLibraryForCardToHandAndCardToGraveyardEffect as spell effect")
-    void hasCorrectEffect() {
-        FinalParting card = new FinalParting();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(SearchLibraryForCardToHandAndCardToGraveyardEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

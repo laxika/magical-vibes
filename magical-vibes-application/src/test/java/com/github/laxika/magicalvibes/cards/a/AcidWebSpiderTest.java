@@ -39,20 +39,6 @@ class AcidWebSpiderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, equipmentId); // choose target -> ETB on stack
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Acid Web Spider has correct card properties")
-    void hasCorrectProperties() {
-        AcidWebSpider card = new AcidWebSpider();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

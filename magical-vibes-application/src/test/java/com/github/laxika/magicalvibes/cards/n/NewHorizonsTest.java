@@ -22,21 +22,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class NewHorizonsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("New Horizons has correct card properties")
-    void hasCorrectProperties() {
-        NewHorizons card = new NewHorizons();
-
-        assertThat(card.isAura()).isTrue();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantActivatedAbilityEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting New Horizons puts it on the stack with correct targets")

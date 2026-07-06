@@ -22,20 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FavorOfTheWoodsTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Favor of the Woods has correct card properties")
-    void hasCorrectProperties() {
-        FavorOfTheWoods card = new FavorOfTheWoods();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BLOCK).getFirst()).isInstanceOf(GainLifeEffect.class);
-        // Only triggers on block, not on attack
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).isEmpty();
-    }
-
     // ===== Block trigger =====
 
     @Test

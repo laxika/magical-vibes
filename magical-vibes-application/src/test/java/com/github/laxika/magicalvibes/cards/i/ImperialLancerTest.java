@@ -21,27 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ImperialLancerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC ConditionalEffect(DINOSAUR) wrapping GrantKeywordEffect(DOUBLE_STRIKE, SELF)")
-    void hasCorrectStaticEffect() {
-        ImperialLancer card = new ImperialLancer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(((ControlsPermanent) conditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
-        assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-
-        GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
-        assertThat(grant.keywords()).containsExactly(Keyword.DOUBLE_STRIKE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Conditional double strike with Dinosaur =====
 
     @Test

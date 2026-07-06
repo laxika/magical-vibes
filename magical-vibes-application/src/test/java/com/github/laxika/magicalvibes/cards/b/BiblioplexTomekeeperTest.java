@@ -20,18 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BiblioplexTomekeeperTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has optional modal ETB with prepare and unprepare modes")
-    void hasCorrectStructure() {
-        BiblioplexTomekeeper card = new BiblioplexTomekeeper();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        ChooseOneEffect modal = (ChooseOneEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(modal.optional()).isTrue();
-        assertThat(modal.options()).hasSize(2);
-        assertThat(modal.options().get(0).effect()).isInstanceOf(MakeTargetCreaturePreparedEffect.class);
-        assertThat(modal.options().get(1).effect()).isInstanceOf(MakeTargetCreatureUnpreparedEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode: target creature becomes prepared")

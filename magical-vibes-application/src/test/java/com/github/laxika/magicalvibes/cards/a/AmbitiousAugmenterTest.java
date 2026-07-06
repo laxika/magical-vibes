@@ -36,22 +36,7 @@ class AmbitiousAugmenterTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has a death trigger creating a Fractal carrying its counters (Increment is keyword-driven)")
-    void hasCorrectEffects() {
-        AmbitiousAugmenter card = new AmbitiousAugmenter();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(CreateTokenWithDyingSourceCountersEffect.class);
-
-        CreateTokenEffect template = ((CreateTokenWithDyingSourceCountersEffect)
-                card.getEffects(EffectSlot.ON_DEATH).getFirst()).tokenTemplate();
-        assertThat(template.tokenName()).isEqualTo("Fractal");
-        assertThat(template.power()).isEqualTo(0);
-        assertThat(template.toughness()).isEqualTo(0);
-        assertThat(template.subtypes()).containsExactly(CardSubtype.FRACTAL);
-    }
+    
 
     @Nested
     @DisplayName("Increment")

@@ -29,37 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DiregrafCaptainTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has Zombie anthem and a targeted ally-Zombie-dies life-loss trigger")
-    void hasCorrectStructure() {
-        DiregrafCaptain card = new DiregrafCaptain();
-
-        // Other Zombie creatures you control get +1/+1.
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-
-        // Whenever another Zombie you control dies, target opponent loses 1 life.
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst())
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect conditional =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).getFirst();
-        assertThat(conditional.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.ZOMBIE));
-        assertThat(conditional.wrapped()).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        assertThat(((TargetPlayerLosesLifeEffect) conditional.wrapped()).amount()).isEqualTo(1);
-
-        // Trigger targets an opponent.
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        PlayerPredicateTargetFilter filter = (PlayerPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PlayerRelationPredicate.class);
-        assertThat(((PlayerRelationPredicate) filter.predicate()).relation()).isEqualTo(PlayerRelation.OPPONENT);
-    }
-
     // ===== Static anthem =====
 
     @Test

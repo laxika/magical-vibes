@@ -31,54 +31,11 @@ class SwordOfFeastAndFamineTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Sword of Feast and Famine has static +2/+2 boost effect")
-    void hasStaticBoostEffect() {
-        SwordOfFeastAndFamine card = new SwordOfFeastAndFamine();
+    
 
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect)
-                .hasSize(1);
-        StaticBoostEffect boost = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof StaticBoostEffect)
-                .map(e -> (StaticBoostEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
-    }
+    
 
-    @Test
-    @DisplayName("Sword of Feast and Famine has static protection from black and green")
-    void hasProtectionEffect() {
-        SwordOfFeastAndFamine card = new SwordOfFeastAndFamine();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof ProtectionFromColorsEffect)
-                .hasSize(1);
-        ProtectionFromColorsEffect protection = card.getEffects(EffectSlot.STATIC).stream()
-                .filter(e -> e instanceof ProtectionFromColorsEffect)
-                .map(e -> (ProtectionFromColorsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(protection.colors()).containsExactlyInAnyOrder(CardColor.BLACK, CardColor.GREEN);
-    }
-
-    @Test
-    @DisplayName("Sword of Feast and Famine has combat damage discard and untap effects")
-    void hasCombatDamageEffects() {
-        SwordOfFeastAndFamine card = new SwordOfFeastAndFamine();
-
-        List<com.github.laxika.magicalvibes.model.effect.CardEffect> effects =
-                card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER);
-        assertThat(effects).hasSize(2);
-        assertThat(effects).filteredOn(e -> e instanceof TargetPlayerDiscardsEffect).hasSize(1);
-        assertThat(effects).filteredOn(e -> e instanceof UntapAllControlledPermanentsEffect).hasSize(1);
-
-        TargetPlayerDiscardsEffect discard = effects.stream()
-                .filter(e -> e instanceof TargetPlayerDiscardsEffect)
-                .map(e -> (TargetPlayerDiscardsEffect) e)
-                .findFirst().orElseThrow();
-        assertThat(discard.amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Sword of Feast and Famine has equip {2} ability")

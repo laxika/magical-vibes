@@ -18,20 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TurnTheTideTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has BoostAllCreaturesEffect with -2/0 and opponent filter")
-    void hasCorrectStructure() {
-        TurnTheTide card = new TurnTheTide();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostAllCreaturesEffect.class);
-
-        BoostAllCreaturesEffect boost = (BoostAllCreaturesEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(-2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.filter()).isInstanceOf(PermanentNotPredicate.class);
-    }
+    
 
     @Test
     @DisplayName("Gives -2/-0 to opponent's creatures")

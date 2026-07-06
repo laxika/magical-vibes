@@ -18,16 +18,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SengirVampireTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Sengir Vampire has correct card properties")
-    void hasCorrectProperties() {
-        SengirVampire card = new SengirVampire();
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Gets a +1/+1 counter when a creature it damaged in combat dies")

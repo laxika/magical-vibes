@@ -55,43 +55,11 @@ class AjaniGoldmaneTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has GainLifeEffect(2)")
-    void plusOneAbilityHasCorrectEffect() {
-        AjaniGoldmane card = new AjaniGoldmane();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) ability.getEffects().getFirst()).amount()).isEqualTo(new Fixed(2));
-    }
+    
 
-    @Test
-    @DisplayName("-1 ability has counter and vigilance effects")
-    void minusOneAbilityHasCorrectEffects() {
-        AjaniGoldmane card = new AjaniGoldmane();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-    }
-
-    @Test
-    @DisplayName("-6 ability has CreateLifeTotalAvatarTokenEffect")
-    void minusSixAbilityHasCorrectEffect() {
-        AjaniGoldmane card = new AjaniGoldmane();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-6);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateLifeTotalAvatarTokenEffect.class);
-    }
+    
 
     // ===== Casting =====
 

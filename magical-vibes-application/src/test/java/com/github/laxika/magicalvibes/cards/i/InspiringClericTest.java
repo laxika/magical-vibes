@@ -23,21 +23,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class InspiringClericTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB gain life effect")
-    void hasEtbEffect() {
-        InspiringCleric card = new InspiringCleric();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect effect =
-                (GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(4));
-    }
-
     // ===== Casting =====
 
     @Test

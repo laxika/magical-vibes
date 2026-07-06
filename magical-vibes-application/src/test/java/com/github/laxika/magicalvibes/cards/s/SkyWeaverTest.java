@@ -31,33 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SkyWeaverTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sky Weaver has correct card properties")
-    void hasCorrectProperties() {
-        SkyWeaver card = new SkyWeaver();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect effect = (GrantKeywordEffect) ability.getEffects().getFirst();
-        assertThat(effect.keywords()).containsExactly(Keyword.FLYING);
-        assertThat(effect.scope()).isEqualTo(GrantScope.TARGET);
-        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLACK))
-                )),
-                "Target must be a white or black creature"
-        ));
-    }
-
     // ===== Activation =====
 
     @Test
@@ -263,5 +236,4 @@ class SkyWeaverTest extends BaseCardTest {
         return perm;
     }
 }
-
 

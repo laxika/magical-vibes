@@ -20,27 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PredatorOozeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has attack and damaged-creature-dies counter triggers")
-    void hasCounterTriggers() {
-        PredatorOoze card = new PredatorOoze();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOfSatisfying(PutCountersOnSourceEffect.class, effect -> {
-                    assertThat(effect.powerModifier()).isEqualTo(1);
-                    assertThat(effect.toughnessModifier()).isEqualTo(1);
-                    assertThat(effect.amount()).isEqualTo(1);
-                });
-
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DAMAGED_CREATURE_DIES).getFirst())
-                .isInstanceOfSatisfying(PutCountersOnSourceEffect.class, effect -> {
-                    assertThat(effect.powerModifier()).isEqualTo(1);
-                    assertThat(effect.toughnessModifier()).isEqualTo(1);
-                    assertThat(effect.amount()).isEqualTo(1);
-                });
-    }
+    
 
     @Test
     @DisplayName("Gets a +1/+1 counter when it attacks")

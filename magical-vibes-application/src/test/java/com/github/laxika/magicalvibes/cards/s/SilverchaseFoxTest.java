@@ -19,24 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SilverchaseFoxTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Silverchase Fox has a sacrifice activated ability targeting enchantments")
-    void hasCorrectAbility() {
-        SilverchaseFox card = new SilverchaseFox();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isFalse();
-        assertThat(ability.getManaCost()).isEqualTo("{1}{W}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof SacrificeSelfCost)
-                .anyMatch(e -> e instanceof ExileTargetPermanentEffect);
-    }
-
     // ===== Activation and resolution =====
 
     @Test

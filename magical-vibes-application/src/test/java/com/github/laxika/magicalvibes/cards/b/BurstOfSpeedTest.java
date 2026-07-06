@@ -23,18 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BurstOfSpeedTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Burst of Speed has correct card properties")
-    void hasCorrectProperties() {
-        BurstOfSpeed card = new BurstOfSpeed();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(grant.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(grant.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-    }
+    
 
     @Test
     @DisplayName("Resolving Burst of Speed gives own creatures haste")

@@ -28,22 +28,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class StarlightInvokerTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Starlight Invoker has correct card properties")
-    void hasCorrectProperties() {
-        StarlightInvoker card = new StarlightInvoker();
-
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect effect = (GainLifeEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(5));
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{7}{W}");
-    }
-
     // ===== Activation =====
 
     @Test

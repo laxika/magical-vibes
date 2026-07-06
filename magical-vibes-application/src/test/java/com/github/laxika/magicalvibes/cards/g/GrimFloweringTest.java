@@ -19,16 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GrimFloweringTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Grim Flowering has draw per creature card in graveyard effect")
-    void hasCorrectEffect() {
-        GrimFlowering card = new GrimFlowering();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isEqualTo(new DrawCardEffect(
-                        new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER)));
-    }
+    
 
     @Test
     @DisplayName("Draws a card for each creature card in controller's graveyard")

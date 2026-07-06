@@ -17,21 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NornsAnnexTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Norn's Annex has RequirePhyrexianPaymentToAttackEffect with WHITE")
-    void hasCorrectEffect() {
-        NornsAnnex card = new NornsAnnex();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(RequirePhyrexianPaymentToAttackEffect.class);
-        RequirePhyrexianPaymentToAttackEffect effect =
-                (RequirePhyrexianPaymentToAttackEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.color()).isEqualTo(ManaColor.WHITE);
-    }
-
     // ===== Casting =====
 
     @Test

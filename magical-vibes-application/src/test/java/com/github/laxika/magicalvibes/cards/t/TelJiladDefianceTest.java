@@ -25,20 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TelJiladDefianceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Tel-Jilad Defiance has correct effects")
-    void hasCorrectEffects() {
-        TelJiladDefiance card = new TelJiladDefiance();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantProtectionFromCardTypeUntilEndOfTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-
-        GrantProtectionFromCardTypeUntilEndOfTurnEffect protEffect =
-                (GrantProtectionFromCardTypeUntilEndOfTurnEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(protEffect.cardType()).isEqualTo(CardType.ARTIFACT);
-    }
+    
 
     @Test
     @DisplayName("Resolving Tel-Jilad Defiance grants protection from artifacts and draws a card")

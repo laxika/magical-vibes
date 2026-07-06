@@ -21,19 +21,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SteadyProgressTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has proliferate and draw card effects")
-    void hasCorrectEffects() {
-        SteadyProgress card = new SteadyProgress();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ProliferateEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

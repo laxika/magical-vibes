@@ -23,18 +23,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GutterGrimeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_ALLY_NONTOKEN_CREATURE_DIES PutSlimeCounterAndCreateOozeTokenEffect")
-    void hasCorrectEffects() {
-        GutterGrime card = new GutterGrime();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_NONTOKEN_CREATURE_DIES).getFirst())
-                .isInstanceOf(PutSlimeCounterAndCreateOozeTokenEffect.class);
-    }
-
     // ===== Triggered ability =====
 
     @Nested

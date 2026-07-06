@@ -14,32 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class YavimayaCoastTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Yavimaya Coast has correct card properties")
-    void hasCorrectProperties() {
-        YavimayaCoast card = new YavimayaCoast();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var colorless = card.getActivatedAbilities().get(0);
-        assertThat(colorless.isRequiresTap()).isTrue();
-        assertThat(colorless.getManaCost()).isNull();
-        assertThat(colorless.getEffects()).hasSize(1);
-        assertThat(colorless.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        var green = card.getActivatedAbilities().get(1);
-        assertThat(green.isRequiresTap()).isTrue();
-        assertThat(green.getEffects()).hasSize(2);
-        assertThat(green.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(green.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-
-        var blue = card.getActivatedAbilities().get(2);
-        assertThat(blue.isRequiresTap()).isTrue();
-        assertThat(blue.getEffects()).hasSize(2);
-        assertThat(blue.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(blue.getEffects().get(1)).isInstanceOf(DealDamageToControllerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Tapping for colorless mana adds {C} and deals no damage")

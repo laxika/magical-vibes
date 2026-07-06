@@ -22,23 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MorbidPlunderTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Morbid Plunder has correct effects")
-    void hasCorrectEffects() {
-        MorbidPlunder card = new MorbidPlunder();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnTargetCardsFromGraveyardToHandEffect.class);
-        ReturnTargetCardsFromGraveyardToHandEffect effect =
-                (ReturnTargetCardsFromGraveyardToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.CREATURE);
-        assertThat(effect.maxTargets()).isEqualTo(2);
-    }
-
     // ===== Casting with creature cards in graveyard =====
 
     @Test

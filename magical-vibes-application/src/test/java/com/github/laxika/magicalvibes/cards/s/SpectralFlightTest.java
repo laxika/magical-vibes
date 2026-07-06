@@ -24,24 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SpectralFlightTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Spectral Flight has correct effects")
-    void hasCorrectProperties() {
-        SpectralFlight card = new SpectralFlight();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(2);
-        assertThat(effect.toughnessBoost()).isEqualTo(2);
-        assertThat(effect.grantedKeywords()).isEqualTo(Set.of(Keyword.FLYING));
-        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_CREATURE);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

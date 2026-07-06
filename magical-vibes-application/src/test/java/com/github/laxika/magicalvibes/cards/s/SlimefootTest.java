@@ -49,31 +49,7 @@ class SlimefootTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has two ON_ALLY_CREATURE_DIES effects with Saproling predicate wrapping damage and life gain")
-    void hasCorrectDeathTriggerStructure() {
-        Slimefoot card = new Slimefoot();
-
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES)).hasSize(2);
-
-        // First effect: deal 1 damage to each opponent
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(0))
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect damageFilter =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(0);
-        assertThat(damageFilter.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.SAPROLING));
-        assertThat(damageFilter.wrapped()).isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) damageFilter.wrapped()).damage()).isEqualTo(new Fixed(1));
-
-        // Second effect: gain 1 life
-        assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(1))
-                .isInstanceOf(TriggeringCardConditionalEffect.class);
-        TriggeringCardConditionalEffect lifeFilter =
-                (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(1);
-        assertThat(lifeFilter.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.SAPROLING));
-        assertThat(lifeFilter.wrapped()).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) lifeFilter.wrapped()).amount()).isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Has activated ability to create 1/1 green Saproling token for {4}")

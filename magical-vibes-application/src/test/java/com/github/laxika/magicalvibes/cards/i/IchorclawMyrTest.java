@@ -20,17 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IchorclawMyrTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Ichorclaw Myr has ON_BECOMES_BLOCKED effect with BoostSelfEffect +2/+2")
-    void hasOnBecomesBlockedEffect() {
-        IchorclawMyr card = new IchorclawMyr();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst()).isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getEffects(EffectSlot.ON_BECOMES_BLOCKED).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(2));
-    }
+    
 
     @Test
     @DisplayName("When Ichorclaw Myr becomes blocked, a triggered ability is pushed onto the stack")

@@ -24,23 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PainsmithTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Painsmith has MayEffect wrapping SpellCastTriggerEffect with boost and deathtouch")
-    void hasCorrectStructure() {
-        Painsmith card = new Painsmith();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) mayEffect.wrapped();
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-    }
-
     // ===== Trigger fires on artifact cast =====
 
     @Test

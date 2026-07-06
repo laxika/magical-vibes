@@ -27,17 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class KnightOfMaliceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Knight of Malice has hexproof from white and conditional boost effects")
-    void hasCorrectEffects() {
-        KnightOfMalice card = new KnightOfMalice();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isEqualTo(new HexproofFromColorsEffect(Set.of(CardColor.WHITE)));
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isEqualTo(new ConditionalEffect(new AnyPlayerControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.WHITE))), new StaticBoostEffect(1, 0, GrantScope.SELF)));
-    }
+    
 
     @Test
     @DisplayName("Opponent's white spells cannot target Knight of Malice")

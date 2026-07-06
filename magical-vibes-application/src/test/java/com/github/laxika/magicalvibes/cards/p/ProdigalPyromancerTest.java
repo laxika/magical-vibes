@@ -37,23 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ProdigalPyromancerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Prodigal Pyromancer has correct card properties")
-    void hasCorrectProperties() {
-        ProdigalPyromancer card = new ProdigalPyromancer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect =
-                (DealDamageToAnyTargetEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Casting puts it on the stack")

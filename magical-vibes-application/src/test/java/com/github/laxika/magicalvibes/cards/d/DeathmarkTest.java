@@ -27,26 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class DeathmarkTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Deathmark has correct card properties")
-    void hasCorrectProperties() {
-        Deathmark card = new Deathmark();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE))
-                )),
-                "Target must be a green or white creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

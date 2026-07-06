@@ -20,24 +20,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GravetillerWurmTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping PutCountersOnSourceEffect in ON_ENTER_BATTLEFIELD")
-    void hasCorrectStructure() {
-        GravetillerWurm card = new GravetillerWurm();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect morbid =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(morbid.wrapped()).isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect counters = (PutCountersOnSourceEffect) morbid.wrapped();
-        assertThat(counters.powerModifier()).isEqualTo(1);
-        assertThat(counters.toughnessModifier()).isEqualTo(1);
-        assertThat(counters.amount()).isEqualTo(4);
-    }
+    
 
     @Test
     @DisplayName("Enters as a 4/4 without morbid (no counters)")

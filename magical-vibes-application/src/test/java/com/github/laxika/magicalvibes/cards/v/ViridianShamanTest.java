@@ -21,20 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ViridianShamanTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Viridian Shaman has correct card properties")
-    void hasCorrectProperties() {
-        ViridianShaman card = new ViridianShaman();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

@@ -26,42 +26,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheFlameOfKeldTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has DiscardOwnHandEffect")
-    void chapterIHasCorrectEffect() {
-        TheFlameOfKeld card = new TheFlameOfKeld();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(DiscardOwnHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter II has DrawCardEffect(2)")
-    void chapterIIHasCorrectEffect() {
-        TheFlameOfKeld card = new TheFlameOfKeld();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(DrawCardEffect.class);
-        assertThat(((DrawCardEffect) effects.getFirst()).amount()).isEqualTo(new Fixed(2));
-    }
-
-    @Test
-    @DisplayName("Chapter III has BoostColorSourceDamageThisTurnEffect(RED, 2)")
-    void chapterIIIHasCorrectEffect() {
-        TheFlameOfKeld card = new TheFlameOfKeld();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(BoostColorSourceDamageThisTurnEffect.class);
-        BoostColorSourceDamageThisTurnEffect effect = (BoostColorSourceDamageThisTurnEffect) effects.getFirst();
-        assertThat(effect.color()).isEqualTo(CardColor.RED);
-        assertThat(effect.bonus()).isEqualTo(2);
-    }
-
     // ===== Chapter I: discard your hand =====
 
     @Test

@@ -17,18 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CaressOfPhyrexiaTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effects and targeting")
-    void hasCorrectProperties() {
-        CaressOfPhyrexia card = new CaressOfPhyrexia();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardForTargetPlayerEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerLosesLifeEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(2)).isInstanceOf(GiveTargetPlayerPoisonCountersEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Target player draws three cards, loses 3 life, and gets three poison counters")

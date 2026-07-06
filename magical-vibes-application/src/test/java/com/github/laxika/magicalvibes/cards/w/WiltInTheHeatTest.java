@@ -37,25 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class WiltInTheHeatTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has cost reduction + mark-exile + 5 damage effects")
-    void cardStructure() {
-        WiltInTheHeat card = new WiltInTheHeat();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(ReduceOwnCastCostIfCardsLeftGraveyardThisTurnEffect.class);
-                    assertThat(((ReduceOwnCastCostIfCardsLeftGraveyardThisTurnEffect) e).amount()).isEqualTo(2);
-                });
-        var spell = card.getEffects(EffectSlot.SPELL);
-        assertThat(spell).hasSize(2);
-        assertThat(spell.get(0)).isInstanceOf(MarkTargetCreatureExileInsteadOfDieThisTurnEffect.class);
-        assertThat(spell.get(1)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) spell.get(1)).damage()).isEqualTo(new Fixed(5));
-    }
-
     // ===== Damage + exile instead of die =====
 
     @Test

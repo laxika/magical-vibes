@@ -22,15 +22,7 @@ class InquisitorsFlailTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Inquisitor's Flail has DoubleEquippedCreatureCombatDamageEffect as static effect")
-    void hasCorrectStaticEffect() {
-        InquisitorsFlail card = new InquisitorsFlail();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoubleEquippedCreatureCombatDamageEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Inquisitor's Flail has equip {2} ability")

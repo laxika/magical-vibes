@@ -22,18 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LeoninArbiterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Leonin Arbiter has CantSearchLibrariesEffect as static effect")
-    void hasCorrectStaticEffect() {
-        LeoninArbiter card = new LeoninArbiter();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantSearchLibrariesEffect.class);
-    }
-
     // ===== Search restriction — opponent =====
 
     @Test

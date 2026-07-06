@@ -16,23 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MirrorMadPhantasmTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mirror-Mad Phantasm has activated ability with correct effect")
-    void hasCorrectActivatedAbility() {
-        MirrorMadPhantasm card = new MirrorMadPhantasm();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect.class);
-
-        ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect effect =
-                (ShuffleSelfIntoOwnerLibraryRevealUntilNameToBattlefieldEffect) card.getActivatedAbilities().getFirst().getEffects().getFirst();
-        assertThat(effect.cardName()).isEqualTo("Mirror-Mad Phantasm");
-    }
-
     // ===== Resolving — finds copy in library =====
 
     @Test

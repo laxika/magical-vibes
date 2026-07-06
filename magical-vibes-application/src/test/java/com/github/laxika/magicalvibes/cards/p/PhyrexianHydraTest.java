@@ -20,18 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class PhyrexianHydraTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Phyrexian Hydra has PreventDamageAndAddMinusCountersEffect as static effect")
-    void hasCorrectStaticEffect() {
-        PhyrexianHydra card = new PhyrexianHydra();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PreventDamageAndAddMinusCountersEffect.class);
-    }
-
     // ===== Spell damage is replaced with -1/-1 counters =====
 
     @Test

@@ -14,22 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class UlnaAlleyShopkeepTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has a conditional static +2/+0 self boost gated on gaining life")
-    void hasCorrectEffect() {
-        UlnaAlleyShopkeep card = new UlnaAlleyShopkeep();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect conditional = (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.condition()).isInstanceOf(GainedLifeThisTurn.class);
-        assertThat(conditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) conditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-    }
+    
 
     @Test
     @DisplayName("No bonus when you have not gained life this turn")

@@ -50,50 +50,11 @@ class ChandraBoldPyromancerTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability has AwardManaEffect and DealDamageToTargetPlayerEffect")
-    void plusOneAbilityHasCorrectEffects() {
-        ChandraBoldPyromancer card = new ChandraBoldPyromancer();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        AwardManaEffect manaEffect = (AwardManaEffect) ability.getEffects().get(0);
-        assertThat(manaEffect.color()).isEqualTo(ManaColor.RED);
-        assertThat(manaEffect.amount()).isEqualTo(2);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) ability.getEffects().get(1)).damage()).isEqualTo(new Fixed(2));
-    }
+    
 
-    @Test
-    @DisplayName("-3 ability has DealDamageToTargetCreatureOrPlaneswalkerEffect(3)")
-    void minusThreeAbilityHasCorrectEffect() {
-        ChandraBoldPyromancer card = new ChandraBoldPyromancer();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-3);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureOrPlaneswalkerEffect.class);
-        assertThat(((DealDamageToTargetCreatureOrPlaneswalkerEffect) ability.getEffects().getFirst()).damage()).isEqualTo(3);
-    }
-
-    @Test
-    @DisplayName("-7 ability has DealDamageToTargetPlayerEffect(10) and DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(10)")
-    void minusSevenAbilityHasCorrectEffects() {
-        ChandraBoldPyromancer card = new ChandraBoldPyromancer();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-7);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(DealDamageToTargetPlayerEffect.class);
-        assertThat(((DealDamageToTargetPlayerEffect) ability.getEffects().get(0)).damage()).isEqualTo(new Fixed(10));
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect.class);
-        assertThat(((DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect) ability.getEffects().get(1)).damage()).isEqualTo(10);
-    }
+    
 
     // ===== +1 ability: Add {R}{R} and deal 2 damage to target player =====
 

@@ -19,18 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CurseOfBloodlettingTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Bloodletting has correct effects")
-    void hasCorrectEffects() {
-        CurseOfBloodletting card = new CurseOfBloodletting();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoubleDamageToEnchantedPlayerEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

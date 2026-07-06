@@ -17,25 +17,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ChandrasOutburstTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effects")
-    void hasCorrectEffects() {
-        ChandrasOutburst card = new ChandrasOutburst();
+    
 
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(SearchLibraryAndOrGraveyardForNamedCardToHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Search effect targets Chandra, Bold Pyromancer by name")
-    void searchEffectTargetsCorrectName() {
-        ChandrasOutburst card = new ChandrasOutburst();
-
-        SearchLibraryAndOrGraveyardForNamedCardToHandEffect searchEffect =
-                (SearchLibraryAndOrGraveyardForNamedCardToHandEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(searchEffect.cardName()).isEqualTo("Chandra, Bold Pyromancer");
-    }
+    
 
     @Test
     @DisplayName("Deals 4 damage to target player")

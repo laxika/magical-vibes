@@ -27,19 +27,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MidnightRitualTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Midnight Ritual has correct card properties")
-    void hasCorrectProperties() {
-        MidnightRitual card = new MidnightRitual();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ExileCreaturesFromGraveyardAndCreateTokensEffect.class);
-    }
-
     // ===== Casting with X > 0 enters graveyard choice =====
 
     @Test
@@ -472,5 +459,4 @@ class MidnightRitualTest extends BaseCardTest {
                 .anyMatch(c -> c.getName().equals("Midnight Ritual"));
     }
 }
-
 

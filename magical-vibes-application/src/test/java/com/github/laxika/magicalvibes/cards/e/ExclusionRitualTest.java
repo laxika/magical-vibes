@@ -36,22 +36,6 @@ class ExclusionRitualTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has ExileTargetPermanentAndImprintEffect on ETB and static casting restriction")
-    void hasCorrectEffects() {
-        ExclusionRitual card = new ExclusionRitual();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetPermanentAndImprintEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(CantCastSpellsWithSameNameAsExiledCardEffect.class);
-    }
-
     // ===== ETB exile =====
 
     @Test

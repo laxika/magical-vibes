@@ -31,29 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FieldOfRuinTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Field of Ruin has correct abilities")
-    void hasCorrectAbilities() {
-        FieldOfRuin card = new FieldOfRuin();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // First ability: {T}: Add {C}
-        var manaAbility = card.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        // Second ability: {2}, {T}, Sacrifice: Destroy target nonbasic land...
-        var destroyAbility = card.getActivatedAbilities().get(1);
-        assertThat(destroyAbility.isRequiresTap()).isTrue();
-        assertThat(destroyAbility.getManaCost()).isEqualTo("{2}");
-        assertThat(destroyAbility.getEffects()).hasSize(2);
-        assertThat(destroyAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(destroyAbility.getEffects().get(1))
-                .isInstanceOf(DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Can tap for colorless mana with first ability")

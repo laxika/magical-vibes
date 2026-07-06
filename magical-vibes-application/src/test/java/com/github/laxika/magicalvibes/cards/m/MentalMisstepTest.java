@@ -23,22 +23,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MentalMisstepTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Mental Misstep has correct card properties")
-    void hasCorrectProperties() {
-        MentalMisstep card = new MentalMisstep();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new StackEntryPredicateTargetFilter(
-                new StackEntryManaValuePredicate(1),
-                "Target spell must have mana value 1."
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

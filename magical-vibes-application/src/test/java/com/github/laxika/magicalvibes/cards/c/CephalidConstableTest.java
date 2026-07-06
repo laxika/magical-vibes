@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CephalidConstableTest extends BaseCardTest {
 
-
     private Permanent addReadyCreature(Player player, com.github.laxika.magicalvibes.model.Card card) {
         GameData gd = harness.getGameData();
         Permanent perm = new Permanent(card);
@@ -34,17 +33,6 @@ class CephalidConstableTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Cephalid Constable has correct card properties")
-    void hasCorrectProperties() {
-        CephalidConstable card = new CephalidConstable();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(ReturnPermanentsOnCombatDamageToPlayerEffect.class);
     }
 
     // ===== Combat damage trigger =====
@@ -187,5 +175,4 @@ class CephalidConstableTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 }
-
 

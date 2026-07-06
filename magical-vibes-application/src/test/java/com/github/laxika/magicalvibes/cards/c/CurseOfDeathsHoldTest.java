@@ -18,22 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CurseOfDeathsHoldTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has static boost effect targeting enchanted player's creatures")
-    void hasCorrectEffect() {
-        CurseOfDeathsHold card = new CurseOfDeathsHold();
-
-        assertThat(card.isEnchantPlayer()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(-1);
-        assertThat(boost.toughnessBoost()).isEqualTo(-1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.ENCHANTED_PLAYER_CREATURES);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

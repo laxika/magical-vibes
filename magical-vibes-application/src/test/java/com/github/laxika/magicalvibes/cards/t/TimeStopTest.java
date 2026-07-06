@@ -22,18 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TimeStopTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Time Stop has correct card properties")
-    void hasCorrectProperties() {
-        TimeStop card = new TimeStop();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(EndTurnEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

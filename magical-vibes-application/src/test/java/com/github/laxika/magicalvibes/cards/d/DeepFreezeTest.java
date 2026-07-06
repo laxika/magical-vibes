@@ -28,23 +28,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class DeepFreezeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Deep Freeze has correct effects")
-    void hasCorrectEffects() {
-        DeepFreeze card = new DeepFreeze();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(5);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(SetBasePowerToughnessStaticEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(GrantKeywordEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(2)).isInstanceOf(LosesAllAbilitiesEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(3)).isInstanceOf(GrantColorEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(4)).isInstanceOf(GrantSubtypeEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

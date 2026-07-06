@@ -11,22 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SorcerersStrongboxTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has activated ability with FlipCoinWinEffect wrapping SacrificeSelfAndDrawCardsEffect")
-    void hasCorrectAbility() {
-        SorcerersStrongbox card = new SorcerersStrongbox();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(FlipCoinWinEffect.class);
-
-        FlipCoinWinEffect flipEffect = (FlipCoinWinEffect) ability.getEffects().getFirst();
-        assertThat(flipEffect.wrapped()).isInstanceOf(SacrificeSelfAndDrawCardsEffect.class);
-        assertThat(((SacrificeSelfAndDrawCardsEffect) flipEffect.wrapped()).amount()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Activating the ability flips a coin and result is consistent")

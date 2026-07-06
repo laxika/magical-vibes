@@ -24,18 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FabricateTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Fabricate has correct effect")
-    void hasCorrectEffect() {
-        Fabricate card = new Fabricate();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect effect =
-                (SearchLibraryForCardsToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(CardPredicateUtils.describeFilter(effect.filter())).isEqualTo("artifact card");
-    }
+    
 
     @Test
     @DisplayName("Casting Fabricate puts it on the stack")

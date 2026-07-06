@@ -19,15 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DueRespectTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Due Respect has correct effects")
-    void hasCorrectEffects() {
-        DueRespect card = new DueRespect();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(PermanentsEnterTappedThisTurnEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Due Respect makes creatures enter tapped this turn")

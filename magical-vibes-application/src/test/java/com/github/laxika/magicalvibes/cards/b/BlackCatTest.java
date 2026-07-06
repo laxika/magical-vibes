@@ -24,27 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BlackCatTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_DEATH random-discard trigger targeting an opponent")
-    void hasCorrectStructure() {
-        BlackCat card = new BlackCat();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(TargetPlayerRandomDiscardEffect.class);
-        TargetPlayerRandomDiscardEffect deathEffect =
-                (TargetPlayerRandomDiscardEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathEffect.amount()).isEqualTo(1);
-        assertThat(deathEffect.causedByOpponent()).isTrue();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        PlayerPredicateTargetFilter filter = (PlayerPredicateTargetFilter) card.getTargetFilter();
-        assertThat(filter.predicate()).isInstanceOf(PlayerRelationPredicate.class);
-        assertThat(((PlayerRelationPredicate) filter.predicate()).relation()).isEqualTo(PlayerRelation.OPPONENT);
-    }
-
     // ===== Death trigger =====
 
     @Test

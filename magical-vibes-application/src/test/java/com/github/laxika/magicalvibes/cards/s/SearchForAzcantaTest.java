@@ -24,63 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SearchForAzcantaTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Front face has correct effects configured")
-    void frontFaceHasCorrectEffects() {
-        SearchForAzcanta card = new SearchForAzcanta();
-
-        // Two upkeep effects: surveil 1, then conditional transform
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(0))
-                .isInstanceOf(SurveilEffect.class);
-        SurveilEffect surveil = (SurveilEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(0);
-        assertThat(surveil.count()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-        var conditional = (ConditionalEffect)
-                card.getEffects(EffectSlot.UPKEEP_TRIGGERED).get(1);
-        assertThat(((GraveyardCardThreshold) conditional.condition()).threshold()).isEqualTo(7);
-        assertThat(((GraveyardCardThreshold) conditional.condition()).filter()).isNull(); // counts all cards
-        assertThat(conditional.wrapped()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) conditional.wrapped();
-        assertThat(may.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceClassName()).isEqualTo("AzantaTheSunkenRuin");
-    }
-
-    @Test
-    @DisplayName("Back face has correct abilities configured")
-    void backFaceHasCorrectAbilities() {
-        SearchForAzcanta card = new SearchForAzcanta();
-        AzantaTheSunkenRuin backFace = (AzantaTheSunkenRuin) card.getBackFaceCard();
-
-        // Two activated abilities: {T}: Add {U} and {2}{U}, {T}: look at top 4
-        assertThat(backFace.getActivatedAbilities()).hasSize(2);
-
-        // First: {T}: Add {U}
-        var manaAbility = backFace.getActivatedAbilities().get(0);
-        assertThat(manaAbility.isRequiresTap()).isTrue();
-        assertThat(manaAbility.getManaCost()).isNull();
-        assertThat(manaAbility.getEffects()).hasSize(1);
-        assertThat(manaAbility.getEffects().getFirst()).isInstanceOf(AwardManaEffect.class);
-
-        // Second: {2}{U}, {T}: look at top 4
-        var lookAbility = backFace.getActivatedAbilities().get(1);
-        assertThat(lookAbility.isRequiresTap()).isTrue();
-        assertThat(lookAbility.getManaCost()).isEqualTo("{2}{U}");
-        assertThat(lookAbility.getEffects()).hasSize(1);
-        assertThat(lookAbility.getEffects().getFirst())
-                .isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        var lookEffect = (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect)
-                lookAbility.getEffects().getFirst();
-        assertThat(lookEffect.count()).isEqualTo(4);
-    }
-
     // ===== Upkeep surveil: accept (put into graveyard) =====
 
     @Test

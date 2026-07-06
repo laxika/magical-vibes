@@ -23,20 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SlagFiendTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Slag Fiend has static P/T effect counting artifact cards in all graveyards")
-    void hasCorrectStaticEffect() {
-        SlagFiend card = new SlagFiend();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToCardsInAllGraveyardsEffect.class);
-        var effect = (PowerToughnessEqualToCardsInAllGraveyardsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isEqualTo(new CardTypePredicate(CardType.ARTIFACT));
-    }
-
     // ===== Casting =====
 
     @Test

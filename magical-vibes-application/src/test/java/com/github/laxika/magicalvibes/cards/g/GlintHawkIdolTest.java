@@ -21,23 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GlintHawkIdolTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Glint Hawk Idol has correct card properties")
-    void hasCorrectProperties() {
-        GlintHawkIdol card = new GlintHawkIdol();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(AnimateSelfWithStatsEffect.class);
-
-        var triggerEffects = card.getEffects(EffectSlot.ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
-        assertThat(triggerEffects).hasSize(1);
-        assertThat(triggerEffects.getFirst()).isInstanceOf(MayEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Glint Hawk Idol puts it on the battlefield")

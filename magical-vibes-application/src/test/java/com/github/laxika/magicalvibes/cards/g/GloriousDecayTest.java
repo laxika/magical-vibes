@@ -29,18 +29,7 @@ class GloriousDecayTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
     }
 
-    @Test
-    @DisplayName("Has a ChooseOneEffect with three options")
-    void hasCorrectEffects() {
-        GloriousDecay card = new GloriousDecay();
-
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(3);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(effect.options().get(2).effects().get(0)).isInstanceOf(ExileTargetCardFromGraveyardEffect.class);
-        assertThat(effect.options().get(2).effects().get(1)).isInstanceOf(DrawCardEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: Destroy target artifact")

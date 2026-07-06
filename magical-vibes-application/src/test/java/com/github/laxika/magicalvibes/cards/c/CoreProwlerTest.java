@@ -44,17 +44,6 @@ class CoreProwlerTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Core Prowler has ON_DEATH ProliferateEffect")
-    void hasCorrectEffects() {
-        CoreProwler card = new CoreProwler();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).singleElement()
-                .isInstanceOf(ProliferateEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

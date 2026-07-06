@@ -23,16 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SylvanRangerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Sylvan Ranger has correct ETB effect")
-    void hasCorrectProperties() {
-        SylvanRanger card = new SylvanRanger();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Sylvan Ranger creates may prompt")

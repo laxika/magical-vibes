@@ -24,24 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class IncreasingConfusionTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has target-player X mill effect and flashback cost")
-    void hasCorrectEffects() {
-        IncreasingConfusion card = new IncreasingConfusion();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect = (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        // Cast from graveyard (flashback) mills twice X; otherwise mills X.
-        assertThat(effect.condition()).isEqualTo(new CastFromZone(Zone.GRAVEYARD));
-        assertThat(((MillTargetPlayerEffect) effect.baseEffect()).count()).isEqualTo(new XValue());
-        assertThat(((MillTargetPlayerEffect) effect.upgradedEffect()).count()).isEqualTo(new Scaled(new XValue(), 2));
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{X}{U}");
-    }
+    
 
     @Test
     @DisplayName("Casting normally mills target player for X cards")

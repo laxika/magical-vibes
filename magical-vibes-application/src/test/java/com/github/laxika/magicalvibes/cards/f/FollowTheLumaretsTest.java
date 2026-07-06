@@ -21,29 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FollowTheLumaretsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Follow the Lumarets has a conditional replacement over two look-at-top effects")
-    void hasCorrectProperties() {
-        FollowTheLumarets card = new FollowTheLumarets();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ConditionalReplacementEffect.class);
-
-        ConditionalReplacementEffect effect =
-                (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect base =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) effect.baseEffect();
-        assertThat(base.count()).isEqualTo(4);
-        assertThat(base.anyNumber()).isFalse();
-
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect upgraded =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) effect.upgradedEffect();
-        assertThat(upgraded.count()).isEqualTo(4);
-        assertThat(upgraded.anyNumber()).isTrue();
-        assertThat(upgraded.maxReveal()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Without gaining life, offers a single-pick of the creature/land cards among top four")

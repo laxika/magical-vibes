@@ -25,20 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SeismicAssaultTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Seismic Assault has correct card properties")
-    void hasCorrectProperties() {
-        SeismicAssault card = new SeismicAssault();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(DiscardCardTypeCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Activating ability starts discard-cost choice before stack entry")
@@ -159,5 +146,4 @@ class SeismicAssaultTest extends BaseCardTest {
         return perm;
     }
 }
-
 

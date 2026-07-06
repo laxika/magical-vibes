@@ -18,34 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BleakCovenVampiresTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has metalcraft-conditional ETB drain effect")
-    void hasMetalcraftEtbEffect() {
-        BleakCovenVampires card = new BleakCovenVampires();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-
-        ConditionalEffect metalcraft =
-                (ConditionalEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(metalcraft.wrapped()).isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect drain =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) metalcraft.wrapped();
-        assertThat(drain.lifeLoss()).isEqualTo(4);
-        assertThat(drain.lifeGain()).isEqualTo(4);
-    }
-
-    @Test
-    @DisplayName("Card needs target (delegates from metalcraft wrapper)")
-    void needsTarget() {
-        BleakCovenVampires card = new BleakCovenVampires();
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
     // ===== ETB with metalcraft met =====
 
     @Test

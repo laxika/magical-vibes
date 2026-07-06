@@ -23,16 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VampiricFuryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("VampiricFury has correct effects configured")
-    void hasCorrectEffects() {
-        VampiricFury card = new VampiricFury();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Vampiric Fury gives Vampire creatures +2/+0 and first strike")

@@ -29,28 +29,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class KarnScionOfUrzaTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has three activated abilities with correct loyalty costs and effects")
-    void hasThreeAbilities() {
-        KarnScionOfUrza card = new KarnScionOfUrza();
-
-        assertThat(card.getActivatedAbilities()).hasSize(3);
-
-        var plus1 = card.getActivatedAbilities().get(0);
-        assertThat(plus1.getLoyaltyCost()).isEqualTo(1);
-        assertThat(plus1.getEffects().getFirst()).isInstanceOf(KarnScionRevealTwoOpponentChoosesEffect.class);
-
-        var minus1 = card.getActivatedAbilities().get(1);
-        assertThat(minus1.getLoyaltyCost()).isEqualTo(-1);
-        assertThat(minus1.getEffects().getFirst()).isInstanceOf(KarnScionReturnSilverCounterCardEffect.class);
-
-        var minus2 = card.getActivatedAbilities().get(2);
-        assertThat(minus2.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(minus2.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

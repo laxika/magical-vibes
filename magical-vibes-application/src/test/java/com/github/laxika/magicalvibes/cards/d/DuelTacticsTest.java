@@ -16,15 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DuelTacticsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has damage and can't-block effects with flashback")
-    void hasCorrectStructure() {
-        DuelTactics card = new DuelTactics();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetCreatureCantBlockThisTurnEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Deals 1 damage and target creature cannot block this turn")

@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SunCrownedHuntersTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sun-Crowned Hunters has one ON_DEALT_DAMAGE effect of type DealDamageToTargetOpponentOrPlaneswalkerEffect(3)")
-    void hasCorrectEffect() {
-        SunCrownedHunters card = new SunCrownedHunters();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst())
-                .isInstanceOf(DealDamageToTargetOpponentOrPlaneswalkerEffect.class);
-        DealDamageToTargetOpponentOrPlaneswalkerEffect effect =
-                (DealDamageToTargetOpponentOrPlaneswalkerEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).getFirst();
-        assertThat(effect.damage()).isEqualTo(3);
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

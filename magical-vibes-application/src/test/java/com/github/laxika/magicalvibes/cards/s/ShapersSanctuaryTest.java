@@ -21,22 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ShapersSanctuaryTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Shapers' Sanctuary has ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY MayEffect wrapping DrawCardEffect")
-    void hasCorrectEffectStructure() {
-        ShapersSanctuary card = new ShapersSanctuary();
-
-        var effects = card.getEffects(EffectSlot.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) effects.getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) mayEffect.wrapped();
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Trigger on opponent spell targeting creature =====
 
     @Test

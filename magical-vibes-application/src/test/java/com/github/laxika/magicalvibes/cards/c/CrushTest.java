@@ -20,15 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CrushTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Crush has correct effects")
-    void hasCorrectProperties() {
-        Crush card = new Crush();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Crush puts it on the stack with target")

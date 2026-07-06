@@ -20,17 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class FurorOfTheBittenTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Furor of the Bitten has correct card properties")
-    void hasCorrectProperties() {
-        FurorOfTheBitten card = new FurorOfTheBitten();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(MustAttackEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Furor of the Bitten attaches it to target creature")

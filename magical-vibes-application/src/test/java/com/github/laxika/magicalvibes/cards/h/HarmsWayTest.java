@@ -21,18 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HarmsWayTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Harm's Way has correct spell effect")
-    void hasCorrectEffect() {
-        HarmsWay card = new HarmsWay();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .anyMatch(e -> e instanceof PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect effect
-                        && effect.amount() == 2);
-    }
-
     // ===== Casting =====
 
     @Test

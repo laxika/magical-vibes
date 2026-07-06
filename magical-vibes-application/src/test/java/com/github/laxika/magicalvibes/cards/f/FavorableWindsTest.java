@@ -16,24 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FavorableWindsTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has static boost for own creatures with flying")
-    void hasCorrectEffects() {
-        FavorableWinds card = new FavorableWinds();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
-        assertThat(boost.scope()).isEqualTo(GrantScope.OWN_CREATURES);
-        assertThat(boost.filter()).isInstanceOf(PermanentHasKeywordPredicate.class);
-        PermanentHasKeywordPredicate filter = (PermanentHasKeywordPredicate) boost.filter();
-        assertThat(filter.keyword()).isEqualTo(Keyword.FLYING);
-    }
-
     // ===== Static boost: creatures with flying get +1/+1 =====
 
     @Test

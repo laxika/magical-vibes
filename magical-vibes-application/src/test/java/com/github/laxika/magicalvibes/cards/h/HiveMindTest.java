@@ -24,18 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HiveMindTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Hive Mind has correct effect registration")
-    void hasCorrectEffects() {
-        HiveMind card = new HiveMind();
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_PLAYER_CASTS_SPELL).get(0))
-                .isInstanceOf(CopySpellForEachOtherPlayerEffect.class);
-    }
-
     // ===== Trigger — untargeted sorcery =====
 
     @Test

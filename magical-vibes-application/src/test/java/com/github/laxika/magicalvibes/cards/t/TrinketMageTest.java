@@ -23,19 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TrinketMageTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Trinket Mage has ETB may search for artifact with MV 1 or less")
-    void hasCorrectProperties() {
-        TrinketMage card = new TrinketMage();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect searchEffect =
-                (SearchLibraryForCardsToHandEffect) mayEffect.wrapped();
-        assertThat(CardPredicateUtils.describeFilter(searchEffect.filter())).isEqualTo("artifact card with mana value 1 or less");
-    }
+    
 
     @Test
     @DisplayName("Resolving Trinket Mage creates may prompt")

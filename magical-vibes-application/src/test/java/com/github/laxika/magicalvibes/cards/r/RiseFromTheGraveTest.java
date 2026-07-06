@@ -24,17 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RiseFromTheGraveTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rise from the Grave has correct effects")
-    void hasCorrectEffects() {
-        RiseFromTheGrave card = new RiseFromTheGrave();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

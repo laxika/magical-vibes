@@ -26,24 +26,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CallToTheKindredTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Call to the Kindred has correct effect structure")
-    void hasCorrectEffects() {
-        CallToTheKindred card = new CallToTheKindred();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect.class);
-        LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect effect =
-                (LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect) may.wrapped();
-        assertThat(effect.count()).isEqualTo(5);
-    }
-
     // ===== Targeting =====
 
     @Test

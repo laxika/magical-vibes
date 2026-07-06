@@ -21,24 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LlanowarScoutTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Llanowar Scout has correct activated ability")
-    void hasCorrectProperties() {
-        LlanowarScout card = new LlanowarScout();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getTimingRestriction()).isNull();
-        assertThat(ability.getEffects()).singleElement().isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) ability.getEffects().getFirst();
-        assertThat(may.wrapped()).isInstanceOf(PutCardToBattlefieldEffect.class);
-        PutCardToBattlefieldEffect wrapped = (PutCardToBattlefieldEffect) may.wrapped();
-        assertThat(wrapped.label()).isEqualTo("land");
-    }
+    
 
     @Test
     @DisplayName("Activating ability taps Llanowar Scout and puts ability on stack")

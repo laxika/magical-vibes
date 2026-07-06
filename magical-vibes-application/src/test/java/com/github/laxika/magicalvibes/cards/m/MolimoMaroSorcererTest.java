@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MolimoMaroSorcererTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Molimo, Maro-Sorcerer has correct card properties")
-    void hasCorrectProperties() {
-        MolimoMaroSorcerer card = new MolimoMaroSorcerer();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToControlledLandCountEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Molimo puts it on the stack")

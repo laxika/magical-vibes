@@ -22,39 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class JacesSentinelTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has two STATIC ConditionalEffect(JACE) effects: StaticBoostEffect and GrantEffectEffect(CantBeBlockedEffect)")
-    void hasCorrectStaticEffects() {
-        JacesSentinel card = new JacesSentinel();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-
-        // First effect: +1/+0 conditional on controlling a Jace
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect boostConditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(((ControlsPermanent) boostConditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.JACE));
-        assertThat(boostConditional.wrapped()).isInstanceOf(StaticBoostEffect.class);
-        StaticBoostEffect boost = (StaticBoostEffect) boostConditional.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
-        assertThat(boost.scope()).isEqualTo(GrantScope.SELF);
-
-        // Second effect: can't be blocked conditional on controlling a Jace
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1))
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect unblockableConditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(((ControlsPermanent) unblockableConditional.condition()).filter()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.JACE));
-        assertThat(unblockableConditional.wrapped()).isInstanceOf(GrantEffectEffect.class);
-        GrantEffectEffect grantEffect = (GrantEffectEffect) unblockableConditional.wrapped();
-        assertThat(grantEffect.effect()).isInstanceOf(CantBeBlockedEffect.class);
-        assertThat(grantEffect.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Conditional +1/+0 and can't be blocked with Jace =====
 
     @Test

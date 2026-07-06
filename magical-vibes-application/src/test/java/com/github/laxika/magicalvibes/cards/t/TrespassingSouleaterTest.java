@@ -15,24 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TrespassingSouleaterTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Trespassing Souleater has one activated ability with Phyrexian blue cost")
-    void hasUnblockableActivatedAbility() {
-        TrespassingSouleater card = new TrespassingSouleater();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{U/P}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(MakeCreatureUnblockableEffect.class);
-        MakeCreatureUnblockableEffect effect = (MakeCreatureUnblockableEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.selfTargeting()).isTrue();
-    }
-
     // ===== Activated ability: make self unblockable paying blue mana =====
 
     @Test

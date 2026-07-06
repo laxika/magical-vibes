@@ -21,30 +21,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class CarnifexDemonTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB -1/-1 counters effect and one activated ability")
-    void hasCorrectEffectsAndAbility() {
-        CarnifexDemon card = new CarnifexDemon();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect etb = (PutCountersOnSourceEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etb.powerModifier()).isEqualTo(-1);
-        assertThat(etb.toughnessModifier()).isEqualTo(-1);
-        assertThat(etb.amount()).isEqualTo(2);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(RemoveCounterFromSourceCost.class);
-                    assertThat(effects.get(1)).isInstanceOf(PutMinusOneMinusOneCounterOnEachOtherCreatureEffect.class);
-                });
-    }
-
     // ===== ETB: enters with two -1/-1 counters =====
 
     @Test

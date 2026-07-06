@@ -19,20 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MakeshiftMaulerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Makeshift Mauler has exile creature from graveyard cost")
-    void hasCorrectEffects() {
-        MakeshiftMauler card = new MakeshiftMauler();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(exileCost.trackExiledPower()).isFalse();
-    }
-
     // ===== Casting =====
 
     @Test

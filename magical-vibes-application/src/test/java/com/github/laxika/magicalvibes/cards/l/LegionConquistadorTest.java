@@ -17,22 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LegionConquistadorTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Legion Conquistador has ETB may-search effect")
-    void hasCorrectEffect() {
-        LegionConquistador card = new LegionConquistador();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsByNameToHandEffect.class);
-
-        SearchLibraryForCardsByNameToHandEffect searchEffect =
-                (SearchLibraryForCardsByNameToHandEffect) mayEffect.wrapped();
-        assertThat(searchEffect.cardName()).isEqualTo("Legion Conquistador");
-        assertThat(searchEffect.maxCount()).isEqualTo(Integer.MAX_VALUE);
-    }
+    
 
     @Test
     @DisplayName("Resolving Legion Conquistador creates may prompt")

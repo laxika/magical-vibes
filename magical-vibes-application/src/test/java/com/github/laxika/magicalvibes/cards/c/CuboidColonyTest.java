@@ -31,16 +31,7 @@ class CuboidColonyTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    @Test
-    @DisplayName("Has no card-specific effects (Increment is keyword-driven)")
-    void hasNoCardSpecificEffects() {
-        CuboidColony card = new CuboidColony();
-
-        for (EffectSlot slot : EffectSlot.values()) {
-            assertThat(card.getEffects(slot)).isEmpty();
-        }
-        assertThat(card.getActivatedAbilities()).isEmpty();
-    }
+    
 
     @Nested
     @DisplayName("Flash")

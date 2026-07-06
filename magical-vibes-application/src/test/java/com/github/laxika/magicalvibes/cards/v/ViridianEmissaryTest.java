@@ -26,23 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ViridianEmissaryTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Viridian Emissary has correct death trigger effect")
-    void hasCorrectProperties() {
-        ViridianEmissary card = new ViridianEmissary();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-        SearchLibraryForCardTypesToBattlefieldEffect search =
-                (SearchLibraryForCardTypesToBattlefieldEffect) may.wrapped();
-        assertThat(CardPredicateUtils.describeFilter(search.filter())).isEqualTo("basic land card");
-        assertThat(search.entersTapped()).isTrue();
-    }
-
     // ===== Death trigger: combat (blocker dies), accept =====
 
     @Test

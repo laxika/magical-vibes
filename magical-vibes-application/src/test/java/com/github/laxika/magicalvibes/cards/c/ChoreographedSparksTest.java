@@ -31,36 +31,6 @@ class ChoreographedSparksTest extends BaseCardTest {
         harness.addMana(player, ManaColor.COLORLESS, 4);
     }
 
-    // ===== Structure =====
-
-    @Test
-    @DisplayName("Choreographed Sparks is a can't-be-copied modal spell with three modes")
-    void hasCorrectStructure() {
-        ChoreographedSparks card = new ChoreographedSparks();
-
-        assertThat(card.isCantBeCopied()).isTrue();
-
-        List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
-        assertThat(spellEffects).hasSize(1);
-        assertThat(spellEffects.get(0)).isInstanceOf(ChooseOneEffect.class);
-
-        ChooseOneEffect modal = (ChooseOneEffect) spellEffects.get(0);
-        assertThat(modal.options()).hasSize(3);
-
-        // Mode 0: copy an instant/sorcery — not a token.
-        CopySpellEffect mode0 = (CopySpellEffect) modal.options().get(0).effect();
-        assertThat(mode0.tokenWithHaste()).isFalse();
-
-        // Mode 1: copy a creature spell — token with haste, sacrificed at end step.
-        CopySpellEffect mode1 = (CopySpellEffect) modal.options().get(1).effect();
-        assertThat(mode1.tokenWithHaste()).isTrue();
-        assertThat(mode1.sacrificeAtEndStep()).isTrue();
-
-        // Mode 2 ("both"): two effects, each with its own spell-target filter.
-        assertThat(modal.options().get(2).effects()).hasSize(2);
-        assertThat(modal.options().get(2).targetFilters()).hasSize(2);
-    }
-
     // ===== Mode 0 — copy an instant/sorcery you control =====
 
     @Test

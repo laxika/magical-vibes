@@ -34,26 +34,6 @@ class MindslaverTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Mindslaver has activated ability with tap and sacrifice cost, targets any player")
-    void hasCorrectAbilityStructure() {
-        Mindslaver card = new Mindslaver();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{4}");
-        assertThat(ability.getTimingRestriction()).isNull();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof SacrificeSelfCost)
-                .anyMatch(e -> e instanceof ControlTargetPlayerNextTurnEffect);
-        assertThat(ability.getTargetFilter()).isNull();
-    }
-
     // ===== Activation and delayed effect =====
 
     @Test

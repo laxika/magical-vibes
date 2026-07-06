@@ -20,18 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FieldMarshalTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Field Marshal has correct card properties")
-    void hasCorrectProperties() {
-        FieldMarshal card = new FieldMarshal();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

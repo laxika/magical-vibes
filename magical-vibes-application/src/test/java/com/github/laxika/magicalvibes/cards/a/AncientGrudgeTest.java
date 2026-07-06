@@ -23,17 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AncientGrudgeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Ancient Grudge has correct card properties")
-    void hasCorrectProperties() {
-        AncientGrudge card = new AncientGrudge();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DestroyTargetPermanentEffect.class);
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{G}");
-    }
+    
 
     @Test
     @DisplayName("Casting Ancient Grudge destroys target artifact")

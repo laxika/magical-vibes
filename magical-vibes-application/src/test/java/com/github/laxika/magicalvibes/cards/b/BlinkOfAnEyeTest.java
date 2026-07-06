@@ -36,20 +36,7 @@ class BlinkOfAnEyeTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{1}{U}"));
     }
 
-    @Test
-    @DisplayName("Has bounce effect and kicked conditional draw effect")
-    void hasCorrectSpellEffects() {
-        BlinkOfAnEye card = new BlinkOfAnEye();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .anySatisfy(e -> assertThat(e).isInstanceOf(ReturnTargetPermanentToHandEffect.class))
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(ConditionalEffect.class);
-                    assertThat(((ConditionalEffect) e).wrapped()).isInstanceOf(DrawCardEffect.class);
-                });
-    }
+    
 
     // ===== Cast without kicker =====
 

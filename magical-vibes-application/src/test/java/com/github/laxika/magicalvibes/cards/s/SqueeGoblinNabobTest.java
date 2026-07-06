@@ -16,7 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SqueeGoblinNabobTest extends BaseCardTest {
 
-
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.UNTAP);
@@ -24,16 +23,7 @@ class SqueeGoblinNabobTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    @Test
-    @DisplayName("Squee, Goblin Nabob has correct card properties")
-    void hasCorrectProperties() {
-        SqueeGoblinNabob card = new SqueeGoblinNabob();
-
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.GRAVEYARD_UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Triggers during its owner's upkeep while in graveyard")
@@ -91,5 +81,4 @@ class SqueeGoblinNabobTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).anyMatch(c -> c.getId().equals(squee.getId()));
     }
 }
-
 

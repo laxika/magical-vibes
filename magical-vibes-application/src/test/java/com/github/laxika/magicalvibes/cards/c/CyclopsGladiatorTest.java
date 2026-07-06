@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CyclopsGladiatorTest extends BaseCardTest {
 
-    // ===== Card setup =====
-
-    @Test
-    @DisplayName("Has ON_ATTACK MayEffect wrapping SourceFightsTargetCreatureEffect")
-    void hasCorrectAttackTrigger() {
-        CyclopsGladiator card = new CyclopsGladiator();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_ATTACK).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SourceFightsTargetCreatureEffect.class);
-    }
-
     // ===== Attack trigger: target selection =====
 
     @Test

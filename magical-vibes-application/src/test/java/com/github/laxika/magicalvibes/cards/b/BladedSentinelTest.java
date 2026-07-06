@@ -20,25 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BladedSentinelTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Bladed Sentinel has one activated ability granting vigilance")
-    void hasVigilanceActivatedAbility() {
-        BladedSentinel card = new BladedSentinel();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect vigilance = (GrantKeywordEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(vigilance.keywords()).containsExactly(Keyword.VIGILANCE);
-        assertThat(vigilance.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Casting =====
 
     @Test

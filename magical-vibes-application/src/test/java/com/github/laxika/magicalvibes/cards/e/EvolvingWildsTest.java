@@ -27,25 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EvolvingWildsTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Evolving Wilds has correct card properties")
-    void hasCorrectProperties() {
-        EvolvingWilds card = new EvolvingWilds();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-
-        SearchLibraryForCardTypesToBattlefieldEffect effect =
-                (SearchLibraryForCardTypesToBattlefieldEffect) ability.getEffects().get(1);
-        assertThat(CardPredicateUtils.describeFilter(effect.filter())).isEqualTo("basic land card");
-        assertThat(effect.entersTapped()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Activating Evolving Wilds sacrifices it and puts ability on stack")

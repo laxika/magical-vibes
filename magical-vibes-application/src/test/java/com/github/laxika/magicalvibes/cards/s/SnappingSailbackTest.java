@@ -18,21 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SnappingSailbackTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Snapping Sailback has one ON_DEALT_DAMAGE effect of type PutCountersOnSelfEffect")
-    void hasCorrectEffect() {
-        SnappingSailback card = new SnappingSailback();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0))
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-
-        PutCountersOnSelfEffect effect = (PutCountersOnSelfEffect) card.getEffects(EffectSlot.ON_DEALT_DAMAGE).get(0);
-        assertThat(effect.counterType()).isEqualTo(CounterType.PLUS_ONE_PLUS_ONE);
-    }
-
     // ===== Non-combat damage trigger =====
 
     @Test

@@ -22,21 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CurseOfMisfortunesTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Curse of Misfortunes has a 'you may search' upkeep trigger")
-    void hasCorrectEffects() {
-        CurseOfMisfortunes card = new CurseOfMisfortunes();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(may.wrapped())
-                .isInstanceOf(SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect.class);
-    }
-
     // ===== Upkeep trigger: search and attach =====
 
     @Test

@@ -21,18 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SkyEelSchoolTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sky-Eel School has ETB draw and discard effects")
-    void hasEtbDrawAndDiscardEffects() {
-        SkyEelSchool card = new SkyEelSchool();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).isInstanceOf(DiscardCardEffect.class);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

@@ -22,22 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ArcTrailTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Arc Trail has correct card properties")
-    void hasCorrectProperties() {
-        ArcTrail card = new ArcTrail();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getMinTargets()).isEqualTo(2);
-        assertThat(card.getMaxTargets()).isEqualTo(2);
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealOrderedDamageToAnyTargetsEffect.class);
-        DealOrderedDamageToAnyTargetsEffect effect = (DealOrderedDamageToAnyTargetsEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damageAmounts()).containsExactly(2, 1);
-    }
-
     // ===== Casting =====
 
     @Test

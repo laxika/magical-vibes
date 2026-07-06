@@ -24,30 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EzuriRenegadeLeaderTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has regenerate ability and overrun ability")
-    void hasCorrectAbilities() {
-        EzuriRenegadeLeader card = new EzuriRenegadeLeader();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {G}: Regenerate another target Elf
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{G}");
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-
-        // Ability 1: {2}{G}{G}{G}: Elf overrun
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{2}{G}{G}{G}");
-        assertThat(card.getActivatedAbilities().get(1).getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().get(0))
-                .isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        assertThat(card.getActivatedAbilities().get(1).getEffects().get(1))
-                .isInstanceOf(GrantKeywordEffect.class);
-    }
-
     // ===== Regenerate ability =====
 
     @Test

@@ -40,34 +40,7 @@ class AntiquitiesOnTheLooseTest extends BaseCardTest {
                 .toList();
     }
 
-    @Test
-    @DisplayName("Has Spirit token creation, not-from-hand counter effect, and flashback cost")
-    void hasCorrectEffects() {
-        AntiquitiesOnTheLoose card = new AntiquitiesOnTheLoose();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect token = (CreateTokenEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(token.amount()).isEqualTo(new Fixed(2));
-        assertThat(token.tokenName()).isEqualTo("Spirit");
-        assertThat(token.power()).isEqualTo(2);
-        assertThat(token.toughness()).isEqualTo(2);
-        assertThat(token.color()).isEqualTo(CardColor.WHITE);
-        assertThat(token.colors()).containsExactlyInAnyOrder(CardColor.RED, CardColor.WHITE);
-        assertThat(token.subtypes()).containsExactly(CardSubtype.SPIRIT);
-
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(conditional.wrapped()).isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-        PutCounterOnEachControlledPermanentEffect counters =
-                (PutCounterOnEachControlledPermanentEffect) conditional.wrapped();
-        assertThat(counters.predicate()).isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.SPIRIT));
-
-        FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
-        assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{4}{W}{W}");
-    }
+    
 
     @Test
     @DisplayName("Normal cast creates two 2/2 red and white Spirit tokens without counters")

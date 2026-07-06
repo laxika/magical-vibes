@@ -35,18 +35,6 @@ class MerfolkSpyTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER with RevealRandomCardFromTargetPlayerHandEffect")
-    void hasCorrectEffect() {
-        MerfolkSpy card = new MerfolkSpy();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(RevealRandomCardFromTargetPlayerHandEffect.class);
-    }
-
     // ===== Combat damage trigger =====
 
     @Test

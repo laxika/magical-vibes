@@ -20,18 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GenesisWaveTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has GenesisWaveEffect on SPELL slot")
-    void hasCorrectStructure() {
-        GenesisWave card = new GenesisWave();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(GenesisWaveEffect.class);
-    }
-
     // ===== X=0 reveals nothing =====
 
     @Test

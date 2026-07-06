@@ -40,29 +40,7 @@ class GrowFromTheAshesTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{2}"));
     }
 
-    @Test
-    @DisplayName("Has ConditionalReplacementEffect with search-for-basic-land effects")
-    void hasCorrectSpellEffects() {
-        GrowFromTheAshes card = new GrowFromTheAshes();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(1)
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(ConditionalReplacementEffect.class);
-                    ConditionalReplacementEffect kre = (ConditionalReplacementEffect) e;
-                    assertThat(kre.baseEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-                    SearchLibraryForCardTypesToBattlefieldEffect base =
-                            (SearchLibraryForCardTypesToBattlefieldEffect) kre.baseEffect();
-                    assertThat(base.entersTapped()).isFalse();
-                    assertThat(base.maxCount()).isEqualTo(1);
-
-                    assertThat(kre.upgradedEffect()).isInstanceOf(SearchLibraryForCardTypesToBattlefieldEffect.class);
-                    SearchLibraryForCardTypesToBattlefieldEffect kicked =
-                            (SearchLibraryForCardTypesToBattlefieldEffect) kre.upgradedEffect();
-                    assertThat(kicked.entersTapped()).isFalse();
-                    assertThat(kicked.maxCount()).isEqualTo(2);
-                });
-    }
+    
 
     // ===== Cast without kicker =====
 

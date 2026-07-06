@@ -21,19 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BoomerangTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Boomerang has correct card properties")
-    void hasCorrectProperties() {
-        Boomerang card = new Boomerang();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

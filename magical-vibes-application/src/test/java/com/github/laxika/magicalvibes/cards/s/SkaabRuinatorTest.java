@@ -21,17 +21,7 @@ class SkaabRuinatorTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has ExileNCardsFromGraveyardCost(3, CREATURE) as additional cost")
-    void hasExileThreeCreaturesCost() {
-        SkaabRuinator card = new SkaabRuinator();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileNCardsFromGraveyardCost.class);
-        ExileNCardsFromGraveyardCost cost = (ExileNCardsFromGraveyardCost) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(cost.count()).isEqualTo(3);
-        assertThat(cost.requiredType()).isEqualTo(CardType.CREATURE);
-    }
+    
 
     @Test
     @DisplayName("Has GraveyardCast casting option")

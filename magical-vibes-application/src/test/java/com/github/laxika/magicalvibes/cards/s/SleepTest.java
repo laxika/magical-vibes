@@ -21,28 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SleepTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Sleep has SPELL TapPermanentsOfTargetPlayerEffect with creature filter")
-    void hasTapEffect() {
-        Sleep card = new Sleep();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .anyMatch(e -> e instanceof TapPermanentsOfTargetPlayerEffect t
-                        && t.filter() instanceof PermanentIsCreaturePredicate);
-    }
-
-    @Test
-    @DisplayName("Sleep has SPELL SkipNextUntapPermanentsOfTargetPlayerEffect with creature filter")
-    void hasSkipUntapEffect() {
-        Sleep card = new Sleep();
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .anyMatch(e -> e instanceof SkipNextUntapPermanentsOfTargetPlayerEffect s
-                        && s.filter() instanceof PermanentIsCreaturePredicate);
-    }
-
     // ===== Spell resolution =====
 
     @Nested

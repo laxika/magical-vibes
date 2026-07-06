@@ -20,23 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class NantukoShadeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Nantuko Shade has correct activated ability")
-    void hasCorrectAbility() {
-        NantukoShade card = new NantukoShade();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-        BoostSelfEffect effect = (BoostSelfEffect) card.getActivatedAbilities().get(0).getEffects().getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(1));
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{B}");
-    }
-
     // ===== Casting =====
 
     @Test

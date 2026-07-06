@@ -18,19 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PlagiarizeTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Plagiarize has correct card properties")
-    void hasCorrectProperties() {
-        Plagiarize card = new Plagiarize();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(RedirectDrawsEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

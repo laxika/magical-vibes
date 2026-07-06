@@ -37,29 +37,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GoblinBarrageTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has sacrifice kicker, creature damage, and kicked player damage effects")
-    void hasCorrectEffects() {
-        GoblinBarrage card = new GoblinBarrage();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .anyMatch(e -> e instanceof KickerEffect ke && ke.hasSacrificeCost() && !ke.hasManaCost());
-
-        assertThat(card.getEffects(EffectSlot.SPELL))
-                .hasSize(2)
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-                    assertThat(((DealDamageToTargetCreatureEffect) e).damage()).isEqualTo(new Fixed(4));
-                })
-                .anySatisfy(e -> {
-                    assertThat(e).isInstanceOf(ConditionalEffect.class);
-                    assertThat(((ConditionalEffect) e).wrapped()).isInstanceOf(DealDamageToSecondaryTargetEffect.class);
-                    assertThat(((DealDamageToSecondaryTargetEffect) ((ConditionalEffect) e).wrapped()).damage()).isEqualTo(4);
-                });
-    }
-
     // ===== Cast without kicker =====
 
     @Test

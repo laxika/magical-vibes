@@ -22,22 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VulshokHeartstokerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Vulshok Heartstoker has correct card properties")
-    void hasCorrectProperties() {
-        VulshokHeartstoker card = new VulshokHeartstoker();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(new Fixed(2));
-        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
-
     // ===== Casting and resolving =====
 
     @Test

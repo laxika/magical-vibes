@@ -23,24 +23,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WhispersilkCloakTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
-
-    @Test
-    @DisplayName("Whispersilk Cloak has static CantBeBlockedEffect and GrantKeywordEffect(SHROUD)")
-    void hasStaticEffects() {
-        WhispersilkCloak card = new WhispersilkCloak();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof CantBeBlockedEffect)
-                .hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof GrantKeywordEffect gke
-                        && gke.keywords().contains(Keyword.SHROUD)
-                        && gke.scope() == GrantScope.EQUIPPED_CREATURE)
-                .hasSize(1);
-    }
+    
 
     @Test
     @DisplayName("Whispersilk Cloak has equip {2} ability with correct properties")

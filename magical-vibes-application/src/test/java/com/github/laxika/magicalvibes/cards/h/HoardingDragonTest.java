@@ -24,29 +24,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HoardingDragonTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB may-search-artifact and death may-return-to-hand effects")
-    void hasCorrectEffects() {
-        HoardingDragon card = new HoardingDragon();
-
-        // ETB: MayEffect wrapping SearchLibraryForCardTypeToExileAndImprintEffect(ARTIFACT)
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect etbMay = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etbMay.wrapped()).isInstanceOf(SearchLibraryForCardTypeToExileAndImprintEffect.class);
-        SearchLibraryForCardTypeToExileAndImprintEffect etb =
-                (SearchLibraryForCardTypeToExileAndImprintEffect) etbMay.wrapped();
-        assertThat(etb.cardTypes()).containsExactly(CardType.ARTIFACT);
-
-        // Death: MayEffect wrapping PutImprintedCardIntoOwnersHandEffect
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect deathMay = (MayEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathMay.wrapped()).isInstanceOf(PutImprintedCardIntoOwnersHandEffect.class);
-    }
-
     // ===== ETB trigger =====
 
     @Test

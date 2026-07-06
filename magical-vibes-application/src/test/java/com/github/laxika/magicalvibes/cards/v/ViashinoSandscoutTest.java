@@ -14,16 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ViashinoSandscoutTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Viashino Sandscout has correct card properties and end-step return trigger")
-    void hasCorrectProperties() {
-        ViashinoSandscout card = new ViashinoSandscout();
-
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ReturnSelfToHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Triggers at end step and returns itself to owner's hand on resolution")

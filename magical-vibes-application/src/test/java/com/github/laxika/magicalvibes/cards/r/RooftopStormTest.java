@@ -18,21 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class RooftopStormTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Rooftop Storm has correct effects")
-    void hasCorrectEffects() {
-        RooftopStorm card = new RooftopStorm();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(AlternativeCostForSpellsEffect.class);
-        AlternativeCostForSpellsEffect effect =
-                (AlternativeCostForSpellsEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.manaCost()).isEqualTo("{0}");
-    }
-
     // ===== Casting and resolving =====
 
     @Test

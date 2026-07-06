@@ -23,29 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FerventStrikeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fervent Strike has correct card properties")
-    void hasCorrectProperties() {
-        FerventStrike card = new FerventStrike();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-
-        GrantKeywordEffect firstStrike = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(firstStrike.keywords()).containsExactly(Keyword.FIRST_STRIKE);
-        assertThat(firstStrike.scope()).isEqualTo(GrantScope.TARGET);
-
-        GrantKeywordEffect haste = (GrantKeywordEffect) card.getEffects(EffectSlot.SPELL).get(2);
-        assertThat(haste.keywords()).containsExactly(Keyword.HASTE);
-        assertThat(haste.scope()).isEqualTo(GrantScope.TARGET);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

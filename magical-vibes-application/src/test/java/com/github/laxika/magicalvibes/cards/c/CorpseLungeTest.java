@@ -24,22 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CorpseLungeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Corpse Lunge has correct effects")
-    void hasCorrectEffects() {
-        CorpseLunge card = new CorpseLunge();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileCardFromGraveyardCost.class);
-        ExileCardFromGraveyardCost exileCost = (ExileCardFromGraveyardCost) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(exileCost.requiredType()).isEqualTo(CardType.CREATURE);
-        assertThat(exileCost.trackExiledPower()).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isEqualTo(new DealDamageToTargetCreatureEffect(new XValue()));
-    }
-
     // ===== Casting =====
 
     @Test

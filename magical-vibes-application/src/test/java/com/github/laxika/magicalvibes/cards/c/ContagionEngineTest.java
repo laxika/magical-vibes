@@ -22,23 +22,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ContagionEngineTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB -1/-1 counter on each creature target player controls and proliferate twice activated ability")
-    void hasCorrectEffectsAndAbility() {
-        ContagionEngine card = new ContagionEngine();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(PutMinusOneMinusOneCounterOnEachCreatureTargetPlayerControlsEffect.class);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .allSatisfy(e -> assertThat(e).isInstanceOf(ProliferateEffect.class));
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-    }
-
     // ===== ETB: put -1/-1 counter on each creature target player controls =====
 
     @Test

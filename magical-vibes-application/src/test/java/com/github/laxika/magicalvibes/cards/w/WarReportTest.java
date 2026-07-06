@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WarReportTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("War Report has correct effects")
-    void hasCorrectEffects() {
-        WarReport card = new WarReport();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isEqualTo(new GainLifeEffect(new Sum(
-                new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.ANY_PLAYER),
-                new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.ANY_PLAYER))));
-    }
-
     // ===== Casting =====
 
     @Test

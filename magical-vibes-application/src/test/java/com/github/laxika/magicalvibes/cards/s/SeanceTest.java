@@ -22,25 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SeanceTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has each-upkeep may effect to exile own graveyard creature and create Spirit token copy")
-    void hasCorrectStructure() {
-        Seance card = new Seance();
-
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MayEffect.class);
-
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.EACH_UPKEEP_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(ExileTargetCardFromGraveyardAndCreateTokenCopyEffect.class);
-
-        ExileTargetCardFromGraveyardAndCreateTokenCopyEffect effect =
-                (ExileTargetCardFromGraveyardAndCreateTokenCopyEffect) may.wrapped();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(effect.ownGraveyardOnly()).isTrue();
-        assertThat(effect.additionalSubtypes()).containsExactly(CardSubtype.SPIRIT);
-        assertThat(effect.grantHaste()).isFalse();
-        assertThat(effect.exileAtEndStep()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Triggers during controller's upkeep and prompts may ability")

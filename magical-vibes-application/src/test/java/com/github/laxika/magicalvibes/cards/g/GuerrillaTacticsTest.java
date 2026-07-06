@@ -40,43 +40,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GuerrillaTacticsTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Guerrilla Tactics has correct card properties")
-    void hasCorrectProperties() {
-        GuerrillaTactics card = new GuerrillaTactics();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-    }
-
-    @Test
-    @DisplayName("Guerrilla Tactics has spell effect dealing 2 damage")
-    void hasSpellEffect() {
-        GuerrillaTactics card = new GuerrillaTactics();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect =
-                (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(2));
-    }
-
-    @Test
-    @DisplayName("Guerrilla Tactics has discard trigger dealing 4 damage")
-    void hasDiscardTrigger() {
-        GuerrillaTactics card = new GuerrillaTactics();
-
-        assertThat(card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect discardEffect =
-                (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.ON_SELF_DISCARDED_BY_OPPONENT).getFirst();
-        assertThat(discardEffect.damage()).isEqualTo(new Fixed(4));
-    }
-
     // ===== Casting as a spell =====
 
     @Test
@@ -406,5 +369,4 @@ class GuerrillaTacticsTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 }
-
 

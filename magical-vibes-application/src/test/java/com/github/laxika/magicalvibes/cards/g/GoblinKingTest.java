@@ -22,24 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GoblinKingTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Goblin King has correct card properties")
-    void hasCorrectProperties() {
-        GoblinKing card = new GoblinKing();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(StaticBoostEffect.class);
-
-        StaticBoostEffect effect = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(1);
-        assertThat(effect.toughnessBoost()).isEqualTo(1);
-        assertThat(effect.grantedKeywords()).containsExactly(Keyword.MOUNTAINWALK);
-        assertThat(effect.filter()).isNotNull();
-    }
-
     // ===== Casting and resolving =====
 
     @Test
@@ -338,5 +320,4 @@ class GoblinKingTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, goblinAttacker, Keyword.MOUNTAINWALK)).isFalse();
     }
 }
-
 

@@ -26,24 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GoForTheThroatTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Go for the Throat has correct card properties")
-    void hasCorrectProperties() {
-        GoForTheThroat card = new GoForTheThroat();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentIsArtifactPredicate())
-                )),
-                "Target must be a nonartifact creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Go for the Throat targeting a nonartifact creature puts it on stack")

@@ -21,24 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class IsolationCellTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ON_OPPONENT_CASTS_SPELL LoseLifeUnlessPaysEffect with creature filter")
-    void hasCorrectEffect() {
-        IsolationCell card = new IsolationCell();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst())
-                .isInstanceOf(LoseLifeUnlessPaysEffect.class);
-        LoseLifeUnlessPaysEffect effect =
-                (LoseLifeUnlessPaysEffect) card.getEffects(EffectSlot.ON_OPPONENT_CASTS_SPELL).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(2);
-        assertThat(effect.payAmount()).isEqualTo(2);
-        assertThat(effect.spellFilter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.spellFilter()).cardType()).isEqualTo(CardType.CREATURE);
-    }
-
     // ===== Only triggers on creature spells =====
 
     @Test

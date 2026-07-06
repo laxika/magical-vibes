@@ -14,16 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SeedbornMuseTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Seedborn Muse has correct card properties")
-    void hasCorrectProperties() {
-        SeedbornMuse card = new SeedbornMuse();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Seedborn Muse untaps all your permanents during opponent's untap step")

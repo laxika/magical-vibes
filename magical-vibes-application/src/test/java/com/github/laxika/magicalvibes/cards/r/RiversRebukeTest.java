@@ -20,19 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RiversRebukeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("River's Rebuke has correct effect configuration")
-    void hasCorrectEffectConfiguration() {
-        RiversRebuke card = new RiversRebuke();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnPermanentsTargetPlayerControlsToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

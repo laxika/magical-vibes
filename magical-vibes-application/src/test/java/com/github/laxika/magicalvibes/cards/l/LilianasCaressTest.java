@@ -21,21 +21,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LilianasCaressTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Liliana's Caress has correct effect")
-    void hasCorrectEffect() {
-        LilianasCaress card = new LilianasCaress();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst())
-                .isInstanceOf(LoseLifeEffect.class);
-        LoseLifeEffect effect =
-                (LoseLifeEffect) card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst();
-        assertThat(effect.amount()).isEqualTo(2);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

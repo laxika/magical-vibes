@@ -19,17 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TelJiladFallenTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has static protection from artifacts effect")
-    void hasStaticProtectionFromArtifacts() {
-        TelJiladFallen card = new TelJiladFallen();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(ProtectionFromCardTypesEffect.class);
-
-        ProtectionFromCardTypesEffect effect = (ProtectionFromCardTypesEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(effect.cardTypes()).containsExactly(CardType.ARTIFACT);
-    }
+    
 
     @Test
     @DisplayName("Infect deals damage to creatures as -1/-1 counters")

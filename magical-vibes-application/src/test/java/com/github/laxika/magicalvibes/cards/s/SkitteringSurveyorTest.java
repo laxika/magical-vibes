@@ -23,16 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SkitteringSurveyorTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Skittering Surveyor has ETB may search for basic land effect")
-    void hasCorrectEffects() {
-        SkitteringSurveyor card = new SkitteringSurveyor();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Resolving Skittering Surveyor creates may prompt")

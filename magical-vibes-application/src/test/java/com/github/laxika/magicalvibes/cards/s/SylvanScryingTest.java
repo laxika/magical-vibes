@@ -25,19 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SylvanScryingTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Sylvan Scrying has correct card properties")
-    void hasCorrectProperties() {
-        SylvanScrying card = new SylvanScrying();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(SearchLibraryForCardsToHandEffect.class);
-        SearchLibraryForCardsToHandEffect effect =
-                (SearchLibraryForCardsToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(CardPredicateUtils.describeFilter(effect.filter())).isEqualTo("land card");
-    }
+    
 
     @Test
     @DisplayName("Casting Sylvan Scrying puts it on the stack")

@@ -50,28 +50,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class NavigatorsCompassTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Navigator's Compass has ETB gain life and activated ability")
-    void hasCorrectProperties() {
-        NavigatorsCompass card = new NavigatorsCompass();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect lifeEffect = (GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(lifeEffect.amount()).isEqualTo(new Fixed(3));
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().getFirst().getTargetFilter())
-                .isInstanceOf(ControlledPermanentPredicateTargetFilter.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(GrantBasicLandTypeToTargetEffect.class);
-    }
-
     // ===== ETB life gain =====
 
     @Test

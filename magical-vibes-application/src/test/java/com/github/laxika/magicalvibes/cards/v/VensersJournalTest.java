@@ -29,28 +29,6 @@ class VensersJournalTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Venser's Journal has no maximum hand size static effect")
-    void hasNoMaxHandSizeEffect() {
-        VensersJournal card = new VensersJournal();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(NoMaximumHandSizeEffect.class);
-    }
-
-    @Test
-    @DisplayName("Venser's Journal has upkeep life gain trigger")
-    void hasUpkeepLifeGainTrigger() {
-        VensersJournal card = new VensersJournal();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isEqualTo(new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
-    }
-
     // ===== No maximum hand size =====
 
     @Test

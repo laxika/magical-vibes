@@ -36,20 +36,6 @@ class CorpseCurTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true); // accept → inner effect resolves inline
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has ETB may ability to return creature with infect from graveyard")
-    void hasCorrectEffect() {
-        CorpseCur card = new CorpseCur();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-    }
-
     // ===== ETB may ability =====
 
     @Test

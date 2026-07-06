@@ -22,43 +22,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RaidersWakeTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has LoseLifeEffect(2) on ON_OPPONENT_DISCARDS")
-    void hasDiscardTriggerEffect() {
-        RaidersWake card = new RaidersWake();
-
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst())
-                .isInstanceOf(LoseLifeEffect.class);
-        LoseLifeEffect lifeLoss = (LoseLifeEffect) card.getEffects(EffectSlot.ON_OPPONENT_DISCARDS).getFirst();
-        assertThat(lifeLoss.amount()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("Has ConditionalEffect wrapping TargetPlayerDiscardsEffect(1) on CONTROLLER_END_STEP_TRIGGERED")
-    void hasRaidEndStepDiscardEffect() {
-        RaidersWake card = new RaidersWake();
-
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect raid =
-                (ConditionalEffect) card.getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(raid.wrapped()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        TargetPlayerDiscardsEffect discard = (TargetPlayerDiscardsEffect) raid.wrapped();
-        assertThat(discard.amount()).isEqualTo(1);
-    }
-
-    @Test
-    @DisplayName("Has PlayerPredicateTargetFilter restricting to opponents")
-    void hasOpponentTargetFilter() {
-        RaidersWake card = new RaidersWake();
-
-        assertThat(card.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-    }
-
     // ===== Discard trigger: opponent loses 2 life =====
 
     @Test

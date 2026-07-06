@@ -17,20 +17,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class CurseOfStalkedPreyTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Is an enchant-player aura with PutCountersOnSourceEffect")
-    void hasCorrectEffects() {
-        CurseOfStalkedPrey card = new CurseOfStalkedPrey();
-
-        assertThat(card.isEnchantPlayer()).isTrue();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst())
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-    }
-
     // ===== Casting and attaching to player =====
 
     @Test

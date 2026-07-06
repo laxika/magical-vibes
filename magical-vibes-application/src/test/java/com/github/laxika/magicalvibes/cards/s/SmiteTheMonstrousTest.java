@@ -26,24 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SmiteTheMonstrousTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Smite the Monstrous has correct card properties")
-    void hasCorrectProperties() {
-        SmiteTheMonstrous card = new SmiteTheMonstrous();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentPowerAtLeastPredicate(4)
-                )),
-                "Target must be a creature with power 4 or greater"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Smite the Monstrous targeting a creature with power 4+ puts it on stack")

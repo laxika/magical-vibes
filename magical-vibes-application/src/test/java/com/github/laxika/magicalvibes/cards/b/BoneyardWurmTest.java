@@ -23,20 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class BoneyardWurmTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Boneyard Wurm has static P/T effect counting creature cards in controller's graveyard")
-    void hasCorrectStaticEffect() {
-        BoneyardWurm card = new BoneyardWurm();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(PowerToughnessEqualToCardsInControllerGraveyardEffect.class);
-        var effect = (PowerToughnessEqualToCardsInControllerGraveyardEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isEqualTo(new CardTypePredicate(CardType.CREATURE));
-    }
-
     // ===== Casting =====
 
     @Test

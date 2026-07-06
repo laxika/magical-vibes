@@ -19,27 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MaulSplicerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Maul Splicer has ETB token effect and static trample grant")
-    void hasCorrectEffects() {
-        MaulSplicer card = new MaulSplicer();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(CreateTokenEffect.class);
-
-        CreateTokenEffect tokenEffect =
-                (CreateTokenEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(tokenEffect.amount()).isEqualTo(new Fixed(2));
-        assertThat(tokenEffect.tokenName()).isEqualTo("Phyrexian Golem");
-        assertThat(tokenEffect.power()).isEqualTo(3);
-        assertThat(tokenEffect.toughness()).isEqualTo(3);
-        assertThat(tokenEffect.additionalTypes()).containsExactly(CardType.ARTIFACT);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantKeywordEffect.class);
-    }
+    
 
     @Test
     @DisplayName("ETB creates two 3/3 colorless Phyrexian Golem artifact creature tokens")

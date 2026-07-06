@@ -24,50 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TimeOfIceTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has tap and prevent-untap-while-on-battlefield effects")
-    void chapterIHasCorrectEffects() {
-        TimeOfIce card = new TimeOfIce();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(PreventTargetUntapWhileSourceOnBattlefieldEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter II has tap and prevent-untap-while-on-battlefield effects")
-    void chapterIIHasCorrectEffects() {
-        TimeOfIce card = new TimeOfIce();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(effects.get(1)).isInstanceOf(PreventTargetUntapWhileSourceOnBattlefieldEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter III has return tapped creatures effect")
-    void chapterIIIHasCorrectEffects() {
-        TimeOfIce card = new TimeOfIce();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ReturnCreaturesToOwnersHandEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapters I and II have saga chapter target filters")
-    void chaptersHaveTargetFilters() {
-        TimeOfIce card = new TimeOfIce();
-
-        assertThat(card.getSagaChapterTargetFilters(EffectSlot.SAGA_CHAPTER_I)).isNotEmpty();
-        assertThat(card.getSagaChapterTargetFilters(EffectSlot.SAGA_CHAPTER_II)).isNotEmpty();
-        assertThat(card.getSagaChapterTargetFilters(EffectSlot.SAGA_CHAPTER_III)).isEmpty();
-    }
-
     // ===== Chapter I: tap target creature an opponent controls =====
 
     @Test

@@ -31,18 +31,7 @@ class LoreholdCharmTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
     }
 
-    @Test
-    @DisplayName("Has a ChooseOneEffect with three options")
-    void hasCorrectEffects() {
-        LoreholdCharm card = new LoreholdCharm();
-
-        ChooseOneEffect effect = (ChooseOneEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.options()).hasSize(3);
-        assertThat(effect.options().get(0).effect()).isInstanceOf(EachOpponentSacrificesPermanentsEffect.class);
-        assertThat(effect.options().get(1).effect()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
-        assertThat(effect.options().get(2).effects().get(0)).isInstanceOf(BoostAllOwnCreaturesEffect.class);
-        assertThat(effect.options().get(2).effects().get(1)).isInstanceOf(GrantKeywordEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Mode 0: Each opponent sacrifices a nontoken artifact")

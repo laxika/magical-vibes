@@ -22,31 +22,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GolemFoundryTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has artifact-cast trigger with may charge counter")
-    void hasArtifactCastTrigger() {
-        GolemFoundry card = new GolemFoundry();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(SpellCastTriggerEffect.class);
-    }
-
-    @Test
-    @DisplayName("Has activated ability with remove 3 charge counters cost and token creation")
-    void hasActivatedAbility() {
-        GolemFoundry card = new GolemFoundry();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 3)
-                .anyMatch(e -> e instanceof CreateTokenEffect);
-    }
-
     // ===== Charge counter trigger =====
 
     @Test

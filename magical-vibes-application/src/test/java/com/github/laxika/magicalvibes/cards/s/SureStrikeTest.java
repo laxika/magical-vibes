@@ -23,20 +23,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SureStrikeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Sure Strike has correct effects")
-    void hasCorrectEffects() {
-        SureStrike card = new SureStrike();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(3));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
-    }
+    
 
     @Test
     @DisplayName("Resolving Sure Strike gives +3/+0 and first strike")

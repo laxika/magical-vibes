@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ForbiddenAlchemyTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Forbidden Alchemy has correct effect structure")
-    void hasCorrectProperties() {
-        ForbiddenAlchemy card = new ForbiddenAlchemy();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsChooseNToHandRestToGraveyardEffect.class);
-        LookAtTopCardsChooseNToHandRestToGraveyardEffect effect =
-                (LookAtTopCardsChooseNToHandRestToGraveyardEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(4);
-    }
-
     // ===== Casting =====
 
     @Test

@@ -23,19 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CounterlashTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Counterlash has correct card properties")
-    void hasCorrectProperties() {
-        Counterlash card = new Counterlash();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterlashEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

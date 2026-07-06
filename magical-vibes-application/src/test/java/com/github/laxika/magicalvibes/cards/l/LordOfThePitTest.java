@@ -17,11 +17,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 class LordOfThePitTest extends BaseCardTest {
-
 
     private void advanceToUpkeep(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
@@ -35,17 +33,6 @@ class LordOfThePitTest extends BaseCardTest {
         perm.setSummoningSick(false);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Lord of the Pit has correct card properties")
-    void hasCorrectProperties() {
-        LordOfThePit card = new LordOfThePit();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst()).isInstanceOf(SacrificeOtherCreatureOrDamageEffect.class);
     }
 
     // ===== No other creatures — deals 7 damage =====
@@ -273,5 +260,4 @@ class LordOfThePitTest extends BaseCardTest {
         assertThat(gd.status).isEqualTo(GameStatus.FINISHED);
     }
 }
-
 

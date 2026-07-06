@@ -24,46 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class PhyrexianScripturesTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I has +1/+1 counter and artifact type grant effects")
-    void chapterIHasCorrectEffects() {
-        PhyrexianScriptures card = new PhyrexianScriptures();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(PutPlusOnePlusOneCounterOnTargetCreatureEffect.class);
-        PutPlusOnePlusOneCounterOnTargetCreatureEffect counterEffect =
-                (PutPlusOnePlusOneCounterOnTargetCreatureEffect) effects.get(0);
-        assertThat(counterEffect.count()).isEqualTo(1);
-
-        assertThat(effects.get(1)).isInstanceOf(AddCardTypeToTargetPermanentEffect.class);
-        AddCardTypeToTargetPermanentEffect typeEffect = (AddCardTypeToTargetPermanentEffect) effects.get(1);
-        assertThat(typeEffect.cardType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(typeEffect.persistent()).isTrue();
-    }
-
-    @Test
-    @DisplayName("Chapter II has destroy all nonartifact creatures effect")
-    void chapterIIHasCorrectEffects() {
-        PhyrexianScriptures card = new PhyrexianScriptures();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(DestroyAllPermanentsEffect.class);
-    }
-
-    @Test
-    @DisplayName("Chapter III has exile all opponents' graveyards effect")
-    void chapterIIIHasCorrectEffects() {
-        PhyrexianScriptures card = new PhyrexianScriptures();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(ExileAllOpponentsGraveyardsEffect.class);
-    }
-
     // ===== Chapter I: targeting + resolution =====
 
     @Test

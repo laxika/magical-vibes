@@ -20,19 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MoxOpalTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has tap activated ability with metalcraft restriction and any-color mana effect")
-    void hasCorrectAbility() {
-        MoxOpal card = new MoxOpal();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        ActivatedAbility ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AwardAnyColorManaEffect.class);
-        assertThat(ability.getTimingRestriction()).isEqualTo(ActivationTimingRestriction.METALCRAFT);
-    }
+    
 
     @Test
     @DisplayName("Cannot activate without three artifacts on the battlefield")

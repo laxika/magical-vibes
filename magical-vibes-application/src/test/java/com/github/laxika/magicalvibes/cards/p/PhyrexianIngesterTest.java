@@ -32,22 +32,6 @@ class PhyrexianIngesterTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, targetId); // choose target → exile + imprint inline
     }
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Card has MayEffect wrapping ExileTargetPermanentAndImprintEffect on ETB and static boost")
-    void hasCorrectEffects() {
-        PhyrexianIngester card = new PhyrexianIngester();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ExileTargetPermanentAndImprintEffect.class);
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(BoostSelfEffect.class);
-    }
-
     // ===== ETB exile =====
 
     @Test

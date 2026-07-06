@@ -27,18 +27,7 @@ class ShimmeringGrottoTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability taps for colorless mana with no mana cost")
-    void firstAbilityProperties() {
-        ShimmeringGrotto card = new ShimmeringGrotto();
-
-        var ability = card.getActivatedAbilities().get(0);
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isNull();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(AwardManaEffect.class);
-        assertThat(((AwardManaEffect) ability.getEffects().get(0)).color()).isEqualTo(ManaColor.COLORLESS);
-    }
+    
 
     @Test
     @DisplayName("Second ability costs {1} and taps to add one mana of any color")

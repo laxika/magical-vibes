@@ -24,21 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StonySilenceTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Stony Silence has correct static effect")
-    void hasCorrectStaticEffect() {
-        StonySilence card = new StonySilence();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect.class);
-
-        var effect = (ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.predicate()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
-
     // ===== Blocking artifact mana abilities (tap for mana) =====
 
     @Test

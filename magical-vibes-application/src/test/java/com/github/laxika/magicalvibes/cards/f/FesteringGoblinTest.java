@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FesteringGoblinTest extends BaseCardTest {
 
-
     /**
      * Sets up combat where Festering Goblin (player1) attacks and is blocked by a 3/3 creature (player2).
      * FG will die from combat damage.
@@ -47,20 +46,6 @@ class FesteringGoblinTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Festering Goblin has correct card properties")
-    void hasCorrectProperties() {
-        FesteringGoblin card = new FesteringGoblin();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
-        BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(new Fixed(-1));
-        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(-1));
     }
 
     // ===== Death trigger with target selection =====
@@ -307,5 +292,4 @@ class FesteringGoblinTest extends BaseCardTest {
                 && e.getTargetId().equals(survivorId));
     }
 }
-
 

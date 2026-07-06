@@ -46,32 +46,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LivewireLashTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has static +2/+0 boost for equipped creature")
-    void hasStaticBoost() {
-        LivewireLash card = new LivewireLash();
-
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .filteredOn(e -> e instanceof StaticBoostEffect bace
-                        && bace.powerBoost() == 2 && bace.toughnessBoost() == 0)
-                .hasSize(1);
-    }
-
-    @Test
-    @DisplayName("Has ON_BECOMES_TARGET_OF_SPELL effect dealing 2 damage to any target")
-    void hasBecomesTargetTrigger() {
-        LivewireLash card = new LivewireLash();
-
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL).getFirst())
-                .isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect =
-                (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Equip ability =====
 
     @Test

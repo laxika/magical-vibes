@@ -19,20 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SoulFeastTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Soul Feast has correct card properties")
-    void hasCorrectProperties() {
-        SoulFeast card = new SoulFeast();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect effect =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.lifeLoss()).isEqualTo(4);
-        assertThat(effect.lifeGain()).isEqualTo(4);
-    }
+    
 
     @Test
     @DisplayName("Casting Soul Feast targeting a player puts it on the stack")

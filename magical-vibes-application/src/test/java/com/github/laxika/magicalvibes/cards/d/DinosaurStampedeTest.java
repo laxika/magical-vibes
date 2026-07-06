@@ -21,16 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DinosaurStampedeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Dinosaur Stampede has correct effects configured")
-    void hasCorrectEffects() {
-        DinosaurStampede card = new DinosaurStampede();
-
-        assertThat(EffectResolution.needsTarget(card)).isFalse();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(BoostAllCreaturesEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GrantKeywordEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Attacking Dinosaur gets +2/+0 and trample")

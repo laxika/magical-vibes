@@ -14,19 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VampireBatsTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Vampire Bats has correct card properties and activated ability")
-    void hasCorrectProperties() {
-        VampireBats card = new VampireBats();
-
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{B}");
-        assertThat(card.getActivatedAbilities().getFirst().getMaxActivationsPerTurn()).isEqualTo(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst()).isInstanceOf(BoostSelfEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Ability can be activated twice in one turn")

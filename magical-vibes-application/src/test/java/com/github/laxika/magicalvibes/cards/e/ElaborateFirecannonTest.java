@@ -43,15 +43,7 @@ class ElaborateFirecannonTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has DoesntUntapDuringUntapStepEffect as static effect")
-    void hasDoesntUntapStaticEffect() {
-        ElaborateFirecannon card = new ElaborateFirecannon();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(DoesntUntapDuringUntapStepEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has activated ability: {4}, tap, deals 2 damage to any target")
@@ -69,17 +61,7 @@ class ElaborateFirecannonTest extends BaseCardTest {
         assertThat(dmgEffect.damage()).isEqualTo(new Fixed(2));
     }
 
-    @Test
-    @DisplayName("Has upkeep trigger: MayEffect wrapping DiscardCardAndUntapSelfEffect")
-    void hasUpkeepTrigger() {
-        ElaborateFirecannon card = new ElaborateFirecannon();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DiscardCardAndUntapSelfEffect.class);
-    }
+    
 
     // ===== Doesn't untap during untap step =====
 

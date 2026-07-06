@@ -35,24 +35,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HeatedArgumentTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has 6 damage to creature + optional exile-then-2-damage effects")
-    void cardStructure() {
-        HeatedArgument card = new HeatedArgument();
-        var effects = card.getEffects(EffectSlot.SPELL);
-
-        assertThat(effects).hasSize(2);
-        assertThat(effects.get(0)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(((DealDamageToTargetCreatureEffect) effects.get(0)).damage()).isEqualTo(new Fixed(6));
-        assertThat(effects.get(1)).isInstanceOf(MayEffect.class);
-        assertThat(((MayEffect) effects.get(1)).wrapped())
-                .isInstanceOf(ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect.class);
-        assertThat(((ExileOwnGraveyardCardThenDamageTargetCreatureControllerEffect)
-                ((MayEffect) effects.get(1)).wrapped()).damage()).isEqualTo(2);
-    }
-
     // ===== Damage only, exile declined =====
 
     @Test

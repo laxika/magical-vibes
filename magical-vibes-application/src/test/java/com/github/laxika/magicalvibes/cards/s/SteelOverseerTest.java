@@ -18,22 +18,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SteelOverseerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Steel Overseer has tap ability with PutCounterOnEachControlledPermanentEffect")
-    void hasCorrectProperties() {
-        SteelOverseer card = new SteelOverseer();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PutCounterOnEachControlledPermanentEffect.class);
-    }
-
     // ===== Resolving ability =====
 
     @Test

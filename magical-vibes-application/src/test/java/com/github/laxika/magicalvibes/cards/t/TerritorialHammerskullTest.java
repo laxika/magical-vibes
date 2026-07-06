@@ -20,15 +20,7 @@ class TerritorialHammerskullTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Has ON_ATTACK TapTargetPermanentEffect")
-    void hasAttackTapEffect() {
-        TerritorialHammerskull card = new TerritorialHammerskull();
-
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ATTACK).getFirst())
-                .isInstanceOf(TapTargetPermanentEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Has a target filter restricting to opponent creatures")

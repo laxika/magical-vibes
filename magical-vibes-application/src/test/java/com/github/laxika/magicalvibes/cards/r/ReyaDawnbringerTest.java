@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ReyaDawnbringerTest extends BaseCardTest {
 
-
     /**
      * Advances from UNTAP to UPKEEP, triggering upkeep abilities.
      * Resolves the MayEffect from the stack and accepts the may choice.
@@ -37,20 +36,6 @@ class ReyaDawnbringerTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP → MayEffect goes on stack
         harness.passBothPriorities(); // resolve MayEffect from stack → may prompt
         harness.handleMayAbilityChosen(player1, true); // accept → inner effects resolve inline
-    }
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Reya Dawnbringer has correct card properties")
-    void hasCorrectProperties() {
-        ReyaDawnbringer card = new ReyaDawnbringer();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(ReturnCardFromGraveyardEffect.class);
     }
 
     // ===== Casting =====
@@ -311,5 +296,4 @@ class ReyaDawnbringerTest extends BaseCardTest {
                 .hasMessageContaining("Not your turn to choose");
     }
 }
-
 

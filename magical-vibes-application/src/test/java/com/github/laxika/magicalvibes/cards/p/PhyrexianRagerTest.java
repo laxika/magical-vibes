@@ -16,17 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PhyrexianRagerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Has ETB draw then lose life effects")
-    void hasEtbEffects() {
-        PhyrexianRager card = new PhyrexianRager();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).isInstanceOf(DrawCardEffect.class);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).isInstanceOf(LoseLifeEffect.class);
-        assertThat(((LoseLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).amount()).isEqualTo(1);
-    }
+    
 
     @Test
     @DisplayName("Casting Phyrexian Rager puts it on stack as creature spell")

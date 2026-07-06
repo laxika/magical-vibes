@@ -22,22 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class AppliedGeometryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has targeted token-copy effect with Fractal creature overrides and six +1/+1 counters")
-    void hasCorrectEffectStructure() {
-        AppliedGeometry card = new AppliedGeometry();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-
-        CreateTokenCopyOfTargetPermanentEffect effect =
-                (CreateTokenCopyOfTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.additionalSubtypes()).containsExactly(CardSubtype.FRACTAL);
-        assertThat(effect.additionalTypes()).containsExactly(CardType.CREATURE);
-        assertThat(effect.powerOverride()).isEqualTo(0);
-        assertThat(effect.toughnessOverride()).isEqualTo(0);
-        assertThat(effect.initialCounters()).containsEntry(CounterType.PLUS_ONE_PLUS_ONE, 6);
-    }
+    
 
     @Test
     @DisplayName("Creates a 6/6 Fractal token copy of target creature you control")

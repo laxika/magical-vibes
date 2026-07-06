@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShimmerMyrTest extends BaseCardTest {
 
-    // ===== Static effect registration =====
-
-    @Test
-    @DisplayName("Shimmer Myr has GrantFlashToCardTypeEffect for ARTIFACT")
-    void hasGrantFlashStaticEffect() {
-        ShimmerMyr card = new ShimmerMyr();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(GrantFlashToCardTypeEffect.class);
-        GrantFlashToCardTypeEffect effect = (GrantFlashToCardTypeEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.filter()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.filter()).cardType()).isEqualTo(CardType.ARTIFACT);
-    }
-
     // ===== Grant flash to artifact spells =====
 
     @Test

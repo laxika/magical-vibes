@@ -19,21 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class LoxodonMysticTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Loxodon Mystic has correct card properties")
-    void hasCorrectProperties() {
-        LoxodonMystic card = new LoxodonMystic();
-
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(TapTargetPermanentEffect.class);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{W}");
-    }
-
     // ===== Casting and resolving =====
 
     @Test

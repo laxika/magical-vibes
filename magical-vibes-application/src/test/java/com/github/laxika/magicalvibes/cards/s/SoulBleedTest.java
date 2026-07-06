@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SoulBleedTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Soul Bleed has correct effects")
-    void hasCorrectEffects() {
-        SoulBleed card = new SoulBleed();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED).getFirst())
-                .isInstanceOf(EnchantedCreatureControllerLosesLifeEffect.class);
-    }
-
     // ===== Targeting =====
 
     @Test

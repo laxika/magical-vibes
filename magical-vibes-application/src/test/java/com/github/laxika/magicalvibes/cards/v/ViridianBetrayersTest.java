@@ -15,24 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class ViridianBetrayersTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has STATIC effect with ConditionalEffect wrapping GrantKeywordEffect(INFECT, SELF)")
-    void hasCorrectStructure() {
-        ViridianBetrayers card = new ViridianBetrayers();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(ConditionalEffect.class);
-        ConditionalEffect conditional =
-                (ConditionalEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(conditional.wrapped()).isInstanceOf(GrantKeywordEffect.class);
-        GrantKeywordEffect grant = (GrantKeywordEffect) conditional.wrapped();
-        assertThat(grant.keywords()).containsExactly(Keyword.INFECT);
-        assertThat(grant.scope()).isEqualTo(GrantScope.SELF);
-    }
-
     // ===== Conditional infect — opponent poisoned =====
 
     @Test

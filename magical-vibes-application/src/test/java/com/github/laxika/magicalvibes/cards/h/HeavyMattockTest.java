@@ -22,27 +22,7 @@ class HeavyMattockTest extends BaseCardTest {
 
     // ===== Card properties =====
 
-    @Test
-    @DisplayName("Heavy Mattock has two static boost effects scoped to the equipped creature")
-    void hasStaticBoostEffects() {
-        HeavyMattock card = new HeavyMattock();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC))
-                .allMatch(e -> e instanceof StaticBoostEffect);
-
-        StaticBoostEffect baseBoost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(0);
-        assertThat(baseBoost.powerBoost()).isEqualTo(1);
-        assertThat(baseBoost.toughnessBoost()).isEqualTo(1);
-        assertThat(baseBoost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(baseBoost.filter()).isNull();
-
-        StaticBoostEffect humanBoost = (StaticBoostEffect) card.getEffects(EffectSlot.STATIC).get(1);
-        assertThat(humanBoost.powerBoost()).isEqualTo(1);
-        assertThat(humanBoost.toughnessBoost()).isEqualTo(1);
-        assertThat(humanBoost.scope()).isEqualTo(GrantScope.EQUIPPED_CREATURE);
-        assertThat(humanBoost.filter()).isNotNull();
-    }
+    
 
     @Test
     @DisplayName("Heavy Mattock has equip {2} ability at sorcery speed")

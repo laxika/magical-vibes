@@ -30,20 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ErodeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has a destroy-and-search effect that puts the land onto the battlefield tapped")
-    void hasCorrectEffect() {
-        Erode card = new Erode();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect.class);
-        var effect = (DestroyTargetPermanentAndControllerSearchesLibraryToBattlefieldEffect)
-                card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.may()).isTrue();
-        assertThat(effect.tapped()).isTrue();
-    }
+    
 
     @Test
     @DisplayName("Destroys target creature and prompts its controller to search for a basic land (tapped)")

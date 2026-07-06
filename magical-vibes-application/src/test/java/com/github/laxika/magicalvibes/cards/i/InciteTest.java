@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InciteTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Incite has correct spell effects")
-    void hasCorrectEffects() {
-        Incite card = new Incite();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(GrantColorUntilEndOfTurnEffect.class);
-        GrantColorUntilEndOfTurnEffect colorEffect = (GrantColorUntilEndOfTurnEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(colorEffect.color()).isEqualTo(CardColor.RED);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MustAttackThisTurnEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

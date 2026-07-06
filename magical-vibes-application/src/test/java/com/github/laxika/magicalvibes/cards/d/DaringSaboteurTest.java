@@ -41,16 +41,7 @@ class DaringSaboteurTest extends BaseCardTest {
         assertThat(effect.selfTargeting()).isTrue();
     }
 
-    @Test
-    @DisplayName("Has ON_COMBAT_DAMAGE_TO_PLAYER MayEffect wrapping DrawAndDiscardCardEffect")
-    void hasCombatDamageTrigger() {
-        DaringSaboteur card = new DaringSaboteur();
-
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(DrawAndDiscardCardEffect.class);
-    }
+    
 
     // ===== Activated ability: make self unblockable =====
 

@@ -24,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PyroclasmTest extends BaseCardTest {
 
-
     private static Card indestructibleCreature() {
         Card card = new Card();
         card.setName("Darksteel Sentinel");
@@ -37,17 +36,7 @@ class PyroclasmTest extends BaseCardTest {
         return card;
     }
 
-
-    @Test
-    @DisplayName("Pyroclasm has correct card properties")
-    void hasCorrectProperties() {
-        Pyroclasm card = new Pyroclasm();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MassDamageEffect.class);
-        MassDamageEffect effect = (MassDamageEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Casting Pyroclasm puts it on the stack as a sorcery")

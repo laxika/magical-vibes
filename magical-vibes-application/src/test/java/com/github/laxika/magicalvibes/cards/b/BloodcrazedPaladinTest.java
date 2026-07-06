@@ -20,19 +20,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class BloodcrazedPaladinTest extends BaseCardTest {
 
-    // ===== Card effects =====
-
-    @Test
-    @DisplayName("Has EnterWithCountersEffect as ETB effect")
-    void hasCorrectETBEffect() {
-        BloodcrazedPaladin card = new BloodcrazedPaladin();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                        new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
-    }
-
     // ===== ETB counter placement =====
 
     @Test

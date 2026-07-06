@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class AjaniOutlandChaperoneTest extends BaseCardTest {
 
-
     // ===== Card properties =====
 
     @Test
@@ -36,45 +35,11 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(3);
     }
 
-    @Test
-    @DisplayName("+1 ability creates a Kithkin token effect")
-    void plusOneAbilityHasCorrectEffect() {
-        AjaniOutlandChaperone card = new AjaniOutlandChaperone();
-        var ability = card.getActivatedAbilities().get(0);
+    
 
-        assertThat(ability.getLoyaltyCost()).isEqualTo(1);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(CreateTokenEffect.class);
-    }
+    
 
-    @Test
-    @DisplayName("-2 ability deals 4 damage to target tapped creature")
-    void minusTwoAbilityHasCorrectEffect() {
-        AjaniOutlandChaperone card = new AjaniOutlandChaperone();
-        var ability = card.getActivatedAbilities().get(1);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-2);
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentIsTappedPredicate(),
-                "Target must be a tapped creature"
-        ));
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-    }
-
-    @Test
-    @DisplayName("-8 ability is the ultimate effect")
-    void minusEightAbilityHasCorrectEffect() {
-        AjaniOutlandChaperone card = new AjaniOutlandChaperone();
-        var ability = card.getActivatedAbilities().get(2);
-
-        assertThat(ability.getLoyaltyCost()).isEqualTo(-8);
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(AjaniUltimateEffect.class);
-    }
+    
 
     // ===== Casting =====
 
@@ -324,5 +289,4 @@ class AjaniOutlandChaperoneTest extends BaseCardTest {
         return perm;
     }
 }
-
 

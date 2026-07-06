@@ -27,24 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CastDownTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Cast Down has correct card properties")
-    void hasCorrectProperties() {
-        CastDown card = new CastDown();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isEqualTo(new PermanentPredicateTargetFilter(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))
-                )),
-                "Target must be a nonlegendary creature"
-        ));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DestroyTargetPermanentEffect.class);
-        DestroyTargetPermanentEffect effect = (DestroyTargetPermanentEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.cannotBeRegenerated()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Cast Down targeting a nonlegendary creature puts it on stack")

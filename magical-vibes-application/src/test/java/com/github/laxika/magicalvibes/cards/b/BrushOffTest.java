@@ -25,21 +25,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BrushOffTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has cost reduction and counter target spell effects")
-    void hasCorrectEffects() {
-        BrushOff card = new BrushOff();
-
-        assertThat(EffectResolution.needsSpellTarget(card)).isTrue();
-        assertThat(card.getTargetFilter()).isNull();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new ReduceOwnCastCostIfTargetingStackEntryEffect(
-                        new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)), 2));
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(CounterSpellEffect.class);
-    }
+    
 
     @Nested
     @DisplayName("Cost reduction")

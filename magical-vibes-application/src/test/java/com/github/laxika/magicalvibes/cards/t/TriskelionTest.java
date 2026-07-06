@@ -39,31 +39,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TriskelionTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ETB three +1/+1 counters and one activated ability")
-    void hasCorrectEffectsAndAbility() {
-        Triskelion card = new Triskelion();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).singleElement()
-                .isInstanceOf(PutCountersOnSourceEffect.class);
-
-        PutCountersOnSourceEffect etb = (PutCountersOnSourceEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(etb.powerModifier()).isEqualTo(1);
-        assertThat(etb.toughnessModifier()).isEqualTo(1);
-        assertThat(etb.amount()).isEqualTo(3);
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects())
-                .hasSize(2)
-                .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(RemoveCounterFromSourceCost.class);
-                    assertThat(effects.get(1)).isInstanceOf(DealDamageToAnyTargetEffect.class);
-                    assertThat(((DealDamageToAnyTargetEffect) effects.get(1)).damage()).isEqualTo(new Fixed(1));
-                });
-    }
-
     // ===== ETB: enters with three +1/+1 counters =====
 
     @Test

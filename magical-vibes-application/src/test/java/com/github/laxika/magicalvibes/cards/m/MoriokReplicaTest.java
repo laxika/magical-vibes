@@ -19,25 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MoriokReplicaTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Moriok Replica has correct activated ability")
-    void hasCorrectProperties() {
-        MoriokReplica card = new MoriokReplica();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{B}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(3);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0))
-                .isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(DrawCardEffect.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(2))
-                .isInstanceOf(LoseLifeEffect.class);
-    }
-
     // ===== Activation =====
 
     @Test

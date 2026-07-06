@@ -32,38 +32,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class ShrineOfLimitlessPowerTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has upkeep trigger, black spell cast trigger, and activated ability")
-    void hasCorrectStructure() {
-        ShrineOfLimitlessPower card = new ShrineOfLimitlessPower();
-
-        // Upkeep trigger — mandatory charge counter
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).singleElement()
-                .isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Cast trigger — black spell adds charge counter
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).singleElement()
-                .isInstanceOf(SpellCastTriggerEffect.class);
-        SpellCastTriggerEffect castTrigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(castTrigger.spellFilter()).isInstanceOf(CardColorPredicate.class);
-        assertThat(((CardColorPredicate) castTrigger.spellFilter()).color()).isEqualTo(CardColor.BLACK);
-        assertThat(castTrigger.resolvedEffects()).singleElement().isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Activated ability — {4}, T, sacrifice: target player discards by charge counters
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{4}");
-        assertThat(ability.getEffects()).hasSize(2);
-        assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) ability.getEffects().get(1)).amount())
-                .isEqualTo(new CountersOnSource(CounterType.CHARGE));
-        assertThat(ability.isNeedsTarget()).isTrue();
-    }
-
     // ===== Upkeep trigger =====
 
     @Test

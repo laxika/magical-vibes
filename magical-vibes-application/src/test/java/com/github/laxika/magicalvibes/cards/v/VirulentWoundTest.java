@@ -24,21 +24,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class VirulentWoundTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has -1/-1 counter and delayed poison trigger spell effects")
-    void hasCorrectEffects() {
-        VirulentWound card = new VirulentWound();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(PutMinusOneMinusOneCounterOnTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1))
-                .isInstanceOf(GiveControllerPoisonCountersOnTargetDeathThisTurnEffect.class);
-    }
-
     // ===== Resolution: -1/-1 counter =====
 
     @Test

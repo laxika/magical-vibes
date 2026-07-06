@@ -20,20 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CurseOfTheNightlyHuntTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has MustAttackEffect with ENCHANTED_PLAYER_CREATURES scope")
-    void hasCorrectEffect() {
-        CurseOfTheNightlyHunt card = new CurseOfTheNightlyHunt();
-
-        assertThat(card.isEnchantPlayer()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(MustAttackEffect.class);
-        MustAttackEffect effect = (MustAttackEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.scope()).isEqualTo(GrantScope.ENCHANTED_PLAYER_CREATURES);
-    }
-
     // ===== Casting and resolving =====
 
     @Test

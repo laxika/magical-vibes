@@ -14,28 +14,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class CloisteredYouthTest extends BaseCardTest {
 
-    // ===== Card configuration =====
-
-    @Test
-    @DisplayName("Has correct effects configured")
-    void hasCorrectEffects() {
-        CloisteredYouth card = new CloisteredYouth();
-
-        // Front face: upkeep may-transform trigger
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect mayEffect = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(mayEffect.wrapped()).isInstanceOf(TransformSelfEffect.class);
-
-        // Back face exists with end step life loss
-        assertThat(card.getBackFaceCard()).isNotNull();
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getBackFaceCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst())
-                .isInstanceOf(LoseLifeEffect.class);
-        LoseLifeEffect loseLife = (LoseLifeEffect) card.getBackFaceCard().getEffects(EffectSlot.CONTROLLER_END_STEP_TRIGGERED).getFirst();
-        assertThat(loseLife.amount()).isEqualTo(1);
-    }
-
     // ===== Front face: upkeep transform trigger =====
 
     @Test
@@ -150,7 +128,5 @@ class CloisteredYouthTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
-
-    // ===== Helpers =====
 
 }

@@ -26,26 +26,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class FountainOfYouthTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Fountain of Youth has correct card properties")
-    void hasCorrectProperties() {
-        FountainOfYouth card = new FountainOfYouth();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{2}");
-        assertThat(ability.isNeedsTarget()).isFalse();
-        assertThat(ability.getEffects()).hasSize(1);
-        assertThat(ability.getEffects().getFirst()).isInstanceOf(GainLifeEffect.class);
-        GainLifeEffect effect = (GainLifeEffect) ability.getEffects().getFirst();
-        assertThat(effect.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Activation =====
 
     @Test

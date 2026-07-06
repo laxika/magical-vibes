@@ -25,17 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SeismicStrikeTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Seismic Strike has correct card properties")
-    void hasCorrectProperties() {
-        SeismicStrike card = new SeismicStrike();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isEqualTo(new DealDamageToTargetCreatureEffect(new PermanentCount(
-                        new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER)));
-    }
+    
 
     @Test
     @DisplayName("Casting Seismic Strike targeting a creature puts it on the stack")

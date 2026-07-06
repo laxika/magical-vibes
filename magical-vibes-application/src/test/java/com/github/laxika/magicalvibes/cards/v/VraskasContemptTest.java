@@ -45,22 +45,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 class VraskasContemptTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has two SPELL effects: ExileTargetPermanentEffect and GainLifeEffect(2)")
-    void hasCorrectEffects() {
-        VraskasContempt card = new VraskasContempt();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ExileTargetPermanentEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(GainLifeEffect.class);
-
-        GainLifeEffect lifeEffect = (GainLifeEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(lifeEffect.amount()).isEqualTo(new Fixed(2));
-    }
-
     // ===== Exile target creature =====
 
     @Test

@@ -21,18 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UncontrollableAngerTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Uncontrollable Anger has correct card properties")
-    void hasCorrectProperties() {
-        UncontrollableAnger card = new UncontrollableAnger();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(0)).isInstanceOf(StaticBoostEffect.class);
-        assertThat(card.getEffects(EffectSlot.STATIC).get(1)).isInstanceOf(MustAttackEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Can cast Uncontrollable Anger during opponent's turn thanks to flash")
@@ -176,5 +165,4 @@ class UncontrollableAngerTest extends BaseCardTest {
                 .hasMessageContaining("Target must be a creature");
     }
 }
-
 

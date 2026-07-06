@@ -17,20 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class RegenerationTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Regeneration has correct card properties")
-    void hasCorrectProperties() {
-        Regeneration card = new Regeneration();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.isAura()).isTrue();
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{G}");
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(RegenerateEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting Regeneration puts it on the stack")

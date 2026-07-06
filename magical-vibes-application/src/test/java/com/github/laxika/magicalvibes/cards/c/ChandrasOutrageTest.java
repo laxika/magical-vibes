@@ -30,15 +30,7 @@ class ChandrasOutrageTest extends BaseCardTest {
         return card;
     }
 
-    @Test
-    @DisplayName("Has correct effects")
-    void hasCorrectEffects() {
-        ChandrasOutrage card = new ChandrasOutrage();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DealDamageToTargetCreatureEffect.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DealDamageToTargetCreatureControllerEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Deals 4 damage to target creature and 2 damage to its controller")

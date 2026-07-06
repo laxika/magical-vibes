@@ -20,21 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TellingTimeTest extends BaseCardTest {
 
-
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Telling Time has correct card properties")
-    void hasCorrectProperties() {
-        TellingTime card = new TellingTime();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(LookAtTopCardsHandTopBottomEffect.class);
-        LookAtTopCardsHandTopBottomEffect effect = (LookAtTopCardsHandTopBottomEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-    }
-
     // ===== Casting =====
 
     @Test
@@ -343,5 +328,4 @@ class TellingTimeTest extends BaseCardTest {
                         && !log.contains("bottom"));
     }
 }
-
 

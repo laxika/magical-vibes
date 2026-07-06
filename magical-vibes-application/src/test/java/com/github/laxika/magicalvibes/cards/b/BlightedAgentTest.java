@@ -18,17 +18,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BlightedAgentTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Blighted Agent has CantBeBlockedEffect as static effect")
-    void hasCorrectProperties() {
-        BlightedAgent card = new BlightedAgent();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBeBlockedEffect.class);
-    }
-
     // ===== Can't be blocked =====
 
     @Test

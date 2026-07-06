@@ -22,19 +22,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class VaporSnagTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Vapor Snag has correct card properties")
-    void hasCorrectProperties() {
-        VaporSnag card = new VaporSnag();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(ReturnTargetPermanentToHandEffect.class);
-    }
-
     // ===== Casting =====
 
     @Test

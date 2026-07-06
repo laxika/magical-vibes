@@ -25,18 +25,7 @@ class TrigonOfRageTest extends BaseCardTest {
 
     // ===== Card structure =====
 
-    @Test
-    @DisplayName("Has ETB effect for entering with 3 charge counters")
-    void hasEnterWithChargeCountersEffect() {
-        TrigonOfRage card = new TrigonOfRage();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithCountersEffect.class);
-        EnterWithCountersEffect effect = (EnterWithCountersEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.type()).isEqualTo(CounterType.CHARGE);
-        assertThat(effect.count()).isEqualTo(new Fixed(3));
-    }
+    
 
     @Test
     @DisplayName("Has two activated abilities")

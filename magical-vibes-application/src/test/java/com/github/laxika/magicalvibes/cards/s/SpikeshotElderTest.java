@@ -21,22 +21,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class SpikeshotElderTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has activated ability that deals damage equal to power to any target")
-    void hasCorrectAbility() {
-        SpikeshotElder card = new SpikeshotElder();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().getFirst().getManaCost()).isEqualTo("{1}{R}{R}");
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isEqualTo(new DealDamageToAnyTargetEffect(new SourcePower()));
-    }
-
     // ===== Damage to player =====
 
     @Test

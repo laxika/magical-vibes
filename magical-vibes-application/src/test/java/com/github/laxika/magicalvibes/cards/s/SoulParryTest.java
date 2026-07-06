@@ -17,17 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class SoulParryTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Soul Parry has correct effects and targeting")
-    void hasCorrectProperties() {
-        SoulParry card = new SoulParry();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(PreventAllDamageByTargetCreatureEffect.class);
-        assertThat(card.getMinTargets()).isEqualTo(1);
-        assertThat(card.getMaxTargets()).isEqualTo(2);
-    }
+    
 
     @Test
     @DisplayName("Single target creature is prevented from dealing damage")

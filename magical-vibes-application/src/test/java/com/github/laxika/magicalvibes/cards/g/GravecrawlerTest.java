@@ -21,18 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class GravecrawlerTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has can't-block static effect and conditional graveyard cast option")
-    void hasEffects() {
-        Gravecrawler card = new Gravecrawler();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst()).isInstanceOf(CantBlockEffect.class);
-
-        GraveyardCast graveyardCast = card.getCastingOption(GraveyardCast.class).orElseThrow();
-        assertThat(graveyardCast.controllerControlsPredicate())
-                .isEqualTo(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE));
-    }
+    
 
     @Test
     @DisplayName("Can cast from graveyard while controlling a Zombie")

@@ -27,21 +27,6 @@ class GalvanothTest extends BaseCardTest {
         harness.passBothPriorities(); // advances to UPKEEP
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has upkeep may-look-and-cast effect")
-    void hasCorrectProperties() {
-        Galvanoth card = new Galvanoth();
-
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst()).isInstanceOf(MayEffect.class);
-        MayEffect may = (MayEffect) card.getEffects(EffectSlot.UPKEEP_TRIGGERED).getFirst();
-        assertThat(may.wrapped()).isInstanceOf(CastTopOfLibraryWithoutPayingManaCostEffect.class);
-        CastTopOfLibraryWithoutPayingManaCostEffect effect = (CastTopOfLibraryWithoutPayingManaCostEffect) may.wrapped();
-        assertThat(effect.castableTypes()).containsExactlyInAnyOrder(CardType.INSTANT, CardType.SORCERY);
-    }
-
     // ===== Upkeep trigger — may look prompt =====
 
     @Test

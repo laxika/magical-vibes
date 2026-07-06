@@ -12,18 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class LlanowarElvesTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Llanowar Elves has tap-for-green mana ability")
-    void hasTapForGreenManaAbility() {
-        LlanowarElves card = new LlanowarElves();
-
-        assertThat(card.getEffects(EffectSlot.ON_TAP)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_TAP).getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-    }
-
     // ===== Mana production =====
 
     @Test

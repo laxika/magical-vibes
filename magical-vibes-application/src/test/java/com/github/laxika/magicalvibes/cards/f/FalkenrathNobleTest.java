@@ -18,26 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class FalkenrathNobleTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Has ON_DEATH and ON_ANY_CREATURE_DIES effects")
-    void hasCorrectStructure() {
-        FalkenrathNoble card = new FalkenrathNoble();
-
-        assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-        TargetPlayerLosesLifeAndControllerGainsLifeEffect deathEffect =
-                (TargetPlayerLosesLifeAndControllerGainsLifeEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(deathEffect.lifeLoss()).isEqualTo(1);
-        assertThat(deathEffect.lifeGain()).isEqualTo(1);
-
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ANY_CREATURE_DIES).getFirst())
-                .isInstanceOf(TargetPlayerLosesLifeAndControllerGainsLifeEffect.class);
-    }
-
     // ===== ON_DEATH: Falkenrath Noble itself dies =====
 
     @Test

@@ -29,17 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GutShotTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Gut Shot has correct card properties")
-    void hasCorrectProperties() {
-        GutShot card = new GutShot();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(1));
-    }
+    
 
     @Test
     @DisplayName("Gut Shot deals 1 damage to target player when paid with red mana")

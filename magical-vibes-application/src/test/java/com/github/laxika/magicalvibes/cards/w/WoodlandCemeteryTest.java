@@ -23,34 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class WoodlandCemeteryTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Has conditional enters-tapped effect checking for Swamp or Forest")
-    void hasConditionalEntersTappedEffect() {
-        WoodlandCemetery card = new WoodlandCemetery();
-
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isEqualTo(new EntersTappedUnlessControlsPermanentEffect(
-                        new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SWAMP, CardSubtype.FOREST))));
-    }
-
-    @Test
-    @DisplayName("Has two mana abilities for black and green")
-    void hasManaAbilities() {
-        WoodlandCemetery card = new WoodlandCemetery();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.BLACK));
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getEffects().getFirst())
-                .isEqualTo(new AwardManaEffect(ManaColor.GREEN));
-    }
-
     // ===== Enters tapped (no qualifying lands) =====
 
     @Test

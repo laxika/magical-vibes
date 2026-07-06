@@ -31,16 +31,7 @@ class AcademyDrakeTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof KickerEffect ke && ke.cost().equals("{4}"));
     }
 
-    @Test
-    @DisplayName("Has kicked-conditional EnterWithCountersEffect with count 2")
-    void hasKickedETBEffect() {
-        AcademyDrake card = new AcademyDrake();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isEqualTo(new ConditionalEffect(new Kicked(),
-                        new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
-    }
+    
 
     // ===== Casting without kicker =====
 

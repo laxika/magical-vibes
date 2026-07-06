@@ -26,28 +26,9 @@ class TitanForgeTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities()).hasSize(2);
     }
 
-    @Test
-    @DisplayName("First ability puts a charge counter on self")
-    void firstAbilityPutsChargeCounter() {
-        TitanForge card = new TitanForge();
+    
 
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{3}");
-        assertThat(card.getActivatedAbilities().get(0).getEffects())
-                .anyMatch(e -> e instanceof PutCountersOnSelfEffect);
-    }
-
-    @Test
-    @DisplayName("Second ability removes 3 charge counters and creates a 9/9 Golem token")
-    void secondAbilityCreatesToken() {
-        TitanForge card = new TitanForge();
-
-        assertThat(card.getActivatedAbilities().get(1).isRequiresTap()).isTrue();
-        assertThat(card.getActivatedAbilities().get(1).getManaCost()).isNull();
-        assertThat(card.getActivatedAbilities().get(1).getEffects())
-                .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 3)
-                .anyMatch(e -> e instanceof CreateTokenEffect);
-    }
+    
 
     // ===== First ability — charge counter =====
 

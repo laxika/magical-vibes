@@ -19,19 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class SwordPointDiplomacyTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Has correct effect")
-    void hasCorrectEffect() {
-        SwordPointDiplomacy card = new SwordPointDiplomacy();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(RevealTopCardsOpponentPaysLifeOrToHandEffect.class);
-        RevealTopCardsOpponentPaysLifeOrToHandEffect effect =
-                (RevealTopCardsOpponentPaysLifeOrToHandEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
-        assertThat(effect.lifeCost()).isEqualTo(3);
-    }
+    
 
     @Test
     @DisplayName("Casting and resolving reveals top 3 and presents opponent with choice")

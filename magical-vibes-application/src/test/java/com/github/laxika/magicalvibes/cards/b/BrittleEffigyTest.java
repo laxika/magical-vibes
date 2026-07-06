@@ -20,24 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class BrittleEffigyTest extends BaseCardTest {
 
-    // ===== Ability structure =====
-
-    @Test
-    @DisplayName("Brittle Effigy has a tap + exile self activated ability targeting creatures")
-    void hasCorrectAbility() {
-        BrittleEffigy card = new BrittleEffigy();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        var ability = card.getActivatedAbilities().getFirst();
-        assertThat(ability.isRequiresTap()).isTrue();
-        assertThat(ability.getManaCost()).isEqualTo("{4}");
-        assertThat(ability.isNeedsTarget()).isTrue();
-        assertThat(ability.getEffects())
-                .hasSize(2)
-                .anyMatch(e -> e instanceof ExileSelfCost)
-                .anyMatch(e -> e instanceof ExileTargetPermanentEffect);
-    }
-
     // ===== Activation and resolution =====
 
     @Test

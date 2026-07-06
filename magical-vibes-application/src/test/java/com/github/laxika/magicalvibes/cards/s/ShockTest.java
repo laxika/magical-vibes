@@ -35,19 +35,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ShockTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Shock has correct card properties")
-    void hasCorrectProperties() {
-        Shock card = new Shock();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(DealDamageToAnyTargetEffect.class);
-        DealDamageToAnyTargetEffect effect = (DealDamageToAnyTargetEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.damage()).isEqualTo(new Fixed(2));
-        assertThat(effect.cantRegenerate()).isFalse();
-    }
+    
 
     @Test
     @DisplayName("Casting Shock targeting a player puts it on the stack")

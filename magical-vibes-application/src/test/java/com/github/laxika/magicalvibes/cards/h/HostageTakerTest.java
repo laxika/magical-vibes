@@ -46,40 +46,6 @@ class HostageTakerTest extends BaseCardTest {
         harness.clearPriorityPassed();
     }
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Card has ExileTargetPermanentUntilSourceLeavesEffect on ETB")
-    void hasCorrectETBEffect() {
-        HostageTaker card = new HostageTaker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(ExileTargetPermanentUntilSourceLeavesEffect.class);
-    }
-
-    @Test
-    @DisplayName("Card has AllowCastFromCardsExiledWithSourceEffect with anyManaType")
-    void hasCorrectStaticEffect() {
-        HostageTaker card = new HostageTaker();
-
-        assertThat(card.getEffects(EffectSlot.STATIC)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.STATIC).getFirst())
-                .isInstanceOf(AllowCastFromCardsExiledWithSourceEffect.class);
-        AllowCastFromCardsExiledWithSourceEffect effect =
-                (AllowCastFromCardsExiledWithSourceEffect) card.getEffects(EffectSlot.STATIC).getFirst();
-        assertThat(effect.anyManaType()).isTrue();
-    }
-
-    @Test
-    @DisplayName("ETB is mandatory (not a may ability)")
-    void etbIsMandatory() {
-        HostageTaker card = new HostageTaker();
-
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isNotInstanceOf(com.github.laxika.magicalvibes.model.effect.MayEffect.class);
-    }
-
     // ===== ETB exile =====
 
     @Test

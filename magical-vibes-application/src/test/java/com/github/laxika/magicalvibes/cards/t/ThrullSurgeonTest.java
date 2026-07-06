@@ -24,22 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ThrullSurgeonTest extends BaseCardTest {
 
-
-    @Test
-    @DisplayName("Thrull Surgeon has correct card properties")
-    void hasCorrectProperties() {
-        ThrullSurgeon card = new ThrullSurgeon();
-
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().getFirst().getTimingRestriction())
-                .isEqualTo(ActivationTimingRestriction.SORCERY_SPEED);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(2);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(card.getActivatedAbilities().getFirst().getEffects().get(1))
-                .isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Activating ability sacrifices Thrull Surgeon and puts ability on stack")

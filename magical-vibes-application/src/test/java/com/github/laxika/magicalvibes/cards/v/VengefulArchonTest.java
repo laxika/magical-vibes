@@ -17,22 +17,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class VengefulArchonTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Vengeful Archon has correct activated ability")
-    void hasCorrectAbility() {
-        VengefulArchon card = new VengefulArchon();
-
-        assertThat(card.getActivatedAbilities()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{X}");
-        assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
-        assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isTrue();
-        assertThat(card.getActivatedAbilities().get(0).getEffects()).hasSize(1);
-        assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(PreventXDamageToControllerAndRedirectToTargetPlayerEffect.class);
-    }
-
     // ===== Activation =====
 
     @Test

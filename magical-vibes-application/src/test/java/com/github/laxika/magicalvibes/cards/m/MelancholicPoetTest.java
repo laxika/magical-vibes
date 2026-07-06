@@ -20,18 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class MelancholicPoetTest extends BaseCardTest {
 
-    @Test
-    @DisplayName("Repartee trigger drains 1 life, gated on targeting a creature")
-    void hasCorrectStructure() {
-        MelancholicPoet card = new MelancholicPoet();
-
-        SpellCastTriggerEffect trigger =
-                (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.castSpellTargetCondition()).isInstanceOf(StackEntryTargetsPermanentPredicate.class);
-        assertThat(trigger.resolvedEffects()).hasSize(2);
-        assertThat(trigger.resolvedEffects().get(0)).isInstanceOf(EachOpponentLosesLifeEffect.class);
-        assertThat(trigger.resolvedEffects().get(1)).isInstanceOf(GainLifeEffect.class);
-    }
+    
 
     @Test
     @DisplayName("Casting an instant that targets a creature drains the opponent for 1")

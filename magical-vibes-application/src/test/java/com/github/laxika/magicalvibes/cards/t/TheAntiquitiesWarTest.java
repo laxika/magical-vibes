@@ -29,52 +29,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class TheAntiquitiesWarTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Chapter I looks at top 5 cards for an artifact")
-    void chapterIHasCorrectEffect() {
-        TheAntiquitiesWar card = new TheAntiquitiesWar();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) effects.getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.predicate()).cardType()).isEqualTo(CardType.ARTIFACT);
-    }
-
-    @Test
-    @DisplayName("Chapter II has same effect as chapter I")
-    void chapterIIHasCorrectEffect() {
-        TheAntiquitiesWar card = new TheAntiquitiesWar();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_II);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect.class);
-        LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect effect =
-                (LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect) effects.getFirst();
-        assertThat(effect.count()).isEqualTo(5);
-        assertThat(effect.predicate()).isInstanceOf(CardTypePredicate.class);
-        assertThat(((CardTypePredicate) effect.predicate()).cardType()).isEqualTo(CardType.ARTIFACT);
-    }
-
-    @Test
-    @DisplayName("Chapter III animates controlled artifacts as 5/5 creatures")
-    void chapterIIIHasCorrectEffect() {
-        TheAntiquitiesWar card = new TheAntiquitiesWar();
-
-        var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_III);
-        assertThat(effects).hasSize(1);
-        assertThat(effects.getFirst()).isInstanceOf(AnimateControlledPermanentsEffect.class);
-        AnimateControlledPermanentsEffect effect = (AnimateControlledPermanentsEffect) effects.getFirst();
-        assertThat(effect.power()).isEqualTo(5);
-        assertThat(effect.toughness()).isEqualTo(5);
-        assertThat(effect.filter()).isInstanceOf(PermanentIsArtifactPredicate.class);
-    }
-
     // ===== ETB: first lore counter and chapter I triggers =====
 
     @Test

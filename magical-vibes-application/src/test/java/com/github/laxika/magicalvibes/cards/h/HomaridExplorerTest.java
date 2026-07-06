@@ -16,22 +16,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class HomaridExplorerTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Homarid Explorer has correct card properties")
-    void hasCorrectProperties() {
-        HomaridExplorer card = new HomaridExplorer();
-
-        assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(MillTargetPlayerEffect.class);
-        MillTargetPlayerEffect effect =
-                (MillTargetPlayerEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(4);
-    }
-
     // ===== Resolving creature spell =====
 
     @Test

@@ -20,22 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class PreordainTest extends BaseCardTest {
 
-    // ===== Card properties =====
-
-    @Test
-    @DisplayName("Preordain has scry 2 and draw 1 spell effects")
-    void hasCorrectProperties() {
-        Preordain card = new Preordain();
-
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(ScryEffect.class);
-        ScryEffect scryEffect = (ScryEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(scryEffect.count()).isEqualTo(2);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
-        DrawCardEffect drawEffect = (DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(1);
-        assertThat(drawEffect.amount()).isEqualTo(new Fixed(1));
-    }
-
     // ===== Casting =====
 
     @Test

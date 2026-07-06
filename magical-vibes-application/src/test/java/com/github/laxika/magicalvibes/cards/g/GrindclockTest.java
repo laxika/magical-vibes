@@ -22,33 +22,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 
 class GrindclockTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("Grindclock has two activated abilities with correct structure")
-    void hasCorrectAbilityStructure() {
-        Grindclock card = new Grindclock();
-
-        assertThat(card.getActivatedAbilities()).hasSize(2);
-
-        // Ability 0: {T}: Put a charge counter on Grindclock.
-        var ability0 = card.getActivatedAbilities().get(0);
-        assertThat(ability0.isRequiresTap()).isTrue();
-        assertThat(ability0.getManaCost()).isNull();
-        assertThat(ability0.getEffects()).hasSize(1);
-        assertThat(ability0.getEffects().getFirst()).isInstanceOf(PutCountersOnSelfEffect.class);
-
-        // Ability 1: {T}: Target player mills X cards, where X is the number of charge counters on Grindclock.
-        var ability1 = card.getActivatedAbilities().get(1);
-        assertThat(ability1.isRequiresTap()).isTrue();
-        assertThat(ability1.getManaCost()).isNull();
-        assertThat(ability1.getEffects()).hasSize(1);
-        assertThat(ability1.getEffects().getFirst()).isInstanceOf(MillTargetPlayerEffect.class);
-        assertThat(((MillTargetPlayerEffect) ability1.getEffects().getFirst()).count())
-                .isEqualTo(new CountersOnSource(CounterType.CHARGE));
-        assertThat(ability1.isNeedsTarget()).isTrue();
-    }
-
     // ===== Ability 0: Put a charge counter =====
 
     @Test

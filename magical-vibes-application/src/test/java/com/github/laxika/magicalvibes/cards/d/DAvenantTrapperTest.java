@@ -25,25 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class DAvenantTrapperTest extends BaseCardTest {
 
-    // ===== Card structure =====
-
-    @Test
-    @DisplayName("D'Avenant Trapper has historic spell-cast trigger with tap target permanent effect and target filter")
-    void hasCorrectStructure() {
-        DAvenantTrapper card = new DAvenantTrapper();
-
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst())
-                .isInstanceOf(SpellCastTriggerEffect.class);
-
-        SpellCastTriggerEffect trigger = (SpellCastTriggerEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CASTS_SPELL).getFirst();
-        assertThat(trigger.spellFilter()).isInstanceOf(CardIsHistoricPredicate.class);
-        assertThat(trigger.targetFilter()).isInstanceOf(PermanentPredicateTargetFilter.class);
-
-        assertThat(trigger.resolvedEffects()).hasSize(1);
-        assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(TapTargetPermanentEffect.class);
-    }
-
     // ===== Artifact spell triggers target selection =====
 
     @Test
