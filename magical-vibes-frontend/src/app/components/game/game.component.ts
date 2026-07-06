@@ -310,6 +310,10 @@ export class GameComponent implements OnInit, OnDestroy {
   private static readonly TAPPED_STACK_STRIP = 31;
   private static readonly ROW_GAP = 10;
   private static readonly BLOCKER_GAP = 6;
+  /* Attached auras peek out from under their host: 50px to the side
+     (margin-left) and 41px above (231px card minus the -190px overlap). */
+  private static readonly AURA_X_OFFSET = 50;
+  private static readonly AURA_STRIP = 41;
   private static readonly COMBAT_GROUPS_GAP = 24;
   private static readonly COMBAT_STACK_GAP = 8;
   private static readonly LANDS_ROW_MODIFIER = 0.9;
@@ -344,6 +348,19 @@ export class GameComponent implements OnInit, OnDestroy {
     const cardWidth = (tapped: boolean) => (tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH);
     let total = 0;
 
+    /* A permanent plus its attached auras, at zoom 1. Tapped cards occupy the
+       rotated footprint (165px tall), but an aura'd stack keeps min-height 231. */
+    const auraCount = (perm: Permanent) => this.getAttachedAuras(perm.id).length;
+    const stackWidth = (perm: Permanent) =>
+      cardWidth(perm.tapped) + (auraCount(perm) > 0 ? C.AURA_X_OFFSET : 0);
+    const stackHeight = (perm: Permanent) => {
+      const auras = auraCount(perm);
+      if (perm.tapped) {
+        return auras > 0 ? Math.max(C.CARD_HEIGHT, C.CARD_WIDTH + auras * C.AURA_STRIP) : C.CARD_WIDTH;
+      }
+      return C.CARD_HEIGHT + auras * C.AURA_STRIP;
+    };
+
     const rowHeight = (widths: number[], lineHeight: number): number => {
       if (widths.length === 0) return 0;
       const lines = C.packedLines(widths, C.ROW_GAP, rowWidth);
@@ -357,7 +374,7 @@ export class GameComponent implements OnInit, OnDestroy {
         const strip = tapped ? C.TAPPED_STACK_STRIP : C.STACK_STRIP;
         return (base + (item.lands.length - 1) * strip) * landZoom;
       }
-      return cardWidth(item.perm.tapped) * landZoom;
+      return stackWidth(item.perm) * landZoom;
     };
 
     const addSide = (
@@ -371,7 +388,10 @@ export class GameComponent implements OnInit, OnDestroy {
         total += C.EMPTY_MESSAGE_HEIGHT;
         return;
       }
-      total += rowHeight(creatures.map(ip => cardWidth(ip.perm.tapped) * zoom), C.CARD_HEIGHT * zoom);
+      const creatureLine = creatures.length > 0
+        ? Math.max(...creatures.map(ip => stackHeight(ip.perm)))
+        : 0;
+      total += rowHeight(creatures.map(ip => stackWidth(ip.perm) * zoom), creatureLine * zoom);
       const landZoom = zoom * C.LANDS_ROW_MODIFIER;
       total += rowHeight(lands.map(item => landItemWidth(item, landZoom)), C.CARD_HEIGHT * landZoom);
     };
@@ -389,12 +409,19 @@ export class GameComponent implements OnInit, OnDestroy {
 
     if (this.showCombatZone) {
       const groups = this.combatPairings;
-      const anyBlockers = groups.some(g => g.blockers.length > 0);
-      const groupHeight = C.CARD_HEIGHT * zoom
-        + (anyBlockers ? C.COMBAT_STACK_GAP + C.CARD_HEIGHT * zoom : 0);
+      const blockers = groups.flatMap(g => g.blockers);
+      const attackerLine = groups.length > 0
+        ? Math.max(...groups.map(g => stackHeight(g.attacker)))
+        : 0;
+      const blockerLine = blockers.length > 0
+        ? Math.max(...blockers.map(b => stackHeight(b.perm)))
+        : 0;
+      const groupHeight = attackerLine * zoom
+        + (blockers.length > 0 ? C.COMBAT_STACK_GAP + blockerLine * zoom : 0);
       const widths = groups.map(g => Math.max(
-        cardWidth(g.attacker.tapped) * zoom,
-        g.blockers.length * C.CARD_WIDTH * zoom + Math.max(0, g.blockers.length - 1) * C.BLOCKER_GAP));
+        stackWidth(g.attacker) * zoom,
+        g.blockers.reduce((sum, b) => sum + stackWidth(b.perm) * zoom, 0)
+          + Math.max(0, g.blockers.length - 1) * C.BLOCKER_GAP));
       const lines = widths.length > 0 ? C.packedLines(widths, C.COMBAT_GROUPS_GAP, rowWidth - 20) : 1;
       total += lines * groupHeight + (lines - 1) * C.COMBAT_GROUPS_GAP + C.COMBAT_ZONE_CHROME;
     } else {
