@@ -150,6 +150,144 @@
     }
   </div>
 
+  <div class="side-prompts">
+    @if (isMindControlling) {
+      <div class="side-prompt prompt-mind-control">
+        <span class="side-prompt-text">Mindslaver — You control {{ mindControlledPlayerName }}'s turn</span>
+      </div>
+    }
+
+    @if (choice.targeting.selectingTarget) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">{{ choice.targeting.targetingPrompt }}</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelTargeting()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.targetingSpell) {
+      <div class="side-prompt prompt-spell-targeting">
+        <span class="side-prompt-text">Select a spell on the stack to counter with {{ choice.targeting.targetingSpellCardName }}</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelSpellTargeting()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.multiTargeting) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">{{ choice.targeting.targetingPrompt }} ({{ choice.targeting.multiTargetSelectedIds().length }}/{{ choice.targeting.multiTargetMaxCount }})</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmMultiTargets()" [disabled]="choice.targeting.multiTargetSelectedIds().length < choice.targeting.multiTargetMinCount">Confirm</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelMultiTargeting()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.convoking) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Tap creatures to help cast {{ choice.targeting.convokeCardName }} ({{ choice.targeting.convokeSelectedCreatureIds().length }} tapped)</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmConvoke()">Cast</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.skipConvoke()">Skip Convoke</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelConvoke()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.choosingAlternateCost) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Cast {{ choice.targeting.alternateCostCardName }} &mdash; choose how to pay:</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.choosePayMana()">Pay Mana</button>
+          @if (choice.targeting.alternateCostSacrificeCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostLifePayment }} Life + Sacrifice {{ choice.targeting.alternateCostSacrificeCount }} Creatures</button>
+          } @else if (choice.targeting.alternateCostTapCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }} + Tap {{ choice.targeting.alternateCostTapCount }} Artifact</button>
+          }
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.selectingAlternateCostCreatures) {
+      <div class="side-prompt prompt-targeting">
+        @if (choice.targeting.alternateCostSacrificeCount > 0) {
+          <span class="side-prompt-text">Select {{ choice.targeting.alternateCostSacrificeCount }} creatures to sacrifice for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostSacrificeCount }})</span>
+        } @else if (choice.targeting.alternateCostTapCount > 0) {
+          <span class="side-prompt-text">Select {{ choice.targeting.alternateCostTapCount }} untapped artifact to tap for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostTapCount }})</span>
+        }
+        <div class="side-prompt-buttons">
+          @if (choice.targeting.alternateCostSacrificeCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostSacrificeCount">Cast</button>
+          } @else if (choice.targeting.alternateCostTapCount > 0) {
+            <button class="btn-side-prompt" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostTapCount">Cast</button>
+          }
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.choosingKicker) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Cast {{ choice.targeting.kickerCardName }} &mdash; pay kicker {{ choice.targeting.kickerCost }}?</span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          <button class="btn-side-prompt" (click)="choice.targeting.confirmKicker()">Pay Kicker</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.skipKicker()">Skip Kicker</button>
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelKicker()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.damage.distributingDamage) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">Click attacking creatures to assign damage for {{ choice.damage.damageDistributionCardName }} ({{ choice.damage.damageDistributionRemaining }} remaining of {{ choice.damage.damageDistributionXValue }})</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.damage.confirmDamageDistribution()" [disabled]="choice.damage.damageDistributionRemaining !== 0">Confirm</button>
+          <button class="btn-side-prompt" (click)="choice.damage.cancelDamageDistribution()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.choosingFromHand) {
+      <div class="side-prompt prompt-hand-choice">
+        <span class="side-prompt-text">{{ choice.handChoicePrompt }}</span>
+        @if (choice.handChoiceCanDecline) {
+          <div class="side-prompt-buttons">
+            <button class="btn-side-prompt" (click)="choice.declineHandChoice()">Decline</button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (choice.choosingFromList) {
+      <div class="side-prompt prompt-list-choice">
+        <span class="side-prompt-text">{{ choice.listChoicePrompt }}</span>
+        <div class="color-choice-buttons">
+          @for (option of choice.listChoices; track option) {
+            <button class="btn-color-choice" [attr.data-color]="option" (click)="choice.chooseFromList(option)">{{ choice.getOptionDisplayName(option) }}</button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (choice.choosingPermanent) {
+      <div class="side-prompt prompt-permanent-choice">
+        <span class="side-prompt-text">{{ choice.permanentChoicePrompt }}</span>
+      </div>
+    }
+
+    @if (choice.choosingMultiplePermanents) {
+      <div class="side-prompt prompt-permanent-choice">
+        <span class="side-prompt-text">{{ choice.multiPermanentChoicePrompt }} ({{ choice.multiPermanentSelectedIds().size }}/{{ choice.multiPermanentMaxCount }} selected)</span>
+        <div class="side-prompt-buttons">
+          <button class="btn-side-prompt" (click)="choice.confirmMultiPermanentChoice()">Confirm</button>
+        </div>
+      </div>
+    }
+  </div>
+
   <div class="action-bar">
     @if (declaringAttackers) {
       @if (attackTaxPerCreature > 0) {

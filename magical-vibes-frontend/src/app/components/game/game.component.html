@@ -20,83 +20,10 @@
   }
 
   @if (game()?.status === GameStatus.RUNNING || game()?.status === GameStatus.FINISHED) {
-    @if (choice.targeting.selectingTarget) {
-      <div class="combat-banner targeting-banner">
-        <span>{{ choice.targeting.targetingPrompt }}</span>
-        <button class="btn-confirm-combat" (click)="choice.targeting.cancelTargeting()">Cancel</button>
-      </div>
-    }
-
-    @if (choice.targeting.targetingSpell) {
-      <div class="combat-banner spell-targeting-banner">
-        <span>Select a spell on the stack to counter with {{ choice.targeting.targetingSpellCardName }}</span>
-        <button class="btn-confirm-combat" (click)="choice.targeting.cancelSpellTargeting()">Cancel</button>
-      </div>
-    }
-
-    @if (choice.targeting.multiTargeting) {
-      <div class="combat-banner targeting-banner">
-        <span>{{ choice.targeting.targetingPrompt }} ({{ choice.targeting.multiTargetSelectedIds().length }}/{{ choice.targeting.multiTargetMaxCount }})</span>
-        <button class="btn-confirm-combat" (click)="choice.targeting.confirmMultiTargets()" [disabled]="choice.targeting.multiTargetSelectedIds().length < choice.targeting.multiTargetMinCount">Confirm</button>
-        <button class="btn-confirm-combat" (click)="choice.targeting.cancelMultiTargeting()">Cancel</button>
-      </div>
-    }
-
-    @if (isMindControlling) {
-      <div class="combat-banner mind-control-banner">
-        <span>Mindslaver — You control {{ mindControlledPlayerName }}'s turn</span>
-      </div>
-    }
-
-    @if (choice.targeting.convoking) {
-      <div class="combat-banner targeting-banner">
-        <span>Tap creatures to help cast {{ choice.targeting.convokeCardName }} ({{ choice.targeting.convokeSelectedCreatureIds().length }} tapped)</span>
-        <button class="btn-confirm-combat" (click)="choice.targeting.confirmConvoke()">Cast</button>
-        <button class="btn-confirm-combat" (click)="choice.targeting.skipConvoke()">Skip Convoke</button>
-        <button class="btn-confirm-combat" (click)="choice.targeting.cancelConvoke()">Cancel</button>
-      </div>
-    }
-
-    @if (choice.targeting.choosingAlternateCost) {
-      <div class="combat-banner targeting-banner">
-        <span>Cast {{ choice.targeting.alternateCostCardName }} &mdash; choose how to pay:</span>
-        <button class="btn-confirm-combat" (click)="choice.targeting.choosePayMana()">Pay Mana</button>
-        @if (choice.targeting.alternateCostSacrificeCount > 0) {
-          <button class="btn-confirm-combat" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostLifePayment }} Life + Sacrifice {{ choice.targeting.alternateCostSacrificeCount }} Creatures</button>
-        } @else if (choice.targeting.alternateCostTapCount > 0) {
-          <button class="btn-confirm-combat" (click)="choice.targeting.choosePayAlternateCost()">Pay {{ choice.targeting.alternateCostManaCost }} + Tap {{ choice.targeting.alternateCostTapCount }} Artifact</button>
-        }
-        <button class="btn-confirm-combat" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
-      </div>
-    }
-
-    @if (choice.targeting.selectingAlternateCostCreatures) {
-      <div class="combat-banner targeting-banner">
-        @if (choice.targeting.alternateCostSacrificeCount > 0) {
-          <span>Select {{ choice.targeting.alternateCostSacrificeCount }} creatures to sacrifice for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostSacrificeCount }})</span>
-          <button class="btn-confirm-combat" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostSacrificeCount">Cast</button>
-        } @else if (choice.targeting.alternateCostTapCount > 0) {
-          <span>Select {{ choice.targeting.alternateCostTapCount }} untapped artifact to tap for {{ choice.targeting.alternateCostCardName }} ({{ choice.targeting.alternateCostSelectedIds().length }}/{{ choice.targeting.alternateCostTapCount }})</span>
-          <button class="btn-confirm-combat" (click)="choice.targeting.confirmAlternateCost()" [disabled]="choice.targeting.alternateCostSelectedIds().length !== choice.targeting.alternateCostTapCount">Cast</button>
-        }
-        <button class="btn-confirm-combat" (click)="choice.targeting.cancelAlternateCost()">Cancel</button>
-      </div>
-    }
-
-    @if (choice.targeting.choosingKicker) {
-      <div class="combat-banner targeting-banner">
-        <span>Cast {{ choice.targeting.kickerCardName }} &mdash; pay kicker {{ choice.targeting.kickerCost }}?</span>
-        <button class="btn-confirm-combat" (click)="choice.targeting.confirmKicker()">Pay Kicker</button>
-        <button class="btn-confirm-combat" (click)="choice.targeting.skipKicker()">Skip Kicker</button>
-        <button class="btn-confirm-combat" (click)="choice.targeting.cancelKicker()">Cancel</button>
-      </div>
-    }
-
     @if (choice.library.scrying) {
-      <div class="combat-banner reorder-banner">
-        <span>{{ choice.library.scryPrompt }}</span>
-      </div>
-      <div class="reorder-zone">
+      <div class="reveal-hand-overlay">
+        <div class="reveal-hand-card">
+        <h2>{{ choice.library.scryPrompt }}</h2>
         @if (choice.library.scryAvailableCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">Click a card then choose Top or Bottom:</div>
@@ -132,7 +59,7 @@
                 </div>
               }
             </div>
-            <button class="btn-confirm-combat" (click)="choice.library.undoScryTop()" [disabled]="choice.library.scryTopCards.length === 0">Undo Top</button>
+            <button class="btn-keep" (click)="choice.library.undoScryTop()" [disabled]="choice.library.scryTopCards.length === 0">Undo Top</button>
           </div>
         }
         @if (choice.library.scryBottomCards.length > 0) {
@@ -147,20 +74,20 @@
                   (mouseleave)="onCardHoverEnd()" />
               }
             </div>
-            <button class="btn-confirm-combat" (click)="choice.library.undoScryBottom()" [disabled]="choice.library.scryBottomCards.length === 0">Undo Bottom</button>
+            <button class="btn-keep" (click)="choice.library.undoScryBottom()" [disabled]="choice.library.scryBottomCards.length === 0">Undo Bottom</button>
           </div>
         }
         <div class="reorder-actions">
-          <button class="btn-confirm-combat" (click)="choice.library.confirmScry()" [disabled]="choice.library.scryAvailableCards.length > 0">Confirm Scry</button>
+          <button class="btn-keep" (click)="choice.library.confirmScry()" [disabled]="choice.library.scryAvailableCards.length > 0">Confirm Scry</button>
+        </div>
         </div>
       </div>
     }
 
     @if (choice.library.reorderingLibrary) {
-      <div class="combat-banner reorder-banner">
-        <span>{{ choice.library.reorderPrompt }}</span>
-      </div>
-      <div class="reorder-zone">
+      <div class="reveal-hand-overlay">
+        <div class="reveal-hand-card">
+        <h2>{{ choice.library.reorderPrompt }}</h2>
         @if (choice.library.reorderAvailableCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">Click cards to set their order (top to bottom):</div>
@@ -194,17 +121,17 @@
           </div>
         }
         <div class="reorder-actions">
-          <button class="btn-confirm-combat" (click)="choice.library.undoLastReorderCard()" [disabled]="choice.library.reorderOriginalIndices.length === 0">Undo</button>
-          <button class="btn-confirm-combat" (click)="choice.library.confirmReorder()" [disabled]="choice.library.reorderAvailableCards.length > 0">Confirm Order</button>
+          <button class="btn-keep" (click)="choice.library.undoLastReorderCard()" [disabled]="choice.library.reorderOriginalIndices.length === 0">Undo</button>
+          <button class="btn-keep" (click)="choice.library.confirmReorder()" [disabled]="choice.library.reorderAvailableCards.length > 0">Confirm Order</button>
+        </div>
         </div>
       </div>
     }
 
     @if (choice.library.choosingHandTopBottom) {
-      <div class="combat-banner reorder-banner">
-        <span>{{ choice.library.handTopBottomPrompt }}</span>
-      </div>
-      <div class="reorder-zone">
+      <div class="reveal-hand-overlay">
+        <div class="reveal-hand-card">
+        <h2>{{ choice.library.handTopBottomPrompt }}</h2>
         @if (choice.library.handTopBottomAvailableCards.length > 0) {
           <div class="reorder-section">
             <div class="reorder-label">
@@ -274,8 +201,9 @@
           </div>
         }
         <div class="reorder-actions">
-          <button class="btn-confirm-combat" (click)="choice.library.undoHandTopBottom()" [disabled]="choice.library.handTopBottomHandIndex === null">Undo</button>
-          <button class="btn-confirm-combat" (click)="choice.library.confirmHandTopBottom()" [disabled]="choice.library.handTopBottomStep !== 2">Confirm</button>
+          <button class="btn-keep" (click)="choice.library.undoHandTopBottom()" [disabled]="choice.library.handTopBottomHandIndex === null">Undo</button>
+          <button class="btn-keep" (click)="choice.library.confirmHandTopBottom()" [disabled]="choice.library.handTopBottomStep !== 2">Confirm</button>
+        </div>
         </div>
       </div>
     }
@@ -300,14 +228,6 @@
       </div>
     }
 
-
-    @if (choice.damage.distributingDamage) {
-      <div class="combat-banner targeting-banner">
-        <span>Click attacking creatures to assign damage for {{ choice.damage.damageDistributionCardName }} ({{ choice.damage.damageDistributionRemaining }} remaining of {{ choice.damage.damageDistributionXValue }})</span>
-        <button class="btn-confirm-combat" (click)="choice.damage.confirmDamageDistribution()" [disabled]="choice.damage.damageDistributionRemaining !== 0">Confirm</button>
-        <button class="btn-confirm-combat" (click)="choice.damage.cancelDamageDistribution()">Cancel</button>
-      </div>
-    }
 
     @if (choice.damage.assigningCombatDamage) {
       <div class="combat-damage-popup">
@@ -648,56 +568,22 @@
       }
     </div>
 
-    @if (choice.choosingFromHand) {
-      <div class="combat-banner hand-choice-banner">
-        <span>{{ choice.handChoicePrompt }}</span>
-        @if (choice.handChoiceCanDecline) {
-          <button class="btn-confirm-combat" (click)="choice.declineHandChoice()">Decline</button>
-        }
-      </div>
-    }
-
-    @if (choice.choosingFromList) {
-      <div class="combat-banner color-choice-banner">
-        <span>{{ choice.listChoicePrompt }}</span>
-        <div class="color-choice-buttons">
-          @for (option of choice.listChoices; track option) {
-            <button class="btn-color-choice" [attr.data-color]="option" (click)="choice.chooseFromList(option)">{{ choice.getOptionDisplayName(option) }}</button>
-          }
-        </div>
-      </div>
-    }
-
-
-    @if (choice.choosingPermanent) {
-      <div class="combat-banner permanent-choice-banner">
-        <span>{{ choice.permanentChoicePrompt }}</span>
-      </div>
-    }
-
-    @if (choice.choosingMultiplePermanents) {
-      <div class="combat-banner permanent-choice-banner">
-        <span>{{ choice.multiPermanentChoicePrompt }} ({{ choice.multiPermanentSelectedIds().size }}/{{ choice.multiPermanentMaxCount }} selected)</span>
-        <button class="btn-confirm-combat" (click)="choice.confirmMultiPermanentChoice()">Confirm</button>
-      </div>
-    }
-
     @if (choice.choosingGraveyardCards) {
-      <div class="combat-banner permanent-choice-banner">
-        <span>{{ choice.multiGraveyardPrompt }} ({{ choice.graveyardChoiceSelectedIds().size }}/{{ choice.graveyardChoiceMaxCount }} selected)</span>
-        <button class="btn-confirm-combat" (click)="choice.confirmGraveyardCardChoice()">Confirm</button>
-      </div>
-      <div class="graveyard-choice-overlay">
-        <div class="graveyard-choice-cards">
-          @for (card of choice.multiGraveyardCards; track $index) {
-            <app-card-display
-              [card]="card"
-              class="graveyard-choice-card"
-              [class.selected-graveyard-card]="choice.graveyardChoiceSelectedIds().has(choice.graveyardChoiceCardIds[$index])"
-              (click)="choice.toggleGraveyardCardSelection($index)"
-              (mouseenter)="onCardHover(card)"
-              (mouseleave)="onCardHoverEnd()" />
-          }
+      <div class="reveal-hand-overlay">
+        <div class="reveal-hand-card">
+          <h2>{{ choice.multiGraveyardPrompt }} ({{ choice.graveyardChoiceSelectedIds().size }}/{{ choice.graveyardChoiceMaxCount }} selected)</h2>
+          <div class="reveal-hand-cards">
+            @for (card of choice.multiGraveyardCards; track $index) {
+              <app-card-display
+                [card]="card"
+                class="graveyard-choice-card"
+                [class.selected-graveyard-card]="choice.graveyardChoiceSelectedIds().has(choice.graveyardChoiceCardIds[$index])"
+                (click)="choice.toggleGraveyardCardSelection($index)"
+                (mouseenter)="onCardHover(card)"
+                (mouseleave)="onCardHoverEnd()" />
+            }
+          </div>
+          <button class="btn-keep" (click)="choice.confirmGraveyardCardChoice()">Confirm</button>
         </div>
       </div>
     }
@@ -874,6 +760,8 @@
       [getStackEntryTargetName]="boundGetStackEntryTargetName"
       [searchTaxCost]="searchTaxCost()"
       [myPlayerIndex]="myPlayerIndex"
+      [isMindControlling]="isMindControlling"
+      [mindControlledPlayerName]="mindControlledPlayerName"
       (passPriority)="passPriority()"
       (paySearchTax)="paySearchTax()"
       (surrenderClick)="onSurrenderClick()"

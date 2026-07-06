@@ -58,6 +58,8 @@ export class SidePanelComponent {
   @Input() getStackEntryTargetName!: (entry: StackEntry) => string | null;
   @Input() searchTaxCost = 0;
   @Input() myPlayerIndex = 0;
+  @Input() isMindControlling = false;
+  @Input() mindControlledPlayerName = '';
 
   @Output() passPriority = new EventEmitter<void>();
   @Output() paySearchTax = new EventEmitter<void>();

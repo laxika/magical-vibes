@@ -425,6 +425,170 @@
   box-shadow: 0 6px 16px rgba(139, 26, 26, 0.5);
 }
 
+/* Choice prompts — live here instead of above the battlefield so popping up
+   never shifts the board layout. */
+
+.side-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 6px 0;
+  flex-shrink: 0;
+  overflow-y: auto;
+  max-height: 45vh;
+}
+
+.side-prompts:empty {
+  display: none;
+}
+
+.side-prompt {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 2px solid;
+}
+
+.side-prompt-text {
+  display: block;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-parchment);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.side-prompt-buttons {
+  display: flex;
+}
+
+.side-prompt-buttons-stacked {
+  flex-direction: column;
+}
+
+.btn-side-prompt {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-parchment);
+  background: rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  transition: background 0.15s;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.side-prompt-buttons:not(.side-prompt-buttons-stacked) .btn-side-prompt + .btn-side-prompt {
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-side-prompt:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.btn-side-prompt:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.side-prompt.prompt-targeting {
+  background: linear-gradient(135deg, var(--color-green-primary), var(--color-green-dark));
+  border-color: var(--color-green-dark);
+  box-shadow: 0 4px 12px rgba(45, 122, 80, 0.4);
+}
+
+.side-prompt.prompt-spell-targeting {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  border-color: #8e2418;
+  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+}
+
+.side-prompt.prompt-mind-control {
+  background: linear-gradient(135deg, #6a1b9a, #4a148c);
+  border-color: #38006b;
+  box-shadow: 0 4px 12px rgba(106, 27, 154, 0.4);
+}
+
+.side-prompt.prompt-hand-choice {
+  background: linear-gradient(135deg, #4b0082, #2e0854);
+  border-color: #3a0068;
+  box-shadow: 0 4px 12px rgba(75, 0, 130, 0.4);
+}
+
+.side-prompt.prompt-list-choice {
+  background: linear-gradient(135deg, var(--color-dark-wood), var(--color-darkest-wood));
+  border-color: var(--color-dark-border);
+  box-shadow: 0 4px 12px rgba(43, 27, 23, 0.4);
+}
+
+.side-prompt.prompt-permanent-choice {
+  background: linear-gradient(135deg, #c9854a, #a06020);
+  border-color: #8a5010;
+  box-shadow: 0 4px 12px rgba(201, 133, 74, 0.4);
+}
+
+.color-choice-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  padding: 0 8px 8px;
+}
+
+.btn-color-choice {
+  padding: 8px 16px;
+  border: 2px solid rgba(245, 230, 200, 0.5);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--color-parchment);
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-color-choice:hover {
+  transform: scale(1.05);
+}
+
+.btn-color-choice[data-color="WHITE"],
+.btn-color-choice[data-color="PLAINS"] {
+  background: var(--color-border-gold);
+  color: var(--color-dark-wood);
+  border-color: #a08030;
+}
+
+.btn-color-choice[data-color="BLUE"],
+.btn-color-choice[data-color="ISLAND"] {
+  background: var(--color-blue-primary);
+  border-color: var(--color-blue-dark);
+}
+
+.btn-color-choice[data-color="BLACK"],
+.btn-color-choice[data-color="SWAMP"] {
+  background: var(--color-darkest-wood);
+  border-color: var(--color-dark-border);
+}
+
+.btn-color-choice[data-color="RED"],
+.btn-color-choice[data-color="MOUNTAIN"] {
+  background: var(--color-red-primary);
+  border-color: #6b1010;
+}
+
+.btn-color-choice[data-color="GREEN"],
+.btn-color-choice[data-color="FOREST"] {
+  background: var(--color-green-primary);
+  border-color: var(--color-green-dark);
+}
+
 .action-bar {
   display: flex;
   flex-direction: column;
