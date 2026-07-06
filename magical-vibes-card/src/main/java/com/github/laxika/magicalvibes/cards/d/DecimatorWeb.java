@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -23,7 +24,7 @@ public class DecimatorWeb extends Card {
                 "{4}",
                 List.of(
                         new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
-                        new GiveTargetPlayerPoisonCountersEffect(1),
+                        new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER),
                         new MillTargetPlayerEffect(6)
                 ),
                 "{4}, {T}: Target opponent loses 2 life, gets a poison counter, then mills six cards.",

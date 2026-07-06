@@ -14,7 +14,7 @@ All paths relative to `cards/`.
 | Color boost/debuff | `a/AscendantEvincar.java` | STATIC StaticBoostEffect with PermanentColorInPredicate / PermanentNotPredicate filter |
 | Own boost + opponent debuff | `e/EleshNornGrandCenobite.java` | STATIC StaticBoostEffect(2, 2, OWN_CREATURES) + StaticBoostEffect(-2, -2, OPPONENT_CREATURES) |
 | Color keyword lord | `b/BellowingTanglewurm.java` | STATIC GrantKeywordEffect with PermanentColorInPredicate filter, OWN_CREATURES scope |
-| Keyword lord + spell trigger | `h/HandOfThePraetors.java` | STATIC StaticBoostEffect with PermanentHasKeywordPredicate(INFECT) filter, OWN_CREATURES scope + ON_ANY_PLAYER_CASTS_SPELL GiveTargetPlayerPoisonCountersEffect with CardAllOfPredicate(CREATURE, INFECT) |
+| Keyword lord + spell trigger | `h/HandOfThePraetors.java` | STATIC StaticBoostEffect with PermanentHasKeywordPredicate(INFECT) filter, OWN_CREATURES scope + ON_CONTROLLER_CASTS_SPELL GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, CardAllOfPredicate(CREATURE, INFECT)) |
 | Attachment self-buff | `c/ChampionOfTheFlame.java` | STATIC BoostSelfEffect(Scaled(AttachmentsOnSource(true, true), 2), same) — +2/+2 for each Aura and Equipment attached. Equipment-only: AttachmentsOnSource(false, true) (Goblin Gaveleer) |
 | Tribal combat trigger (subtype counter lord) | `r/RakishHeir.java` | ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER PutCountersOnDamageDealerEffect(1,1,1, PermanentHasSubtypePredicate(VAMPIRE)) — when a Vampire you control deals combat damage to a player, put +1/+1 counter on it |
 | Choose subtype + grant to own | `x/Xenograft.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + STATIC GrantChosenSubtypeToOwnCreaturesEffect |

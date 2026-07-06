@@ -318,9 +318,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Poison counters
 
-- `GiveControllerPoisonCountersEffect(int)` — self poison
-- `GiveEachPlayerPoisonCountersEffect(int)` — each player poison
-- `GiveTargetPlayerPoisonCountersEffect(int)` — target poison
+- `GivePoisonCountersEffect(int, PoisonRecipient)` — give poison; recipient routes CONTROLLER (self) / TARGET_PLAYER / EACH_PLAYER / ENCHANTED_PERMANENT_CONTROLLER
+- `GivePoisonCountersEffect(int, TARGET_PLAYER, CardPredicate spellFilter)` — `ON_CONTROLLER_CASTS_SPELL` trigger descriptor (Hand of the Praetors)
 
 ## Creature pump / boost
 

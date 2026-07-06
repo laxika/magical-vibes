@@ -21,7 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypeP
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
@@ -932,10 +933,10 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_CASTS_SPELL — GiveTargetPlayerPoisonCountersEffect =====
+    // ===== ON_CONTROLLER_CASTS_SPELL — GivePoisonCountersEffect (TARGET_PLAYER) =====
 
     @Nested
-    @DisplayName("ON_CONTROLLER_CASTS_SPELL — GiveTargetPlayerPoisonCountersEffect")
+    @DisplayName("ON_CONTROLLER_CASTS_SPELL — GivePoisonCountersEffect (TARGET_PLAYER)")
     class ControllerPoisonOnSpellCast {
 
         @Test
@@ -943,7 +944,7 @@ class SpellCastTriggerCollectorServiceTest {
         void addsToPendingTargetTriggers() {
             Permanent perm = createPermanent("Hand of the Praetors");
             CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new GiveTargetPlayerPoisonCountersEffect(1, filter);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
             Card spellCard = createCard("Plague Stinger");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
@@ -962,7 +963,7 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("returns false when spell filter is null")
         void returnsFalseWhenFilterNull() {
             Permanent perm = createPermanent("Hand of the Praetors");
-            var effect = new GiveTargetPlayerPoisonCountersEffect(1);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER);
             Card spellCard = createCard("Plague Stinger");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
@@ -978,7 +979,7 @@ class SpellCastTriggerCollectorServiceTest {
         void returnsFalseWhenFilterDoesNotMatch() {
             Permanent perm = createPermanent("Hand of the Praetors");
             CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new GiveTargetPlayerPoisonCountersEffect(1, filter);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
@@ -996,7 +997,7 @@ class SpellCastTriggerCollectorServiceTest {
         void broadcastsLogMessage() {
             Permanent perm = createPermanent("Hand of the Praetors");
             CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new GiveTargetPlayerPoisonCountersEffect(1, filter);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER, filter);
             Card spellCard = createCard("Plague Stinger");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 

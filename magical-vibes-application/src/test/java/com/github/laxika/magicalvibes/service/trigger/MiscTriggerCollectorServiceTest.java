@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GiveEnchantedPermanentControllerPoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MillOpponentOnLifeLossEffect;
@@ -233,10 +234,10 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_ENCHANTED_PERMANENT_TAPPED — GiveEnchantedPermanentControllerPoisonCountersEffect =====
+    // ===== ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER) =====
 
     @Nested
-    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — GiveEnchantedPermanentControllerPoisonCountersEffect")
+    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — GivePoisonCountersEffect (ENCHANTED_PERMANENT_CONTROLLER)")
     class EnchantedPermanentTapPoison {
 
         @Test
@@ -244,7 +245,7 @@ class MiscTriggerCollectorServiceTest {
         void putsTriggeredAbilityOnStack() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GiveEnchantedPermanentControllerPoisonCountersEffect(1);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             boolean result = registry.dispatch(
@@ -265,14 +266,14 @@ class MiscTriggerCollectorServiceTest {
         void resolvedEffectContainsControllerId() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GiveEnchantedPermanentControllerPoisonCountersEffect(1);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             registry.dispatch(
                     match(aura, player1Id, effect),
                     EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
 
-            var resolved = (GiveEnchantedPermanentControllerPoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
+            var resolved = (GivePoisonCountersEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
             assertThat(resolved.affectedPlayerId()).isEqualTo(player2Id);
             assertThat(resolved.amount()).isEqualTo(1);
         }
@@ -282,7 +283,7 @@ class MiscTriggerCollectorServiceTest {
         void broadcastsTriggerLog() {
             Permanent aura = createPermanent("Relic Putrescence");
             Permanent tappedPerm = createPermanent("Sol Ring");
-            var effect = new GiveEnchantedPermanentControllerPoisonCountersEffect(1);
+            var effect = new GivePoisonCountersEffect(1, PoisonRecipient.ENCHANTED_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             registry.dispatch(
