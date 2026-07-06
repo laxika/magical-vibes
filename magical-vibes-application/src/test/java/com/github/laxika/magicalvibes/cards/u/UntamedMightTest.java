@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,11 +33,11 @@ class UntamedMightTest extends BaseCardTest {
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getXColorRestriction()).isNull();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureXEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
 
-        BoostTargetCreatureXEffect effect = (BoostTargetCreatureXEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerMultiplier()).isEqualTo(1);
-        assertThat(effect.toughnessMultiplier()).isEqualTo(1);
+        BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        assertThat(effect.powerBoost()).isEqualTo(new XValue());
+        assertThat(effect.toughnessBoost()).isEqualTo(new XValue());
     }
 
     // ===== Casting =====

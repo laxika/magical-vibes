@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToTargetIfPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -36,8 +37,8 @@ class VampiresZealTest extends BaseCardTest {
                         Keyword.FIRST_STRIKE, new PermanentHasSubtypePredicate(com.github.laxika.magicalvibes.model.CardSubtype.VAMPIRE)));
 
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(2);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(2));
     }
 
     // ===== Non-vampire gets boost but NOT first strike =====

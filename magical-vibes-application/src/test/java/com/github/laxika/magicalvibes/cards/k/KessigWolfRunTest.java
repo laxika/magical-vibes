@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureXEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ class KessigWolfRunTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(1).getEffects())
                 .hasSize(2)
                 .satisfies(effects -> {
-                    assertThat(effects.get(0)).isInstanceOf(BoostTargetCreatureXEffect.class);
+                    assertThat(effects.get(0)).isInstanceOf(BoostTargetCreatureEffect.class);
                     assertThat(effects.get(1)).isInstanceOf(GrantKeywordEffect.class);
                 });
     }

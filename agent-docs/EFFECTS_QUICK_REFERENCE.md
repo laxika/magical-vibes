@@ -339,9 +339,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Creature pump / boost
 
-- `BoostTargetCreatureEffect(int power, int toughness)` — target +X/+Y
-- `BoostTargetCreaturePerCardsInControllerGraveyardEffect(CardPredicate filter, int basePower, int powerPerCard, int baseToughness, int toughnessPerCard)` — target +(base + count×powerPer)/+(base + count×toughPer) where count = matching cards in controller's graveyard
-- `CardNamedPredicate(String cardName)` — card filter for exact name match (use with graveyard-count boost above)
+- `BoostTargetCreatureEffect(DynamicAmount power, DynamicAmount toughness)` or `(int, int)` — target +X/+Y. Any "for each …", "+X/+X" (X paid), or "where X is …" target-pump = this effect + a `model/amount/DynamicAmount` — never a new per-variant class. The amount evaluates against the SOURCE, so counting refers to the effect's controller, not the pumped target. E.g. `(new XValue(), new XValue())` (Untamed Might), `(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER), same)` (Elder of Laurels), `(new Sum(new Fixed(1), new CardsInGraveyard(filter, CountScope.CONTROLLER)), new Fixed(0))` (Ancestral Anger)
+- `CardNamedPredicate(String cardName)` — card filter for exact name match (use with graveyard-count boosts above)
 - `BoostSelfEffect(DynamicAmount, DynamicAmount)` or `(int, int)` — self +X/+Y; one-shot in trigger/ability slots, continuous in STATIC. Any "for each …" self-boost = this effect + a `model/amount/DynamicAmount` (`PermanentCount`, `CardsInGraveyard`, `AttachmentsOnSource`, `CreaturesBlockingSource`, `OpponentPoisonCounters`, `ImprintedCreaturePower/Toughness`, `XValue`, `Scaled`, `Fixed`) — never a new per-variant effect class
 - `DoubleSelfPowerToughnessEffect()` — double self P/T
 - `BoostAllOwnCreaturesEffect(int, int)` or `(int, int, PermanentPredicate)` — all own +X/+Y

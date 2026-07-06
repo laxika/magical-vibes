@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -31,8 +32,8 @@ class LurkingChupacabraTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst())
                 .isInstanceOf(BoostTargetCreatureEffect.class);
         BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_EXPLORES).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(-2);
-        assertThat(effect.toughnessBoost()).isEqualTo(-2);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-2));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(-2));
     }
 
     // ===== Explore land — trigger fires, target gets -2/-2 =====

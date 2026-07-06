@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,12 +33,12 @@ class TormentorExarchTest extends BaseCardTest {
         assertThat(effect.options().get(1).effect()).isInstanceOf(BoostTargetCreatureEffect.class);
 
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) effect.options().get(0).effect();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
 
         BoostTargetCreatureEffect debuff = (BoostTargetCreatureEffect) effect.options().get(1).effect();
-        assertThat(debuff.powerBoost()).isEqualTo(0);
-        assertThat(debuff.toughnessBoost()).isEqualTo(-2);
+        assertThat(debuff.powerBoost()).isEqualTo(new Fixed(0));
+        assertThat(debuff.toughnessBoost()).isEqualTo(new Fixed(-2));
     }
 
     @Nested

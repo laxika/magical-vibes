@@ -4,7 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerCardsInControllerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -22,8 +26,10 @@ public class AncestralAnger extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        )).addEffect(EffectSlot.SPELL, new BoostTargetCreaturePerCardsInControllerGraveyardEffect(
-                new CardNamedPredicate("Ancestral Anger"), 1, 1, 0, 0
+        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(
+                // X is 1 plus the number of cards named Ancestral Anger in your graveyard.
+                new Sum(new Fixed(1), new CardsInGraveyard(new CardNamedPredicate("Ancestral Anger"), CountScope.CONTROLLER)),
+                new Fixed(0)
         )).addEffect(EffectSlot.SPELL, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
           .addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
     }

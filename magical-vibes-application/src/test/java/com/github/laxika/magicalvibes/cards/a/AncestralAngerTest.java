@@ -8,7 +8,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerCardsInControllerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -32,19 +36,19 @@ class AncestralAngerTest extends BaseCardTest {
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(3);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(BoostTargetCreaturePerCardsInControllerGraveyardEffect.class);
+                .isInstanceOf(BoostTargetCreatureEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(1))
                 .isInstanceOf(GrantKeywordEffect.class);
         assertThat(card.getEffects(EffectSlot.SPELL).get(2))
                 .isInstanceOf(DrawCardEffect.class);
 
-        BoostTargetCreaturePerCardsInControllerGraveyardEffect boost =
-                (BoostTargetCreaturePerCardsInControllerGraveyardEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.filter()).isEqualTo(new CardNamedPredicate("Ancestral Anger"));
-        assertThat(boost.basePower()).isEqualTo(1);
-        assertThat(boost.powerPerCard()).isEqualTo(1);
-        assertThat(boost.baseToughness()).isZero();
-        assertThat(boost.toughnessPerCard()).isZero();
+        BoostTargetCreatureEffect boost =
+                (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
+        // X is 1 plus the number of cards named Ancestral Anger in your graveyard; +X/+0.
+        assertThat(boost.powerBoost()).isEqualTo(new Sum(
+                new Fixed(1),
+                new CardsInGraveyard(new CardNamedPredicate("Ancestral Anger"), CountScope.CONTROLLER)));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     @Test

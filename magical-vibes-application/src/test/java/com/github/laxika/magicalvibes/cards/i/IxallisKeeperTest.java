@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -40,8 +41,8 @@ class IxallisKeeperTest extends BaseCardTest {
 
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect)
                 card.getActivatedAbilities().getFirst().getEffects().get(1);
-        assertThat(boost.powerBoost()).isEqualTo(5);
-        assertThat(boost.toughnessBoost()).isEqualTo(5);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(5));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(5));
     }
 
     // ===== Activating ability =====

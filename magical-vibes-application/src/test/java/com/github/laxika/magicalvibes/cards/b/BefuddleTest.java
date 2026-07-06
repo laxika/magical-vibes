@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -35,8 +36,8 @@ class BefuddleTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DrawCardEffect.class);
 
         BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(effect.powerBoost()).isEqualTo(-4);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-4));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     @Test

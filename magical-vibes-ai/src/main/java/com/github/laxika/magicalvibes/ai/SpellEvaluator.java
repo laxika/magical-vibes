@@ -545,7 +545,9 @@ public class SpellEvaluator {
 
         // P/T boost to target creature
         if (effect instanceof BoostTargetCreatureEffect boost) {
-            return (boost.powerBoost() * 2.0 + boost.toughnessBoost());
+            AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
+            return amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) * 2.0
+                    + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
         }
 
         // Divided damage among creatures

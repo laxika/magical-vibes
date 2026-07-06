@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -33,8 +34,8 @@ class ImperialAerosaurTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0))
                 .isInstanceOf(BoostTargetCreatureEffect.class);
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(1);
-        assertThat(boost.toughnessBoost()).isEqualTo(1);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(1));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(1));
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1))
                 .isInstanceOf(GrantKeywordEffect.class);

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -58,8 +59,8 @@ class FesteringGoblinTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_DEATH)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_DEATH).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_DEATH).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(-1);
-        assertThat(boost.toughnessBoost()).isEqualTo(-1);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(-1));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(-1));
     }
 
     // ===== Death trigger with target selection =====

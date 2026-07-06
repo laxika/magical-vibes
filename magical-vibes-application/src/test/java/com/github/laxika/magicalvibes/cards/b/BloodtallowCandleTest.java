@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,8 +33,8 @@ class BloodtallowCandleTest extends BaseCardTest {
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
         assertThat(ability.getEffects().get(1)).isInstanceOf(BoostTargetCreatureEffect.class);
         BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) ability.getEffects().get(1);
-        assertThat(effect.powerBoost()).isEqualTo(-5);
-        assertThat(effect.toughnessBoost()).isEqualTo(-5);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-5));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(-5));
     }
 
     // ===== Ability resolution =====

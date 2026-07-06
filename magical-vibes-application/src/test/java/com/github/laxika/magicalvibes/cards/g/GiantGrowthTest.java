@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -33,8 +34,8 @@ class GiantGrowthTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
 
         BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(3);
-        assertThat(effect.toughnessBoost()).isEqualTo(3);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(3));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(3));
     }
 
     @Test

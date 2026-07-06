@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -41,8 +42,8 @@ class AnointedDeaconTest extends BaseCardTest {
         assertThat(mayEffect.wrapped()).isInstanceOf(BoostTargetCreatureEffect.class);
 
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) mayEffect.wrapped();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(0);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(0));
 
         // Target filter is set on the card (used at resolution time), but the card itself
         // does not need a target when cast — targeting happens on the triggered ability.

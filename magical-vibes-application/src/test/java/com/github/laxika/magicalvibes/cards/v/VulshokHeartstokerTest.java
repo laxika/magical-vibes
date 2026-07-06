@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -33,8 +34,8 @@ class VulshokHeartstokerTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
                 .isInstanceOf(BoostTargetCreatureEffect.class);
         BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(2);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(2));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     // ===== Casting and resolving =====

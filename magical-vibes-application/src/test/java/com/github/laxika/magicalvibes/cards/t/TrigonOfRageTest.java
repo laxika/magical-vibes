@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -70,7 +71,8 @@ class TrigonOfRageTest extends BaseCardTest {
         assertThat(ability.getEffects())
                 .hasSize(2)
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof BoostTargetCreatureEffect bte && bte.powerBoost() == 3 && bte.toughnessBoost() == 0);
+                .anyMatch(e -> e instanceof BoostTargetCreatureEffect bte
+                        && bte.powerBoost().equals(new Fixed(3)) && bte.toughnessBoost().equals(new Fixed(0)));
     }
 
     // ===== Entering the battlefield with charge counters =====

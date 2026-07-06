@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,6 +22,7 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,6 +32,14 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostTargetCreatureEffect) effect;
+        // The boost applies to the target, but counting contexts ("you control", "in your
+        // graveyard") refer to the effect's controller, so the amount evaluates against the
+        // SOURCE permanent (the spell/ability's own permanent), not the target being pumped.
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        AmountContext ctx = AmountContext.forStackEntry(entry, source);
+        int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
+        int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
+
         // Multi-target: apply boost to each valid target
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
             for (UUID targetId : entry.getTargetIds()) {
@@ -36,13 +47,7 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
                 if (target == null) {
                     continue; // Partially resolves — skip removed targets
                 }
-                target.setPowerModifier(target.getPowerModifier() + boost.powerBoost());
-                target.setToughnessModifier(target.getToughnessModifier() + boost.toughnessBoost());
-
-                String logEntry = target.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
-
-                log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+                applyBoost(gameData, target, powerBoost, toughnessBoost);
             }
             return;
         }
@@ -52,13 +57,17 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         if (target == null) {
             return;
         }
+        applyBoost(gameData, target, powerBoost, toughnessBoost);
+    }
 
-        target.setPowerModifier(target.getPowerModifier() + boost.powerBoost());
-        target.setToughnessModifier(target.getToughnessModifier() + boost.toughnessBoost());
+    private void applyBoost(GameData gameData, Permanent target, int powerBoost, int toughnessBoost) {
+        target.setPowerModifier(target.getPowerModifier() + powerBoost);
+        target.setToughnessModifier(target.getToughnessModifier() + toughnessBoost);
 
-        String logEntry = target.getCard().getName() + " gets +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " until end of turn.";
+        String logEntry = String.format("%s gets %+d/%+d until end of turn.",
+                target.getCard().getName(), powerBoost, toughnessBoost);
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        log.info("Game {} - {} gets +{}/+{}", gameData.id, target.getCard().getName(), boost.powerBoost(), boost.toughnessBoost());
+        log.info("Game {} - {} gets {}/{}", gameData.id, target.getCard().getName(), powerBoost, toughnessBoost);
     }
 }

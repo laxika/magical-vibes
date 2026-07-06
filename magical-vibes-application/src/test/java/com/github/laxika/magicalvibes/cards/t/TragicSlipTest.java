@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -37,10 +38,10 @@ class TragicSlipTest extends BaseCardTest {
                 (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
         assertThat(effect.upgradedEffect()).isInstanceOf(BoostTargetCreatureEffect.class);
-        assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).powerBoost()).isEqualTo(-1);
-        assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).toughnessBoost()).isEqualTo(-1);
-        assertThat(((BoostTargetCreatureEffect) effect.upgradedEffect()).powerBoost()).isEqualTo(-13);
-        assertThat(((BoostTargetCreatureEffect) effect.upgradedEffect()).toughnessBoost()).isEqualTo(-13);
+        assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).powerBoost()).isEqualTo(new Fixed(-1));
+        assertThat(((BoostTargetCreatureEffect) effect.baseEffect()).toughnessBoost()).isEqualTo(new Fixed(-1));
+        assertThat(((BoostTargetCreatureEffect) effect.upgradedEffect()).powerBoost()).isEqualTo(new Fixed(-13));
+        assertThat(((BoostTargetCreatureEffect) effect.upgradedEffect()).toughnessBoost()).isEqualTo(new Fixed(-13));
     }
 
     @Test

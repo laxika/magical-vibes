@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -43,8 +44,8 @@ class QuicksandTest extends BaseCardTest {
         assertThat(sacrificeAbility.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
         assertThat(sacrificeAbility.getEffects().get(1)).isInstanceOf(BoostTargetCreatureEffect.class);
         BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) sacrificeAbility.getEffects().get(1);
-        assertThat(effect.powerBoost()).isEqualTo(-1);
-        assertThat(effect.toughnessBoost()).isEqualTo(-2);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-1));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(-2));
     }
 
     // ===== Mana ability =====

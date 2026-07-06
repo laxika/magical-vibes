@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -26,8 +27,8 @@ class LumaretsFavorTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(boost.powerBoost()).isEqualTo(2);
-        assertThat(boost.toughnessBoost()).isEqualTo(4);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(2));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(4));
 
         assertThat(card.getEffects(EffectSlot.ON_SELF_CAST)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_SELF_CAST).getFirst())

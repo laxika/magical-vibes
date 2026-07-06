@@ -726,7 +726,8 @@ class AiTargetSelector {
 
         // Classify: is this ability beneficial to the target or harmful?
         boolean isBeneficial = nonCostEffects.stream().anyMatch(e ->
-                (e instanceof BoostTargetCreatureEffect boost && boost.powerBoost() >= 0)
+                (e instanceof BoostTargetCreatureEffect boost
+                        && amountEvaluationService.evaluate(gameData, boost.powerBoost(), AmountContext.forEstimation(aiPlayerId)) >= 0)
                         || e instanceof RegenerateEffect
                         || (e instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.TARGET));
 

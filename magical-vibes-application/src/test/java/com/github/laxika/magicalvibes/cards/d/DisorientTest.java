@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,8 +29,8 @@ class DisorientTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(BoostTargetCreatureEffect.class);
 
         BoostTargetCreatureEffect effect = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.powerBoost()).isEqualTo(-7);
-        assertThat(effect.toughnessBoost()).isEqualTo(0);
+        assertThat(effect.powerBoost()).isEqualTo(new Fixed(-7));
+        assertThat(effect.toughnessBoost()).isEqualTo(new Fixed(0));
     }
 
     @Test

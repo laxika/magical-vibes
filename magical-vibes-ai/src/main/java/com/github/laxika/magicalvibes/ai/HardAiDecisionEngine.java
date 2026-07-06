@@ -65,6 +65,8 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.combat.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -99,6 +101,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
     private final CombatSimulator combatSimulator;
     private MCTSEngine mctsEngine;
     private final RaceEvaluator raceEvaluator;
+    private final AmountEvaluationService amountEvaluationService;
 
     public HardAiDecisionEngine(UUID gameId, Player aiPlayer, GameRegistry gameRegistry,
                                 GameService gameService, GameQueryService gameQueryService,
@@ -129,6 +132,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         this.combatSimulator = new CombatSimulator(gameQueryService, boardEvaluator);
         this.mctsEngine = new MCTSEngine(GameSimulator.forQueryService(gameQueryService));
         this.raceEvaluator = new RaceEvaluator(gameQueryService);
+        this.amountEvaluationService = new AmountEvaluationService(
+                new PredicateEvaluationService(gameQueryService), gameQueryService);
     }
 
     /** Package-private setter for injecting a deterministic MCTSEngine in tests. */
@@ -1600,6 +1605,10 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
         if (boost == null) return -1;
 
+        AmountContext amountCtx = AmountContext.forEstimation(aiPlayer.getId());
+        int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), amountCtx);
+        int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), amountCtx);
+
         UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
         List<Permanent> aiBf = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
         List<Permanent> oppBf = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
@@ -1623,7 +1632,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
         if (attackerIndices.isEmpty()) return -1;
 
-        boolean isPump = boost.powerBoost() >= 0 && boost.toughnessBoost() >= 0;
+        boolean isPump = powerBoost >= 0 && toughnessBoost >= 0;
         double bestDelta = 0;
 
         for (int atkIdx : attackerIndices) {
@@ -1648,14 +1657,14 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 if (!isOpponentsTurn) {
                     // AI is attacking — pump our attacker
                     double pumpedScore = combatSimulator.evaluateDefenderCombat(
-                            List.of(withBoost(attackerInfo, boost)),
+                            List.of(withBoost(attackerInfo, powerBoost, toughnessBoost)),
                             mutableBlockAssignment(blockerInfos), defenderLife, defenderPoison);
                     bestDelta = Math.max(bestDelta, aiSign * (pumpedScore - normalScore));
                 } else {
                     // AI is defending — pump one of our blockers
                     for (int bi = 0; bi < blockerInfos.size(); bi++) {
                         List<CombatSimulator.CreatureInfo> pumpedBlockers = new ArrayList<>(blockerInfos);
-                        pumpedBlockers.set(bi, withBoost(blockerInfos.get(bi), boost));
+                        pumpedBlockers.set(bi, withBoost(blockerInfos.get(bi), powerBoost, toughnessBoost));
                         double pumpedScore = combatSimulator.evaluateDefenderCombat(
                                 List.of(attackerInfo), mutableBlockAssignment(pumpedBlockers),
                                 defenderLife, defenderPoison);
@@ -1668,7 +1677,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     // AI is attacking — debuff a blocker
                     for (int bi = 0; bi < blockerInfos.size(); bi++) {
                         List<CombatSimulator.CreatureInfo> debuffedBlockers = new ArrayList<>(blockerInfos);
-                        debuffedBlockers.set(bi, withBoost(blockerInfos.get(bi), boost));
+                        debuffedBlockers.set(bi, withBoost(blockerInfos.get(bi), powerBoost, toughnessBoost));
                         double debuffedScore = combatSimulator.evaluateDefenderCombat(
                                 List.of(attackerInfo), mutableBlockAssignment(debuffedBlockers),
                                 defenderLife, defenderPoison);
@@ -1677,7 +1686,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 } else {
                     // AI is defending — debuff the attacker
                     double debuffedScore = combatSimulator.evaluateDefenderCombat(
-                            List.of(withBoost(attackerInfo, boost)),
+                            List.of(withBoost(attackerInfo, powerBoost, toughnessBoost)),
                             mutableBlockAssignment(blockerInfos), defenderLife, defenderPoison);
                     bestDelta = Math.max(bestDelta, aiSign * (debuffedScore - normalScore));
                 }
@@ -1689,11 +1698,11 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
     /** Creates a CreatureInfo with modified power/toughness from a boost effect. */
     private CombatSimulator.CreatureInfo withBoost(CombatSimulator.CreatureInfo info,
-                                                    BoostTargetCreatureEffect boost) {
+                                                    int powerBoost, int toughnessBoost) {
         return new CombatSimulator.CreatureInfo(
                 info.index(), info.id(), info.perm(),
-                info.power() + boost.powerBoost(),
-                info.toughness() + boost.toughnessBoost(),
+                info.power() + powerBoost,
+                info.toughness() + toughnessBoost,
                 info.flying(), info.firstStrike(), info.doubleStrike(),
                 info.trample(), info.lifelink(), info.indestructible(),
                 info.menace(), info.fear(), info.intimidate(),

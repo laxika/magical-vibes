@@ -38,8 +38,10 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
-| "target creature gets +X/+Y until end of turn" | `BoostTargetCreatureEffect(X, Y)` | SPELL | Targeting auto-derived |
-| "target creature gets +X/+0 until end of turn, where X is 1 plus the number of cards named CARDNAME in your graveyard" | `BoostTargetCreaturePerCardsInControllerGraveyardEffect(new CardNamedPredicate("CARDNAME"), 1, 1, 0, 0)` + `GrantKeywordEffect(TRAMPLE, TARGET)` | SPELL | Ancestral Anger; count at resolution (spell not yet in graveyard) |
+| "target creature gets +X/+Y until end of turn" | `BoostTargetCreatureEffect(X, Y)` | SPELL | Targeting auto-derived. Fixed `(int,int)` ctor; for dynamic pumps pass `DynamicAmount`s |
+| "target creature gets +X/+X until end of turn" (X = mana paid) | `BoostTargetCreatureEffect(new XValue(), new XValue())` | SPELL | Untamed Might; `(new XValue(), new Fixed(0))` for +X/+0 (Kessig Wolf Run) |
+| "target creature gets +X/+X, where X is the number of creatures you control" | `BoostTargetCreatureEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER), same)` | ability | Elder of Laurels; count resolves against the effect's controller |
+| "target creature gets +X/+0 until end of turn, where X is 1 plus the number of cards named CARDNAME in your graveyard" | `BoostTargetCreatureEffect(new Sum(new Fixed(1), new CardsInGraveyard(new CardNamedPredicate("CARDNAME"), CountScope.CONTROLLER)), new Fixed(0))` + `GrantKeywordEffect(TRAMPLE, TARGET)` | SPELL | Ancestral Anger; count at resolution (spell not yet in graveyard) |
 | "creatures you control get +X/+Y until end of turn" | `BoostAllOwnCreaturesEffect(X, Y)` | SPELL | No targeting |
 | "creatures you control get +X/+Y until end of turn" (with predicate) | `BoostAllOwnCreaturesEffect(X, Y, predicate)` | SPELL | Filtered |
 | "all creatures get +X/+Y until end of turn" | `BoostAllCreaturesEffect(X, Y)` | SPELL | Affects all |

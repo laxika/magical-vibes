@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -30,8 +31,8 @@ class StabbingPainTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TapTargetPermanentEffect.class);
 
         BoostTargetCreatureEffect boost = (BoostTargetCreatureEffect) card.getEffects(EffectSlot.SPELL).get(0);
-        assertThat(boost.powerBoost()).isEqualTo(-1);
-        assertThat(boost.toughnessBoost()).isEqualTo(-1);
+        assertThat(boost.powerBoost()).isEqualTo(new Fixed(-1));
+        assertThat(boost.toughnessBoost()).isEqualTo(new Fixed(-1));
     }
 
     @Test
