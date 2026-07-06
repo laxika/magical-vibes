@@ -55,18 +55,34 @@
    always reserved so pips appearing (tapping a land) never shifts the panel. */
 .mana-strip {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
+  flex-direction: column;
+  height: 46px;
   box-sizing: border-box;
-  padding: 4px 6px;
+  padding: 3px 6px 4px;
   background: var(--gradient-dark-wood);
   border: 2px solid var(--color-dark-border);
   border-radius: 4px;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
   margin: 6px 6px 0;
   flex-shrink: 0;
+}
+
+.mana-strip-label {
+  align-self: flex-start;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--color-border-tan);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: var(--font-display);
+}
+
+.mana-strip-pips {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
 }
 
 .mana-pip-sm {
