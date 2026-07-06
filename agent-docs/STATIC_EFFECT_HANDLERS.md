@@ -28,6 +28,14 @@ Static/continuous effects (P/T bonuses, keyword grants, conditionals computed du
 generic `BoostSelfSelfEffectHandler` (selfOnly), which evaluates the amounts via
 `AmountEvaluationService` — do NOT add per-derivation `BoostSelfPer*` handlers.
 
+`SetPowerToughnessToAmountEffect(DynamicAmount power, DynamicAmount toughness)` is the
+characteristic-defining (`*/*`) counterpart, handled by the single generic
+`SetPowerToughnessToAmountSelfEffectHandler` (selfOnly). It evaluates both amounts via
+`AmountEvaluationService` on the same `forStaticEffect` context and adds them to the 0/0 base
+(P/T-defining CDA creatures have base 0/0, so add == set, matching `BoostSelfSelfEffectHandler`).
+It replaced the entire per-derivation `PowerToughnessEqualTo*SelfEffectHandler` family and the
+ooze-token `BoostSelfBySlimeCountersOnLinkedPermanentSelfEffectHandler` — do NOT add new ones.
+
 The attached-scope counterpart is `AttachedBoostEffect(DynamicAmount, DynamicAmount, GrantScope)`,
 handled by the single generic `AttachedBoostEffectHandler` (NOT selfOnly). It gates on
 `StaticEffectSupport.matchesCreatureScope` (typically `ENCHANTED_CREATURE`/`EQUIPPED_CREATURE`),

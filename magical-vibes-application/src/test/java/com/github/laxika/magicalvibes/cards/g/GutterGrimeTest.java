@@ -5,11 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfBySlimeCountersOnLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -177,34 +175,6 @@ class GutterGrimeTest extends BaseCardTest {
                     .findFirst().orElse(null);
             assertThat(grime).isNotNull();
             assertThat(grime.getCounterCount(CounterType.SLIME)).isEqualTo(0);
-        }
-
-        @Test
-        @DisplayName("Token CDA: token has STATIC BoostSelfBySlimeCountersOnLinkedPermanentEffect")
-        void tokenHasCorrectStaticEffect() {
-            harness.addToBattlefield(player1, new GutterGrime());
-            harness.addToBattlefield(player1, new GrizzlyBears());
-
-            // Use opponent's Wrath so Gutter Grime survives
-            harness.setHand(player2, List.of(new WrathOfGod()));
-            harness.addMana(player2, ManaColor.WHITE, 4);
-            harness.forceActivePlayer(player2);
-
-            harness.getGameService().playCard(harness.getGameData(), player2, 0, 0, null, null);
-            harness.passBothPriorities(); // Resolve Wrath
-            harness.passBothPriorities(); // Resolve trigger
-
-            GameData gd = harness.getGameData();
-
-            Permanent ooze = gd.playerBattlefields.get(player1.getId()).stream()
-                    .filter(p -> p.getCard().getName().equals("Ooze"))
-                    .findFirst().orElse(null);
-            assertThat(ooze).isNotNull();
-
-            // The Ooze token should have the linked static effect
-            assertThat(ooze.getCard().getEffects(EffectSlot.STATIC)).hasSize(1);
-            assertThat(ooze.getCard().getEffects(EffectSlot.STATIC).getFirst())
-                    .isInstanceOf(BoostSelfBySlimeCountersOnLinkedPermanentEffect.class);
         }
 
         @Test

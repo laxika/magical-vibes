@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateLifeTotalAvatarTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessEqualToControllerLifeTotalEffect;
+import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -55,7 +56,8 @@ public class CreateLifeTotalAvatarTokenEffectHandler implements NormalEffectHand
                     tokenCard.setSubtypes(e.subtypes());
 
                     // CDA: "This creature's power and toughness are each equal to your life total."
-                    tokenCard.addEffect(EffectSlot.STATIC, new PowerToughnessEqualToControllerLifeTotalEffect());
+                    tokenCard.addEffect(EffectSlot.STATIC,
+                            new SetPowerToughnessToAmountEffect(new ControllerLifeTotal(), new ControllerLifeTotal()));
 
                     ScryfallOracleLoader.TokenImageData imageData = ScryfallOracleLoader.getTokenImage(
                             entry.getCard().getSetCode(), e.tokenName(), 0, 0, e.color()

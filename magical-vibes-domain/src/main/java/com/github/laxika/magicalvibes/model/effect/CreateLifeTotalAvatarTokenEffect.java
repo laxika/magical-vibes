@@ -7,7 +7,8 @@ import java.util.List;
 
 /**
  * Create a creature token whose power and toughness are each equal to the controller's
- * life total. The token has a characteristic-defining ability (PowerToughnessEqualToControllerLifeTotalEffect)
+ * life total. The token has a characteristic-defining ability
+ * ({@code SetPowerToughnessToAmountEffect} with a {@code ControllerLifeTotal} amount)
  * as a static effect, so its P/T updates dynamically.
  *
  * @param tokenName name of the token (e.g. "Avatar")

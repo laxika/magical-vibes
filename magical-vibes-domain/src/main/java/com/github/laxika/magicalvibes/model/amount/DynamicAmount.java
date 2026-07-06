@@ -15,6 +15,8 @@ public sealed interface DynamicAmount permits
         AttachmentsOnSource,
         CardsInGraveyard,
         CardsInHand,
+        ControllerLifeTotal,
+        CountersOnLinkedPermanent,
         CountersOnSource,
         CreatureDeathsThisTurn,
         CreaturesBlockingSource,

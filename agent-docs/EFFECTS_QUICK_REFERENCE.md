@@ -352,11 +352,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## P/T setting / counters
 
-- `PowerToughnessEqualToControlledLandCountEffect()` — P/T = lands
-- `PowerToughnessEqualToControlledCreatureCountEffect()` — P/T = creatures
-- `PowerToughnessEqualToControlledPermanentCountEffect(PermanentPredicate)` — P/T = matching controlled permanents (e.g. `PermanentHasSubtypePredicate`, `PermanentIsArtifactPredicate`)
-- `PowerToughnessEqualToCardsInHandEffect()` — P/T = hand size
-- `PowerToughnessEqualToControllerLifeTotalEffect()` — P/T = life total
+- `SetPowerToughnessToAmountEffect(DynamicAmount power, DynamicAmount toughness)` — CDA that sets P/T on a 0/0 base (pass the same amount for both). Replaced the `PowerToughnessEqualTo*` family + `BoostSelfBySlimeCountersOnLinkedPermanentEffect`. Amounts: `PermanentCount(IsLand/IsCreature/IsArtifact/HasSubtype…, CONTROLLER)` (lands/creatures/artifacts/Swamps you control), `CardsInGraveyard(filter, CONTROLLER|ANY_PLAYER)`, `CardsInHand(CONTROLLER)` (hand size), `ControllerLifeTotal()` (life total), `CountersOnLinkedPermanent(type, id)` (linked-permanent counters)
 - `PutCountersOnSourceEffect(int power, int toughness, int amount)` — counters on self
 - `PutCountersOnSelfEffect(CounterType)` — one counter of a type on self (charge, +1/+1, study, etc.)
 - `PutCountersOnSelfEffect(CounterType, int count)` — N counters of a type on self (e.g. Withengar Unbound: 13 +1/+1)

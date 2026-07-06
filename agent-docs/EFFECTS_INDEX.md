@@ -36,7 +36,7 @@ Conditional: `RegenerateEffect` → `!targetsPermanent()`, `GrantKeywordEffect` 
 
 Effects that are characteristic-defining abilities (CDAs) for power/toughness (`*/*` effects) override `isPowerToughnessDefining()` to return `true`. Per CR 707.9d, when a copy effect provides specific P/T values (e.g. "except it's 7/7"), CDAs that define P/T are not copied. Used by `CopyPermanentOnEnterEffect` with `powerOverride`/`toughnessOverride`.
 
-Effects returning `true`: `PowerToughnessEqualToControlledLandCountEffect`, `PowerToughnessEqualToControlledCreatureCountEffect`, `PowerToughnessEqualToControlledPermanentCountEffect`, `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInAllGraveyardsEffect`, `PowerToughnessEqualToCardsInControllerGraveyardEffect`, `PowerToughnessEqualToCardsInHandEffect`, `PowerToughnessEqualToControllerLifeTotalEffect`, `BoostSelfBySlimeCountersOnLinkedPermanentEffect`.
+Effects returning `true`: `SetPowerToughnessToAmountEffect` (the single CDA record that replaced the entire `PowerToughnessEqualTo*` family and the ooze-token `BoostSelfBySlimeCountersOnLinkedPermanentEffect`).
 
 ---
 
@@ -121,9 +121,14 @@ sealed interface `model/amount/DynamicAmount` has one small record per derivatio
 - `CardsInGraveyard(CardPredicate filter, CountScope scope)` — matching non-token cards in
   the graveyard(s) in scope (`null` filter = every card)
 - `CardsInHand(CountScope scope)` — cards in the hand(s) of the players in scope
+- `ControllerLifeTotal()` — the controller's current life total (Serra Avatar / Ajani
+  Goldmane's Avatar token, whose P/T are each equal to their controller's life total)
 - `CountersOnSource(CounterType counterType)` — counters of that type on the source
   permanent; reads the stack entry's live source, falling back to the last-known
   `sourcePermanentSnapshot` when the source left the battlefield as a cost (Golden Urn)
+- `CountersOnLinkedPermanent(CounterType counterType, UUID linkedPermanentId)` — counters
+  of that type on a specific permanent identified by ID (0 if it has left the battlefield);
+  for token CDAs referencing another permanent, e.g. Gutter Grime's Ooze tokens
 - `GreatestPowerAmongControlled()` — greatest effective power among creatures the
   controller controls (0 if none)
 - `AttachmentsOnSource(boolean countAuras, boolean countEquipment)` — Auras/Equipment
@@ -150,6 +155,9 @@ switch, parallel to `ConditionEvaluationService`; contexts built via
 `AmountContext.forStackEntry` / `forStaticEffect`). Effects that only differ in HOW A NUMBER
 IS COMPUTED must be a single record parameterized with `DynamicAmount` — see
 `BoostSelfEffect(DynamicAmount, DynamicAmount)` (replaced the entire `BoostSelfPer*` family),
+`SetPowerToughnessToAmountEffect(DynamicAmount power, DynamicAmount toughness)` (the CDA sibling —
+sets P/T on a 0/0 base via the selfOnly `SetPowerToughnessToAmountSelfEffectHandler`; replaced the
+entire `PowerToughnessEqualTo*` family and the ooze-token `BoostSelfBySlimeCountersOnLinkedPermanentEffect`),
 `AttachedBoostEffect(DynamicAmount, DynamicAmount, GrantScope)` (the attached-scope sibling —
 replaced `BoostCreaturePerCardsInAllGraveyardsEffect`, `BoostCreaturePerCardsInControllerGraveyardEffect`,
 `BoostCreaturePerControlledCardTypeEffect`, `BoostCreaturePerControlledSubtypeEffect`, and
@@ -775,10 +783,10 @@ Pass `null` as filter to allow any card.
 | `CreateTokenCopyOfSourceEffect` | `(boolean removeLegendary, int amount)` | create token(s) that are copies of the source permanent. `removeLegendary` removes LEGENDARY supertype from copies, `amount` is the number of copies. No-arg constructor `()` defaults to `(false, 1)`. For planeswalker sources, tokens enter with loyalty counters. If source left the battlefield, copies are based on the card stored on the stack entry (CR 608.2b). Used by Jace, Cunning Castaway's -5 |
 | `CreateTokenCopyOfTargetPermanentEffect` | `()` or `(List<CardSubtype> additionalSubtypes, Set<CardType> additionalTypes, Integer powerOverride, Integer toughnessOverride, Map<CounterType, Integer> initialCounters)` | create a token that is a copy of the permanent referenced by `targetId` on the stack entry. Used for triggered abilities where the permanent to copy is determined at trigger time (e.g. Mirrorworks) or targeted spells (e.g. Cackling Counterpart, Applied Geometry). Copies all copiable characteristics per CR 707.2. Optional overrides: additional subtypes/types ("in addition to its other types"), P/T overrides (skips copied CDAs per CR 707.9d), and counters placed after ETB triggers are queued |
 | `CreateTokenCopyOfEquippedCreatureEffect` | `(boolean removeLegendary, boolean grantHaste)` | create a token that is a copy of the creature the source equipment is attached to. When `removeLegendary=true`, the token loses the LEGENDARY supertype. When `grantHaste=true`, the token gains haste. Place in `BEGINNING_OF_COMBAT_TRIGGERED` slot. Used by Helm of the Host |
-| `CreateLifeTotalAvatarTokenEffect` | `(String tokenName, CardColor color, List<CardSubtype> subtypes)` | create a creature token with P/T = controller's life total (CDA). Token gets `PowerToughnessEqualToControllerLifeTotalEffect` as a static effect so P/T updates dynamically. Used by Ajani Goldmane |
+| `CreateLifeTotalAvatarTokenEffect` | `(String tokenName, CardColor color, List<CardSubtype> subtypes)` | create a creature token with P/T = controller's life total (CDA). Token gets `SetPowerToughnessToAmountEffect(new ControllerLifeTotal(), new ControllerLifeTotal())` as a static effect so P/T updates dynamically. Used by Ajani Goldmane |
 | `CreateTokenFromHalfLifeTotalAndDealDamageEffect` | `(String tokenName, CardColor color, List<CardSubtype> subtypes)` | create an X/X creature token where X = half the controller's life total (rounded up), then the token deals X damage to the controller. Used by Chainer's Torment chapter III |
 | `LivingWeaponEffect` | `()` | living weapon ETB: create 0/0 black Phyrexian Germ token and attach this equipment to it (resolved by PermanentControlResolutionService) |
-| `PutSlimeCounterAndCreateOozeTokenEffect` | `()` | composite: puts a slime counter on the source permanent, then creates a 0/0 green Ooze creature token with a CDA linking its P/T to the number of slime counters on the source. The token gets a `BoostSelfBySlimeCountersOnLinkedPermanentEffect` as a static effect. Place in `ON_ALLY_NONTOKEN_CREATURE_DIES` slot. Used by Gutter Grime |
+| `PutSlimeCounterAndCreateOozeTokenEffect` | `()` | composite: puts a slime counter on the source permanent, then creates a 0/0 green Ooze creature token with a CDA linking its P/T to the number of slime counters on the source. The token gets a `SetPowerToughnessToAmountEffect` with a `CountersOnLinkedPermanent(CounterType.SLIME, sourceId)` amount as a static effect (0/0 → dies to SBA if the source leaves). Place in `ON_ALLY_NONTOKEN_CREATURE_DIES` slot. Used by Gutter Grime |
 
 ## Life
 
@@ -881,15 +889,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `PowerToughnessEqualToControlledLandCountEffect` | `()` | P/T = number of lands you control (static) |
-| `PowerToughnessEqualToControlledCreatureCountEffect` | `()` | P/T = number of creatures you control (static) |
-| `PowerToughnessEqualToControlledPermanentCountEffect` | `(PermanentPredicate filter)` | P/T = number of permanents you control matching predicate (static). E.g. `new PermanentIsArtifactPredicate()` for artifacts, `new PermanentHasSubtypePredicate(CardSubtype.SWAMP)` for Swamps |
-| `PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect` | `()` | P/T = number of creature cards in all graveyards (static) |
-| `PowerToughnessEqualToCardsInAllGraveyardsEffect` | `(CardPredicate filter)` | P/T = number of cards matching filter in all graveyards (static). E.g. `new CardTypePredicate(CardType.ARTIFACT)` for artifact cards |
-| `PowerToughnessEqualToCardsInControllerGraveyardEffect` | `(CardPredicate filter)` | P/T = number of cards matching filter in controller's graveyard only (static). E.g. `new CardTypePredicate(CardType.CREATURE)` for creature cards |
-| `PowerToughnessEqualToCardsInHandEffect` | `()` | P/T = number of cards in controller's hand (static) |
-| `PowerToughnessEqualToControllerLifeTotalEffect` | `()` | P/T = controller's life total (static CDA, e.g. Ajani Goldmane's Avatar token, Serra Avatar) |
-| `BoostSelfBySlimeCountersOnLinkedPermanentEffect` | `(UUID linkedPermanentId)` | CDA static self-effect placed on tokens: P/T equals the number of slime counters on the linked permanent. If the linked permanent has left the battlefield, P/T is 0/0 (token dies to SBA). Created automatically by `PutSlimeCounterAndCreateOozeTokenEffect`. Used by Gutter Grime's Ooze tokens |
+| `SetPowerToughnessToAmountEffect` | `(DynamicAmount power, DynamicAmount toughness)` | CDA (`isPowerToughnessDefining()=true`): sets P/T on a 0/0 base to the given amounts, via the selfOnly `SetPowerToughnessToAmountSelfEffectHandler`. Pass the same amount instance for both fields for "P/T are each equal to …". Replaced the entire `PowerToughnessEqualTo*` family and `BoostSelfBySlimeCountersOnLinkedPermanentEffect`. Examples: `PermanentCount(new PermanentIsLandPredicate(), CONTROLLER)` (lands you control — Molimo), `PermanentCount(new PermanentIsCreaturePredicate(), CONTROLLER)` (creatures you control — Scion of the Wild), `PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CONTROLLER)` (Swamps you control — Nightmare), `CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), ANY_PLAYER)` (creature cards in all graveyards — Mortivore), `CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CONTROLLER)` (your graveyard only — Boneyard Wurm), `CardsInHand(CONTROLLER)` (your hand size — Psychosis Crawler), `ControllerLifeTotal()` (Ajani's Avatar token), `CountersOnLinkedPermanent(CounterType.SLIME, sourceId)` (Gutter Grime's Ooze tokens) |
 | `PutCountersOnSourceEffect` | `(int powerModifier, int toughnessModifier, int amount)` | put N counters on this creature (e.g. `(1,1,1)` for +1/+1, `(-1,-1,2)` for two -1/-1) |
 | `PutCountersOnDamageDealerEffect` | `(int powerModifier, int toughnessModifier, int amount, PermanentPredicate predicate)` | ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER slot: when a creature you control matching predicate deals combat damage to a player, put N counters on that creature. Null predicate means any creature. Resolved via PutCountersOnSourceEffect. Used by Rakish Heir (Vampire predicate) |
 | `PutCounterOnEachControlledPermanentEffect` | `(CounterType counterType, int count, PermanentPredicate predicate)` | put N counters of the specified type on each permanent you control matching the predicate. Use `PermanentIsCreaturePredicate` for "each creature you control", `PermanentAllOfPredicate` to combine filters (e.g. artifact + creature). Supports source-aware predicates like `PermanentNotPredicate(PermanentIsSourceCardPredicate())` for "each other creature" patterns |

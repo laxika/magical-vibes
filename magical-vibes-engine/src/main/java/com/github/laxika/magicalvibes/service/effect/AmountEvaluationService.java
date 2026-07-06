@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
@@ -78,6 +80,10 @@ public class AmountEvaluationService {
                     countHandCards(gameData, c, ctx);
             case CountersOnSource c ->
                     ctx.sourcePermanent() == null ? 0 : ctx.sourcePermanent().getCounterCount(c.counterType());
+            case CountersOnLinkedPermanent c ->
+                    countCountersOnLinkedPermanent(gameData, c);
+            case ControllerLifeTotal ignored ->
+                    gameData.playerLifeTotals.getOrDefault(ctx.controllerId(), 0);
             case GreatestPowerAmongControlled ignored ->
                     greatestPowerAmongControlled(gameData, ctx);
             case AttachmentsOnSource a ->
@@ -165,6 +171,11 @@ public class AmountEvaluationService {
             }
         }
         return matches;
+    }
+
+    private int countCountersOnLinkedPermanent(GameData gameData, CountersOnLinkedPermanent count) {
+        Permanent linked = gameQueryService.findPermanentById(gameData, count.linkedPermanentId());
+        return linked == null ? 0 : linked.getCounterCount(count.counterType());
     }
 
     private int countHandCards(GameData gameData, CardsInHand count, AmountContext ctx) {

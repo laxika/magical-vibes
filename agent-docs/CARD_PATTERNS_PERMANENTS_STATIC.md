@@ -46,11 +46,11 @@ All paths relative to `cards/`.
 | Tax matching spells (all players) | `t/ThaliaGuardianOfThraben.java` | STATIC IncreaseSpellCostEffect(CardNotPredicate(CardTypePredicate(CREATURE)), 1) — symmetric, affects all players |
 | Enters tapped | `r/RootMaze.java` | STATIC EnterPermanentsOfTypesTappedEffect |
 | Opponent creatures enter tapped + haste lord | `u/UrabraskTheHidden.java` | STATIC GrantKeywordEffect(HASTE, OWN_CREATURES) + EnterPermanentsOfTypesTappedEffect(CREATURE, opponentsOnly=true) |
-| P/T = lands | `m/MolimoMaroSorcerer.java` | STATIC PowerToughnessEqualToControlledLandCountEffect |
-| P/T = creatures | `s/ScionOfTheWild.java` | STATIC PowerToughnessEqualToControlledCreatureCountEffect |
-| P/T = subtype | `n/Nightmare.java` | STATIC PowerToughnessEqualToControlledPermanentCountEffect(PermanentHasSubtypePredicate) |
-| P/T = GY creatures | `m/Mortivore.java` | STATIC PowerToughnessEqualToCreatureCardsInAllGraveyardsEffect |
-| P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC PowerToughnessEqualToCardsInHandEffect + ON_CONTROLLER_DRAWS EachOpponentLosesLifeEffect |
+| P/T = lands | `m/MolimoMaroSorcerer.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = PermanentCount(PermanentIsLandPredicate, CONTROLLER) |
+| P/T = creatures | `s/ScionOfTheWild.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = PermanentCount(PermanentIsCreaturePredicate, CONTROLLER) |
+| P/T = subtype | `n/Nightmare.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = PermanentCount(PermanentHasSubtypePredicate(SWAMP), CONTROLLER) |
+| P/T = GY creatures | `m/Mortivore.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = CardsInGraveyard(CardTypePredicate(CREATURE), ANY_PLAYER) |
+| P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = CardsInHand(CONTROLLER) + ON_CONTROLLER_DRAWS EachOpponentLosesLifeEffect |
 | Self boost per lands + GY lands | `m/MultaniYavimayasAvatar.java` | STATIC BoostSelfEffect(PermanentCount(PermanentIsLandPredicate, CONTROLLER), same) + BoostSelfEffect(CardsInGraveyard(CardTypePredicate(LAND), CONTROLLER), same) — +1/+1 per land you control and per land card in your graveyard |
 | Gain GY creature abilities | `n/NecroticOoze.java` | STATIC GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect — selfOnly, gains all activated abilities of all creature cards in all graveyards |
 | +1/+1 per same name | `r/RelentlessRats.java` | STATIC BoostByOtherCreaturesWithSameNameEffect |
