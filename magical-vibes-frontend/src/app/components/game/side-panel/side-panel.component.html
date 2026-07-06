@@ -1,14 +1,19 @@
 <div class="side-panel">
   <div class="tab-header">
     <div class="tab" [class.active]="activeTab() === 'game'" (click)="activeTab.set('game')">Game</div>
+    <div class="tab" [class.active]="activeTab() === 'log'" (click)="activeTab.set('log')">Log</div>
     <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
       Stack
-      <span class="tab-badge">{{ stackEntries.length }}</span>
+      <span class="tab-badges">
+        <span class="tab-badge">{{ stackEntries.length }}</span>
+      </span>
     </div>
     <div class="tab" [class.active]="activeTab() === 'graveyard'" (click)="activeTab.set('graveyard')">
-      Graveyard
-      <span class="tab-badge">{{ myGraveyard.length }}</span>
-      <span class="tab-badge tab-badge-opponent">{{ opponentGraveyard.length }}</span>
+      Grave
+      <span class="tab-badges">
+        <span class="tab-badge">{{ myGraveyard.length }}</span>
+        <span class="tab-badge tab-badge-opponent">{{ opponentGraveyard.length }}</span>
+      </span>
     </div>
   </div>
 
@@ -20,6 +25,12 @@
             <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
           } @else {
             <div class="card-preview-empty"></div>
+          }
+        </div>
+
+        <div class="mana-strip">
+          @for (entry of manaEntries; track entry.color) {
+            <div class="mana-pip-sm" [attr.data-color]="entry.color">{{ entry.count }}</div>
           }
         </div>
 
@@ -59,6 +70,9 @@
           </div>
         </div>
 
+      </div>
+    } @else if (activeTab() === 'log') {
+      <div class="log-tab">
         <div class="log-entries">
           @if (gameLog.length === 0) {
             <div class="log-entry empty">Waiting for game to start...</div>

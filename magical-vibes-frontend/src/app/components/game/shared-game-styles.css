@@ -22,7 +22,9 @@
 }
 
 .game-container {
-  min-height: 100vh;
+  height: 100vh;
+  box-sizing: border-box;
+  overflow: hidden;
   background:
     repeating-linear-gradient(
       0deg,
@@ -39,67 +41,84 @@
       rgba(0, 0, 0, 0.04) 80px
     ),
     linear-gradient(180deg, var(--color-darkest-wood) 0%, var(--color-dark-wood) 30%, var(--color-darkest-wood) 60%, #0d0a07 100%);
-  padding: 10px;
+  padding: 4px;
 }
 
 .game-layout {
   display: flex;
-  gap: 10px;
+  gap: 4px;
+  height: 100%;
 }
 
 .game-area {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+/* Only the battlefield gives up height; banners, tracker, and hand keep theirs. */
+.game-area > :not(.battlefield-area) {
+  flex-shrink: 0;
 }
 
 .phase-tracker {
   display: flex;
-  gap: 6px;
+  gap: 8px;
   background: var(--gradient-parchment);
-  padding: 8px 10px;
+  padding: 4px 8px;
   border-radius: 4px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
   overflow-x: auto;
 }
 
+/* Groups share the row proportionally to their step count (flex-grow is bound
+   in the template); pips never wrap, so every group stays two rows tall:
+   header line + pip line. */
 .phase-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 0;
+}
+
+.phase-group + .phase-group {
+  border-left: 1px solid var(--color-border-tan);
+  padding-left: 8px;
 }
 
 .phase-label {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--color-text-brown);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 6px;
+  margin-bottom: 3px;
   white-space: nowrap;
   font-family: var(--font-display);
 }
 
 .phase-steps {
   display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  gap: 3px;
+  flex-wrap: nowrap;
   justify-content: center;
 }
 
 .step-pip {
-  padding: 4px 8px;
+  padding: 2px 6px;
   border-radius: 3px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #4a2c17;
   background: #e8d5a3;
   white-space: nowrap;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
 }
 
 .step-pip:hover {
@@ -190,7 +209,6 @@
 
 .hand-area {
   background: var(--gradient-parchment);
-  margin-top: 16px;
   padding: 8px 10px;
   border-radius: 4px;
   border: 2px solid var(--color-border-tan);
@@ -238,14 +256,21 @@
   background: var(--gradient-parchment);
   padding: 8px 10px;
   border-radius: 4px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-  min-height: 160px;
+  /* Fill the viewport between the banners above and the tracker/hand below;
+     card zoom is computed from this allocated height. */
+  flex: 1;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
 }
 
 .battlefield-row {
   margin-bottom: 8px;
+  /* Each side grows into the leftover space but never squeezes its content. */
+  flex: 1 0 auto;
 }
 
 .battlefield-row:last-child {
@@ -286,13 +311,19 @@
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  min-height: 30px;
   align-items: center;
   padding: 4px 0;
 }
 
+/* An empty sub-row (no permanents of that kind) takes no space. */
+.battlefield-sub-row:not(:has(*)) {
+  display: none;
+}
+
 .lands-row {
   opacity: 0.9;
+  /* Lands render at 90% of the row's density zoom. */
+  --land-zoom: calc(var(--density-zoom, 1) * 0.9);
 }
 
 .lands-row:has(.ability-popup) {
@@ -301,11 +332,15 @@
 }
 
 .lands-row .card {
-  --card-scale: 0.9;
+  --card-zoom: var(--land-zoom);
 }
 
-.creatures-row {
-  min-height: 40px;
+.creatures-row .card {
+  --card-zoom: var(--density-zoom, 1);
+}
+
+.hand-cards .card {
+  --card-zoom: var(--density-zoom, 1);
 }
 
 .permanent-stack {
@@ -326,7 +361,7 @@
 }
 
 .permanent-stack:has(.attached-aura):has(.tapped) {
-  min-height: 231px;
+  min-height: calc(var(--density-zoom, 1) * 231px);
 }
 
 .permanent-stack > .card:last-child {
@@ -350,12 +385,14 @@
   }
 }
 
+/* Stack overlap sized in card-zoom units: cards are 165px (231px tapped)
+   wide at zoom 1, leaving a ~45px (~31px tapped) strip of each land visible. */
 .land-stack .land-stack-item:not(:first-child) {
-  margin-left: -120px;
+  margin-left: calc(var(--land-zoom, 0.9) * -133px);
 }
 
 .land-stack:has(.tapped) .land-stack-item:not(:first-child) {
-  margin-left: -200px;
+  margin-left: calc(var(--land-zoom, 0.9) * -200px);
 }
 
 .land-stack .land-stack-item:hover {

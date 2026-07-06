@@ -44,6 +44,7 @@
 
 .combat-zone .card {
   cursor: pointer;
+  --card-zoom: var(--density-zoom, 1);
 }
 
 /* Combat card state classes */
@@ -157,7 +158,7 @@
 }
 
 .permanent-stack:has(.attached-aura):has(.tapped) {
-  min-height: 231px;
+  min-height: calc(var(--density-zoom, 1) * 231px);
 }
 
 .permanent-stack > .card:last-child {

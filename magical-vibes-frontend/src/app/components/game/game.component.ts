@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -31,6 +31,21 @@ export class GameComponent implements OnInit, OnDestroy {
   @ViewChild(MulliganModalComponent) mulliganModal?: MulliganModalComponent;
   @ViewChild(SidePanelComponent) sidePanel?: SidePanelComponent;
 
+  private battlefieldAreaObserver: ResizeObserver | null = null;
+  readonly battlefieldAreaSize = signal<{ width: number; height: number }>({ width: 0, height: 0 });
+
+  @ViewChild('battlefieldArea')
+  set battlefieldArea(ref: ElementRef<HTMLElement> | undefined) {
+    this.battlefieldAreaObserver?.disconnect();
+    if (!ref) return;
+    this.battlefieldAreaObserver ??= new ResizeObserver(entries => {
+      const rect = entries[entries.length - 1].contentRect;
+      this.ngZone.run(() => this.battlefieldAreaSize.set({ width: rect.width, height: rect.height }));
+    });
+    this.battlefieldAreaObserver.observe(ref.nativeElement);
+  }
+
+  private ngZone = inject(NgZone);
   readonly choice = inject(GameChoiceService);
   private clickResolver = inject(PermanentClickResolverService);
   private manaSymbolService = inject(ManaSymbolService);
@@ -120,6 +135,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(s => s.unsubscribe());
+    this.battlefieldAreaObserver?.disconnect();
     this.websocketService.pendingGameInputMessage = null;
   }
 
@@ -283,6 +299,125 @@ export class GameComponent implements OnInit, OnDestroy {
 
   get opponentBattlefield(): Permanent[] {
     return this.game()?.battlefields?.[this.opponentPlayerIndex] ?? [];
+  }
+
+  /* Dimensions mirrored from shared-game-styles.css / combat-zone.component.css,
+     used to fit both battlefields into the area's flex-allocated size. */
+  private static readonly CARD_HEIGHT = 231;
+  private static readonly CARD_WIDTH = 165;
+  private static readonly TAPPED_CARD_WIDTH = 231;
+  private static readonly STACK_STRIP = 32;
+  private static readonly TAPPED_STACK_STRIP = 31;
+  private static readonly ROW_GAP = 10;
+  private static readonly BLOCKER_GAP = 6;
+  private static readonly COMBAT_GROUPS_GAP = 24;
+  private static readonly COMBAT_STACK_GAP = 8;
+  private static readonly LANDS_ROW_MODIFIER = 0.9;
+  private static readonly SUB_ROW_PADDING = 8;
+  private static readonly SIDE_LABEL_HEIGHT = 23;
+  private static readonly ROW_MARGIN = 8;
+  private static readonly EMPTY_MESSAGE_HEIGHT = 20;
+  private static readonly REVEALED_ROW_HEIGHT = 250;
+  private static readonly DIVIDER_HEIGHT = 25;
+  private static readonly COMBAT_ZONE_CHROME = 63;
+  private static readonly MIN_BATTLEFIELD_ZOOM = 0.5;
+
+  /** Greedy flex-wrap simulation: how many lines the given item widths need. */
+  private static packedLines(widths: number[], gap: number, rowWidth: number): number {
+    let lines = 1;
+    let x = 0;
+    for (const w of widths) {
+      const next = x === 0 ? w : x + gap + w;
+      if (next > rowWidth && x > 0) {
+        lines++;
+        x = w;
+      } else {
+        x = next;
+      }
+    }
+    return lines;
+  }
+
+  /** Total board height at the given zoom, including horizontal wrapping of crowded rows. */
+  private modeledBoardHeight(zoom: number, rowWidth: number): number {
+    const C = GameComponent;
+    const cardWidth = (tapped: boolean) => (tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH);
+    let total = 0;
+
+    const rowHeight = (widths: number[], lineHeight: number): number => {
+      if (widths.length === 0) return 0;
+      const lines = C.packedLines(widths, C.ROW_GAP, rowWidth);
+      return lines * lineHeight + (lines - 1) * C.ROW_GAP + C.SUB_ROW_PADDING;
+    };
+
+    const landItemWidth = (item: IndexedPermanent | LandStack, landZoom: number): number => {
+      if (isLandStack(item)) {
+        const tapped = item.lands.some(l => l.perm.tapped);
+        const base = tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
+        const strip = tapped ? C.TAPPED_STACK_STRIP : C.STACK_STRIP;
+        return (base + (item.lands.length - 1) * strip) * landZoom;
+      }
+      return cardWidth(item.perm.tapped) * landZoom;
+    };
+
+    const addSide = (
+      creatures: IndexedPermanent[],
+      lands: (IndexedPermanent | LandStack)[],
+      isEmpty: boolean,
+      revealedRows: number,
+    ) => {
+      total += C.SIDE_LABEL_HEIGHT + C.ROW_MARGIN + revealedRows * C.REVEALED_ROW_HEIGHT;
+      if (isEmpty) {
+        total += C.EMPTY_MESSAGE_HEIGHT;
+        return;
+      }
+      total += rowHeight(creatures.map(ip => cardWidth(ip.perm.tapped) * zoom), C.CARD_HEIGHT * zoom);
+      const landZoom = zoom * C.LANDS_ROW_MODIFIER;
+      total += rowHeight(lands.map(item => landItemWidth(item, landZoom)), C.CARD_HEIGHT * landZoom);
+    };
+
+    addSide(
+      this.opponentCreaturesNotInCombat(),
+      this.opponentLandStacks,
+      this.opponentBattlefield.length === 0,
+      (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0));
+    addSide(
+      this.myCreaturesNotInCombat(),
+      this.myLandStacks,
+      this.myBattlefield.length === 0,
+      this.myRevealedTopCard.length > 0 ? 1 : 0);
+
+    if (this.showCombatZone) {
+      const groups = this.combatPairings;
+      const anyBlockers = groups.some(g => g.blockers.length > 0);
+      const groupHeight = C.CARD_HEIGHT * zoom
+        + (anyBlockers ? C.COMBAT_STACK_GAP + C.CARD_HEIGHT * zoom : 0);
+      const widths = groups.map(g => Math.max(
+        cardWidth(g.attacker.tapped) * zoom,
+        g.blockers.length * C.CARD_WIDTH * zoom + Math.max(0, g.blockers.length - 1) * C.BLOCKER_GAP));
+      const lines = widths.length > 0 ? C.packedLines(widths, C.COMBAT_GROUPS_GAP, rowWidth - 20) : 1;
+      total += lines * groupHeight + (lines - 1) * C.COMBAT_GROUPS_GAP + C.COMBAT_ZONE_CHROME;
+    } else {
+      total += C.DIVIDER_HEIGHT;
+    }
+
+    return total;
+  }
+
+  /** MTGO-style density: cards render full size and shrink only when the board would otherwise scroll. */
+  get battlefieldZoom(): number {
+    const { width, height } = this.battlefieldAreaSize();
+    if (!width || !height) return 1;
+    for (let z = 1; z > GameComponent.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
+      if (this.modeledBoardHeight(z, width) <= height) {
+        return Math.round(z * 100) / 100;
+      }
+    }
+    return GameComponent.MIN_BATTLEFIELD_ZOOM;
+  }
+
+  get handZoom(): number {
+    return this.hand.length > 9 ? 0.6 : 0.68;
   }
 
   get myGraveyard(): Card[] {

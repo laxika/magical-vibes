@@ -32,6 +32,7 @@ export class SidePanelComponent {
   @Input() opponentGraveyard: Card[] = [];
   @Input() opponentPlayerName = '';
   @Input() gameLog: string[] = [];
+  @Input() manaEntries: { color: string; count: number }[] = [];
   @Input() declaringAttackers = false;
   @Input() declaringBlockers = false;
   @Input() attackTaxPerCreature = 0;
@@ -72,7 +73,7 @@ export class SidePanelComponent {
   @Output() graveyardAbilityActivate = new EventEmitter<number>();
   @Output() flashbackPlay = new EventEmitter<number>();
 
-  activeTab = signal<'game' | 'stack' | 'graveyard'>('game');
+  activeTab = signal<'game' | 'log' | 'stack' | 'graveyard'>('game');
   showPlayerMenu = signal(false);
 
   // Opponent is always shown on the left, my player on the right
