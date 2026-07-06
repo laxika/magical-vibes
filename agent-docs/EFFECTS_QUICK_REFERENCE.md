@@ -235,14 +235,10 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DrawCardForTargetPlayerEffect(DynamicAmount, boolean requiresUntapped, boolean targets)` or `(int)` — target/entry player draws; `XValue` for "target player draws X"
 - `DrawAndDiscardCardEffect(int draw, int discard)` — loot
 - `DiscardAndDrawCardEffect(int discard, int draw)` — rummage
-- `DiscardCardEffect(int)` — discard N
+- `DiscardEffect(DynamicAmount, DiscardRecipient, boolean random)` — the whole discard family; `recipient` ∈ {`CONTROLLER`, `TARGET_PLAYER`, `EACH_PLAYER`, `EACH_OPPONENT`}, `random` picks chosen vs random discard. `(int, recipient, random)` / `(DynamicAmount, recipient)` / `(int, recipient)` convenience ctors (last two non-random). `CountersOnSource(CHARGE)` for per-charge-counter (Shrine of Limitless Power), `XValue()` for Mind Shatter (`TARGET_PLAYER`, random)
 - `DiscardOwnHandEffect()` — discard entire hand
 - `DiscardOwnHandThenDrawThatManyEffect()` — discard entire hand, then draw that many
 - `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` — discard entire hand, then draw equal to target player's hand size (counted at draw time)
-- `EachPlayerDiscardsEffect(int)` — each player discards
-- `EachOpponentDiscardsEffect(int)` — each opponent discards
-- `TargetPlayerDiscardsEffect(DynamicAmount)` — target discards (`(int)` ctor; `CountersOnSource(CHARGE)` for per-charge-counter, e.g. Shrine of Limitless Power)
-- `TargetPlayerRandomDiscardEffect(DynamicAmount, boolean)` — target/self discards at random (`(new XValue(), true)` for Mind Shatter; `()` / `(int)` convenience ctors)
 - `ExileTopCardsMayPlayUntilNextTurnEffect(DynamicAmount count)` or `(int count)` — exile top N from library, may play until end of your next turn (owner-relative expiry via `ExileSupport.grantPlayUntilOwnersNextTurn`). Use `EventValue()` for "equal to the excess damage dealt this way" (Archaic's Agony)
 - `ExileTargetPermanentMayPlayUntilNextTurnEffect()` — exile the target permanent, its owner may play it until end of their next turn (e.g. Suspend Aggression; pair with a permanent target filter). Tokens exiled this way cease to exist
 - `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(CardPredicate filter, boolean ownGraveyardOnly)` — exile a targeted graveyard card matching the filter, controller may play it until end of their next turn (e.g. Practiced Scrollsmith; ETB graveyard-target flow via `MultiGraveyardChoice`)

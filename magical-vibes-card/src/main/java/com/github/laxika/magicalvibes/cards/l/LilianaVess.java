@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class LilianaVess extends Card {
         // +1: Target player discards a card.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new TargetPlayerDiscardsEffect(1)),
+                List.of(new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)),
                 "+1: Target player discards a card."
         ));
 

@@ -142,14 +142,15 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "discard any number of cards, then draw that many cards plus one" | `DiscardUpToThenDrawThatManyEffect(ANY_NUMBER, 1)` | ON_DEATH/trigger | Colossus of the Blood Age |
 | "discard all the cards in your hand, then draw that many cards" | `DiscardOwnHandThenDrawThatManyEffect()` | SPELL | Shattered Perception |
 | "discard your hand, then draw cards equal to the number of cards in target opponent's hand" | `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` | SPELL | Borrowed Knowledge (modal mode 0) |
-| "discard a card" / "discard N cards" | `DiscardCardEffect(N)` | SPELL/trigger | Controller discards |
-| "target player discards N cards" | `TargetPlayerDiscardsEffect(N)` | SPELL | |
-| "target player discards a card for each charge counter on ~" | `TargetPlayerDiscardsEffect(new CountersOnSource(CounterType.CHARGE))` | ability | Shrine of Limitless Power (with `SacrificeSelfCost`) |
-| "target player discards X cards at random" | `TargetPlayerRandomDiscardEffect(new XValue(), true)` | SPELL | Mind Shatter |
+| "discard a card" / "discard N cards" | `DiscardEffect(N, DiscardRecipient.CONTROLLER)` | SPELL/trigger | Controller discards |
+| "target player discards N cards" | `DiscardEffect(N, DiscardRecipient.TARGET_PLAYER)` | SPELL | |
+| "target player discards a card for each charge counter on ~" | `DiscardEffect(new CountersOnSource(CounterType.CHARGE), DiscardRecipient.TARGET_PLAYER)` | ability | Shrine of Limitless Power (with `SacrificeSelfCost`) |
+| "target player discards X cards at random" | `DiscardEffect(new XValue(), DiscardRecipient.TARGET_PLAYER, true)` | SPELL | Mind Shatter |
+| "you discard N cards at random" (rummaging) | `DiscardEffect(N, DiscardRecipient.CONTROLLER, true)` | SPELL | Goblin Lore, Desperate Ravings |
 | "Converge — Target player discards X cards, where X is the number of colors of mana spent to cast this spell." | `TargetPlayerDiscardsByConvergeEffect()` | SPELL | Arcane Omens |
 | "Converge — deals X damage to target creature" + excess-damage exile | `DealDamageToTargetCreatureEffect(new XValue())` + `ExileTopCardsMayPlayUntilNextTurnEffect(new EventValue())` | SPELL | Converge snapshotted to xValue; damage handler stores excess on the entry's eventValue, which EventValue reads; Archaic's Agony |
-| "each player discards N cards" | `EachPlayerDiscardsEffect(N)` | SPELL | |
-| "each opponent discards a card" | `EachOpponentDiscardsEffect(1)` | SPELL/trigger | |
+| "each player discards N cards" | `DiscardEffect(N, DiscardRecipient.EACH_PLAYER)` | SPELL | APNAP order; `EACH_PLAYER` + `random=true` for Burning Inquiry |
+| "each opponent discards a card" | `DiscardEffect(1, DiscardRecipient.EACH_OPPONENT)` | SPELL/trigger | |
 | "look at target player's hand" | `LookAtHandEffect()` | SPELL | |
 
 ## Life

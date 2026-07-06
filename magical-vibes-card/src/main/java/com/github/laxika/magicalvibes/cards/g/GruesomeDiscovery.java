@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 import java.util.List;
 
@@ -15,7 +16,7 @@ public class GruesomeDiscovery extends Card {
 
     public GruesomeDiscovery() {
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Morbid(), 
-                new TargetPlayerDiscardsEffect(2),
+                new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER),
                 new ChooseCardFromTargetHandToDiscardEffect(2, List.of())
         ));
     }

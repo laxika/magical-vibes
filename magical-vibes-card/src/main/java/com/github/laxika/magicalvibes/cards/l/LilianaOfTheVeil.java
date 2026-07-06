@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SeparatePermanentsIntoPilesAndSacrificeEffect;
 
@@ -16,7 +17,7 @@ public class LilianaOfTheVeil extends Card {
         // +1: Each player discards a card.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new EachPlayerDiscardsEffect(1)),
+                List.of(new DiscardEffect(1, DiscardRecipient.EACH_PLAYER)),
                 "+1: Each player discards a card."
         ));
 

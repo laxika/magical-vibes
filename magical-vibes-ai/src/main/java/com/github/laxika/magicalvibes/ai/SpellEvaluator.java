@@ -52,7 +52,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWi
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -404,7 +405,8 @@ public class SpellEvaluator {
                     AmountContext.forEstimation(aiPlayerId));
             return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
-        if (effect instanceof TargetPlayerDiscardsEffect discard) {
+        if (effect instanceof DiscardEffect discard
+                && discard.recipient() == DiscardRecipient.TARGET_PLAYER && !discard.random()) {
             int opponentHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
             int discardAmount = amountEvaluationService.evaluate(gameData, discard.amount(),
                     AmountContext.forEstimation(aiPlayerId));
@@ -530,7 +532,8 @@ public class SpellEvaluator {
         }
 
         // Discard
-        if (effect instanceof TargetPlayerDiscardsEffect discard) {
+        if (effect instanceof DiscardEffect discard
+                && discard.recipient() == DiscardRecipient.TARGET_PLAYER && !discard.random()) {
             int opponentHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
             int discardAmount = amountEvaluationService.evaluate(gameData, discard.amount(),
                     AmountContext.forEstimation(aiPlayerId));

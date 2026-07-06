@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -39,7 +40,7 @@ public class TheEldestReborn extends Card {
         ));
 
         // Chapter II: Each opponent discards a card
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new EachOpponentDiscardsEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_II, new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
 
         // Chapter III: Put target creature or planeswalker card from a graveyard
         // onto the battlefield under your control

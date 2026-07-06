@@ -41,9 +41,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | Instant flicker (immediate return) + subtype bonus | `s/SirensRuse.java` | ExileTargetPermanentAndReturnImmediatelyEffect(CardSubtype.PIRATE, DrawCardEffect(1)) + PermanentPredicateTargetFilter(AllOf(ControlledBySourceController, IsCreature)). Instant that exiles own creature and immediately returns it; draws a card if it was a Pirate |
 | ETB may rummage (discard then draw) | `k/KeldonRaider.java` | MayEffect(DiscardAndDrawCardEffect()) — may discard a card, if you do draw a card |
 | ETB draw + random discard + conditional counters | `r/RowdyCrew.java` | DrawAndRandomDiscardWithSharedTypeCountersEffect(3, 2, 2) — draw N, discard M at random, +1/+1 counters if discards share a card type |
-| ETB discard (targeted) | `r/RavenousRats.java` | TargetPlayerDiscardsEffect |
-| ETB discard (raid conditional) | `d/DeadeyeTormentor.java` | ConditionalEffect(new Raid(), TargetPlayerDiscardsEffect(1)) + PlayerPredicateTargetFilter(OPPONENT). Raid = intervening-if checked at trigger and resolution time |
-| ETB discard (each opponent) | `l/LilianasSpecter.java` | EachOpponentDiscardsEffect — no targeting, all opponents discard |
+| ETB discard (targeted) | `r/RavenousRats.java` | DiscardEffect(1, TARGET_PLAYER) |
+| ETB discard (raid conditional) | `d/DeadeyeTormentor.java` | ConditionalEffect(new Raid(), DiscardEffect(1, TARGET_PLAYER)) + PlayerPredicateTargetFilter(OPPONENT). Raid = intervening-if checked at trigger and resolution time |
+| ETB discard (each opponent) | `l/LilianasSpecter.java` | DiscardEffect(1, EACH_OPPONENT) — no targeting, all opponents discard |
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryForCardsToHandEffect(CardPredicateUtils.basicLand())) |
 | ETB opponent search (downside) | `o/OldGrowthDryads.java` | EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect — each opponent may search for a basic land (tapped). No targeting. APNAP order |
 | ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryForCardsToHandEffect(CardAllOf(ARTIFACT, MinMV 6))) — artifact with MV 6+ |

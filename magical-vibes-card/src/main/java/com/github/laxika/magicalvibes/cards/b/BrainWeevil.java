@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class BrainWeevil extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new TargetPlayerDiscardsEffect(2)),
+                List.of(new SacrificeSelfCost(), new DiscardEffect(2, DiscardRecipient.TARGET_PLAYER)),
                 "Sacrifice Brain Weevil: Target player discards two cards. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
