@@ -22,14 +22,24 @@ Static/continuous effects (P/T bonuses, keyword grants, conditionals computed du
 - `testutil/GameTestDoublesConfig` + `GameTestEngineContext` — card tests load the same `GameEngineConfig` graph via a cached Spring test context.
 - `ai/simulation/HeadlessSimulationDoublesConfig` + `HeadlessSimulationContext` — MCTS loads the same engine graph headlessly (no WebSocket broadcasts).
 
-## Dynamic-amount self boosts
+## Dynamic-amount boosts (self and attached scopes)
 
 `BoostSelfEffect(DynamicAmount, DynamicAmount)` in the `STATIC` slot is handled by the single
 generic `BoostSelfSelfEffectHandler` (selfOnly), which evaluates the amounts via
-`AmountEvaluationService` — do NOT add per-derivation `BoostSelfPer*` handlers. New count
-sources become new `model/amount/DynamicAmount` records with a case in
-`AmountEvaluationService.evaluate` (recursion-safe in static contexts: predicates are matched
-with a null `FilterContext`).
+`AmountEvaluationService` — do NOT add per-derivation `BoostSelfPer*` handlers.
+
+The attached-scope counterpart is `AttachedBoostEffect(DynamicAmount, DynamicAmount, GrantScope)`,
+handled by the single generic `AttachedBoostEffectHandler` (NOT selfOnly). It gates on
+`StaticEffectSupport.matchesCreatureScope` (typically `ENCHANTED_CREATURE`/`EQUIPPED_CREATURE`),
+then evaluates the amounts with the **source** (the Aura/Equipment) as the amount source and its
+controller as the amount controller — so `CountScope.CONTROLLER` resolves to the attachment's
+controller ("you"/"you control", CR 109.5), not the enchanted/equipped creature's controller. Do
+NOT add per-derivation `BoostCreaturePer*` handlers.
+
+Both evaluate under `AmountContext.forStaticEffect` (static recursion guard). New count sources
+become new `model/amount/DynamicAmount` records with a case in `AmountEvaluationService.evaluate`
+(recursion-safe in static contexts: permanent predicates are matched with a null `FilterContext`,
+so two permanents counting each other cannot recurse infinitely).
 
 ## Conditional static effects
 

@@ -5,16 +5,18 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.BoostCreaturePerControlledCardTypeEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
 
@@ -23,8 +25,10 @@ public class BlackbladeReforged extends Card {
 
     public BlackbladeReforged() {
         // Equipped creature gets +1/+1 for each land you control
-        addEffect(EffectSlot.STATIC, new BoostCreaturePerControlledCardTypeEffect(
-                CardType.LAND, 1, 1, GrantScope.EQUIPPED_CREATURE));
+        addEffect(EffectSlot.STATIC, new AttachedBoostEffect(
+                new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
+                new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
+                GrantScope.EQUIPPED_CREATURE));
 
         // Equip legendary creature {3}
         addActivatedAbility(new ActivatedAbility(

@@ -23,6 +23,7 @@ public sealed interface DynamicAmount permits
         GreatestPowerAmongControlled,
         ImprintedCreaturePower,
         ImprintedCreatureToughness,
+        LandsMatchingImprintedName,
         ManaSpentToCast,
         OpponentPoisonCounters,
         PermanentCount,

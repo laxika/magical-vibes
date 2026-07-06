@@ -100,7 +100,7 @@ All paths relative to `cards/`.
 | Static boost | `h/HolyStrength.java` | STATIC StaticBoostEffect(X, Y, GrantScope.ENCHANTED_CREATURE) |
 | Boost + keyword | `s/SerrasEmbrace.java` | Boost + GrantKeywordEffect(ENCHANTED_CREATURE) |
 | Keyword + combat damage prevention | `g/GhostlyPossession.java` | GrantKeywordEffect(FLYING) + PreventAllCombatDamageToAndByEnchantedCreatureEffect (non-combat damage still goes through) |
-| Boost per subtype | `b/BlanchwoodArmor.java` | STATIC BoostCreaturePerControlledSubtypeEffect |
+| Aura boost per controlled subtype | `b/BlanchwoodArmor.java` | STATIC AttachedBoostEffect(PermanentCount(PermanentHasSubtypePredicate(FOREST), CONTROLLER), same, GrantScope.ENCHANTED_CREATURE) — enchanted creature gets +1/+1 per Forest you control |
 | Control enchanted | `p/Persuasion.java` | STATIC ControlEnchantedCreatureEffect |
 | Grant activated ability | `a/ArcaneTeachings.java` | GrantActivatedAbilityEffect with GrantScope.ENCHANTED_CREATURE |
 | Redirect damage to creature | `p/Pariah.java` | STATIC RedirectPlayerDamageToEnchantedCreatureEffect |

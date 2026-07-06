@@ -135,6 +135,8 @@ sealed interface `model/amount/DynamicAmount` has one small record per derivatio
   `GameData.creatureDeathCountThisTurn`; Fresh Meat = `CONTROLLER`)
 - `ImprintedCreaturePower()` / `ImprintedCreatureToughness()` — the imprinted creature
   card's P/T (0 if nothing imprinted)
+- `LandsMatchingImprintedName()` — lands on any battlefield whose name matches the source's
+  imprinted card (0 if nothing imprinted); Strata Scythe
 - `SourcePower()` / `SourceToughness()` — the source permanent's effective power/toughness
   at evaluation time, never negative; uses the live source or the last-known snapshot when
   it left the battlefield (CR 608.2h — Spikeshot Elder, Steadfast Armasaur)
@@ -148,6 +150,11 @@ switch, parallel to `ConditionEvaluationService`; contexts built via
 `AmountContext.forStackEntry` / `forStaticEffect`). Effects that only differ in HOW A NUMBER
 IS COMPUTED must be a single record parameterized with `DynamicAmount` — see
 `BoostSelfEffect(DynamicAmount, DynamicAmount)` (replaced the entire `BoostSelfPer*` family),
+`AttachedBoostEffect(DynamicAmount, DynamicAmount, GrantScope)` (the attached-scope sibling —
+replaced `BoostCreaturePerCardsInAllGraveyardsEffect`, `BoostCreaturePerCardsInControllerGraveyardEffect`,
+`BoostCreaturePerControlledCardTypeEffect`, `BoostCreaturePerControlledSubtypeEffect`, and
+`BoostCreaturePerMatchingLandNameEffect`; amounts evaluate against the Aura/Equipment's
+controller, so `CountScope.CONTROLLER` = "you"/"you control" per CR 109.5),
 `BoostTargetCreatureEffect(DynamicAmount, DynamicAmount)` (replaced the
 `BoostTargetCreaturePerControlledPermanentEffect`, `BoostTargetCreaturePerCardsInControllerGraveyardEffect`,
 and `BoostTargetCreatureXEffect` variants — counting contexts resolve against the effect's
@@ -861,11 +868,7 @@ Pass `null` as filter to allow any card.
 | `StaticBoostEffect` | `(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope, PermanentPredicate filter)` | unified static boost: +X/+Y and keywords with predicate-based filtering. Scope: `OWN_CREATURES`, `OPPONENT_CREATURES`, `ALL_CREATURES`, `ENCHANTED_CREATURE`, `EQUIPPED_CREATURE`, `ENCHANTED_PLAYER_CREATURES`. With `GrantScope.ENCHANTED_CREATURE` it works as an aura boost (enchanted creature gets +X/+Y), with `GrantScope.EQUIPPED_CREATURE` it works as an equipment boost (equipped creature gets +X/+Y), and with `GrantScope.ENCHANTED_PLAYER_CREATURES` it affects creatures controlled by the enchanted player (for Curses). Filter: optional `PermanentPredicate` (color, subtype, not, etc). Convenience constructors: `(p, t, scope)`, `(p, t, scope, filter)`, `(p, t, keywords, scope)` |
 | `BoostCreaturesOfChosenColorEffect` | `(int powerBoost, int toughnessBoost)` | static: creatures you control of the source permanent's chosen color get +X/+Y. The chosen color is stored on the permanent at runtime via `Permanent.getChosenColor()`. Used by Caged Sun |
 | `BoostCreaturesOfChosenSubtypeEffect` | `(int powerBoost, int toughnessBoost)` | static: creatures you control of the source permanent's chosen subtype get +X/+Y. The chosen subtype is stored on the permanent at runtime via `Permanent.getChosenSubtype()`. Used by Vanquisher's Banner |
-| `BoostCreaturePerCardsInAllGraveyardsEffect` | `(CardPredicate filter, GrantScope scope)` | attached creature gets +X/+X where X = cards in all graveyards matching filter. Scope: `ENCHANTED_CREATURE` or `EQUIPPED_CREATURE` |
-| `BoostCreaturePerCardsInControllerGraveyardEffect` | `(CardPredicate filter, int powerPerCard, int toughnessPerCard, GrantScope scope)` | attached creature gets +X/+Y per card in controller's graveyard matching filter. Scope: `ENCHANTED_CREATURE` or `EQUIPPED_CREATURE`. Used by Runechanter's Pike (instants+sorceries, power only) |
-| `BoostCreaturePerControlledCardTypeEffect` | `(CardType cardType, int powerPerMatch, int toughnessPerMatch, GrantScope scope)` | attached creature gets +X/+Y per controlled permanent with card type (static). Scope: `ENCHANTED_CREATURE` or `EQUIPPED_CREATURE`. Used by Blackblade Reforged (LAND) |
-| `BoostCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype, GrantScope scope)` | attached creature gets +X/+Y per controlled permanent with subtype (static). Scope: `ENCHANTED_CREATURE` or `EQUIPPED_CREATURE` |
-| `BoostCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch, GrantScope scope)` | attached creature gets +X/+Y per land on the battlefield with the same name as the imprinted card. Scope: `ENCHANTED_CREATURE` or `EQUIPPED_CREATURE` |
+| `AttachedBoostEffect` | `(DynamicAmount powerBoost, DynamicAmount toughnessBoost, GrantScope scope)` | static: the attached creature (Aura/Equipment) gets +X/+Y where the amounts are `DynamicAmount`s. Scope: `ENCHANTED_CREATURE` or `EQUIPPED_CREATURE`. The attached-scope sibling of `BoostSelfEffect` — collapsed the whole `BoostCreaturePer*` family. Amounts evaluate against the Aura/Equipment's controller (CR 109.5), so `CountScope.CONTROLLER` = "you"/"you control". Examples: `+X/+X` per creature card in all graveyards `(CardsInGraveyard(CardTypePredicate(CREATURE), ANY_PLAYER), same, EQUIPPED_CREATURE)` (Bonehoard); per creature card in your graveyard uses `CONTROLLER` (Wreath of Geists); `+X/+0` instants+sorceries in your graveyard uses `(CardsInGraveyard(anyOf(INSTANT,SORCERY), CONTROLLER), Fixed(0), …)` (Runechanter's Pike); `+1/+1` per land you control `(PermanentCount(PermanentIsLandPredicate, CONTROLLER), same, …)` (Blackblade Reforged); per basic-land subtype you control `(PermanentCount(PermanentHasSubtypePredicate(FOREST), CONTROLLER), same, …)` (Blanchwood Armor, Lashwrithe, Armored Ascension); `-1/-1` per Swamp uses `Scaled(…, -1)` (Quag Sickness); `+1/+1` per matching-name land `(LandsMatchingImprintedName(), same, …)` (Strata Scythe) |
 | `BoostByOtherCreaturesWithSameNameEffect` | `(int powerPerCreature, int toughnessPerCreature)` | +X/+Y per other creature with same name (static) |
 | `BoostBySharedCreatureTypeEffect` | `()` | +1/+1 for each other creature sharing a creature type (static) |
 | `BoostFirstTargetCreatureEffect` | `(int powerBoost, int toughnessBoost)` | first target creature in multi-target spell gets +X/+Y until end of turn |
@@ -1181,11 +1184,7 @@ Pass `null` as filter to allow any card.
 |--------|-------------|--------|
 | `EquipEffect` | `()` | equip to target creature. Prefer using `EquipActivatedAbility(manaCost)` which wraps this effect with sorcery-speed timing and "creature you control" filter |
 | `StaticBoostEffect` | `(int powerBoost, int toughnessBoost, GrantScope.EQUIPPED_CREATURE)` | equipped creature gets +X/+Y (static). See Boost Effects section for full constructor signatures |
-| `BoostCreaturePerCardsInAllGraveyardsEffect` | `(CardPredicate filter, GrantScope.EQUIPPED_CREATURE)` | equipped creature gets +X/+X where X = cards in all graveyards matching filter (static) |
-| `BoostCreaturePerCardsInControllerGraveyardEffect` | `(CardPredicate filter, int powerPerCard, int toughnessPerCard, GrantScope.EQUIPPED_CREATURE)` | equipped creature gets +X/+Y per card in controller's graveyard matching filter (static) |
-| `BoostCreaturePerControlledCardTypeEffect` | `(CardType cardType, int powerPerMatch, int toughnessPerMatch, GrantScope.EQUIPPED_CREATURE)` | equipped creature gets +X/+Y per controlled permanent with card type (static). Used by Blackblade Reforged (LAND) |
-| `BoostCreaturePerControlledSubtypeEffect` | `(CardSubtype subtype, int powerPerSubtype, int toughnessPerSubtype, GrantScope.EQUIPPED_CREATURE)` | equipped creature gets +X/+Y per controlled permanent with subtype (static) |
-| `BoostCreaturePerMatchingLandNameEffect` | `(int powerPerMatch, int toughnessPerMatch, GrantScope.EQUIPPED_CREATURE)` | equipped creature gets +X/+Y per land matching imprinted card name (static) |
+| `AttachedBoostEffect` | `(DynamicAmount powerBoost, DynamicAmount toughnessBoost, GrantScope.EQUIPPED_CREATURE)` | equipped creature gets +X/+Y where the amounts are `DynamicAmount`s (static). Collapsed the `BoostCreaturePer*` family; amounts evaluate against the Equipment's controller (see Boost Effects section). Bonehoard/Runechanter's Pike (`CardsInGraveyard`), Blackblade Reforged (`PermanentCount(PermanentIsLandPredicate, CONTROLLER)`), Lashwrithe (`PermanentCount(PermanentHasSubtypePredicate(SWAMP), CONTROLLER)`), Strata Scythe (`LandsMatchingImprintedName()`) |
 | `SacrificeOnUnattachEffect` | `()` | whenever this equipment becomes unattached, sacrifice the previously-equipped creature (static marker) |
 | `AttachSourceEquipmentToTargetCreatureEffect` | `()` | attach source equipment to target creature. Reads targetId as creature; finds equipment via sourcePermanentId (ETB path) or by card ID fallback (death trigger path). Used by equipment with "When this Equipment enters, attach it to target creature you control" (ON_ENTER_BATTLEFIELD) or "Whenever equipped creature dies, attach this Equipment to target creature you control" (ON_EQUIPPED_CREATURE_DIES). |
 | `AttachTargetEquipmentToTargetCreatureEffect` | `()` | attach target Equipment to target creature (multi-target; reads targetIds[0] as equipment, [1] as creature) |

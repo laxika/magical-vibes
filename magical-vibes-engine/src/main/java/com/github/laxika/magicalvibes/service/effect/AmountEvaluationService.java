@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
@@ -17,6 +18,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
+import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
@@ -90,6 +92,8 @@ public class AmountEvaluationService {
                     imprintedCreaturePT(ctx, true);
             case ImprintedCreatureToughness ignored ->
                     imprintedCreaturePT(ctx, false);
+            case LandsMatchingImprintedName ignored ->
+                    countLandsMatchingImprintedName(gameData, ctx);
             case SourcePower ignored ->
                     ctx.sourcePermanent() == null ? 0
                             : Math.max(0, gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));
@@ -248,6 +252,21 @@ public class AmountEvaluationService {
             }
         }
         return total;
+    }
+
+    private int countLandsMatchingImprintedName(GameData gameData, AmountContext ctx) {
+        if (ctx.sourcePermanent() == null) return 0;
+        Card imprinted = ctx.sourcePermanent().getCard().getImprintedCard();
+        if (imprinted == null) return 0;
+        String imprintedName = imprinted.getName();
+        final int[] count = {0};
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (permanent.getCard().hasType(CardType.LAND)
+                    && imprintedName.equals(permanent.getCard().getName())) {
+                count[0]++;
+            }
+        });
+        return count[0];
     }
 
     private int imprintedCreaturePT(AmountContext ctx, boolean power) {
