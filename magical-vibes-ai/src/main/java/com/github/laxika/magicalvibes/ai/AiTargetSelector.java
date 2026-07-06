@@ -772,7 +772,7 @@ class AiTargetSelector {
 
         // For damage abilities, prefer creatures we can kill. Amounts evaluate with the
         // ability's source permanent in context (e.g. power/counter-based damage).
-        AmountContext amountCtx = new AmountContext(aiPlayerId, source, 0, false);
+        AmountContext amountCtx = new AmountContext(aiPlayerId, source, null, 0, 0, false);
         for (CardEffect effect : effects) {
             final int damage;
             if (effect instanceof DealDamageToAnyTargetEffect dmg)

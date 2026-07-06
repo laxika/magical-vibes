@@ -31,7 +31,7 @@ class DecimatorWebTest extends BaseCardTest {
         assertThat(ability.getEffects())
                 .hasSize(3)
                 .anyMatch(e -> e instanceof TargetPlayerLosesLifeEffect tp
-                        && tp.amount() == 2)
+                        && tp.amount().equals(new Fixed(2)))
                 .anyMatch(e -> e instanceof GiveTargetPlayerPoisonCountersEffect gp
                         && gp.amount() == 1)
                 .anyMatch(e -> e instanceof MillTargetPlayerEffect mp

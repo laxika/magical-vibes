@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
@@ -232,7 +233,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(4);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(4));
         }
 
         @Test
@@ -246,7 +247,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(3);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(3));
         }
 
         @Test
@@ -261,7 +262,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(0);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(0));
         }
 
         @Test
@@ -276,7 +277,7 @@ class DeathTriggerCollectorServiceTest {
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.amount()).isEqualTo(0);
+            assertThat(resolved.amount()).isEqualTo(new Fixed(0));
         }
     }
 

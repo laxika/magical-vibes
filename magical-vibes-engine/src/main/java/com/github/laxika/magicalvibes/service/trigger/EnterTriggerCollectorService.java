@@ -112,7 +112,7 @@ public class EnterTriggerCollectorService {
     @CollectsTrigger(value = GainLifeEffect.class, slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureGainLife(TriggerMatchContext match, GainLifeEffect gainLife, TriggerContext ctx) {
         int amount = amountEvaluationService.evaluate(match.gameData(), gainLife.amount(),
-                new AmountContext(match.controllerId(), match.permanent(), 0, false));
+                new AmountContext(match.controllerId(), match.permanent(), null, 0, 0, false));
         return enqueueGainLife(match, ctx, amount);
     }
 

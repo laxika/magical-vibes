@@ -432,7 +432,7 @@ public class ActivatedAbilityExecutionService {
                 }
             } else if (effect instanceof GainLifeEffect gain) {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
-                        new AmountContext(playerId, permanent, 0, false));
+                        new AmountContext(playerId, permanent, null, 0, 0, false));
                 lifeSupport.applyGainLife(gameData, playerId, amount);
             } else if (effect instanceof DealDamageToControllerEffect dmg) {
                 String cardName = permanent.getCard().getName();
@@ -470,7 +470,7 @@ public class ActivatedAbilityExecutionService {
                 // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser:
                 // "Add {R}. When you do, this creature deals 1 damage to each opponent."
                 int damage = amountEvaluationService.evaluate(gameData, dmg.damage(),
-                        new AmountContext(playerId, permanent, 0, false));
+                        new AmountContext(playerId, permanent, null, 0, 0, false));
                 for (UUID opponentId : gameData.orderedPlayerIds) {
                     if (opponentId.equals(playerId)) continue;
                     dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, damage);

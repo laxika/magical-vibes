@@ -289,17 +289,17 @@ public class BoardEvaluator {
                 if (effect instanceof CostEffect) continue;
                 if (effect instanceof DealDamageToAnyTargetEffect dmg) {
                     bonus += amountEvaluationService.evaluate(gameData, dmg.damage(),
-                            new AmountContext(controllerId, perm, 0, false)) * 2.0;
+                            new AmountContext(controllerId, perm, null, 0, 0, false)) * 2.0;
                 } else if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
                     bonus += amountEvaluationService.evaluate(gameData, dmg.damage(),
-                            new AmountContext(controllerId, perm, 0, false)) * 2.0;
+                            new AmountContext(controllerId, perm, null, 0, 0, false)) * 2.0;
                 } else if (effect instanceof DestroyTargetPermanentEffect) {
                     bonus += 8.0;
                 } else if (effect instanceof ExileTargetPermanentEffect) {
                     bonus += 9.0;
                 } else if (effect instanceof DrawCardEffect draw) {
                     int drawAmount = amountEvaluationService.evaluate(gameData, draw.amount(),
-                            new AmountContext(controllerId, perm, 0, false));
+                            new AmountContext(controllerId, perm, null, 0, 0, false));
                     bonus += drawAmount * 4.0;
                 }
             }

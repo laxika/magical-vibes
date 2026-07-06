@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -63,18 +63,20 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
             return;
         }
 
-        // Excess-damage tracking for companion effects (e.g. Archaic's Agony exiles cards
-        // equal to the excess damage dealt to the target).
+        // Excess-damage tracking for companion effects (e.g. Archaic's Agony exiles cards equal to
+        // the excess damage dealt to the target). The excess is stored on the entry's event value,
+        // which a later EventValue amount reads back — so only snapshot it when such an effect asks.
         boolean tracksExcess = entry.getEffectsToResolve().stream()
-                .anyMatch(ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect.class::isInstance);
+                .anyMatch(ef -> ef instanceof ExileTopCardsMayPlayUntilNextTurnEffect ex
+                        && amountEvaluationService.referencesEventValue(ex.count()));
         if (tracksExcess) {
             Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
             if (target == null || damageSupport.isDamagePreventedForCreature(gameData, entry, target)) {
-                entry.setExcessDamageDealt(0);
+                entry.setEventValue(0);
             } else {
                 int markedBefore = target.getMarkedDamage();
                 boolean deathtouch = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.DEATHTOUCH);
-                entry.setExcessDamageDealt(damageSupport.computeExcessDamageToCreature(
+                entry.setEventValue(damageSupport.computeExcessDamageToCreature(
                         gameData, target, damage, markedBefore, deathtouch));
             }
         }

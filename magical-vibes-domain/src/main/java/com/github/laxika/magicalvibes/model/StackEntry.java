@@ -35,8 +35,14 @@ public class StackEntry {
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
-    /** Excess damage dealt by a prior effect on this stack entry (e.g. Archaic's Agony). */
-    @Setter private int excessDamageDealt;
+    /**
+     * The integer payload of the event (or prior resolution step) behind this entry — life gained,
+     * damage dealt, excess damage, etc. Snapshotted by the trigger collector that enqueues the entry
+     * (parallel to {@link #xValue}, but for trigger-event data rather than cast-time data), or set by
+     * an earlier effect on the same entry (e.g. excess damage from a damage effect). Read back by the
+     * {@code EventValue} dynamic amount at resolution.
+     */
+    @Setter private int eventValue;
     /**
      * Last-known snapshot of the source permanent, set at activation time. Used to evaluate
      * source-relative amounts (e.g. counters on the source) per CR 608.2h last-known
@@ -228,7 +234,7 @@ public class StackEntry {
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;
-        this.excessDamageDealt = source.excessDamageDealt;
+        this.eventValue = source.eventValue;
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
         this.targetIds = source.targetIds.isEmpty() ? List.of() : new ArrayList<>(source.targetIds);
     }

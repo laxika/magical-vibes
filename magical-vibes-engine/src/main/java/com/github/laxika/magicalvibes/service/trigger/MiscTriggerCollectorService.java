@@ -24,10 +24,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
@@ -56,6 +56,7 @@ public class MiscTriggerCollectorService {
     private final PredicateEvaluationService predicateEvaluationService;
     private final ExileService exileService;
     private final DrawService drawService;
+    private final AmountEvaluationService amountEvaluationService;
     // @Lazy to break indirect circular dependency:
     // MiscTriggerCollectorService → PermanentControlSupport → TriggerCollectionService → MiscTriggerCollectorService
     private PermanentControlSupport permanentControlSupport;
@@ -67,6 +68,7 @@ public class MiscTriggerCollectorService {
                                        PredicateEvaluationService predicateEvaluationService,
                                        ExileService exileService,
                                        @Lazy DrawService drawService,
+                                       AmountEvaluationService amountEvaluationService,
                                        @Lazy PermanentControlSupport permanentControlSupport,
                                        @Lazy PermanentRemovalService permanentRemovalService) {
         this.gameBroadcastService = gameBroadcastService;
@@ -75,6 +77,7 @@ public class MiscTriggerCollectorService {
         this.predicateEvaluationService = predicateEvaluationService;
         this.exileService = exileService;
         this.drawService = drawService;
+        this.amountEvaluationService = amountEvaluationService;
         this.permanentControlSupport = permanentControlSupport;
         this.permanentRemovalService = permanentRemovalService;
     }
@@ -306,24 +309,29 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TargetPlayerLosesLifeEqualToLifeGainedEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsTrigger(value = TargetPlayerLosesLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainTargetPlayerLosesLife(TriggerMatchContext match,
-            TargetPlayerLosesLifeEqualToLifeGainedEffect effect, TriggerContext ctx) {
+            TargetPlayerLosesLifeEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
         UUID opponentId = gameQueryService.getOpponentId(gameData, match.controllerId());
 
-        TargetPlayerLosesLifeEffect resolved = new TargetPlayerLosesLifeEffect(lg.lifeGainedAmount());
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 cardName + "'s ability",
-                new ArrayList<>(List.of(resolved)),
+                new ArrayList<>(List.of(effect)),
                 opponentId,
-                match.permanent().getId()
-        ));
+                match.permanent().getId());
+        // Snapshot the life gained onto the entry's event value — parallel to the spell-mana-spent
+        // xValue plumbing — so the effect's EventValue amount ("equal to the life gained") reads it
+        // back at resolution.
+        if (amountEvaluationService.referencesEventValue(effect.amount())) {
+            entry.setEventValue(lg.lifeGainedAmount());
+        }
+        gameData.enqueueTrigger(entry);
 
         String triggerLog = cardName + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(gameData, triggerLog);

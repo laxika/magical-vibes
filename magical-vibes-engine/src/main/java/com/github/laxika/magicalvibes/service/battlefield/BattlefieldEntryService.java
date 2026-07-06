@@ -323,7 +323,7 @@ public class BattlefieldEntryService {
             }
 
             int count = amountEvaluationService.evaluate(gameData, enterWith.count(),
-                    new AmountContext(controllerId, permanent, xValue, false));
+                    new AmountContext(controllerId, permanent, null, xValue, 0, false));
             if (count > 0) {
                 permanent.setCounterCount(enterWith.type(), permanent.getCounterCount(enterWith.type()) + count);
                 log.info("Game {} - {} enters with {} {} counter(s)",

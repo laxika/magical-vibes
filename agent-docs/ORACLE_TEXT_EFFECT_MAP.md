@@ -147,7 +147,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "target player discards a card for each charge counter on ~" | `TargetPlayerDiscardsEffect(new CountersOnSource(CounterType.CHARGE))` | ability | Shrine of Limitless Power (with `SacrificeSelfCost`) |
 | "target player discards X cards at random" | `TargetPlayerRandomDiscardEffect(new XValue(), true)` | SPELL | Mind Shatter |
 | "Converge — Target player discards X cards, where X is the number of colors of mana spent to cast this spell." | `TargetPlayerDiscardsByConvergeEffect()` | SPELL | Arcane Omens |
-| "Converge — deals X damage to target creature" + excess-damage exile | `DealDamageToTargetCreatureEffect(new XValue())` + `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect()` | SPELL | Converge keyword snapshotted to xValue; Archaic's Agony |
+| "Converge — deals X damage to target creature" + excess-damage exile | `DealDamageToTargetCreatureEffect(new XValue())` + `ExileTopCardsMayPlayUntilNextTurnEffect(new EventValue())` | SPELL | Converge snapshotted to xValue; damage handler stores excess on the entry's eventValue, which EventValue reads; Archaic's Agony |
 | "each player discards N cards" | `EachPlayerDiscardsEffect(N)` | SPELL | |
 | "each opponent discards a card" | `EachOpponentDiscardsEffect(1)` | SPELL/trigger | |
 | "look at target player's hand" | `LookAtHandEffect()` | SPELL | |

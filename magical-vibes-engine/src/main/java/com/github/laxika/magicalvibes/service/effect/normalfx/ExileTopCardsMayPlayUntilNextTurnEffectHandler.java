@@ -4,8 +4,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +26,8 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
     private final ExileService exileService;
     private final ExileSupport exileSupport;
     private final GameBroadcastService gameBroadcastService;
+    private final GameQueryService gameQueryService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,7 +36,17 @@ public class ExileTopCardsMayPlayUntilNextTurnEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        int count = ((ExileTopCardsMayPlayUntilNextTurnEffect) effect).count();
+        // Source-relative amounts use the live source permanent when it is still on the
+        // battlefield, else the last-known snapshot (mirrors the other amount-driven handlers).
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int count = amountEvaluationService.evaluate(gameData,
+                ((ExileTopCardsMayPlayUntilNextTurnEffect) effect).count(),
+                AmountContext.forStackEntry(entry, source));
         if (count <= 0) {
             return;
         }

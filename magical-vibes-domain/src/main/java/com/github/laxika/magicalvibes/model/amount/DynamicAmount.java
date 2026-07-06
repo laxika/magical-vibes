@@ -21,6 +21,7 @@ public sealed interface DynamicAmount permits
         CreatureDeathsThisTurn,
         CreaturesBlockingSource,
         Divided,
+        EventValue,
         Fixed,
         GreatestPowerAmongControlled,
         ImprintedCreaturePower,
@@ -33,5 +34,6 @@ public sealed interface DynamicAmount permits
         SourcePower,
         SourceToughness,
         Sum,
+        TargetToughness,
         XValue {
 }

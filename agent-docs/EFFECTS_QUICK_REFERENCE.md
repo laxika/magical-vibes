@@ -243,8 +243,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `EachOpponentDiscardsEffect(int)` — each opponent discards
 - `TargetPlayerDiscardsEffect(DynamicAmount)` — target discards (`(int)` ctor; `CountersOnSource(CHARGE)` for per-charge-counter, e.g. Shrine of Limitless Power)
 - `TargetPlayerRandomDiscardEffect(DynamicAmount, boolean)` — target/self discards at random (`(new XValue(), true)` for Mind Shatter; `()` / `(int)` convenience ctors)
-- `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect()` — exile top N from library (N = stack entry excess damage), may play until end of your next turn
-- `ExileTopCardsMayPlayUntilNextTurnEffect(int count)` — exile top N from library (fixed count), may play until end of your next turn (owner-relative expiry via `ExileSupport.grantPlayUntilOwnersNextTurn`)
+- `ExileTopCardsMayPlayUntilNextTurnEffect(DynamicAmount count)` or `(int count)` — exile top N from library, may play until end of your next turn (owner-relative expiry via `ExileSupport.grantPlayUntilOwnersNextTurn`). Use `EventValue()` for "equal to the excess damage dealt this way" (Archaic's Agony)
 - `ExileTargetPermanentMayPlayUntilNextTurnEffect()` — exile the target permanent, its owner may play it until end of their next turn (e.g. Suspend Aggression; pair with a permanent target filter). Tokens exiled this way cease to exist
 - `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(CardPredicate filter, boolean ownGraveyardOnly)` — exile a targeted graveyard card matching the filter, controller may play it until end of their next turn (e.g. Practiced Scrollsmith; ETB graveyard-target flow via `MultiGraveyardChoice`)
 - `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect()` — exile a targeted instant/sorcery from an opponent's graveyard; controller may cast it **this turn**, spending mana of any type, and it is exiled instead of going to a graveyard (Nita, Forum Conciliator). Uses `exilePlayPermissions` + `exilePlayPermissionsExpireEndOfTurn` + `exilePlayAnyManaType` + `exileInsteadOfGraveyard`. Targets graveyard (`canTargetGraveyard()`/`canTargetAnyGraveyard()`)
@@ -318,15 +317,14 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Life
 
-- `GainLifeEffect(DynamicAmount)` or `(int)` — gain life; dynamic derivations via `DynamicAmount` (PermanentCount, CardsInHand, CardsInGraveyard, CountersOnSource, GreatestPowerAmongControlled, XValue, Scaled, Sum, …)
-- `GainLifeEqualToTargetToughnessEffect()` — life = target toughness
+- `GainLifeEffect(DynamicAmount[, GainLifeRecipient])` or `(int)` — gain life; dynamic derivations via `DynamicAmount` (PermanentCount, CardsInHand, CardsInGraveyard, CountersOnSource, GreatestPowerAmongControlled, XValue, Scaled, Sum, …). `recipient=TARGET_CONTROLLER` gives the life to the target permanent's controller: "its controller gains life = its toughness" = `GainLifeEffect(new TargetToughness(), GainLifeRecipient.TARGET_CONTROLLER)` (Condemn)
 - `TargetPlayerGainsLifeEffect(int)` — target gains life
 - `DoubleTargetPlayerLifeEffect()` — double target life
 - `SetTargetPlayerLifeToSpecificValueEffect(int)` — set life to value
 - `LoseLifeEffect(int)` — lose N life
 - `EachOpponentLosesLifeEffect(int)` — each opponent loses
 - `EachOpponentLosesLifeAndControllerGainsLifeLostEffect(int)` — drain each opponent
-- `TargetPlayerLosesLifeEffect(int)` — target loses
+- `TargetPlayerLosesLifeEffect(DynamicAmount)` or `(int)` — target loses life. `EventValue()` for "equal to the life you gained" (Sanguine Bond, snapshotted at the life-gain trigger); `PermanentCount(filter, CONTROLLER)` for "1 life for each … you control" (Bishop of the Bloodstained)
 - `TargetPlayerLosesLifeAndControllerGainsLifeEffect(int, int)` — drain target
 - `EachPlayerLosesLifeEffect(int)` — each player loses
 - `PlayersCantGainLifeEffect()` — can't gain life (static)

@@ -19,10 +19,11 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToLifeGainedEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -61,6 +62,9 @@ class MiscTriggerCollectorServiceTest {
 
     @Mock
     private PermanentControlSupport permanentControlSupport;
+
+    @Mock
+    private AmountEvaluationService amountEvaluationService;
 
     @InjectMocks
     private MiscTriggerCollectorService sut;
@@ -461,17 +465,17 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_GAINS_LIFE — TargetPlayerLosesLifeEqualToLifeGainedEffect =====
+    // ===== ON_CONTROLLER_GAINS_LIFE — TargetPlayerLosesLifeEffect(EventValue) =====
 
     @Nested
-    @DisplayName("ON_CONTROLLER_GAINS_LIFE — TargetPlayerLosesLifeEqualToLifeGainedEffect")
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — TargetPlayerLosesLifeEffect(EventValue)")
     class LifeGainOpponentLosesLife {
 
         @Test
         @DisplayName("puts triggered ability on stack targeting opponent with life loss equal to life gained")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEqualToLifeGainedEffect();
+            var effect = new TargetPlayerLosesLifeEffect(new EventValue());
             var ctx = new TriggerContext.LifeGain(player1Id, 4);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
@@ -491,27 +495,30 @@ class MiscTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("resolved effect has TargetPlayerLosesLifeEffect with correct amount")
+        @DisplayName("resolved effect keeps EventValue amount and snapshots life gained onto the entry")
         void resolvedEffectHasCorrectAmount() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEqualToLifeGainedEffect();
+            var effect = new TargetPlayerLosesLifeEffect(new EventValue());
             var ctx = new TriggerContext.LifeGain(player1Id, 7);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
+            when(amountEvaluationService.referencesEventValue(new EventValue())).thenReturn(true);
 
             registry.dispatch(
                     match(perm, player1Id, effect),
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.stack.getLast().getEffectsToResolve().getFirst();
-            assertThat(resolved.amount()).isEqualTo(7);
+            var entry = gd.stack.getLast();
+            var resolved = (TargetPlayerLosesLifeEffect) entry.getEffectsToResolve().getFirst();
+            assertThat(resolved.amount()).isEqualTo(new EventValue());
+            assertThat(entry.getEventValue()).isEqualTo(7);
         }
 
         @Test
         @DisplayName("broadcasts trigger log message")
         void broadcastsTriggerLog() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEqualToLifeGainedEffect();
+            var effect = new TargetPlayerLosesLifeEffect(new EventValue());
             var ctx = new TriggerContext.LifeGain(player1Id, 4);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
