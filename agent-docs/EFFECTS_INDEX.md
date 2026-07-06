@@ -168,7 +168,11 @@ and the damage bases `DealDamageToAnyTargetEffect` / `DealDamageToTargetCreature
 `DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect`,
 `DealDamageToTargetCreatureEqualToManaSpentToCastEffect`,
 `DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect`,
-`DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffect`).
+`DealDamageToEachOpponentEqualToPlusOnePlusOneCountersOnSourceEffect`),
+and the mill/discard bases `MillTargetPlayerEffect(DynamicAmount)` (replaced `MillTargetPlayerXEffect`,
+`MillTargetPlayerByChargeCountersEffect`), `TargetPlayerDiscardsEffect(DynamicAmount)` (replaced
+`TargetPlayerDiscardsByChargeCountersEffect`), and `TargetPlayerRandomDiscardEffect(DynamicAmount, boolean)`
+(replaced `TargetPlayerRandomDiscardXEffect`).
 New amounts: add the record to `model/amount/`, add it to the `permits` list on
 `DynamicAmount`, and add its case to `AmountEvaluationService.evaluate`. Never add a new
 per-derivation effect record.
@@ -583,15 +587,13 @@ Pass `null` as filter to allow any card.
 | `EachPlayerDiscardsEffect` | `(int amount)` | each player discards N cards in APNAP order (active player first). Uses queued sequential discard interaction. Controller's discard has `discardCausedByOpponent=false`; others have `true`. |
 | `EachOpponentDiscardsEffect` | `(int amount)` | each opponent discards N cards in APNAP order (skips controller). Uses same queued sequential discard interaction as EachPlayerDiscardsEffect. All discards have `discardCausedByOpponent=true`. Convenience ctor: `()` defaults to amount=1. |
 | `EachPlayerRandomDiscardEffect` | `(int amount)` | each player discards N cards at random in APNAP order. No player interaction required (random selection). Controller's discard has `discardCausedByOpponent=false`; others have `true`. Used by Burning Inquiry. |
-| `TargetPlayerDiscardsByChargeCountersEffect` | `()` | target player discards X cards where X = charge counters on source (snapshotted into xValue at activation time) |
 | `TargetPlayerDiscardsByConvergeEffect` | `()` | target player discards X cards where X = number of colors of mana spent to cast this spell (Converge; snapshotted into xValue at cast time) |
 | `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect` | `()` | exile top cards of controller's library equal to `excessDamageDealt` on the stack entry; grants play permission until end of controller's next turn via `exilePlayPermissionsExpireAtTurnEnd`. Pair after `DealDamageToTargetCreatureEffect(new XValue())` on Converge spells (e.g. Archaic's Agony) |
 | `ExileTopCardsMayPlayUntilNextTurnEffect` | `(int count)` | exile top N cards of controller's library; grants play permission (any type) until end of controller's next turn via `exilePlayPermissionsExpireAtTurnEnd`. Fixed-count impulse; used by Elemental Mascot (Opus) |
-| `TargetPlayerDiscardsEffect` | `(int amount)` | target player discards N cards |
+| `TargetPlayerDiscardsEffect` | `(DynamicAmount amount)` | target player discards cards; `(int)` convenience ctor for a fixed count. Use `CountersOnSource(CHARGE)` for "a card for each charge counter" (e.g. Shrine of Limitless Power). Logs "discards 0 cards" and skips the prompt when the amount evaluates to 0 |
 | `TargetPlayerDiscardsReturnSelfIfCardTypeEffect` | `(int amount, CardType returnIfType)` | target player discards N cards; if a discarded card matches the type, return the source spell from graveyard to owner's hand (e.g. Psychic Miasma) |
-| `TargetPlayerRandomDiscardEffect` | `(int amount, boolean causedByOpponent)` | target player discards N cards at random. Convenience ctors: `()` → amount=1, causedByOpponent=true (e.g. Hypnotic Specter); `(int amount)` → causedByOpponent=false (e.g. Goblin Lore self-discard). When `causedByOpponent=true`, uses `entry.getTargetId()` for who discards and sets `discardCausedByOpponent = true`; when `false`, uses `entry.getControllerId()`. |
+| `TargetPlayerRandomDiscardEffect` | `(DynamicAmount amount, boolean causedByOpponent)` | discard cards at random. Convenience ctors: `()` → amount=1, causedByOpponent=true (e.g. Hypnotic Specter); `(int amount)` → causedByOpponent=false (e.g. Goblin Lore self-discard); `(DynamicAmount amount)` → causedByOpponent=false. Use `(new XValue(), true)` for "target player discards X at random" (e.g. Mind Shatter). When `causedByOpponent=true`, uses `entry.getTargetId()` and sets `discardCausedByOpponent = true`; when `false`, uses `entry.getControllerId()`. Logs "discards 0 cards" when the amount evaluates to 0. |
 | `TargetPlayerRandomDiscardOrControllerDrawsEffect` | `()` | target player discards a card at random. If they can't (empty hand), the controller draws a card instead. Used by Urgoros, the Empty One. |
-| `TargetPlayerRandomDiscardXEffect` | `()` | target player discards X cards at random, where X is the X value paid when casting the spell (read from `entry.getXValue()`). Always treats discard as caused by opponent. Used by Mind Shatter. |
 | `ChooseCardFromTargetHandToDiscardEffect` | `(int count, List<CardType> excludedTypes)` | choose N cards from target's hand to discard (excludedTypes can't be chosen) |
 | `ChooseCardFromTargetHandToExileEffect` | `(int count, List<CardType> excludedTypes)` | choose N cards from target's hand to exile (excludedTypes can't be chosen). Same as ChooseCardFromTargetHandToDiscardEffect but exiles instead of discarding. Also has `(int count, List<CardType> excludedTypes, List<CardType> includedTypes)` and `(int count, List<CardType> excludedTypes, List<CardType> includedTypes, boolean returnOnSourceLeave)` overloads. When `returnOnSourceLeave=true`, exiled cards return to owner's hand when the source permanent leaves the battlefield (e.g. Kitesail Freebooter). |
 | `ChooseCardsFromTargetHandToTopOfLibraryEffect` | `(int count)` | choose N cards from target hand to put on top of library |
@@ -675,11 +677,9 @@ Pass `null` as filter to allow any card.
 | `MillControllerAndDealDamageByHighestManaValueEffect` | `(int count)` | mills N cards from controller's library, deals damage to any target equal to greatest mana value among milled cards. Used by Heretic's Punishment |
 | `MillControllerCost` | `(int count)` | **Cost**: controller mills N cards as activation cost. Blocks activation if library too small. Used by Deranged Assistant |
 | `MillTargetPlayerAndBoostSelfByManaValueEffect` | `()` | target player mills one card, source creature gets +X/+X until end of turn where X is milled card's mana value. Used by Mindshrieker |
-| `MillTargetPlayerEffect` | `(int count)` | target player mills N cards |
-| `MillTargetPlayerXEffect` | `(int castWithFlashbackMultiplier)` | target player mills X cards from stack entry; if cast with flashback, multiply X by `castWithFlashbackMultiplier`. Used by Increasing Confusion |
+| `MillTargetPlayerEffect` | `(DynamicAmount count)` | target player mills cards; `(int)` convenience ctor for a fixed count. Use `XValue()` for "mills X" and `CountersOnSource(CHARGE)` for "mills X where X = charge counters on source" (e.g. Grindclock). For flashback "twice X" (Increasing Confusion), wrap two mill effects in `ConditionalReplacementEffect(new CastFromZone(Zone.GRAVEYARD), Mill(XValue()), Mill(Scaled(XValue(),2)))` |
 | `MillHalfLibraryEffect` | `(boolean roundUp)` | target player mills half their library. `roundUp=false` rounds down (Traumatize), `roundUp=true` rounds up (Fleet Swallower) |
 | `MillByHandSizeEffect` | `()` | target player mills cards equal to hand size |
-| `MillTargetPlayerByChargeCountersEffect` | `()` | target player mills X cards where X is charge counters on source (reads snapshotted count from xValue) |
 | `EachOpponentMillsEffect` | `(int count)` | each opponent mills N cards |
 | `MillOpponentOnLifeLossEffect` | `()` | triggered effect: whenever an opponent loses life, that player mills that many cards. Amount determined at trigger time. Used by Mindcrank |
 | `MillBottomOfTargetLibraryConditionalTokenEffect` | `(CardType conditionType, String tokenName, int tokenPower, int tokenToughness, CardColor tokenColor, List<CardSubtype> tokenSubtypes)` | target player puts bottom card of library into graveyard; if it matches conditionType, controller creates a creature token. Used by Cellar Door |

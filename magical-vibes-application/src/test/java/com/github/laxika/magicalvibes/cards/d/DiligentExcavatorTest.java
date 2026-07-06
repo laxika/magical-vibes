@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -40,7 +41,7 @@ class DiligentExcavatorTest extends BaseCardTest {
 
         assertThat(trigger.resolvedEffects()).hasSize(1);
         assertThat(trigger.resolvedEffects().getFirst()).isInstanceOf(MillTargetPlayerEffect.class);
-        assertThat(((MillTargetPlayerEffect) trigger.resolvedEffects().getFirst()).count()).isEqualTo(2);
+        assertThat(((MillTargetPlayerEffect) trigger.resolvedEffects().getFirst()).count()).isEqualTo(new Fixed(2));
     }
 
     // ===== Artifact spell triggers target selection =====

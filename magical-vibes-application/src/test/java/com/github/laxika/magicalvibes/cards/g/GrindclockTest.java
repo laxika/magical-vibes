@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -42,7 +43,9 @@ class GrindclockTest extends BaseCardTest {
         assertThat(ability1.isRequiresTap()).isTrue();
         assertThat(ability1.getManaCost()).isNull();
         assertThat(ability1.getEffects()).hasSize(1);
-        assertThat(ability1.getEffects().getFirst()).isInstanceOf(MillTargetPlayerByChargeCountersEffect.class);
+        assertThat(ability1.getEffects().getFirst()).isInstanceOf(MillTargetPlayerEffect.class);
+        assertThat(((MillTargetPlayerEffect) ability1.getEffects().getFirst()).count())
+                .isEqualTo(new CountersOnSource(CounterType.CHARGE));
         assertThat(ability1.isNeedsTarget()).isTrue();
     }
 

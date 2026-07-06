@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEff
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -876,15 +876,15 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("MillTargetPlayerByChargeCountersEffect snapshots counters as xValue")
-        void millSnapshotsChargeCounters() {
-            Card card = createCard("Grindclock", CardType.ARTIFACT);
+        @DisplayName("Charge-counter-scaled effect snapshots counters as xValue")
+        void snapshotsChargeCounters() {
+            Card card = createCard("Ratchet Bomb", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             perm.setCounterCount(CounterType.CHARGE, 4);
-            List<CardEffect> effects = List.of(new MillTargetPlayerByChargeCountersEffect());
-            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Mill X.");
+            List<CardEffect> effects = List.of(new DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}, Sacrifice: Destroy.");
 
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(4);
@@ -893,13 +893,13 @@ class ActivatedAbilityExecutionServiceTest {
         @Test
         @DisplayName("Charge counters snapshot to 0 when permanent has no counters")
         void snapshotZeroCounters() {
-            Card card = createCard("Grindclock", CardType.ARTIFACT);
+            Card card = createCard("Ratchet Bomb", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             // No charge counters set
-            List<CardEffect> effects = List.of(new MillTargetPlayerByChargeCountersEffect());
-            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Mill X.");
+            List<CardEffect> effects = List.of(new DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect());
+            ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}, Sacrifice: Destroy.");
 
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
+            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(gameData.stack).hasSize(1);
             assertThat(gameData.stack.getFirst().getXValue()).isEqualTo(0);

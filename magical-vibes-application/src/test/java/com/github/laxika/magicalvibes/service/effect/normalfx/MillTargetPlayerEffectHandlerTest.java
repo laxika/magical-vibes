@@ -6,8 +6,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MillTargetPlayerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +32,10 @@ class MillTargetPlayerEffectHandlerTest {
     private GraveyardService graveyardService;
     @Mock
     private GameBroadcastService gameBroadcastService;
+    @Mock
+    private GameQueryService gameQueryService;
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
     @Mock
     private PermanentControlSupport permanentControlSupport;
     private GameData gd;
@@ -64,7 +71,8 @@ player1Id = UUID.randomUUID();
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
-        millTargetPlayerEffectHandler = new MillTargetPlayerEffectHandler(graveyardService);
+        millTargetPlayerEffectHandler = new MillTargetPlayerEffectHandler(graveyardService, gameQueryService,
+                new AmountEvaluationService(predicateEvaluationService, gameQueryService));
 
     }
 

@@ -32,8 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerByChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
@@ -103,7 +101,8 @@ public class ActivatedAbilityExecutionService {
      *       effects (e.g. {@code BoostSelfEffect}, {@code RegenerateEffect}, {@code AnimateSelfEffect}).</li>
      *   <li>Taps the permanent if the ability requires a tap cost.</li>
      *   <li>Snapshots charge counters into {@code effectiveXValue} for counter-dependent effects
-     *       (e.g. {@code MillTargetPlayerByChargeCountersEffect}) so the value survives sacrifice.</li>
+     *       (e.g. {@code DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect}) so the
+     *       value survives sacrifice.</li>
      *   <li>Executes {@link com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost} if present —
      *       removes the permanent from the battlefield, adds it to the graveyard, and collects death triggers.</li>
      *   <li>Logs the activation and broadcasts to all players.</li>
@@ -205,9 +204,7 @@ public class ActivatedAbilityExecutionService {
         }
 
         // Snapshot charge counters before sacrifice so the value survives in the stack entry's xValue
-        else if (abilityEffects.stream().anyMatch(e -> e instanceof MillTargetPlayerByChargeCountersEffect
-                || e instanceof TargetPlayerDiscardsByChargeCountersEffect
-                || e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect
+        else if (abilityEffects.stream().anyMatch(e -> e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect
                 || e instanceof LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect)) {
             effectiveXValue = permanent.getCounterCount(CounterType.CHARGE);
         }

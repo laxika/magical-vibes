@@ -136,6 +136,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "discard your hand, then draw cards equal to the number of cards in target opponent's hand" | `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` | SPELL | Borrowed Knowledge (modal mode 0) |
 | "discard a card" / "discard N cards" | `DiscardCardEffect(N)` | SPELL/trigger | Controller discards |
 | "target player discards N cards" | `TargetPlayerDiscardsEffect(N)` | SPELL | |
+| "target player discards a card for each charge counter on ~" | `TargetPlayerDiscardsEffect(new CountersOnSource(CounterType.CHARGE))` | ability | Shrine of Limitless Power (with `SacrificeSelfCost`) |
+| "target player discards X cards at random" | `TargetPlayerRandomDiscardEffect(new XValue(), true)` | SPELL | Mind Shatter |
 | "Converge — Target player discards X cards, where X is the number of colors of mana spent to cast this spell." | `TargetPlayerDiscardsByConvergeEffect()` | SPELL | Arcane Omens |
 | "Converge — deals X damage to target creature" + excess-damage exile | `DealDamageToTargetCreatureEffect(new XValue())` + `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect()` | SPELL | Converge keyword snapshotted to xValue; Archaic's Agony |
 | "each player discards N cards" | `EachPlayerDiscardsEffect(N)` | SPELL | |
@@ -194,7 +196,8 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "target player mills N cards" / "puts the top N cards into their graveyard" | `MillTargetPlayerEffect(N)` | SPELL | |
-| "target player mills X cards" | `MillTargetPlayerXEffect(multiplier)` | SPELL | Use multiplier `2` for "if cast from a graveyard, twice that many" flashback spells |
+| "target player mills X cards" | `MillTargetPlayerEffect(new XValue())` | SPELL | For "if cast from a graveyard, twice that many" flashback spells, wrap in `ConditionalReplacementEffect(new CastFromZone(Zone.GRAVEYARD), new MillTargetPlayerEffect(new XValue()), new MillTargetPlayerEffect(new Scaled(new XValue(), 2)))` (Increasing Confusion) |
+| "target player mills X cards, where X is the number of charge counters on ~" | `MillTargetPlayerEffect(new CountersOnSource(CounterType.CHARGE))` | ability | Grindclock |
 | "each opponent mills N cards" | `MillEachOpponentEffect(N)` | SPELL/trigger | |
 | "each player mills N cards" | `MillControllerEffect(N)` + `EachOpponentMillsEffect(N)` | SPELL/trigger | Combine two effects — no targeting. See `GhoulcallersBell`, `ChillOfForeboding` |
 | "mill N cards" (self) | `MillControllerEffect(N)` | SPELL/trigger | |

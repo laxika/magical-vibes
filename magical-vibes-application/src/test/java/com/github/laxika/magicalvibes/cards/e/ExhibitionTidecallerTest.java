@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
@@ -59,8 +60,8 @@ class ExhibitionTidecallerTest extends BaseCardTest {
         ConditionalReplacementEffect replacement =
                 (ConditionalReplacementEffect) trigger.resolvedEffects().getFirst();
         assertThat(((SpellManaSpentAtLeast) replacement.condition()).minMana()).isEqualTo(5);
-        assertThat(((MillTargetPlayerEffect) replacement.baseEffect()).count()).isEqualTo(3);
-        assertThat(((MillTargetPlayerEffect) replacement.upgradedEffect()).count()).isEqualTo(10);
+        assertThat(((MillTargetPlayerEffect) replacement.baseEffect()).count()).isEqualTo(new Fixed(3));
+        assertThat(((MillTargetPlayerEffect) replacement.upgradedEffect()).count()).isEqualTo(new Fixed(10));
     }
 
     @Test

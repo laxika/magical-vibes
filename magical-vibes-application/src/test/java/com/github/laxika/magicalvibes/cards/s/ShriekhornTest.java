@@ -45,7 +45,7 @@ class ShriekhornTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().getEffects())
                 .hasSize(2)
                 .anyMatch(e -> e instanceof RemoveChargeCountersFromSourceCost rc && rc.count() == 1)
-                .anyMatch(e -> e instanceof MillTargetPlayerEffect mp && mp.count() == 2);
+                .anyMatch(e -> e instanceof MillTargetPlayerEffect mp && mp.count().equals(new Fixed(2)));
     }
 
     // ===== Entering the battlefield with charge counters =====

@@ -7,7 +7,12 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerXEffect;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,10 +31,13 @@ class IncreasingConfusionTest extends BaseCardTest {
 
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(MillTargetPlayerXEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).getFirst()).isInstanceOf(ConditionalReplacementEffect.class);
 
-        MillTargetPlayerXEffect effect = (MillTargetPlayerXEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.castWithFlashbackMultiplier()).isEqualTo(2);
+        ConditionalReplacementEffect effect = (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
+        // Cast from graveyard (flashback) mills twice X; otherwise mills X.
+        assertThat(effect.condition()).isEqualTo(new CastFromZone(Zone.GRAVEYARD));
+        assertThat(((MillTargetPlayerEffect) effect.baseEffect()).count()).isEqualTo(new XValue());
+        assertThat(((MillTargetPlayerEffect) effect.upgradedEffect()).count()).isEqualTo(new Scaled(new XValue(), 2));
 
         FlashbackCast flashback = card.getCastingOption(FlashbackCast.class).orElseThrow();
         assertThat(flashback.getCost(ManaCastingCost.class).orElseThrow().manaCost()).isEqualTo("{X}{U}");

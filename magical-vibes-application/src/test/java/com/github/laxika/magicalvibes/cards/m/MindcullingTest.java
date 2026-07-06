@@ -37,7 +37,7 @@ class MindcullingTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
         assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new Fixed(2));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount()).isEqualTo(2);
+        assertThat(((TargetPlayerDiscardsEffect) card.getEffects(EffectSlot.SPELL).get(1)).amount()).isEqualTo(new Fixed(2));
     }
 
     // ===== Targeting restriction =====

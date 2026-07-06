@@ -16,7 +16,8 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +58,9 @@ class ShrineOfLimitlessPowerTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isEqualTo("{4}");
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(TargetPlayerDiscardsByChargeCountersEffect.class);
+        assertThat(ability.getEffects().get(1)).isInstanceOf(TargetPlayerDiscardsEffect.class);
+        assertThat(((TargetPlayerDiscardsEffect) ability.getEffects().get(1)).amount())
+                .isEqualTo(new CountersOnSource(CounterType.CHARGE));
         assertThat(ability.isNeedsTarget()).isTrue();
     }
 

@@ -402,7 +402,9 @@ public class SpellEvaluator {
         }
         if (effect instanceof TargetPlayerDiscardsEffect discard) {
             int opponentHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
-            int effectiveDiscards = Math.min(discard.amount(), opponentHandSize);
+            int discardAmount = amountEvaluationService.evaluate(gameData, discard.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            int effectiveDiscards = Math.min(discardAmount, opponentHandSize);
             return effectiveDiscards * 4.0;
         }
         return 0;
@@ -526,7 +528,9 @@ public class SpellEvaluator {
         // Discard
         if (effect instanceof TargetPlayerDiscardsEffect discard) {
             int opponentHandSize = gameData.playerHands.getOrDefault(opponentId, List.of()).size();
-            int effectiveDiscards = Math.min(discard.amount(), opponentHandSize);
+            int discardAmount = amountEvaluationService.evaluate(gameData, discard.amount(),
+                    AmountContext.forEstimation(aiPlayerId));
+            int effectiveDiscards = Math.min(discardAmount, opponentHandSize);
             return effectiveDiscards * 4.0;
         }
 

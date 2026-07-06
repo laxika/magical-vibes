@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToDiscardEffect;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -37,7 +38,7 @@ class GruesomeDiscoveryTest extends BaseCardTest {
 
         ConditionalReplacementEffect effect = (ConditionalReplacementEffect) card.getEffects(EffectSlot.SPELL).getFirst();
         assertThat(effect.baseEffect()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) effect.baseEffect()).amount()).isEqualTo(2);
+        assertThat(((TargetPlayerDiscardsEffect) effect.baseEffect()).amount()).isEqualTo(new Fixed(2));
         assertThat(effect.upgradedEffect()).isInstanceOf(ChooseCardFromTargetHandToDiscardEffect.class);
         assertThat(((ChooseCardFromTargetHandToDiscardEffect) effect.upgradedEffect()).count()).isEqualTo(2);
     }

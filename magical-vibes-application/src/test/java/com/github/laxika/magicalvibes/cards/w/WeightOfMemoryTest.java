@@ -29,7 +29,7 @@ class WeightOfMemoryTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(DrawCardEffect.class);
         assertThat(((DrawCardEffect) card.getEffects(EffectSlot.SPELL).get(0)).amount()).isEqualTo(new Fixed(3));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(MillTargetPlayerEffect.class);
-        assertThat(((MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(1)).count()).isEqualTo(3);
+        assertThat(((MillTargetPlayerEffect) card.getEffects(EffectSlot.SPELL).get(1)).count()).isEqualTo(new Fixed(3));
     }
 
     // ===== Draw effect =====

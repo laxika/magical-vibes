@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
@@ -47,7 +48,7 @@ class LilianaVessTest extends BaseCardTest {
         assertThat(ability.isNeedsTarget()).isTrue();
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().getFirst()).isInstanceOf(TargetPlayerDiscardsEffect.class);
-        assertThat(((TargetPlayerDiscardsEffect) ability.getEffects().getFirst()).amount()).isEqualTo(1);
+        assertThat(((TargetPlayerDiscardsEffect) ability.getEffects().getFirst()).amount()).isEqualTo(new Fixed(1));
     }
 
     @Test

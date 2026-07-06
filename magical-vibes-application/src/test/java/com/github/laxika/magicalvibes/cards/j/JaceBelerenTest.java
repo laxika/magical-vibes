@@ -71,7 +71,7 @@ class JaceBelerenTest extends BaseCardTest {
         assertThat(ability.isNeedsTarget()).isTrue();
         assertThat(ability.getEffects()).hasSize(1);
         assertThat(ability.getEffects().getFirst()).isInstanceOf(MillTargetPlayerEffect.class);
-        assertThat(((MillTargetPlayerEffect) ability.getEffects().getFirst()).count()).isEqualTo(20);
+        assertThat(((MillTargetPlayerEffect) ability.getEffects().getFirst()).count()).isEqualTo(new Fixed(20));
     }
 
     // ===== Casting =====

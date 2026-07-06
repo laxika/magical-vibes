@@ -241,7 +241,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` — discard entire hand, then draw equal to target player's hand size (counted at draw time)
 - `EachPlayerDiscardsEffect(int)` — each player discards
 - `EachOpponentDiscardsEffect(int)` — each opponent discards
-- `TargetPlayerDiscardsEffect(int)` — target discards
+- `TargetPlayerDiscardsEffect(DynamicAmount)` — target discards (`(int)` ctor; `CountersOnSource(CHARGE)` for per-charge-counter, e.g. Shrine of Limitless Power)
+- `TargetPlayerRandomDiscardEffect(DynamicAmount, boolean)` — target/self discards at random (`(new XValue(), true)` for Mind Shatter; `()` / `(int)` convenience ctors)
 - `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect()` — exile top N from library (N = stack entry excess damage), may play until end of your next turn
 - `ExileTopCardsMayPlayUntilNextTurnEffect(int count)` — exile top N from library (fixed count), may play until end of your next turn (owner-relative expiry via `ExileSupport.grantPlayUntilOwnersNextTurn`)
 - `ExileTargetPermanentMayPlayUntilNextTurnEffect()` — exile the target permanent, its owner may play it until end of their next turn (e.g. Suspend Aggression; pair with a permanent target filter). Tokens exiled this way cease to exist
@@ -283,9 +284,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `MillControllerEffect(int)` — self-mill N
 - `MillControllerAndMayPlayFromGraveyardThisTurnEffect()` — mill 1, grant play-from-graveyard permission until end of turn
-- `MillTargetPlayerEffect(int)` — mill target N
-- `MillTargetPlayerXEffect(int)` — target mills X, optional flashback multiplier
-- `MillTargetPlayerByChargeCountersEffect()` — mill = charge counters
+- `MillTargetPlayerEffect(DynamicAmount)` — mill target (`(int)` ctor; `XValue()` for mills X, `CountersOnSource(CHARGE)` for Grindclock; flashback "twice X" via `ConditionalReplacementEffect(CastFromZone(GRAVEYARD), …)`, e.g. Increasing Confusion)
 - `MillHalfLibraryEffect()` — mill half
 - `MillEachPlayerEffect(int)` — mill each player N
 - `MillEachOpponentEffect(int)` — mill each opponent N

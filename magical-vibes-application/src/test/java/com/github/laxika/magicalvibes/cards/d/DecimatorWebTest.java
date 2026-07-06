@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
@@ -35,7 +36,7 @@ class DecimatorWebTest extends BaseCardTest {
                 .anyMatch(e -> e instanceof GiveTargetPlayerPoisonCountersEffect gp
                         && gp.amount() == 1)
                 .anyMatch(e -> e instanceof MillTargetPlayerEffect mp
-                        && mp.count() == 6);
+                        && mp.count().equals(new Fixed(6)));
     }
 
     // ===== Activation: all three effects resolve =====
