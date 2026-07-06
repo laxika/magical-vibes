@@ -4,9 +4,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesByCreatureCardsInGraveyardEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureSearchLibraryForCreatureToHandEffect;
@@ -44,7 +48,9 @@ public class GarrukTheVeilCursed extends Card {
                 -3,
                 List.of(
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES),
-                        new BoostAllOwnCreaturesByCreatureCardsInGraveyardEffect()
+                        new BoostAllOwnCreaturesEffect(
+                                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
+                                new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER))
                 ),
                 "\u22123: Creatures you control gain trample and get +X/+X until end of turn, where X is the number of creature cards in your graveyard."
         ));

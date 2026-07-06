@@ -343,8 +343,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CardNamedPredicate(String cardName)` — card filter for exact name match (use with graveyard-count boosts above)
 - `BoostSelfEffect(DynamicAmount, DynamicAmount)` or `(int, int)` — self +X/+Y; one-shot in trigger/ability slots, continuous in STATIC. Any "for each …" self-boost = this effect + a `model/amount/DynamicAmount` (`PermanentCount`, `CardsInGraveyard`, `AttachmentsOnSource`, `CreaturesBlockingSource`, `OpponentPoisonCounters`, `ImprintedCreaturePower/Toughness`, `XValue`, `Scaled`, `Fixed`) — never a new per-variant effect class
 - `DoubleSelfPowerToughnessEffect()` — double self P/T
-- `BoostAllOwnCreaturesEffect(int, int)` or `(int, int, PermanentPredicate)` — all own +X/+Y
-- `BoostAllCreaturesEffect(int, int)` or `(int, int, PermanentPredicate)` — all creatures +X/+Y
+- `BoostAllOwnCreaturesEffect(DynamicAmount, DynamicAmount)` or `(…, PermanentPredicate)` — all own +X/+Y; `(int, int[, PermanentPredicate])` convenience wraps in `Fixed`. Any "where X is …" / power- or graveyard-derived mass own-pump = this effect + a `DynamicAmount` (evaluated once at resolution) — e.g. `new GreatestPowerAmongControlled()` (Overwhelming Stampede), `new CardsInGraveyard(new CardTypePredicate(CREATURE), CONTROLLER)` (Garruk, the Veil-Cursed). Never a new per-variant class
+- `BoostAllCreaturesEffect(DynamicAmount, DynamicAmount)` or `(…, PermanentPredicate)` — all creatures (both sides) +X/+Y; `(int, int[, PermanentPredicate])` convenience wraps in `Fixed`. "X paid" mass pump = `new Scaled(new XValue(), mult)` / `new XValue()` (Ichor Explosion, Flowstone Slide)
 - `StaticBoostEffect(int, int, Set<Keyword>, GrantScope, PermanentPredicate)` — static +X/+Y + keywords
 - `SetBasePowerToughnessUntilEndOfTurnEffect(int, int)` — set base P/T
 - `SwitchPowerToughnessEffect()` — switch P/T

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameBroadcastService gameBroadcastService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,6 +33,15 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var boost = (BoostAllCreaturesEffect) effect;
+
+        // Lock the amount in once, before any boost lands, then apply it uniformly.
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        AmountContext ctx = AmountContext.forStackEntry(entry, source);
+        int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
+        int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
+
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                 .withSourceControllerId(entry.getControllerId());
@@ -38,15 +50,16 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
             if (gameQueryService.isCreature(gameData, permanent)
                     && (boost.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
-                permanent.setPowerModifier(permanent.getPowerModifier() + boost.powerBoost());
-                permanent.setToughnessModifier(permanent.getToughnessModifier() + boost.toughnessBoost());
+                permanent.setPowerModifier(permanent.getPowerModifier() + powerBoost);
+                permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
                 count[0]++;
             }
         });
 
-        String logEntry = entry.getCard().getName() + " gives +" + boost.powerBoost() + "/+" + boost.toughnessBoost() + " to " + count[0] + " creature(s) until end of turn.";
+        String logEntry = String.format("%s gives %+d/%+d to %d creature(s) until end of turn.",
+                entry.getCard().getName(), powerBoost, toughnessBoost, count[0]);
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
 
-        log.info("Game {} - {} boosts {} creatures +{}/+{}", gameData.id, entry.getCard().getName(), count[0], boost.powerBoost(), boost.toughnessBoost());
+        log.info("Game {} - {} gives {}/{} to {} creatures", gameData.id, entry.getCard().getName(), powerBoost, toughnessBoost, count[0]);
     }
 }
