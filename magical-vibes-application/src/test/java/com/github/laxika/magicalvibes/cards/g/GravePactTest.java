@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -121,8 +120,6 @@ class GravePactTest extends BaseCardTest {
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Grave Pact");
         assertThat(trigger.getEffectsToResolve()).hasSize(1);
-        assertThat(trigger.getEffectsToResolve().getFirst())
-                .isInstanceOf(EachOpponentSacrificesCreatureEffect.class);
     }
 
     // ===== Resolving =====

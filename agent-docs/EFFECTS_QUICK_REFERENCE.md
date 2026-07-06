@@ -144,16 +144,11 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `DestroyCreatureBlockingThisEffect()` — destroy blocker
 - `DestroyTargetPermanentAndGainLifeEqualToManaValueEffect()` — destroy + life = MV
 - `DestroyTargetCreatureAndGainLifeEqualToToughnessEffect(PermanentPredicate?)` — destroy + life = toughness; predicate arg makes life gain conditional (e.g. `PermanentHasSubtypePredicate(HUMAN)`)
-- `SacrificeCreatureEffect()` — target player sacrifices creature
+- `SacrificePermanentsEffect(count, PermanentPredicate, SacrificeRecipient)` — collapsed forced-sacrifice family. `SacrificeRecipient` = CONTROLLER / TARGET_PLAYER / EACH_PLAYER / EACH_OPPONENT. Bare `PermanentIsCreaturePredicate` → single-select "sacrifice a creature" (Cruel Edict, Grave Pact, Stitcher's Apprentice); any other filter → multi-permanent choice (Storm Fleet Arsonist, Yawning Fissure, Destructive Force). int-count sugar ctor
 - `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect()` — sacrifice + life = toughness
 - `SacrificeCreatureToCreateTokensEqualToToughnessEffect(CreateTokenEffect template, PermanentPredicate filter)` — controller sacrifices a matching creature, then creates X copies of `template` where X = sacrificed creature's toughness (template `amount` ignored). Wrap in `MayEffect` for "you may sacrifice" (e.g. Feed the Pack)
-- `ControllerSacrificesCreatureEffect()` — controller sacrifices (non-targeting)
 - `ForcedCostOrElseEffect(CostEffect, List<CardEffect>)` — mandatory cost-like instruction; if it cannot be performed, resolve fallback effects
 - `SacrificeAttackingCreaturesEffect(int base, int metalcraft)` — sacrifice attackers
-- `EachOpponentSacrificesCreatureEffect()` — each opponent sacrifices
-- `EachOpponentSacrificesPermanentsEffect(int, PermanentPredicate)` — opponents sacrifice permanents
-- `TargetPlayerSacrificesPermanentsEffect(int, PermanentPredicate)` — target sacrifices permanents
-- `EachPlayerSacrificesPermanentsEffect(int, PermanentPredicate)` — each player sacrifices
 - `EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int, CardPredicate)` — mass reanimate
 - `SacrificeSelfEffect()` — sacrifice self
 - `SacrificeUnlessDiscardCardTypeEffect(CardType)` — sacrifice unless discard

@@ -99,11 +99,12 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "destroy target creature. It can't be regenerated" | `DestroyTargetPermanentEffect(true)` | SPELL | cantRegenerate=true |
 | "destroy all creatures" | `DestroyAllPermanentsEffect(PermanentIsCreaturePredicate())` | SPELL | |
 | "destroy all [type]" | `DestroyAllPermanentsEffect(predicate)` | SPELL | Filtered wipe |
-| "sacrifice a creature" | `SacrificeCreatureEffect()` | SPELL | Target player sacrifices |
+| "target player sacrifices a creature" | `SacrificePermanentsEffect(1, PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER)` | SPELL | bare creature filter → single-select sacrifice-a-creature primitive |
 | "sacrifice a [subtype]: [effect]" | `SacrificePermanentCost(PermanentAllOfPredicate(creature + PermanentHasSubtypePredicate(subtype)), "Sacrifice a [subtype]", false)` then effect | activated ability | Ravenous Demon front face uses `TransformSelfEffect()` with `SORCERY_SPEED` |
 | "sacrifice a [subtype]. If you can't, [effects]" | `ForcedCostOrElseEffect(SacrificePermanentCost(PermanentAllOfPredicate(creature + subtype), description, false), elseEffects)` | trigger | Archdemon of Greed uses `TapPermanentsEffect(TapUntapScope.SELF)` + `DealDamageToControllerEffect(9)` |
 | "you may sacrifice a nontoken creature. If you do, create X 2/2 Wolf tokens, where X is its toughness" | `MayEffect(SacrificeCreatureToCreateTokensEqualToToughnessEffect(template, PermanentNotPredicate(PermanentIsTokenPredicate)))` | trigger | Feed the Pack; X = sacrificed creature's toughness |
-| "each opponent sacrifices a creature" | `EachOpponentSacrificesCreatureEffect()` | SPELL/trigger | |
+| "each opponent sacrifices a creature" | `SacrificePermanentsEffect(1, PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT)` | SPELL/trigger | bare creature filter → per-opponent single-select sacrifice-a-creature |
+| "each opponent/each player sacrifices N [type]" | `SacrificePermanentsEffect(N, predicate, SacrificeRecipient.EACH_OPPONENT/EACH_PLAYER)` | SPELL/trigger | non-creature filter → APNAP multi-permanent choice (Yawning Fissure, Destructive Force) |
 | "sacrifice CARDNAME" | `SacrificeSelfEffect()` | trigger/ability | |
 
 ## Bounce / tuck

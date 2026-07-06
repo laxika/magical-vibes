@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndControllerLos
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndBoostSelfByManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAndGainLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetThenRevealUntilTypeToBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -23,9 +24,14 @@ public class DestructionTargetValidators {
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
 
-    @ValidatesTarget(SacrificeCreatureEffect.class)
-    public void validateSacrificeCreature(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    // The validator is keyed by effect class and runs unconditionally, so only the
+    // target-player recipient requires a targeted player; controller / each-player / each-opponent
+    // recipients take no target.
+    @ValidatesTarget(SacrificePermanentsEffect.class)
+    public void validateSacrificePermanents(TargetValidationContext ctx, SacrificePermanentsEffect effect) {
+        if (effect.recipient() == SacrificeRecipient.TARGET_PLAYER) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 
     @ValidatesTarget(DestroyCreatureBlockingThisEffect.class)

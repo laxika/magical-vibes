@@ -8,10 +8,11 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -31,10 +32,11 @@ public class LoreholdCharm extends Card {
         addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent sacrifices a nontoken artifact of their choice",
-                        new EachOpponentSacrificesPermanentsEffect(1,
+                        new SacrificePermanentsEffect(1,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
-                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
+                                SacrificeRecipient.EACH_OPPONENT)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target artifact or creature card with mana value 2 or less "
                                 + "from your graveyard to the battlefield",

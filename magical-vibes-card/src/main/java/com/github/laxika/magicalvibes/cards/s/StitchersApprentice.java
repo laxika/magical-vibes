@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ControllerSacrificesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +28,8 @@ public class StitchersApprentice extends Card {
                                 Set.of(),
                                 Set.of()
                         ),
-                        new ControllerSacrificesCreatureEffect()
+                        new SacrificePermanentsEffect(
+                                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.CONTROLLER)
                 ),
                 "{1}{U}, {T}: Create a 2/2 blue Homunculus creature token, then sacrifice a creature."
         ));

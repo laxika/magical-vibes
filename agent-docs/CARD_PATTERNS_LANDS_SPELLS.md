@@ -63,7 +63,7 @@ All paths relative to `cards/`.
 | Board wipe | `w/WrathOfGod.java` | DestroyAllPermanentsEffect |
 | Board wipe + opponent library search to graveyard | `l/LifesFinale.java` | DestroyAllPermanentsEffect + SearchTargetLibraryForCardsToGraveyardEffect(3, CREATURE) + PlayerPredicateTargetFilter(OPPONENT) |
 | Destroy land + mass creature/planeswalker damage | `s/StarOfExtinction.java` | DestroyTargetPermanentEffect + MassDamageEffect(20, false, false, true, null) — targets a land, deals 20 damage to each creature and each planeswalker (damagesPlaneswalkers=true) |
-| Opponent land edict | `y/YawningFissure.java` | EachOpponentSacrificesPermanentsEffect(1, PermanentIsLandPredicate) — each opponent sacrifices a land, controller unaffected |
+| Opponent land edict | `y/YawningFissure.java` | SacrificePermanentsEffect(1, PermanentIsLandPredicate, EACH_OPPONENT) — each opponent sacrifices a land, controller unaffected |
 | Counter (any) | `c/Cancel.java` | CounterSpellEffect (spell targeting auto-derived) |
 | Counter (filtered by type) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
 | Counter (filtered by mana value) | `m/MentalMisstep.java` | StackEntryPredicateTargetFilter + StackEntryManaValuePredicate. Phyrexian mana cost |
