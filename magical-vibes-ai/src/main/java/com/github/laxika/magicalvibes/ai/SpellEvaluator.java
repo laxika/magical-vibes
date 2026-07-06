@@ -978,7 +978,9 @@ public class SpellEvaluator {
                     && !gameQueryService.hasKeyword(gameData, perm, Keyword.HASTE)) continue;
             for (CardEffect manaEffect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                 if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardManaEffect me) {
-                    virtualPool.add(me.color(), me.amount());
+                    // ON_TAP mana (basic lands, mana dorks) is always a flat quantity.
+                    int amt = me.amount() instanceof com.github.laxika.magicalvibes.model.amount.Fixed f ? f.value() : 0;
+                    virtualPool.add(me.color(), amt);
                 } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect) {
                     virtualPool.add(ManaColor.COLORLESS);
                 } else if (manaEffect instanceof com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect) {

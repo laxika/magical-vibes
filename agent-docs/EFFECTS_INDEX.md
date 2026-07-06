@@ -175,7 +175,16 @@ and the damage bases `DealDamageToAnyTargetEffect` / `DealDamageToTargetCreature
 and the mill/discard bases `MillTargetPlayerEffect(DynamicAmount)` (replaced `MillTargetPlayerXEffect`,
 `MillTargetPlayerByChargeCountersEffect`), `TargetPlayerDiscardsEffect(DynamicAmount)` (replaced
 `TargetPlayerDiscardsByChargeCountersEffect`), and `TargetPlayerRandomDiscardEffect(DynamicAmount, boolean)`
-(replaced `TargetPlayerRandomDiscardXEffect`).
+(replaced `TargetPlayerRandomDiscardXEffect`), and the mana base
+`AwardManaEffect(ManaColor, DynamicAmount)` (replaced `AddManaPerControlledPermanentEffect`
+[→ `PermanentCount(filter, CONTROLLER)`], `AddColorlessManaPerChargeCounterOnSourceEffect`
+[→ `CountersOnSource(CHARGE)`], and `AwardManaEqualToSourcePowerEffect` [→ `SourcePower()`]).
+Mana abilities resolve outside the stack, so their amount is evaluated from the source
+permanent via `AmountContext.forManaAbility(Permanent, UUID controllerId)` (no `xValue`);
+stack-resolved mana (Koth's `-2`, Molten-Core Maestro's Opus) uses `forStackEntry`.
+`AddManaPerAttackingCreatureEffect` is intentionally NOT collapsed — its attacker count is
+locked at trigger time (Grand Warlord Radha ruling), which a resolution-time `PermanentCount`
+would get wrong.
 New amounts: add the record to `model/amount/`, add it to the `permits` list on
 `DynamicAmount`, and add its case to `AmountEvaluationService.evaluate`. Never add a new
 per-derivation effect record.
@@ -1089,7 +1098,7 @@ Pass `null` as filter to allow any card.
 
 | Effect | Constructor | Intent |
 |--------|-------------|--------|
-| `AwardManaEffect` | `(ManaColor color, int amount)` or `(ManaColor color)` (defaults amount to 1) | add N mana of specified color. Also stack-resolvable via `AwardManaEffectHandler` in `effect/normalfx` |
+| `AwardManaEffect` | `(ManaColor color, DynamicAmount amount)`, `(ManaColor color, int amount)`, or `(ManaColor color)` (defaults amount to 1) | add mana of the specified color; the quantity is a `DynamicAmount` (see "Dynamic amounts"). Flat: `(color)`/`(color, N)`. "for each X you control": `PermanentCount(filter, CountScope.CONTROLLER)`. "for each charge counter on it": `CountersOnSource(CounterType.CHARGE)` (Shrine of Boundless Growth). "equal to its power": `SourcePower()` (Marwyn, the Nurturer; Molten-Core Maestro). Implements `ManaProducingEffect`. Resolves inline for mana abilities (from the source permanent) and on the stack via `AwardManaEffectHandler` for triggered/loyalty mana (needs the stack entry's `sourcePermanentId`); dynamic amounts produce no mana when they evaluate to ≤ 0 and track creature mana when the source is a creature |
 | `AwardAnyColorManaEffect` | `(int amount)` or `()` (defaults amount to 1) | add N mana of any one color (player chooses) |
 | `AwardAnyColorManaWithInstantSorceryCopyEffect` | `(int amount)` or `()` (defaults amount to 1) | add N mana of any color and register a delayed one-shot trigger that copies the next instant or sorcery the controller casts. Cleared when mana pools drain. Used by Primal Wellspring |
 | `AddManaOnEnchantedLandTapEffect` | `(ManaColor color, int amount)` | when enchanted land is tapped, add N mana of color |
@@ -1097,13 +1106,10 @@ Pass `null` as filter to allow any card.
 | `AddOneOfEachManaTypeProducedByLandEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when a land you control taps for mana, add one additional mana of any type that land produced (exactly 1 mana, picks first type if multiple). Used by Vorinclex, Voice of Hunger |
 | `OpponentTappedLandDoesntUntapEffect` | `()` | ON_ANY_PLAYER_TAPS_LAND trigger: when an opponent taps a land for mana, increments skipUntapCount on the tapped land so it doesn't untap during its controller's next untap step. Multiple taps stack. Used by Vorinclex, Voice of Hunger |
 | `DoubleManaPoolEffect` | `()` | double your mana pool |
-| `AddManaPerControlledPermanentEffect` | `(ManaColor color, PermanentPredicate predicate, String description)` | add one mana of color for each permanent matching the predicate you control. The description is used for log messages. Compose predicates with `PermanentAllOfPredicate` for AND logic (e.g. basic Swamps = `PermanentHasSubtypePredicate(SWAMP)` + `PermanentHasSupertypePredicate(BASIC)`) |
-| `AddManaPerAttackingCreatureEffect` | `(ManaColor color1, ManaColor color2)` | triggered: counts controller's attacking creatures, player chooses color1 or color2, adds that many mana of the chosen color. Also sets per-player mana drain prevention until end of turn. Use with `ON_ALLY_CREATURES_ATTACK` slot. Used by Grand Warlord Radha |
+| `AddManaPerAttackingCreatureEffect` | `(ManaColor color1, ManaColor color2)` | triggered: counts controller's attacking creatures, player chooses color1 or color2, adds that many mana of the chosen color. Also sets per-player mana drain prevention until end of turn. Use with `ON_ALLY_CREATURES_ATTACK` slot. The attacker count is snapshotted into the trigger's `xValue` at trigger time (NOT counted at resolution) — per the Grand Warlord Radha ruling, creatures that leave combat before it resolves still count and creatures that enter attacking later don't, so this stays a dedicated effect rather than a resolution-time `PermanentCount`. Used by Grand Warlord Radha |
 | `AwardManaOfColorsAmongControlledEffect` | `(PermanentPredicate predicate)` | add one mana of any color among permanents matching the predicate you control. If only one color is available, auto-adds it. If multiple colors, player chooses. If no colors, produces nothing. Used by Mox Amber with a predicate matching legendary creatures or planeswalkers |
 | `AwardAnyColorChosenSubtypeCreatureManaEffect` | `()` | add one mana of any color (player chooses) that can only be spent to cast a creature spell of the source permanent's chosen creature type. Stored in `ManaPool.subtypeCreatureMana` keyed by `CardSubtype`. Requires `ChooseSubtypeOnEnterEffect` on the source permanent. `ManaCost.canPay/pay` accept `Set<CardSubtype> subtypeCreatureContext` to include this mana. Used by Pillar of Origins, Unclaimed Territory |
 | `AwardRestrictedManaEffect` | `(ManaColor color, int amount, Set<CardType> allowedSpellTypes)` | add N mana of specified color that can only be spent to cast spells of the given types. Implements `ManaProducingEffect` so it works as a mana ability. Supports RED via `ManaPool.restrictedRed` and COLORLESS via `ManaPool.instantSorceryOnlyColorless`. `ManaCost.canPay/pay` accept context flags to include this mana for both colored and generic costs |
-| `AddColorlessManaPerChargeCounterOnSourceEffect` | `()` | add {C} for each charge counter on the source permanent. Implements `ManaProducingEffect` so the ability is treated as a mana ability. Used by Shrine of Boundless Growth |
-| `AwardManaEqualToSourcePowerEffect` | `(ManaColor color)` | add mana of the specified color equal to the source permanent's effective power. Implements `ManaProducingEffect` so an activated ability is treated as a mana ability. Also resolvable as a normal stack effect inside a triggered ability (needs the stack entry's `sourcePermanentId` — e.g. pair it after a self-targeting effect like `PutCountersOnSelfEffect` in a spell-cast trigger). Produces no mana if power is 0 or less. Tracks creature mana when source is a creature. Used by Marwyn, the Nurturer and Molten-Core Maestro |
 | `AwardArtifactOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast artifact spells or activate abilities of artifacts. Stored in `ManaPool.artifactOnlyColorless`; `ManaCost.canPay/pay` accept `artifactContext=true` to include this mana |
 | `AwardMyrOnlyColorlessManaEffect` | `(int amount)` | add N colorless mana that can only be spent to cast Myr spells or activate abilities of Myr. Stored in `ManaPool.myrOnlyColorless`; `ManaCost.canPay/pay` accept `myrContext=true` to include this mana |
 | `AwardKickedOnlyManaEffect` | `(ManaColor color, int amount)` | add N mana of specified color that can only be spent to cast kicked spells. Stored in `ManaPool.kickedOnlyGreen`; `ManaCost.canPay/pay` accept `kickedOnlyGreenContext=true` to include this mana for both colored and generic costs. Used by Elfhame Druid |

@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEqualToSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
@@ -27,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
@@ -65,6 +65,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -118,6 +119,12 @@ class ActivatedAbilityExecutionServiceTest {
         gameData.playerIdToName.put(player1Id, "Player1");
         gameData.playerIdToName.put(player2Id, "Player2");
         gameData.activePlayerId = player1Id;
+
+        // Mana amounts resolve through AmountEvaluationService; default flat amounts to their
+        // fixed value so the many "Add {W}"-style mana-ability tests don't each need a stub.
+        // Dynamic amounts (e.g. SourcePower) are stubbed explicitly per test.
+        lenient().when(amountEvaluationService.evaluate(any(), any(), any()))
+                .thenAnswer(inv -> inv.getArgument(1) instanceof Fixed f ? f.value() : 0);
     }
 
     // =========================================================================
@@ -274,18 +281,16 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("AwardManaEqualToSourcePowerEffect adds mana equal to effective power")
+        @DisplayName("Source-power mana ability adds mana equal to effective power")
         void awardManaEqualToSourcePowerAddsCorrectAmount() {
             Card card = createCreature("Marwyn, the Nurturer");
             Permanent perm = addReadyPermanent(player1Id, card);
-            // Simulate +1/+1 counters (power goes from 2 → 4)
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-            List<CardEffect> effects = List.of(new AwardManaEqualToSourcePowerEffect(ManaColor.GREEN));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.GREEN, new SourcePower()));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
                     "{T}: Add an amount of {G} equal to Marwyn's power.");
 
             stubIsCreature(perm, true);
-            when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(4);
+            when(amountEvaluationService.evaluate(eq(gameData), eq(new SourcePower()), any())).thenReturn(4);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
@@ -296,16 +301,16 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("AwardManaEqualToSourcePowerEffect produces no mana when power is 0 or less")
+        @DisplayName("Source-power mana ability produces no mana when power is 0 or less")
         void awardManaEqualToSourcePowerNoManaWhenZeroPower() {
             Card card = createCreature("Marwyn, the Nurturer");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEqualToSourcePowerEffect(ManaColor.GREEN));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.GREEN, new SourcePower()));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
                     "{T}: Add an amount of {G} equal to Marwyn's power.");
 
             stubIsCreature(perm, true);
-            when(gameQueryService.getEffectivePower(gameData, perm)).thenReturn(0);
+            when(amountEvaluationService.evaluate(eq(gameData), eq(new SourcePower()), any())).thenReturn(0);
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 

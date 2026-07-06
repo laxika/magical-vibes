@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.KothEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
@@ -37,7 +39,8 @@ public class KothOfTheHammer extends Card {
         // −2: Add {R} for each Mountain you control.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new AddManaPerControlledPermanentEffect(ManaColor.RED, new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), "Mountains")),
+                List.of(new AwardManaEffect(ManaColor.RED,
+                        new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER))),
                 "\u22122: Add {R} for each Mountain you control."
         ));
 

@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -30,13 +31,12 @@ public class CabalStronghold extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new AddManaPerControlledPermanentEffect(
+                List.of(new AwardManaEffect(
                         ManaColor.BLACK,
-                        new PermanentAllOfPredicate(List.of(
+                        new PermanentCount(new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP),
                                 new PermanentHasSupertypePredicate(CardSupertype.BASIC)
-                        )),
-                        "basic Swamps"
+                        )), CountScope.CONTROLLER)
                 )),
                 "{3}, {T}: Add {B} for each basic Swamp you control."
         ));

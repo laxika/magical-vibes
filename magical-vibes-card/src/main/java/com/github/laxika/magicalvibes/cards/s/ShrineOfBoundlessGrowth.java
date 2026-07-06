@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -30,7 +32,8 @@ public class ShrineOfBoundlessGrowth extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new SacrificeSelfCost(), new AddColorlessManaPerChargeCounterOnSourceEffect()),
+                List.of(new SacrificeSelfCost(),
+                        new AwardManaEffect(ManaColor.COLORLESS, new CountersOnSource(CounterType.CHARGE))),
                 "{T}, Sacrifice Shrine of Boundless Growth: Add {C} for each charge counter on Shrine of Boundless Growth."
         ));
     }

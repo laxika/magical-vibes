@@ -13,7 +13,10 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
@@ -94,9 +97,10 @@ public class AiManaManager {
                     // Basic lands and permanents with ON_TAP mana effects
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
-                            virtual.add(manaEffect.color(), manaEffect.amount());
+                            int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
+                            virtual.add(manaEffect.color(), amount);
                             if (isCreature) {
-                                virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                                virtual.addCreatureMana(manaEffect.color(), amount);
                             }
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
                             virtual.add(ManaColor.COLORLESS, aace.amount());
@@ -154,7 +158,7 @@ public class AiManaManager {
                 } else if (hasOnTapManaEffects(perm.getCard())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
-                            virtual.add(manaEffect.color(), manaEffect.amount());
+                            virtual.add(manaEffect.color(), estimateManaAmount(manaEffect.amount(), perm, gameData));
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
                             virtual.add(ManaColor.COLORLESS, aace.amount());
                         } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
@@ -200,16 +204,12 @@ public class AiManaManager {
             EnumMap<ManaColor, Integer> abilityByColor = new EnumMap<>(ManaColor.class);
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof AwardManaEffect manaEffect) {
-                    abilityByColor.merge(manaEffect.color(), manaEffect.amount(), Integer::sum);
+                    int amount = estimateManaAmount(manaEffect.amount(), permanent, gameData);
+                    if (amount > 0) {
+                        abilityByColor.merge(manaEffect.color(), amount, Integer::sum);
+                    }
                 } else if (effect instanceof AwardAnyColorManaEffect aace) {
                     abilityByColor.merge(ManaColor.COLORLESS, aace.amount(), Integer::sum);
-                } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                    if (permanent != null) {
-                        int count = permanent.getCounterCount(CounterType.CHARGE);
-                        if (count > 0) {
-                            abilityByColor.merge(ManaColor.COLORLESS, count, Integer::sum);
-                        }
-                    }
                 }
             }
 
@@ -633,7 +633,7 @@ public class AiManaManager {
         if (hasOnTapManaEffects(card)) {
             for (CardEffect effect : card.getEffects(EffectSlot.ON_TAP)) {
                 if (effect instanceof AwardManaEffect manaEffect) {
-                    pool.add(manaEffect.color(), manaEffect.amount());
+                    pool.add(manaEffect.color(), estimateManaAmount(manaEffect.amount(), null, null));
                 } else if (effect instanceof AwardAnyColorManaEffect aace) {
                     pool.add(ManaColor.COLORLESS, aace.amount());
                 } else if (effect instanceof AwardAnyColorChosenSubtypeCreatureManaEffect) {
@@ -666,8 +666,6 @@ public class AiManaManager {
                         colors.add(manaEffect.color());
                     } else if (effect instanceof AwardAnyColorManaEffect) {
                         Collections.addAll(colors, ManaColor.values());
-                    } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                        colors.add(ManaColor.COLORLESS);
                     }
                 }
             }
@@ -715,9 +713,10 @@ public class AiManaManager {
                 } else if (hasOnTapManaEffects(perm.getCard())) {
                     for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_TAP)) {
                         if (effect instanceof AwardManaEffect manaEffect) {
-                            virtual.add(manaEffect.color(), manaEffect.amount());
+                            int amount = estimateManaAmount(manaEffect.amount(), perm, gameData);
+                            virtual.add(manaEffect.color(), amount);
                             if (isCreature) {
-                                virtual.addCreatureMana(manaEffect.color(), manaEffect.amount());
+                                virtual.addCreatureMana(manaEffect.color(), amount);
                             }
                         } else if (effect instanceof AwardAnyColorManaEffect aace) {
                             virtual.add(ManaColor.COLORLESS, aace.amount());
@@ -763,6 +762,31 @@ public class AiManaManager {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Estimates the integer mana quantity an {@link AwardManaEffect} would produce for the AI's
+     * virtual mana pool. A flat {@link Fixed} amount is exact; source-relative amounts the AI can
+     * resolve from the permanent alone — charge counters ({@link CountersOnSource}) and source power
+     * ({@link SourcePower}) — are computed directly. Other dynamic amounts (e.g. per-permanent
+     * counts) aren't estimated here (they contribute 0, matching the pre-collapse behavior where
+     * such mana abilities weren't counted); {@code null} permanent/game data (hypothetical card
+     * evaluation) yields the fixed value or 0.
+     */
+    private int estimateManaAmount(DynamicAmount amount, Permanent permanent, GameData gameData) {
+        if (amount instanceof Fixed fixed) {
+            return fixed.value();
+        }
+        if (permanent == null || gameData == null) {
+            return 0;
+        }
+        if (amount instanceof CountersOnSource counters) {
+            return permanent.getCounterCount(counters.counterType());
+        }
+        if (amount instanceof SourcePower) {
+            return Math.max(0, gameQueryService.getEffectivePower(gameData, permanent));
+        }
+        return 0;
+    }
 
     /**
      * Returns true if the card has ON_TAP mana-producing effects (basic lands, mana creatures like Llanowar Elves).
@@ -828,10 +852,6 @@ public class AiManaManager {
                 return hasSideEffects ? 1 : 5;
             }
             if (effect instanceof AwardAnyColorManaEffect) {
-                return hasSideEffects ? 1 : 5;
-            }
-            if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                // Colorless mana - can contribute to generic costs
                 return hasSideEffects ? 1 : 5;
             }
         }

@@ -301,6 +301,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
 | "add {C}" / "add one mana of [color]" | `AwardManaEffect(ManaColor.X, 1)` | ON_TAP/ability | |
+| "add [color] for each [X] you control" | `AwardManaEffect(ManaColor.X, new PermanentCount(filter, CountScope.CONTROLLER))` | ability | Elvish Archdruid, Cabal Stronghold, Itlimoc, Koth −2, Powerstone Shard |
+| "add {C} for each charge counter on it" | `AwardManaEffect(ManaColor.COLORLESS, new CountersOnSource(CounterType.CHARGE))` | ability | Shrine of Boundless Growth |
+| "add [color] equal to its power" | `AwardManaEffect(ManaColor.X, new SourcePower())` | ability/trigger | Marwyn, the Nurturer; Molten-Core Maestro |
 | "add one mana of any color" | `AwardAnyColorManaEffect()` | ON_TAP/ability/`ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` | |
 | "add N mana of any one color" | `AwardAnyColorManaEffect(N)` | ability | |
 

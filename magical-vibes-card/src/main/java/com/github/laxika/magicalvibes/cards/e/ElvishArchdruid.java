@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -26,7 +28,8 @@ public class ElvishArchdruid extends Card {
         // {T}: Add {G} for each Elf you control.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new AddManaPerControlledPermanentEffect(ManaColor.GREEN, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF)), "Elves")),
+                List.of(new AwardManaEffect(ManaColor.GREEN,
+                        new PermanentCount(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF)), CountScope.CONTROLLER))),
                 "{T}: Add {G} for each Elf you control."
         ));
     }

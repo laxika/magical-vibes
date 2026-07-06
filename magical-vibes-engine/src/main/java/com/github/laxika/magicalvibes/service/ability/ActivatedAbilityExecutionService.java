@@ -13,9 +13,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEqualToSourcePowerEffect;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
@@ -42,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -351,9 +347,21 @@ public class ActivatedAbilityExecutionService {
                 continue;
             }
             if (effect instanceof AwardManaEffect award) {
-                gameData.playerManaPools.get(playerId).add(award.color(), award.amount());
-                if (isCreatureSource) {
-                    gameData.playerManaPools.get(playerId).addCreatureMana(award.color(), award.amount());
+                int amount = amountEvaluationService.evaluate(gameData, award.amount(),
+                        AmountContext.forManaAbility(permanent, playerId));
+                if (amount > 0) {
+                    ManaPool pool = gameData.playerManaPools.get(playerId);
+                    pool.add(award.color(), amount);
+                    if (isCreatureSource) {
+                        pool.addCreatureMana(award.color(), amount);
+                    }
+                    // Dynamic amounts (per-permanent counts, charge counters, source power) log the
+                    // realized quantity for clarity; a flat "Add {G}" is covered by the activation log.
+                    if (!(award.amount() instanceof com.github.laxika.magicalvibes.model.amount.Fixed)) {
+                        String logEntry = player.getUsername() + " adds " + amount + " " + award.color().getCode()
+                                + " from " + permanent.getCard().getName() + ".";
+                        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                    }
                 }
             } else if (effect instanceof DoubleManaPoolEffect) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -400,27 +408,6 @@ public class ActivatedAbilityExecutionService {
                 gameData.playerManaPools.get(playerId).addKickedOnlyGreen(kom.amount());
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 arm.applyTo(gameData.playerManaPools.get(playerId));
-            } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                int count = 0;
-                FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(permanent.getCard().getId());
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (predicateEvaluationService.matchesPermanentPredicate(p, manaPerPermanent.predicate(), filterContext)) {
-                            count++;
-                        }
-                    }
-                }
-                ManaPool pool = gameData.playerManaPools.get(playerId);
-                for (int i = 0; i < count; i++) {
-                    pool.add(manaPerPermanent.color());
-                    if (isCreatureSource) {
-                        pool.addCreatureMana(manaPerPermanent.color(), 1);
-                    }
-                }
-                String logEntry = player.getUsername() + " adds " + count + " " + manaPerPermanent.color().getCode()
-                        + " (" + manaPerPermanent.description() + " controlled).";
-                gameBroadcastService.logAndBroadcast(gameData, logEntry);
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
                 Set<CardColor> availableColors = collectColorsAmongControlled(gameData, playerId, manaAmong);
                 if (availableColors.size() == 1) {
@@ -441,25 +428,6 @@ public class ActivatedAbilityExecutionService {
                 } else {
                     String logEntry = player.getUsername() + " activates " + permanent.getCard().getName()
                             + " but produces no mana (no colors among legendary creatures and planeswalkers).";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                }
-            } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                int count = permanent.getCounterCount(CounterType.CHARGE);
-                if (count > 0) {
-                    gameData.playerManaPools.get(playerId).add(ManaColor.COLORLESS, count);
-                    String logEntry = player.getUsername() + " adds " + count + " {C} from " + permanent.getCard().getName() + ".";
-                    gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                }
-            } else if (effect instanceof AwardManaEqualToSourcePowerEffect powerMana) {
-                int power = gameQueryService.getEffectivePower(gameData, permanent);
-                if (power > 0) {
-                    ManaPool pool = gameData.playerManaPools.get(playerId);
-                    pool.add(powerMana.color(), power);
-                    if (isCreatureSource) {
-                        pool.addCreatureMana(powerMana.color(), power);
-                    }
-                    String logEntry = player.getUsername() + " adds " + power + " " + powerMana.color().getCode()
-                            + " from " + permanent.getCard().getName() + ".";
                     gameBroadcastService.logAndBroadcast(gameData, logEntry);
                 }
             } else if (effect instanceof GainLifeEffect gain) {
@@ -578,7 +546,8 @@ public class ActivatedAbilityExecutionService {
         int total = 0;
         for (CardEffect effect : effects) {
             if (effect instanceof AwardManaEffect award) {
-                total += award.amount();
+                total += amountEvaluationService.evaluate(gameData, award.amount(),
+                        AmountContext.forManaAbility(permanent, playerId));
             } else if (effect instanceof AwardAnyColorManaEffect aace) {
                 total += aace.amount();
             } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
@@ -589,25 +558,11 @@ public class ActivatedAbilityExecutionService {
                 total += kom.amount();
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
                 total += fba.amount();
-            } else if (effect instanceof AddManaPerControlledPermanentEffect manaPerPermanent) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                FilterContext filterContext = FilterContext.of(gameData).withSourceCardId(permanent.getCard().getId());
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (predicateEvaluationService.matchesPermanentPredicate(p, manaPerPermanent.predicate(), filterContext)) {
-                            total++;
-                        }
-                    }
-                }
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
                 Set<CardColor> colors = collectColorsAmongControlled(gameData, playerId, manaAmong);
                 if (!colors.isEmpty()) {
                     total += 1;
                 }
-            } else if (effect instanceof AddColorlessManaPerChargeCounterOnSourceEffect) {
-                total += permanent.getCounterCount(CounterType.CHARGE);
-            } else if (effect instanceof AwardManaEqualToSourcePowerEffect) {
-                total += gameQueryService.getEffectivePower(gameData, permanent);
             } else if (effect instanceof DoubleManaPoolEffect) {
                 total += gameData.playerManaPools.get(playerId).getTotal();
             }

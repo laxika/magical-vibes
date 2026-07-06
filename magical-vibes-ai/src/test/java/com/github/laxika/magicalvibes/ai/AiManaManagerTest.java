@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AddColorlessManaPerChargeCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -202,7 +202,8 @@ class AiManaManagerTest {
         // Tap, Sacrifice: Add {C} for each charge counter (like Shrine of Boundless Growth)
         card.addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new SacrificeSelfCost(), new AddColorlessManaPerChargeCounterOnSourceEffect()),
+                List.of(new SacrificeSelfCost(),
+                        new AwardManaEffect(ManaColor.COLORLESS, new CountersOnSource(CounterType.CHARGE))),
                 "{T}, Sacrifice: Add {C} for each charge counter."));
         return card;
     }

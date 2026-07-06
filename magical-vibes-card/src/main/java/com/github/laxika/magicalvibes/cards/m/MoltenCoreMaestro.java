@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEqualToSourcePowerEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -33,7 +34,7 @@ public class MoltenCoreMaestro extends Card {
                 List.of(
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new ConditionalEffect(new SpellManaSpentAtLeast(5),
-                                new AwardManaEqualToSourcePowerEffect(ManaColor.RED))
+                                new AwardManaEffect(ManaColor.RED, new SourcePower()))
                 )
         ));
     }

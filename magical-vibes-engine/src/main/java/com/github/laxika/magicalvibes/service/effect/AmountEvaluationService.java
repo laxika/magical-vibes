@@ -118,9 +118,17 @@ public class AmountEvaluationService {
         // In static evaluation, match with a null FilterContext: type/keyword checks then
         // use only intrinsic values, so counting never calls computeStaticBonus on other
         // permanents (which could recurse back into the count being computed).
-        FilterContext filterContext = ctx.staticEvaluation()
-                ? null
-                : FilterContext.of(gameData).withSourceControllerId(ctx.controllerId());
+        FilterContext filterContext;
+        if (ctx.staticEvaluation()) {
+            filterContext = null;
+        } else {
+            filterContext = FilterContext.of(gameData).withSourceControllerId(ctx.controllerId());
+            // Source-relative predicates (e.g. PermanentHasSameNameAsSourcePredicate on
+            // Powerstone Shard's "for each artifact you control named ~") need the source card.
+            if (ctx.sourcePermanent() != null) {
+                filterContext = filterContext.withSourceCardId(ctx.sourcePermanent().getCard().getId());
+            }
+        }
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(playerId, count.scope(), ctx)) continue;

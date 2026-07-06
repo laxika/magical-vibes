@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;

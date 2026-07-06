@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaPerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -19,13 +21,12 @@ public class PowerstoneShard extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AddManaPerControlledPermanentEffect(
+                List.of(new AwardManaEffect(
                         ManaColor.COLORLESS,
-                        new PermanentAllOfPredicate(List.of(
+                        new PermanentCount(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentHasSameNameAsSourcePredicate()
-                        )),
-                        "artifacts named Powerstone Shard"
+                        )), CountScope.CONTROLLER)
                 )),
                 "{T}: Add {C} for each artifact you control named Powerstone Shard."
         ));

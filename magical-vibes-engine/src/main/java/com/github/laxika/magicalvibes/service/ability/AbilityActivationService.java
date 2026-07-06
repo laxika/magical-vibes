@@ -45,6 +45,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
@@ -127,6 +128,15 @@ public class AbilityActivationService {
      * @throws IllegalStateException if the permanent is already tapped, has no tap effects,
      *                               has summoning sickness (creatures without haste), or is blocked by Arrest
      */
+    /**
+     * The mana quantity of an {@code ON_TAP} {@link AwardManaEffect}. Tap-for-mana is always a flat
+     * ({@link Fixed}) amount — basic lands and mana creatures — so there is no evaluation context to
+     * build here; a non-fixed amount (which never occurs in an {@code ON_TAP} slot) contributes 0.
+     */
+    private static int onTapManaAmount(AwardManaEffect effect) {
+        return effect.amount() instanceof Fixed fixed ? fixed.value() : 0;
+    }
+
     public void tapPermanent(GameData gameData, Player player, int permanentIndex) {
         UUID playerId = player.getId();
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -165,7 +175,7 @@ public class AbilityActivationService {
                 int totalMana = 0;
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect awardMana) {
-                        totalMana += awardMana.amount();
+                        totalMana += onTapManaAmount(awardMana);
                     }
                 }
                 if (totalMana >= 2) {
@@ -176,9 +186,10 @@ public class AbilityActivationService {
             if (!dampingReplacement) {
                 for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.ON_TAP)) {
                     if (effect instanceof AwardManaEffect awardMana) {
-                        manaPool.add(awardMana.color(), awardMana.amount());
+                        int amount = onTapManaAmount(awardMana);
+                        manaPool.add(awardMana.color(), amount);
                         if (isCreatureSource) {
-                            manaPool.addCreatureMana(awardMana.color(), awardMana.amount());
+                            manaPool.addCreatureMana(awardMana.color(), amount);
                         }
                     }
                 }

@@ -36,6 +36,15 @@ public record AmountContext(
         return new AmountContext(controllerId, source, 0, true);
     }
 
+    /**
+     * Context for a mana ability resolving outside the stack (no priority round, no {@code xValue}).
+     * Mana abilities are resolved immediately from the source permanent and its controller
+     * (CR 605.3a), so there is no {@link StackEntry} to read.
+     */
+    public static AmountContext forManaAbility(Permanent source, UUID controllerId) {
+        return new AmountContext(controllerId, source, 0, false);
+    }
+
     /** Source-less context for heuristic estimation (AI evaluation). */
     public static AmountContext forEstimation(UUID controllerId) {
         return new AmountContext(controllerId, null, 0, false);
