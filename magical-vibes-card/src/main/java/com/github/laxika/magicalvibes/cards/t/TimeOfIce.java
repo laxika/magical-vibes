@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -27,7 +29,7 @@ public class TimeOfIce extends Card {
     public TimeOfIce() {
         // Chapter I: Tap target creature an opponent controls.
         // It doesn't untap during its controller's untap step for as long as you control this Saga.
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new TapTargetPermanentEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_I, new TapPermanentsEffect(TapUntapScope.TARGET));
         addEffect(EffectSlot.SAGA_CHAPTER_I, new PreventTargetUntapWhileSourceOnBattlefieldEffect());
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_I, Set.of(
                 new PermanentPredicateTargetFilter(
@@ -37,7 +39,7 @@ public class TimeOfIce extends Card {
         ));
 
         // Chapter II: Same as chapter I
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new TapTargetPermanentEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_II, new TapPermanentsEffect(TapUntapScope.TARGET));
         addEffect(EffectSlot.SAGA_CHAPTER_II, new PreventTargetUntapWhileSourceOnBattlefieldEffect());
         setSagaChapterTargetFilter(EffectSlot.SAGA_CHAPTER_II, Set.of(
                 new PermanentPredicateTargetFilter(

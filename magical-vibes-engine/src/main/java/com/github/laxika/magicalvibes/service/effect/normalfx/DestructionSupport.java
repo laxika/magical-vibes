@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.TapSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -317,7 +318,7 @@ public class DestructionSupport {
 
     void resolveForcedCostElseEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect) {
         for (var elseEffect : effect.elseEffects()) {
-            if (elseEffect instanceof TapSelfEffect) {
+            if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.SELF) {
                 tapSourcePermanent(gameData, entry);
             } else if (elseEffect instanceof DealDamageToControllerEffect damage) {
                 dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage.damage(),

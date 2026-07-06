@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * During the untap step, the counter prevents untapping and is decremented.</p>
  *
  * <p>This effect does NOT declare {@code canTargetPermanent()} because it piggybacks
- * on the targeting from a companion effect (e.g. {@link TapTargetPermanentEffect}).</p>
+ * on the targeting from a companion effect (e.g. {@link TapPermanentsEffect}).</p>
  *
  * <p>Used by Frost Titan's ETB/attack trigger.</p>
  */

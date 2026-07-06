@@ -10,13 +10,14 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromCardTypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.effect.ValidatesTarget;
@@ -34,14 +35,22 @@ public class CreatureModTargetValidators {
         tvs.requireBattlefieldTarget(ctx);
     }
 
-    @ValidatesTarget(TapTargetPermanentEffect.class)
-    public void validateTapTargetPermanent(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
+    @ValidatesTarget(TapPermanentsEffect.class)
+    public void validateTapPermanents(TargetValidationContext ctx, TapPermanentsEffect effect) {
+        // Only the single-target scope validates a chosen permanent; the other scopes
+        // (SELF, ENCHANTED, TARGET_PLAYERS_PERMANENTS, ALL_CREATURES) don't target one.
+        if (effect.scope() == TapUntapScope.TARGET) {
+            tvs.requireBattlefieldTarget(ctx);
+        }
     }
 
-    @ValidatesTarget(UntapTargetPermanentEffect.class)
-    public void validateUntapTargetPermanent(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
+    @ValidatesTarget(UntapPermanentsEffect.class)
+    public void validateUntapPermanents(TargetValidationContext ctx, UntapPermanentsEffect effect) {
+        // Only the single-target scope validates a chosen permanent; ALL_TARGETS, SELF,
+        // CONTROLLED, OTHER_CONTROLLED_CREATURES and ATTACKED_CREATURES don't target one.
+        if (effect.scope() == TapUntapScope.TARGET) {
+            tvs.requireBattlefieldTarget(ctx);
+        }
     }
 
     @ValidatesTarget(BoostTargetCreatureEffect.class)

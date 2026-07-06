@@ -10,7 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * battlefield, the lock is removed and the target can untap normally.
  *
  * This effect does NOT declare {@code canTargetPermanent()} because it piggybacks
- * on the targeting from a companion effect (e.g. {@link TapTargetPermanentEffect}).
+ * on the targeting from a companion effect (e.g. {@link TapPermanentsEffect}).
  */
 public record PreventTargetUntapWhileSourceTappedEffect() implements CardEffect {
 }

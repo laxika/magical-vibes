@@ -15,7 +15,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * is tied to the source being controlled, not to its tapped state.
  *
  * This effect does NOT declare {@code canTargetPermanent()} because it piggybacks
- * on the targeting from a companion effect (e.g. {@link TapTargetPermanentEffect}).
+ * on the targeting from a companion effect (e.g. {@link TapPermanentsEffect}).
  */
 public record PreventTargetUntapWhileSourceOnBattlefieldEffect() implements CardEffect {
 }

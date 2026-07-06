@@ -101,7 +101,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "destroy all [type]" | `DestroyAllPermanentsEffect(predicate)` | SPELL | Filtered wipe |
 | "sacrifice a creature" | `SacrificeCreatureEffect()` | SPELL | Target player sacrifices |
 | "sacrifice a [subtype]: [effect]" | `SacrificePermanentCost(PermanentAllOfPredicate(creature + PermanentHasSubtypePredicate(subtype)), "Sacrifice a [subtype]", false)` then effect | activated ability | Ravenous Demon front face uses `TransformSelfEffect()` with `SORCERY_SPEED` |
-| "sacrifice a [subtype]. If you can't, [effects]" | `ForcedCostOrElseEffect(SacrificePermanentCost(PermanentAllOfPredicate(creature + subtype), description, false), elseEffects)` | trigger | Archdemon of Greed uses `TapSelfEffect()` + `DealDamageToControllerEffect(9)` |
+| "sacrifice a [subtype]. If you can't, [effects]" | `ForcedCostOrElseEffect(SacrificePermanentCost(PermanentAllOfPredicate(creature + subtype), description, false), elseEffects)` | trigger | Archdemon of Greed uses `TapPermanentsEffect(TapUntapScope.SELF)` + `DealDamageToControllerEffect(9)` |
 | "you may sacrifice a nontoken creature. If you do, create X 2/2 Wolf tokens, where X is its toughness" | `MayEffect(SacrificeCreatureToCreateTokensEqualToToughnessEffect(template, PermanentNotPredicate(PermanentIsTokenPredicate)))` | trigger | Feed the Pack; X = sacrificed creature's toughness |
 | "each opponent sacrifices a creature" | `EachOpponentSacrificesCreatureEffect()` | SPELL/trigger | |
 | "sacrifice CARDNAME" | `SacrificeSelfEffect()` | trigger/ability | |
@@ -283,14 +283,18 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
-| "tap enchanted creature" | `TapEnchantedCreatureEffect()` | ability | aura's own activated ability; no targeting |
+| "tap enchanted creature" | `TapPermanentsEffect(TapUntapScope.ENCHANTED)` | ability | aura's own activated ability; no targeting |
 | "whenever enchanted creature is dealt damage, it deals that much damage to its controller" | `EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect()` | `ON_ENCHANTED_CREATURE_DEALT_DAMAGE` | Spiteful Shadows |
-| "tap target [permanent]" | `TapTargetPermanentEffect()` | SPELL/ability | + filter |
-| "untap target [permanent]" | `UntapTargetPermanentEffect(predicate)` | SPELL/ability | |
-| "untap all [permanents] you control" | `UntapAllControlledPermanentsEffect(predicate)` | SPELL | |
+| "tap target [permanent]" | `TapPermanentsEffect(TapUntapScope.TARGET)` | SPELL/ability | target filter from the ability/spell target spec |
+| "untap target [permanent]" | `UntapPermanentsEffect(TapUntapScope.TARGET[, predicate])` | SPELL/ability | predicate restricts valid targets |
+| "tap all [permanents] target player controls" | `TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, predicate)` | SPELL/ability | targets a player (Sleep, Tempest Caller) |
+| "untap all [permanents] you control" | `UntapPermanentsEffect(TapUntapScope.CONTROLLED, predicate)` | SPELL | |
+| "untap each other [creature] you control" | `UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES, predicate)` | trigger/ability | Copperhorn Scout, Myr Galvanizer |
+| "tap/untap this permanent" | `TapPermanentsEffect(TapUntapScope.SELF)` / `UntapPermanentsEffect(TapUntapScope.SELF)` | ability/trigger | self as effect (not cost) |
 | "CARDNAME doesn't untap during your untap step" | `DoesntUntapDuringUntapStepEffect()` | STATIC | |
-| "tap all attacking creatures" | `TapAllAttackingCreaturesEffect()` | SPELL/trigger | no targeting |
-| "those creatures don't untap during their controller's next untap step" (attacking creatures) | `SkipNextUntapAllAttackingCreaturesEffect()` | SPELL/trigger | pair with `TapAllAttackingCreaturesEffect` |
+| "tap all attacking creatures" | `TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())` | SPELL/trigger | no targeting |
+| "untap all creatures that attacked this turn" | `UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES)` | SPELL/trigger | Relentless Assault |
+| "those creatures don't untap during their controller's next untap step" (attacking creatures) | `SkipNextUntapAllAttackingCreaturesEffect()` | SPELL/trigger | pair with `TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())` |
 
 ## Control / steal
 

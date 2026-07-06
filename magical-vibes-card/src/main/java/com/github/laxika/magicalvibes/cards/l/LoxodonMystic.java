@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -16,7 +18,7 @@ public class LoxodonMystic extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}",
-                List.of(new TapTargetPermanentEffect()),
+                List.of(new TapPermanentsEffect(TapUntapScope.TARGET)),
                 "{W}, {T}: Tap target creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

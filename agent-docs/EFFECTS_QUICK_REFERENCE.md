@@ -389,15 +389,15 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Tap / untap
 
-- `TapEnchantedCreatureEffect()` — tap aura's enchanted creature
 - `EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect()` — enchanted creature deals damage equal to amount dealt to its controller (ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-- `TapTargetPermanentEffect()` — tap target
-- `UntapTargetPermanentEffect(PermanentPredicate)` — untap target
-- `TapSelfEffect()` — tap self
-- `UntapSelfEffect()` — untap self
+- `TapPermanentsEffect(TapUntapScope.TARGET)` — tap target
+- `TapPermanentsEffect(TapUntapScope.SELF)` — tap self · `.ENCHANTED` — tap aura's enchanted creature
+- `TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, filter)` — tap that player's matching permanents
+- `TapPermanentsEffect(TapUntapScope.ALL_CREATURES, filter)` — tap all creatures matching filter (`PermanentIsAttackingPredicate` = all attackers)
+- `UntapPermanentsEffect(TapUntapScope.TARGET[, PermanentPredicate])` — untap target (predicate restricts targets)
+- `UntapPermanentsEffect(TapUntapScope.SELF)` — untap self · `.ALL_TARGETS` — untap all targets
+- `UntapPermanentsEffect(TapUntapScope.CONTROLLED, filter)` — untap all you control matching · `.OTHER_CONTROLLED_CREATURES` — untap each other creature you control · `.ATTACKED_CREATURES` — untap creatures that attacked this turn
 - `DoesntUntapDuringUntapStepEffect()` — doesn't untap (static)
-- `UntapAllControlledPermanentsEffect(PermanentPredicate)` — untap all matching
-- `TapAllAttackingCreaturesEffect()` — tap all attacking creatures
 - `SkipNextUntapAllAttackingCreaturesEffect()` — attacking creatures skip next untap
 
 ## Control / steal

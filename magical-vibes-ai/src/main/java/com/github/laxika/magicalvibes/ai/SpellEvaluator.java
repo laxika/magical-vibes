@@ -50,7 +50,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEf
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -131,7 +132,7 @@ public class SpellEvaluator {
                     AmountContext.forEstimation(aiPlayerId)) * 3.5;
         }
         // Tap target permanent
-        if (effect instanceof TapTargetPermanentEffect) {
+        if (effect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.TARGET) {
             double bestTapValue = oppBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p) && !p.isTapped())
                     .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId) * 0.3)

@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.TapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -19,7 +21,7 @@ public class DeceiverExarch extends Card {
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap target permanent you control",
-                        new UntapTargetPermanentEffect(),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new PermanentPredicateTargetFilter(
                                 new PermanentControlledBySourceControllerPredicate(),
                                 "Target must be a permanent you control"
@@ -27,7 +29,7 @@ public class DeceiverExarch extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap target permanent an opponent controls",
-                        new TapTargetPermanentEffect(),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new PermanentPredicateTargetFilter(
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                                 "Target must be a permanent an opponent controls"

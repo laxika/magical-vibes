@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -10,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapTargetPermanentEffect;
 
 @CardRegistration(set = "DOM", collectorNumber = "134")
 public class KeldonOverseer extends Card {
@@ -25,7 +27,7 @@ public class KeldonOverseer extends Card {
                 new GainControlOfTargetPermanentUntilEndOfTurnEffect()
         ));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), 
-                new UntapTargetPermanentEffect()
+                new UntapPermanentsEffect(TapUntapScope.TARGET)
         ));
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ConditionalEffect(new Kicked(), 
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
