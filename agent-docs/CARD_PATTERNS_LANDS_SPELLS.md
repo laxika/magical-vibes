@@ -29,7 +29,7 @@ All paths relative to `cards/`.
 | X burn | `b/Blaze.java` | DealDamageToAnyTargetEffect(new XValue()) |
 | Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
 | Burn + drain by land count | `c/Corrupt.java` | DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect — damage and life gain equal to controlled Swamps |
-| X drain all opponents | `e/Exsanguinate.java` | EachOpponentLosesXLifeAndControllerGainsLifeLostEffect — no target, X life loss + gain |
+| X drain all opponents | `e/Exsanguinate.java` | SPELL LoseLifeEffect(new XValue(), EACH_OPPONENT, true) — no target, X life loss from each opponent + controller gains total lost |
 | Multi-target damage | `c/ConeOfFlame.java` | DealOrderedDamageToAnyTargetsEffect |
 | Mixed target groups (mandatory + optional) | `s/SeismicShift.java` | Two separate `target()` calls with different filters and counts: `target(LandFilter)` (1,1) + `target(CreatureFilter, 0, 2)`. Destroy land + up to 2 creatures can't block. Also see `i/IntoTheMawOfHell.java` for two mandatory groups |
 | Mixed graveyard + permanent targeting (up to one each) | `y/YawgmothsVileOffering.java` | Graveyard target via `addEffect(SPELL, ReturnCardFromGraveyardEffect.builder().targetGraveyard(true)...)` + permanent target via `target(filter, 0, 1).addEffect(SPELL, DestroyTargetPermanentEffect)` + `ExileSpellEffect`. Uses `targetId` for graveyard (Zone.GRAVEYARD) + `targetIds` for permanent. Legendary sorcery restriction handled automatically by Scryfall LEGENDARY supertype |

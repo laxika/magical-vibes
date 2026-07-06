@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -21,7 +22,7 @@ public class DecimatorWeb extends Card {
                 true,
                 "{4}",
                 List.of(
-                        new TargetPlayerLosesLifeEffect(2),
+                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER),
                         new GiveTargetPlayerPoisonCountersEffect(1),
                         new MillTargetPlayerEffect(6)
                 ),

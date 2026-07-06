@@ -166,11 +166,12 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "you gain life equal to the greatest power among creatures you control" | `GainLifeEffect(new GreatestPowerAmongControlled())` | ability/trigger | Huatli, Warrior Poet +2 |
 | "you gain life equal to the sacrificed creature's toughness" | `GainLifeEffect(new XValue())` | ability effect | with `SacrificeCreatureCost(trackToughness)` snapshotting toughness into xValue |
 | "you gain twice X life" | `GainLifeEffect(new Scaled(new XValue(), 2))` | SPELL | Sanguine Sacrament |
-| "you lose N life" / "lose N life" | `LoseLifeEffect(N)` | SPELL/trigger | |
+| "you lose N life" / "lose N life" | `LoseLifeEffect(N)` (= `(Fixed(N), CONTROLLER, false)`) | SPELL/trigger | |
 | "target player gains N life" | `TargetPlayerGainsLifeEffect(N)` | SPELL | |
-| "target player loses N life" | `TargetPlayerLosesLifeEffect(N)` | SPELL | |
-| "each opponent loses N life" | `EachOpponentLosesLifeEffect(N)` | SPELL/trigger | |
-| "each opponent loses N life and you gain life equal to the life lost" | `EachOpponentLosesLifeAndControllerGainsLifeLostEffect(N)` | SPELL | Drain |
+| "target player loses N life" | `LoseLifeEffect(N, LoseLifeRecipient.TARGET_PLAYER)` | SPELL | Amount is `DynamicAmount` — `EventValue()` for "equal to the life you gained" (Sanguine Bond), `PermanentCount(filter, CONTROLLER)` for "for each … you control" (Bishop) |
+| "each player loses N life" | `LoseLifeEffect(N, LoseLifeRecipient.EACH_PLAYER)` | SPELL/trigger | |
+| "each opponent loses N life" | `LoseLifeEffect(N, LoseLifeRecipient.EACH_OPPONENT)` | SPELL/trigger | |
+| "each opponent loses N life and you gain life equal to the life lost" | `LoseLifeEffect(N, LoseLifeRecipient.EACH_OPPONENT, true)` | SPELL | Drain; Exsanguinate = `LoseLifeEffect(new XValue(), EACH_OPPONENT, true)` |
 | "whenever you gain life, draw a card" | `DrawCardEffect(1)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `d/DrogskolReaver.java` |
 | "whenever you gain life, put a growth counter on this enchantment" | `PutCountersOnSelfEffect(CounterType.GROWTH)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `c/ComfortingCounsel.java` |
 | "as long as there are five or more growth counters on this enchantment, creatures you control get +3/+3" | `ConditionalEffect(new SourceCounterThreshold(5, CounterType.GROWTH), StaticBoostEffect(3, 3, OWN_CREATURES))` | STATIC | |

@@ -20,7 +20,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -465,17 +466,17 @@ class MiscTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_GAINS_LIFE — TargetPlayerLosesLifeEffect(EventValue) =====
+    // ===== ON_CONTROLLER_GAINS_LIFE — LoseLifeEffect(EventValue, TARGET_PLAYER) =====
 
     @Nested
-    @DisplayName("ON_CONTROLLER_GAINS_LIFE — TargetPlayerLosesLifeEffect(EventValue)")
+    @DisplayName("ON_CONTROLLER_GAINS_LIFE — LoseLifeEffect(EventValue, TARGET_PLAYER)")
     class LifeGainOpponentLosesLife {
 
         @Test
         @DisplayName("puts triggered ability on stack targeting opponent with life loss equal to life gained")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEffect(new EventValue());
+            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
             var ctx = new TriggerContext.LifeGain(player1Id, 4);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
@@ -498,7 +499,7 @@ class MiscTriggerCollectorServiceTest {
         @DisplayName("resolved effect keeps EventValue amount and snapshots life gained onto the entry")
         void resolvedEffectHasCorrectAmount() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEffect(new EventValue());
+            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
             var ctx = new TriggerContext.LifeGain(player1Id, 7);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
@@ -509,7 +510,7 @@ class MiscTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
 
             var entry = gd.stack.getLast();
-            var resolved = (TargetPlayerLosesLifeEffect) entry.getEffectsToResolve().getFirst();
+            var resolved = (LoseLifeEffect) entry.getEffectsToResolve().getFirst();
             assertThat(resolved.amount()).isEqualTo(new EventValue());
             assertThat(entry.getEventValue()).isEqualTo(7);
         }
@@ -518,7 +519,7 @@ class MiscTriggerCollectorServiceTest {
         @DisplayName("broadcasts trigger log message")
         void broadcastsTriggerLog() {
             Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new TargetPlayerLosesLifeEffect(new EventValue());
+            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
             var ctx = new TriggerContext.LifeGain(player1Id, 4);
 
             when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);

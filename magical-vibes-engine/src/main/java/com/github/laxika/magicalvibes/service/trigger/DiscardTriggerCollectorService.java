@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDiscardingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -82,7 +83,8 @@ public class DiscardTriggerCollectorService {
             LoseLifeEffect trigger, TriggerContext ctx) {
         TriggerContext.Discard dc = (TriggerContext.Discard) ctx;
         String cardName = match.permanent().getCard().getName();
-        int amount = trigger.amount();
+        // The ON_OPPONENT_DISCARDS marker always carries a literal amount ("that player loses N life").
+        int amount = trigger.amount() instanceof Fixed fixed ? fixed.value() : 0;
         var gameData = match.gameData();
         var discardingPlayerId = dc.discardingPlayerId();
 

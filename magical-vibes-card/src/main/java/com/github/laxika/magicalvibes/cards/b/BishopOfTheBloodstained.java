@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -23,8 +24,8 @@ public class BishopOfTheBloodstained extends Card {
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
                         // "target player loses 1 life for each Vampire you control" — the controller's
                         // Vampires (including Bishop itself), counted as the ability resolves.
-                        new TargetPlayerLosesLifeEffect(new PermanentCount(
+                        new LoseLifeEffect(new PermanentCount(
                                 new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),
-                                CountScope.CONTROLLER)));
+                                CountScope.CONTROLLER), LoseLifeRecipient.TARGET_PLAYER));
     }
 }

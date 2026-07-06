@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetC
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -528,7 +527,28 @@ public class SpellEvaluator {
             return gainAmount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
         }
         if (effect instanceof LoseLifeEffect lose) {
-            return -lose.amount() * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
+            switch (lose.recipient()) {
+                case CONTROLLER -> {
+                    // Controller loses life — a cost/drawback (formerly LoseLifeEffect).
+                    int amount = amountEvaluationService.evaluate(gameData, lose.amount(),
+                            AmountContext.forEstimation(aiPlayerId));
+                    return -amount * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
+                }
+                case EACH_OPPONENT -> {
+                    // Formerly only the X-scaled drain (Exsanguinate) was scored; the fixed
+                    // "each opponent loses N life" variants were not — kept faithful.
+                    if (lose.controllerGainsLifeLost() && amountEvaluationService.referencesXValue(lose.amount())) {
+                        int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
+                        if (estimatedX <= 0) return 0;
+                        return estimatedX * 1.5 + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId); // drain value
+                    }
+                    return 0;
+                }
+                default -> {
+                    // TARGET_PLAYER / EACH_PLAYER were not scored before.
+                    return 0;
+                }
+            }
         }
 
         // Discard
@@ -568,11 +588,6 @@ public class SpellEvaluator {
             if (estimatedX <= 0) return 0;
             return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId)
                     + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
-        }
-        if (effect instanceof EachOpponentLosesXLifeAndControllerGainsLifeLostEffect) {
-            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
-            if (estimatedX <= 0) return 0;
-            return estimatedX * 1.5 + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId); // drain value
         }
 
         return 0;

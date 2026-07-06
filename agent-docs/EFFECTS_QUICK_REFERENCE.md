@@ -312,12 +312,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `TargetPlayerGainsLifeEffect(int)` — target gains life
 - `DoubleTargetPlayerLifeEffect()` — double target life
 - `SetTargetPlayerLifeToSpecificValueEffect(int)` — set life to value
-- `LoseLifeEffect(int)` — lose N life
-- `EachOpponentLosesLifeEffect(int)` — each opponent loses
-- `EachOpponentLosesLifeAndControllerGainsLifeLostEffect(int)` — drain each opponent
-- `TargetPlayerLosesLifeEffect(DynamicAmount)` or `(int)` — target loses life. `EventValue()` for "equal to the life you gained" (Sanguine Bond, snapshotted at the life-gain trigger); `PermanentCount(filter, CONTROLLER)` for "1 life for each … you control" (Bishop of the Bloodstained)
-- `TargetPlayerLosesLifeAndControllerGainsLifeEffect(int, int)` — drain target
-- `EachPlayerLosesLifeEffect(int)` — each player loses
+- `LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient, boolean controllerGainsLifeLost)` — the whole life-loss family. `recipient` = CONTROLLER / TARGET_PLAYER / EACH_PLAYER / EACH_OPPONENT; `controllerGainsLifeLost` drains total life lost back to you. Sugar: `(int)` = `(Fixed, CONTROLLER, false)` (lose N life), `(int, recipient)`, `(DynamicAmount, recipient)`, `(int, recipient, boolean)`. Amount: `EventValue()` for "equal to the life you gained" (Sanguine Bond `(new EventValue(), TARGET_PLAYER)`); `PermanentCount(filter, CONTROLLER)` for "1 life for each … you control" (Bishop); `new XValue()` for Exsanguinate `(new XValue(), EACH_OPPONENT, true)`. `canTargetPlayer()` = recipient==TARGET_PLAYER
+- `TargetPlayerLosesLifeAndControllerGainsLifeEffect(int, int)` — drain target (fixed gain, NOT gains-life-lost)
 - `PlayersCantGainLifeEffect()` — can't gain life (static)
 
 ## Poison counters

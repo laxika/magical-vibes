@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnSpellLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -309,9 +309,9 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = TargetPlayerLosesLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsTrigger(value = LoseLifeEffect.class, slot = EffectSlot.ON_CONTROLLER_GAINS_LIFE)
     private boolean handleLifeGainTargetPlayerLosesLife(TriggerMatchContext match,
-            TargetPlayerLosesLifeEffect effect, TriggerContext ctx) {
+            LoseLifeEffect effect, TriggerContext ctx) {
         TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();

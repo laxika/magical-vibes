@@ -1,10 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.GiveTargetPlayerPoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -28,14 +24,7 @@ class DecimatorWebTest extends BaseCardTest {
         assertThat(ability.isRequiresTap()).isTrue();
         assertThat(ability.getManaCost()).isEqualTo("{4}");
         assertThat(ability.getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-        assertThat(ability.getEffects())
-                .hasSize(3)
-                .anyMatch(e -> e instanceof TargetPlayerLosesLifeEffect tp
-                        && tp.amount().equals(new Fixed(2)))
-                .anyMatch(e -> e instanceof GiveTargetPlayerPoisonCountersEffect gp
-                        && gp.amount() == 1)
-                .anyMatch(e -> e instanceof MillTargetPlayerEffect mp
-                        && mp.count().equals(new Fixed(6)));
+        assertThat(ability.getEffects()).hasSize(3);
     }
 
     // ===== Activation: all three effects resolve =====

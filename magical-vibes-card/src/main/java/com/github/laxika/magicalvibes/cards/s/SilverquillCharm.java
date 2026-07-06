@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,7 +39,7 @@ public class SilverquillCharm extends Card {
                                 "Target must be a creature with power 2 or less.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent loses 3 life and you gain 3 life",
-                        List.of(new EachOpponentLosesLifeEffect(3), new GainLifeEffect(3)))
+                        List.of(new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(3)))
         )));
     }
 }

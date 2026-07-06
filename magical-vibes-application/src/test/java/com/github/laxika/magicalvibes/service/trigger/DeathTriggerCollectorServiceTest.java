@@ -28,7 +28,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwne
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -232,7 +233,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
+            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.amount()).isEqualTo(new Fixed(4));
         }
 
@@ -246,7 +247,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
+            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.amount()).isEqualTo(new Fixed(3));
         }
 
@@ -261,7 +262,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
+            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.amount()).isEqualTo(new Fixed(0));
         }
 
@@ -276,7 +277,7 @@ class DeathTriggerCollectorServiceTest {
 
             svc.handleLosesLifeEqualToPower(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (TargetPlayerLosesLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
+            var resolved = (LoseLifeEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
             assertThat(resolved.amount()).isEqualTo(new Fixed(0));
         }
     }
@@ -303,7 +304,7 @@ class DeathTriggerCollectorServiceTest {
         @DisplayName("Targeting MayEffect queues a DeathTriggerTarget interaction (CR 603.3d)")
         void targetingGoesToPendingTargets() {
             Card card = createCreature("Targeted May", 2, 2);
-            var may = new MayEffect(new TargetPlayerLosesLifeEffect(3), "Drain?");
+            var may = new MayEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER), "Drain?");
             Permanent perm = new Permanent(card);
             var ctx = new TriggerContext.SelfDeath(card, PLAYER1_ID, true, perm);
 

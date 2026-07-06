@@ -29,7 +29,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwne
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -160,7 +161,7 @@ public class DeathTriggerCollectorService {
         Permanent dyingPermanent = sd.dyingPermanent();
         int power = dyingPermanent != null ? dyingPermanent.getEffectivePower()
                 : (sd.dyingCard().getPower() != null ? sd.dyingCard().getPower() : 0);
-        CardEffect resolved = new TargetPlayerLosesLifeEffect(Math.max(0, power));
+        CardEffect resolved = new LoseLifeEffect(Math.max(0, power), LoseLifeRecipient.TARGET_PLAYER);
         match.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                 sd.dyingCard(), sd.controllerId(), new ArrayList<>(List.of(resolved))
         ));

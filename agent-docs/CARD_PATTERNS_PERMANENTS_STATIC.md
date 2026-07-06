@@ -50,7 +50,7 @@ All paths relative to `cards/`.
 | P/T = creatures | `s/ScionOfTheWild.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = PermanentCount(PermanentIsCreaturePredicate, CONTROLLER) |
 | P/T = subtype | `n/Nightmare.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = PermanentCount(PermanentHasSubtypePredicate(SWAMP), CONTROLLER) |
 | P/T = GY creatures | `m/Mortivore.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = CardsInGraveyard(CardTypePredicate(CREATURE), ANY_PLAYER) |
-| P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = CardsInHand(CONTROLLER) + ON_CONTROLLER_DRAWS EachOpponentLosesLifeEffect |
+| P/T = hand size + draw trigger | `p/PsychosisCrawler.java` | STATIC SetPowerToughnessToAmountEffect(a, a) where a = CardsInHand(CONTROLLER) + ON_CONTROLLER_DRAWS LoseLifeEffect(1, EACH_OPPONENT) |
 | Self boost per lands + GY lands | `m/MultaniYavimayasAvatar.java` | STATIC BoostSelfEffect(PermanentCount(PermanentIsLandPredicate, CONTROLLER), same) + BoostSelfEffect(CardsInGraveyard(CardTypePredicate(LAND), CONTROLLER), same) — +1/+1 per land you control and per land card in your graveyard |
 | Gain GY creature abilities | `n/NecroticOoze.java` | STATIC GainActivatedAbilitiesOfCreatureCardsInAllGraveyardsEffect — selfOnly, gains all activated abilities of all creature cards in all graveyards |
 | +1/+1 per same name | `r/RelentlessRats.java` | STATIC BoostByOtherCreaturesWithSameNameEffect |
