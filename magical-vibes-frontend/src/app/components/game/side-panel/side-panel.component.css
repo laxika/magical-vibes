@@ -29,6 +29,15 @@
   transform-origin: top center;
 }
 
+/* Scryfall "normal" scans are 488x680; at 264px wide they fill the 370px panel. */
+.preview-card-image {
+  width: 264px;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
 .card-preview-empty {
   width: 264px;
   height: 370px;

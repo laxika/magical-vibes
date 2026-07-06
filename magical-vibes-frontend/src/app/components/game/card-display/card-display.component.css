@@ -9,7 +9,10 @@
   height: 231px;
   box-sizing: border-box;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-  transition: transform 0.15s;
+  /* Composed from custom properties so tap rotation, hover lift, and
+     parent-driven scaling (e.g. .lands-row) combine instead of overriding. */
+  transform: translateY(var(--card-lift, 0px)) rotate(var(--card-tap-rotate, 0deg)) scale(var(--card-scale, 1));
+  transition: transform 0.25s ease, margin 0.25s ease;
   position: relative;
   overflow: visible;
   user-select: none;
@@ -24,8 +27,20 @@
   pointer-events: none;
 }
 
-:host:hover {
-  transform: translateY(-4px);
+:host(:hover) {
+  --card-lift: -4px;
+}
+
+/* Reserve the rotated footprint: (231 - 165) / 2 = 33px on each axis. */
+:host(.is-tapped) {
+  --card-tap-rotate: 90deg;
+  margin: -33px 33px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host {
+    transition: none;
+  }
 }
 
 
@@ -484,10 +499,18 @@ img.card-art {
   font-family: 'Cinzel', Georgia, serif;
 }
 
-.card-charge-badge {
+.card-counter-badges {
   position: absolute;
   bottom: -8px;
   right: -8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  z-index: 3;
+}
+
+.card-counter-badge {
   background: #5a3d8a;
   color: #e0d0f0;
   font-size: 10px;
@@ -496,6 +519,7 @@ img.card-art {
   border-radius: 3px;
   text-transform: uppercase;
   font-family: 'Cinzel', Georgia, serif;
+  white-space: nowrap;
 }
 
 .card-prepared-badge {

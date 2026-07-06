@@ -1,8 +1,9 @@
-import { Component, Input, Output, EventEmitter, signal, inject, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, signal, inject, HostListener } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent, StackEntry } from '../../../services/websocket.service';
 import { GameChoiceService } from '../../../services/game-choice.service';
 import { ManaSymbolService } from '../../../services/mana-symbol.service';
+import { ScryfallImageService } from '../../../services/scryfall-image.service';
 import { CardDisplayComponent } from '../card-display/card-display.component';
 
 @Component({
@@ -12,9 +13,10 @@ import { CardDisplayComponent } from '../card-display/card-display.component';
   templateUrl: './side-panel.component.html',
   styleUrl: './side-panel.component.css'
 })
-export class SidePanelComponent {
+export class SidePanelComponent implements OnChanges {
   readonly choice = inject(GameChoiceService);
   private manaSymbolService = inject(ManaSymbolService);
+  private scryfallImageService = inject(ScryfallImageService);
   private sanitizer = inject(DomSanitizer);
 
   @Input() hoveredCard: Card | null = null;
@@ -74,6 +76,33 @@ export class SidePanelComponent {
 
   activeTab = signal<'game' | 'stack' | 'graveyard'>('game');
   showPlayerMenu = signal(false);
+  previewImageUrl = signal<string | null>(null);
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['hoveredCard']) {
+      this.loadPreviewImage();
+    }
+  }
+
+  /** Shows the real Scryfall card scan in the preview; the rendered card component is the fallback while loading. */
+  private loadPreviewImage(): void {
+    const card = this.hoveredCard;
+    if (!card || !card.setCode || !card.collectorNumber) {
+      this.previewImageUrl.set(null);
+      return;
+    }
+    const cached = this.scryfallImageService.getCachedCardImageUrl(card.setCode, card.collectorNumber);
+    this.previewImageUrl.set(cached);
+    if (!cached) {
+      this.scryfallImageService.getCardImageUrl(card.setCode, card.collectorNumber)
+        .then(url => {
+          if (this.hoveredCard === card) {
+            this.previewImageUrl.set(url);
+          }
+        })
+        .catch(() => {});
+    }
+  }
 
   // Opponent is always shown on the left, my player on the right
   get opponentPlayerIndex(): number { return 1 - this.myPlayerIndex; }

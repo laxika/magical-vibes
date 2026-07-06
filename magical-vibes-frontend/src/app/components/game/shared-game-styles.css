@@ -220,7 +220,8 @@
 }
 
 .card.tapped {
-  /* Rotation handled by card-display component via :host(.tapped) */
+  /* Rotation handled by card-display component via :host(.is-tapped);
+     this class is still set by parents for the :has(.tapped) spacing rules. */
 }
 
 .card.tappable {
@@ -300,7 +301,7 @@
 }
 
 .lands-row .card {
-  transform: scale(0.9);
+  --card-scale: 0.9;
 }
 
 .creatures-row {
@@ -340,6 +341,13 @@
 
 .land-stack .land-stack-item {
   position: relative;
+  transition: margin-left 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .land-stack .land-stack-item {
+    transition: none;
+  }
 }
 
 .land-stack .land-stack-item:not(:first-child) {

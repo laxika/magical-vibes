@@ -17,7 +17,11 @@
       <div class="game-tab">
         <div class="card-preview-panel">
           @if (hoveredCard) {
-            <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
+            @if (previewImageUrl(); as imageUrl) {
+              <img class="preview-card-image" [src]="imageUrl" [alt]="hoveredCard!.name" />
+            } @else {
+              <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
+            }
           } @else {
             <div class="card-preview-empty"></div>
           }

@@ -72,34 +72,11 @@
 @if (permanent && permanent.prepared) {
   <div class="card-prepared-badge">Prepared</div>
 }
-@if (!preview && permanent && counter('CHARGE') > 0) {
-  <div class="card-charge-badge">Charge x{{ counter('CHARGE') }}</div>
-}
-@if (!preview && permanent && counter('HATCHLING') > 0) {
-  <div class="card-charge-badge">Hatchling x{{ counter('HATCHLING') }}</div>
-}
-@if (!preview && permanent && counter('PHYLACTERY') > 0) {
-  <div class="card-charge-badge">Phylactery x{{ counter('PHYLACTERY') }}</div>
-}
-@if (!preview && permanent && counter('SLIME') > 0) {
-  <div class="card-charge-badge">Slime x{{ counter('SLIME') }}</div>
-}
-@if (!preview && permanent && counter('STUDY') > 0) {
-  <div class="card-charge-badge">Study x{{ counter('STUDY') }}</div>
-}
-@if (!preview && permanent && counter('WISH') > 0) {
-  <div class="card-charge-badge">Wish x{{ counter('WISH') }}</div>
-}
-@if (!preview && permanent && counter('LORE') > 0) {
-  <div class="card-charge-badge">Lore x{{ counter('LORE') }}</div>
-}
-@if (!preview && permanent && counter('AIM') > 0) {
-  <div class="card-charge-badge">Aim x{{ counter('AIM') }}</div>
-}
-@if (!preview && permanent && counter('LANDMARK') > 0) {
-  <div class="card-charge-badge">Landmark x{{ counter('LANDMARK') }}</div>
-}
-@if (!preview && permanent && counter('EYEBALL') > 0) {
-  <div class="card-charge-badge">Eyeball x{{ counter('EYEBALL') }}</div>
+@if (badgeCounters.length > 0) {
+  <div class="card-counter-badges">
+    @for (c of badgeCounters; track c.type) {
+      <div class="card-counter-badge">{{ formatEnumName(c.type) }} x{{ c.count }}</div>
+    }
+  </div>
 }
 <ng-content></ng-content>

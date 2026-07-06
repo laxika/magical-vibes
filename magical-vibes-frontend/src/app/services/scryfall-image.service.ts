@@ -22,8 +22,18 @@ export class ScryfallImageService {
   }
 
   getArtCropUrl(setCode: string, collectorNumber: string): Promise<string> {
-    const cacheKey = `${setCode}:${collectorNumber}`;
+    return this.getImageUrl(`${setCode}:${collectorNumber}`, setCode, collectorNumber, 'art_crop');
+  }
 
+  getCachedCardImageUrl(setCode: string, collectorNumber: string): string | null {
+    return this.objectUrls.get(`normal:${setCode}:${collectorNumber}`) ?? null;
+  }
+
+  getCardImageUrl(setCode: string, collectorNumber: string): Promise<string> {
+    return this.getImageUrl(`normal:${setCode}:${collectorNumber}`, setCode, collectorNumber, 'normal');
+  }
+
+  private getImageUrl(cacheKey: string, setCode: string, collectorNumber: string, version: string): Promise<string> {
     const memCached = this.objectUrls.get(cacheKey);
     if (memCached) {
       return Promise.resolve(memCached);
@@ -34,7 +44,7 @@ export class ScryfallImageService {
       return existing;
     }
 
-    const url = `https://api.scryfall.com/cards/${encodeURIComponent(setCode)}/${encodeURIComponent(collectorNumber)}?format=image&version=art_crop`;
+    const url = `https://api.scryfall.com/cards/${encodeURIComponent(setCode)}/${encodeURIComponent(collectorNumber)}?format=image&version=${version}`;
 
     const promise = this.getFromDb(cacheKey).then(blob => {
       if (blob) {
