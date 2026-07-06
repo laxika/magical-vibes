@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -26,8 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesXLifeAndControllerGainsLifeLostEffect;
@@ -383,10 +382,12 @@ public class SpellEvaluator {
             }
         }
         if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-            return evaluateDamageEffect(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
+            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
+            return evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-            return evaluateDamageToCreature(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
+            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
+            return evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof ReturnTargetPermanentToHandEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
@@ -451,13 +452,15 @@ public class SpellEvaluator {
 
         // Damage
         if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-            return evaluateDamageEffect(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
+            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
+            return evaluateDamageEffect(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-            return evaluateDamageToCreature(gameData, dmg.damage(), oppBattlefield, opponentId, aiPlayerId);
+            int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
+            return evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof DealDamageToTargetPlayerEffect dmg) {
-            return dmg.damage() * 1.5;
+            return estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId) * 1.5;
         }
         if (effect instanceof DealDamageToControllerEffect dmg) {
             return -dmg.damage() * 1.5;
@@ -547,21 +550,11 @@ public class SpellEvaluator {
         }
 
         // X-damage effects
-        if (effect instanceof DealXDamageToAnyTargetEffect) {
-            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
-            if (estimatedX <= 0) return 0;
-            return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId);
-        }
         if (effect instanceof DealXDamageToAnyTargetAndGainXLifeEffect) {
             int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
             if (estimatedX <= 0) return 0;
             return evaluateDamageEffect(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId)
                     + estimatedX * 0.5 * lifeGainMultiplier(gameData, aiPlayerId, opponentId);
-        }
-        if (effect instanceof DealXDamageToTargetCreatureEffect) {
-            int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
-            if (estimatedX <= 0) return 0;
-            return evaluateDamageToCreature(gameData, estimatedX, oppBattlefield, opponentId, aiPlayerId);
         }
         if (effect instanceof EachOpponentLosesXLifeAndControllerGainsLifeLostEffect) {
             int estimatedX = estimateMaxX(gameData, card, aiPlayerId);
@@ -804,6 +797,18 @@ public class SpellEvaluator {
         // Detrimental aura - value based on neutralizing opponent's best creature
         double bestOppCreature = bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId);
         return bestOppCreature > 0 ? bestOppCreature * 0.8 : 0;
+    }
+
+    /**
+     * Resolves a damage effect's {@link DynamicAmount} for heuristic estimation: X-based
+     * amounts use the maximum X the AI could afford for the card, everything else
+     * evaluates in a source-less estimation context.
+     */
+    int estimateDamageAmount(GameData gameData, Card card, DynamicAmount amount, UUID aiPlayerId) {
+        if (amountEvaluationService.referencesXValue(amount)) {
+            return estimateMaxX(gameData, card, aiPlayerId);
+        }
+        return amountEvaluationService.evaluate(gameData, amount, AmountContext.forEstimation(aiPlayerId));
     }
 
     private double evaluateDamageEffect(GameData gameData, int damage, List<Permanent> oppBattlefield,

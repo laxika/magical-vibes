@@ -16,12 +16,18 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "deals N damage to target opponent or planeswalker" | `DealDamageToTargetOpponentOrPlaneswalkerEffect(N)` | SPELL | |
 | "deals N damage to target opponent and N damage to up to M target creatures that player controls" | `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(N, N, M)` | `ON_TRANSFORM_TO_BACK_FACE` | Two-step transform trigger target choice; use M=1 for "up to one" |
 | "deals N damage to target player" | `DealDamageToTargetPlayerEffect(N)` | SPELL | |
-| "deals N damage to each opponent" | `DealDamageToEachOpponentEffect(N)` | SPELL/trigger | No targeting |
+| "deals N damage to each opponent" | `DealDamageToEachOpponentEffect(N)` | SPELL/trigger | No targeting. Amount evaluates once — for dynamic amounts pass a `DynamicAmount`, e.g. `new CountersOnSource(PLUS_ONE_PLUS_ONE)` (Hallar). NOT for per-opponent amounts (Molten Psyche keeps its own record) |
 | "deals N damage to each player" | `DealDamageToEachPlayerEffect(N)` | SPELL | No targeting |
 | "deals N damage to each creature" | `MassDamageEffect(N)` | SPELL | No targeting |
 | "deals N damage to each creature and each planeswalker" | `MassDamageEffect(N, false, false, true, null)` | SPELL | damagesPlaneswalkers=true |
-| "deals X damage to any target" | `DealXDamageToAnyTargetEffect()` | SPELL | X-cost |
-| "deals X damage to target creature" | `DealXDamageToTargetCreatureEffect()` | SPELL | X-cost |
+| "deals X damage to any target" | `DealDamageToAnyTargetEffect(new XValue())` | SPELL | X-cost; also cost-snapshotted X (Fling's sacrificed power, Soulblast). Add `(…, false, true)` for "if it would die this turn, exile it instead" (Red Sun's Zenith) |
+| "deals X damage to target creature" | `DealDamageToTargetCreatureEffect(new XValue())` | SPELL | X-cost; also cost-snapshotted X (Corpse Lunge, Harvest Pyre) |
+| "deals damage equal to its power to any target" (ability/trigger) | `DealDamageToAnyTargetEffect(new SourcePower())` | ability/trigger | Spikeshot Elder, Flayer of the Hatebound. Uses live source or last-known snapshot (CR 608.2h) |
+| "deals damage equal to its toughness to target creature" | `DealDamageToTargetCreatureEffect(new SourceToughness())` | ability | Steadfast Armasaur |
+| "deals damage equal to the number of charge counters on it to any target" | `DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE))` | ability | Shrine of Burning Rage; sacrifice-cost sources resolve from the entry's source snapshot |
+| "deals damage to target creature equal to the number of SUBTYPEs you control" | `DealDamageToTargetCreatureEffect(new PermanentCount(new PermanentHasSubtypePredicate(SUBTYPE), CountScope.CONTROLLER))` | SPELL/trigger | Seismic Strike, Spitting Earth, Firefist Adept. "…and you gain X life" (Tendrils of Corruption) = add `GainLifeEffect(sameAmount)` |
+| "deals damage to target player equal to the number of TYPE cards in your graveyard" | `DealDamageToTargetPlayerEffect(new CardsInGraveyard(new CardTypePredicate(TYPE), CountScope.CONTROLLER))` | SPELL | Scrapyard Salvo |
+| "deals X damage to each of up to N targets" | `DealDamageToEachTargetEffect(new XValue())` + `target(1, N)` | SPELL | Jaya's Immolating Inferno — full amount to each target, not divided |
 | "deals damage equal to its power to target" | `FirstTargetDealsPowerDamageToSecondTargetEffect()` | SPELL | Bite — multi-target. Effect impl uses `gameQueryService.getPowerBasedDamage(gd, source)` — do NOT call `getEffectivePower` directly; the helper clamps negative power to 0 per CR 510.1a. |
 | "target creature deals damage to itself equal to its power" | `TargetCreatureDealsPowerDamageToSelfEffect()` | SPELL | Single-target. Target is both damage source and recipient. Use `getPowerBasedDamage`, not `getEffectivePower`. |
 | "fights target creature" | `FirstTargetFightsSecondTargetEffect()` | SPELL | Multi-target. Same rule: use `getPowerBasedDamage`, not `getEffectivePower`. |
@@ -131,7 +137,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "discard a card" / "discard N cards" | `DiscardCardEffect(N)` | SPELL/trigger | Controller discards |
 | "target player discards N cards" | `TargetPlayerDiscardsEffect(N)` | SPELL | |
 | "Converge — Target player discards X cards, where X is the number of colors of mana spent to cast this spell." | `TargetPlayerDiscardsByConvergeEffect()` | SPELL | Arcane Omens |
-| "Converge — deals X damage to target creature" + excess-damage exile | `DealXDamageToTargetCreatureEffect()` + `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect()` | SPELL | Converge keyword snapshotted to xValue; Archaic's Agony |
+| "Converge — deals X damage to target creature" + excess-damage exile | `DealDamageToTargetCreatureEffect(new XValue())` + `ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect()` | SPELL | Converge keyword snapshotted to xValue; Archaic's Agony |
 | "each player discards N cards" | `EachPlayerDiscardsEffect(N)` | SPELL | |
 | "each opponent discards a card" | `EachOpponentDiscardsEffect(1)` | SPELL/trigger | |
 | "look at target player's hand" | `LookAtHandEffect()` | SPELL | |
@@ -237,7 +243,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "return target creature card from your graveyard to the battlefield" | `ReturnCardFromGraveyardEffect.builder().destination(BATTLEFIELD).filter(CardTypePredicate(CREATURE)).targetGraveyard(true).build()` | SPELL | |
 | "return target card from your graveyard to the top of your library" | `ReturnCardFromGraveyardEffect.builder().destination(TOP_OF_OWNERS_LIBRARY).targetGraveyard(true).build()` | SPELL | |
 | "Undying" (keyword) | none — loaded from Scryfall as `Keyword.UNDYING` | — | Engine handles the return-with-counter in `PermanentRemovalService.collectUndyingTrigger` + `UndyingReturnEffect`. Just register the printing. |
-| "Whenever this creature or another creature enters from your graveyard, that creature deals damage equal to its power to any target" | `DealDamageEqualToSourcePowerToAnyTargetEffect()` | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | Flayer of the Hatebound. The entering creature is the damage source (its power is read at resolution); any-target choice is handled by the `EntersFromGraveyardTriggerTarget` pipeline. |
+| "Whenever this creature or another creature enters from your graveyard, that creature deals damage equal to its power to any target" | `DealDamageToAnyTargetEffect(new SourcePower())` | `ON_CREATURE_ENTERS_FROM_GRAVEYARD` | Flayer of the Hatebound. The entering creature is the damage source (its power is read at resolution); any-target choice is handled by the `EntersFromGraveyardTriggerTarget` pipeline. |
 
 ## Counters
 
@@ -249,7 +255,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "put a +1/+1 counter on each creature you control" | `PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())` | SPELL/trigger | |
 | "put a +1/+1 counter on each creature target player controls" | `PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect()` | SPELL | Multi-target: player first (`targetIds[0]`). Practiced Offense |
 | "target creature gains your choice of [keyword] or [keyword] until end of turn" | `GrantChosenKeywordToSecondTargetEffect(List.of(Keyword.X, Keyword.Y))` | SPELL | Multi-target: creature second (`targetIds[1]`). Practiced Offense |
-| "damage to target creature equal to the amount of mana spent to cast this spell" | `DealDamageToTargetCreatureEqualToManaSpentToCastEffect()` | SPELL | Total mana spent snapshotted at cast time. Molten Note |
+| "damage to target creature equal to the amount of mana spent to cast this spell" | `DealDamageToTargetCreatureEffect(new ManaSpentToCast())` | SPELL | Total mana spent snapshotted at cast time (`SpellCastingService` keys on the `ManaSpentToCast` amount). Molten Note |
 | "put a -1/-1 counter on target creature" | `PutMinusOneMinusOneCounterOnTargetCreatureEffect(1)` | SPELL/trigger | |
 | "proliferate" | `ProliferateEffect()` | SPELL/trigger | |
 | "put N <named> counters on CARDNAME" | `PutCountersOnSelfEffect(CounterType.X, N)` | trigger/ability | for a non-P/T named counter type on the source (e.g. Jar of Eyeballs: `CounterType.EYEBALL, 2`) |

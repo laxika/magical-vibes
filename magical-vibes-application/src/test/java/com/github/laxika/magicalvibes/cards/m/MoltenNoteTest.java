@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToManaSpentToCastEffect;
+import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllControlledPermanentsEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +24,7 @@ class MoltenNoteTest extends BaseCardTest {
 
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0))
-                .isInstanceOf(DealDamageToTargetCreatureEqualToManaSpentToCastEffect.class);
+                .isEqualTo(new DealDamageToTargetCreatureEffect(new ManaSpentToCast()));
         assertThat(card.getEffects(EffectSlot.SPELL).get(1))
                 .isInstanceOf(UntapAllControlledPermanentsEffect.class);
     }

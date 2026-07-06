@@ -889,7 +889,7 @@ class SpellCastTriggerCollectorServiceTest {
                     EffectSlot.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
 
             var resolved = (DealDamageToAnyTargetEffect) gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class).effects().getFirst();
-            assertThat(resolved.damage()).isEqualTo(2);
+            assertThat(resolved.damage()).isEqualTo(new Fixed(2));
         }
 
         @Test

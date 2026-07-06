@@ -332,13 +332,11 @@ public class SpellCastTriggerCollectorService {
         if (!isKicked) return false;
 
         List<CardEffect> resolved = new ArrayList<>(trigger.resolvedEffects());
-        boolean selfTarget = resolved.stream().anyMatch(CardEffect::isSelfTargeting);
 
-        StackEntry entry = selfTarget
-                ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId())
-                : new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability", resolved);
+        // The trigger's source permanent is always carried on the entry — source-relative
+        // effects (put counters on source, damage equal to counters on source) need it.
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, match.permanent().getCard(), match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability", resolved, null, match.permanent().getId());
         match.gameData().stack.add(entry);
 
         log.info("Game {} - {} kicked-spell-cast trigger queued",

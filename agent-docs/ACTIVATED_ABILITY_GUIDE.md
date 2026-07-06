@@ -200,7 +200,7 @@ ActivatedAbility.variableLoyaltyAbility(effects, description, targetFilter)
 ```java
 // −X: Chandra Nalaar deals X damage to target creature.
 ActivatedAbility.variableLoyaltyAbility(
-    List.of(new DealXDamageToTargetCreatureEffect()),
+    List.of(new DealDamageToTargetCreatureEffect(new XValue())),
     "\u2212X: Chandra Nalaar deals X damage to target creature.",
     null)
 ```

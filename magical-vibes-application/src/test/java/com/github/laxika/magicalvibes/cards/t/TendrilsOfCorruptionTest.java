@@ -10,7 +10,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,13 +32,11 @@ class TendrilsOfCorruptionTest extends BaseCardTest {
         TendrilsOfCorruption card = new TendrilsOfCorruption();
 
         assertThat(EffectResolution.needsTarget(card)).isTrue();
-        assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(1);
-        assertThat(card.getEffects(EffectSlot.SPELL).getFirst())
-                .isInstanceOf(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class);
-        DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect effect =
-                (DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect) card.getEffects(EffectSlot.SPELL).getFirst();
-        assertThat(effect.subtype()).isEqualTo(CardSubtype.SWAMP);
-        assertThat(effect.gainLife()).isTrue();
+        PermanentCount swampCount = new PermanentCount(
+                new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER);
+        assertThat(card.getEffects(EffectSlot.SPELL)).containsExactly(
+                new DealDamageToTargetCreatureEffect(swampCount),
+                new GainLifeEffect(swampCount));
     }
 
     @Test

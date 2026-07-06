@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -29,7 +30,7 @@ public class ChandraNalaar extends Card {
 
         // −X: Chandra Nalaar deals X damage to target creature.
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new DealXDamageToTargetCreatureEffect()),
+                List.of(new DealDamageToTargetCreatureEffect(new XValue())),
                 "\u2212X: Chandra Nalaar deals X damage to target creature.",
                 null
         ));

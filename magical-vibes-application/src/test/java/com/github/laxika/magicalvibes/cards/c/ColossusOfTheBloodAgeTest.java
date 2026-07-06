@@ -47,7 +47,7 @@ class ColossusOfTheBloodAgeTest extends BaseCardTest {
                 .hasAtLeastOneElementOfType(DealDamageToEachOpponentEffect.class)
                 .hasAtLeastOneElementOfType(GainLifeEffect.class);
         assertThat(((DealDamageToEachOpponentEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(0)).damage())
-                .isEqualTo(3);
+                .isEqualTo(new Fixed(3));
         assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).get(1)).amount())
                 .isEqualTo(new Fixed(3));
 

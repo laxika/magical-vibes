@@ -52,7 +52,7 @@ class ArkOfHungerTest extends BaseCardTest {
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(0))
                 .isInstanceOf(DealDamageToEachOpponentEffect.class);
         assertThat(((DealDamageToEachOpponentEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(0)).damage())
-                .isEqualTo(1);
+                .isEqualTo(new Fixed(1));
         assertThat(card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(1))
                 .isInstanceOf(GainLifeEffect.class);
         assertThat(((GainLifeEffect) card.getEffects(EffectSlot.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD).get(1)).amount())

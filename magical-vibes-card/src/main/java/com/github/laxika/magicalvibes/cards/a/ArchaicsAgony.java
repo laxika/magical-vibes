@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -20,7 +21,7 @@ public class ArchaicsAgony extends Card {
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
         ))
-                .addEffect(EffectSlot.SPELL, new DealXDamageToTargetCreatureEffect())
+                .addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(new XValue()))
                 .addEffect(EffectSlot.SPELL, new ExileTopCardsEqualToStackEntryExcessDamageMayPlayUntilNextTurnEffect());
     }
 }

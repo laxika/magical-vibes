@@ -8,10 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -26,22 +24,8 @@ public class DamageTargetValidators {
     private final TargetValidationService tvs;
     private final GameQueryService gameQueryService;
 
-    @ValidatesTarget(DealXDamageToTargetCreatureEffect.class)
-    public void validateDealXDamageToTargetCreature(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-        tvs.checkProtection(ctx, target);
-    }
-
     @ValidatesTarget(DealDamageToTargetCreatureEffect.class)
     public void validateDealDamageToTargetCreature(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
-        tvs.checkProtection(ctx, target);
-    }
-
-    @ValidatesTarget(DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect.class)
-    public void validateDealDamageToTargetCreatureEqualToSubtypeCount(TargetValidationContext ctx) {
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
         tvs.checkProtection(ctx, target);

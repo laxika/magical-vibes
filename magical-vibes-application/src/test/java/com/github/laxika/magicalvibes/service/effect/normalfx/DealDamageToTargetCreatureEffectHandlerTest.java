@@ -25,7 +25,7 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
 
     @Override
     protected void setUpHandler() {
-        dealDamageToTargetCreatureHandler = new DealDamageToTargetCreatureEffectHandler(damageSupport, gameQueryService);
+        dealDamageToTargetCreatureHandler = new DealDamageToTargetCreatureEffectHandler(damageSupport, gameQueryService, amountEvaluationService);
     }
 
     @Test

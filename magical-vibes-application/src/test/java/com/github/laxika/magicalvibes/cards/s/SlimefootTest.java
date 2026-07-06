@@ -63,7 +63,7 @@ class SlimefootTest extends BaseCardTest {
                 (TriggeringCardConditionalEffect) card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(0);
         assertThat(damageFilter.predicate()).isEqualTo(new CardSubtypePredicate(CardSubtype.SAPROLING));
         assertThat(damageFilter.wrapped()).isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) damageFilter.wrapped()).damage()).isEqualTo(1);
+        assertThat(((DealDamageToEachOpponentEffect) damageFilter.wrapped()).damage()).isEqualTo(new Fixed(1));
 
         // Second effect: gain 1 life
         assertThat(card.getEffects(EffectSlot.ON_ALLY_CREATURE_DIES).get(1))

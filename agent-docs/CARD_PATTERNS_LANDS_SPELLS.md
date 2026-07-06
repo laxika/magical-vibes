@@ -26,7 +26,7 @@ All paths relative to `cards/`.
 | Targeted burn | `s/Shock.java` | SPELL DealDamageToAnyTargetEffect (targeting auto-derived) |
 | Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToTargetCreatureControllerEffect |
 | Uncounterable + unpreventable burn | `c/Combust.java` | STATIC CantBeCounteredEffect + DealDamageToTargetCreatureEffect(5, true) + PermanentColorInPredicate target filter |
-| X burn | `b/Blaze.java` | DealXDamageToAnyTargetEffect |
+| X burn | `b/Blaze.java` | DealDamageToAnyTargetEffect(new XValue()) |
 | Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
 | Burn + drain by land count | `c/Corrupt.java` | DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect — damage and life gain equal to controlled Swamps |
 | X drain all opponents | `e/Exsanguinate.java` | EachOpponentLosesXLifeAndControllerGainsLifeLostEffect — no target, X life loss + gain |
@@ -119,7 +119,7 @@ All paths relative to `cards/`.
 | Mill half library (ON_ATTACK) | `f/FleetSwallower.java` | ON_ATTACK MillHalfLibraryEffect(true) — creature attacks, target player mills half library rounded up |
 | Shuffle-back spell | `b/BeaconOfDestruction.java` | Effect + ShuffleIntoLibraryEffect |
 | X draw (controller) | `m/MindSpring.java` | DrawCardEffect(new XValue()) — non-targeting X draw for controller |
-| X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealXDamageToAnyTargetEffect(true) + ShuffleIntoLibraryEffect |
+| X burn + exile-instead-of-die + shuffle | `r/RedSunsZenith.java` | DealDamageToAnyTargetEffect(new XValue(), false, true) + ShuffleIntoLibraryEffect |
 | X tokens + shuffle | `w/WhiteSunsZenith.java` | CreateTokenEffect(new XValue(), ...) + ShuffleIntoLibraryEffect |
 | Fight (two-target) | `p/PreyUpon.java` | FirstTargetFightsSecondTargetEffect, multi-target: creature you control + creature you don't control |
 | Fight (any two creatures) | `b/BloodFeud.java` | FirstTargetFightsSecondTargetEffect, both targets are any creature (no controller restriction). Cross-group distinct is the default — no extra flags needed when oracle text says "another target" |
@@ -131,8 +131,8 @@ All paths relative to `cards/`.
 | Sacrifice artifact spell cost + tokens | `k/KuldothaRebirth.java` | SacrificeArtifactCost + CreateTokenEffect — sacrifice artifact as additional spell cost |
 | Sacrifice permanent spell cost + burn | `a/Artillerize.java` | SacrificePermanentCost(PermanentAnyOfPredicate) + DealDamageToAnyTargetEffect — sacrifice artifact or creature as additional spell cost |
 | Sacrifice creature spell cost + power-based mass debuff | `i/IchorExplosion.java` | SacrificeCreatureCost(false, true) + BoostAllCreaturesXEffect(-1, -1) — sacrifice creature, all creatures get -X/-X where X = sacrificed creature's power |
-| Exile graveyard creature spell cost + power-based damage | `c/CorpseLunge.java` | ExileCardFromGraveyardCost(CREATURE, false, false, true) + DealXDamageToTargetCreatureEffect — exile creature from graveyard as additional cost, deal damage equal to exiled card's power to target creature |
-| Graveyard-count damage | `s/ScrapyardSalvo.java` | DealDamageToTargetPlayerEqualToCardTypeCountInGraveyardEffect(ARTIFACT) — damage to target player equal to artifact cards in graveyard |
+| Exile graveyard creature spell cost + power-based damage | `c/CorpseLunge.java` | ExileCardFromGraveyardCost(CREATURE, false, false, true) + DealDamageToTargetCreatureEffect(new XValue()) — exile creature from graveyard as additional cost (snapshots the exiled card's power into xValue), deal that much damage to target creature |
+| Graveyard-count damage | `s/ScrapyardSalvo.java` | DealDamageToTargetPlayerEffect(new CardsInGraveyard(new CardTypePredicate(ARTIFACT), CountScope.CONTROLLER)) — damage to target player equal to artifact cards in your graveyard |
 | Mass exile + reveal creatures to battlefield | `m/MassPolymorph.java` | ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect — exile all your creatures, reveal from library until that many creature cards found, put onto battlefield, shuffle rest back |
 | Static self-boost per controlled subtype | `e/EarthServant.java` | STATIC BoostSelfEffect(Fixed(0), PermanentCount(PermanentHasSubtypePredicate(MOUNTAIN), CONTROLLER)) — +0/+1 for each Mountain you control |
 | Static conditional boost (another multi-subtype) | `k/KumenasSpeaker.java` | STATIC ConditionalEffect(new ControlsAnotherPermanent(PermanentHasAnySubtypePredicate(Set.of(MERFOLK, ISLAND))), StaticBoostEffect(1, 1, SELF)) — +1/+1 as long as you control another Merfolk or Island |

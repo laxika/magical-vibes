@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -51,7 +52,8 @@ class ShrineOfBurningRageTest extends BaseCardTest {
         assertThat(ability.getManaCost()).isEqualTo("{3}");
         assertThat(ability.getEffects()).hasSize(2);
         assertThat(ability.getEffects().get(0)).isInstanceOf(SacrificeSelfCost.class);
-        assertThat(ability.getEffects().get(1)).isInstanceOf(DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect.class);
+        assertThat(ability.getEffects().get(1))
+                .isEqualTo(new DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE)));
         assertThat(ability.isNeedsTarget()).isTrue();
     }
 

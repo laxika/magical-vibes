@@ -41,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -66,6 +68,7 @@ class AiTargetSelector {
     private final TargetValidationService targetValidationService;
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
+    private final AmountEvaluationService amountEvaluationService;
     private final BoardEvaluator boardEvaluator;
 
     AiTargetSelector(GameQueryService gameQueryService, TargetValidationService targetValidationService,
@@ -80,6 +83,7 @@ class AiTargetSelector {
         this.targetValidationService = targetValidationService;
         this.targetLegalityService = targetLegalityService;
         this.validTargetService = new ValidTargetService(gameQueryService, predicateEvaluationService);
+        this.amountEvaluationService = new AmountEvaluationService(predicateEvaluationService, gameQueryService);
         this.boardEvaluator = boardEvaluator;
     }
 
@@ -768,11 +772,15 @@ class AiTargetSelector {
                                         List<CardEffect> effects, Permanent source) {
         List<Permanent> oppBattlefield = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
 
-        // For damage abilities, prefer creatures we can kill
+        // For damage abilities, prefer creatures we can kill. Amounts evaluate with the
+        // ability's source permanent in context (e.g. power/counter-based damage).
+        AmountContext amountCtx = new AmountContext(aiPlayerId, source, 0, false);
         for (CardEffect effect : effects) {
             final int damage;
-            if (effect instanceof DealDamageToAnyTargetEffect dmg) damage = dmg.damage();
-            else if (effect instanceof DealDamageToTargetCreatureEffect dmg) damage = dmg.damage();
+            if (effect instanceof DealDamageToAnyTargetEffect dmg)
+                damage = amountEvaluationService.evaluate(gameData, dmg.damage(), amountCtx);
+            else if (effect instanceof DealDamageToTargetCreatureEffect dmg)
+                damage = amountEvaluationService.evaluate(gameData, dmg.damage(), amountCtx);
             else damage = 0;
 
             if (damage > 0) {

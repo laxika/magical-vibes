@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTarget
 import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEqualToManaSpentToCastEffect;
+import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 
 import java.util.ArrayList;
@@ -215,7 +216,8 @@ public final class EffectResolution {
     }
 
     public static boolean hasManaSpentToCastDamageEffect(List<CardEffect> effects) {
-        return effects.stream().anyMatch(DealDamageToTargetCreatureEqualToManaSpentToCastEffect.class::isInstance);
+        return effects.stream().anyMatch(e ->
+                e instanceof DealDamageToTargetCreatureEffect d && d.damage() instanceof ManaSpentToCast);
     }
 
     public static boolean hasManaSpentToCastDamageEffect(Card card) {

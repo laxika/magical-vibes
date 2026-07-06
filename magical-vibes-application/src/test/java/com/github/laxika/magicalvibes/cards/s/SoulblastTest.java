@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RagingGoblin;
@@ -7,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +30,7 @@ class SoulblastTest extends BaseCardTest {
         assertThat(EffectResolution.needsTarget(card)).isTrue();
         assertThat(card.getEffects(EffectSlot.SPELL)).hasSize(2);
         assertThat(card.getEffects(EffectSlot.SPELL).get(0)).isInstanceOf(SacrificeAllCreaturesYouControlCost.class);
-        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isInstanceOf(DealXDamageToAnyTargetEffect.class);
+        assertThat(card.getEffects(EffectSlot.SPELL).get(1)).isEqualTo(new DealDamageToAnyTargetEffect(new XValue()));
     }
 
     @Test
@@ -50,7 +51,7 @@ class SoulblastTest extends BaseCardTest {
         assertThat(entry.getTargetId()).isEqualTo(player2.getId());
         assertThat(entry.getXValue()).isEqualTo(3);
         assertThat(entry.getEffectsToResolve()).hasSize(1);
-        assertThat(entry.getEffectsToResolve().getFirst()).isInstanceOf(DealXDamageToAnyTargetEffect.class);
+        assertThat(entry.getEffectsToResolve().getFirst()).isEqualTo(new DealDamageToAnyTargetEffect(new XValue()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears") || p.getCard().getName().equals("Raging Goblin"));

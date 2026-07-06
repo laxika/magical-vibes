@@ -17,9 +17,12 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
+import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.OpponentPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.amount.SourceToughness;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -57,6 +60,8 @@ public class AmountEvaluationService {
                     f.value();
             case XValue ignored ->
                     ctx.xValue();
+            case ManaSpentToCast ignored ->
+                    ctx.xValue();
             case Scaled s ->
                     s.factor() * evaluate(gameData, s.amount(), ctx);
             case Divided d ->
@@ -85,6 +90,12 @@ public class AmountEvaluationService {
                     imprintedCreaturePT(ctx, true);
             case ImprintedCreatureToughness ignored ->
                     imprintedCreaturePT(ctx, false);
+            case SourcePower ignored ->
+                    ctx.sourcePermanent() == null ? 0
+                            : Math.max(0, gameQueryService.getEffectivePower(gameData, ctx.sourcePermanent()));
+            case SourceToughness ignored ->
+                    ctx.sourcePermanent() == null ? 0
+                            : Math.max(0, gameQueryService.getEffectiveToughness(gameData, ctx.sourcePermanent()));
         };
     }
 
@@ -95,6 +106,7 @@ public class AmountEvaluationService {
     public boolean referencesXValue(DynamicAmount amount) {
         return switch (amount) {
             case XValue ignored -> true;
+            case ManaSpentToCast ignored -> true;
             case Scaled s -> referencesXValue(s.amount());
             case Divided d -> referencesXValue(d.amount());
             case Sum s -> s.amounts().stream().anyMatch(this::referencesXValue);

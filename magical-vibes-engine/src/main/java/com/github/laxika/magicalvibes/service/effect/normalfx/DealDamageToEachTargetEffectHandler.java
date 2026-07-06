@@ -3,34 +3,37 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToEachTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Card;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class DealXDamageToEachTargetEffectHandler implements NormalEffectHandlerBean {
+public class DealDamageToEachTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final GameOutcomeService gameOutcomeService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return DealXDamageToEachTargetEffect.class;
+        return DealDamageToEachTargetEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (DealDamageToEachTargetEffect) effect;
 
         List<UUID> targets = entry.getTargetIds();
         if (targets.isEmpty()) {
@@ -41,8 +44,18 @@ public class DealXDamageToEachTargetEffectHandler implements NormalEffectHandler
             }
         }
 
-        int x = entry.getXValue();
-        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, x, entry);
+        // Source-relative amounts use the live source permanent when it is still on the
+        // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, source));
+
+        int rawDamage = gameQueryService.applyDamageMultiplier(gameData, damage, entry);
         String cardName = entry.getCard().getName();
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
@@ -71,6 +84,6 @@ public class DealXDamageToEachTargetEffectHandler implements NormalEffectHandler
 
         damageSupport.destroyAllLethal(gameData, destroyed);
         gameOutcomeService.checkWinCondition(gameData);
-    
+
     }
 }

@@ -20,7 +20,7 @@ class DealDamageToTargetPlayerEffectHandlerTest extends AbstractDamageHandlerTes
 
     @Override
     protected void setUpHandler() {
-        dealDamageToTargetPlayerHandler = new DealDamageToTargetPlayerEffectHandler(damageSupport, gameQueryService, gameOutcomeService);
+        dealDamageToTargetPlayerHandler = new DealDamageToTargetPlayerEffectHandler(damageSupport, gameQueryService, gameOutcomeService, amountEvaluationService);
     }
 
     @Test

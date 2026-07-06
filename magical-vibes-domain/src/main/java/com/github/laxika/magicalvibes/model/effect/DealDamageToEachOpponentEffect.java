@@ -1,8 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
- * Deals a fixed amount of damage to each opponent (not creatures, not the controller).
- * Used by cards like Cabal Paladin: "deals 2 damage to each opponent."
+ * Deals damage to each opponent (not creatures, not the controller). The amount is a
+ * {@link DynamicAmount} evaluated once at resolution — the same value is dealt to every
+ * opponent (e.g. Cabal Paladin's fixed 2, Hallar's +1/+1 counter count).
  */
-public record DealDamageToEachOpponentEffect(int damage) implements CardEffect {
+public record DealDamageToEachOpponentEffect(DynamicAmount damage) implements CardEffect {
+
+    public DealDamageToEachOpponentEffect(int damage) {
+        this(new Fixed(damage));
+    }
 }

@@ -73,27 +73,25 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 > (fight, bite, Pack Hunt, Berserker, Arc-Lightning-style source damage, planeswalker
 > power-to-loyalty, `FirstTargetDealsPowerDamageToSecondTargetEffect`,
 > `FirstTargetFightsSecondTargetEffect`, `MassFightTargetCreatureEffect`,
-> `SourceFightsTargetCreatureEffect`, `DealDamageEqualToSourcePowerToAnyTargetEffect`,
+> `SourceFightsTargetCreatureEffect`, the `SourcePower` dynamic amount,
 > `PackHuntEffect`) must read the amount via
 > `gameQueryService.getPowerBasedDamage(gameData, source)` — **never** via
 > `getEffectivePower` with a manual `> 0` guard. The helper clamps negative power to 0 per
 > CR 510.1a so the damage primitives never see negative values.
 
-- `DealDamageToAnyTargetEffect(int damage, boolean cantRegenerate)` — any target
+- `DealDamageToAnyTargetEffect(DynamicAmount, boolean cantRegenerate, boolean exileInsteadOfDie)`; `(int)`, `(int, boolean)`, `(DynamicAmount)` — any target. Amounts: `Fixed`, `XValue` (X spells / cost-snapshotted power), `SourcePower`, `CountersOnSource(CHARGE)`, …
 - `DealDamageToAttackedTargetEffect(int damage)` — damage to the player or planeswalker attacked by the creature that caused the attack trigger
-- `DealDamageEqualToSourcePowerToAnyTargetEffect()` — source power to any target
-- `DealDamageEqualToSourceToughnessToTargetCreatureEffect()` — source toughness to creature
 - `SourceFightsTargetCreatureEffect()` — source fights target
 - `PackHuntEffect(CardSubtype)` — pack hunt
 - `DealDamageToTargetAndTheirCreaturesEffect(int)` — player + their creatures
 - `DealDamageToEachCreatureDamagedPlayerControlsEffect()` — damage to damaged player's creatures
-- `DealDamageToTargetCreatureEffect(int)` or `(int, boolean unpreventable)` — target creature
+- `DealDamageToTargetCreatureEffect(DynamicAmount, boolean unpreventable)`; `(int)`, `(int, boolean)`, `(DynamicAmount)` — target creature. Amounts: `Fixed`, `XValue`, `SourceToughness`, `PermanentCount` (subtype counts), `ManaSpentToCast`
 - `DealDamageToTargetCreatureOrPlaneswalkerEffect(int)` — creature or planeswalker
 - `DealDamageToTargetOpponentOrPlaneswalkerEffect(int)` — opponent or planeswalker
 - `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(int opponentDamage, int creatureDamage, int maxCreatureTargets)` — target opponent plus up to N creatures that player controls
 - `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(int)` — all target controls
 - `DealDamageToAllCreaturesTargetControlsEffect(int)` — creatures target controls
-- `DealDamageToTargetPlayerEffect(int)` — target player
+- `DealDamageToTargetPlayerEffect(DynamicAmount)`; `(int)` — target player. Amounts: `Fixed`, `CardsInGraveyard` (Scrapyard Salvo)
 - `DealDamageToSecondaryTargetEffect(int)` — secondary target
 - `DealDamageToTargetPlayerByHandSizeEffect()` — damage = hand size
 - `MassDamageEffect(int)` or `(int, boolean, boolean, PermanentPredicate)` + overloads — mass damage
@@ -101,18 +99,14 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToAnyTargetAndGainLifeEffect(int damage, int lifeGain)` — damage + life gain
 - `DealDamageToControllerEffect(int)` — self damage
 - `DealDamageToTargetCreatureControllerEffect(int)` — target creature's controller
-- `DealDamageToTargetCreatureEqualToControlledSubtypeCountEffect(CardSubtype, boolean)` — damage = subtype count
-- `DealDamageToTargetCreatureEqualToManaSpentToCastEffect()` — damage = total mana spent to cast (snapshotted at cast time)
 - `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect(CardSubtype, boolean)` — any target = subtype count
-- `DealDamageToEachOpponentEffect(int)` — each opponent
+- `DealDamageToEachOpponentEffect(DynamicAmount)`; `(int)` — each opponent (single evaluation, same value for all). Amounts: `Fixed`, `CountersOnSource(PLUS_ONE_PLUS_ONE)` (Hallar)
 - `DealOrderedDamageToAnyTargetsEffect(List<Integer>)` — ordered multi-target
-- `DealXDamageToAnyTargetEffect()` or `(boolean exileInsteadOfDie)` — X damage any target
 - `DealXDamageToAnyTargetAndGainXLifeEffect()` — X damage + X life
-- `DealXDamageToTargetCreatureEffect()` — X damage creature
 - `DealXDamageDividedAmongTargetAttackingCreaturesEffect()` — X divided among attackers
 - `DealXDamageDividedAmongTargetCreaturesCantBlockEffect()` — X divided, can't block
 - `DealXDamageDividedEvenlyAmongTargetsEffect()` — X divided evenly (Fireball-style)
-- `DealXDamageToEachTargetEffect()` — X to each target
+- `DealDamageToEachTargetEffect(DynamicAmount)` — full amount to each of multiple targets (Jaya's Immolating Inferno with `XValue`)
 - `FirstTargetDealsPowerDamageToSecondTargetEffect()` — bite
 - `TargetCreatureDealsPowerDamageToSelfEffect()` — target deals its power to itself
 - `FirstTargetFightsSecondTargetEffect()` — fight

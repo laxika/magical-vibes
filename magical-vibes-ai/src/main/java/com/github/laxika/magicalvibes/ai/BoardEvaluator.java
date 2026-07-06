@@ -289,9 +289,11 @@ public class BoardEvaluator {
             for (CardEffect effect : ability.getEffects()) {
                 if (effect instanceof CostEffect) continue;
                 if (effect instanceof DealDamageToAnyTargetEffect dmg) {
-                    bonus += dmg.damage() * 2.0;
+                    bonus += amountEvaluationService.evaluate(gameData, dmg.damage(),
+                            new AmountContext(controllerId, perm, 0, false)) * 2.0;
                 } else if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
-                    bonus += dmg.damage() * 2.0;
+                    bonus += amountEvaluationService.evaluate(gameData, dmg.damage(),
+                            new AmountContext(controllerId, perm, 0, false)) * 2.0;
                 } else if (effect instanceof DestroyTargetPermanentEffect) {
                     bonus += 8.0;
                 } else if (effect instanceof ExileTargetPermanentEffect) {

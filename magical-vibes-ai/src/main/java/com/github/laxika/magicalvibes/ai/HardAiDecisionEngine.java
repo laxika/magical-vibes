@@ -912,19 +912,19 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (gameQueryService.hasHexproofFromColor(gameData, creature, spell.getColor())) return false;
 
         for (CardEffect effect : spell.getEffects(EffectSlot.SPELL)) {
-            if (canSingleEffectRemoveCreature(gameData, effect, creature)) return true;
+            if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
         for (CardEffect effect : spell.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
-            if (canSingleEffectRemoveCreature(gameData, effect, creature)) return true;
+            if (canSingleEffectRemoveCreature(gameData, spell, effect, creature)) return true;
         }
         return false;
     }
 
-    private boolean canSingleEffectRemoveCreature(GameData gameData, CardEffect effect,
+    private boolean canSingleEffectRemoveCreature(GameData gameData, Card spell, CardEffect effect,
                                                    Permanent creature) {
         if (effect instanceof ChooseOneEffect coe) {
             for (ChooseOneEffect.ChooseOneOption option : coe.options()) {
-                if (canSingleEffectRemoveCreature(gameData, option.effect(), creature)) return true;
+                if (canSingleEffectRemoveCreature(gameData, spell, option.effect(), creature)) return true;
             }
             return false;
         }
@@ -937,16 +937,18 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (effect instanceof GainControlOfTargetPermanentEffect) return true;
         if (effect instanceof GainControlOfTargetPermanentUntilEndOfTurnEffect) return true;
         if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
+            int damage = spellEvaluator.estimateDamageAmount(gameData, spell, dmg.damage(), aiPlayer.getId());
             int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
-            return dmg.damage() >= toughness - creature.getMarkedDamage();
+            return damage >= toughness - creature.getMarkedDamage();
         }
         if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect dmg) {
             int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
             return dmg.damage() >= toughness - creature.getMarkedDamage();
         }
         if (effect instanceof DealDamageToAnyTargetEffect dmg) {
+            int damage = spellEvaluator.estimateDamageAmount(gameData, spell, dmg.damage(), aiPlayer.getId());
             int toughness = gameQueryService.getEffectiveToughness(gameData, creature);
-            return dmg.damage() >= toughness - creature.getMarkedDamage();
+            return damage >= toughness - creature.getMarkedDamage();
         }
         return false;
     }

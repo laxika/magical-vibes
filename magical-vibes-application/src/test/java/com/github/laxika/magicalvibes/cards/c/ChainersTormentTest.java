@@ -49,7 +49,7 @@ class ChainersTormentTest extends BaseCardTest {
         var effects = card.getEffects(EffectSlot.SAGA_CHAPTER_I);
         assertThat(effects).hasSize(2);
         assertThat(effects.get(0)).isInstanceOf(DealDamageToEachOpponentEffect.class);
-        assertThat(((DealDamageToEachOpponentEffect) effects.get(0)).damage()).isEqualTo(2);
+        assertThat(((DealDamageToEachOpponentEffect) effects.get(0)).damage()).isEqualTo(new Fixed(2));
         assertThat(effects.get(1)).isInstanceOf(GainLifeEffect.class);
         assertThat(((GainLifeEffect) effects.get(1)).amount()).isEqualTo(new Fixed(2));
     }

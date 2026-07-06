@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSourceToughnessToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.amount.SourceToughness;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,7 +38,7 @@ class SteadfastArmasaurTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().getFirst().isNeedsTarget()).isTrue();
         assertThat(card.getActivatedAbilities().getFirst().getEffects()).hasSize(1);
         assertThat(card.getActivatedAbilities().getFirst().getEffects().getFirst())
-                .isInstanceOf(DealDamageEqualToSourceToughnessToTargetCreatureEffect.class);
+                .isEqualTo(new DealDamageToTargetCreatureEffect(new SourceToughness()));
     }
 
     @Test

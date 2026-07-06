@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -209,7 +208,6 @@ public class ActivatedAbilityExecutionService {
         else if (abilityEffects.stream().anyMatch(e -> e instanceof MillTargetPlayerByChargeCountersEffect
                 || e instanceof TargetPlayerDiscardsByChargeCountersEffect
                 || e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect
-                || e instanceof DealDamageToAnyTargetEqualToChargeCountersOnSourceEffect
                 || e instanceof LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect)) {
             effectiveXValue = permanent.getCounterCount(CounterType.CHARGE);
         }
@@ -506,9 +504,11 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof DealDamageToEachOpponentEffect dmg) {
                 // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser:
                 // "Add {R}. When you do, this creature deals 1 damage to each opponent."
+                int damage = amountEvaluationService.evaluate(gameData, dmg.damage(),
+                        new AmountContext(playerId, permanent, 0, false));
                 for (UUID opponentId : gameData.orderedPlayerIds) {
                     if (opponentId.equals(playerId)) continue;
-                    dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, dmg.damage());
+                    dealManaAbilityRiderDamageToPlayer(gameData, permanent, opponentId, damage);
                 }
             }
         }

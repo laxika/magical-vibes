@@ -14,8 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -81,11 +79,9 @@ public final class InstantCategoryClassifier {
         // Damage-based removal (targets creatures)
         if (effect instanceof DealDamageToTargetCreatureEffect) return InstantCategory.REMOVAL;
         if (effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect) return InstantCategory.REMOVAL;
-        if (effect instanceof DealXDamageToTargetCreatureEffect) return InstantCategory.REMOVAL;
 
         // Damage to any target — primarily removal (can also go face)
         if (effect instanceof DealDamageToAnyTargetEffect) return InstantCategory.REMOVAL;
-        if (effect instanceof DealXDamageToAnyTargetEffect) return InstantCategory.REMOVAL;
 
         // Combat tricks (pump spells)
         if (effect instanceof BoostTargetCreatureEffect) return InstantCategory.COMBAT_TRICK;
