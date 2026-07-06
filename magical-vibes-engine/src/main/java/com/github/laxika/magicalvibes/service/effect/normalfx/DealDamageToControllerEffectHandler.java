@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.model.Card;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model;
 
-import com.github.laxika.magicalvibes.model.CardColor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;
@@ -16,7 +15,6 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
-import java.util.EnumSet;
 import java.util.stream.Collectors;
 
 import com.github.laxika.magicalvibes.model.effect.MayEffect;

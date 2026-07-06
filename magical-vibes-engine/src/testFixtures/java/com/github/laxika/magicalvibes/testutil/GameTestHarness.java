@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import org.springframework.context.ApplicationContext;
 
 import java.util.ArrayList;

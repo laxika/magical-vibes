@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageT
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
-import java.util.ArrayList;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

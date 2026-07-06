@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentAnd
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
-import java.util.ArrayList;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.RequiredArgsConstructor;

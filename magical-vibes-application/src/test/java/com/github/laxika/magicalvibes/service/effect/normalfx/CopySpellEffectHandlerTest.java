@@ -31,9 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEf
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellEffectHandler;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -70,7 +68,6 @@ import static org.mockito.Mockito.never;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import static org.mockito.Mockito.verify;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CopySpellEffectHandlerTest {

@@ -11,7 +11,6 @@ import java.util.UUID;
 import java.util.ArrayList;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Card;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

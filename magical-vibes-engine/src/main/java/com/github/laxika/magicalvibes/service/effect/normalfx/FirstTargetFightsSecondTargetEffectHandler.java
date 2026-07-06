@@ -7,10 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.FirstTargetFightsSecondTarget
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
-import java.util.ArrayList;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Card;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

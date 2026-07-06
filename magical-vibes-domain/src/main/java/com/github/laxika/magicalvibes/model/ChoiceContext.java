@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 
 public sealed interface ChoiceContext {
 

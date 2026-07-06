@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
 import java.util.UUID;
 import java.util.Map;
-import com.github.laxika.magicalvibes.model.Card;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermane
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.Permanent;

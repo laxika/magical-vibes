@@ -57,7 +57,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 

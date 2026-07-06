@@ -6,8 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import java.util.UUID;
-import java.util.Map;
-import com.github.laxika.magicalvibes.model.Card;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

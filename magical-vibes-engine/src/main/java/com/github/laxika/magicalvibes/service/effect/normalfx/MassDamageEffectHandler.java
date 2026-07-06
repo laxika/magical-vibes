@@ -10,10 +10,8 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.UUID;
 import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

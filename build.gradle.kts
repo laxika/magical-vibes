@@ -3,6 +3,7 @@ import io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension
 plugins {
     id("org.springframework.boot") version "4.0.1" apply false
     id("io.spring.dependency-management") version "1.1.7" apply false
+    id("com.diffplug.spotless") version "7.0.2" apply false
 }
 
 group = "com.magicalvibes"
@@ -12,6 +13,7 @@ subprojects {
     if (name != "magical-vibes-frontend") {
         apply(plugin = "java-library")
         apply(plugin = "io.spring.dependency-management")
+        apply(plugin = "com.diffplug.spotless")
 
         repositories {
             mavenCentral()
@@ -35,6 +37,13 @@ subprojects {
             "testImplementation"("org.junit.jupiter:junit-jupiter")
             "testImplementation"("org.assertj:assertj-core")
             "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
+        }
+
+        configure<com.diffplug.gradle.spotless.SpotlessExtension> {
+            java {
+                target("src/**/*.java")
+                removeUnusedImports()
+            }
         }
 
         tasks.withType<Test> {
