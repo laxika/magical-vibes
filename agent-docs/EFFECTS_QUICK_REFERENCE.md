@@ -366,9 +366,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutMinusOneMinusOneCounterOnTargetCreatureEffect(int)` — -1/-1 on target
 - `PutCounterOnEachControlledPermanentEffect(CounterType, int, PermanentPredicate)` — counters on each own permanent matching predicate (use `PermanentIsCreaturePredicate` for "each creature you control")
 - `PutCounterOnEnchantedCreatureEffect(CounterType)` or `(CounterType, int)` — counter(s) on enchanted creature
-- `EnterWithXChargeCountersEffect()` — ETB X charge counters
-- `EnterWithXPlusOnePlusOneCountersEffect()` — ETB X +1/+1 counters
-- `EnterWithFixedChargeCountersEffect(int)` — ETB fixed charge counters
+- `EnterWithCountersEffect(CounterType, DynamicAmount)` — "enters the battlefield with … counters" (as-enters replacement effect): fixed = `Fixed(n)`, X paid = `XValue()`, "for each …" = a counting amount (`CreatureDeathsThisTurn`, `Sum(PermanentCount(...), CardsInGraveyard(...))`, …). "If kicked" / "Raid —" variants wrap it in `ConditionalEffect(new Kicked()/new Raid(), …)`
 - Increment keyword — keyword-driven (`Keyword.INCREMENT`, auto-loaded from Scryfall): +1/+1 counter on self when mana spent on a cast spell exceeds self's current power or toughness. Add nothing to the card; behavior lives in `TriggerCollectionService.collectIncrementTriggers` (resolution effect: `IncrementTriggerEffect`). E.g. Ambitious Augmenter
 - `ProliferateEffect()` — proliferate
 - `KickerEffect(String cost)` — kicker declaration

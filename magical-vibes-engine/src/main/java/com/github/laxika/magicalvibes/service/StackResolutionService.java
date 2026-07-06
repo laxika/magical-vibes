@@ -21,20 +21,13 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfRaidEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.PutPhylacteryCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryEffect;
@@ -191,47 +184,10 @@ public class StackResolutionService {
 
         Permanent perm = new Permanent(card);
 
-        // "Enters with X +1/+1 counters" — replacement effect (MTG Rule 614.1c)
-        boolean cantHaveCounters = card.getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof CantHaveCountersEffect);
-        boolean hasXPlusOneCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithXPlusOnePlusOneCountersEffect);
-        if (hasXPlusOneCounterEffect && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, entry.getXValue());
-        }
-
-        // "If kicked, enters with N +1/+1 counters" — replacement effect (MTG Rule 614.1c)
-        if (entry.isKicked() && !cantHaveCounters) {
-            int kickedCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .filter(e -> e instanceof EnterWithPlusOnePlusOneCountersIfKickedEffect)
-                    .map(e -> ((EnterWithPlusOnePlusOneCountersIfKickedEffect) e).count())
-                    .findFirst().orElse(0);
-            if (kickedCounters > 0) {
-                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + kickedCounters);
-            }
-        }
-
-        // "Raid — enters with N +1/+1 counters if you attacked this turn" — replacement effect (MTG Rule 614.1c)
-        if (gameData.playersDeclaredAttackersThisTurn.contains(controllerId) && !cantHaveCounters) {
-            int raidCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                    .filter(e -> e instanceof EnterWithPlusOnePlusOneCountersIfRaidEffect)
-                    .map(e -> ((EnterWithPlusOnePlusOneCountersIfRaidEffect) e).count())
-                    .findFirst().orElse(0);
-            if (raidCounters > 0) {
-                perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + raidCounters);
-            }
-        }
-
-        // "Enters with N wish counters" — replacement effect for fixed count (MTG Rule 614.1c)
-        int fixedWishCountersCreature = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof EnterWithFixedWishCountersEffect)
-                .map(e -> ((EnterWithFixedWishCountersEffect) e).count())
-                .findFirst().orElse(0);
-        if (fixedWishCountersCreature > 0 && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.WISH, fixedWishCountersCreature);
-        }
-
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
+        // battlefield entry; pass the spell's cast context (X paid, kicked) along.
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
+                entry.getXValue(), entry.isKicked());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
@@ -239,15 +195,7 @@ public class StackResolutionService {
         Card enteredCard = perm.getCard();
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        boolean hasSubtypeCounterEffect = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerSubtypeEffect);
-        boolean hasDeathCounterEffect = enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect);
-        boolean hasKickedCounterEffect = entry.isKicked() && enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersIfKickedEffect);
-        boolean hasRaidCounterEffect = gameData.playersDeclaredAttackersThisTurn.contains(controllerId) && enteredCard.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithPlusOnePlusOneCountersIfRaidEffect);
-        if ((hasXPlusOneCounterEffect || hasSubtypeCounterEffect || hasDeathCounterEffect || hasKickedCounterEffect || hasRaidCounterEffect) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
+        if (hasEnterWithCountersEffect(enteredCard, CounterType.PLUS_ONE_PLUS_ONE) && perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) {
             String logEntry = enteredCard.getName() + " enters the battlefield with " + perm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + " +1/+1 counters under " + playerName + "'s control.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
         } else if (perm.getCounterCount(CounterType.WISH) > 0) {
@@ -263,6 +211,19 @@ public class StackResolutionService {
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, controllerId, enteredCard, entry.getTargetId(), true, entry.getXValue(), entry.isKicked(), entry.getTargetIds());
         checkLegendRuleIfIdle(gameData, controllerId);
+    }
+
+    /**
+     * Whether the card has an "enters with … counters" replacement effect of the given counter
+     * type, bare or wrapped in a {@link ConditionalEffect} ("if kicked", "Raid —"). Used only to
+     * pick the entry log message; the counters themselves are applied during battlefield entry.
+     */
+    private boolean hasEnterWithCountersEffect(Card card, CounterType type) {
+        return card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                .anyMatch(e -> (e instanceof EnterWithCountersEffect enterWith && enterWith.type() == type)
+                        || (e instanceof ConditionalEffect conditional
+                        && conditional.wrapped() instanceof EnterWithCountersEffect wrapped
+                        && wrapped.type() == type));
     }
 
     private void resolveEnchantmentSpell(GameData gameData, StackEntry entry) {
@@ -407,42 +368,10 @@ public class StackResolutionService {
 
         Permanent perm = new Permanent(card);
 
-        boolean cantHaveCounters = card.getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(e -> e instanceof CantHaveCountersEffect);
-
-        // "Enters with X charge counters" — replacement effect (MTG Rule 614.1c)
-        boolean hasXChargeCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithXChargeCountersEffect);
-        if (hasXChargeCounterEffect && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.CHARGE, entry.getXValue());
-        }
-
-        // "Enters with X +1/+1 counters" — replacement effect (MTG Rule 614.1c)
-        boolean hasXPlusOneCounterEffect = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .anyMatch(e -> e instanceof EnterWithXPlusOnePlusOneCountersEffect);
-        if (hasXPlusOneCounterEffect && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, entry.getXValue());
-        }
-
-        // "Enters with N charge counters" — replacement effect for fixed count (MTG Rule 614.1c)
-        int fixedChargeCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof EnterWithFixedChargeCountersEffect)
-                .map(e -> ((EnterWithFixedChargeCountersEffect) e).count())
-                .findFirst().orElse(0);
-        if (fixedChargeCounters > 0 && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.CHARGE, fixedChargeCounters);
-        }
-
-        // "Enters with N wish counters" — replacement effect for fixed count (MTG Rule 614.1c)
-        int fixedWishCounters = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
-                .filter(e -> e instanceof EnterWithFixedWishCountersEffect)
-                .map(e -> ((EnterWithFixedWishCountersEffect) e).count())
-                .findFirst().orElse(0);
-        if (fixedWishCounters > 0 && !cantHaveCounters) {
-            perm.setCounterCount(CounterType.WISH, fixedWishCounters);
-        }
-
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm);
+        // "Enters with … counters" replacement effects (MTG Rule 614.1c) are applied during
+        // battlefield entry; pass the spell's cast context (X paid, kicked) along.
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
+                entry.getXValue(), entry.isKicked());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing

@@ -7,8 +7,15 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerSubtypeEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,13 +31,17 @@ class UnbreathingHordeTest extends BaseCardTest {
     // ===== Card effects =====
 
     @Test
-    @DisplayName("Has EnterWithPlusOnePlusOneCountersPerSubtypeEffect as ETB effect")
+    @DisplayName("Has EnterWithCountersEffect counting other Zombies and graveyard Zombie cards")
     void hasCorrectETBEffect() {
         UnbreathingHorde card = new UnbreathingHorde();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithPlusOnePlusOneCountersPerSubtypeEffect.class);
+                .isEqualTo(new EnterWithCountersEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE,
+                        new Sum(
+                                new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER),
+                                new CardsInGraveyard(new CardSubtypePredicate(CardSubtype.ZOMBIE), CountScope.CONTROLLER))));
     }
 
     @Test

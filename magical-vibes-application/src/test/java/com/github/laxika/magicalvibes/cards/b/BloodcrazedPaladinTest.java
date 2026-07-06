@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,13 +23,14 @@ class BloodcrazedPaladinTest extends BaseCardTest {
     // ===== Card effects =====
 
     @Test
-    @DisplayName("Has EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect as ETB effect")
+    @DisplayName("Has EnterWithCountersEffect as ETB effect")
     void hasCorrectETBEffect() {
         BloodcrazedPaladin card = new BloodcrazedPaladin();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithPlusOnePlusOneCountersPerCreatureDeathsThisTurnEffect.class);
+                .isEqualTo(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                        new CreatureDeathsThisTurn(CountScope.ANY_PLAYER)));
     }
 
     // ===== ETB counter placement =====

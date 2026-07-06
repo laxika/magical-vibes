@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AnimateSelfByChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,13 +26,13 @@ class ChimericMassTest extends BaseCardTest {
 
 
     @Test
-    @DisplayName("Chimeric Mass has EnterWithXChargeCountersEffect and AnimateSelfByChargeCounters ability")
+    @DisplayName("Chimeric Mass has EnterWithCountersEffect and AnimateSelfByChargeCounters ability")
     void hasCorrectProperties() {
         ChimericMass card = new ChimericMass();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithXChargeCountersEffect.class);
+                .isEqualTo(new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
 
         assertThat(card.getActivatedAbilities()).hasSize(1);
         assertThat(card.getActivatedAbilities().get(0).getManaCost()).isEqualTo("{1}");

@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,15 +32,14 @@ class UntamedKavuTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has EnterWithPlusOnePlusOneCountersIfKickedEffect with count 3")
+    @DisplayName("Has kicked-conditional EnterWithCountersEffect with count 3")
     void hasKickedETBEffect() {
         UntamedKavu card = new UntamedKavu();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithPlusOnePlusOneCountersIfKickedEffect.class);
-        var effect = (EnterWithPlusOnePlusOneCountersIfKickedEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(3);
+                .isEqualTo(new ConditionalEffect(new Kicked(),
+                        new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
     }
 
     // ===== Casting without kicker =====

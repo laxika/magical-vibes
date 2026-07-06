@@ -16,15 +16,12 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedChargeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithFixedWishCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXChargeCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithXPlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -252,7 +249,7 @@ class StackResolutionServiceTest {
 
             // Second creature (top of stack) should have been passed to battlefield entry
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Second Creature");
             // First creature should still be on the stack
             assertThat(gd.stack).hasSize(1);
@@ -335,7 +332,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Creature");
             assertThat(gd.stack).isEmpty();
         }
@@ -349,15 +346,16 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER2_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER2_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("P2 Creature");
         }
 
         @Test
-        @DisplayName("Creature enters with X +1/+1 counters")
-        void creatureEntersWithXPlusOnePlusOneCounters() {
+        @DisplayName("Creature spell forwards the X paid to battlefield entry")
+        void creatureSpellForwardsXValueToBattlefieldEntry() {
             Card card = createCreature("Hydra");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                    new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
             StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of(), 3);
             gd.stack.addLast(entry);
@@ -365,54 +363,21 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(3), eq(false));
         }
 
         @Test
-        @DisplayName("Creature enters with fixed wish counters")
-        void creatureEntersWithFixedWishCounters() {
-            Card card = createCreature("Wish Creature");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedWishCountersEffect(2));
-            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.WISH)).isEqualTo(2);
-        }
-
-        @Test
-        @DisplayName("CantHaveCountersEffect prevents +1/+1 counters on creature")
-        void cantHaveCountersPreventsCreaturePlusOnePlusOneCounters() {
-            Card card = createCreature("No Counter Hydra");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
-            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
-            StackEntry entry = new StackEntry(StackEntryType.CREATURE_SPELL, card,
-                    PLAYER1_ID, card.getName(), List.of(), 5);
+        @DisplayName("Creature spell forwards the kicked flag to battlefield entry")
+        void creatureSpellForwardsKickedFlagToBattlefieldEntry() {
+            Card card = createCreature("Kicked Creature");
+            StackEntry entry = new StackEntry(card, PLAYER1_ID);
+            entry.setKicked(true);
             gd.stack.addLast(entry);
 
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        }
-
-        @Test
-        @DisplayName("CantHaveCountersEffect prevents wish counters on creature")
-        void cantHaveCountersPreventsCreatureWishCounters() {
-            Card card = createCreature("No Wish Creature");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedWishCountersEffect(3));
-            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
-            gd.stack.addLast(new StackEntry(card, PLAYER1_ID));
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.WISH)).isZero();
+                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(0), eq(true));
         }
 
         @Test
@@ -638,15 +603,16 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
+                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture(), anyInt(), anyBoolean());
             assertThat(permanentCaptor.getValue().getCard().getName()).isEqualTo("Test Artifact");
         }
 
         @Test
-        @DisplayName("Artifact enters with X charge counters")
-        void artifactEntersWithXChargeCounters() {
+        @DisplayName("Artifact spell forwards the X paid to battlefield entry")
+        void artifactSpellForwardsXValueToBattlefieldEntry() {
             Card card = createArtifact("X Counter Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXChargeCountersEffect());
+            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD,
+                    new EnterWithCountersEffect(CounterType.CHARGE, new XValue()));
             StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
                     PLAYER1_ID, card.getName(), List.of(), 5);
             gd.stack.addLast(entry);
@@ -654,124 +620,7 @@ class StackResolutionServiceTest {
             svc.resolveTopOfStack(gd);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.CHARGE)).isEqualTo(5);
-        }
-
-        @Test
-        @DisplayName("Artifact enters with fixed charge counters")
-        void artifactEntersWithFixedChargeCounters() {
-            Card card = createArtifact("Fixed Counter Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedChargeCountersEffect(3));
-            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    PLAYER1_ID, card.getName(), List.of());
-            gd.stack.addLast(entry);
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.CHARGE)).isEqualTo(3);
-        }
-
-        @Test
-        @DisplayName("Artifact enters with X +1/+1 counters")
-        void artifactEntersWithXPlusOnePlusOneCounters() {
-            Card card = createArtifact("Modular Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
-            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    PLAYER1_ID, card.getName(), List.of(), 4);
-            gd.stack.addLast(entry);
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
-        }
-
-        @Test
-        @DisplayName("Artifact enters with fixed wish counters")
-        void artifactEntersWithFixedWishCounters() {
-            Card card = createArtifact("Wish Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedWishCountersEffect(3));
-            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    PLAYER1_ID, card.getName(), List.of());
-            gd.stack.addLast(entry);
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.WISH)).isEqualTo(3);
-        }
-
-        @Test
-        @DisplayName("CantHaveCountersEffect prevents X charge counters")
-        void cantHaveCountersPreventsXChargeCounters() {
-            Card card = createArtifact("No Counter Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXChargeCountersEffect());
-            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
-            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    PLAYER1_ID, card.getName(), List.of(), 5);
-            gd.stack.addLast(entry);
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.CHARGE)).isZero();
-        }
-
-        @Test
-        @DisplayName("CantHaveCountersEffect prevents fixed charge counters")
-        void cantHaveCountersPreventsFixedChargeCounters() {
-            Card card = createArtifact("No Fixed Counter Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedChargeCountersEffect(4));
-            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
-            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    PLAYER1_ID, card.getName(), List.of());
-            gd.stack.addLast(entry);
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.CHARGE)).isZero();
-        }
-
-        @Test
-        @DisplayName("CantHaveCountersEffect prevents +1/+1 counters on artifact")
-        void cantHaveCountersPreventsArtifactPlusOnePlusOneCounters() {
-            Card card = createArtifact("No +1 Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithXPlusOnePlusOneCountersEffect());
-            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
-            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    PLAYER1_ID, card.getName(), List.of(), 5);
-            gd.stack.addLast(entry);
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        }
-
-        @Test
-        @DisplayName("CantHaveCountersEffect prevents wish counters on artifact")
-        void cantHaveCountersPreventsArtifactWishCounters() {
-            Card card = createArtifact("No Wish Artifact");
-            card.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new EnterWithFixedWishCountersEffect(3));
-            card.addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
-            StackEntry entry = new StackEntry(StackEntryType.ARTIFACT_SPELL, card,
-                    PLAYER1_ID, card.getName(), List.of());
-            gd.stack.addLast(entry);
-
-            svc.resolveTopOfStack(gd);
-
-            verify(battlefieldEntryService).putPermanentOntoBattlefield(
-                    eq(gd), eq(PLAYER1_ID), permanentCaptor.capture());
-            assertThat(permanentCaptor.getValue().getCounterCount(CounterType.WISH)).isZero();
+                    eq(gd), eq(PLAYER1_ID), any(Permanent.class), eq(5), eq(false));
         }
 
         @Test

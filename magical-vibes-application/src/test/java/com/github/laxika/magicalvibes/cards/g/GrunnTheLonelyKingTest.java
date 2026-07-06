@@ -10,8 +10,10 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.EnterWithPlusOnePlusOneCountersIfKickedEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,15 +37,14 @@ class GrunnTheLonelyKingTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Has EnterWithPlusOnePlusOneCountersIfKickedEffect with count 5")
+    @DisplayName("Has kicked-conditional EnterWithCountersEffect with count 5")
     void hasKickedETBEffect() {
         GrunnTheLonelyKing card = new GrunnTheLonelyKing();
 
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)).hasSize(1);
         assertThat(card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst())
-                .isInstanceOf(EnterWithPlusOnePlusOneCountersIfKickedEffect.class);
-        var effect = (EnterWithPlusOnePlusOneCountersIfKickedEffect) card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).getFirst();
-        assertThat(effect.count()).isEqualTo(5);
+                .isEqualTo(new ConditionalEffect(new Kicked(),
+                        new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(5))));
     }
 
     @Test

@@ -65,7 +65,7 @@ class GremlinMineTest extends BaseCardTest {
         harness.addToBattlefield(player2, new TumbleMagnet());
         harness.addMana(player1, ManaColor.COLORLESS, 1);
 
-        // TumbleMagnet enters with 3 charge counters via EnterWithFixedChargeCountersEffect
+        // TumbleMagnet enters with 3 charge counters via EnterWithCountersEffect
         // but addToBattlefield doesn't trigger ETB, so set manually
         Permanent magnet = findPermanent(player2, "Tumble Magnet");
         magnet.setCounterCount(CounterType.CHARGE, 3);
