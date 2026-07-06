@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -17,9 +18,13 @@ public class LibraryTargetValidators {
 
     private final TargetValidationService tvs;
 
-    @ValidatesTarget(MillTargetPlayerEffect.class)
-    public void validateMillTargetPlayer(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    @ValidatesTarget(MillEffect.class)
+    public void validateMill(TargetValidationContext ctx, MillEffect effect) {
+        // Only the target-player recipient targets a player; controller / each-opponent take no
+        // player target and must not have a player-target requirement forced on them.
+        if (effect.recipient() == MillRecipient.TARGET_PLAYER) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 
     @ValidatesTarget(RevealTopCardOfLibraryEffect.class)

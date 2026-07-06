@@ -322,6 +322,8 @@ public class AmountEvaluationService {
             case CONTROLLER -> playerId.equals(ctx.controllerId());
             case OPPONENTS -> !playerId.equals(ctx.controllerId());
             case ANY_PLAYER -> true;
+            // The target channel carries the target player's id for player-targeting effects.
+            case TARGET_PLAYER -> playerId.equals(ctx.targetPermanentId());
         };
     }
 }

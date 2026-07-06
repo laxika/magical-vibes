@@ -649,7 +649,7 @@ public class MayAbilityHandlerService {
             }
         }
 
-        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillTargetPlayerEffect)
+        // Add player IDs for effects that can target players (e.g. DealDamageToAnyTargetEffect, MillEffect)
         boolean canTargetPlayer = ability.effects().stream().anyMatch(CardEffect::canTargetPlayer);
         if (canTargetPlayer) {
             validTargets.addAll(gameData.orderedPlayerIds);

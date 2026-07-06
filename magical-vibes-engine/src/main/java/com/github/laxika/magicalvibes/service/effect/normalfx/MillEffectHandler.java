@@ -4,17 +4,18 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class MillTargetPlayerEffectHandler implements NormalEffectHandlerBean {
+public class MillEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
@@ -22,12 +23,12 @@ public class MillTargetPlayerEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return MillTargetPlayerEffect.class;
+        return MillEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var mill = (MillTargetPlayerEffect) effect;
+        var mill = (MillEffect) effect;
 
         // Source-relative amounts (e.g. CountersOnSource for Grindclock) use the live source
         // permanent when it is still on the battlefield, else the last-known snapshot.
@@ -37,9 +38,19 @@ public class MillTargetPlayerEffectHandler implements NormalEffectHandlerBean {
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        int count = amountEvaluationService.evaluate(gameData, mill.count(),
-                AmountContext.forStackEntry(entry, source));
+        int count = Math.max(0, amountEvaluationService.evaluate(gameData, mill.count(),
+                AmountContext.forStackEntry(entry, source)));
 
-        graveyardService.resolveMillPlayer(gameData, entry.getTargetId(), count);
+        switch (mill.recipient()) {
+            case CONTROLLER -> graveyardService.resolveMillPlayer(gameData, entry.getControllerId(), count);
+            case TARGET_PLAYER -> graveyardService.resolveMillPlayer(gameData, entry.getTargetId(), count);
+            case EACH_OPPONENT -> {
+                UUID controllerId = entry.getControllerId();
+                for (UUID playerId : gameData.orderedPlayerIds) {
+                    if (playerId.equals(controllerId)) continue;
+                    graveyardService.resolveMillPlayer(gameData, playerId, count);
+                }
+            }
+        }
     }
 }

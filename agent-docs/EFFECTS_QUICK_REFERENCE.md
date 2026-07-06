@@ -272,12 +272,9 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Mill
 
-- `MillControllerEffect(int)` — self-mill N
+- `MillEffect(DynamicAmount, MillRecipient)` — the recipient mills cards. `recipient` ∈ {`CONTROLLER`, `TARGET_PLAYER`, `EACH_OPPONENT`}; `(int, recipient)` ctor for a fixed count. `XValue()` for mills X, `CountersOnSource(CHARGE)` for Grindclock, `CardsInHand(TARGET_PLAYER)` for Dreamborn Muse's hand-size mill. "Each player mills N" = `(N, CONTROLLER)` + `(N, EACH_OPPONENT)`. Flashback "twice X" via `ConditionalReplacementEffect(CastFromZone(GRAVEYARD), Mill(XValue(),TARGET_PLAYER), Mill(Scaled(XValue(),2),TARGET_PLAYER))` (Increasing Confusion)
 - `MillControllerAndMayPlayFromGraveyardThisTurnEffect()` — mill 1, grant play-from-graveyard permission until end of turn
-- `MillTargetPlayerEffect(DynamicAmount)` — mill target (`(int)` ctor; `XValue()` for mills X, `CountersOnSource(CHARGE)` for Grindclock; flashback "twice X" via `ConditionalReplacementEffect(CastFromZone(GRAVEYARD), …)`, e.g. Increasing Confusion)
-- `MillHalfLibraryEffect()` — mill half
-- `MillEachPlayerEffect(int)` — mill each player N
-- `MillEachOpponentEffect(int)` — mill each opponent N
+- `MillHalfLibraryEffect()` — mill half (target player)
 
 ## Exile
 

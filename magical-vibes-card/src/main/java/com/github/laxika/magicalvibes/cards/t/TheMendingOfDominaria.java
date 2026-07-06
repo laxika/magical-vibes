@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.MillControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,14 +24,14 @@ public class TheMendingOfDominaria extends Card {
 
     public TheMendingOfDominaria() {
         // Chapter I: Mill two cards, then you may return a creature card from your graveyard to your hand
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new MillControllerEffect(2));
+        addEffect(EffectSlot.SAGA_CHAPTER_I, new MillEffect(2, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.SAGA_CHAPTER_I, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .build());
 
         // Chapter II: Same as chapter I
-        addEffect(EffectSlot.SAGA_CHAPTER_II, new MillControllerEffect(2));
+        addEffect(EffectSlot.SAGA_CHAPTER_II, new MillEffect(2, MillRecipient.CONTROLLER));
         addEffect(EffectSlot.SAGA_CHAPTER_II, ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardTypePredicate(CardType.CREATURE))

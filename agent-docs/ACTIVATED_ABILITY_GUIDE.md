@@ -56,7 +56,7 @@ new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),
     "{R}: Furnace Whelp gets +1/+0 until end of turn.")
 
 // Tap + mana to mill
-new ActivatedAbility(true, "{2}", List.of(new MillTargetPlayerEffect(2)),
+new ActivatedAbility(true, "{2}", List.of(new MillEffect(2, MillRecipient.TARGET_PLAYER)),
     "{2}, {T}: Target player mills two cards.")
 ```
 

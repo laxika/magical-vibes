@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentMillsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 
 @CardRegistration(set = "NPH", collectorNumber = "31")
 public class ChancellorOfTheSpires extends Card {
@@ -15,7 +16,7 @@ public class ChancellorOfTheSpires extends Card {
         // You may reveal this card from your opening hand. If you do, at the beginning of
         // the first upkeep, each opponent mills seven cards.
         addEffect(EffectSlot.ON_OPENING_HAND_REVEAL, new MayEffect(
-                new EachOpponentMillsEffect(7),
+                new MillEffect(7, MillRecipient.EACH_OPPONENT),
                 "Reveal this card from your opening hand?"
         ));
 

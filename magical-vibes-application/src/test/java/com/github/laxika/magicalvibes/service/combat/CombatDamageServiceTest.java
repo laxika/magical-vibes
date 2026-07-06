@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -1015,15 +1016,15 @@ class CombatDamageServiceTest {
         }
 
         @Test
-        @DisplayName("MillTargetPlayerEffect stack entry has defenderId as targetId")
+        @DisplayName("MillEffect (target player) stack entry has defenderId as targetId")
         void millTargetPlayerEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillTargetPlayerEffect(10));
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new MillEffect(10, MillRecipient.TARGET_PLAYER));
 
             combatDamageService.resolveCombatDamage(gameData);
 
             List<StackEntry> triggerEntries = gameData.stack.stream()
-                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof MillTargetPlayerEffect))
+                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof MillEffect))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);

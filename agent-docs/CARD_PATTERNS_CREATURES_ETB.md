@@ -28,7 +28,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB pump target creature (own only, +keyword) | `i/ImperialAerosaur.java` | PermanentAllOfPredicate(IsCreature, ControlledBySourceController, NotSource) + BoostTargetCreatureEffect + GrantKeywordEffect(FLYING, TARGET) |
 | ETB gain life | `a/AngelOfMercy.java` | ON_ENTER_BATTLEFIELD GainLifeEffect |
 | ETB draw | `k/KavuClimber.java` | ON_ENTER_BATTLEFIELD DrawCardEffect |
-| ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillControllerEffect(4) — controller mills N cards, no target |
+| ETB self-mill | `a/ArmoredSkaab.java` | ON_ENTER_BATTLEFIELD MillEffect(4, CONTROLLER) — controller mills N cards, no target |
 | ETB draw + downside | `p/PhyrexianRager.java` | Draw + LoseLifeEffect |
 | ETB destroy (targeted) | `n/Nekrataal.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect (targeting auto-derived) |
 | ETB destroy (conditional, dealt damage) | `f/FathomFleetCutthroat.java` | ON_ENTER_BATTLEFIELD DestroyTargetPermanentEffect + PermanentAllOfPredicate(IsCreature, NotControlledBySource, DealtDamageThisTurn) |
@@ -50,7 +50,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB search (by name, multi-pick) | `s/SquadronHawk.java` | MayEffect(SearchLibraryForCardsByNameToHandEffect("Squadron Hawk", 3)) — search for up to 3 copies by name to hand |
 | ETB may return from GY | `g/Gravedigger.java` | MayEffect(ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardTypePredicate(CREATURE)).build()) |
 | ETB may bounce own historic | `g/GuardiansOfKoilos.java` | MayEffect(ReturnTargetPermanentToHandEffect()) + PermanentPredicateTargetFilter(AllOf(AnyOf(artifact, legendary, Saga), controlled-by-source, not-source)) — "you may return another target historic permanent you control to its owner's hand" |
-| ETB cast from opponent's GY | `c/ChancellorOfTheSpires.java` | CastTargetInstantOrSorceryFromGraveyardEffect(OPPONENT_GRAVEYARD, true) — targets instant/sorcery in opponent's graveyard, may cast without paying. Also has ON_OPENING_HAND_REVEAL MayEffect(EachOpponentMillsEffect(7)) |
+| ETB cast from opponent's GY | `c/ChancellorOfTheSpires.java` | CastTargetInstantOrSorceryFromGraveyardEffect(OPPONENT_GRAVEYARD, true) — targets instant/sorcery in opponent's graveyard, may cast without paying. Also has ON_OPENING_HAND_REVEAL MayEffect(MillEffect(7, EACH_OPPONENT)) |
 | ETB explore | `b/BrazenBuccaneers.java` | ON_ENTER_BATTLEFIELD ExploreEffect() — reveal top card; land → hand, non-land → +1/+1 counter + may put to graveyard |
 | Activated: exile from opponent GY + explore | `d/DeadeyeTracker.java` | Tap + {1}{B}: ExileTargetCardsFromOpponentGraveyardEffect(2) + ExploreEffect — exile two target cards from opponent's graveyard, then this creature explores. Uses `activateAbilityWithGraveyardTargets` for multi-target graveyard activated abilities |
 | Explore trigger (target opponent creature) | `l/LurkingChupacabra.java` | ON_ALLY_CREATURE_EXPLORES BoostTargetCreatureEffect(-2, -2) — whenever a creature you control explores, target creature an opponent controls gets -2/-2. Uses `ExploreTriggerTarget` queue for target selection |

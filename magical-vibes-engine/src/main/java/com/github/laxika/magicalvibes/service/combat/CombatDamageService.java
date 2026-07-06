@@ -39,7 +39,8 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
@@ -717,7 +718,7 @@ public class CombatDamageService {
                         || effect instanceof TargetPlayerRandomDiscardOrControllerDrawsEffect
                         || effect instanceof RevealRandomCardFromTargetPlayerHandEffect
                         || effect instanceof SphinxAmbassadorEffect
-                        || effect instanceof MillTargetPlayerEffect
+                        || (effect instanceof MillEffect mill && mill.recipient() == MillRecipient.TARGET_PLAYER)
                         || effect instanceof TargetPlayerExilesFromHandEffect
                         || effect instanceof DealDamageToTargetPlayerByHandSizeEffect) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,

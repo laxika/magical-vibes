@@ -34,7 +34,7 @@ All paths relative to `cards/`.
 | Regenerate (target creature) | `a/Asceticism.java` | `RegenerateEffect(true)` + PermanentPredicateTargetFilter |
 | Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffectEffect(CantBeTargetOfSpellsOrAbilitiesEffect, GrantScope.OWN_CREATURES)` |
 | Create token | `d/DragonRoost.java` | CreateTokenEffect |
-| Mill target | `m/Millstone.java` | `(true, "{2}", MillTargetPlayerEffect, true)` |
+| Mill target | `m/Millstone.java` | `(true, "{2}", MillEffect(2, TARGET_PLAYER), true)` |
 | Mana dork (tap for color) | `b/BirdsOfParadise.java` | `(true, null, AwardAnyColorManaEffect, false)` |
 | Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
 | Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorChosenSubtypeCreatureManaEffect, false)` |

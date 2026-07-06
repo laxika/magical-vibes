@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
@@ -26,7 +27,7 @@ public class Grindclock extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MillTargetPlayerEffect(new CountersOnSource(CounterType.CHARGE))),
+                List.of(new MillEffect(new CountersOnSource(CounterType.CHARGE), MillRecipient.TARGET_PLAYER)),
                 "{T}: Target player mills X cards, where X is the number of charge counters on Grindclock."
         ));
     }

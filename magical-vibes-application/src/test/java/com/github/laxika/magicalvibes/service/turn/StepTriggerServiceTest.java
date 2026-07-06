@@ -29,7 +29,8 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -1064,7 +1065,7 @@ class StepTriggerServiceTest {
         void raidConditionalEndStepTargetingEffectQueuesWhenRaidMet() {
             Card card = createCardWithName("Navigator's Ruin");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new ConditionalEffect(new Raid(), new MillTargetPlayerEffect(4)));
+                    new ConditionalEffect(new Raid(), new MillEffect(4, MillRecipient.TARGET_PLAYER)));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
@@ -1085,7 +1086,7 @@ class StepTriggerServiceTest {
         void raidConditionalEndStepTargetingEffectSkipsWhenRaidNotMet() {
             Card card = createCardWithName("Navigator's Ruin");
             card.addEffect(EffectSlot.CONTROLLER_END_STEP_TRIGGERED,
-                    new ConditionalEffect(new Raid(), new MillTargetPlayerEffect(4)));
+                    new ConditionalEffect(new Raid(), new MillEffect(4, MillRecipient.TARGET_PLAYER)));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
@@ -1107,7 +1108,7 @@ class StepTriggerServiceTest {
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
             gd.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
-                    card, player1Id, new ArrayList<>(List.of(new MillTargetPlayerEffect(4))),
+                    card, player1Id, new ArrayList<>(List.of(new MillEffect(4, MillRecipient.TARGET_PLAYER))),
                     UUID.randomUUID()));
 
             sut.processNextEndStepTriggerTarget(gd);

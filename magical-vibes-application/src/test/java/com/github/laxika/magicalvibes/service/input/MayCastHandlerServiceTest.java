@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -148,7 +149,7 @@ class MayCastHandlerServiceTest {
         @Test
         @DisplayName("Returns only player IDs for player-only targeting effects")
         void returnsOnlyPlayerIdsForPlayerOnlyTargeting() {
-            List<CardEffect> effects = List.of(new MillTargetPlayerEffect(5));
+            List<CardEffect> effects = List.of(new MillEffect(5, MillRecipient.TARGET_PLAYER));
             Card card = createSorcery("Tome Scour");
 
             List<UUID> targets = svc.buildValidSpellTargets(gd, card, effects);
@@ -176,7 +177,7 @@ class MayCastHandlerServiceTest {
         @DisplayName("Does not include permanents when no effect can target permanents")
         void doesNotIncludePermanentsWhenNoEffectTargetsPermanents() {
             Card card = createSorcery("Mill Spell");
-            List<CardEffect> effects = List.of(new MillTargetPlayerEffect(3));
+            List<CardEffect> effects = List.of(new MillEffect(3, MillRecipient.TARGET_PLAYER));
 
             Permanent creature = new Permanent(createCreature("Bear"));
             gd.playerBattlefields.get(PLAYER1_ID).add(creature);
@@ -357,7 +358,7 @@ class MayCastHandlerServiceTest {
         @DisplayName("Targeted spell with valid targets begins permanent choice and does not call processMayAbilities")
         void targetedSpellWithTargetsBeginsChoice() {
             Card card = createSorcery("Tome Scour");
-            card.addEffect(EffectSlot.SPELL, new MillTargetPlayerEffect(5));
+            card.addEffect(EffectSlot.SPELL, new MillEffect(5, MillRecipient.TARGET_PLAYER));
             gd.playerDecks.get(PLAYER1_ID).add(card);
             PendingMayAbility ability = abilityFor(card);
 
@@ -514,7 +515,7 @@ class MayCastHandlerServiceTest {
         @DisplayName("Targeted spell with valid targets begins permanent choice")
         void targetedSpellWithTargetsBeginsChoice() {
             Card card = createSorcery("Tome Scour");
-            card.addEffect(EffectSlot.SPELL, new MillTargetPlayerEffect(5));
+            card.addEffect(EffectSlot.SPELL, new MillEffect(5, MillRecipient.TARGET_PLAYER));
             gd.playerDecks.get(PLAYER1_ID).add(card);
             PendingMayAbility ability = abilityFor(card);
 
@@ -709,7 +710,7 @@ class MayCastHandlerServiceTest {
         void targetedSpellWithTargetsBeginsChoice() {
             allowGraveyardCasting();
             Card card = createSorcery("Tome Scour");
-            card.addEffect(EffectSlot.SPELL, new MillTargetPlayerEffect(5));
+            card.addEffect(EffectSlot.SPELL, new MillEffect(5, MillRecipient.TARGET_PLAYER));
             PendingMayAbility ability = abilityFor(card);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
             when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(PLAYER2_ID);
@@ -745,7 +746,7 @@ class MayCastHandlerServiceTest {
         void playerOnlyTargetingDoesNotOfferPermanents() {
             allowGraveyardCasting();
             Card card = createSorcery("Tome Scour");
-            card.addEffect(EffectSlot.SPELL, new MillTargetPlayerEffect(5));
+            card.addEffect(EffectSlot.SPELL, new MillEffect(5, MillRecipient.TARGET_PLAYER));
             PendingMayAbility ability = abilityFor(card);
             when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
             when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(PLAYER2_ID);
