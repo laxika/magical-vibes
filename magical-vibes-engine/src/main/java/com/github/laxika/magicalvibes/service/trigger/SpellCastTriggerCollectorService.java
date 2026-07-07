@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypeP
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageEqualToSpellManaValueToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
@@ -454,9 +454,9 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToTargetPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_OPPONENT_CASTS_SPELL)
     private boolean handleDamageToCastingOpponent(TriggerMatchContext match,
-            DealDamageToTargetPlayerEffect trigger, TriggerContext ctx) {
+            DealDamageToPlayersEffect trigger, TriggerContext ctx) {
         TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

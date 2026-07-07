@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -362,9 +362,9 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsTrigger(value = DealDamageToTriggeringPermanentControllerEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
+    @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleArtifactGraveyardDamageController(TriggerMatchContext match,
-            DealDamageToTriggeringPermanentControllerEffect effect, TriggerContext ctx) {
+            DealDamageToPlayersEffect effect, TriggerContext ctx) {
         TriggerContext.ArtifactGraveyard ag = (TriggerContext.ArtifactGraveyard) ctx;
         match.gameData().stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,6 +32,6 @@ public class ArchdemonOfGreed extends Card {
                                 "Sacrifice a Human",
                                 false
                         ),
-                        List.of(new TapPermanentsEffect(TapUntapScope.SELF), new DealDamageToControllerEffect(9))));
+                        List.of(new TapPermanentsEffect(TapUntapScope.SELF), new DealDamageToPlayersEffect(9, DamageRecipient.CONTROLLER))));
     }
 }

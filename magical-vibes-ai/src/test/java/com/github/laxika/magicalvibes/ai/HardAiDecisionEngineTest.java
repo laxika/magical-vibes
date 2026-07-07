@@ -4085,7 +4085,7 @@ class HardAiDecisionEngineTest {
             com.github.laxika.magicalvibes.model.PendingMayAbility pending =
                     new com.github.laxika.magicalvibes.model.PendingMayAbility(
                             sourceCard, player1.getId(),
-                            List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect(5)),
+                            List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(5, com.github.laxika.magicalvibes.model.effect.DamageRecipient.CONTROLLER)),
                             "You may have this deal 5 damage to you");
             gd.pendingMayAbilities.add(pending);
             gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(player1.getId(), pending.description(), pending.manaCost()));

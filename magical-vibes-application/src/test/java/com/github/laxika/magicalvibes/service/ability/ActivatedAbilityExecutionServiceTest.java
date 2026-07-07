@@ -19,7 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffe
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -140,7 +141,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandAddsManaAndDealsDamage() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToControllerEffect(1));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
@@ -179,7 +180,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandBlueAbility() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.BLUE, 1), new DealDamageToControllerEffect(1));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.BLUE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {U}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
@@ -960,7 +961,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandManaAbilityPreservesPriority() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToControllerEffect(1));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
             gameData.priorityPassedBy.add(player2Id);
 
@@ -1030,7 +1031,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandDamagePreventedBySourcePrevention() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToControllerEffect(1));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
             stubIsCreature(perm, false);
@@ -1054,7 +1055,7 @@ class ActivatedAbilityExecutionServiceTest {
         void painLandDamageReducedByShield() {
             Card card = createCard("Test Pain Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToControllerEffect(1));
+            List<CardEffect> effects = List.of(new AwardManaEffect(ManaColor.WHITE, 1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {W}. Deals 1 damage.");
 
             stubIsCreature(perm, false);

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,7 +19,7 @@ import java.util.List;
 public class JinxedIdol extends Card {
 
     public JinxedIdol() {
-        addEffect(EffectSlot.UPKEEP_TRIGGERED, new DealDamageToControllerEffect(2));
+        addEffect(EffectSlot.UPKEEP_TRIGGERED, new DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

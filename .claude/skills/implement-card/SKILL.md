@@ -51,7 +51,7 @@ Detailed references — grep these when the three above aren't enough:
 - `agent-docs/CARD_IMPLEMENTATION_PLAYBOOK.md` — canonical patterns, targeting checklist, anti-patterns, new-effect/predicate checklists.
 
 Reuse rules (from `CLAUDE.md`):
-- Recreate effects by combining existing ones where possible (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToControllerEffect`).
+- Recreate effects by combining existing ones where possible (e.g. "2 damage to any target and 3 to you" = `DealDamageToAnyTargetEffect` + `DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)`).
 - Prefer parameterizing an existing effect with a predicate over a new class (e.g. `DestroyTargetPermanentEffect` + a `PermanentPredicate`, not `DestroyTargetArtifactEffect`).
 
 ## Step 4 — Write the card class

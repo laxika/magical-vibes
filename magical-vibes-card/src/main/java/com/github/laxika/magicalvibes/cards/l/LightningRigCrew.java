@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -22,7 +23,7 @@ public class LightningRigCrew extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new DealDamageToEachOpponentEffect(1)),
+                List.of(new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)),
                 "{T}: Lightning-Rig Crew deals 1 damage to each opponent."
         ));
 

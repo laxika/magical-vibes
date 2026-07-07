@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
 import java.util.List;
@@ -135,7 +136,7 @@ public class RaceEvaluator {
     /**
      * Calculates total direct-to-face damage available from burn spells in hand.
      * Counts spells that can deal damage to a player (DealDamageToAnyTargetEffect,
-     * DealDamageToTargetPlayerEffect, etc.). Only includes spells passed in as castable.
+     * DealDamageToPlayersEffect with TARGET_PLAYER, etc.). Only includes spells passed in as castable.
      */
     int calculateBurnInHandDamage(List<Card> castableBurnCards) {
         int totalDamage = 0;
@@ -175,7 +176,8 @@ public class RaceEvaluator {
         if (effect instanceof DealDamageToAnyTargetEffect dmg && dmg.damage() instanceof Fixed f) {
             return f.value();
         }
-        if (effect instanceof DealDamageToTargetPlayerEffect dmg && dmg.damage() instanceof Fixed f) {
+        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER
+                && dmg.amount() instanceof Fixed f) {
             return f.value();
         }
         return 0;

@@ -24,13 +24,13 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -468,11 +468,11 @@ public class SpellEvaluator {
             int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
             return evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof DealDamageToTargetPlayerEffect dmg) {
-            return estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId) * 1.5;
+        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER) {
+            return estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
         }
-        if (effect instanceof DealDamageToControllerEffect dmg) {
-            return -dmg.damage() * 1.5;
+        if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
+            return -estimateDamageAmount(gameData, card, dmg.amount(), aiPlayerId) * 1.5;
         }
 
         // Board wipes

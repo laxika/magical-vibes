@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 
@@ -17,7 +18,7 @@ public class CabalPaladin extends Card {
         // (Artifacts, legendaries, and Sagas are historic.)
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(
                 new CardIsHistoricPredicate(),
-                List.of(new DealDamageToEachOpponentEffect(2))
+                List.of(new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT))
         ));
     }
 }

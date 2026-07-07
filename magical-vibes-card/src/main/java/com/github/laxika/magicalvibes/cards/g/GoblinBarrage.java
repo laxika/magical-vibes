@@ -32,7 +32,7 @@ public class GoblinBarrage extends Card {
         addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
 
         // If this spell was kicked, it also deals 4 damage to target player or planeswalker.
-        // TODO: We should find a way to get rid of DealDamageToSecondaryTargetEffect and use DealDamageToTargetPlayerEffect instead
+        // TODO: We should find a way to get rid of DealDamageToSecondaryTargetEffect and use DealDamageToPlayersEffect (TARGET_PLAYER) instead
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new DealDamageToSecondaryTargetEffect(4)));
     }
 }

@@ -91,16 +91,11 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(int opponentDamage, int creatureDamage, int maxCreatureTargets)` — target opponent plus up to N creatures that player controls
 - `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(int)` — all target controls
 - `DealDamageToAllCreaturesTargetControlsEffect(int)` — creatures target controls
-- `DealDamageToTargetPlayerEffect(DynamicAmount)`; `(int)` — target player. Amounts: `Fixed`, `CardsInGraveyard` (Scrapyard Salvo)
+- `DealDamageToPlayersEffect(DynamicAmount, DamageRecipient)`; `(int, recipient)`; `.enchantedAttachedCount(PermanentPredicate)` — **unified player damage.** Recipients: `TARGET_PLAYER` (only targeting one; `Fixed`/`CardsInGraveyard` Scrapyard Salvo/`CardsInHand(TARGET_PLAYER)` Sudden Impact + Sword of War and Peace), `EACH_OPPONENT` (single eval, same value; `Fixed`/`CountersOnSource` Hallar), `EACH_PLAYER` (Slagstorm), `CONTROLLER` (self/pain lands), `ENCHANTED_PLAYER` (curse upkeep; `.enchantedAttachedCount` Curse of Thirst), `TARGET_PERMANENT_CONTROLLER` (Chandra's Outrage), `TRIGGERING_PERMANENT_CONTROLLER` (Magnetic Mine)
 - `DealDamageToSecondaryTargetEffect(int)` — secondary target
-- `DealDamageToTargetPlayerByHandSizeEffect()` — damage = hand size
 - `MassDamageEffect(int)` or `(int, boolean, boolean, PermanentPredicate)` + overloads — mass damage
-- `DealDamageToEachPlayerEffect(int)` — each player
 - `DealDamageToAnyTargetAndGainLifeEffect(int damage, int lifeGain)` — damage + life gain
-- `DealDamageToControllerEffect(int)` — self damage
-- `DealDamageToTargetCreatureControllerEffect(int)` — target creature's controller
 - `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect(CardSubtype, boolean)` — any target = subtype count
-- `DealDamageToEachOpponentEffect(DynamicAmount)`; `(int)` — each opponent (single evaluation, same value for all). Amounts: `Fixed`, `CountersOnSource(PLUS_ONE_PLUS_ONE)` (Hallar)
 - `DealDividedDamageEffect` (unified divided/multi-target damage) — factories: `.chosenAmongAnyTargets(int)` (Fight with Fire kicked), `.chosenAmongTargetCreatures(int)` (Ignite Disorder), `.chosenAmongAnyTargetsEtb(int,int)` (Inferno Titan/Bogardan ETB), `.xAmongAttackingCreatures()` (Hail of Arrows), `.xAmongTargetCreaturesCantBlock()` (Huatli −X), `.xDividedEvenly()` (Fireball), `.ordered(List<Integer>)` (Cone of Flame/Arc Trail)
 - `DealXDamageToAnyTargetAndGainXLifeEffect()` — X damage + X life
 - `DealDamageToEachTargetEffect(DynamicAmount)` — full amount to each of multiple targets (Jaya's Immolating Inferno with `XValue`)

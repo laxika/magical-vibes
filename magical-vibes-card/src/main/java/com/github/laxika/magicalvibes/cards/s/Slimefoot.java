@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -24,7 +25,7 @@ public class Slimefoot extends Card {
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.SAPROLING),
-                        new DealDamageToEachOpponentEffect(1)));
+                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)));
         addEffect(EffectSlot.ON_ALLY_CREATURE_DIES,
                 new TriggeringCardConditionalEffect(
                         new CardSubtypePredicate(CardSubtype.SAPROLING),

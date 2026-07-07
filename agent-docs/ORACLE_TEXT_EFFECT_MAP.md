@@ -15,9 +15,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "deals N damage to target creature or planeswalker" | `DealDamageToTargetCreatureOrPlaneswalkerEffect(N)` | SPELL | |
 | "deals N damage to target opponent or planeswalker" | `DealDamageToTargetOpponentOrPlaneswalkerEffect(N)` | SPELL | |
 | "deals N damage to target opponent and N damage to up to M target creatures that player controls" | `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(N, N, M)` | `ON_TRANSFORM_TO_BACK_FACE` | Two-step transform trigger target choice; use M=1 for "up to one" |
-| "deals N damage to target player" | `DealDamageToTargetPlayerEffect(N)` | SPELL | |
-| "deals N damage to each opponent" | `DealDamageToEachOpponentEffect(N)` | SPELL/trigger | No targeting. Amount evaluates once — for dynamic amounts pass a `DynamicAmount`, e.g. `new CountersOnSource(PLUS_ONE_PLUS_ONE)` (Hallar). NOT for per-opponent amounts (Molten Psyche keeps its own record) |
-| "deals N damage to each player" | `DealDamageToEachPlayerEffect(N)` | SPELL | No targeting |
+| "deals N damage to target player" | `DealDamageToPlayersEffect(N, DamageRecipient.TARGET_PLAYER)` | SPELL | Only recipient that targets. Amount is any `DynamicAmount` |
+| "deals N damage to each opponent" | `DealDamageToPlayersEffect(N, DamageRecipient.EACH_OPPONENT)` | SPELL/trigger | No targeting. Amount evaluates once — for dynamic amounts pass a `DynamicAmount`, e.g. `new CountersOnSource(PLUS_ONE_PLUS_ONE)` (Hallar). NOT for per-opponent amounts (Molten Psyche keeps its own record) |
+| "deals N damage to each player" | `DealDamageToPlayersEffect(N, DamageRecipient.EACH_PLAYER)` | SPELL | No targeting |
 | "deals N damage to each creature" | `MassDamageEffect(N)` | SPELL | No targeting |
 | "deals N damage to each creature and each planeswalker" | `MassDamageEffect(N, false, false, true, null)` | SPELL | damagesPlaneswalkers=true |
 | "deals X damage to any target" | `DealDamageToAnyTargetEffect(new XValue())` | SPELL | X-cost; also cost-snapshotted X (Fling's sacrificed power, Soulblast). Add `(…, false, true)` for "if it would die this turn, exile it instead" (Red Sun's Zenith) |
@@ -26,13 +26,15 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "deals damage equal to its toughness to target creature" | `DealDamageToTargetCreatureEffect(new SourceToughness())` | ability | Steadfast Armasaur |
 | "deals damage equal to the number of charge counters on it to any target" | `DealDamageToAnyTargetEffect(new CountersOnSource(CounterType.CHARGE))` | ability | Shrine of Burning Rage; sacrifice-cost sources resolve from the entry's source snapshot |
 | "deals damage to target creature equal to the number of SUBTYPEs you control" | `DealDamageToTargetCreatureEffect(new PermanentCount(new PermanentHasSubtypePredicate(SUBTYPE), CountScope.CONTROLLER))` | SPELL/trigger | Seismic Strike, Spitting Earth, Firefist Adept. "…and you gain X life" (Tendrils of Corruption) = add `GainLifeEffect(sameAmount)` |
-| "deals damage to target player equal to the number of TYPE cards in your graveyard" | `DealDamageToTargetPlayerEffect(new CardsInGraveyard(new CardTypePredicate(TYPE), CountScope.CONTROLLER))` | SPELL | Scrapyard Salvo |
+| "deals damage to target player equal to the number of TYPE cards in your graveyard" | `DealDamageToPlayersEffect(new CardsInGraveyard(new CardTypePredicate(TYPE), CountScope.CONTROLLER), DamageRecipient.TARGET_PLAYER)` | SPELL | Scrapyard Salvo |
+| "deals damage to target player equal to the number of cards in that player's hand" | `DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER)` | SPELL / ON_COMBAT_DAMAGE_TO_PLAYER | Sudden Impact, Sword of War and Peace |
 | "deals X damage to each of up to N targets" | `DealDamageToEachTargetEffect(new XValue())` + `target(1, N)` | SPELL | Jaya's Immolating Inferno — full amount to each target, not divided |
 | "deals damage equal to its power to target" | `FirstTargetDealsPowerDamageToSecondTargetEffect()` | SPELL | Bite — multi-target. Effect impl uses `gameQueryService.getPowerBasedDamage(gd, source)` — do NOT call `getEffectivePower` directly; the helper clamps negative power to 0 per CR 510.1a. |
 | "target creature deals damage to itself equal to its power" | `TargetCreatureDealsPowerDamageToSelfEffect()` | SPELL | Single-target. Target is both damage source and recipient. Use `getPowerBasedDamage`, not `getEffectivePower`. |
 | "fights target creature" | `FirstTargetFightsSecondTargetEffect()` | SPELL | Multi-target. Same rule: use `getPowerBasedDamage`, not `getEffectivePower`. |
 | "target creature fights another target creature" | `FirstTargetFightsSecondTargetEffect()` | SPELL | Multi-target, any two creatures; distinct is the default |
-| "deals N damage to you" | `DealDamageToControllerEffect(N)` | SPELL/trigger | Self-damage |
+| "deals N damage to you" | `DealDamageToPlayersEffect(N, DamageRecipient.CONTROLLER)` | SPELL/trigger | Self-damage (pain lands) |
+| "deals N damage to that creature's controller" | `DealDamageToPlayersEffect(N, DamageRecipient.TARGET_PERMANENT_CONTROLLER)` | SPELL | Chandra's Outrage (paired with a target-creature damage effect) |
 
 ## Creature pump / boost
 
@@ -101,7 +103,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "destroy all [type]" | `DestroyAllPermanentsEffect(predicate)` | SPELL | Filtered wipe |
 | "target player sacrifices a creature" | `SacrificePermanentsEffect(1, PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER)` | SPELL | bare creature filter → single-select sacrifice-a-creature primitive |
 | "sacrifice a [subtype]: [effect]" | `SacrificePermanentCost(PermanentAllOfPredicate(creature + PermanentHasSubtypePredicate(subtype)), "Sacrifice a [subtype]", false)` then effect | activated ability | Ravenous Demon front face uses `TransformSelfEffect()` with `SORCERY_SPEED` |
-| "sacrifice a [subtype]. If you can't, [effects]" | `ForcedCostOrElseEffect(SacrificePermanentCost(PermanentAllOfPredicate(creature + subtype), description, false), elseEffects)` | trigger | Archdemon of Greed uses `TapPermanentsEffect(TapUntapScope.SELF)` + `DealDamageToControllerEffect(9)` |
+| "sacrifice a [subtype]. If you can't, [effects]" | `ForcedCostOrElseEffect(SacrificePermanentCost(PermanentAllOfPredicate(creature + subtype), description, false), elseEffects)` | trigger | Archdemon of Greed uses `TapPermanentsEffect(TapUntapScope.SELF)` + `DealDamageToPlayersEffect(9, DamageRecipient.CONTROLLER)` |
 | "you may sacrifice a nontoken creature. If you do, create X 2/2 Wolf tokens, where X is its toughness" | `MayEffect(SacrificeCreatureToCreateTokensEqualToToughnessEffect(template, PermanentNotPredicate(PermanentIsTokenPredicate)))` | trigger | Feed the Pack; X = sacrificed creature's toughness |
 | "each opponent sacrifices a creature" | `SacrificePermanentsEffect(1, PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_OPPONENT)` | SPELL/trigger | bare creature filter → per-opponent single-select sacrifice-a-creature |
 | "each opponent/each player sacrifices N [type]" | `SacrificePermanentsEffect(N, predicate, SacrificeRecipient.EACH_OPPONENT/EACH_PLAYER)` | SPELL/trigger | non-creature filter → APNAP multi-permanent choice (Yawning Fissure, Destructive Force) |

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.KickedSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 
@@ -21,7 +22,7 @@ public class HallarTheFirefletcher extends Card {
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new KickedSpellCastTriggerEffect(
                 List.of(
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        new DealDamageToEachOpponentEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE))
+                        new DealDamageToPlayersEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE), DamageRecipient.EACH_OPPONENT)
                 )
         ));
     }

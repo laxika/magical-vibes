@@ -21,7 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
@@ -604,7 +605,7 @@ class TargetLegalityServiceTest {
         @DisplayName("passes when modal spell with player-targeting mode targets a player")
         void passesWhenModalSpellWithPlayerModeTargetsPlayer() {
             Card spell = createModalSpell("Modal Burn", CardColor.RED,
-                    new DestroyTargetPermanentEffect(), new DealDamageToTargetPlayerEffect(3));
+                    new DestroyTargetPermanentEffect(), new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
 
             sut.validateSpellTargeting(gd, spell, player2Id, null, player1Id, true);
         }

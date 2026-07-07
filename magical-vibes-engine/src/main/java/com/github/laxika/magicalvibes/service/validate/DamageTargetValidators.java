@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetOpponentOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -103,13 +103,13 @@ public class DamageTargetValidators {
         tvs.checkProtection(ctx, target);
     }
 
-    @ValidatesTarget(DealDamageToTargetPlayerEffect.class)
-    public void validateDealDamageToTargetPlayer(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
-    }
-
-    @ValidatesTarget(DealDamageToTargetPlayerByHandSizeEffect.class)
-    public void validateDealDamageToTargetPlayerByHandSize(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    @ValidatesTarget(DealDamageToPlayersEffect.class)
+    public void validateDealDamageToPlayers(TargetValidationContext ctx, DealDamageToPlayersEffect effect) {
+        // Only the TARGET_PLAYER recipient chooses a player target; every other recipient
+        // (CONTROLLER, EACH_*, ENCHANTED_PLAYER, the two permanent-controller riders) takes no
+        // player target and must not trip the class-keyed validator, which runs unconditionally.
+        if (effect.recipient() == DamageRecipient.TARGET_PLAYER) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 }

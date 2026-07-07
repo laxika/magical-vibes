@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCom
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
@@ -496,9 +495,9 @@ public class StepTriggerService {
                 CardEffect effectForStack = effect;
                 if (effect instanceof ExileCardsFromOwnGraveyardEffect e) {
                     effectForStack = new ExileCardsFromOwnGraveyardEffect(e.count(), enchantedPlayerId);
-                } else if (effect instanceof DealDamageToEnchantedPlayerEffect e) {
-                    effectForStack = new DealDamageToEnchantedPlayerEffect(e.damage(), e.damageEqualsAttachedCount(), enchantedPlayerId);
                 }
+                // DealDamageToPlayersEffect(ENCHANTED_PLAYER) reads the enchanted player from the
+                // stack entry's targetId (set below), so no per-effect baking is needed here.
 
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,

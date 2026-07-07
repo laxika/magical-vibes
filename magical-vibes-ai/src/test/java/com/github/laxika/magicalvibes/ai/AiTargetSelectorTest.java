@@ -32,7 +32,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
@@ -553,7 +554,7 @@ class AiTargetSelectorTest {
             Card spell = new Card();
             spell.setName("Test Player Spell");
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDamageToTargetPlayerEffect(3));
+            spell.addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER));
             return spell;
         }
 

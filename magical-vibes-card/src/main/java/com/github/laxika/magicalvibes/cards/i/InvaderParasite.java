@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.condition.ImprintedCardNameMatchesEnteringPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -24,7 +25,7 @@ public class InvaderParasite extends Card {
         // under an opponent's control, Invader Parasite deals 2 damage to that player.
         addEffect(EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD,
                 new ConditionalEffect(new ImprintedCardNameMatchesEnteringPermanent(), 
-                        new DealDamageToTargetPlayerEffect(2)
+                        new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER)
                 ));
     }
 }

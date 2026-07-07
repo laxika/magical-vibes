@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class ChandraBoldPyromancer extends Card {
         // +1: Add {R}{R}. Chandra deals 2 damage to target player.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new AwardManaEffect(ManaColor.RED, 2), new DealDamageToTargetPlayerEffect(2)),
+                List.of(new AwardManaEffect(ManaColor.RED, 2), new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER)),
                 "+1: Add {R}{R}. Chandra, Bold Pyromancer deals 2 damage to target player."
         ));
 
@@ -32,7 +33,7 @@ public class ChandraBoldPyromancer extends Card {
         // −7: Chandra deals 10 damage to target player and each creature and planeswalker they control.
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new DealDamageToTargetPlayerEffect(10),
+                List.of(new DealDamageToPlayersEffect(10, DamageRecipient.TARGET_PLAYER),
                         new DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(10)),
                 "\u22127: Chandra, Bold Pyromancer deals 10 damage to target player and each creature and planeswalker they control."
         ));

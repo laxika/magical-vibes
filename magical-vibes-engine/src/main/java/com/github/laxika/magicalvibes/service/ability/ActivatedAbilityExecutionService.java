@@ -22,10 +22,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessMan
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
@@ -248,7 +248,7 @@ public class ActivatedAbilityExecutionService {
 
         List<CardEffect> snapshotEffects = snapshotEffects(abilityEffects, permanent);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, and isn't a loyalty ability.
-        // Pain lands (e.g. Adarkar Wastes) include DealDamageToControllerEffect alongside mana production
+        // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
         boolean isManaAbility = !ability.isNeedsTarget() && !ability.isNeedsSpellTarget()
                 && ability.getLoyaltyCost() == null
@@ -434,9 +434,10 @@ public class ActivatedAbilityExecutionService {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
                         new AmountContext(playerId, permanent, null, 0, 0, false));
                 lifeSupport.applyGainLife(gameData, playerId, amount);
-            } else if (effect instanceof DealDamageToControllerEffect dmg) {
+            } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
                 String cardName = permanent.getCard().getName();
-                int damage = dmg.damage();
+                int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
+                        new AmountContext(playerId, permanent, null, 0, 0, false));
                 if (!gameQueryService.isDamagePreventable(gameData)
                         || (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
                             && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
@@ -466,10 +467,10 @@ public class ActivatedAbilityExecutionService {
                         gameData.playersDealtDamageThisTurn.add(playerId);
                     }
                 }
-            } else if (effect instanceof DealDamageToEachOpponentEffect dmg) {
+            } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
                 // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser:
                 // "Add {R}. When you do, this creature deals 1 damage to each opponent."
-                int damage = amountEvaluationService.evaluate(gameData, dmg.damage(),
+                int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
                         new AmountContext(playerId, permanent, null, 0, 0, false));
                 for (UUID opponentId : gameData.orderedPlayerIds) {
                     if (opponentId.equals(playerId)) continue;
@@ -491,8 +492,8 @@ public class ActivatedAbilityExecutionService {
 
     /**
      * Deals a mana-ability rider's damage to a single player, applying the same prevention/infect/
-     * redirect handling used by the {@link DealDamageToControllerEffect} rider. Used by
-     * {@link DealDamageToEachOpponentEffect} riders (e.g. Rubble Rouser).
+     * redirect handling used by the {@link DealDamageToPlayersEffect} CONTROLLER rider. Used by
+     * {@link DealDamageToPlayersEffect} EACH_OPPONENT riders (e.g. Rubble Rouser).
      */
     private void dealManaAbilityRiderDamageToPlayer(GameData gameData, Permanent permanent, UUID playerId, int damage) {
         String cardName = permanent.getCard().getName();

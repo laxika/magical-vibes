@@ -299,7 +299,7 @@ Cards: `MagmaPhoenix`
 
 ## Mana ability riders ("Add {X}. When you do, ...")
 
-An ability that produces mana and has no target/loyalty cost is a **mana ability** (resolves immediately, no stack). Any non-mana effects in its list are treated as reflexive "when you do" riders resolved inline by `ActivatedAbilityExecutionService.doResolveManaAbility`. Only a fixed set of rider effects are supported there: `GainLifeEffect`, `DealDamageToControllerEffect`, and `DealDamageToEachOpponentEffect` (Rubble Rouser: `{T}, Exile a card from your graveyard: Add {R}. When you do, deal 1 damage to each opponent.`). To support a new rider, add a branch in `doResolveManaAbility` — a rider effect placed on a mana ability but not handled there is silently dropped.
+An ability that produces mana and has no target/loyalty cost is a **mana ability** (resolves immediately, no stack). Any non-mana effects in its list are treated as reflexive "when you do" riders resolved inline by `ActivatedAbilityExecutionService.doResolveManaAbility`. Only a fixed set of rider effects are supported there: `GainLifeEffect`, `DealDamageToPlayersEffect` with recipient `CONTROLLER`, and `DealDamageToPlayersEffect` with recipient `EACH_OPPONENT` (Rubble Rouser: `{T}, Exile a card from your graveyard: Add {R}. When you do, deal 1 damage to each opponent.`). To support a new rider, add a branch in `doResolveManaAbility` — a rider effect placed on a mana ability but not handled there is silently dropped.
 
 ## Costs in the effects list
 

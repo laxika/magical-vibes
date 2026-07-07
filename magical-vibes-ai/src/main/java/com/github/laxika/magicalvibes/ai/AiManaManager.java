@@ -22,7 +22,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantS
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -568,7 +569,7 @@ public class AiManaManager {
 
     /**
      * Returns true if any free-tap mana ability on this card has a
-     * {@link DealDamageToControllerEffect} side effect (pain lands).
+     * {@link DealDamageToPlayersEffect} CONTROLLER side effect (pain lands).
      */
     private static boolean hasManaAbilityWithDamageCost(Card card) {
         for (ActivatedAbility ability : card.getActivatedAbilities()) {
@@ -576,7 +577,7 @@ public class AiManaManager {
                 continue;
             }
             for (CardEffect effect : ability.getEffects()) {
-                if (effect instanceof DealDamageToControllerEffect) {
+                if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER) {
                     return true;
                 }
             }
@@ -835,7 +836,7 @@ public class AiManaManager {
      */
     private static int scoreManaAbility(ActivatedAbility ability, ManaCost cost, ManaPool currentPool) {
         boolean hasSideEffects = ability.getEffects().stream()
-                .anyMatch(e -> e instanceof DealDamageToControllerEffect);
+                .anyMatch(e -> e instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.CONTROLLER);
         Map<ManaColor, Integer> coloredCosts = cost.getColoredCosts();
 
         for (CardEffect effect : ability.getEffects()) {

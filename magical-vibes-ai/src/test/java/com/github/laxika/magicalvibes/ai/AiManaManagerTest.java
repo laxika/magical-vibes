@@ -19,7 +19,8 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -121,9 +122,9 @@ class AiManaManagerTest {
                 true, null, List.of(new AwardManaEffect(ManaColor.COLORLESS)), "Add {C}"));
         // Color ability with pain
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new AwardManaEffect(color1), new DealDamageToControllerEffect(1)), "Add " + color1));
+                true, null, List.of(new AwardManaEffect(color1), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)), "Add " + color1));
         card.addActivatedAbility(new ActivatedAbility(
-                true, null, List.of(new AwardManaEffect(color2), new DealDamageToControllerEffect(1)), "Add " + color2));
+                true, null, List.of(new AwardManaEffect(color2), new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)), "Add " + color2));
         return card;
     }
 
@@ -881,7 +882,7 @@ class AiManaManagerTest {
         @DisplayName("tap + no mana cost + no mana effect = false")
         void tapNoCostNoManaEffect() {
             ActivatedAbility ability = new ActivatedAbility(
-                    true, null, List.of(new DealDamageToControllerEffect(1)), "Ouch");
+                    true, null, List.of(new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)), "Ouch");
             assertThat(AiManaManager.isFreeTapManaAbility(ability)).isFalse();
         }
 

@@ -12,8 +12,10 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -320,8 +322,10 @@ public class DestructionSupport {
         for (var elseEffect : effect.elseEffects()) {
             if (elseEffect instanceof TapPermanentsEffect tap && tap.scope() == TapUntapScope.SELF) {
                 tapSourcePermanent(gameData, entry);
-            } else if (elseEffect instanceof DealDamageToControllerEffect damage) {
-                dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), damage.damage(),
+            } else if (elseEffect instanceof DealDamageToPlayersEffect damage
+                    && damage.recipient() == DamageRecipient.CONTROLLER
+                    && damage.amount() instanceof Fixed fixed) {
+                dealNoncombatDamageToPlayer(gameData, entry.getControllerId(), fixed.value(),
                         entry.getCard().getName(), entry.getCard().getColor());
                 gameOutcomeService.checkWinCondition(gameData);
             } else {

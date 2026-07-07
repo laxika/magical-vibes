@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -752,12 +753,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED bakes DealDamageToEnchantedPlayerEffect with player ID")
-        void enchantedPlayerUpkeepBakesDamageEffect() {
+        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED pushes damage effect with the enchanted player as targetId")
+        void enchantedPlayerUpkeepPushesDamageEffect() {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of the Bloody Tome");
             curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
-                    new DealDamageToEnchantedPlayerEffect(2));
+                    new DealDamageToPlayersEffect(2, DamageRecipient.ENCHANTED_PLAYER));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id);
             gd.playerBattlefields.get(player2Id).add(cursePerm);
@@ -765,19 +766,20 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isNotEmpty();
-            DealDamageToEnchantedPlayerEffect bakedEffect =
-                    (DealDamageToEnchantedPlayerEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-            assertThat(bakedEffect.affectedPlayerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
+            DealDamageToPlayersEffect effect =
+                    (DealDamageToPlayersEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(effect.recipient()).isEqualTo(DamageRecipient.ENCHANTED_PLAYER);
         }
 
         @Test
-        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED preserves the attached-count predicate when baking player ID")
+        @DisplayName("ENCHANTED_PLAYER_UPKEEP_TRIGGERED preserves the attached-count predicate")
         void enchantedPlayerUpkeepPreservesAttachedCountPredicate() {
             gd.turnNumber = 2;
             PermanentPredicate predicate = new PermanentHasSubtypePredicate(CardSubtype.CURSE);
             Card curseCard = createCardWithName("Curse of Thirst");
             curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
-                    DealDamageToEnchantedPlayerEffect.attachedCount(predicate));
+                    DealDamageToPlayersEffect.enchantedAttachedCount(predicate));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id);
             gd.playerBattlefields.get(player2Id).add(cursePerm);
@@ -785,10 +787,11 @@ class StepTriggerServiceTest {
             sut.handleUpkeepTriggers(gd);
 
             assertThat(gd.stack).isNotEmpty();
-            DealDamageToEnchantedPlayerEffect bakedEffect =
-                    (DealDamageToEnchantedPlayerEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-            assertThat(bakedEffect.affectedPlayerId()).isEqualTo(player1Id);
-            assertThat(bakedEffect.damageEqualsAttachedCount()).isEqualTo(predicate);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
+            DealDamageToPlayersEffect effect =
+                    (DealDamageToPlayersEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
+            assertThat(effect.recipient()).isEqualTo(DamageRecipient.ENCHANTED_PLAYER);
+            assertThat(effect.attachedCountFilter()).isEqualTo(predicate);
         }
 
         @Test

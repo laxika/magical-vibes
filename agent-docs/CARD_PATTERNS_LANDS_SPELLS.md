@@ -24,7 +24,7 @@ All paths relative to `cards/`.
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
 | Targeted burn | `s/Shock.java` | SPELL DealDamageToAnyTargetEffect (targeting auto-derived) |
-| Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToTargetCreatureControllerEffect |
+| Burn creature + controller | `c/ChandrasOutrage.java` | DealDamageToTargetCreatureEffect + DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PERMANENT_CONTROLLER) |
 | Uncounterable + unpreventable burn | `c/Combust.java` | STATIC CantBeCounteredEffect + DealDamageToTargetCreatureEffect(5, true) + PermanentColorInPredicate target filter |
 | X burn | `b/Blaze.java` | DealDamageToAnyTargetEffect(new XValue()) |
 | Burn + life drain | `e/EssenceDrain.java` | DealDamageToAnyTargetAndGainLifeEffect |
@@ -39,7 +39,7 @@ All paths relative to `cards/`.
 | X divided among attacking creatures | `h/HailOfArrows.java` | DealDividedDamageEffect.xAmongAttackingCreatures() — X divided as you choose among any number of target attacking creatures |
 | Kicked divided damage among any targets | `f/FightWithFire.java` | ConditionalReplacementEffect(new Kicked(), new DealDamageToTargetCreatureEffect(5), DealDividedDamageEffect.chosenAmongAnyTargets(10)) |
 | Damage all creatures | `p/Pyroclasm.java` | MassDamageEffect |
-| Modal spell (choose one) | `s/Slagstorm.java` | ChooseOneEffect wrapping multiple CardEffects (e.g. MassDamageEffect + DealDamageToEachPlayerEffect). Mode chosen at cast time via `xValue` parameter (0-based index). Test with `castSorcery(player, idx, modeIndex)` |
+| Modal spell (choose one) | `s/Slagstorm.java` | ChooseOneEffect wrapping multiple CardEffects (e.g. MassDamageEffect + DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER)). Mode chosen at cast time via `xValue` parameter (0-based index). Test with `castSorcery(player, idx, modeIndex)` |
 | Modal spell (per-mode target filter) | `c/CrushingCanopy.java`, `f/FieryIntervention.java` | Each `ChooseOneOption` has a 3rd arg `PermanentPredicateTargetFilter` overriding the cast-time target filter for that mode. No-target modes omit it. Modal cast derives targeting (permanent/spell/graveyard) from the chosen mode's unwrapped effect |
 | Modal option with multiple effects | `w/WitherbloomCharm.java`, `l/LoreholdCharm.java`, `g/GloriousDecay.java` | A `ChooseOneOption` can take `List<CardEffect>` (e.g. "each opponent loses 3 / you gain 3", "creatures +1/+1 and trample", "exile from graveyard, draw a card"). All the mode's effects are spliced into resolution in order. Modal graveyard targeting (reanimate/exile from graveyard) works via the chosen mode's effects (Witherbloom/Lorehold/Glorious Decay) |
 | Modal spell (choose one or both) | `r/RememberTheFallen.java` | ChooseOneEffect with 3 options: mode 0 (creature), mode 1 (artifact), mode 2 (both). Each wraps ReturnTargetCardsFromGraveyardToHandEffect with appropriate filter. "Both" mode uses CardAnyOfPredicate with maxTargets=2. SpellCastingService unwraps ChooseOneEffect before graveyard targeting detection |
@@ -89,7 +89,7 @@ All paths relative to `cards/`.
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + DiscardEffect(3, EACH_PLAYER, true) |
 | Library selection (hand/top/bottom) | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |
 | Library selection (N to hand, rest to graveyard) | `f/ForbiddenAlchemy.java` | LookAtTopCardsChooseNToHandRestToGraveyardEffect(count, toHandCount) |
-| Library selection + self-damage | `d/DarkBargain.java` | LookAtTopCardsChooseNToHandRestToGraveyardEffect(3, 2) + DealDamageToControllerEffect(2) |
+| Library selection + self-damage | `d/DarkBargain.java` | LookAtTopCardsChooseNToHandRestToGraveyardEffect(3, 2) + DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER) |
 | Library reveal (type to hand, rest to graveyard) | `m/Mulch.java` | RevealTopCardsTypeToHandRestToGraveyardEffect(count, cardTypes) — deterministic, no player choice |
 | Library match-permanent-to-battlefield | `m/MitoticManipulation.java` | LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect |
 | Aura upkeep — library creature sharing type to battlefield | `c/CallToTheKindred.java` | MayEffect wrapping LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect(5) in UPKEEP_TRIGGERED |
@@ -134,7 +134,7 @@ All paths relative to `cards/`.
 | Sacrifice permanent spell cost + burn | `a/Artillerize.java` | SacrificePermanentCost(PermanentAnyOfPredicate) + DealDamageToAnyTargetEffect — sacrifice artifact or creature as additional spell cost |
 | Sacrifice creature spell cost + power-based mass debuff | `i/IchorExplosion.java` | SacrificeCreatureCost(false, true) + BoostAllCreaturesEffect(new Scaled(new XValue(), -1), new Scaled(new XValue(), -1)) — sacrifice creature, all creatures get -X/-X where X = sacrificed creature's power |
 | Exile graveyard creature spell cost + power-based damage | `c/CorpseLunge.java` | ExileCardFromGraveyardCost(CREATURE, false, false, true) + DealDamageToTargetCreatureEffect(new XValue()) — exile creature from graveyard as additional cost (snapshots the exiled card's power into xValue), deal that much damage to target creature |
-| Graveyard-count damage | `s/ScrapyardSalvo.java` | DealDamageToTargetPlayerEffect(new CardsInGraveyard(new CardTypePredicate(ARTIFACT), CountScope.CONTROLLER)) — damage to target player equal to artifact cards in your graveyard |
+| Graveyard-count damage | `s/ScrapyardSalvo.java` | DealDamageToPlayersEffect(new CardsInGraveyard(new CardTypePredicate(ARTIFACT), CountScope.CONTROLLER), DamageRecipient.TARGET_PLAYER) — damage to target player equal to artifact cards in your graveyard |
 | Mass exile + reveal creatures to battlefield | `m/MassPolymorph.java` | ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect — exile all your creatures, reveal from library until that many creature cards found, put onto battlefield, shuffle rest back |
 | Static self-boost per controlled subtype | `e/EarthServant.java` | STATIC BoostSelfEffect(Fixed(0), PermanentCount(PermanentHasSubtypePredicate(MOUNTAIN), CONTROLLER)) — +0/+1 for each Mountain you control |
 | Static conditional boost (another multi-subtype) | `k/KumenasSpeaker.java` | STATIC ConditionalEffect(new ControlsAnotherPermanent(PermanentHasAnySubtypePredicate(Set.of(MERFOLK, ISLAND))), StaticBoostEffect(1, 1, SELF)) — +1/+1 as long as you control another Merfolk or Island |

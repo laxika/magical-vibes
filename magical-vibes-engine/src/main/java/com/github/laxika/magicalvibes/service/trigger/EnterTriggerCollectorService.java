@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -137,22 +138,22 @@ public class EnterTriggerCollectorService {
     }
 
     @CollectsTriggers({
-            @CollectsTrigger(value = DealDamageToTargetPlayerEffect.class, slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
-            @CollectsTrigger(value = DealDamageToTargetPlayerEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD),
+            @CollectsTrigger(value = DealDamageToPlayersEffect.class, slot = EffectSlot.ON_OPPONENT_LAND_ENTERS_BATTLEFIELD),
     })
     private boolean handleDealDamageToEnteringController(TriggerMatchContext match,
-            DealDamageToTargetPlayerEffect damageEffect, TriggerContext ctx) {
+            DealDamageToPlayersEffect damageEffect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         var gameData = match.gameData();
         String cardName = match.permanent().getCard().getName();
         UUID targetPlayerId = pe.enteringControllerId();
-        enqueue(match, new DealDamageToTargetPlayerEffect(damageEffect.damage()), targetPlayerId,
+        enqueue(match, new DealDamageToPlayersEffect(damageEffect.amount(), DamageRecipient.TARGET_PLAYER), targetPlayerId,
                 pe.perEffectTriggerCount());
         String targetName = gameData.playerIdToName.get(targetPlayerId);
         gameBroadcastService.logAndBroadcast(gameData,
-                cardName + " triggers — deals " + damageEffect.damage() + " damage to " + targetName + ".");
+                cardName + " triggers — deals " + damageEffect.amount() + " damage to " + targetName + ".");
         log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
-                gameData.id, cardName, pe.enteringCard().getName(), damageEffect.damage());
+                gameData.id, cardName, pe.enteringCard().getName(), damageEffect.amount());
         return true;
     }
 

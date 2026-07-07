@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameOnLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentControllerEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentLeavesConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
@@ -626,7 +627,7 @@ class DeathTriggerCollectorServiceTest {
         @DisplayName("DealDamage effect sets target to artifact controller")
         void dealDamageSetsTarget() {
             Card watcher = createArtifact("Damage Watcher");
-            var effect = new DealDamageToTriggeringPermanentControllerEffect(1);
+            var effect = new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER2_ID, PLAYER2_ID);
 

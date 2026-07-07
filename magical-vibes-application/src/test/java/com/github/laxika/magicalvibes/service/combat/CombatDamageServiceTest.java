@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerByHandSizeEffect;
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -1031,15 +1034,17 @@ class CombatDamageServiceTest {
         }
 
         @Test
-        @DisplayName("DealDamageToTargetPlayerByHandSizeEffect stack entry has defenderId as targetId")
+        @DisplayName("DealDamageToPlayersEffect(TARGET_PLAYER) stack entry has defenderId as targetId")
         void dealDamageByHandSizeEffectSetsDefenderAsTarget() {
             addAttackerWithEffect("Animated Sword", 3, 3,
-                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER, new DealDamageToTargetPlayerByHandSizeEffect());
+                    EffectSlot.ON_COMBAT_DAMAGE_TO_PLAYER,
+                    new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
 
             combatDamageService.resolveCombatDamage(gameData);
 
             List<StackEntry> triggerEntries = gameData.stack.stream()
-                    .filter(se -> se.getEffectsToResolve().stream().anyMatch(e -> e instanceof DealDamageToTargetPlayerByHandSizeEffect))
+                    .filter(se -> se.getEffectsToResolve().stream()
+                            .anyMatch(e -> e instanceof DealDamageToPlayersEffect d && d.recipient() == DamageRecipient.TARGET_PLAYER))
                     .toList();
             assertThat(triggerEntries).hasSize(1);
             assertThat(triggerEntries.getFirst().getTargetId()).isEqualTo(player2Id);
