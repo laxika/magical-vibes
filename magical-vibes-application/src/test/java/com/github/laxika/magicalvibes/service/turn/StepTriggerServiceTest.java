@@ -20,7 +20,8 @@ import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -725,7 +726,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of Oblivion");
             curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
-                    new ExileCardsFromOwnGraveyardEffect(2, null));
+                    new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN, null, null));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player1Id); // Attached to active player
             gd.playerBattlefields.get(player2Id).add(cursePerm);
@@ -742,7 +743,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card curseCard = createCardWithName("Curse of Oblivion");
             curseCard.addEffect(EffectSlot.ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
-                    new ExileCardsFromOwnGraveyardEffect(2, null));
+                    new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN, null, null));
             Permanent cursePerm = new Permanent(curseCard);
             cursePerm.setAttachedTo(player2Id); // Attached to non-active player
             gd.playerBattlefields.get(player1Id).add(cursePerm);

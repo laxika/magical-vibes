@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,7 +72,8 @@ class GraveyardTargetingServiceTest {
         Card card = new Card();
         card.setName("Ravenous Chupacabra");
         UUID sourcePermanentId = UUID.randomUUID();
-        ExileTargetCardFromGraveyardEffect exileEffect = new ExileTargetCardFromGraveyardEffect(CardType.CREATURE);
+        ExileGraveyardCardsEffect exileEffect = new ExileGraveyardCardsEffect(
+                1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, new CardTypePredicate(CardType.CREATURE));
         List<CardEffect> effects = List.of(exileEffect);
 
         service.handleBeginningOfCombatGraveyardTargeting(gd, player1Id, card, effects, sourcePermanentId, exileEffect);
@@ -86,7 +89,8 @@ class GraveyardTargetingServiceTest {
         Card card = new Card();
         card.setName("Ravenous Chupacabra");
         UUID sourcePermanentId = UUID.randomUUID();
-        ExileTargetCardFromGraveyardEffect exileEffect = new ExileTargetCardFromGraveyardEffect(CardType.CREATURE);
+        ExileGraveyardCardsEffect exileEffect = new ExileGraveyardCardsEffect(
+                1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, new CardTypePredicate(CardType.CREATURE));
 
         Card landCard = new Card();
         landCard.setName("Forest");

@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -28,7 +30,8 @@ public class CemeteryReaper extends Card {
                 true,
                 "{2}{B}",
                 List.of(
-                        new ExileTargetCardFromGraveyardEffect(CardType.CREATURE),
+                        new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                                new CardTypePredicate(CardType.CREATURE)),
                         CreateTokenEffect.blackZombie(1)
                 ),
                 "{2}{B}, {T}: Exile target creature card from a graveyard. Create a 2/2 black Zombie creature token."

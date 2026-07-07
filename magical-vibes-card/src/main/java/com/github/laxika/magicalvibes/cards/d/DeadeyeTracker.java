@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardsFromOpponentGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ public class DeadeyeTracker extends Card {
                 true,
                 "{1}{B}",
                 List.of(
-                        new ExileTargetCardsFromOpponentGraveyardEffect(2),
+                        new ExileGraveyardCardsEffect(2, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD),
                         new ExploreEffect()
                 ),
                 "{1}{B}, {T}: Exile two target cards from an opponent's graveyard. Deadeye Tracker explores."

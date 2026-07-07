@@ -262,7 +262,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ExileTargetPermanentEffect()` or `(boolean returnEndStep)` — exile target
 - `ExileTargetPermanentAndReturnAtEndStepEffect(boolean tapped)` — exile + return at end step
 - `ExilePermanentsTargetPlayerControlsAndReturnAtStepEffect(PermanentPredicate, TurnStep)` — mass exile target's permanents + return at step
-- `ExileTargetPlayerGraveyardEffect()` — exile target's graveyard
+- `ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE)` — exile target player's whole graveyard (also: `OWN`, `TARGET_CARDS_ANY_GRAVEYARD` [+`CardTypePredicate`], `TARGET_CARDS_OPPONENT_GRAVEYARD`, `ALL_PLAYERS`, `ALL_OPPONENTS`)
 - `ExileAllCreaturesEffect()` — exile all creatures
 - `ExileAllPermanentsEffect(PermanentPredicate)` — exile matching permanents
 - `ExileTargetPermanentAndTrackWithSourceEffect()` — exile + track exiled card with source permanent (cards "exiled with" it)

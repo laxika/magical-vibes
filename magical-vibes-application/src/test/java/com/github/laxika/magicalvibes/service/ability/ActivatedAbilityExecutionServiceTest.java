@@ -24,7 +24,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleManaPoolEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -734,7 +735,8 @@ class ActivatedAbilityExecutionServiceTest {
         void deathTriggerOnTopOfActivatedAbility() {
             Card card = createCard("Test Spellbomb", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ExileTargetPlayerGraveyardEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(),
+                new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
             // Simulate death trigger being added during sacrifice
@@ -757,7 +759,8 @@ class ActivatedAbilityExecutionServiceTest {
         void activatedAbilityIsBottomWithCorrectEffect() {
             Card card = createCard("Test Spellbomb", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ExileTargetPlayerGraveyardEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(),
+                new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
             doAnswer(inv -> {
@@ -770,7 +773,8 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, player2Id, null, false);
 
             assertThat(gameData.stack.getFirst().getEffectsToResolve())
-                    .anyMatch(e -> e instanceof ExileTargetPlayerGraveyardEffect);
+                    .anyMatch(e -> e instanceof ExileGraveyardCardsEffect ge
+                        && ge.scope() == GraveyardExileScope.TARGET_PLAYER_ENTIRE);
         }
 
         @Test
@@ -778,7 +782,8 @@ class ActivatedAbilityExecutionServiceTest {
         void deathTriggerIsTopWithDrawCardEffect() {
             Card card = createCard("Test Spellbomb", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ExileTargetPlayerGraveyardEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(),
+                new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE));
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
             doAnswer(inv -> {

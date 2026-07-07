@@ -227,7 +227,12 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "exile target [permanent]" | `ExileTargetPermanentEffect()` | SPELL | |
 | "exile target [permanent]. Return it at the beginning of the next end step" | `ExileTargetPermanentEffect(true)` | SPELL | returnEndStep=true |
 | "exile all creatures" | `ExileAllCreaturesEffect()` | SPELL | |
-| "exile target player's graveyard" | `ExileTargetPlayerGraveyardEffect()` | SPELL | |
+| "exile target player's graveyard" | `ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE)` | SPELL | Family record; other scopes: OWN, TARGET_CARDS_ANY_GRAVEYARD, TARGET_CARDS_OPPONENT_GRAVEYARD, ALL_PLAYERS, ALL_OPPONENTS |
+| "exile target [type] card from a graveyard" | `ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, new CardTypePredicate(...))` | SPELL/ability | filter null = any card |
+| "exile N target cards from an opponent's graveyard" | `ExileGraveyardCardsEffect(N, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD)` | ability | |
+| "exile all cards from all graveyards" | `ExileGraveyardCardsEffect(GraveyardExileScope.ALL_PLAYERS)` | ability | |
+| "exile all opponents' graveyards" | `ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS)` | saga/ability | |
+| "that player exiles N cards from their graveyard" | `ExileGraveyardCardsEffect(N, GraveyardExileScope.OWN)` | ENCHANTED_PLAYER_UPKEEP_TRIGGERED | |
 | "exile target noncreature, nonland card from your graveyard. Until the end of your next turn, you may cast that card" | `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(CardAllOfPredicate(not creature, not land), true)` | `ON_ENTER_BATTLEFIELD` | Practiced Scrollsmith. Single graveyard target chosen at trigger time; grants play-until-end-of-next-turn permission |
 | "exile target nonland permanent and the top card of your library. For each of those cards, its owner may play it until the end of their next turn" | `target(nonland permanent) + ExileTargetPermanentMayPlayUntilNextTurnEffect()` and `ExileTopCardsMayPlayUntilNextTurnEffect(1)` | SPELL | Suspend Aggression. Owner-relative play permission for each exiled card |
 | "Exile target instant or sorcery card from an opponent's graveyard. You may cast it this turn, and mana of any type can be spent to cast that spell. If that spell would be put into a graveyard, exile it instead. Activate only as a sorcery" | `{2}` + `SacrificeCreatureCost(false,false,false,true)` + `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect()` with `ActivationTimingRestriction.SORCERY_SPEED` | activated ability | Nita, Forum Conciliator. This-turn cast permission with any-mana + exile-instead-of-graveyard riders |

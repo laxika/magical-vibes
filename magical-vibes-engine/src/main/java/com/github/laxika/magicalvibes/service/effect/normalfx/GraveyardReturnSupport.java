@@ -707,7 +707,7 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves an {@link ExileTargetCardFromGraveyardEffect} by exiling a targeted card from a
+     * Resolves an {@link ExileGraveyardCardsEffect} by exiling a targeted card from a
      * graveyard. Unlike the imprint variant, this does NOT track the exiled card on the source
      * permanent. Validates the card still matches the required type (if any). Fizzles if the target
      * is no longer in a graveyard or no longer matches the type requirement.
@@ -803,7 +803,7 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves an {@link ExileTargetCardsFromOpponentGraveyardEffect} by exiling
+     * Resolves an {@link ExileGraveyardCardsEffect} by exiling
      * the pre-targeted cards from an opponent's graveyard. Reads target card IDs from
      * {@code entry.getTargetCardIds()}. Cards that are no longer in a graveyard at
      * resolution time are silently skipped.
@@ -819,7 +819,7 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves an {@link ExileTargetPlayerGraveyardEffect} by exiling all cards in the target
+     * Resolves an {@link ExileGraveyardCardsEffect} by exiling all cards in the target
      * player's graveyard. Does nothing beyond logging if the graveyard is already empty.
      *
      * @param gameData the current game state
@@ -827,7 +827,7 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves an {@link ExileAllOpponentsGraveyardsEffect} by exiling all cards from every
+     * Resolves an {@link ExileGraveyardCardsEffect} by exiling all cards from every
      * opponent's graveyard. Does not affect the controller's graveyard.
      */
 
@@ -880,7 +880,7 @@ public class GraveyardReturnSupport {
 
 
     /**
-     * Resolves an {@link ExileCardsFromOwnGraveyardEffect} by forcing the affected
+     * Resolves an {@link ExileGraveyardCardsEffect} by forcing the affected
      * player to exile cards from their own graveyard.
      * <ul>
      *   <li>0 cards in graveyard: nothing happens</li>

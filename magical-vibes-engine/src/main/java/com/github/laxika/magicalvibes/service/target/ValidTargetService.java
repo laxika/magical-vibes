@@ -20,9 +20,9 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardsFromOpponentGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
@@ -190,7 +190,8 @@ public class ValidTargetService {
 
         // Multi-target graveyard ability (e.g. "exile two target cards")
         for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof ExileTargetCardsFromOpponentGraveyardEffect graveyardEffect) {
+            if (effect instanceof ExileGraveyardCardsEffect graveyardEffect
+                    && graveyardEffect.scope() == GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD) {
                 minTargets = graveyardEffect.count();
                 maxTargets = graveyardEffect.count();
                 prompt = "Select " + graveyardEffect.count() + " target cards from an opponent's graveyard";
@@ -519,7 +520,8 @@ public class ValidTargetService {
         List<UUID> validIds = new ArrayList<>();
 
         for (CardEffect effect : ability.getEffects()) {
-            if (effect instanceof ExileTargetCardsFromOpponentGraveyardEffect) {
+            if (effect instanceof ExileGraveyardCardsEffect ge
+                    && ge.scope() == GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD) {
                 // Opponent-only graveyard targeting
                 for (UUID playerId : gameData.orderedPlayerIds) {
                     if (playerId.equals(controllerId)) continue;
@@ -560,8 +562,9 @@ public class ValidTargetService {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
         } else if (effect instanceof GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect) {
             return c.hasType(CardType.CREATURE);
-        } else if (effect instanceof ExileTargetCardFromGraveyardEffect e && e.requiredType() != null) {
-            return c.hasType(e.requiredType());
+        } else if (effect instanceof ExileGraveyardCardsEffect e
+                && e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD && e.filter() != null) {
+            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
             return e.cardTypes().stream().anyMatch(c::hasType);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {

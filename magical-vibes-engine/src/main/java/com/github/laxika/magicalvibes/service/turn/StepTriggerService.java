@@ -38,8 +38,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCom
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardsFromOwnGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -493,8 +493,8 @@ public class StepTriggerService {
             for (CardEffect effect : enchantedPlayerUpkeepEffects) {
                 // Bake the enchanted player ID into effects that need it
                 CardEffect effectForStack = effect;
-                if (effect instanceof ExileCardsFromOwnGraveyardEffect e) {
-                    effectForStack = new ExileCardsFromOwnGraveyardEffect(e.count(), enchantedPlayerId);
+                if (effect instanceof ExileGraveyardCardsEffect e && e.scope() == GraveyardExileScope.OWN) {
+                    effectForStack = new ExileGraveyardCardsEffect(e.count(), GraveyardExileScope.OWN, null, enchantedPlayerId);
                 }
                 // DealDamageToPlayersEffect(ENCHANTED_PLAYER) reads the enchanted player from the
                 // stack entry's targetId (set below), so no per-effect baking is needed here.
@@ -1659,9 +1659,10 @@ public class StepTriggerService {
                 boolean needsGraveyardTarget = mandatoryEffects.stream()
                         .anyMatch(CardEffect::canTargetGraveyard);
                 if (needsGraveyardTarget) {
-                    ExileTargetCardFromGraveyardEffect exileEffect = mandatoryEffects.stream()
-                            .filter(e -> e instanceof ExileTargetCardFromGraveyardEffect)
-                            .map(e -> (ExileTargetCardFromGraveyardEffect) e)
+                    ExileGraveyardCardsEffect exileEffect = mandatoryEffects.stream()
+                            .filter(e -> e instanceof ExileGraveyardCardsEffect ge
+                                    && ge.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)
+                            .map(e -> (ExileGraveyardCardsEffect) e)
                             .findFirst()
                             .orElseThrow();
                     graveyardTargetingService.handleBeginningOfCombatGraveyardTargeting(

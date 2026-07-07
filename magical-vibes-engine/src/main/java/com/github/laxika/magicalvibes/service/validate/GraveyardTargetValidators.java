@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -174,8 +175,18 @@ public class GraveyardTargetValidators {
         }
     }
 
-    @ValidatesTarget(ExileTargetCardFromGraveyardEffect.class)
-    public void validateExileTargetCardFromGraveyard(TargetValidationContext ctx, ExileTargetCardFromGraveyardEffect effect) {
+    @ValidatesTarget(ExileGraveyardCardsEffect.class)
+    public void validateExileGraveyardCards(TargetValidationContext ctx, ExileGraveyardCardsEffect effect) {
+        // Runs unconditionally for the class; gate the per-scope checks. The opponent-multi-card scope
+        // is validated separately in TargetLegalityService.validateMultiTargetGraveyardAbility, and the
+        // OWN / ALL_* scopes take no single validated target here.
+        if (effect.scope() == GraveyardExileScope.TARGET_PLAYER_ENTIRE) {
+            tvs.requireTargetPlayer(ctx);
+            return;
+        }
+        if (effect.scope() != GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD) {
+            return;
+        }
         if (ctx.targetZone() != Zone.GRAVEYARD) {
             throw new IllegalStateException("Ability requires a graveyard target");
         }
@@ -186,8 +197,8 @@ public class GraveyardTargetValidators {
         if (graveyardCard == null) {
             throw new IllegalStateException("Target card not found in any graveyard");
         }
-        if (effect.requiredType() != null && !graveyardCard.hasType(effect.requiredType())) {
-            throw new IllegalStateException("Target must be a " + effect.requiredType().name().toLowerCase() + " card");
+        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(graveyardCard, effect.filter(), null)) {
+            throw new IllegalStateException("Target must be a " + CardPredicateUtils.describeFilter(effect.filter()));
         }
     }
 

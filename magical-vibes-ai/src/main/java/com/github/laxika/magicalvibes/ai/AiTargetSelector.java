@@ -27,9 +27,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -505,8 +506,10 @@ class AiTargetSelector {
                 } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
                     candidates = candidates.stream()
                             .filter(c -> c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY)).toList();
-                } else if (effect instanceof ExileTargetCardFromGraveyardEffect e && e.requiredType() != null) {
-                    candidates = candidates.stream().filter(c -> c.hasType(e.requiredType())).toList();
+                } else if (effect instanceof ExileGraveyardCardsEffect e
+                        && e.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD && e.filter() != null) {
+                    candidates = candidates.stream()
+                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.filter(), card.getId())).toList();
                 } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
                     candidates = candidates.stream()
                             .filter(c -> e.cardTypes().stream().anyMatch(c::hasType)).toList();

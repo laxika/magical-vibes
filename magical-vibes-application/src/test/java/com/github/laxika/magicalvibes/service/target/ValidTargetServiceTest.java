@@ -20,7 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
@@ -1452,13 +1453,14 @@ class ValidTargetServiceTest {
                             Set.of("GY Instant", "GY Sorcery")
                     ),
                     Arguments.of(
-                            "ExileTargetCardFromGraveyard(CREATURE) filters to creatures only",
-                            new ExileTargetCardFromGraveyardEffect(CardType.CREATURE),
+                            "ExileGraveyardCards(CREATURE) filters to creatures only",
+                            new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD,
+                                    new CardTypePredicate(CardType.CREATURE)),
                             Set.of("GY Creature")
                     ),
                     Arguments.of(
-                            "ExileTargetCardFromGraveyard(null) allows all card types",
-                            new ExileTargetCardFromGraveyardEffect(null),
+                            "ExileGraveyardCards(null) allows all card types",
+                            new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD),
                             Set.of("GY Creature", "GY Instant", "GY Sorcery", "GY Artifact", "GY Enchantment", "GY Basic Land")
                     ),
                     Arguments.of(

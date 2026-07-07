@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -71,8 +71,8 @@ public class GraveyardTargetingService {
 
     public void handleBeginningOfCombatGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId,
-            ExileTargetCardFromGraveyardEffect exileEffect) {
-        CardType requiredType = exileEffect.requiredType();
+            ExileGraveyardCardsEffect exileEffect) {
+        CardPredicate filter = exileEffect.filter();
         boolean anyGraveyard = exileEffect.canTargetAnyGraveyard();
 
         List<Card> matchingCards = new ArrayList<>();
@@ -81,7 +81,8 @@ public class GraveyardTargetingService {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) continue;
             for (Card graveyardCard : graveyard) {
-                if (requiredType == null || graveyardCard.hasType(requiredType)) {
+                if (filter == null
+                        || predicateEvaluationService.matchesCardPredicate(graveyardCard, filter, card.getId())) {
                     matchingCards.add(graveyardCard);
                 }
             }

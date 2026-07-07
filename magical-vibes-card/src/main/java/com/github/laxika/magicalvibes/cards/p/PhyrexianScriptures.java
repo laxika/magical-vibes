@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllOpponentsGraveyardsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -43,6 +44,6 @@ public class PhyrexianScriptures extends Card {
         ));
 
         // Chapter III: Exile all opponents' graveyards
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileAllOpponentsGraveyardsEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_III, new ExileGraveyardCardsEffect(GraveyardExileScope.ALL_OPPONENTS));
     }
 }
