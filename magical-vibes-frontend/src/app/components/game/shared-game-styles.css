@@ -303,6 +303,14 @@
   justify-content: flex-end;
 }
 
+/* The label stays glued to the divider at the top of the row while the cards
+   keep hanging from the bottom edge: the auto margin absorbs the leftover
+   space, and the padding preserves the 8px gap when there is none. */
+.battlefield-row:last-child .battlefield-label {
+  margin-bottom: auto;
+  padding-bottom: 8px;
+}
+
 .battlefield-label {
   font-size: 12px;
   font-weight: 700;
