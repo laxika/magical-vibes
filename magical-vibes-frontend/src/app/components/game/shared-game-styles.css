@@ -305,16 +305,21 @@
   /* Each player owns exactly half the area (zero-basis, equal grow) so the
      divider stays fixed at the center and never gets pushed around by whichever
      side has more cards. The zoom model shrinks cards so the taller side fits
-     inside its half; a side's cards therefore never cross the divider. */
+     inside its half; a side's cards therefore never cross the divider.
+     The opponent packs its cards DOWN toward the divider so the two card masses
+     meet in the middle and combat happens right where the cards are (rather than
+     floating in an empty centre). */
   flex: 1 1 0;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
 }
 
 .battlefield-row:last-child {
-  /* Our side hangs from the bottom edge, next to the hand, so the combat zone
-     opening only consumes the empty middle instead of shoving our cards up. */
-  justify-content: flex-end;
+  /* Our side packs its cards UP toward the divider (mirror of the opponent), so
+     attackers advance to the red line instead of the combat zone opening in dead
+     centre. Empty space collects at the outer edges next to the hand/life totals. */
+  justify-content: flex-start;
 }
 
 .battlefield-cards {
@@ -326,12 +331,19 @@
 }
 
 .battlefield-divider {
-  height: 1px;
+  height: 3px;
   /* Sits in flow between the two equal halves (so it marks the true center) but
-     never shrinks: the rows don't shrink either, so without this the 1px divider
+     never shrinks: the rows don't shrink either, so without this the divider
      would be the only flex-shrinkable item and collapse to 0px on a full board. */
   flex-shrink: 0;
   background: var(--color-border-tan);
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Turns into the red combat line while attackers/blockers are declared. */
+.battlefield-divider.in-combat {
+  background: var(--color-red-primary, #8b1a1a);
+  box-shadow: 0 0 6px rgba(139, 26, 26, 0.6);
 }
 
 .battlefield-empty {
@@ -345,6 +357,7 @@
   gap: 10px;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   padding: 4px 0;
 }
 

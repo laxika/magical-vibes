@@ -166,6 +166,70 @@
   cursor: pointer;
 }
 
+/* Attacking/blocking creatures advance toward the divider without changing size
+   or layout: --card-lift composes into the card's own transform (alongside any
+   tap rotation), so the card just slides toward the red line while staying in
+   its row, beside its non-combat neighbours. */
+.battlefield-row:first-child .creatures-row .card.combat-nudge {
+  --card-lift: 30px;   /* opponent's side slides down toward the divider */
+  z-index: 3;
+}
+
+.battlefield-row:last-child .creatures-row .card.combat-nudge {
+  --card-lift: -30px;  /* our side slides up toward the divider */
+  z-index: 3;
+}
+
+/* Combat badges pinned to the corners of the card. */
+.card-combat-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-family: var(--font-display);
+  z-index: 10;
+}
+
+.attacking-badge {
+  background: var(--color-red-bright);
+  color: var(--color-parchment);
+}
+
+.blocking-badge {
+  background: var(--color-blue-primary);
+  color: var(--color-parchment);
+}
+
+.damage-badge {
+  background: var(--color-red-bright);
+  color: var(--color-parchment);
+  top: auto;
+  bottom: -8px;
+  left: auto;
+  right: -8px;
+}
+
+.must-block-badge {
+  background: #d4a017;
+  color: #1a1a1a;
+  top: auto;
+  bottom: -8px;
+  left: -8px;
+}
+
+.menace-badge {
+  background: #8b2fc9;
+  color: var(--color-parchment);
+  top: auto;
+  bottom: -8px;
+  right: -8px;
+  left: auto;
+}
+
 .surrender-confirm-card h2 {
   color: var(--color-red-primary);
 }

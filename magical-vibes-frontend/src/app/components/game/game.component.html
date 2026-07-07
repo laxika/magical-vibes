@@ -343,7 +343,7 @@
           }
         </div>
         <div class="battlefield-sub-row creatures-row">
-          @for (ip of opponentCreaturesNotInCombat(); track ip.originalIndex) {
+          @for (ip of opponentCreatures(); track ip.originalIndex) {
             <div class="permanent-stack">
               @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
                 <app-card-display
@@ -360,15 +360,31 @@
                 [permanent]="ip.perm"
                 [class.tapped]="ip.perm.tapped"
                 [class.summoning-sick]="ip.perm.summoningSick"
+                [class.attacking]="ip.perm.attacking"
+                [class.blocking]="ip.perm.blocking"
+                [class.combat-nudge]="ip.perm.attacking || ip.perm.blocking"
                 [class.block-target]="isBlockTarget(ip.originalIndex)"
-                [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)"
+                [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (choice.damage.distributingDamage && ip.perm.attacking)"
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
                 [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                 (click)="onOpponentBattlefieldCardClick(ip.originalIndex)"
+                (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-                (mouseleave)="onCardHoverEnd()" />
+                (mouseleave)="onCardHoverEnd()">
+                @if (ip.perm.attacking) { <div class="card-combat-badge attacking-badge">Attacking</div> }
+                @if (ip.perm.blocking) { <div class="card-combat-badge blocking-badge">Blocking</div> }
+                @if (declaringBlockers() && mustBeBlockedAttackerIndices().has(ip.originalIndex)) {
+                  <div class="card-combat-badge must-block-badge">Must Block</div>
+                }
+                @if (declaringBlockers() && menaceAttackerIndices().has(ip.originalIndex)) {
+                  <div class="card-combat-badge menace-badge">Needs 2 Blockers</div>
+                }
+                @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
+                  <div class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
+                }
+              </app-card-display>
             </div>
           }
         </div>
@@ -397,34 +413,11 @@
         }
       </div>
 
-      @if (showCombatZone) {
-        <app-combat-zone
-          [combatPairings]="combatPairings"
-          [declaringAttackers]="declaringAttackers()"
-          [declaringBlockers]="declaringBlockers()"
-          [selectedBlockerIndex]="selectedBlockerIndex()"
-          [mustBeBlockedAttackerIndices]="mustBeBlockedAttackerIndices()"
-          [menaceAttackerIndices]="menaceAttackerIndices()"
-          [stackTargetId]="stackTargetId()"
-          [isSelectingTarget]="choice.targeting.selectingTarget || choice.targeting.multiTargeting"
-          [isDistributingDamage]="choice.damage.distributingDamage"
-          [isValidTarget]="boundIsValidTarget"
-          [isSelectedAttacker]="boundIsSelectedAttacker"
-          [getAttachedAuras]="boundGetAttachedAuras"
-          [getDamageAssigned]="boundGetDamageAssigned"
-          [unassignDamage]="boundUnassignDamage"
-          (attackerClick)="onCombatAttackerClick($event)"
-          (blockerClick)="onCombatBlockerClick($event)"
-          (auraClick)="onAuraClick($event)"
-          (cardHover)="onCardHover($event.card, $event.permanent ?? null)"
-          (cardHoverEnd)="onCardHoverEnd()" />
-      } @else {
-        <div class="battlefield-divider"></div>
-      }
+      <div class="battlefield-divider" [class.in-combat]="inCombat"></div>
 
       <div class="battlefield-row" [style.--density-zoom]="myBattlefieldZoom">
         <div class="battlefield-sub-row creatures-row">
-          @for (ip of myCreaturesNotInCombat(); track ip.originalIndex) {
+          @for (ip of myCreatures(); track ip.originalIndex) {
             <div class="permanent-stack">
               @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
                 <app-card-display
@@ -442,19 +435,30 @@
                 [class.tapped]="ip.perm.tapped"
                 [class.tappable]="(choice.targeting.canTapPermanent(ip.originalIndex) && !declaringAttackers() && !declaringBlockers()) || choice.canTapForMana(ip.perm) || (declaringAttackers() && attackTaxPerCreature() > 0 && !canAttack(ip.originalIndex) && canTapPermanentForMana(ip.perm))"
                 [class.summoning-sick]="ip.perm.summoningSick"
+                [class.attacking]="ip.perm.attacking"
+                [class.blocking]="ip.perm.blocking"
+                [class.combat-nudge]="isAttackingCreature(ip.originalIndex, true) || isBlockingCreature(ip.originalIndex, true)"
                 [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
+                [class.selected-attacker]="declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
                 [class.must-attack]="mustAttackIndices().has(ip.originalIndex)"
                 [class.can-block]="canBlock(ip.originalIndex) && !isAssignedBlocker(ip.originalIndex) && selectedBlockerIndex() !== ip.originalIndex"
                 [class.selected-blocker]="selectedBlockerIndex() === ip.originalIndex"
                 [class.assigned-blocker]="isAssignedBlocker(ip.originalIndex)"
-                [class.targetable]="(choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)"
+                [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (choice.damage.distributingDamage && ip.perm.attacking)"
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
                 [class.selected-multi-permanent]="choice.choosingMultiplePermanents && choice.multiPermanentSelectedIds().has(ip.perm.id)"
                 [class.alternate-cost-selected]="choice.targeting.selectingAlternateCostCreatures && choice.targeting.isAlternateCostSelected(ip.perm.id)"
                 (click)="onMyBattlefieldCardClick(ip.originalIndex, $event)"
+                (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
-                (mouseleave)="onCardHoverEnd()" />
+                (mouseleave)="onCardHoverEnd()">
+                @if (ip.perm.attacking) { <div class="card-combat-badge attacking-badge">Attacking</div> }
+                @if (ip.perm.blocking) { <div class="card-combat-badge blocking-badge">Blocking</div> }
+                @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
+                  <div class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
+                }
+              </app-card-display>
               @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
                 <div class="ability-popup" (click)="$event.stopPropagation()">
                   <div class="ability-popup-title">Choose an ability:</div>

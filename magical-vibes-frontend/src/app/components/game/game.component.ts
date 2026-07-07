@@ -7,9 +7,8 @@ import { WebsocketService, WebSocketMessage, Game, GameNotification, GameStateNo
 import { GameChoiceService } from '../../services/game-choice.service';
 import { CardDisplayComponent } from './card-display/card-display.component';
 import { MulliganModalComponent } from './mulligan-modal/mulligan-modal.component';
-import { CombatZoneComponent } from './combat-zone/combat-zone.component';
 import { SidePanelComponent } from './side-panel/side-panel.component';
-import { IndexedPermanent, CombatGroup, CombatBlocker, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact } from './battlefield.utils';
+import { IndexedPermanent, AttachedAura, LandStack, splitBattlefield, stackBasicLands, getAttachedAuras, isLandStack, isPermanentCreature, isPermanentArtifact } from './battlefield.utils';
 import { Subscription } from 'rxjs';
 import { ManaSymbolService } from '../../services/mana-symbol.service';
 import { PermanentClickResolverService } from '../../services/permanent-click-resolver.service';
@@ -17,7 +16,7 @@ import { PermanentClickResolverService } from '../../services/permanent-click-re
 @Component({
   selector: 'app-game',
   standalone: true,
-  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, CombatZoneComponent, SidePanelComponent],
+  imports: [CommonModule, FormsModule, CardDisplayComponent, MulliganModalComponent, SidePanelComponent],
   templateUrl: './game.component.html',
   styleUrls: ['./shared-game-styles.css', './game.component.css']
 })
@@ -52,11 +51,6 @@ export class GameComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
 
   // Bound function references for child component inputs
-  readonly boundIsValidTarget = (perm: Permanent) => this.choice.targeting.isValidTarget(perm);
-  readonly boundIsSelectedAttacker = (index: number) => this.isSelectedAttacker(index);
-  readonly boundGetAttachedAuras = (permanentId: string) => this.getAttachedAuras(permanentId);
-  readonly boundGetDamageAssigned = (permanentId: string) => this.choice.damage.getDamageAssigned(permanentId);
-  readonly boundUnassignDamage = (permanentId: string) => this.choice.damage.unassignDamage(permanentId);
   readonly boundIsGraveyardLandPlayable = (index: number) => this.isGraveyardLandPlayable(index);
   readonly boundIsGraveyardAbilityActivatable = (index: number) => this.isGraveyardAbilityActivatable(index);
   readonly boundIsFlashbackPlayable = (index: number) => this.isFlashbackPlayable(index);
@@ -301,21 +295,18 @@ export class GameComponent implements OnInit, OnDestroy {
     return this.game()?.battlefields?.[this.opponentPlayerIndex] ?? [];
   }
 
-  /* Dimensions mirrored from shared-game-styles.css / combat-zone.component.css,
-     used to fit both battlefields into the area's flex-allocated size. */
+  /* Dimensions mirrored from shared-game-styles.css, used to fit both
+     battlefields into the area's flex-allocated size. */
   private static readonly CARD_HEIGHT = 231;
   private static readonly CARD_WIDTH = 165;
   private static readonly TAPPED_CARD_WIDTH = 231;
   private static readonly STACK_STRIP = 32;
   private static readonly TAPPED_STACK_STRIP = 31;
   private static readonly ROW_GAP = 10;
-  private static readonly BLOCKER_GAP = 6;
   /* Attached auras peek out from under their host: 50px to the side
      (margin-left) and 41px above (231px card minus the -190px overlap). */
   private static readonly AURA_X_OFFSET = 50;
   private static readonly AURA_STRIP = 41;
-  private static readonly COMBAT_GROUPS_GAP = 24;
-  private static readonly COMBAT_STACK_GAP = 8;
   private static readonly LANDS_ROW_MODIFIER = 0.9;
   private static readonly SUB_ROW_PADDING = 8;
   private static readonly SIDE_LABEL_HEIGHT = 0;
@@ -327,8 +318,8 @@ export class GameComponent implements OnInit, OnDestroy {
   private static readonly ROW_MARGIN = 0;
   private static readonly EMPTY_MESSAGE_HEIGHT = 20;
   private static readonly REVEALED_ROW_HEIGHT = 250;
-  private static readonly DIVIDER_HEIGHT = 1;
-  private static readonly COMBAT_ZONE_CHROME = 63;
+  /* The divider between the two halves; grows to a visible red line during combat. */
+  private static readonly DIVIDER_HEIGHT = 3;
   /* Low floor so an unbalanced board (one side's content is much taller than
      half) scales its cards down to stay inside its half instead of scrolling. */
   private static readonly MIN_BATTLEFIELD_ZOOM = 0.3;
@@ -419,7 +410,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private opponentSideHeight(zoom: number, rowWidth: number): number {
     return this.computeSideHeight(
-      this.opponentCreaturesNotInCombat(),
+      this.opponentCreatures(),
       this.opponentLandStacks,
       this.opponentBattlefield.length === 0,
       (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0),
@@ -428,7 +419,7 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private mySideHeight(zoom: number, rowWidth: number): number {
     return this.computeSideHeight(
-      this.myCreaturesNotInCombat(),
+      this.myCreatures(),
       this.myLandStacks,
       this.myBattlefield.length === 0,
       this.myRevealedTopCard.length > 0 ? 1 : 0,
@@ -436,36 +427,16 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   /** Total board height at the given zoom. The two players are flex halves, so
-      the board fits when the taller side fits into its half; the combat zone (if
-      shown) replaces the divider in the middle. */
+      the board fits when the taller side fits into its half; the divider (red
+      during combat) sits between them. Combat doesn't add its own space — the
+      attacking/blocking creatures stay in their rows and merely nudge toward the
+      divider — so the fit is the same in and out of combat. */
   private modeledBoardHeight(zoom: number, rowWidth: number): number {
     const C = GameComponent;
-    let total = 2 * Math.max(
+    const total = 2 * Math.max(
       this.opponentSideHeight(zoom, rowWidth),
       this.mySideHeight(zoom, rowWidth));
-
-    if (this.showCombatZone) {
-      const groups = this.combatPairings;
-      const blockers = groups.flatMap(g => g.blockers);
-      const attackerLine = groups.length > 0
-        ? Math.max(...groups.map(g => this.stackHeight(g.attacker)))
-        : 0;
-      const blockerLine = blockers.length > 0
-        ? Math.max(...blockers.map(b => this.stackHeight(b.perm)))
-        : 0;
-      const groupHeight = attackerLine * zoom
-        + (blockers.length > 0 ? C.COMBAT_STACK_GAP + blockerLine * zoom : 0);
-      const widths = groups.map(g => Math.max(
-        this.stackWidth(g.attacker) * zoom,
-        g.blockers.reduce((sum, b) => sum + this.stackWidth(b.perm) * zoom, 0)
-          + Math.max(0, g.blockers.length - 1) * C.BLOCKER_GAP));
-      const lines = widths.length > 0 ? C.packedLines(widths, C.COMBAT_GROUPS_GAP, rowWidth - 20) : 1;
-      total += lines * groupHeight + (lines - 1) * C.COMBAT_GROUPS_GAP + C.COMBAT_ZONE_CHROME;
-    } else {
-      total += C.DIVIDER_HEIGHT;
-    }
-
-    return total;
+    return total + C.DIVIDER_HEIGHT;
   }
 
   /** Largest zoom (MAX→MIN) at which one side's content fits in its half of the
@@ -483,21 +454,18 @@ export class GameComponent implements OnInit, OnDestroy {
     return C.MIN_BATTLEFIELD_ZOOM;
   }
 
-  /* Each player's row is zoomed to fit only its own content into its own half,
-     so the opponent's board never resizes our cards (and vice versa). During
-     combat the attackers move to the shared combat zone, so both rows fall back
-     to the single board zoom to stay visually consistent with it. */
+  /* Each player's row is zoomed to fit only its own content into its own half, so
+     the opponent's board never resizes our cards (and vice versa) — unchanged by
+     combat, since combat creatures stay in their rows at the same size. */
   get myBattlefieldZoom(): number {
-    if (this.showCombatZone) return this.battlefieldZoom;
     return this.sideZoom((z, w) => this.mySideHeight(z, w));
   }
 
   get opponentBattlefieldZoom(): number {
-    if (this.showCombatZone) return this.battlefieldZoom;
     return this.sideZoom((z, w) => this.opponentSideHeight(z, w));
   }
 
-  /** Board-wide zoom, used for the combat zone (which spans both players). */
+  /** Board-wide zoom, kept as the battlefield area's fallback density. */
   get battlefieldZoom(): number {
     const { width, height } = this.battlefieldAreaSize();
     if (!width || !height) return 1;
@@ -1055,87 +1023,37 @@ export class GameComponent implements OnInit, OnDestroy {
     return isPermanentCreature(perm);
   }
 
-  myCreaturesNotInCombat = computed(() => {
-    const selectedAttackers = this.selectedAttackerIndices();
-    const assignedBlockers = this.blockerAssignments();
-    return splitBattlefield(this.myBattlefield).creatures.filter(c => {
-      if (selectedAttackers.has(c.originalIndex)) return false;
-      if (assignedBlockers.has(c.originalIndex)) return false;
-      if (c.perm.attacking || c.perm.blocking) return false;
-      return true;
-    });
-  });
+  /* All creatures render in their own row; attacking/blocking ones stay in place
+     and merely nudge toward the divider (see the combat CSS), so nothing is
+     filtered out of the rows during combat. */
+  myCreatures = computed(() => splitBattlefield(this.myBattlefield).creatures);
+  opponentCreatures = computed(() => splitBattlefield(this.opponentBattlefield).creatures);
 
-  opponentCreaturesNotInCombat = computed(() => {
-    return splitBattlefield(this.opponentBattlefield).creatures.filter(c => {
-      if (c.perm.attacking || c.perm.blocking) return false;
-      return true;
-    });
-  });
+  // ========== Combat ==========
 
-  // ========== Combat zone ==========
-
-  get showCombatZone(): boolean {
-    return this.combatPairings.length > 0;
+  /** True while attackers/blockers are being declared or are committed, so the
+      divider turns red and combat creatures nudge toward it. */
+  get inCombat(): boolean {
+    if (this.declaringAttackers() || this.declaringBlockers()) return true;
+    if (this.selectedAttackerIndices().size > 0 || this.blockerAssignments().size > 0) return true;
+    return this.myBattlefield.some(p => p.attacking || p.blocking)
+      || this.opponentBattlefield.some(p => p.attacking || p.blocking);
   }
 
-  get combatPairings(): CombatGroup[] {
-    const groups: CombatGroup[] = [];
+  /** Whether the creature at the given index (on the given side) is attacking —
+      either committed or currently being declared. */
+  isAttackingCreature(index: number, isMine: boolean): boolean {
+    const perm = (isMine ? this.myBattlefield : this.opponentBattlefield)[index];
+    if (perm?.attacking) return true;
+    return isMine && this.isSelectedAttacker(index);
+  }
 
-    const selectedAttackers = this.selectedAttackerIndices();
-    if (this.declaringAttackers() || selectedAttackers.size > 0) {
-      for (const idx of selectedAttackers) {
-        groups.push({
-          attackerIndex: idx,
-          attacker: this.myBattlefield[idx],
-          attackerIsMine: true,
-          blockers: []
-        });
-      }
-      return groups;
-    }
-
-    const myBf = this.myBattlefield;
-    const oppBf = this.opponentBattlefield;
-    const myAttacking = myBf.some(p => p.attacking);
-    const oppAttacking = oppBf.some(p => p.attacking);
-
-    if (myAttacking) {
-      myBf.forEach((perm, idx) => {
-        if (!perm.attacking) return;
-        const group: CombatGroup = { attackerIndex: idx, attacker: perm, attackerIsMine: true, blockers: [] };
-        oppBf.forEach((defPerm, defIdx) => {
-          if (defPerm.blocking && defPerm.blockingTargets.includes(idx)) {
-            group.blockers.push({ index: defIdx, perm: defPerm, isMine: false });
-          }
-        });
-        groups.push(group);
-      });
-    } else if (oppAttacking) {
-      oppBf.forEach((perm, idx) => {
-        if (!perm.attacking) return;
-        const group: CombatGroup = { attackerIndex: idx, attacker: perm, attackerIsMine: false, blockers: [] };
-        myBf.forEach((defPerm, defIdx) => {
-          if (defPerm.blocking && defPerm.blockingTargets.includes(idx)) {
-            group.blockers.push({ index: defIdx, perm: defPerm, isMine: true });
-          }
-        });
-        const assignments = this.blockerAssignments();
-        if (this.declaringBlockers() || assignments.size > 0) {
-          for (const [blockerIdx, atkIdx] of assignments) {
-            if (atkIdx === idx) {
-              const alreadyIncluded = group.blockers.some(b => b.index === blockerIdx && b.isMine);
-              if (!alreadyIncluded) {
-                group.blockers.push({ index: blockerIdx, perm: myBf[blockerIdx], isMine: true });
-              }
-            }
-          }
-        }
-        groups.push(group);
-      });
-    }
-
-    return groups;
+  /** Whether the creature at the given index (on the given side) is blocking —
+      either committed or currently being assigned. */
+  isBlockingCreature(index: number, isMine: boolean): boolean {
+    const perm = (isMine ? this.myBattlefield : this.opponentBattlefield)[index];
+    if (perm?.blocking) return true;
+    return isMine && this.isAssignedBlocker(index);
   }
 
   // ========== Click dispatch ==========
@@ -1194,26 +1112,6 @@ export class GameComponent implements OnInit, OnDestroy {
     if (this.clickResolver.tryResolveClick(perm, this.attackingCreatureFilter)) return;
     if (this.declaringBlockers()) {
       this.assignBlock(index);
-    }
-  }
-
-  onCombatAttackerClick(group: CombatGroup): void {
-    if (this.clickResolver.tryResolveClick(group.attacker, () => true)) return;
-    if (this.declaringAttackers() && group.attackerIsMine) {
-      this.toggleAttacker(group.attackerIndex);
-    } else if (this.declaringBlockers() && !group.attackerIsMine) {
-      this.assignBlock(group.attackerIndex);
-    } else if (group.attackerIsMine) {
-      this.choice.targeting.tapPermanent(group.attackerIndex);
-    }
-  }
-
-  onCombatBlockerClick(blocker: CombatBlocker): void {
-    if (this.clickResolver.tryResolveClick(blocker.perm)) return;
-    if (this.declaringBlockers() && blocker.isMine) {
-      this.selectBlocker(blocker.index);
-    } else if (blocker.isMine) {
-      this.choice.targeting.tapPermanent(blocker.index);
     }
   }
 

@@ -5,19 +5,6 @@ export interface IndexedPermanent {
   originalIndex: number;
 }
 
-export interface CombatBlocker {
-  index: number;
-  perm: Permanent;
-  isMine: boolean;
-}
-
-export interface CombatGroup {
-  attackerIndex: number;
-  attacker: Permanent;
-  attackerIsMine: boolean;
-  blockers: CombatBlocker[];
-}
-
 export interface AttachedAura {
   perm: Permanent;
   originalIndex: number;
