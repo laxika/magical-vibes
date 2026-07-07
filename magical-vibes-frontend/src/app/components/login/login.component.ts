@@ -16,7 +16,6 @@ export class LoginComponent {
   password = signal('');
   loading = signal(false);
   errorMessage = signal('');
-  successMessage = signal('');
 
   constructor(
     private websocketService: WebsocketService,
@@ -25,7 +24,6 @@ export class LoginComponent {
 
   onSubmit() {
     this.errorMessage.set('');
-    this.successMessage.set('');
 
     if (!this.username() || !this.password()) {
       this.errorMessage.set('Please enter both username and password');
@@ -40,16 +38,12 @@ export class LoginComponent {
 
         if (response.type === MessageType.LOGIN_SUCCESS) {
           let destination = '/home';
-          let msg = response.message;
           if (response.activeGame) {
             destination = '/game';
-            msg = 'Rejoining game...';
           } else if (response.activeDraftId) {
             destination = '/draft';
-            msg = 'Rejoining draft...';
           }
-          this.successMessage.set(msg);
-          setTimeout(() => this.router.navigate([destination]), 1000);
+          this.router.navigate([destination]);
         } else if (response.type === MessageType.LOGIN_FAILURE) {
           this.errorMessage.set(response.message);
         } else if (response.type === MessageType.TIMEOUT) {

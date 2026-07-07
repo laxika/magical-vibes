@@ -36,12 +36,6 @@
         </div>
       }
 
-      @if (successMessage()) {
-        <div class="alert alert-success">
-          {{ successMessage() }}
-        </div>
-      }
-
       <button
         type="submit"
         [disabled]="loading() || !loginForm.form.valid"
