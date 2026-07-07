@@ -280,8 +280,6 @@
   min-height: 200px;
   display: flex;
   flex-direction: column;
-  /* Anchors the absolutely-centered divider. */
-  position: relative;
   overflow-y: auto;
   scrollbar-gutter: stable;
   scrollbar-color: #c4a06a #e8d5b0;
@@ -304,11 +302,11 @@
 }
 
 .battlefield-row {
-  /* Grow into free space but stay content-sized when the board is tight, so an
-     unbalanced board uses only the height it needs (no wasted half) and the
-     zoom model can fit it at a readable zoom instead of scrolling. The divider
-     is centered independently (absolute), so it is never pushed around. */
-  flex: 1 0 auto;
+  /* Each player owns exactly half the area (zero-basis, equal grow) so the
+     divider stays fixed at the center and never gets pushed around by whichever
+     side has more cards. The zoom model shrinks cards so the taller side fits
+     inside its half; a side's cards therefore never cross the divider. */
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
 }
@@ -328,15 +326,12 @@
 }
 
 .battlefield-divider {
-  /* Pinned at the vertical center of the area, out of flow, so it never moves
-     as either side gains cards and can never be flex-squeezed to 0px. */
-  position: absolute;
-  top: 50%;
-  left: 10px;
-  right: 10px;
   height: 1px;
+  /* Sits in flow between the two equal halves (so it marks the true center) but
+     never shrinks: the rows don't shrink either, so without this the 1px divider
+     would be the only flex-shrinkable item and collapse to 0px on a full board. */
+  flex-shrink: 0;
   background: var(--color-border-tan);
-  pointer-events: none;
 }
 
 .battlefield-empty {

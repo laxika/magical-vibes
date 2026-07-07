@@ -329,7 +329,9 @@ export class GameComponent implements OnInit, OnDestroy {
   private static readonly REVEALED_ROW_HEIGHT = 250;
   private static readonly DIVIDER_HEIGHT = 1;
   private static readonly COMBAT_ZONE_CHROME = 63;
-  private static readonly MIN_BATTLEFIELD_ZOOM = 0.5;
+  /* Low floor so an unbalanced board (one side's content is much taller than
+     half) scales its cards down to stay inside its half instead of scrolling. */
+  private static readonly MIN_BATTLEFIELD_ZOOM = 0.3;
   /* Cards never render above 80% of natural size; they only shrink further to fit. */
   private static readonly MAX_BATTLEFIELD_ZOOM = 0.8;
 
@@ -413,18 +415,21 @@ export class GameComponent implements OnInit, OnDestroy {
       return h;
     };
 
-    /* Content-sized rows stack, so the board needs the sum of both sides; the
-       divider is centered out of flow and adds no flow height. */
-    total += sideHeight(
-      this.opponentCreaturesNotInCombat(),
-      this.opponentLandStacks,
-      this.opponentBattlefield.length === 0,
-      (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0));
-    total += sideHeight(
-      this.myCreaturesNotInCombat(),
-      this.myLandStacks,
-      this.myBattlefield.length === 0,
-      this.myRevealedTopCard.length > 0 ? 1 : 0);
+    /* The rows are zero-basis flex halves, so each player gets the same share:
+       the board fits when the taller side fits into its half. Shrinking to this
+       (rather than the sum) keeps the divider centered and stops either side's
+       cards from crossing it. */
+    total += 2 * Math.max(
+      sideHeight(
+        this.opponentCreaturesNotInCombat(),
+        this.opponentLandStacks,
+        this.opponentBattlefield.length === 0,
+        (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0)),
+      sideHeight(
+        this.myCreaturesNotInCombat(),
+        this.myLandStacks,
+        this.myBattlefield.length === 0,
+        this.myRevealedTopCard.length > 0 ? 1 : 0));
 
     if (this.showCombatZone) {
       const groups = this.combatPairings;
