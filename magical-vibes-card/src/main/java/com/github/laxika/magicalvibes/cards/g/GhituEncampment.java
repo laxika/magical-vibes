@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
@@ -24,7 +24,7 @@ public class GhituEncampment extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}",
-                List.of(new AnimateLandEffect(2, 1, List.of(CardSubtype.WARRIOR), Set.of(Keyword.FIRST_STRIKE), CardColor.RED)),
+                List.of(new AnimatePermanentsEffect(2, 1, List.of(CardSubtype.WARRIOR), Set.of(Keyword.FIRST_STRIKE), CardColor.RED)),
                 "{1}{R}: Ghitu Encampment becomes a 2/1 red Warrior creature with first strike until end of turn. It's still a land."
         ));
     }

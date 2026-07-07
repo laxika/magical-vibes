@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -12,6 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "MBS", collectorNumber = "97")
 public class TezzeretAgentOfBolas extends Card {
@@ -28,7 +31,8 @@ public class TezzeretAgentOfBolas extends Card {
         // −1: Target artifact becomes an artifact creature with base power and toughness 5/5.
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new AnimateTargetPermanentEffect(5, 5)),
+                List.of(new AnimatePermanentsEffect(5, 5, List.of(), Set.of(), null, Set.of(),
+                        GrantScope.TARGET, EffectDuration.PERMANENT)),
                 "\u22121: Target artifact becomes an artifact creature with base power and toughness 5/5.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsArtifactPredicate(),

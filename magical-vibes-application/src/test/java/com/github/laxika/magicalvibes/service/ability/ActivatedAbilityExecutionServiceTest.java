@@ -12,8 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -376,11 +375,11 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("AnimateSelfWithStatsEffect auto-targets source permanent")
+        @DisplayName("AnimatePermanentsEffect (self scope) auto-targets source permanent")
         void animateSelfAutoTargets() {
             Card card = createCard("Test Artifact", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AnimateSelfWithStatsEffect(2, 2, List.of(), Set.of()));
+            List<CardEffect> effects = List.of(new AnimatePermanentsEffect(2, 2, List.of(), Set.of()));
             ActivatedAbility ability = new ActivatedAbility(false, "{W}", effects, "Animate");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
@@ -390,11 +389,11 @@ class ActivatedAbilityExecutionServiceTest {
         }
 
         @Test
-        @DisplayName("AnimateLandEffect auto-targets source permanent")
+        @DisplayName("AnimatePermanentsEffect (manland) auto-targets source permanent")
         void animateLandAutoTargets() {
             Card card = createCard("Test Land", CardType.LAND);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AnimateLandEffect(3, 3, List.of(), Set.of(), CardColor.GREEN));
+            List<CardEffect> effects = List.of(new AnimatePermanentsEffect(3, 3, List.of(), Set.of(), CardColor.GREEN));
             ActivatedAbility ability = new ActivatedAbility(false, "{1}{G}", effects, "Animate land");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);

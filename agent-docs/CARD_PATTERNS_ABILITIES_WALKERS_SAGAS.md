@@ -39,7 +39,7 @@ All paths relative to `cards/`.
 | Mana rock (tap for N of any color) | `g/GildedLotus.java` | `(true, null, AwardAnyColorManaEffect(3), false)` |
 | Mana rock (choose subtype + tap for any color restricted to chosen creature type) | `p/PillarOfOrigins.java` | ON_ENTER_BATTLEFIELD ChooseSubtypeOnEnterEffect + `(true, null, AwardAnyColorChosenSubtypeCreatureManaEffect, false)` |
 | Mana dork (ON_TAP) | `l/LlanowarElves.java` | addEffect(ON_TAP, AwardManaEffect) |
-| Animate self | `c/ChimericStaff.java` | AnimateSelfEffect |
+| Animate self (X/X) | `c/ChimericStaff.java` | AnimatePermanentsEffect(XValue, XValue, subtypes, …, SELF, UEOT) |
 | Sorcery-speed ability | `t/ThrullSurgeon.java` | ActivationTimingRestriction.SORCERY_SPEED |
 | Metalcraft exile-flicker | `a/ArgentSphinx.java` | ExileSelfAndReturnAtEndStepEffect + METALCRAFT restriction |
 | Metalcraft tap ability | `v/VedalkenCertarch.java` | ActivationTimingRestriction.METALCRAFT + target filter |

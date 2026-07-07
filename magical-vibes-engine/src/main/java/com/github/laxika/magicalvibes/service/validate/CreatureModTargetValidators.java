@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.service.validate;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateTargetLandWhileSourceOnBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
@@ -116,13 +116,12 @@ public class CreatureModTargetValidators {
         tvs.requireBattlefieldTarget(ctx);
     }
 
-    @ValidatesTarget(AnimateTargetPermanentEffect.class)
-    public void validateAnimateTargetPermanent(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
-    }
-
-    @ValidatesTarget(AnimateTargetLandWhileSourceOnBattlefieldEffect.class)
-    public void validateAnimateTargetLandWhileSourceOnBattlefield(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
+    @ValidatesTarget(AnimatePermanentsEffect.class)
+    public void validateAnimatePermanents(TargetValidationContext ctx, AnimatePermanentsEffect effect) {
+        // Only the TARGET scope (Tezzeret, Waker, Awakener Druid) validates a chosen permanent;
+        // the SELF/OWN_LANDS/OWN_PERMANENTS scopes don't target one.
+        if (effect.scope() == GrantScope.TARGET) {
+            tvs.requireBattlefieldTarget(ctx);
+        }
     }
 }

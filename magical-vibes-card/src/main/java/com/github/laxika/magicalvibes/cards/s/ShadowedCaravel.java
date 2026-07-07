@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfAsCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
@@ -22,7 +22,7 @@ public class ShadowedCaravel extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new CrewCost(2), new AnimateSelfAsCreatureEffect()),
+                List.of(new CrewCost(2), AnimatePermanentsEffect.crew()),
                 "Crew 2"
         ));
     }

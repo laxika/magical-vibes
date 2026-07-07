@@ -10,8 +10,9 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -143,10 +144,12 @@ public class StaticEffectSupport {
             if (grant.scope() == GrantScope.SELF || matchesStaticFilter(context.target(), grant.filter())) {
                 accumulator.addGrantedEffect(grant.effect());
             }
-        } else if (wrapped instanceof AnimateSelfWithStatsEffect animate) {
+        } else if (wrapped instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF) {
             accumulator.setSelfBecomeCreature(true);
-            accumulator.addPower(animate.power());
-            accumulator.addToughness(animate.toughness());
+            // Conditional self-become-creature statics (Rusted Relic, Warden of the Wall) always use
+            // a fixed base P/T; static bonus computation has no stack entry to evaluate a dynamic amount.
+            accumulator.addPower(animate.power() instanceof Fixed p ? p.value() : 0);
+            accumulator.addToughness(animate.toughness() instanceof Fixed t ? t.value() : 0);
             for (CardSubtype subtype : animate.grantedSubtypes()) {
                 accumulator.addGrantedSubtype(subtype);
             }

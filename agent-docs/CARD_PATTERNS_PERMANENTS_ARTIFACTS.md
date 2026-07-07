@@ -50,7 +50,7 @@ All paths relative to `cards/`.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| Vehicle with Crew + combat trigger | `w/Weatherlight.java` | CrewCost(3) + AnimateSelfAsCreatureEffect activated ability (no tap, no mana). ON_COMBAT_DAMAGE_TO_PLAYER LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(5, CardIsHistoricPredicate). Crew cost auto-pays when all creatures must be tapped; prompts interactively otherwise |
+| Vehicle with Crew + combat trigger | `w/Weatherlight.java` | CrewCost(3) + AnimatePermanentsEffect.crew() activated ability (no tap, no mana). ON_COMBAT_DAMAGE_TO_PLAYER LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect(5, CardIsHistoricPredicate). Crew cost auto-pays when all creatures must be tapped; prompts interactively otherwise |
 
 ## Equipment
 

@@ -351,7 +351,7 @@ class ChimericStaffTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 3, null);
         harness.passBothPriorities();
 
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("becomes a 3/3 artifact creature"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("becomes a 3/3 creature"));
     }
 
     // ===== Helper methods =====

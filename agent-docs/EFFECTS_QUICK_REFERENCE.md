@@ -394,8 +394,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Animate / transform
 
-- `AnimateLandEffect(int, int, List<CardSubtype>, Set<Keyword>, CardColor)` + overloads — animate land
-- `AnimateSelfAsCreatureEffect()` — vehicle crew
+- `AnimatePermanentsEffect(power, toughness, subtypes, keywords, color, cardTypes, GrantScope, EffectDuration, filter)` (+ int-P/T sugar ctors) — one/many permanents become creatures. Scope SELF (manland/self, UEOT), TARGET (PERMANENT or WHILE_SOURCE_ON_BATTLEFIELD), OWN_LANDS (Sylvan Awakening), OWN_PERMANENTS+filter (The Antiquities War). P/T `DynamicAmount` (`XValue`/`CountersOnSource`); null P/T = printed
+- `AnimatePermanentsEffect.crew()` — vehicle crew (printed P/T, +CREATURE)
 - `TransformSelfEffect()` — transform DFC
 - `TransformSelfAndAttachToCreatureDamagedPlayerControlsEffect()` — combat-damage "you may transform; if you do, attach to target creature that player controls" (wrap in `MayEffect`)
 - `TransformAllEffect(PermanentPredicate)` — transform all matching

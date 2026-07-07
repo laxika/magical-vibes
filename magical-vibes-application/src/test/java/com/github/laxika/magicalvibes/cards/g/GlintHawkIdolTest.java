@@ -122,7 +122,7 @@ class GlintHawkIdolTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve trigger (MayEffect → prompt)
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities(); // resolve AnimateSelfWithStatsEffect
+        harness.passBothPriorities(); // resolve AnimatePermanentsEffect
 
         assertThat(idolPerm.isAnimatedUntilEndOfTurn()).isTrue();
         assertThat(idolPerm.getAnimatedPower()).isEqualTo(2);

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class InkmothNexus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new AnimateLandEffect(1, 1,
+                List.of(new AnimatePermanentsEffect(1, 1,
                         List.of(CardSubtype.PHYREXIAN, CardSubtype.BLINKMOTH),
                         Set.of(Keyword.FLYING, Keyword.INFECT),
                         null,

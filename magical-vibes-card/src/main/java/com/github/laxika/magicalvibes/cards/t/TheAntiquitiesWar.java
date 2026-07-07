@@ -4,10 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AnimateControlledPermanentsEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsMayRevealByPredicatePutIntoHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * The Antiquities War — {3}{U} Enchantment — Saga
@@ -35,6 +41,8 @@ public class TheAntiquitiesWar extends Card {
 
         // Chapter III: Artifacts you control become artifact creatures with base P/T 5/5 until end of turn
         addEffect(EffectSlot.SAGA_CHAPTER_III,
-                new AnimateControlledPermanentsEffect(5, 5, new PermanentIsArtifactPredicate()));
+                new AnimatePermanentsEffect(new Fixed(5), new Fixed(5), List.of(), Set.of(), null, Set.of(),
+                        GrantScope.OWN_PERMANENTS, EffectDuration.UNTIL_END_OF_TURN,
+                        new PermanentIsArtifactPredicate()));
     }
 }

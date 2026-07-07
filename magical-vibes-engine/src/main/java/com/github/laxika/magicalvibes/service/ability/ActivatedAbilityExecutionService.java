@@ -93,7 +93,7 @@ public class ActivatedAbilityExecutionService {
      * <p>This method performs the remaining activation steps in order:
      * <ol>
      *   <li>Determines the effective target — auto-targets the source permanent for self-targeting
-     *       effects (e.g. {@code BoostSelfEffect}, {@code RegenerateEffect}, {@code AnimateSelfEffect}).</li>
+     *       effects (e.g. {@code BoostSelfEffect}, {@code RegenerateEffect}, {@code AnimatePermanentsEffect}).</li>
      *   <li>Taps the permanent if the ability requires a tap cost.</li>
      *   <li>Snapshots charge counters into {@code effectiveXValue} for counter-dependent effects
      *       (e.g. {@code DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect}) so the

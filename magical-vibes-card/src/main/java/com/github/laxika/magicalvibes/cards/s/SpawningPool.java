@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -26,7 +26,7 @@ public class SpawningPool extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",
-                List.of(new AnimateLandEffect(1, 1, List.of(CardSubtype.SKELETON), Set.of(), CardColor.BLACK)),
+                List.of(new AnimatePermanentsEffect(1, 1, List.of(CardSubtype.SKELETON), Set.of(), CardColor.BLACK)),
                 "{1}{B}: Spawning Pool becomes a 1/1 black Skeleton creature with \"{B}: Regenerate this creature\" until end of turn. It's still a land."
         ));
         // {B}: Regenerate this creature. (Only available while animated as a creature)

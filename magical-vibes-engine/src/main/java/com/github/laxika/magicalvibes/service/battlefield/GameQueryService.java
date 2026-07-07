@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChos
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowExtraLoyaltyActivationEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfOpponentAbilitiesEffect;
@@ -524,13 +524,14 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if the permanent has a conditional
-     * {@link AnimateSelfWithStatsEffect} and its condition is currently met.
+     * Returns {@code true} if the permanent has a conditional self-scope
+     * {@link AnimatePermanentsEffect} and its condition is currently met.
      */
     public boolean hasSelfBecomeCreatureEffect(GameData gameData, Permanent permanent) {
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ConditionalEffect conditional
-                    && conditional.wrapped() instanceof AnimateSelfWithStatsEffect) {
+                    && conditional.wrapped() instanceof AnimatePermanentsEffect animate
+                    && animate.scope() == GrantScope.SELF) {
                 UUID controllerId = findPermanentController(gameData, permanent.getId());
                 if (controllerId != null && conditionEvaluationService.isMet(gameData,
                         conditional.condition(), ConditionContext.forPermanent(permanent, controllerId))) {

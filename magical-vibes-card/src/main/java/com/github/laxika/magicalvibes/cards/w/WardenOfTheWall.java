@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfWithStatsEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
@@ -33,6 +33,6 @@ public class WardenOfTheWall extends Card {
 
         // During turns other than yours, Warden of the Wall is a 2/3 Gargoyle artifact creature with flying.
         addEffect(EffectSlot.STATIC, new ConditionalEffect(new NotControllerTurn(), 
-                new AnimateSelfWithStatsEffect(2, 3, List.of(CardSubtype.GARGOYLE), Set.of(Keyword.FLYING))));
+                new AnimatePermanentsEffect(2, 3, List.of(CardSubtype.GARGOYLE), Set.of(Keyword.FLYING))));
     }
 }

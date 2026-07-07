@@ -8,10 +8,10 @@ All paths relative to `cards/`.
 |---------|-----------|-------|
 | Basic land | `f/Forest.java` | `addEffect(ON_TAP, AwardManaEffect(color))` |
 | Pain land | `s/SulfurousSprings.java` | 3 activated abilities: colorless + 2x colored with DealDamageToController |
-| Creature land (manland) | `t/TreetopVillage.java` | STATIC `EntersTappedEffect` + ON_TAP mana + AnimateLandEffect ability |
-| Creature land (artifact) | `i/InkmothNexus.java` | manland that becomes artifact creature (uses 6-arg AnimateLandEffect with grantedCardTypes) |
+| Creature land (manland) | `t/TreetopVillage.java` | STATIC `EntersTappedEffect` + ON_TAP mana + AnimatePermanentsEffect (5-arg SELF/UEOT) ability |
+| Creature land (artifact) | `i/InkmothNexus.java` | manland that becomes artifact creature (uses 6-arg AnimatePermanentsEffect with grantedCardTypes) |
 | Creature land + sub-ability | `s/SpawningPool.java` | manland + regenerate with `ONLY_WHILE_CREATURE` restriction |
-| X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, new XValue()) + AnimateTargetPermanentEffect(0, 0, ELEMENTAL, HASTE) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
+| X-cost land animation + counters | `w/WakerOfTheWilds.java` | {X}{G}{G} activated ability: PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, new XValue()) + AnimatePermanentsEffect(0, 0, [ELEMENTAL], [HASTE], null, {}, TARGET, PERMANENT) with ControlledPermanentPredicateTargetFilter(PermanentIsLandPredicate) |
 | Check land | `d/DragonskullSummit.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(0, PermanentHasAnySubtypePredicate), new EntersTappedEffect())` + 2 mana abilities — enters tapped unless you control a matching permanent |
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 3+ other lands |
 | Slow land | `d/DeathcapGlade.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(1, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 1 or fewer other lands |

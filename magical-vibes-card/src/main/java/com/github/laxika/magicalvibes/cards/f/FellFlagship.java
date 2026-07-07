@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AnimateSelfAsCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -31,7 +31,7 @@ public class FellFlagship extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new CrewCost(3), new AnimateSelfAsCreatureEffect()),
+                List.of(new CrewCost(3), AnimatePermanentsEffect.crew()),
                 "Crew 3"
         ));
     }

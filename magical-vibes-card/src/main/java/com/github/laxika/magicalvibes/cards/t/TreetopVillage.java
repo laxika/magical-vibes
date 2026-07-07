@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AnimateLandEffect;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 
@@ -25,7 +25,7 @@ public class TreetopVillage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",
-                List.of(new AnimateLandEffect(3, 3, List.of(CardSubtype.APE), Set.of(Keyword.TRAMPLE), CardColor.GREEN)),
+                List.of(new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.APE), Set.of(Keyword.TRAMPLE), CardColor.GREEN)),
                 "{1}{G}: Treetop Village becomes a 3/3 green Ape creature with trample until end of turn. It's still a land."
         ));
     }
