@@ -126,6 +126,7 @@ class PredicateEvaluationServiceTest {
         card.setType(CardType.CREATURE);
         card.setManaCost("{1}");
         card.setColor(color);
+        card.setColors(color == null ? List.of() : List.of(color));
         card.setPower(power);
         card.setToughness(toughness);
         return card;
@@ -272,6 +273,18 @@ class PredicateEvaluationServiceTest {
         void cardColorPredicateMatches() {
             Card card = createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR));
 
+            assertThat(evaluator.matchesCardPredicate(card, new CardColorPredicate(CardColor.GREEN), null)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(card, new CardColorPredicate(CardColor.RED), null)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardColorPredicate matches every colour of a multicoloured card")
+        void cardColorPredicateMatchesMulticolour() {
+            Card card = createCreatureWithSubtypes("Golgari Spy", 2, 2, CardColor.BLACK, List.of());
+            card.setColors(List.of(CardColor.BLACK, CardColor.GREEN));
+
+            // A Black-Green card is both black and green (order-independent), not red.
+            assertThat(evaluator.matchesCardPredicate(card, new CardColorPredicate(CardColor.BLACK), null)).isTrue();
             assertThat(evaluator.matchesCardPredicate(card, new CardColorPredicate(CardColor.GREEN), null)).isTrue();
             assertThat(evaluator.matchesCardPredicate(card, new CardColorPredicate(CardColor.RED), null)).isFalse();
         }

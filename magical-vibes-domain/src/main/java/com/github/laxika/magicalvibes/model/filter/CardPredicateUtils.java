@@ -49,7 +49,7 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardSupertypePredicate p) {
             return p.supertype().getDisplayName().toLowerCase();
         }
-        if (predicate instanceof CardHasColorPredicate p) {
+        if (predicate instanceof CardColorPredicate p) {
             return p.color().name().toLowerCase();
         }
         if (predicate instanceof CardMaxManaValuePredicate p) {
