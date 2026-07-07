@@ -358,15 +358,15 @@ export class GameComponent implements OnInit, OnDestroy {
     return base + (this.getAttachedAuras(perm.id).length > 0 ? C.AURA_X_OFFSET : 0);
   }
 
-  /** Footprint height (zoom 1) of a permanent plus any attached auras. Tapped
-      cards occupy the rotated 165px footprint, but an aura'd stack keeps 231. */
+  /** Reserved footprint height (zoom 1) of a permanent plus any attached auras.
+      Tap state is intentionally ignored: a tapped card renders shorter (rotated,
+      165px), but if the modeled height shrank on tap the whole side's cards would
+      rescale every time a land is tapped for mana or a creature attacks. Reserving
+      the upright height keeps the per-side zoom stable across tap/untap — a tapped
+      card just leaves a little unused vertical space, never an overflow. */
   private stackHeight(perm: Permanent): number {
     const C = GameComponent;
-    const auras = this.getAttachedAuras(perm.id).length;
-    if (perm.tapped) {
-      return auras > 0 ? Math.max(C.CARD_HEIGHT, C.CARD_WIDTH + auras * C.AURA_STRIP) : C.CARD_WIDTH;
-    }
-    return C.CARD_HEIGHT + auras * C.AURA_STRIP;
+    return C.CARD_HEIGHT + this.getAttachedAuras(perm.id).length * C.AURA_STRIP;
   }
 
   /** Height of one player's battlefield (creatures row + lands row + revealed rows)
@@ -394,11 +394,11 @@ export class GameComponent implements OnInit, OnDestroy {
       }
       return this.stackWidth(item.perm) * landZoom;
     };
-    /* A lands line is only as tall as its tallest item: a fully tapped line
-       occupies the rotated 165px footprint, not the upright 231px. */
+    /* Reserve the upright line height regardless of tap state so the lands row
+       (and thus the side's zoom) doesn't jump when lands tap/untap; see stackHeight. */
     const landItemHeight = (item: IndexedPermanent | LandStack): number => {
       if (isLandStack(item)) {
-        return item.lands.some(l => !l.perm.tapped) ? C.CARD_HEIGHT : C.CARD_WIDTH;
+        return C.CARD_HEIGHT;
       }
       return this.stackHeight(item.perm);
     };
