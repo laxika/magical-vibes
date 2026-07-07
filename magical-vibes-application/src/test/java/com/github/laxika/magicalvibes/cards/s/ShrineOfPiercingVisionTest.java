@@ -88,40 +88,38 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
     // ===== Activated ability: Tap + sacrifice to look at top X =====
 
     @Test
-    @DisplayName("Sacrificing with charge counters enters hand/top/bottom choice state")
-    void sacrificeEntersHandTopBottomChoiceState() {
+    @DisplayName("Sacrificing with charge counters enters library reveal choice state")
+    void sacrificeEntersLibraryRevealChoiceState() {
         Permanent shrine = addReadyShrine(player1);
         shrine.setCounterCount(CounterType.CHARGE, 3);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities(); // resolve ability from stack
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(3);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(3);
     }
 
     @Test
-    @DisplayName("Choosing a card puts it into hand and rest on bottom")
+    @DisplayName("Choosing a card puts it into hand and the rest on the bottom")
     void choosingCardPutsInHandRestOnBottom() {
         Permanent shrine = addReadyShrine(player1);
-        shrine.setCounterCount(CounterType.CHARGE, 3);
+        shrine.setCounterCount(CounterType.CHARGE, 2);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top0 = deck.get(0);
         Card top1 = deck.get(1);
-        Card top2 = deck.get(2);
         int originalDeckSize = deck.size();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Choose: card 1 to hand, card 0 to top, card 2 to bottom
-        gs.handleHandTopBottomChosen(gd, player1, 1, 0);
+        // Choose top0 to hand; the other card goes on the bottom of the library
+        harness.handleMultipleCardsChosen(player1, List.of(top0.getId()));
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(top1);
-        assertThat(deck.get(0)).isSameAs(top0);
-        assertThat(deck.get(deck.size() - 1)).isSameAs(top2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(top0);
+        assertThat(deck.get(deck.size() - 1)).isSameAs(top1);
         assertThat(deck).hasSize(originalDeckSize - 1);
     }
 
@@ -154,7 +152,6 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         // No cards should be added to hand
         assertThat(gd.playerHands.get(player1.getId()).size()).isEqualTo(handSizeBefore);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no charge counters"));
     }
 
     @Test
@@ -172,7 +169,7 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         // Single card goes directly to hand — no choice needed
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player1.getId())).contains(topCard);
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("looks at the top card"));
+        assertThat(gd.gameLog).anyMatch(log -> log.contains("into their hand"));
     }
 
     @Test
@@ -214,8 +211,8 @@ class ShrineOfPiercingVisionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Should use all available cards (capped at deck size)
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(deckSize);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(deckSize);
     }
 
     // ===== Helper methods =====

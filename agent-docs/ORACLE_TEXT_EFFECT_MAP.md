@@ -295,7 +295,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "put a -1/-1 counter on each creature target player controls" | `PutCounterOnEachMatchingPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1, IsCreature, EachPermanentScope.TARGET_PLAYER)` | SPELL/trigger | targets a player. Contagion Engine |
 | "proliferate" | `ProliferateEffect()` | SPELL/trigger | |
 | "put N <named> counters on CARDNAME" | `PutCountersOnSelfEffect(CounterType.X, N)` | trigger/ability | for a non-P/T named counter type on the source (e.g. Jar of Eyeballs: `CounterType.EYEBALL, 2`) |
-| "Remove all <named> counters from CARDNAME: Look at the top X cards…" | `RemoveAllCountersAsCostEffect(CounterType.X)` + `LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect()` | ability | X = counters removed, snapshotted into xValue (Jar of Eyeballs: `CounterType.EYEBALL`). The look effect reads xValue, so it works for any counter-removal cost that snapshots X |
+| "Remove all <named> counters from CARDNAME: Look at the top X cards…" | `RemoveAllCountersAsCostEffect(CounterType.X)` + `LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new XValue())` | ability | X = counters removed, snapshotted into xValue (Jar of Eyeballs: `CounterType.EYEBALL`). The look effect reads xValue, so it works for any counter-removal cost that snapshots X |
 
 ## Tap / untap
 

@@ -104,7 +104,7 @@ class JarOfEyeballsTest extends BaseCardTest {
     // ===== Activated ability =====
 
     @Test
-    @DisplayName("Activating removes all eyeball counters as a cost and enters hand/top/bottom choice")
+    @DisplayName("Activating removes all eyeball counters as a cost and enters library reveal choice")
     void activatingRemovesCountersAndEntersChoice() {
         Permanent jar = addReadyJar(player1);
         jar.setCounterCount(CounterType.EYEBALL, 4);
@@ -117,34 +117,32 @@ class JarOfEyeballsTest extends BaseCardTest {
 
         harness.passBothPriorities(); // resolve ability from stack
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.HandTopBottomChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).playerId()).isEqualTo(player1.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).playerId()).isEqualTo(player1.getId());
         // X equals the number of eyeball counters removed this way
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandTopBottomChoice.class).cards()).hasSize(4);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class).allCards()).hasSize(4);
     }
 
     @Test
-    @DisplayName("Choosing a card puts it into hand and rest on bottom")
+    @DisplayName("Choosing a card puts it into hand and the rest on the bottom")
     void choosingCardPutsInHandRestOnBottom() {
         Permanent jar = addReadyJar(player1);
-        jar.setCounterCount(CounterType.EYEBALL, 3);
+        jar.setCounterCount(CounterType.EYEBALL, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         List<Card> deck = gd.playerDecks.get(player1.getId());
         Card top0 = deck.get(0);
         Card top1 = deck.get(1);
-        Card top2 = deck.get(2);
         int originalDeckSize = deck.size();
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        // Choose: card 1 to hand, card 0 to top, card 2 to bottom
-        gs.handleHandTopBottomChosen(gd, player1, 1, 0);
+        // Choose top0 to hand; the other card goes on the bottom of the library
+        harness.handleMultipleCardsChosen(player1, List.of(top0.getId()));
 
-        assertThat(gd.playerHands.get(player1.getId())).contains(top1);
-        assertThat(deck.get(0)).isSameAs(top0);
-        assertThat(deck.get(deck.size() - 1)).isSameAs(top2);
+        assertThat(gd.playerHands.get(player1.getId())).contains(top0);
+        assertThat(deck.get(deck.size() - 1)).isSameAs(top1);
         assertThat(deck).hasSize(originalDeckSize - 1);
     }
 

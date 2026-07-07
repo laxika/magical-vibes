@@ -89,8 +89,9 @@ All paths relative to `cards/`.
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardEffect(1, CONTROLLER) |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + DiscardEffect(3, EACH_PLAYER, true) |
 | Library selection (hand/top/bottom) | `t/TellingTime.java` | LookAtTopCardsHandTopBottomEffect |
-| Library selection (N to hand, rest to graveyard) | `f/ForbiddenAlchemy.java` | LookAtTopCardsChooseNToHandRestToGraveyardEffect(count, toHandCount) |
-| Library selection + self-damage | `d/DarkBargain.java` | LookAtTopCardsChooseNToHandRestToGraveyardEffect(3, 2) + DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER) |
+| Library selection (N to hand, rest to graveyard) | `f/ForbiddenAlchemy.java` | LookAtTopCardsEffect.chooseNToHandRestToGraveyard(4, 1) |
+| Library selection + self-damage | `d/DarkBargain.java` | LookAtTopCardsEffect.chooseNToHandRestToGraveyard(3, 2) + DealDamageToPlayersEffect(2, DamageRecipient.CONTROLLER) |
+| Library selection (one to hand, rest on bottom) | `s/StressDream.java` | LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(2)) |
 | Library reveal (type to hand, rest to graveyard) | `m/Mulch.java` | RevealTopCardsTypeToHandRestToGraveyardEffect(count, cardTypes) — deterministic, no player choice |
 | Library match-permanent-to-battlefield | `m/MitoticManipulation.java` | LookAtTopCardsPutMatchingPermanentNameOnBattlefieldEffect |
 | Aura upkeep — library creature sharing type to battlefield | `c/CallToTheKindred.java` | MayEffect wrapping LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect(5) in UPKEEP_TRIGGERED |

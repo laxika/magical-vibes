@@ -28,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffe
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
@@ -200,8 +199,7 @@ public class ActivatedAbilityExecutionService {
         }
 
         // Snapshot charge counters before sacrifice so the value survives in the stack entry's xValue
-        else if (abilityEffects.stream().anyMatch(e -> e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect
-                || e instanceof LookAtTopCardsPerChargeCounterChooseOneToHandRestOnBottomEffect)) {
+        else if (abilityEffects.stream().anyMatch(e -> e instanceof DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect)) {
             effectiveXValue = permanent.getCounterCount(CounterType.CHARGE);
         }
 
