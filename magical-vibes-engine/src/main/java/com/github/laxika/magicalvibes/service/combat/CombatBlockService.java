@@ -20,7 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyBlockedCreatureAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureAndGainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
@@ -261,7 +261,7 @@ public class CombatBlockService {
                 // Set target: attacker ID for effects that need it, otherwise blocker's own ID
                 boolean needsAttackerTarget = blockEffects.stream()
                         .anyMatch(e -> e instanceof DestroyBlockedCreatureAndSelfEffect
-                                || e instanceof DestroyTargetCreatureAndGainLifeEqualToToughnessEffect
+                                || e instanceof DestroyTargetPermanentThenEffect
                                 || e instanceof SkipNextUntapOnTargetEffect
                                 || e instanceof DealDamageToTargetCreatureEffect
                                 || e instanceof DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect);

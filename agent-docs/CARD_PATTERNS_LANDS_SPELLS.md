@@ -58,8 +58,8 @@ All paths relative to `cards/`.
 | Put on top of library | `b/BanishmentDecree.java` | PutTargetOnTopOfLibraryEffect + PermanentAnyOfPredicate filter (artifact/creature/enchantment) |
 | Metalcraft sacrifice instant | `d/DispenseJustice.java` | SacrificeAttackingCreaturesEffect(1, 2) + PlayerPredicateTargetFilter(ANY) — metalcraft checked at resolution |
 | Destroy + cantrip | `s/Smash.java` | DestroyTargetPermanentEffect + DrawCardEffect |
-| Destroy + life gain by mana value | `d/DivineOffering.java` | DestroyTargetPermanentAndGainLifeEqualToManaValueEffect + artifact filter |
-| Destroy + controller life loss | `g/GlissasScorn.java` | DestroyTargetPermanentAndControllerLosesLifeEffect(1) + artifact filter |
+| Destroy + life gain by mana value | `d/DivineOffering.java` | DestroyTargetPermanentThenEffect(MANA_VALUE, GainLifeEffect(EventValue()), CONTROLLER) + artifact filter |
+| Destroy + controller life loss | `g/GlissasScorn.java` | DestroyTargetPermanentThenEffect(LoseLifeEffect(1), TARGET_CONTROLLER) + artifact filter |
 | Board wipe | `w/WrathOfGod.java` | DestroyAllPermanentsEffect |
 | Board wipe + opponent library search to graveyard | `l/LifesFinale.java` | DestroyAllPermanentsEffect + SearchTargetLibraryForCardsToGraveyardEffect(3, CREATURE) + PlayerPredicateTargetFilter(OPPONENT) |
 | Destroy land + mass creature/planeswalker damage | `s/StarOfExtinction.java` | DestroyTargetPermanentEffect + MassDamageEffect(20, false, false, true, null) — targets a land, deals 20 damage to each creature and each planeswalker (damagesPlaneswalkers=true) |

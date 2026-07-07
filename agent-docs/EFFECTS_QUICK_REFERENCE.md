@@ -138,12 +138,9 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `DestroyTargetLandAndDamageControllerEffect(int)` — destroy land + damage
 - `DestroyTargetPermanentAndDamageControllerIfDestroyedEffect(int)` — destroy + conditional damage
 - `DestroyUpToTargetsThenReturnFromGraveyardEffect()` — destroy each targeted permanent and return cards put into graveyard this way under your control (multi-target via ability `minTargets`/`maxTargets`)
-- `DestroyTargetPermanentAndControllerLosesLifeEffect(int)` — destroy + life loss
-- `DestroyTargetPermanentAndGiveControllerPoisonCountersEffect(int)` — destroy + poison
+- `DestroyTargetPermanentThenEffect(EventStat, CardEffect rider, RiderRecipient[, PermanentPredicate])` — collapsed destroy-plus-value family. Destroy the target, then resolve an existing rider effect. `recipient` CONTROLLER (you) / TARGET_CONTROLLER (destroyed permanent's controller). `EventStat` NONE/MANA_VALUE/TOUGHNESS snapshots the destroyed permanent's last-known stat onto `eventValue` for a `GainLifeEffect(EventValue())` / `BoostSelfEffect(EventValue(), Fixed(0))` rider. Riders: `GainLifeEffect`, `BoostSelfEffect`, `LoseLifeEffect`, `GivePoisonCountersEffect`. Optional `PermanentPredicate` gates the rider on the destroyed permanent's state (Death's Caress HUMAN). Rider happens even if destruction fails (indestructible)
 - `DestroySourcePermanentEffect()` — destroy source
 - `DestroyCreatureBlockingThisEffect()` — destroy blocker
-- `DestroyTargetPermanentAndGainLifeEqualToManaValueEffect()` — destroy + life = MV
-- `DestroyTargetCreatureAndGainLifeEqualToToughnessEffect(PermanentPredicate?)` — destroy + life = toughness; predicate arg makes life gain conditional (e.g. `PermanentHasSubtypePredicate(HUMAN)`)
 - `SacrificePermanentsEffect(count, PermanentPredicate, SacrificeRecipient)` — collapsed forced-sacrifice family. `SacrificeRecipient` = CONTROLLER / TARGET_PLAYER / EACH_PLAYER / EACH_OPPONENT. Bare `PermanentIsCreaturePredicate` → single-select "sacrifice a creature" (Cruel Edict, Grave Pact, Stitcher's Apprentice); any other filter → multi-permanent choice (Storm Fleet Arsonist, Yawning Fissure, Destructive Force). int-count sugar ctor
 - `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect()` — sacrifice + life = toughness
 - `SacrificeCreatureToCreateTokensEqualToToughnessEffect(CreateTokenEffect template, PermanentPredicate filter)` — controller sacrifices a matching creature, then creates X copies of `template` where X = sacrificed creature's toughness (template `amount` ignored). Wrap in `MayEffect` for "you may sacrifice" (e.g. Feed the Pack)
