@@ -47,8 +47,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -258,7 +258,7 @@ public class SpellEvaluator {
 
     private boolean isBoardWipeEffect(CardEffect effect) {
         if (effect instanceof MassDamageEffect || effect instanceof DestroyAllPermanentsEffect
-                || effect instanceof ReturnCreaturesToOwnersHandEffect) {
+                || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ALL_MATCHING)) {
             return true;
         }
         if (effect instanceof ChooseOneEffect coe) {
@@ -395,7 +395,7 @@ public class SpellEvaluator {
             int damage = estimateDamageAmount(gameData, card, dmg.damage(), aiPlayerId);
             return evaluateDamageToCreature(gameData, damage, oppBattlefield, opponentId, aiPlayerId);
         }
-        if (effect instanceof ReturnTargetPermanentToHandEffect) {
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
         if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) {
@@ -492,13 +492,13 @@ public class SpellEvaluator {
         }
 
         // Bounce
-        if (effect instanceof ReturnTargetPermanentToHandEffect) {
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
         if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 0.6;
         }
-        if (effect instanceof ReturnCreaturesToOwnersHandEffect) {
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.ALL_MATCHING) {
             double oppValue = oppBattlefield.stream()
                     .filter(p -> gameQueryService.isCreature(gameData, p))
                     .mapToDouble(p -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId))
@@ -1129,7 +1129,7 @@ public class SpellEvaluator {
                 || effect instanceof ExileTargetPermanentEffect
                 || effect instanceof DealDamageToAnyTargetEffect
                 || effect instanceof DealDamageToTargetCreatureEffect
-                || effect instanceof ReturnTargetPermanentToHandEffect
+                || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET)
                 || effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect
                 || effect instanceof GainControlOfTargetPermanentEffect;
     }

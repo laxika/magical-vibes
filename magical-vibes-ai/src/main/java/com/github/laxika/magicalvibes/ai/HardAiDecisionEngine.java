@@ -38,9 +38,10 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentU
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -887,7 +888,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         }
         return effect instanceof DestroyTargetPermanentEffect
                 || effect instanceof ExileTargetPermanentEffect
-                || effect instanceof ReturnTargetPermanentToHandEffect
+                || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET)
                 || effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect
                 || effect instanceof DealDamageToTargetCreatureEffect
                 || effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect
@@ -930,7 +931,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             return !gameQueryService.hasKeyword(gameData, creature, Keyword.INDESTRUCTIBLE);
         }
         if (effect instanceof ExileTargetPermanentEffect) return true;
-        if (effect instanceof ReturnTargetPermanentToHandEffect) return true;
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) return true;
         if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) return true;
         if (effect instanceof GainControlOfTargetPermanentEffect) return true;
         if (effect instanceof GainControlOfTargetPermanentUntilEndOfTurnEffect) return true;

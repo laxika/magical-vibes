@@ -7,12 +7,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceOnBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesToOwnersHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,11 +52,10 @@ public class TimeOfIce extends Card {
         ));
 
         // Chapter III: Return all tapped creatures to their owners' hands.
-        addEffect(EffectSlot.SAGA_CHAPTER_III, new ReturnCreaturesToOwnersHandEffect(
-                Set.of(new PermanentPredicateTargetFilter(
-                        new PermanentIsTappedPredicate(),
-                        "Must be tapped"
-                ))
-        ));
+        addEffect(EffectSlot.SAGA_CHAPTER_III, ReturnToHandEffect.allPermanentsMatching(
+                new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsTappedPredicate()
+                ))));
     }
 }

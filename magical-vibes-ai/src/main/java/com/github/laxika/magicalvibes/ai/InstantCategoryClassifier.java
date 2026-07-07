@@ -19,7 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 
 /**
@@ -74,7 +75,7 @@ public final class InstantCategoryClassifier {
         // Hard removal (destroy, exile, bounce)
         if (effect instanceof DestroyTargetPermanentEffect) return InstantCategory.REMOVAL;
         if (effect instanceof ExileTargetPermanentEffect) return InstantCategory.REMOVAL;
-        if (effect instanceof ReturnTargetPermanentToHandEffect) return InstantCategory.REMOVAL;
+        if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) return InstantCategory.REMOVAL;
         if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) return InstantCategory.REMOVAL;
 
         // Damage-based removal (targets creatures)

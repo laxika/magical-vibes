@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MillHalfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -615,7 +615,7 @@ class TargetLegalityServiceTest {
         void passesWhenModalSpellWithCounterAndBounceModeTargetsPermanent() {
             Permanent target = addPermanent(player2Id, createCreature("Artifact Creature", CardColor.BLUE));
             Card spell = createModalSpell("Steel Sabotage", CardColor.BLUE,
-                    new CounterSpellEffect(), new ReturnTargetPermanentToHandEffect());
+                    new CounterSpellEffect(), ReturnToHandEffect.target());
 
             // Bounce mode: needsTarget=true, targeting a permanent
             sut.validateSpellTargeting(gd, spell, target.getId(), null, player1Id, true);

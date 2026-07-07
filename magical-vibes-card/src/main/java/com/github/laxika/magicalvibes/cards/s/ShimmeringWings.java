@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -16,6 +16,6 @@ public class ShimmeringWings extends Card {
 
     public ShimmeringWings() {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
-        addActivatedAbility(new ActivatedAbility(false, "{U}", List.of(new ReturnSelfToHandEffect()), "{U}: Return Shimmering Wings to its owner's hand."));
+        addActivatedAbility(new ActivatedAbility(false, "{U}", List.of(ReturnToHandEffect.self()), "{U}: Return Shimmering Wings to its owner's hand."));
     }
 }

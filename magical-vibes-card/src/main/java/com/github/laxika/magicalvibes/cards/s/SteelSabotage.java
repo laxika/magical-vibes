@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class SteelSabotage extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target artifact to its owner's hand",
-                        new ReturnTargetPermanentToHandEffect(),
+                        ReturnToHandEffect.target(),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsArtifactPredicate(),
                                 "Target must be an artifact."

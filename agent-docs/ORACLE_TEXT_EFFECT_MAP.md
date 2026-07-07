@@ -113,8 +113,11 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
-| "return target [permanent] to its owner's hand" | `ReturnTargetPermanentToHandEffect()` | SPELL | + filter |
-| "return all creatures to their owners' hands" | `ReturnCreaturesToOwnersHandEffect(filters)` | SPELL | Mass bounce |
+| "return target [permanent] to its owner's hand" | `ReturnToHandEffect.target()` | SPELL | + card `target(...)` filter; `.targetAndControllerLosesLife(1)` for "its controller loses 1 life" (Vapor Snag) |
+| "return all creatures to their owners' hands" | `ReturnToHandEffect.allPermanentsMatching(new PermanentIsCreaturePredicate())` | SPELL | Mass bounce (null filter = every permanent) |
+| "return this permanent to its owner's hand" | `ReturnToHandEffect.self()` | ability/trigger | Self-bounce |
+| "return all permanents target player controls to their owners' hands" | `ReturnToHandEffect.permanentsTargetPlayerControls(filter)` | SPELL | River's Rebuke |
+| "return all artifacts target player owns to their hand" | `ReturnToHandEffect.permanentsTargetPlayerOwns(new PermanentIsArtifactPredicate())` | SPELL | Owner-based (Hurkyl's Recall) |
 | "put target [permanent] on top of its owner's library" | `PutTargetOnTopOfLibraryEffect()` | SPELL | |
 | "put target [permanent] on the bottom of its owner's library" | `PutTargetOnBottomOfLibraryEffect()` | SPELL | |
 

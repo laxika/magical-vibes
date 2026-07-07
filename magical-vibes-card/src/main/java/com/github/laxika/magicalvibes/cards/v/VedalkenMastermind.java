@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
@@ -16,7 +16,7 @@ public class VedalkenMastermind extends Card {
         addActivatedAbility(new ActivatedAbility(
             true,
             "{U}",
-            List.of(new ReturnTargetPermanentToHandEffect()),
+            List.of(ReturnToHandEffect.target()),
             "{U}, {T}: Return target permanent you control to its owner's hand.",
             new ControlledPermanentPredicateTargetFilter(
                     new PermanentTruePredicate(),

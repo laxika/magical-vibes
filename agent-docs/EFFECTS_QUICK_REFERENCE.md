@@ -184,14 +184,10 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Bounce / return to hand
 
-- `ReturnTargetPermanentToHandEffect()` or `(int lifeLoss)` — bounce target
+- `ReturnToHandEffect` — unified bounce, **static factories only**: `.target()` (bounce target), `.targetAndControllerLosesLife(1)` (Vapor Snag), `.self()` (bounce source), `.allPermanentsMatching(filter)` (mass bounce matching permanents; null = every permanent — pass `PermanentIsCreaturePredicate` for creatures), `.permanentsTargetPlayerControls(filter)` (River's Rebuke), `.permanentsTargetPlayerOwns(filter)` (Hurkyl's Recall, owner-based)
 - `ReturnTargetPermanentToHandWithManaValueConditionalEffect(int, CardEffect)` — bounce + MV bonus
-- `ReturnCreaturesToOwnersHandEffect(Set<TargetFilter>)` — mass bounce creatures
-- `ReturnSelfToHandEffect()` — bounce self
 - `ReturnSelfToHandOnCoinFlipLossEffect()` — bounce self on coin flip loss
 - `ReturnPermanentsOnCombatDamageToPlayerEffect()` or `(PermanentPredicate)` — Ninja-style
-- `ReturnArtifactsTargetPlayerOwnsToHandEffect()` — bounce target's artifacts
-- `ReturnPermanentsTargetPlayerControlsToHandEffect(PermanentPredicate)` — bounce target's permanents
 - `PutTargetOnBottomOfLibraryEffect()` — tuck bottom
 - `PutTargetOnTopOfLibraryEffect()` — tuck top
 - `PutTargetPermanentIntoLibraryNFromTopEffect(int)` — tuck N from top

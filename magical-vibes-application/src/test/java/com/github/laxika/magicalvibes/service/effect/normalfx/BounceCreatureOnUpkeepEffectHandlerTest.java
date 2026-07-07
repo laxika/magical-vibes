@@ -116,7 +116,7 @@ class BounceCreatureOnUpkeepEffectHandlerTest {
         }
 
         // =========================================================================
-        // ReturnSelfToHandEffect
+        // ReturnToHandEffect (SELF scope)
         // =========================================================================
 
     @Test

@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToContr
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -557,7 +557,7 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCard("Test Replica", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), ReturnToHandEffect.target());
             ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
@@ -566,7 +566,7 @@ class ActivatedAbilityExecutionServiceTest {
             assertThat(gameData.stack.getFirst().getEffectsToResolve())
                     .noneMatch(e -> e instanceof SacrificeSelfCost);
             assertThat(gameData.stack.getFirst().getEffectsToResolve())
-                    .anyMatch(e -> e instanceof ReturnTargetPermanentToHandEffect);
+                    .anyMatch(e -> e instanceof ReturnToHandEffect);
         }
 
         @Test
@@ -641,7 +641,7 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCard("Test Replica", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), ReturnToHandEffect.target());
             ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
@@ -655,7 +655,7 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCard("Neurok Replica", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), ReturnToHandEffect.target());
             ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
@@ -670,7 +670,7 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCard("Test Replica", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), ReturnToHandEffect.target());
             ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, target.getId(), null, false);
@@ -833,7 +833,7 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCard("Test Replica", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
             Permanent target = addReadyPermanent(player2Id, createCreature("Target Creature"));
-            List<CardEffect> effects = List.of(new SacrificeSelfCost(), new ReturnTargetPermanentToHandEffect());
+            List<CardEffect> effects = List.of(new SacrificeSelfCost(), ReturnToHandEffect.target());
             ActivatedAbility ability = new ActivatedAbility(false, "{1}{U}", effects, "Bounce target");
 
             // No death trigger added during sacrifice (mock does nothing by default)
@@ -1200,7 +1200,7 @@ class ActivatedAbilityExecutionServiceTest {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
             // Non-mana ability: no ManaProducingEffect, has a target
-            List<CardEffect> effects = List.of(new ReturnTargetPermanentToHandEffect());
+            List<CardEffect> effects = List.of(ReturnToHandEffect.target());
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
                     "{T}: Return target permanent to hand.");
 
@@ -1220,7 +1220,7 @@ class ActivatedAbilityExecutionServiceTest {
         void nonManaAbilityNoPendingTriggersNoChange() {
             Card card = createCreature("Test Creature");
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new ReturnTargetPermanentToHandEffect());
+            List<CardEffect> effects = List.of(ReturnToHandEffect.target());
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
                     "{T}: Return target permanent to hand.");
 

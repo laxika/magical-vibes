@@ -70,7 +70,7 @@ All paths relative to `cards/`.
 | Counter (filtered by type) | `r/RemoveSoul.java` | StackEntryPredicateTargetFilter + StackEntryTypeInPredicate |
 | Counter (filtered by mana value) | `m/MentalMisstep.java` | StackEntryPredicateTargetFilter + StackEntryManaValuePredicate. Phyrexian mana cost |
 | Counter + bonus | `d/Discombobulate.java` | Counter + ReorderTopCardsOfLibraryEffect |
-| Counter + bounce | `l/LostInTheMist.java` | CounterSpellEffect + ReturnTargetPermanentToHandEffect — targets both a spell and a permanent. Uses `targetId` (spell, Zone.STACK) + `targetIds` (permanent). Multi-zone fizzle: only fizzles if ALL targets become illegal |
+| Counter + bounce | `l/LostInTheMist.java` | CounterSpellEffect + ReturnToHandEffect.target() — targets both a spell and a permanent. Uses `targetId` (spell, Zone.STACK) + `targetIds` (permanent). Multi-zone fizzle: only fizzles if ALL targets become illegal |
 | Counter (filtered) + draw | `b/BoneToAsh.java` | CounterSpellEffect + DrawCardEffect + creature-spell filter via target() chain |
 | Counter (filtered) + life loss | `p/PsychicBarrier.java` | TargetSpellControllerLosesLifeEffect(1) + CounterSpellEffect + creature-spell filter. Life loss placed before counter so target is still on stack |
 | Counter-unless-pay + discard | `f/FrightfulDelusion.java` | TargetSpellControllerDiscardsEffect(1) + CounterUnlessPaysEffect(1). Discard placed before counter so target is still on stack |
@@ -78,11 +78,12 @@ All paths relative to `cards/`.
 | Counter (conditional, poisoned) | `c/CorruptedResolve.java` | CounterSpellIfControllerPoisonedEffect — counters only if target spell's controller is poisoned |
 | Counter spell/ability (sac creature) | `s/SirenStormtamer.java` | Activated: {U}+SacrificeSelfCost+CounterSpellEffect with StackEntryAllOfPredicate(StackEntryHasTargetPredicate, StackEntryTargetsYouOrCreatureYouControlPredicate) — counters spells OR abilities that target you or a creature you control. HasTargetPredicate enables ability targeting |
 | Counter + may cast from hand | `c/Counterlash.java` | CounterlashEffect — counters target spell, then queues per-eligible-card MayCastFromHandWithoutPayingManaCostEffect may abilities for cards sharing a type |
-| Bounce target | `u/Unsummon.java` | ReturnTargetPermanentToHandEffect |
-| Bounce target + life loss | `v/VaporSnag.java` | ReturnTargetPermanentToHandEffect(1) — bounce creature, its controller loses life |
-| Bounce creature + conditional draw | `t/TemporalMachinations.java` | SPELL ReturnTargetPermanentToHandEffect() + SPELL ConditionalEffect(new ControlsPermanent(PermanentIsArtifactPredicate()), DrawCardEffect(1)) — bounce target creature, if you control an artifact draw a card. Use ConditionalEffect(new ControlsPermanent(filter), wrapped) for "if you control a [type]" conditions |
-| Bounce mass | `e/Evacuation.java` | ReturnCreaturesToOwnersHandEffect |
-| Bounce mass (target player, filtered) | `r/RiversRebuke.java` | ReturnPermanentsTargetPlayerControlsToHandEffect(PermanentNotPredicate(PermanentIsLandPredicate())) — return all nonland permanents target player controls to their owners' hands |
+| Bounce target | `u/Unsummon.java` | ReturnToHandEffect.target() |
+| Bounce target + life loss | `v/VaporSnag.java` | ReturnToHandEffect.targetAndControllerLosesLife(1) — bounce creature, its controller loses life |
+| Bounce creature + conditional draw | `t/TemporalMachinations.java` | SPELL ReturnToHandEffect.target() + SPELL ConditionalEffect(new ControlsPermanent(PermanentIsArtifactPredicate()), DrawCardEffect(1)) — bounce target creature, if you control an artifact draw a card. Use ConditionalEffect(new ControlsPermanent(filter), wrapped) for "if you control a [type]" conditions |
+| Bounce mass | `e/Evacuation.java` | ReturnToHandEffect.allPermanentsMatching(new PermanentIsCreaturePredicate()) — all creatures (ALL_MATCHING is permanent-general; put the type in the filter) |
+| Bounce mass (target player, filtered) | `r/RiversRebuke.java` | ReturnToHandEffect.permanentsTargetPlayerControls(PermanentNotPredicate(PermanentIsLandPredicate())) — return all nonland permanents target player controls (TARGET_PLAYERS_PERMANENTS scope, sets canTargetPlayer) |
+| Bounce all artifacts target player owns | `h/HurkylsRecall.java` | ReturnToHandEffect.permanentsTargetPlayerOwns(new PermanentIsArtifactPredicate()) — owner-based (TARGET_PLAYERS_OWNED scope; returns artifacts the target owns even if another player controls them) |
 | Mass exile + return at step (target player, filtered) | `s/SuddenDisappearance.java` | ExilePermanentsTargetPlayerControlsAndReturnAtStepEffect(PermanentNotPredicate(PermanentIsLandPredicate()), TurnStep.END_STEP) — exile all nonland permanents target player controls, return at next end step |
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardEffect(1, CONTROLLER) |

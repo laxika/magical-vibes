@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class Batterskull extends Card {
         addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.EQUIPPED_CREATURE));
 
         // {3}: Return Batterskull to its owner's hand
-        addActivatedAbility(new ActivatedAbility(false, "{3}", List.of(new ReturnSelfToHandEffect()), "{3}: Return Batterskull to its owner's hand."));
+        addActivatedAbility(new ActivatedAbility(false, "{3}", List.of(ReturnToHandEffect.self()), "{3}: Return Batterskull to its owner's hand."));
 
         // Equip {5}
         addActivatedAbility(new EquipActivatedAbility("{5}"));

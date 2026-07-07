@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -16,7 +16,7 @@ public class GraspingCurrent extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
-        ), 0, 2).addEffect(EffectSlot.SPELL, new ReturnTargetPermanentToHandEffect());
+        ), 0, 2).addEffect(EffectSlot.SPELL, ReturnToHandEffect.target());
 
         // Search your library and/or graveyard for a card named Jace, Ingenious Mind-Mage,
         // reveal it, and put it into your hand. If you searched your library this way, shuffle.

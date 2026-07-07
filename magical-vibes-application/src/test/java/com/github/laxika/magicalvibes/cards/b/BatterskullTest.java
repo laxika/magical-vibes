@@ -10,7 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +41,8 @@ class BatterskullTest extends BaseCardTest {
         assertThat(card.getActivatedAbilities().get(0).isRequiresTap()).isFalse();
         assertThat(card.getActivatedAbilities().get(0).isNeedsTarget()).isFalse();
         assertThat(card.getActivatedAbilities().get(0).getEffects().getFirst())
-                .isInstanceOf(ReturnSelfToHandEffect.class);
+                .isInstanceOfSatisfying(ReturnToHandEffect.class,
+                        e -> assertThat(e.scope()).isEqualTo(BounceScope.SELF));
 
         // Ability 1: Equip {5}
         assertThat(card.getActivatedAbilities().get(1).getManaCost()).isEqualTo("{5}");

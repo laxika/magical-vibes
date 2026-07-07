@@ -27,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -270,7 +270,7 @@ class CopySpellEffectHandlerTest {
                 Card boomerangCard = createSpellCard("Boomerang", List.of());
                 UUID bearsPermId = UUID.randomUUID();
                 StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
-                        List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+                        List.of(ReturnToHandEffect.target()), bearsPermId);
                 gd.stack.add(targetEntry);
 
                 Card twincastCard = createCard("Twincast");
@@ -288,7 +288,7 @@ class CopySpellEffectHandlerTest {
                 Card boomerangCard = createSpellCard("Boomerang", List.of());
                 UUID bearsPermId = UUID.randomUUID();
                 StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
-                        List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+                        List.of(ReturnToHandEffect.target()), bearsPermId);
                 gd.stack.add(targetEntry);
 
                 Card twincastCard = createCard("Twincast");
@@ -351,7 +351,7 @@ class CopySpellEffectHandlerTest {
                 Card boomerangCard = createSpellCard("Boomerang", List.of());
                 UUID bearsPermId = UUID.randomUUID();
                 StackEntry targetEntry = spellEntry(boomerangCard, player1Id, StackEntryType.INSTANT_SPELL,
-                        List.of(new ReturnTargetPermanentToHandEffect()), bearsPermId);
+                        List.of(ReturnToHandEffect.target()), bearsPermId);
                 gd.stack.add(targetEntry);
 
                 Card twincastCard = createCard("Twincast");

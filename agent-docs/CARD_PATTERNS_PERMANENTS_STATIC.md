@@ -93,7 +93,7 @@ All paths relative to `cards/`.
 |---------|-----------|-------|
 | Lockdown (can't attack/block) | `p/Pacifism.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect |
 | Predicate-conditional aura | `b/BondsOfFaith.java` | STATIC EnchantedPermanentConditionalEffect(PermanentHasSubtypePredicate(HUMAN), StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE), EnchantedCreatureCantAttackOrBlockEffect()) — composes existing effects, +2/+2 if Human, can't attack/block otherwise |
-| Lockdown (can't attack) + self-bounce | `f/ForcedWorship.java` | STATIC EnchantedCreatureCantAttackEffect + activated ReturnSelfToHandEffect |
+| Lockdown (can't attack) + self-bounce | `f/ForcedWorship.java` | STATIC EnchantedCreatureCantAttackEffect + activated ReturnToHandEffect.self() |
 | Full lockdown (can't attack/block/activate) | `a/Arrest.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect |
 | P/T override + ability strip aura | `d/DeepFreeze.java` | STATIC SetBasePowerToughnessStaticEffect(0, 4, ENCHANTED_CREATURE) + GrantKeywordEffect(DEFENDER, ENCHANTED_CREATURE) + LosesAllAbilitiesEffect(ENCHANTED_CREATURE) + GrantColorEffect(BLUE, ENCHANTED_CREATURE) + GrantSubtypeEffect(WALL, ENCHANTED_CREATURE) — sets base P/T, grants defender, strips all original abilities, adds color and type |
 | Lockdown + self-destruct on target | `i/IceCage.java` | STATIC EnchantedCreatureCantAttackOrBlockEffect + EnchantedCreatureCantActivateAbilitiesEffect + ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY DestroySourcePermanentEffect |
@@ -110,7 +110,7 @@ All paths relative to `cards/`.
 | Enchanted land grant mana ability + ETB counter | `n/NewHorizons.java` | STATIC GrantActivatedAbilityEffect(AwardAnyColorManaEffect(2), ENCHANTED_PERMANENT) + ON_ENTER_BATTLEFIELD PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 1) — multi-target aura: first target is land (aura attachment), second is creature (ETB +1/+1 counter). Uses GrantScope.ENCHANTED_PERMANENT for non-creature aura targets |
 | Enchanted land becomes basic type | `e/EvilPresence.java` | STATIC EnchantedPermanentBecomesTypeEffect(SWAMP) — land loses all land types/abilities, becomes the new basic land type |
 | Aura with tap enchanted creature ability | `b/BurdenOfGuilt.java` | Activated TapPermanentsEffect(TapUntapScope.ENCHANTED) — aura's own ability pays {1} to tap the enchanted creature (no targeting, finds creature via attachedTo) |
-| Aura + self-bounce ability | `s/ShimmeringWings.java` | STATIC keyword + activated ReturnSelfToHandEffect |
+| Aura + self-bounce ability | `s/ShimmeringWings.java` | STATIC keyword + activated ReturnToHandEffect.self() |
 | Grant keyword + upkeep counter + death return | `g/GlisteningOil.java` | STATIC GrantKeywordEffect(INFECT, ENCHANTED_CREATURE) + UPKEEP_TRIGGERED PutCounterOnEnchantedCreatureEffect(CounterType.MINUS_ONE_MINUS_ONE) + ON_DEATH ReturnCardFromGraveyardEffect.builder().destination(HAND).filter(CardIsSelfPredicate).build() |
 | Upkeep +1/+1 counter + sacrifice on combat | `p/PrimalCocoon.java` | UPKEEP_TRIGGERED PutCounterOnEnchantedCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE) + ON_ATTACK SacrificeSelfEffect + ON_BLOCK SacrificeSelfEffect |
 | Doesn't untap + enchanted controller upkeep life loss | `n/NumbingDose.java` | STATIC AttachedCreatureDoesntUntapEffect + ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED EnchantedCreatureControllerLosesLifeEffect(1) — enchants artifact or creature, uses PermanentAnyOfPredicate target filter |

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.validate;
 
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.BounceScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandWithManaValueConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -14,9 +15,14 @@ public class BounceTargetValidators {
 
     private final TargetValidationService tvs;
 
-    @ValidatesTarget(ReturnTargetPermanentToHandEffect.class)
-    public void validateReturnTargetPermanentToHand(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
+    @ValidatesTarget(ReturnToHandEffect.class)
+    public void validateReturnToHand(TargetValidationContext ctx, ReturnToHandEffect effect) {
+        // Validator is class-keyed and runs unconditionally; only the TARGET scope actually
+        // targets a battlefield permanent. The other scopes (SELF / ALL_MATCHING /
+        // TARGET_PLAYERS_*) take no permanent target and must not require one.
+        if (effect.scope() == BounceScope.TARGET) {
+            tvs.requireBattlefieldTarget(ctx);
+        }
     }
 
     @ValidatesTarget(ReturnTargetPermanentToHandWithManaValueConditionalEffect.class)
