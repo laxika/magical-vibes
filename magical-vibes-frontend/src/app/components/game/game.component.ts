@@ -351,31 +351,40 @@ export class GameComponent implements OnInit, OnDestroy {
     return lines;
   }
 
-  /** Total board height at the given zoom, including horizontal wrapping of crowded rows. */
-  private modeledBoardHeight(zoom: number, rowWidth: number): number {
+  /** Footprint width (zoom 1) of a permanent plus any attached auras. */
+  private stackWidth(perm: Permanent): number {
     const C = GameComponent;
-    const cardWidth = (tapped: boolean) => (tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH);
-    let total = 0;
+    const base = perm.tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
+    return base + (this.getAttachedAuras(perm.id).length > 0 ? C.AURA_X_OFFSET : 0);
+  }
 
-    /* A permanent plus its attached auras, at zoom 1. Tapped cards occupy the
-       rotated footprint (165px tall), but an aura'd stack keeps min-height 231. */
-    const auraCount = (perm: Permanent) => this.getAttachedAuras(perm.id).length;
-    const stackWidth = (perm: Permanent) =>
-      cardWidth(perm.tapped) + (auraCount(perm) > 0 ? C.AURA_X_OFFSET : 0);
-    const stackHeight = (perm: Permanent) => {
-      const auras = auraCount(perm);
-      if (perm.tapped) {
-        return auras > 0 ? Math.max(C.CARD_HEIGHT, C.CARD_WIDTH + auras * C.AURA_STRIP) : C.CARD_WIDTH;
-      }
-      return C.CARD_HEIGHT + auras * C.AURA_STRIP;
-    };
+  /** Footprint height (zoom 1) of a permanent plus any attached auras. Tapped
+      cards occupy the rotated 165px footprint, but an aura'd stack keeps 231. */
+  private stackHeight(perm: Permanent): number {
+    const C = GameComponent;
+    const auras = this.getAttachedAuras(perm.id).length;
+    if (perm.tapped) {
+      return auras > 0 ? Math.max(C.CARD_HEIGHT, C.CARD_WIDTH + auras * C.AURA_STRIP) : C.CARD_WIDTH;
+    }
+    return C.CARD_HEIGHT + auras * C.AURA_STRIP;
+  }
 
+  /** Height of one player's battlefield (creatures row + lands row + revealed rows)
+      at the given zoom, including horizontal wrapping of crowded rows. */
+  private computeSideHeight(
+    creatures: IndexedPermanent[],
+    lands: (IndexedPermanent | LandStack)[],
+    isEmpty: boolean,
+    revealedRows: number,
+    zoom: number,
+    rowWidth: number,
+  ): number {
+    const C = GameComponent;
     const rowHeight = (widths: number[], lineHeight: number): number => {
       if (widths.length === 0) return 0;
       const lines = C.packedLines(widths, C.ROW_GAP, rowWidth);
       return lines * (Math.ceil(lineHeight) + C.LINE_SLACK) + (lines - 1) * C.ROW_GAP + C.SUB_ROW_PADDING;
     };
-
     const landItemWidth = (item: IndexedPermanent | LandStack, landZoom: number): number => {
       if (isLandStack(item)) {
         const tapped = item.lands.some(l => l.perm.tapped);
@@ -383,68 +392,72 @@ export class GameComponent implements OnInit, OnDestroy {
         const strip = tapped ? C.TAPPED_STACK_STRIP : C.STACK_STRIP;
         return (base + (item.lands.length - 1) * strip) * landZoom;
       }
-      return stackWidth(item.perm) * landZoom;
+      return this.stackWidth(item.perm) * landZoom;
     };
-
     /* A lands line is only as tall as its tallest item: a fully tapped line
        occupies the rotated 165px footprint, not the upright 231px. */
     const landItemHeight = (item: IndexedPermanent | LandStack): number => {
       if (isLandStack(item)) {
         return item.lands.some(l => !l.perm.tapped) ? C.CARD_HEIGHT : C.CARD_WIDTH;
       }
-      return stackHeight(item.perm);
+      return this.stackHeight(item.perm);
     };
 
-    const sideHeight = (
-      creatures: IndexedPermanent[],
-      lands: (IndexedPermanent | LandStack)[],
-      isEmpty: boolean,
-      revealedRows: number,
-    ): number => {
-      let h = C.SIDE_LABEL_HEIGHT + C.ROW_MARGIN + revealedRows * C.REVEALED_ROW_HEIGHT;
-      if (isEmpty) {
-        return h + C.EMPTY_MESSAGE_HEIGHT;
-      }
-      const creatureLine = creatures.length > 0
-        ? Math.max(...creatures.map(ip => stackHeight(ip.perm)))
-        : 0;
-      h += rowHeight(creatures.map(ip => stackWidth(ip.perm) * zoom), creatureLine * zoom);
-      const landZoom = zoom * C.LANDS_ROW_MODIFIER;
-      const landLine = lands.length > 0 ? Math.max(...lands.map(landItemHeight)) : 0;
-      h += rowHeight(lands.map(item => landItemWidth(item, landZoom)), landLine * landZoom);
-      return h;
-    };
+    let h = C.SIDE_LABEL_HEIGHT + C.ROW_MARGIN + revealedRows * C.REVEALED_ROW_HEIGHT;
+    if (isEmpty) {
+      return h + C.EMPTY_MESSAGE_HEIGHT;
+    }
+    const creatureLine = creatures.length > 0
+      ? Math.max(...creatures.map(ip => this.stackHeight(ip.perm)))
+      : 0;
+    h += rowHeight(creatures.map(ip => this.stackWidth(ip.perm) * zoom), creatureLine * zoom);
+    const landZoom = zoom * C.LANDS_ROW_MODIFIER;
+    const landLine = lands.length > 0 ? Math.max(...lands.map(landItemHeight)) : 0;
+    h += rowHeight(lands.map(item => landItemWidth(item, landZoom)), landLine * landZoom);
+    return h;
+  }
 
-    /* The rows are zero-basis flex halves, so each player gets the same share:
-       the board fits when the taller side fits into its half. Shrinking to this
-       (rather than the sum) keeps the divider centered and stops either side's
-       cards from crossing it. */
-    total += 2 * Math.max(
-      sideHeight(
-        this.opponentCreaturesNotInCombat(),
-        this.opponentLandStacks,
-        this.opponentBattlefield.length === 0,
-        (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0)),
-      sideHeight(
-        this.myCreaturesNotInCombat(),
-        this.myLandStacks,
-        this.myBattlefield.length === 0,
-        this.myRevealedTopCard.length > 0 ? 1 : 0));
+  private opponentSideHeight(zoom: number, rowWidth: number): number {
+    return this.computeSideHeight(
+      this.opponentCreaturesNotInCombat(),
+      this.opponentLandStacks,
+      this.opponentBattlefield.length === 0,
+      (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0),
+      zoom, rowWidth);
+  }
+
+  private mySideHeight(zoom: number, rowWidth: number): number {
+    return this.computeSideHeight(
+      this.myCreaturesNotInCombat(),
+      this.myLandStacks,
+      this.myBattlefield.length === 0,
+      this.myRevealedTopCard.length > 0 ? 1 : 0,
+      zoom, rowWidth);
+  }
+
+  /** Total board height at the given zoom. The two players are flex halves, so
+      the board fits when the taller side fits into its half; the combat zone (if
+      shown) replaces the divider in the middle. */
+  private modeledBoardHeight(zoom: number, rowWidth: number): number {
+    const C = GameComponent;
+    let total = 2 * Math.max(
+      this.opponentSideHeight(zoom, rowWidth),
+      this.mySideHeight(zoom, rowWidth));
 
     if (this.showCombatZone) {
       const groups = this.combatPairings;
       const blockers = groups.flatMap(g => g.blockers);
       const attackerLine = groups.length > 0
-        ? Math.max(...groups.map(g => stackHeight(g.attacker)))
+        ? Math.max(...groups.map(g => this.stackHeight(g.attacker)))
         : 0;
       const blockerLine = blockers.length > 0
-        ? Math.max(...blockers.map(b => stackHeight(b.perm)))
+        ? Math.max(...blockers.map(b => this.stackHeight(b.perm)))
         : 0;
       const groupHeight = attackerLine * zoom
         + (blockers.length > 0 ? C.COMBAT_STACK_GAP + blockerLine * zoom : 0);
       const widths = groups.map(g => Math.max(
-        stackWidth(g.attacker) * zoom,
-        g.blockers.reduce((sum, b) => sum + stackWidth(b.perm) * zoom, 0)
+        this.stackWidth(g.attacker) * zoom,
+        g.blockers.reduce((sum, b) => sum + this.stackWidth(b.perm) * zoom, 0)
           + Math.max(0, g.blockers.length - 1) * C.BLOCKER_GAP));
       const lines = widths.length > 0 ? C.packedLines(widths, C.COMBAT_GROUPS_GAP, rowWidth - 20) : 1;
       total += lines * groupHeight + (lines - 1) * C.COMBAT_GROUPS_GAP + C.COMBAT_ZONE_CHROME;
@@ -455,7 +468,36 @@ export class GameComponent implements OnInit, OnDestroy {
     return total;
   }
 
-  /** MTGO-style density: cards render full size and shrink only when the board would otherwise scroll. */
+  /** Largest zoom (MAX→MIN) at which one side's content fits in its half of the
+      area. Each half = (area - safety - divider) / 2, matching the flex layout. */
+  private sideZoom(sideHeightAtZoom: (zoom: number, width: number) => number): number {
+    const C = GameComponent;
+    const { width, height } = this.battlefieldAreaSize();
+    if (!width || !height) return 1;
+    const budget = (height - C.FIT_SAFETY - C.DIVIDER_HEIGHT) / 2;
+    for (let z = C.MAX_BATTLEFIELD_ZOOM; z > C.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
+      if (sideHeightAtZoom(z, width) <= budget) {
+        return Math.round(z * 100) / 100;
+      }
+    }
+    return C.MIN_BATTLEFIELD_ZOOM;
+  }
+
+  /* Each player's row is zoomed to fit only its own content into its own half,
+     so the opponent's board never resizes our cards (and vice versa). During
+     combat the attackers move to the shared combat zone, so both rows fall back
+     to the single board zoom to stay visually consistent with it. */
+  get myBattlefieldZoom(): number {
+    if (this.showCombatZone) return this.battlefieldZoom;
+    return this.sideZoom((z, w) => this.mySideHeight(z, w));
+  }
+
+  get opponentBattlefieldZoom(): number {
+    if (this.showCombatZone) return this.battlefieldZoom;
+    return this.sideZoom((z, w) => this.opponentSideHeight(z, w));
+  }
+
+  /** Board-wide zoom, used for the combat zone (which spans both players). */
   get battlefieldZoom(): number {
     const { width, height } = this.battlefieldAreaSize();
     if (!width || !height) return 1;

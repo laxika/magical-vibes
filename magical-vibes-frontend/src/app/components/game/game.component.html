@@ -280,7 +280,7 @@
     </div>
 
     <div class="battlefield-area" #battlefieldArea [style.--density-zoom]="battlefieldZoom">
-      <div class="battlefield-row">
+      <div class="battlefield-row" [style.--density-zoom]="opponentBattlefieldZoom">
         <div class="battlefield-sub-row lands-row">
           @for (item of opponentLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
@@ -422,7 +422,7 @@
         <div class="battlefield-divider"></div>
       }
 
-      <div class="battlefield-row">
+      <div class="battlefield-row" [style.--density-zoom]="myBattlefieldZoom">
         <div class="battlefield-sub-row creatures-row">
           @for (ip of myCreaturesNotInCombat(); track ip.originalIndex) {
             <div class="permanent-stack">
