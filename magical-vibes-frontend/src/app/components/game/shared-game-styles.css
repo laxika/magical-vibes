@@ -312,8 +312,10 @@
 }
 
 .battlefield-row {
-  /* Each side grows into the leftover space but never squeezes its content. */
-  flex: 1 0 auto;
+  /* Each player owns exactly half the area (zero-basis, equal grow) so the
+     divider stays put instead of being pushed around by whichever side has
+     more cards. The zoom model fits the taller side into its half. */
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
 }
@@ -350,6 +352,9 @@
 
 .battlefield-divider {
   height: 1px;
+  /* The rows around it don't shrink, so without this the divider is the only
+     shrinkable item and collapses to 0px as soon as the board fills up. */
+  flex-shrink: 0;
   background: var(--color-border-tan);
 }
 

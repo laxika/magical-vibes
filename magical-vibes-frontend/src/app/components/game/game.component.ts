@@ -388,36 +388,39 @@ export class GameComponent implements OnInit, OnDestroy {
       return stackHeight(item.perm);
     };
 
-    const addSide = (
+    const sideHeight = (
       creatures: IndexedPermanent[],
       lands: (IndexedPermanent | LandStack)[],
       isEmpty: boolean,
       revealedRows: number,
-    ) => {
-      total += C.SIDE_LABEL_HEIGHT + C.ROW_MARGIN + revealedRows * C.REVEALED_ROW_HEIGHT;
+    ): number => {
+      let h = C.SIDE_LABEL_HEIGHT + C.ROW_MARGIN + revealedRows * C.REVEALED_ROW_HEIGHT;
       if (isEmpty) {
-        total += C.EMPTY_MESSAGE_HEIGHT;
-        return;
+        return h + C.EMPTY_MESSAGE_HEIGHT;
       }
       const creatureLine = creatures.length > 0
         ? Math.max(...creatures.map(ip => stackHeight(ip.perm)))
         : 0;
-      total += rowHeight(creatures.map(ip => stackWidth(ip.perm) * zoom), creatureLine * zoom);
+      h += rowHeight(creatures.map(ip => stackWidth(ip.perm) * zoom), creatureLine * zoom);
       const landZoom = zoom * C.LANDS_ROW_MODIFIER;
       const landLine = lands.length > 0 ? Math.max(...lands.map(landItemHeight)) : 0;
-      total += rowHeight(lands.map(item => landItemWidth(item, landZoom)), landLine * landZoom);
+      h += rowHeight(lands.map(item => landItemWidth(item, landZoom)), landLine * landZoom);
+      return h;
     };
 
-    addSide(
-      this.opponentCreaturesNotInCombat(),
-      this.opponentLandStacks,
-      this.opponentBattlefield.length === 0,
-      (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0));
-    addSide(
-      this.myCreaturesNotInCombat(),
-      this.myLandStacks,
-      this.myBattlefield.length === 0,
-      this.myRevealedTopCard.length > 0 ? 1 : 0);
+    /* The rows are zero-basis flex halves: each player gets the same share, so
+       the board fits exactly when the taller side fits into its half. */
+    total += 2 * Math.max(
+      sideHeight(
+        this.opponentCreaturesNotInCombat(),
+        this.opponentLandStacks,
+        this.opponentBattlefield.length === 0,
+        (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0)),
+      sideHeight(
+        this.myCreaturesNotInCombat(),
+        this.myLandStacks,
+        this.myBattlefield.length === 0,
+        this.myRevealedTopCard.length > 0 ? 1 : 0));
 
     if (this.showCombatZone) {
       const groups = this.combatPairings;
