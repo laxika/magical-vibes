@@ -5,8 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessManyLandsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
 
@@ -15,7 +18,8 @@ import java.util.List;
 public class DreamrootCascade extends Card {
 
     public DreamrootCascade() {
-        addEffect(EffectSlot.STATIC, new EntersTappedUnlessManyLandsEffect(2));
+        addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+                new ControlsPermanentCountAtMost(1, new PermanentIsLandPredicate()), new EntersTappedEffect()));
 
         // {T}: Add {G}.
         addActivatedAbility(new ActivatedAbility(

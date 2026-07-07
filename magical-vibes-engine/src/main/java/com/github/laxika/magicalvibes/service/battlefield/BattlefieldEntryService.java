@@ -18,14 +18,12 @@ import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterE
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessFewLandsEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessManyLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -34,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
-import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectContext;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -61,7 +58,6 @@ public class BattlefieldEntryService {
 
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
-    private final CastingCostService castingCostService;
     private final PlayerInputService playerInputService;
     private final PermanentCopierService permanentCopierService;
     private final TriggerCollectionService triggerCollectionService;
@@ -76,7 +72,6 @@ public class BattlefieldEntryService {
     // (effect handlers) → BattlefieldEntryService.
     public BattlefieldEntryService(GameQueryService gameQueryService,
                                    GameBroadcastService gameBroadcastService,
-                                   CastingCostService castingCostService,
                                    PlayerInputService playerInputService,
                                    PermanentCopierService permanentCopierService,
                                    @Lazy TriggerCollectionService triggerCollectionService,
@@ -87,7 +82,6 @@ public class BattlefieldEntryService {
                                    ConditionEvaluationService conditionEvaluationService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
-        this.castingCostService = castingCostService;
         this.playerInputService = playerInputService;
         this.permanentCopierService = permanentCopierService;
         this.triggerCollectionService = triggerCollectionService;
@@ -242,39 +236,24 @@ public class BattlefieldEntryService {
         }
     }
 
+    /**
+     * "This permanent enters tapped unless …" replacement effects (check lands, fast lands,
+     * slow lands). Each is a {@link ConditionalReplacementEffect} wrapping an
+     * {@link EntersTappedEffect}: the wrapped condition is the <em>negated</em> unless-clause
+     * (true when the permanent should enter tapped). The condition is evaluated relative to the
+     * entering permanent's controller; since the permanent is not yet on the battlefield (added
+     * after this method), "other lands" / "matching permanents" counts naturally exclude it.
+     */
     private void applyConditionalEnterTapped(GameData gameData, UUID controllerId, Permanent enteringPermanent) {
         for (CardEffect effect : enteringPermanent.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof EntersTappedUnlessFewLandsEffect fewLands) {
-                int otherLandCount = countOtherLands(gameData, controllerId);
-                if (otherLandCount > fewLands.maxOtherLands()) {
-                    enteringPermanent.tap();
-                }
-            }
-            if (effect instanceof EntersTappedUnlessManyLandsEffect manyLands) {
-                int otherLandCount = countOtherLands(gameData, controllerId);
-                if (otherLandCount < manyLands.minOtherLands()) {
-                    enteringPermanent.tap();
-                }
-            }
-            if (effect instanceof EntersTappedUnlessControlsPermanentEffect controlsPermanent) {
-                if (!castingCostService.controlsPermanent(gameData, controllerId, controlsPermanent.predicate())) {
+            if (effect instanceof ConditionalReplacementEffect conditional
+                    && conditional.upgradedEffect() instanceof EntersTappedEffect) {
+                ConditionContext ctx = ConditionContext.forPermanent(enteringPermanent, controllerId);
+                if (conditionEvaluationService.isMet(gameData, conditional.condition(), ctx)) {
                     enteringPermanent.tap();
                 }
             }
         }
-    }
-
-    private int countOtherLands(GameData gameData, UUID controllerId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        int otherLandCount = 0;
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (p.getCard().hasType(CardType.LAND)) {
-                    otherLandCount++;
-                }
-            }
-        }
-        return otherLandCount;
     }
 
     private boolean matchesAnyType(Card card, Set<CardType> types) {

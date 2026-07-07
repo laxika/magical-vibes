@@ -11,12 +11,14 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.EntersTappedUnlessControlsPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
@@ -35,19 +37,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BattlefieldEntryServiceTest {
 
     @Mock private GameQueryService gameQueryService;
     @Mock private GameBroadcastService gameBroadcastService;
-    @Mock private com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
     @Mock private PlayerInputService playerInputService;
     @Mock private PermanentCopierService permanentCopierService;
     @Mock private TriggerCollectionService triggerCollectionService;
@@ -65,7 +65,7 @@ class BattlefieldEntryServiceTest {
                 gameQueryService, predicateEvaluationService,
                 new StaticEffectSupport(gameQueryService, predicateEvaluationService));
         service = new BattlefieldEntryService(
-                gameQueryService, gameBroadcastService, castingCostService, playerInputService,
+                gameQueryService, gameBroadcastService, playerInputService,
                 permanentCopierService, triggerCollectionService,
                 graveyardTargetingService, etbTokenTargetService,
                 new EtbEffectResolver(conditionEvaluationService),
@@ -85,11 +85,11 @@ class BattlefieldEntryServiceTest {
         Card land = new Card();
         land.setName("Dragonskull Summit");
         land.setType(CardType.LAND);
-        land.addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(predicate));
+        land.addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+                new ControlsPermanentCountAtMost(0, predicate), new EntersTappedEffect()));
         Permanent entering = new Permanent(land);
 
-        when(castingCostService.controlsPermanent(gd, player1Id, predicate)).thenReturn(false);
-
+        // Empty battlefield — controls zero matching permanents, so it enters tapped.
         service.putPermanentOntoBattlefield(gd, player1Id, entering);
 
         assertThat(entering.isTapped()).isTrue();
@@ -102,10 +102,16 @@ class BattlefieldEntryServiceTest {
         Card land = new Card();
         land.setName("Dragonskull Summit");
         land.setType(CardType.LAND);
-        land.addEffect(EffectSlot.STATIC, new EntersTappedUnlessControlsPermanentEffect(predicate));
+        land.addEffect(EffectSlot.STATIC, new ConditionalReplacementEffect(
+                new ControlsPermanentCountAtMost(0, predicate), new EntersTappedEffect()));
         Permanent entering = new Permanent(land);
 
-        when(castingCostService.controlsPermanent(eq(gd), eq(player1Id), eq(predicate))).thenReturn(true);
+        // Controller already controls a matching Swamp, so the land enters untapped.
+        Card swamp = new Card();
+        swamp.setName("Swamp");
+        swamp.setType(CardType.LAND);
+        swamp.setSubtypes(List.of(CardSubtype.SWAMP));
+        gd.playerBattlefields.get(player1Id).add(new Permanent(swamp));
 
         service.putPermanentOntoBattlefield(gd, player1Id, entering);
 

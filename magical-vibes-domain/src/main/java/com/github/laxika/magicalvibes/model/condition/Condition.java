@@ -21,6 +21,7 @@ public sealed interface Condition permits
         ControlsAnotherPermanent,
         ControlsPermanent,
         ControlsPermanentCount,
+        ControlsPermanentCountAtMost,
         DefendingPlayerPoisoned,
         DidntAttack,
         DidntGainLifeThisTurn,

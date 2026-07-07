@@ -426,9 +426,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Static restrictions / taxes
 
 - `EntersTappedEffect()` — enters tapped
-- `EntersTappedUnlessControlsPermanentEffect(PermanentPredicate)` — enters tapped unless you control a matching permanent (check lands)
-- `EntersTappedUnlessFewLandsEffect(int maxOtherLands)` — enters tapped unless you control N or fewer other lands (fast lands)
-- `EntersTappedUnlessManyLandsEffect(int minOtherLands)` — enters tapped unless you control N or more other lands (slow lands)
+- Conditional enters-tapped (check/fast/slow lands): `ConditionalReplacementEffect(condition, new EntersTappedEffect())` where the condition is the **negated** unless-clause (true ⇒ enters tapped), evaluated at entry against the entering permanent's controller (the permanent isn't on the battlefield yet, so counts exclude it). Check land = `ControlsPermanentCountAtMost(0, PermanentHasAnySubtypePredicate)` (tapped unless you control a matching permanent); fast land "unless N-or-fewer other lands" = `ControlsPermanentCount(N+1, new PermanentIsLandPredicate())`; slow land "unless N-or-more other lands" = `ControlsPermanentCountAtMost(N-1, new PermanentIsLandPredicate())`. **Never add a per-cycle enters-tapped record.**
 - `NoMaximumHandSizeEffect()` — no max hand size (static)
 - `IncreaseOpponentCastCostEffect(Set<CardType>, int)` — opponents' spells cost more
 - `IncreaseOpponentCostForTargetingControlledPermanentEffect(PermanentPredicate, int)` — opponent spells/abilities targeting your matching permanent cost more

@@ -17,6 +17,18 @@ public record ConditionalReplacementEffect(
         CardEffect upgradedEffect
 ) implements CardEffect {
 
+    /**
+     * Convenience form for "when the condition is met, apply this effect; otherwise no
+     * replacement happens." Used by the conditional enters-tapped land cycles (check lands,
+     * fast lands, slow lands): the condition is the negated unless-clause and the upgraded
+     * effect is {@link EntersTappedEffect}. {@code baseEffect} is {@code null} — the entering
+     * permanent is simply left untapped — so this form is only meaningful for replacement
+     * effects processed during entry, never for stack resolution.
+     */
+    public ConditionalReplacementEffect(Condition condition, CardEffect upgradedEffect) {
+        this(condition, null, upgradedEffect);
+    }
+
     /** Human-readable condition name for log messages (e.g. "metalcraft"). */
     public String conditionName() {
         return condition.conditionName();
@@ -24,31 +36,31 @@ public record ConditionalReplacementEffect(
 
     @Override
     public boolean canTargetPlayer() {
-        return baseEffect.canTargetPlayer() || upgradedEffect.canTargetPlayer();
+        return (baseEffect != null && baseEffect.canTargetPlayer()) || upgradedEffect.canTargetPlayer();
     }
 
     @Override
     public boolean canTargetPermanent() {
-        return baseEffect.canTargetPermanent() || upgradedEffect.canTargetPermanent();
+        return (baseEffect != null && baseEffect.canTargetPermanent()) || upgradedEffect.canTargetPermanent();
     }
 
     @Override
     public boolean canTargetSpell() {
-        return baseEffect.canTargetSpell() || upgradedEffect.canTargetSpell();
+        return (baseEffect != null && baseEffect.canTargetSpell()) || upgradedEffect.canTargetSpell();
     }
 
     @Override
     public boolean canTargetGraveyard() {
-        return baseEffect.canTargetGraveyard() || upgradedEffect.canTargetGraveyard();
+        return (baseEffect != null && baseEffect.canTargetGraveyard()) || upgradedEffect.canTargetGraveyard();
     }
 
     @Override
     public boolean isDamageOrDestruction() {
-        return baseEffect.isDamageOrDestruction() || upgradedEffect.isDamageOrDestruction();
+        return (baseEffect != null && baseEffect.isDamageOrDestruction()) || upgradedEffect.isDamageOrDestruction();
     }
 
     @Override
     public boolean isSelfTargeting() {
-        return baseEffect.isSelfTargeting() || upgradedEffect.isSelfTargeting();
+        return (baseEffect != null && baseEffect.isSelfTargeting()) || upgradedEffect.isSelfTargeting();
     }
 }

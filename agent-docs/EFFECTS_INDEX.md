@@ -78,7 +78,9 @@ Effects in the `ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY` sl
 
 Game-state conditions are **data**, not classes: the sealed interface
 `model/condition/Condition` has one small record per condition (`Metalcraft`, `Morbid`,
-`Kicked`, `Raid`, `Equipped`, `ControlsPermanent(filter)`, `ControllerLifeAtLeast(n)`,
+`Kicked`, `Raid`, `Equipped`, `ControlsPermanent(filter)`,
+`ControlsPermanentCount(minCount, filter)` (at least), `ControlsPermanentCountAtMost(maxCount, filter)` (at most),
+`ControllerLifeAtLeast(n)`,
 `ControllerLifeAtMost(n)`, `GraveyardCardThreshold(n, filter)`, `CastFromZone(zone)`,
 `AttacksAlone`, `MinimumAttackers(n)`, `HasAttacker(predicate)`, `NoSpellsCastLastTurn`,
 `TwoOrMoreSpellsCastLastTurn`, `SourceCounterThreshold(n, type)`, `TopCardOfLibraryColor(color)`,
@@ -91,7 +93,11 @@ wrappers combine a condition with effects:
   delegates to the wrapped effect.
 - `ConditionalReplacementEffect(Condition condition, CardEffect baseEffect, CardEffect upgradedEffect)`
   — resolves `upgradedEffect` when the condition is met, otherwise `baseEffect`
-  ("instead" upgrade patterns, e.g. kicker). Targeting delegates to both.
+  ("instead" upgrade patterns, e.g. kicker). Targeting delegates to both. A 2-arg convenience
+  form `ConditionalReplacementEffect(condition, upgradedEffect)` sets `baseEffect` to `null`
+  ("apply this effect iff the condition is met, otherwise nothing"); it is meaningful only for
+  entry-time replacement effects (the conditional enters-tapped land cycles), never for stack
+  resolution.
 
 All conditions are evaluated in one place, the engine's `ConditionEvaluationService`
 (exhaustive switch over the sealed hierarchy — adding a condition without an evaluation is a
@@ -1225,9 +1231,7 @@ Pass `null` as filter to allow any card.
 | `ReduceOpponentMaxHandSizeEffect` | `(int reduction)` | each opponent's maximum hand size is reduced by N (static, checked during cleanup discard) |
 | `EntersTappedEffect` | `()` | this permanent enters the battlefield tapped (static, implements `ReplacementEffect`). Replaces `setEntersTapped(true)` |
 | `EnterPermanentsOfTypesTappedEffect` | `(Set<CardType> cardTypes)` or `(Set<CardType> cardTypes, boolean opponentsOnly)` | permanents of specified types enter tapped (static). When `opponentsOnly` is true, only opponents' permanents are affected (e.g. Urabrask the Hidden) |
-| `EntersTappedUnlessControlsPermanentEffect` | `(PermanentPredicate predicate)` | enters tapped unless you control a permanent matching the predicate (check lands use `PermanentHasAnySubtypePredicate`, static, implements `ReplacementEffect`) |
-| `EntersTappedUnlessFewLandsEffect` | `(int maxOtherLands)` | enters tapped unless you control N or fewer other lands (fast lands, static, implements `ReplacementEffect`) |
-| `EntersTappedUnlessManyLandsEffect` | `(int minOtherLands)` | enters tapped unless you control N or more other lands (slow lands, static, implements `ReplacementEffect`) |
+| conditional enters-tapped (check/fast/slow lands) | `ConditionalReplacementEffect(condition, new EntersTappedEffect())` in STATIC | "enters tapped unless …" — the condition is the **negated** unless-clause (true ⇒ tapped), evaluated during entry (`BattlefieldEntryService.applyConditionalEnterTapped`) against the entering permanent's controller. Check land = `ControlsPermanentCountAtMost(0, PermanentHasAnySubtypePredicate)`; fast land ("N or fewer other lands") = `ControlsPermanentCount(N+1, PermanentIsLandPredicate)`; slow land ("N or more other lands") = `ControlsPermanentCountAtMost(N-1, PermanentIsLandPredicate)`. No dedicated per-cycle record — the old `EntersTappedUnless{ControlsPermanent,FewLands,ManyLands}Effect` were collapsed onto this |
 | `OpponentsCantAttackIfCastSpellThisTurnEffect` | `()` | each opponent who cast a spell this turn can't attack with creatures (static, Angelic Arbiter) |
 | `OpponentsCantCastSpellsIfAttackedThisTurnEffect` | `()` | each opponent who attacked with a creature this turn can't cast spells (static, Angelic Arbiter) |
 | `OpponentsCantCastSpellsThisTurnEffect` | `()` | opponents of the controller can't cast spells this turn (spell, Silence) |
