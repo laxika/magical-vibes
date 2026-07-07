@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 
@@ -41,7 +41,7 @@ public class HuatliWarriorPoet extends Card {
         // −X: Huatli, Warrior Poet deals X damage divided as you choose among any number
         // of target creatures. Creatures dealt damage this way can't block this turn.
         addActivatedAbility(ActivatedAbility.variableLoyaltyAbility(
-                List.of(new DealXDamageDividedAmongTargetCreaturesCantBlockEffect()),
+                List.of(DealDividedDamageEffect.xAmongTargetCreaturesCantBlock()),
                 "\u2212X: Huatli, Warrior Poet deals X damage divided as you choose among any number of target creatures. Creatures dealt damage this way can't block this turn.",
                 null
         ));

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -554,7 +554,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -597,7 +597,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());
@@ -620,7 +620,7 @@ class EasyAiDecisionEngineTest {
         spell.setType(CardType.SORCERY);
         spell.setManaCost("{1}{R}");
         spell.target(null, 1, 3)
-                .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
         gd.playerHands.get(aiPlayer.getId()).add(spell);
 
         ManaPool pool = gd.playerManaPools.get(aiPlayer.getId());

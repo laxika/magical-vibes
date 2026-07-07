@@ -25,7 +25,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealXDamageToAnyTargetAndGainXLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
@@ -577,9 +579,11 @@ public class SpellEvaluator {
                     + amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
         }
 
-        // Divided damage among creatures
-        if (effect instanceof DealDividedDamageAmongTargetCreaturesEffect divided) {
-            return evaluateDamageToCreature(gameData, divided.totalDamage(), oppBattlefield, opponentId, aiPlayerId);
+        // Divided damage among creatures (fixed total, no player targets — e.g. Ignite Disorder)
+        if (effect instanceof DealDividedDamageEffect divided
+                && divided.mode() == DivisionMode.CHOSEN && !divided.etbAssignments()
+                && !divided.canTargetPlayers() && divided.totalDamage() instanceof Fixed fixedTotal) {
+            return evaluateDamageToCreature(gameData, fixedTotal.value(), oppBattlefield, opponentId, aiPlayerId);
         }
 
         // X-damage effects

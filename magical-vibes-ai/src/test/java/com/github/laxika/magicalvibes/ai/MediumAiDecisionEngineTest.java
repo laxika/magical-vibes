@@ -29,7 +29,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.networking.Connection;
 import com.github.laxika.magicalvibes.networking.message.PlayCardRequest;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -604,7 +604,7 @@ class MediumAiDecisionEngineTest {
             spell.setType(CardType.SORCERY);
             spell.setManaCost("{1}{R}");
             spell.target(null, 1, 3)
-                    .addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+                    .addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
             mockGd.playerHands.get(mockAiPlayer.getId()).add(spell);
 
             ManaPool pool = mockGd.playerManaPools.get(mockAiPlayer.getId());

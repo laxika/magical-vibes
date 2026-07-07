@@ -3,10 +3,8 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetAttackingCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.DealXDamageDividedAmongTargetCreaturesCantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
@@ -141,11 +139,17 @@ public final class EffectResolution {
      * Returns true if the given effects require damage distribution (divided damage spells).
      */
     public static boolean needsDamageDistribution(List<CardEffect> effects) {
-        return effects.stream()
-                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
-                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect
-                        || e instanceof DealDividedDamageAmongAnyTargetsEffect
-                        || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
+        return effects.stream().anyMatch(EffectResolution::isChosenDivision);
+    }
+
+    /**
+     * Divided damage whose per-target amounts are announced by the controller (CR 601.2b) and
+     * carried on {@code StackEntry.damageAssignments} — i.e. CHOSEN mode that reads the standard
+     * targeting buffer (not the ETB {@code pendingETBDamageAssignments} path).
+     */
+    private static boolean isChosenDivision(CardEffect e) {
+        return e instanceof DealDividedDamageEffect d
+                && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments();
     }
 
     // ===== Card convenience overloads (union semantics, no casting context) =====
@@ -193,10 +197,7 @@ public final class EffectResolution {
         boolean inSpell = needsDamageDistribution(card.getEffects(EffectSlot.SPELL));
         boolean inAbility = card.getActivatedAbilities().stream()
                 .flatMap(a -> a.getEffects().stream())
-                .anyMatch(e -> e instanceof DealXDamageDividedAmongTargetAttackingCreaturesEffect
-                        || e instanceof DealDividedDamageAmongTargetCreaturesEffect
-                        || e instanceof DealDividedDamageAmongAnyTargetsEffect
-                        || e instanceof DealXDamageDividedAmongTargetCreaturesCantBlockEffect);
+                .anyMatch(EffectResolution::isChosenDivision);
         return inSpell || inAbility;
     }
 

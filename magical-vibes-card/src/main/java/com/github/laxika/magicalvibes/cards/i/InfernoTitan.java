@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageToAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class InfernoTitan extends Card {
 
         // Whenever Inferno Titan enters the battlefield or attacks,
         // it deals 3 damage divided as you choose among one, two, or three targets.
-        DealDividedDamageToAnyTargetsEffect dividedDamage = new DealDividedDamageToAnyTargetsEffect(3, 3);
+        DealDividedDamageEffect dividedDamage = DealDividedDamageEffect.chosenAmongAnyTargetsEtb(3, 3);
         addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, dividedDamage);
         addEffect(EffectSlot.ON_ATTACK, dividedDamage);
     }

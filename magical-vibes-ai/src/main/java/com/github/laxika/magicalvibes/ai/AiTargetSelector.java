@@ -16,8 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -552,13 +553,16 @@ class AiTargetSelector {
      * Returns null if no valid targets exist.
      */
     Map<UUID, Integer> buildDamageAssignments(GameData gameData, Card card, UUID aiPlayerId) {
-        DealDividedDamageAmongTargetCreaturesEffect creaturesEffect = card.getEffects(EffectSlot.SPELL).stream()
-                .filter(e -> e instanceof DealDividedDamageAmongTargetCreaturesEffect)
-                .map(DealDividedDamageAmongTargetCreaturesEffect.class::cast)
+        // Ignite Disorder: fixed total divided among target creatures (no players).
+        DealDividedDamageEffect creaturesEffect = card.getEffects(EffectSlot.SPELL).stream()
+                .filter(e -> e instanceof DealDividedDamageEffect d
+                        && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments()
+                        && !d.canTargetPlayers() && d.totalDamage() instanceof Fixed)
+                .map(DealDividedDamageEffect.class::cast)
                 .findFirst()
                 .orElse(null);
 
-        DealDividedDamageAmongAnyTargetsEffect anyTargetEffect = findDividedDamageAnyTargetsEffect(card);
+        DealDividedDamageEffect anyTargetEffect = findDividedDamageAnyTargetsEffect(card);
 
         if (creaturesEffect == null && anyTargetEffect == null) {
             // X-damage divided among attacking creatures — only relevant during combat
@@ -569,11 +573,11 @@ class AiTargetSelector {
         boolean canTargetPlayers;
         int maxTargets;
         if (creaturesEffect != null) {
-            totalDamage = creaturesEffect.totalDamage();
+            totalDamage = ((Fixed) creaturesEffect.totalDamage()).value();
             canTargetPlayers = false;
             maxTargets = Math.max(1, card.getMaxTargets());
         } else {
-            totalDamage = anyTargetEffect.totalDamage();
+            totalDamage = ((Fixed) anyTargetEffect.totalDamage()).value();
             canTargetPlayers = true;
             // "any number of targets" — no creature target limit
             maxTargets = Integer.MAX_VALUE;
@@ -634,20 +638,26 @@ class AiTargetSelector {
     }
 
     /**
-     * Searches for a DealDividedDamageAmongAnyTargetsEffect in the card's spell effects,
+     * Searches for a CHOSEN "any targets" DealDividedDamageEffect in the card's spell effects,
      * including inside kicker replacement wrappers.
      */
-    private DealDividedDamageAmongAnyTargetsEffect findDividedDamageAnyTargetsEffect(Card card) {
+    private DealDividedDamageEffect findDividedDamageAnyTargetsEffect(Card card) {
         for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof DealDividedDamageAmongAnyTargetsEffect anyTarget) {
-                return anyTarget;
+            if (isChosenAnyTargets(effect)) {
+                return (DealDividedDamageEffect) effect;
             }
             if (effect instanceof ConditionalReplacementEffect replacement
-                    && replacement.upgradedEffect() instanceof DealDividedDamageAmongAnyTargetsEffect anyTarget) {
-                return anyTarget;
+                    && isChosenAnyTargets(replacement.upgradedEffect())) {
+                return (DealDividedDamageEffect) replacement.upgradedEffect();
             }
         }
         return null;
+    }
+
+    private boolean isChosenAnyTargets(CardEffect effect) {
+        return effect instanceof DealDividedDamageEffect d
+                && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments()
+                && d.canTargetPlayers() && d.totalDamage() instanceof Fixed;
     }
 
     private UUID findDestroyCandidate(GameData gameData, Card card, List<Permanent> battlefield, UUID aiPlayerId) {

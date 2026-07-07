@@ -43,7 +43,9 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardsFromGraveyardOnTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.DivisionMode;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
@@ -58,7 +60,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect;
@@ -918,10 +919,11 @@ public class SpellCastingService {
             } else if (kicked && damageAssignments != null && !damageAssignments.isEmpty()
                     && findKickedDividedDamageEffect(filteredSpellEffects) != null) {
                 // Kicked spell with divided damage among any targets (e.g. Fight with Fire)
-                DealDividedDamageAmongAnyTargetsEffect dividedEffect = findKickedDividedDamageEffect(filteredSpellEffects);
+                DealDividedDamageEffect dividedEffect = findKickedDividedDamageEffect(filteredSpellEffects);
+                int expectedTotal = ((Fixed) dividedEffect.totalDamage()).value();
                 int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
-                if (totalDamage != dividedEffect.totalDamage()) {
-                    throw new IllegalStateException("Damage assignments must sum to " + dividedEffect.totalDamage());
+                if (totalDamage != expectedTotal) {
+                    throw new IllegalStateException("Damage assignments must sum to " + expectedTotal);
                 }
                 for (Map.Entry<UUID, Integer> assignment : damageAssignments.entrySet()) {
                     UUID target = assignment.getKey();
@@ -946,17 +948,18 @@ public class SpellCastingService {
                     throw new IllegalStateException("Damage assignments required");
                 }
 
-                DealDividedDamageAmongTargetCreaturesEffect dividedCreatureEffect = filteredSpellEffects.stream()
-                        .filter(e -> e instanceof DealDividedDamageAmongTargetCreaturesEffect)
-                        .map(DealDividedDamageAmongTargetCreaturesEffect.class::cast)
+                DealDividedDamageEffect dividedEffect = filteredSpellEffects.stream()
+                        .filter(e -> e instanceof DealDividedDamageEffect d
+                                && d.mode() == DivisionMode.CHOSEN && !d.etbAssignments())
+                        .map(DealDividedDamageEffect.class::cast)
                         .findFirst().orElse(null);
 
                 int totalDamage = damageAssignments.values().stream().mapToInt(Integer::intValue).sum();
 
-                if (dividedCreatureEffect != null) {
+                if (dividedEffect != null && dividedEffect.totalDamage() instanceof Fixed fixedTotal) {
                     // Fixed-damage divided damage spell (e.g. Ignite Disorder)
-                    if (totalDamage != dividedCreatureEffect.totalDamage()) {
-                        throw new IllegalStateException("Damage assignments must sum to " + dividedCreatureEffect.totalDamage());
+                    if (totalDamage != fixedTotal.value()) {
+                        throw new IllegalStateException("Damage assignments must sum to " + fixedTotal.value());
                     }
                     if (damageAssignments.size() > card.getMaxTargets()) {
                         throw new IllegalStateException("Too many targets");
@@ -1951,10 +1954,10 @@ public class SpellCastingService {
         return fromPool + fromConvoke;
     }
 
-    private DealDividedDamageAmongAnyTargetsEffect findKickedDividedDamageEffect(List<CardEffect> effects) {
+    private DealDividedDamageEffect findKickedDividedDamageEffect(List<CardEffect> effects) {
         for (CardEffect e : effects) {
             if (e instanceof ConditionalReplacementEffect kre && kre.condition() instanceof Kicked
-                    && kre.upgradedEffect() instanceof DealDividedDamageAmongAnyTargetsEffect ddae) {
+                    && kre.upgradedEffect() instanceof DealDividedDamageEffect ddae) {
                 return ddae;
             }
         }

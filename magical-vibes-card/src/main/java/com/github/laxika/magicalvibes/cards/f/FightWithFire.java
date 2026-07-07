@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
@@ -20,6 +20,6 @@ public class FightWithFire extends Card {
         // among any number of targets instead.
         addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                 new DealDamageToTargetCreatureEffect(5),
-                new DealDividedDamageAmongAnyTargetsEffect(10)));
+                DealDividedDamageEffect.chosenAmongAnyTargets(10)));
     }
 }

@@ -101,11 +101,8 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToTargetCreatureControllerEffect(int)` — target creature's controller
 - `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect(CardSubtype, boolean)` — any target = subtype count
 - `DealDamageToEachOpponentEffect(DynamicAmount)`; `(int)` — each opponent (single evaluation, same value for all). Amounts: `Fixed`, `CountersOnSource(PLUS_ONE_PLUS_ONE)` (Hallar)
-- `DealOrderedDamageToAnyTargetsEffect(List<Integer>)` — ordered multi-target
+- `DealDividedDamageEffect` (unified divided/multi-target damage) — factories: `.chosenAmongAnyTargets(int)` (Fight with Fire kicked), `.chosenAmongTargetCreatures(int)` (Ignite Disorder), `.chosenAmongAnyTargetsEtb(int,int)` (Inferno Titan/Bogardan ETB), `.xAmongAttackingCreatures()` (Hail of Arrows), `.xAmongTargetCreaturesCantBlock()` (Huatli −X), `.xDividedEvenly()` (Fireball), `.ordered(List<Integer>)` (Cone of Flame/Arc Trail)
 - `DealXDamageToAnyTargetAndGainXLifeEffect()` — X damage + X life
-- `DealXDamageDividedAmongTargetAttackingCreaturesEffect()` — X divided among attackers
-- `DealXDamageDividedAmongTargetCreaturesCantBlockEffect()` — X divided, can't block
-- `DealXDamageDividedEvenlyAmongTargetsEffect()` — X divided evenly (Fireball-style)
 - `DealDamageToEachTargetEffect(DynamicAmount)` — full amount to each of multiple targets (Jaya's Immolating Inferno with `XValue`)
 - `FirstTargetDealsPowerDamageToSecondTargetEffect()` — bite
 - `TargetCreatureDealsPowerDamageToSelfEffect()` — target deals its power to itself
@@ -114,8 +111,6 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DoubleDamageEffect()` — double all damage (static)
 - `DoubleDamageToEnchantedPlayerEffect()` — double damage dealt to enchanted player (static Curse)
 - `DoubleControllerDamageEffect(StackEntryPredicate, boolean)` — double controller's damage
-- `DealDividedDamageAmongTargetCreaturesEffect(int)` — divided among creatures
-- `DealDividedDamageAmongAnyTargetsEffect(int)` — divided among any targets
 - `SacrificePermanentThenEffect(PermanentPredicate, CardEffect, String)` — sacrifice then effect
 - `SpellCastTriggerEffect(CardPredicate, List<CardEffect>)` + overloads — spell cast trigger
 - `BecomePreparedEffect()` — source becomes "prepared" (Strixhaven); exiles a castable copy of its prepare spell (back face)

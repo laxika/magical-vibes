@@ -35,8 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongAnyTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDividedDamageAmongTargetCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardEffect;
@@ -438,7 +437,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.target(1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+            spell.target(1, 3).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -451,13 +450,13 @@ class AiTargetSelectorTest {
         void returnsNullForCreatureOnlyWithNoTargets() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.target(1, 3).addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+            spell.target(1, 3).addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             assertThat(unitSelector.buildDamageAssignments(unitGd, spell, aiId)).isNull();
         }
 
         @Test
-        @DisplayName("Handles DealDividedDamageAmongAnyTargetsEffect inside ConditionalReplacementEffect")
+        @DisplayName("Handles CHOSEN any-targets DealDividedDamageEffect inside ConditionalReplacementEffect")
         void handlesAnyTargetDividedDamageFromKicker() {
             addCreature(opponentId, "Bear", 2);
 
@@ -465,7 +464,7 @@ class AiTargetSelectorTest {
             spell.setType(CardType.SORCERY);
             spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
-                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+                    DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -480,7 +479,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -492,7 +491,7 @@ class AiTargetSelectorTest {
         void anyTargetTargetsOpponentWhenNoCreatures() {
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -508,7 +507,7 @@ class AiTargetSelectorTest {
 
             Card spell = new Card();
             spell.setType(CardType.SORCERY);
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(10));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(10));
 
             Map<UUID, Integer> result = unitSelector.buildDamageAssignments(unitGd, spell, aiId);
 
@@ -614,7 +613,7 @@ class AiTargetSelectorTest {
             spell.setType(CardType.SORCERY);
             spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
-                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+                    DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             Set<TargetType> allowed = unitSelector.computeBaseAllowedTargets(spell);
 
@@ -656,19 +655,19 @@ class AiTargetSelectorTest {
     class NeedsDamageDistributionUnit {
 
         @Test
-        @DisplayName("Returns true for DealDividedDamageAmongTargetCreaturesEffect")
+        @DisplayName("Returns true for CHOSEN among-target-creatures DealDividedDamageEffect")
         void trueForCreatureOnlyDividedDamage() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongTargetCreaturesEffect(3));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongTargetCreatures(3));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isTrue();
         }
 
         @Test
-        @DisplayName("Returns true for direct DealDividedDamageAmongAnyTargetsEffect")
+        @DisplayName("Returns true for direct CHOSEN any-targets DealDividedDamageEffect")
         void trueForDirectAnyTargetDividedDamage() {
             Card spell = new Card();
-            spell.addEffect(EffectSlot.SPELL, new DealDividedDamageAmongAnyTargetsEffect(5));
+            spell.addEffect(EffectSlot.SPELL, DealDividedDamageEffect.chosenAmongAnyTargets(5));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isTrue();
         }
@@ -685,12 +684,12 @@ class AiTargetSelectorTest {
         @Test
         @DisplayName("Returns false when effect is wrapped in ConditionalReplacementEffect")
         void falseForWrappedKickerEffect() {
-            // The DealDividedDamageAmongAnyTargetsEffect is inside a ConditionalReplacementEffect,
+            // The DealDividedDamageEffect is inside a ConditionalReplacementEffect,
             // so needsDamageDistribution should return false (the wrapper type doesn't match)
             Card spell = new Card();
             spell.addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(new Kicked(), 
                     new DealDamageToTargetCreatureEffect(5),
-                    new DealDividedDamageAmongAnyTargetsEffect(10)));
+                    DealDividedDamageEffect.chosenAmongAnyTargets(10)));
 
             assertThat(EffectResolution.needsDamageDistribution(spell)).isFalse();
         }
