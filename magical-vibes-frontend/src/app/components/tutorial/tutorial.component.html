@@ -22,7 +22,6 @@
     <div class="battlefield-area">
       <!-- Opponent's battlefield -->
       <div class="battlefield-row opponent-battlefield">
-        <div class="battlefield-label">{{ game().playerNames[1] }}'s Battlefield</div>
         <div class="battlefield-sub-row lands-row">
           @for (item of opponentLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
@@ -68,7 +67,6 @@
 
       <!-- Your battlefield -->
       <div class="battlefield-row">
-        <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-sub-row creatures-row my-creatures-row">
           @for (ip of myCreatures; track ip.originalIndex) {
             <app-card-display
@@ -131,7 +129,6 @@
 
     <!-- Hand -->
     <div class="hand-area">
-      <div class="hand-label">Your Hand ({{ game().hand.length }} cards)</div>
       <div class="hand-cards">
         @for (card of game().hand; track $index) {
           <app-card-display

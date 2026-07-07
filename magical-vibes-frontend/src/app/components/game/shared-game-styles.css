@@ -232,25 +232,15 @@
 
 .hand-area {
   background: var(--gradient-parchment);
-  padding: 8px 10px;
+  padding: 3px 4px;
   border-radius: 4px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
 }
 
-.hand-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-red-primary);
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: var(--font-display);
-}
-
 .hand-cards {
   display: flex;
-  gap: 10px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
@@ -290,6 +280,8 @@
   min-height: 200px;
   display: flex;
   flex-direction: column;
+  /* Anchors the absolutely-centered divider. */
+  position: relative;
   overflow-y: auto;
   scrollbar-gutter: stable;
   scrollbar-color: #c4a06a #e8d5b0;
@@ -312,10 +304,11 @@
 }
 
 .battlefield-row {
-  /* Each player owns exactly half the area (zero-basis, equal grow) so the
-     divider stays put instead of being pushed around by whichever side has
-     more cards. The zoom model fits the taller side into its half. */
-  flex: 1 1 0;
+  /* Grow into free space but stay content-sized when the board is tight, so an
+     unbalanced board uses only the height it needs (no wasted half) and the
+     zoom model can fit it at a readable zoom instead of scrolling. The divider
+     is centered independently (absolute), so it is never pushed around. */
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
 }
@@ -324,22 +317,6 @@
   /* Our side hangs from the bottom edge, next to the hand, so the combat zone
      opening only consumes the empty middle instead of shoving our cards up. */
   justify-content: flex-end;
-}
-
-/* The label stays glued to the divider at the top of the row while the cards
-   keep hanging from the bottom edge: the auto margin absorbs the leftover
-   space. */
-.battlefield-row:last-child .battlefield-label {
-  margin-bottom: auto;
-}
-
-.battlefield-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text-brown);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-family: var(--font-display);
 }
 
 .battlefield-cards {
@@ -351,11 +328,15 @@
 }
 
 .battlefield-divider {
+  /* Pinned at the vertical center of the area, out of flow, so it never moves
+     as either side gains cards and can never be flex-squeezed to 0px. */
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  right: 10px;
   height: 1px;
-  /* The rows around it don't shrink, so without this the divider is the only
-     shrinkable item and collapses to 0px as soon as the board fills up. */
-  flex-shrink: 0;
   background: var(--color-border-tan);
+  pointer-events: none;
 }
 
 .battlefield-empty {

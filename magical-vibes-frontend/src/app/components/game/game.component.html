@@ -281,7 +281,6 @@
 
     <div class="battlefield-area" #battlefieldArea [style.--density-zoom]="battlefieldZoom">
       <div class="battlefield-row">
-        <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
         <div class="battlefield-sub-row lands-row">
           @for (item of opponentLandStacks; track landStackTrackKey(item)) {
             @if (isLandStack(item)) {
@@ -424,7 +423,6 @@
       }
 
       <div class="battlefield-row">
-        <div class="battlefield-label">Your Battlefield</div>
         <div class="battlefield-sub-row creatures-row">
           @for (ip of myCreaturesNotInCombat(); track ip.originalIndex) {
             <div class="permanent-stack">
@@ -588,7 +586,6 @@
     }
 
     <div class="hand-area">
-      <div class="hand-label">{{ isMindControlling ? mindControlledPlayerName + "'s Hand (Mind Control)" : 'Your Hand' }} ({{ hand.length }} cards)</div>
       <div class="hand-cards" [style.--density-zoom]="handZoom">
         @for (card of hand; track $index) {
           <app-card-display

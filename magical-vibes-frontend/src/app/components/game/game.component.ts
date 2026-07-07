@@ -318,7 +318,12 @@ export class GameComponent implements OnInit, OnDestroy {
   private static readonly COMBAT_STACK_GAP = 8;
   private static readonly LANDS_ROW_MODIFIER = 0.9;
   private static readonly SUB_ROW_PADDING = 8;
-  private static readonly SIDE_LABEL_HEIGHT = 15;
+  private static readonly SIDE_LABEL_HEIGHT = 0;
+  /* CSS zoom rounds each scaled line up to whole pixels, so a modeled line runs
+     a few px short of what renders; this per-line and global slack keeps the
+     model a hair conservative so a tight fit shrinks instead of hairline-scrolling. */
+  private static readonly LINE_SLACK = 3;
+  private static readonly FIT_SAFETY = 12;
   private static readonly ROW_MARGIN = 0;
   private static readonly EMPTY_MESSAGE_HEIGHT = 20;
   private static readonly REVEALED_ROW_HEIGHT = 250;
@@ -366,7 +371,7 @@ export class GameComponent implements OnInit, OnDestroy {
     const rowHeight = (widths: number[], lineHeight: number): number => {
       if (widths.length === 0) return 0;
       const lines = C.packedLines(widths, C.ROW_GAP, rowWidth);
-      return lines * lineHeight + (lines - 1) * C.ROW_GAP + C.SUB_ROW_PADDING;
+      return lines * (Math.ceil(lineHeight) + C.LINE_SLACK) + (lines - 1) * C.ROW_GAP + C.SUB_ROW_PADDING;
     };
 
     const landItemWidth = (item: IndexedPermanent | LandStack, landZoom: number): number => {
@@ -408,19 +413,18 @@ export class GameComponent implements OnInit, OnDestroy {
       return h;
     };
 
-    /* The rows are zero-basis flex halves: each player gets the same share, so
-       the board fits exactly when the taller side fits into its half. */
-    total += 2 * Math.max(
-      sideHeight(
-        this.opponentCreaturesNotInCombat(),
-        this.opponentLandStacks,
-        this.opponentBattlefield.length === 0,
-        (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0)),
-      sideHeight(
-        this.myCreaturesNotInCombat(),
-        this.myLandStacks,
-        this.myBattlefield.length === 0,
-        this.myRevealedTopCard.length > 0 ? 1 : 0));
+    /* Content-sized rows stack, so the board needs the sum of both sides; the
+       divider is centered out of flow and adds no flow height. */
+    total += sideHeight(
+      this.opponentCreaturesNotInCombat(),
+      this.opponentLandStacks,
+      this.opponentBattlefield.length === 0,
+      (this.opponentHand.length > 0 ? 1 : 0) + (this.opponentRevealedTopCard.length > 0 ? 1 : 0));
+    total += sideHeight(
+      this.myCreaturesNotInCombat(),
+      this.myLandStacks,
+      this.myBattlefield.length === 0,
+      this.myRevealedTopCard.length > 0 ? 1 : 0);
 
     if (this.showCombatZone) {
       const groups = this.combatPairings;
@@ -450,8 +454,9 @@ export class GameComponent implements OnInit, OnDestroy {
   get battlefieldZoom(): number {
     const { width, height } = this.battlefieldAreaSize();
     if (!width || !height) return 1;
+    const budget = height - GameComponent.FIT_SAFETY;
     for (let z = GameComponent.MAX_BATTLEFIELD_ZOOM; z > GameComponent.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
-      if (this.modeledBoardHeight(z, width) <= height) {
+      if (this.modeledBoardHeight(z, width) <= budget) {
         return Math.round(z * 100) / 100;
       }
     }
