@@ -373,8 +373,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `AwardManaEffect(ManaColor, DynamicAmount)`, `(ManaColor, int)`, or `(ManaColor)` — add mana; dynamic quantity: `PermanentCount(filter, CONTROLLER)` for "for each X you control", `CountersOnSource(CHARGE)` for "per charge counter", `SourcePower()` for "equal to its power"
 - `AwardAnyColorManaEffect(int)` or `()` — add any color mana
 - `DoubleManaPoolEffect()` — double mana pool
-- `AwardRestrictedManaEffect(ManaColor, int, Set<CardType>)` — restricted mana
-- `AwardFlashbackOnlyAnyColorManaEffect(int)` — flashback-only mana
+- `AwardRestrictedManaEffect(ManaColor, int, ManaRestriction)` — restricted mana (`ManaRestriction`: `SpellTypes(Set<CardType>)`, `ArtifactSpells()`, `SubtypeSpells(CardSubtype)`, `KickedCosts()`)
+- `AwardFlashbackOnlyAnyColorManaEffect(int)` — flashback-only mana (any-color choice; separate record)
 
 ## Copy / clone
 

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 
 import java.util.List;
 import java.util.Set;
@@ -18,7 +19,7 @@ public class VodalianArcanist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardRestrictedManaEffect(ManaColor.COLORLESS, 1, Set.of(CardType.INSTANT, CardType.SORCERY))),
+                List.of(new AwardRestrictedManaEffect(ManaColor.COLORLESS, 1, new ManaRestriction.SpellTypes(Set.of(CardType.INSTANT, CardType.SORCERY)))),
                 "{T}: Add {C}. Spend this mana only to cast an instant or sorcery spell."
         ));
     }

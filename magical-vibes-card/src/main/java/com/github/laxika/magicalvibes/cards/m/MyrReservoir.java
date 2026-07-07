@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -18,7 +20,7 @@ public class MyrReservoir extends Card {
         // {T}: Add {C}{C}. Spend this mana only to cast Myr spells or activate abilities of Myr.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new AwardMyrOnlyColorlessManaEffect(2)),
+                List.of(new AwardRestrictedManaEffect(ManaColor.COLORLESS, 2, new ManaRestriction.SubtypeSpells(CardSubtype.MYR))),
                 "{T}: Add {C}{C}. Spend this mana only to cast Myr spells or activate abilities of Myr."
         ));
 

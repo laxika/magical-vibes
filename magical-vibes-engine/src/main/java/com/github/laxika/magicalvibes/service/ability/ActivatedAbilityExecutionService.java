@@ -18,13 +18,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCre
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaWithInstantSorceryCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardArtifactOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyNonlandPermanentsWithManaValueEqualToChargeCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -398,12 +395,6 @@ public class ActivatedAbilityExecutionService {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, choiceContext, colors, "Choose a color of mana to add (flashback only)."));
                 log.info("Game {} - Awaiting {} to choose a flashback-only mana color", gameData.id, player.getUsername());
-            } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
-                gameData.playerManaPools.get(playerId).addArtifactOnlyColorless(aom.amount());
-            } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
-                gameData.playerManaPools.get(playerId).addMyrOnlyColorless(mom.amount());
-            } else if (effect instanceof AwardKickedOnlyManaEffect kom) {
-                gameData.playerManaPools.get(playerId).addKickedOnlyGreen(kom.amount());
             } else if (effect instanceof AwardRestrictedManaEffect arm) {
                 arm.applyTo(gameData.playerManaPools.get(playerId));
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
@@ -549,12 +540,8 @@ public class ActivatedAbilityExecutionService {
                         AmountContext.forManaAbility(permanent, playerId));
             } else if (effect instanceof AwardAnyColorManaEffect aace) {
                 total += aace.amount();
-            } else if (effect instanceof AwardArtifactOnlyColorlessManaEffect aom) {
-                total += aom.amount();
-            } else if (effect instanceof AwardMyrOnlyColorlessManaEffect mom) {
-                total += mom.amount();
-            } else if (effect instanceof AwardKickedOnlyManaEffect kom) {
-                total += kom.amount();
+            } else if (effect instanceof AwardRestrictedManaEffect arm) {
+                total += arm.amount();
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
                 total += fba.amount();
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {

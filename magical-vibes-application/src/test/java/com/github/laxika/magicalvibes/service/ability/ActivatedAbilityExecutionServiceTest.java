@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.AwardMyrOnlyColorlessManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -221,7 +223,7 @@ class ActivatedAbilityExecutionServiceTest {
         void myrReservoirAddsMyrOnlyMana() {
             Card card = createCard("Myr Reservoir", CardType.ARTIFACT);
             Permanent perm = addReadyPermanent(player1Id, card);
-            List<CardEffect> effects = List.of(new AwardMyrOnlyColorlessManaEffect(2));
+            List<CardEffect> effects = List.of(new AwardRestrictedManaEffect(ManaColor.COLORLESS, 2, new ManaRestriction.SubtypeSpells(CardSubtype.MYR)));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects, "{T}: Add {C}{C} (Myr only).");
 
             stubIsCreature(perm, false);

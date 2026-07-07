@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AwardKickedOnlyManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public class ElfhameDruid extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardKickedOnlyManaEffect(ManaColor.GREEN, 2)),
+                List.of(new AwardRestrictedManaEffect(ManaColor.GREEN, 2, new ManaRestriction.KickedCosts())),
                 "{T}: Add {G}{G}. Spend this mana only to cast kicked spells."
         ));
     }
