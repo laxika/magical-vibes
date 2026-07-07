@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Which player's "controller slot" the rider of a {@link DestroyTargetPermanentThenEffect} acts on.
- * The rider is resolved with its own {@code CONTROLLER}-style recipient against an entry whose
- * controller is chosen here, so no rider effect needs its own "target permanent's controller"
+ * Which player's "controller slot" the {@code thenEffect} of a {@link DestroyTargetPermanentThenEffect}
+ * acts on. The then-effect is resolved with its own {@code CONTROLLER}-style recipient against an entry
+ * whose controller is chosen here, so no then-effect needs its own "target permanent's controller"
  * variant.
  */
-public enum RiderRecipient {
+public enum ThenEffectRecipient {
     /** The spell/ability controller (you gain life, this permanent gets +X/+0). */
     CONTROLLER,
     /**

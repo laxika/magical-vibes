@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RiderRecipient;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -23,7 +23,7 @@ public class DeathsCaress extends Card {
                 "Target must be a creature"
         ))
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
-                        EventStat.TOUGHNESS, new GainLifeEffect(new EventValue()), RiderRecipient.CONTROLLER,
+                        EventStat.TOUGHNESS, new GainLifeEffect(new EventValue()), ThenEffectRecipient.CONTROLLER,
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
     }
 }

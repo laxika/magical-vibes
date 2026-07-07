@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RiderRecipient;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -25,6 +25,6 @@ public class FoolishFate extends Card {
         )).addEffect(EffectSlot.SPELL, new ConditionalReplacementEffect(
                 new GainedLifeThisTurn(),
                 new DestroyTargetPermanentEffect(),
-                new DestroyTargetPermanentThenEffect(new LoseLifeEffect(3), RiderRecipient.TARGET_CONTROLLER)));
+                new DestroyTargetPermanentThenEffect(new LoseLifeEffect(3), ThenEffectRecipient.TARGET_CONTROLLER)));
     }
 }

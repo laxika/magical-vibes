@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RiderRecipient;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -17,6 +17,6 @@ public class SpreadingRot extends Card {
                 new PermanentIsLandPredicate(),
                 "Target must be a land"
         )).addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
-                new LoseLifeEffect(2), RiderRecipient.TARGET_CONTROLLER));
+                new LoseLifeEffect(2), ThenEffectRecipient.TARGET_CONTROLLER));
     }
 }

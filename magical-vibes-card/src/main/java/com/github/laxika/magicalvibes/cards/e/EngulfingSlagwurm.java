@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RiderRecipient;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 
 @CardRegistration(set = "SOM", collectorNumber = "118")
 public class EngulfingSlagwurm extends Card {
@@ -16,9 +16,9 @@ public class EngulfingSlagwurm extends Card {
     public EngulfingSlagwurm() {
         // Destroy target creature. You gain life equal to that creature's toughness.
         addEffect(EffectSlot.ON_BLOCK, new DestroyTargetPermanentThenEffect(
-                EventStat.TOUGHNESS, new GainLifeEffect(new EventValue()), RiderRecipient.CONTROLLER));
+                EventStat.TOUGHNESS, new GainLifeEffect(new EventValue()), ThenEffectRecipient.CONTROLLER));
         addEffect(EffectSlot.ON_BECOMES_BLOCKED, new DestroyTargetPermanentThenEffect(
-                EventStat.TOUGHNESS, new GainLifeEffect(new EventValue()), RiderRecipient.CONTROLLER),
+                EventStat.TOUGHNESS, new GainLifeEffect(new EventValue()), ThenEffectRecipient.CONTROLLER),
                 TriggerMode.PER_BLOCKER);
     }
 }

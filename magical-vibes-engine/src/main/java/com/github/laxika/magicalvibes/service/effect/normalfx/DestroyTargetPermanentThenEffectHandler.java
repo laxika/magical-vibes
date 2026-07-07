@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.RiderRecipient;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
@@ -19,14 +19,14 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves the destroy-plus-value family via {@link DestroyTargetPermanentThenEffect}: destroy the
- * targeted permanent, then resolve an existing rider effect through its own handler.
+ * targeted permanent, then resolve an existing then-effect through its own handler.
  *
  * <p>The controller of the destroyed permanent and the requested last-known stat
  * ({@link com.github.laxika.magicalvibes.model.effect.EventStat}) are snapshotted <em>before</em>
- * destruction. The rider is then resolved against a derived stack entry whose controller is the
- * chosen {@link RiderRecipient} and whose {@code eventValue} carries the snapshot, so the rider's
- * ordinary {@code CONTROLLER}-style recipient lands on the right player with the right value —
- * without any rider effect needing its own "target permanent's controller" variant.
+ * destruction. The then-effect is then resolved against a derived stack entry whose controller is the
+ * chosen {@link ThenEffectRecipient} and whose {@code eventValue} carries the snapshot, so the
+ * then-effect's ordinary {@code CONTROLLER}-style recipient lands on the right player with the right
+ * value — without any then-effect needing its own "target permanent's controller" variant.
  */
 @Slf4j
 @Component
@@ -59,33 +59,33 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             case MANA_VALUE -> target.getCard().getManaValue();
             case TOUGHNESS -> gameQueryService.getEffectiveToughness(gameData, target);
         };
-        boolean riderApplies = e.riderCondition() == null
-                || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.riderCondition());
+        boolean thenApplies = e.thenCondition() == null
+                || predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.thenCondition());
 
-        // The rider happens regardless of whether destruction succeeds (indestructible / regeneration).
+        // The then-effect happens regardless of whether destruction succeeds (indestructible / regeneration).
         destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName());
 
-        if (!riderApplies) {
+        if (!thenApplies) {
             return;
         }
 
-        UUID riderControllerId = e.recipient() == RiderRecipient.TARGET_CONTROLLER
+        UUID thenControllerId = e.recipient() == ThenEffectRecipient.TARGET_CONTROLLER
                 ? targetControllerId
                 : entry.getControllerId();
-        if (riderControllerId == null) {
+        if (thenControllerId == null) {
             return;
         }
 
-        StackEntry riderEntry = new StackEntry(entry.getEntryType(), entry.getCard(), riderControllerId,
-                entry.getDescription(), List.of(e.rider()), entry.getTargetId(), entry.getSourcePermanentId());
-        riderEntry.setEventValue(statValue);
-        riderEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
+                entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
+        thenEntry.setEventValue(statValue);
+        thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
-        EffectHandler handler = effectHandlerRegistry.getHandler(e.rider());
+        EffectHandler handler = effectHandlerRegistry.getHandler(e.thenEffect());
         if (handler != null) {
-            handler.resolve(gameData, riderEntry, e.rider());
+            handler.resolve(gameData, thenEntry, e.thenEffect());
         } else {
-            log.warn("Game {} - No handler for rider effect: {}", gameData.id, e.rider().getClass().getSimpleName());
+            log.warn("Game {} - No handler for then-effect: {}", gameData.id, e.thenEffect().getClass().getSimpleName());
         }
 
         gameOutcomeService.checkWinCondition(gameData);

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.RiderRecipient;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -27,6 +27,6 @@ public class FleshAllergy extends Card {
                 .addEffect(EffectSlot.SPELL, new DestroyTargetPermanentThenEffect(
                         new LoseLifeEffect(new CreatureDeathsThisTurn(CountScope.ANY_PLAYER),
                                 LoseLifeRecipient.CONTROLLER),
-                        RiderRecipient.TARGET_CONTROLLER));
+                        ThenEffectRecipient.TARGET_CONTROLLER));
     }
 }
