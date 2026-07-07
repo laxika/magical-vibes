@@ -93,9 +93,9 @@ All paths relative to `cards/`.
 | Aura upkeep — library creature sharing type to battlefield | `c/CallToTheKindred.java` | MayEffect wrapping LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect(5) in UPKEEP_TRIGGERED |
 | Targeted discard | `d/Distress.java` | ChooseCardFromTargetHandToDiscardEffect |
 | Exile by name (multi-zone) | `m/Memoricide.java` | ChooseCardNameAndExileFromZonesEffect(excludedTypes) — choose nonland name, exile from hand+graveyard+library, shuffle |
-| Tutor to hand | `d/DiabolicTutor.java` | SearchLibraryForCardsToHandEffect() — unified search-to-hand; no-arg = any single card, `(filter)` = restricted, `(filter,count,castFromGraveyardCount)` for multi/increasing |
+| Tutor to hand | `d/DiabolicTutor.java` | SearchLibraryEffect() — unified library search; no-arg = any single card to hand, `(filter)` = restricted single, `(filter,int count,int castFromGraveyardCount)` flashback tutor, `(count,filter,destination)`/`(filter,destination[,XManaValueBound])` for other destinations |
 | Tutor + exile + opponent choice | `d/DistantMemories.java` | DistantMemoriesEffect — search, exile, opponent may let you have it or draw 3 |
-| Tutor to battlefield | `r/RampantGrowth.java` | SearchLibraryForCardTypesToBattlefieldEffect |
+| Tutor to battlefield | `r/RampantGrowth.java` | SearchLibraryEffect(basicLand filter, LibrarySearchDestination.BATTLEFIELD_TAPPED) |
 | Cultivate (2 basic lands split) | `c/Cultivate.java` | SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect — one to BF tapped, one to hand |
 | Graveyard return (to hand) | `r/Recollect.java` | ReturnCardFromGraveyardEffect.builder().destination(HAND).targetGraveyard(true).build() — any card, targets graveyard |
 | Graveyard return (multi-target to hand) | `m/MorbidPlunder.java` | ReturnTargetCardsFromGraveyardToHandEffect(CardTypePredicate(CREATURE), 2) — up to N target cards to hand |

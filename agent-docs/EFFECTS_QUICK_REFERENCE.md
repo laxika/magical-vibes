@@ -243,15 +243,9 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Library manipulation
 
-- `SearchLibraryForCardsToHandEffect(CardPredicate filter, int count, int castFromGraveyardCount)` — unified search-to-hand; `()` = any single card (Diabolic Tutor), `(filter)` = filtered single card, `null` filter = unrestricted; count switches to castFromGraveyardCount when cast from a graveyard/flashback
+- `SearchLibraryEffect(DynamicAmount count, CardPredicate filter, LibrarySearchDestination destination, XManaValueBound manaValueBound, int castFromGraveyardCount)` — unified library search (collapsed the `SearchLibraryFor*` family). Convenience: `()` unrestricted-to-hand (Diabolic Tutor), `(filter)` filtered-to-hand, `(filter, destination)`, `(count, filter, destination)`, `(filter, int count, int cfg)` flashback tutor (Increasing Ambition `(null,1,2)`), `(filter, destination, bound)`. destination ∈ `HAND`/`BATTLEFIELD`/`BATTLEFIELD_TAPPED`/`TOP_OF_LIBRARY`; by-name via `CardNamedPredicate` (Squadron Hawk); creature MV/colour/subtype via filter + `XManaValueBound` (Citanul Flute, Birthing Pod `(true,1)`, Green Sun's Zenith `CardHasColorPredicate`, Myr Turbine)
 - `SearchLibraryForBasicLandsToBattlefieldTappedAndHandEffect()` — Cultivate
-- `SearchLibraryForCardTypesToBattlefieldEffect(CardPredicate, boolean tapped)` or `(CardPredicate, boolean, int max)` — filtered to battlefield
-- `SearchLibraryForCreatureWithMVXOrLessToHandEffect()` — creature MV<=X to hand
-- `SearchLibraryForCreatureWithSubtypeToBattlefieldEffect(CardSubtype)` — creature subtype to battlefield
 - `SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect()` — Curse (name not shared with one already on enchanted player) onto battlefield attached to enchanted player; Curse of Misfortunes
-- `SearchLibraryForCreatureWithExactMVToBattlefieldEffect(int mvOffset)` — Birthing Pod
-- `SearchLibraryForCardToTopOfLibraryEffect()` — any card to top
-- `SearchLibraryForCreatureToTopOfLibraryEffect()` — creature to top
 - `SearchTargetLibraryForCardsToGraveyardEffect(int, Set<CardType>)` — target library to graveyard
 - `RevealTopCardOfLibraryEffect()` or overloads — reveal top card
 - `RevealTopCardRemoveTargetFromCombatIfMatchEffect(CardPredicate)` — reveal top; if match, remove the engine-set attacking creature (targetId) from combat; then bottom the card (Lost in the Woods, ON_CREATURE_ATTACKS_YOU)

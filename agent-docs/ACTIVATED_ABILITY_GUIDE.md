@@ -342,7 +342,7 @@ new ActivatedAbility(true, null,
 // {T}, Sacrifice three artifacts: Search library for artifact to battlefield
 new ActivatedAbility(true, null,
     List.of(new SacrificeMultiplePermanentsCost(3, new PermanentIsArtifactPredicate()),
-            new SearchLibraryForCardTypesToBattlefieldEffect(Set.of(CardType.ARTIFACT), false, false)),
+            new SearchLibraryEffect(new CardTypePredicate(CardType.ARTIFACT), LibrarySearchDestination.BATTLEFIELD)),
     "{T}, Sacrifice three artifacts: Search your library for an artifact card, put it onto the battlefield, then shuffle.")
 ```
 

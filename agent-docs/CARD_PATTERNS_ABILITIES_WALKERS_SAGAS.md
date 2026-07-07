@@ -28,7 +28,7 @@ All paths relative to `cards/`.
 | Sacrifice subtype for +1/+1 counters on target | `d/DerangedOutcast.java` | SacrificePermanentCost(PermanentAllOfPredicate(creature + PermanentHasSubtypePredicate(HUMAN)), description, false) + PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 2) — source is itself a Human, so it can sacrifice itself |
 | Sacrifice artifact for effect | `b/BarrageOgre.java` | SacrificeArtifactCost + DealDamageToAnyTargetEffect (tap + sac artifact) |
 | Sacrifice permanent (predicate) for effect | `m/MakeshiftMunitions.java` | SacrificePermanentCost(PermanentAnyOfPredicate) + DealDamageToAnyTargetEffect (mana + sac artifact or creature, no tap) |
-| Sacrifice multiple permanents for tutor | `k/KuldothaForgemaster.java` | SacrificeMultiplePermanentsCost(3, PermanentIsArtifactPredicate) + SearchLibraryForCardTypesToBattlefieldEffect(ARTIFACT) (tap + sac 3 artifacts) |
+| Sacrifice multiple permanents for tutor | `k/KuldothaForgemaster.java` | SacrificeMultiplePermanentsCost(3, PermanentIsArtifactPredicate) + SearchLibraryEffect(CardTypePredicate(ARTIFACT), LibrarySearchDestination.BATTLEFIELD) (tap + sac 3 artifacts) |
 | Tap to +1/+1 counters on controlled filtered permanents | `s/SteelOverseer.java` | `(true, null, PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, PermanentAllOfPredicate(artifact+creature)))` — no target, affects all matching permanents you control |
 | Regenerate (self) | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |
 | Regenerate (target creature) | `a/Asceticism.java` | `RegenerateEffect(true)` + PermanentPredicateTargetFilter |

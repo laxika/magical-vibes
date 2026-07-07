@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasFlashbackPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -154,6 +155,8 @@ public class PredicateEvaluationService {
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
                     card.getColor() != null && card.getColor() == p.color();
+            case CardHasColorPredicate p ->
+                    card.getColors().contains(p.color());
             case PhyrexianManaPredicate ignored ->
                     card.getManaCost() != null && new ManaCost(card.getManaCost()).hasPhyrexianMana();
             case CardIsAuraPredicate ignored ->

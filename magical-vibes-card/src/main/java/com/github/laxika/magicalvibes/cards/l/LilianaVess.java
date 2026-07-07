@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardToTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +30,7 @@ public class LilianaVess extends Card {
         // −2: Search your library for a card, then shuffle and put that card on top.
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new SearchLibraryForCardToTopOfLibraryEffect()),
+                List.of(new SearchLibraryEffect(null, LibrarySearchDestination.TOP_OF_LIBRARY)),
                 "\u22122: Search your library for a card, then shuffle and put that card on top."
         ));
 
