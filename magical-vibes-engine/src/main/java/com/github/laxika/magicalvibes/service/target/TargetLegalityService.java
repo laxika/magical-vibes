@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -538,7 +538,7 @@ public class TargetLegalityService {
 
     /**
      * Checks if the target permanent is protected from the resolving spell's color
-     * (e.g. via Autumn's Veil or static CantBeTargetedBySpellColorsEffect).
+     * (e.g. via Autumn's Veil or a static TargetingRestrictionEffect blocking that spell color).
      * Only applies when the entry is a spell (not a triggered/activated ability).
      */
     private boolean isSpellProtected(GameData gameData, Permanent targetPerm, StackEntry entry) {
@@ -557,9 +557,13 @@ public class TargetLegalityService {
 
     private String nonColorSourceRestrictionMessage(Permanent target) {
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantBeTargetedByNonColorSourcesEffect r) {
+            if (effect instanceof TargetingRestrictionEffect r && r.mode() == TargetColorMode.ALLOWED_COLORS_ONLY) {
+                String colorName = r.colors().stream()
+                        .map(c -> c.name().toLowerCase())
+                        .reduce((a, b) -> a + "/" + b)
+                        .orElse("");
                 return target.getCard().getName() + " can't be the target of non-"
-                        + r.allowedColor().name().toLowerCase() + " spells or abilities";
+                        + colorName + " spells or abilities";
             }
         }
         return target.getCard().getName() + " can't be targeted by this source";
@@ -615,7 +619,7 @@ public class TargetLegalityService {
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
         if (targetController != null && !targetController.equals(sourcePlayerId)) {
             if (gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)
-                    || gameQueryService.hasGrantedEffect(gameData, target, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
+                    || gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, target)) {
                 return target.getCard().getName() + " has hexproof and can't be targeted";
             }
         }

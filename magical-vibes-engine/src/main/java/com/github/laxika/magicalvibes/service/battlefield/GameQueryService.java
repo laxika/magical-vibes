@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEf
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfOpponentAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
@@ -38,9 +37,9 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.HexproofFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
@@ -679,11 +678,30 @@ public class GameQueryService {
         if (!permanent.isLosesAllAbilitiesUntilEndOfTurn()
                 && !computeStaticBonus(gameData, permanent).losesAllAbilities()) {
             if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
-                    .anyMatch(CantBeTargetOfOpponentAbilitiesEffect.class::isInstance)) {
+                    .anyMatch(GameQueryService::isOpponentAbilityRestriction)) {
                 return true;
             }
         }
-        return hasGrantedEffect(gameData, permanent, CantBeTargetOfOpponentAbilitiesEffect.class);
+        return computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .anyMatch(GameQueryService::isOpponentAbilityRestriction);
+    }
+
+    private static boolean isOpponentAbilityRestriction(CardEffect effect) {
+        return effect instanceof TargetingRestrictionEffect r
+                && r.kind() == TargetingSourceKind.ABILITIES
+                && r.mode() == TargetColorMode.ANY;
+    }
+
+    /**
+     * Returns {@code true} if the permanent has been granted hexproof (opponents' spells and
+     * abilities can't target it), e.g. by Asceticism. Only checks effects granted by other
+     * permanents, matching the historical behavior of this shroud/hexproof-like marker.
+     */
+    public boolean cantBeTargetedBySpellsOrAbilities(GameData gameData, Permanent permanent) {
+        return computeStaticBonus(gameData, permanent).grantedEffects().stream()
+                .anyMatch(e -> e instanceof TargetingRestrictionEffect r
+                        && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                        && r.mode() == TargetColorMode.ANY);
     }
 
     /**
@@ -1195,14 +1213,12 @@ public class GameQueryService {
             return false;
         }
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantBeTargetedBySpellColorsEffect cantBeTargeted
-                    && cantBeTargeted.colors().contains(spellColor)) {
+            if (isSpellColorRestriction(effect, spellColor)) {
                 return true;
             }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
-            if (effect instanceof CantBeTargetedBySpellColorsEffect cantBeTargeted
-                    && cantBeTargeted.colors().contains(spellColor)) {
+            if (isSpellColorRestriction(effect, spellColor)) {
                 return true;
             }
         }
@@ -1222,6 +1238,17 @@ public class GameQueryService {
     }
 
     /**
+     * Matches the "can't be the target of spells of [color]" restriction (Karplusan Strider) — spells
+     * only, no controller gating — for the given spell color.
+     */
+    private static boolean isSpellColorRestriction(CardEffect effect, CardColor spellColor) {
+        return effect instanceof TargetingRestrictionEffect r
+                && r.kind() == TargetingSourceKind.SPELLS
+                && r.mode() == TargetColorMode.BLOCKED_COLORS
+                && r.colors().contains(spellColor);
+    }
+
+    /**
      * Returns {@code true} if the target permanent has "hexproof from [color]" that matches
      * the given source color. Unlike full hexproof, this only blocks targeting from sources
      * of the specified color(s). Only blocks opponent-controlled sources.
@@ -1231,18 +1258,23 @@ public class GameQueryService {
             return false;
         }
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof HexproofFromColorsEffect hexFrom
-                    && hexFrom.colors().contains(sourceColor)) {
+            if (isHexproofFromColorRestriction(effect, sourceColor)) {
                 return true;
             }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
-            if (effect instanceof HexproofFromColorsEffect hexFrom
-                    && hexFrom.colors().contains(sourceColor)) {
+            if (isHexproofFromColorRestriction(effect, sourceColor)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static boolean isHexproofFromColorRestriction(CardEffect effect, CardColor sourceColor) {
+        return effect instanceof TargetingRestrictionEffect r
+                && r.kind() == TargetingSourceKind.SPELLS_AND_ABILITIES
+                && r.mode() == TargetColorMode.BLOCKED_COLORS
+                && r.colors().contains(sourceColor);
     }
 
     /**
@@ -1256,18 +1288,26 @@ public class GameQueryService {
             return false;
         }
         for (CardEffect effect : target.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantBeTargetedByNonColorSourcesEffect restriction
-                    && !sourceHasColor(sourceCard, restriction.allowedColor())) {
+            if (isNonColorSourceRestriction(effect, sourceCard)) {
                 return true;
             }
         }
         for (CardEffect effect : computeStaticBonus(gameData, target).grantedEffects()) {
-            if (effect instanceof CantBeTargetedByNonColorSourcesEffect restriction
-                    && !sourceHasColor(sourceCard, restriction.allowedColor())) {
+            if (isNonColorSourceRestriction(effect, sourceCard)) {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Matches the "can't be the target of non-[color] sources" restriction (Gaea's Revenge): the
+     * source is blocked unless it has one of the allowed colors.
+     */
+    private boolean isNonColorSourceRestriction(CardEffect effect, Card sourceCard) {
+        return effect instanceof TargetingRestrictionEffect r
+                && r.mode() == TargetColorMode.ALLOWED_COLORS_ONLY
+                && r.colors().stream().noneMatch(color -> sourceHasColor(sourceCard, color));
     }
 
     private boolean sourceHasColor(Card card, CardColor color) {

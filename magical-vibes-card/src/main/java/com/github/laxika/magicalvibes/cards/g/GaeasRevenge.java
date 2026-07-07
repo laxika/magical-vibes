@@ -5,13 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetedByNonColorSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "174")
 public class GaeasRevenge extends Card {
 
     public GaeasRevenge() {
         addEffect(EffectSlot.STATIC, new CantBeCounteredEffect());
-        addEffect(EffectSlot.STATIC, new CantBeTargetedByNonColorSourcesEffect(CardColor.GREEN));
+        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.fromNonColorSources(CardColor.GREEN));
     }
 }

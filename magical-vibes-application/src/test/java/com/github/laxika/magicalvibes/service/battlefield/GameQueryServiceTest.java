@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfChosenNameCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetedBySpellColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1209,7 +1209,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns false for null spell color")
         void returnsFalseForNullColor() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, TargetingRestrictionEffect.fromSpellColors(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
 
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, null)).isFalse();
         }
@@ -1217,7 +1217,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns true when matching color protection exists")
         void returnsTrueWithMatchingColor() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, TargetingRestrictionEffect.fromSpellColors(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
 
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.BLUE)).isTrue();
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.BLACK)).isTrue();
@@ -1226,7 +1226,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns false for non-matching color")
         void returnsFalseForNonMatchingColor() {
-            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
+            Permanent perm = addPermanent(player1Id, createCreatureWithStaticEffect("Karplusan Strider", 3, 4, CardColor.GREEN, TargetingRestrictionEffect.fromSpellColors(EnumSet.of(CardColor.BLUE, CardColor.BLACK))));
 
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.RED)).isFalse();
         }
@@ -1236,7 +1236,7 @@ class GameQueryServiceTest {
         void returnsTrueWhenGrantedByStaticEffect() {
             addLordWithHandler(player1Id,
                     (ctx, eff, acc) -> acc.addGrantedEffect(
-                            new CantBeTargetedBySpellColorsEffect(EnumSet.of(CardColor.BLUE))));
+                            TargetingRestrictionEffect.fromSpellColors(EnumSet.of(CardColor.BLUE))));
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(gqs.cantBeTargetedBySpellColor(gd, perm, CardColor.BLUE)).isTrue();

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -17,7 +17,7 @@ import java.util.List;
 public class Asceticism extends Card {
 
     public Asceticism() {
-        addEffect(EffectSlot.STATIC, new GrantEffectEffect(new CantBeTargetOfSpellsOrAbilitiesEffect(), GrantScope.OWN_CREATURES));
+        addEffect(EffectSlot.STATIC, new GrantEffectEffect(TargetingRestrictionEffect.hexproof(), GrantScope.OWN_CREATURES));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",

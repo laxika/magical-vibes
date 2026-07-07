@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfOpponentAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "DOM", collectorNumber = "204")
@@ -14,7 +14,7 @@ public class ShannaSisaysLegacy extends Card {
 
     public ShannaSisaysLegacy() {
         // Shanna can't be the target of abilities your opponents control.
-        addEffect(EffectSlot.STATIC, new CantBeTargetOfOpponentAbilitiesEffect());
+        addEffect(EffectSlot.STATIC, TargetingRestrictionEffect.opponentAbilities());
 
         // Shanna gets +1/+1 for each creature you control.
         PermanentCount creaturesYouControl =

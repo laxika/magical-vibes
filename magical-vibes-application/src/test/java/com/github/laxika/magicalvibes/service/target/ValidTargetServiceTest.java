@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -229,14 +228,14 @@ class ValidTargetServiceTest {
         }
 
         @Test
-        @DisplayName("returns false when opponent's permanent has CantBeTargetOfSpellsOrAbilitiesEffect")
+        @DisplayName("returns false when opponent's permanent has granted hexproof")
         void returnsFalse_whenOpponentHasGrantedHexproof() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(player2Id);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -245,14 +244,14 @@ class ValidTargetServiceTest {
         }
 
         @Test
-        @DisplayName("returns true when own permanent has CantBeTargetOfSpellsOrAbilitiesEffect")
+        @DisplayName("returns true when own permanent has granted hexproof")
         void returnsTrue_whenOwnGrantedHexproof() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(player1Id);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);
@@ -697,7 +696,7 @@ class ValidTargetServiceTest {
         }
 
         @Test
-        @DisplayName("excludes opponent's permanent with CantBeTargetOfSpellsOrAbilitiesEffect")
+        @DisplayName("excludes opponent's permanent with granted hexproof")
         void excludesGrantedHexproofPermanent() {
             Card sourceCard = createCreatureCard();
             sourceCard.setColor(CardColor.RED);
@@ -706,7 +705,7 @@ class ValidTargetServiceTest {
 
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
-            when(gameQueryService.hasGrantedEffect(gameData, creature, CantBeTargetOfSpellsOrAbilitiesEffect.class)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, creature)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, creature.getId())).thenReturn(player2Id);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
@@ -1343,14 +1342,14 @@ class ValidTargetServiceTest {
         }
 
         @Test
-        @DisplayName("CantBeTargetOfSpellsOrAbilitiesEffect with null controller does not crash")
+        @DisplayName("granted hexproof with null controller does not crash")
         void grantedHexproof_nullControllerDoesNotCrash() {
             Card spell = createCard();
             spell.setColor(CardColor.RED);
             Card creatureCard = createCreatureCard();
             Permanent perm = new Permanent(creatureCard);
 
-            when(gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)).thenReturn(true);
+            when(gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)).thenReturn(true);
             when(gameQueryService.findPermanentController(gameData, perm.getId())).thenReturn(null);
 
             boolean result = validTargetService.canPermanentBeTargetedBySpell(gameData, perm, spell, player1Id);

@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
@@ -580,7 +579,7 @@ public class ValidTargetService {
     }
 
     /**
-     * Checks shroud, hexproof, and CantBeTargetOfSpellsOrAbilitiesEffect on a permanent.
+     * Checks shroud, hexproof, and granted hexproof (TargetingRestrictionEffect) on a permanent.
      * Returns true if the permanent is blocked from being targeted by the given controller.
      */
     private boolean isBlockedByHexproofOrGrantedEffect(GameData gameData, Permanent perm, UUID controllerId) {
@@ -597,8 +596,8 @@ public class ValidTargetService {
             }
         }
 
-        // CantBeTargetOfSpellsOrAbilitiesEffect (granted hexproof-like)
-        if (gameQueryService.hasGrantedEffect(gameData, perm, CantBeTargetOfSpellsOrAbilitiesEffect.class)) {
+        // Granted hexproof-like effect (TargetingRestrictionEffect hexproof, e.g. Asceticism)
+        if (gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, perm)) {
             UUID targetController = gameQueryService.findPermanentController(gameData, perm.getId());
             if (targetController != null && !targetController.equals(controllerId)) {
                 return true;

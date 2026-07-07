@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CantBeTargetOfSpellsOrAbilitiesEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +42,7 @@ class AsceticismTest extends BaseCardTest {
         Permanent bears = addReadyCreature(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Asceticism());
 
-        assertThat(gqs.hasGrantedEffect(gd, bears, CantBeTargetOfSpellsOrAbilitiesEffect.class)).isTrue();
+        assertThat(gqs.cantBeTargetedBySpellsOrAbilities(gd, bears)).isTrue();
     }
 
     @Test
@@ -52,7 +51,7 @@ class AsceticismTest extends BaseCardTest {
         Permanent opponentBears = addReadyCreature(player2, new GrizzlyBears());
         harness.addToBattlefield(player1, new Asceticism());
 
-        assertThat(gqs.hasGrantedEffect(gd, opponentBears, CantBeTargetOfSpellsOrAbilitiesEffect.class)).isFalse();
+        assertThat(gqs.cantBeTargetedBySpellsOrAbilities(gd, opponentBears)).isFalse();
     }
 
     @Test
@@ -60,12 +59,12 @@ class AsceticismTest extends BaseCardTest {
     void effectRemovedWhenSourceLeaves() {
         Permanent bears = addReadyCreature(player1, new GrizzlyBears());
         harness.addToBattlefield(player1, new Asceticism());
-        assertThat(gqs.hasGrantedEffect(gd, bears, CantBeTargetOfSpellsOrAbilitiesEffect.class)).isTrue();
+        assertThat(gqs.cantBeTargetedBySpellsOrAbilities(gd, bears)).isTrue();
 
         gd.playerBattlefields.get(player1.getId())
                 .removeIf(p -> p.getCard().getName().equals("Asceticism"));
 
-        assertThat(gqs.hasGrantedEffect(gd, bears, CantBeTargetOfSpellsOrAbilitiesEffect.class)).isFalse();
+        assertThat(gqs.cantBeTargetedBySpellsOrAbilities(gd, bears)).isFalse();
     }
 
     // ===== Targeting prevention: opponent cannot target =====
