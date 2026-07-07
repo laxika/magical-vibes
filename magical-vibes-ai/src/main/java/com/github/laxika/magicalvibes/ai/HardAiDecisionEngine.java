@@ -33,8 +33,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrP
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
@@ -893,8 +893,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                 || effect instanceof DealDamageToTargetCreatureEffect
                 || effect instanceof DealDamageToTargetCreatureOrPlaneswalkerEffect
                 || effect instanceof DealDamageToAnyTargetEffect
-                || effect instanceof GainControlOfTargetPermanentEffect
-                || effect instanceof GainControlOfTargetPermanentUntilEndOfTurnEffect;
+                || (effect instanceof GainControlOfTargetEffect steal
+                        && (steal.duration() == ControlDuration.PERMANENT
+                                || steal.duration() == ControlDuration.END_OF_TURN));
     }
 
     /**
@@ -933,8 +934,9 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
         if (effect instanceof ExileTargetPermanentEffect) return true;
         if (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET) return true;
         if (effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect) return true;
-        if (effect instanceof GainControlOfTargetPermanentEffect) return true;
-        if (effect instanceof GainControlOfTargetPermanentUntilEndOfTurnEffect) return true;
+        if (effect instanceof GainControlOfTargetEffect steal
+                && (steal.duration() == ControlDuration.PERMANENT
+                        || steal.duration() == ControlDuration.END_OF_TURN)) return true;
         if (effect instanceof DealDamageToTargetCreatureEffect dmg) {
             int damage = spellEvaluator.estimateDamageAmount(gameData, spell, dmg.damage(), aiPlayer.getId());
             int toughness = gameQueryService.getEffectiveToughness(gameData, creature);

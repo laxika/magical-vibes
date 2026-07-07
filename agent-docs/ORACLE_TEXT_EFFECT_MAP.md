@@ -320,9 +320,10 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
-| "gain control of target [permanent]" | `GainControlOfTargetPermanentEffect()` | SPELL | Permanent |
-| "gain control of target creature with power <= creature count" | `GainControlOfTargetPermanentEffect()` + `PermanentPowerAtMostControlledCreatureCountPredicate` filter | ability | Dynamic power check vs creature count |
-| "gain control of target creature until end of turn" | `GainControlOfTargetPermanentUntilEndOfTurnEffect()` | SPELL | Threaten |
+| "gain control of target [permanent]" | `GainControlOfTargetEffect(ControlDuration.PERMANENT)` | SPELL | Permanent |
+| "gain control of target creature with power <= creature count" | `GainControlOfTargetEffect(ControlDuration.PERMANENT)` + `PermanentPowerAtMostControlledCreatureCountPredicate` filter | ability | Dynamic power check vs creature count |
+| "gain control of target creature until end of turn" | `GainControlOfTargetEffect(ControlDuration.END_OF_TURN)` | SPELL | Threaten |
+| "gain control of target [permanent] for as long as you control [source]" | `GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)` | ability | Olivia Voldaren |
 | "you control enchanted creature" | `GainControlOfEnchantedTargetEffect()` | STATIC | Control Magic |
 
 ## Mana

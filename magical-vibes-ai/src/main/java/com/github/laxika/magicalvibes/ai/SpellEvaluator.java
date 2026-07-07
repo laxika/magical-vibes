@@ -36,8 +36,8 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -370,7 +370,8 @@ public class SpellEvaluator {
         if (effect instanceof ExileTargetPermanentEffect) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.1;
         }
-        if (effect instanceof GainControlOfTargetPermanentEffect) {
+        if (effect instanceof GainControlOfTargetEffect steal
+                && steal.duration() == ControlDuration.PERMANENT) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
         if (effect instanceof DrawCardEffect draw) {
@@ -451,11 +452,13 @@ public class SpellEvaluator {
         }
 
         // Steal (opponent loses creature + we gain it)
-        if (effect instanceof GainControlOfTargetPermanentEffect) {
+        if (effect instanceof GainControlOfTargetEffect steal
+                && steal.duration() == ControlDuration.PERMANENT) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.8;
         }
         // Temporary steal (attack with opponent's creature this turn)
-        if (effect instanceof GainControlOfTargetPermanentUntilEndOfTurnEffect) {
+        if (effect instanceof GainControlOfTargetEffect steal
+                && steal.duration() == ControlDuration.END_OF_TURN) {
             return bestTargetCreatureValue(gameData, oppBattlefield, opponentId, aiPlayerId) * 1.2;
         }
 
@@ -1131,7 +1134,8 @@ public class SpellEvaluator {
                 || effect instanceof DealDamageToTargetCreatureEffect
                 || (effect instanceof ReturnToHandEffect bounce && bounce.scope() == BounceScope.TARGET)
                 || effect instanceof ReturnTargetPermanentToHandWithManaValueConditionalEffect
-                || effect instanceof GainControlOfTargetPermanentEffect;
+                || (effect instanceof GainControlOfTargetEffect steal
+                        && steal.duration() == ControlDuration.PERMANENT);
     }
 
     /**

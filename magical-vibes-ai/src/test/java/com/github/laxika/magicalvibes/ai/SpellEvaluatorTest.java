@@ -194,7 +194,7 @@ class SpellEvaluatorTest {
         assertThat(stealValue).isGreaterThan(shockValue);
     }
 
-    // ===== Temporary steal (GainControlOfTargetPermanentUntilEndOfTurnEffect) =====
+    // ===== Temporary steal (GainControlOfTargetEffect END_OF_TURN) =====
 
     @Test
     @DisplayName("Temporary steal spell has positive value when opponent has creatures")

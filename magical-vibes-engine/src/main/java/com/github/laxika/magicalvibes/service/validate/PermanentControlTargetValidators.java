@@ -6,9 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentWhileSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
@@ -34,13 +32,8 @@ public class PermanentControlTargetValidators {
         tvs.requireCreature(ctx, target);
     }
 
-    @ValidatesTarget(GainControlOfTargetPermanentUntilEndOfTurnEffect.class)
-    public void validateGainControlOfTargetPermanentUntilEndOfTurn(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
-    }
-
-    @ValidatesTarget(GainControlOfTargetPermanentEffect.class)
-    public void validateGainControlOfTargetPermanent(TargetValidationContext ctx) {
+    @ValidatesTarget(GainControlOfTargetEffect.class)
+    public void validateGainControlOfTarget(TargetValidationContext ctx) {
         tvs.requireBattlefieldTarget(ctx);
     }
 
@@ -72,11 +65,6 @@ public class PermanentControlTargetValidators {
 
     @ValidatesTarget(PutTargetPermanentIntoLibraryNFromTopEffect.class)
     public void validatePutTargetPermanentIntoLibraryNFromTop(TargetValidationContext ctx) {
-        tvs.requireBattlefieldTarget(ctx);
-    }
-
-    @ValidatesTarget(GainControlOfTargetPermanentWhileSourceEffect.class)
-    public void validateGainControlOfTargetPermanentWhileSource(TargetValidationContext ctx) {
         tvs.requireBattlefieldTarget(ctx);
     }
 

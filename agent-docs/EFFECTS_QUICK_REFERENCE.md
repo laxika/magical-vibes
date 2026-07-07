@@ -363,9 +363,9 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Control / steal
 
-- `GainControlOfTargetPermanentEffect()` or `(CardSubtype)` — gain control permanently
-- `GainControlOfTargetPermanentUntilEndOfTurnEffect()` — gain control until EOT
-- `GainControlOfTargetPermanentWhileSourceEffect()` — control while source on battlefield
+- `GainControlOfTargetEffect(ControlDuration.PERMANENT[, CardSubtype])` — gain control permanently
+- `GainControlOfTargetEffect(ControlDuration.END_OF_TURN)` — gain control until EOT
+- `GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)` — control while source on battlefield
 - `GainControlOfEnchantedTargetEffect()` — Control Magic (static)
 
 ## Mana

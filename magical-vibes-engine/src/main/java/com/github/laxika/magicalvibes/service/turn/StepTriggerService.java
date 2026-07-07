@@ -35,7 +35,8 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ControlDuration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -1482,11 +1483,11 @@ public class StepTriggerService {
                                     subtypeEffect.subtype().getDisplayName());
                             continue;
                         }
-                        // Condition met — queue for targeting with GainControlOfTargetPermanentEffect.
+                        // Condition met — queue for targeting with GainControlOfTargetEffect.
                         // The card's targetFilter restricts to nonland opponent permanents.
                         gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                 perm.getCard(), activePlayerId,
-                                new ArrayList<>(List.of(new GainControlOfTargetPermanentEffect())),
+                                new ArrayList<>(List.of(new GainControlOfTargetEffect(ControlDuration.PERMANENT))),
                                 perm.getId()));
                     } else if (effect instanceof ConditionalEffect conditional
                             && conditional.condition() instanceof GainedLifeThisTurn) {
