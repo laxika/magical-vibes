@@ -2,6 +2,23 @@
   <div class="game-layout">
     <div class="game-area">
 
+    <div class="board-row">
+    <!-- Phase tracker -->
+    <div class="phase-tracker">
+      @for (group of phaseGroups; track group.phaseName) {
+        <div class="phase-group">
+          @for (stepInfo of group.steps; track stepInfo.step) {
+            <div class="step-pip"
+                 [class.active]="game().currentStep === stepInfo.step"
+                 [class.force-stop]="stepInfo.step === TurnStep.PRECOMBAT_MAIN || stepInfo.step === TurnStep.POSTCOMBAT_MAIN"
+                 [attr.data-tip]="group.steps.length > 1 ? group.phaseName + ' — ' + stepInfo.displayName : group.phaseName">
+              {{ stepInfo.icon }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+
     <div class="battlefield-area">
       <!-- Opponent's battlefield -->
       <div class="battlefield-row opponent-battlefield">
@@ -97,24 +114,6 @@
         }
       </div>
     </div>
-
-    <!-- Phase tracker -->
-    <div class="phase-tracker">
-      @for (group of phaseGroups; track group.phaseName) {
-        <div class="phase-group" [style.flex-grow]="group.steps.length">
-          <div class="phase-label">{{ group.phaseName }}</div>
-          <div class="phase-steps">
-            @for (stepInfo of group.steps; track stepInfo.step) {
-              <div class="step-pip"
-                   [class.active]="game().currentStep === stepInfo.step"
-                   [class.force-stop]="stepInfo.step === TurnStep.PRECOMBAT_MAIN || stepInfo.step === TurnStep.POSTCOMBAT_MAIN"
-                   [title]="stepInfo.displayName">
-                {{ stepInfo.displayName }}
-              </div>
-            }
-          </div>
-        </div>
-      }
     </div>
 
     <!-- Mana pool -->

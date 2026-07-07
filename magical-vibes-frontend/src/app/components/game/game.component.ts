@@ -318,13 +318,15 @@ export class GameComponent implements OnInit, OnDestroy {
   private static readonly COMBAT_STACK_GAP = 8;
   private static readonly LANDS_ROW_MODIFIER = 0.9;
   private static readonly SUB_ROW_PADDING = 8;
-  private static readonly SIDE_LABEL_HEIGHT = 23;
-  private static readonly ROW_MARGIN = 8;
+  private static readonly SIDE_LABEL_HEIGHT = 15;
+  private static readonly ROW_MARGIN = 0;
   private static readonly EMPTY_MESSAGE_HEIGHT = 20;
   private static readonly REVEALED_ROW_HEIGHT = 250;
-  private static readonly DIVIDER_HEIGHT = 25;
+  private static readonly DIVIDER_HEIGHT = 1;
   private static readonly COMBAT_ZONE_CHROME = 63;
   private static readonly MIN_BATTLEFIELD_ZOOM = 0.5;
+  /* Cards never render above 80% of natural size; they only shrink further to fit. */
+  private static readonly MAX_BATTLEFIELD_ZOOM = 0.8;
 
   /** Greedy flex-wrap simulation: how many lines the given item widths need. */
   private static packedLines(widths: number[], gap: number, rowWidth: number): number {
@@ -377,6 +379,15 @@ export class GameComponent implements OnInit, OnDestroy {
       return stackWidth(item.perm) * landZoom;
     };
 
+    /* A lands line is only as tall as its tallest item: a fully tapped line
+       occupies the rotated 165px footprint, not the upright 231px. */
+    const landItemHeight = (item: IndexedPermanent | LandStack): number => {
+      if (isLandStack(item)) {
+        return item.lands.some(l => !l.perm.tapped) ? C.CARD_HEIGHT : C.CARD_WIDTH;
+      }
+      return stackHeight(item.perm);
+    };
+
     const addSide = (
       creatures: IndexedPermanent[],
       lands: (IndexedPermanent | LandStack)[],
@@ -393,7 +404,8 @@ export class GameComponent implements OnInit, OnDestroy {
         : 0;
       total += rowHeight(creatures.map(ip => stackWidth(ip.perm) * zoom), creatureLine * zoom);
       const landZoom = zoom * C.LANDS_ROW_MODIFIER;
-      total += rowHeight(lands.map(item => landItemWidth(item, landZoom)), C.CARD_HEIGHT * landZoom);
+      const landLine = lands.length > 0 ? Math.max(...lands.map(landItemHeight)) : 0;
+      total += rowHeight(lands.map(item => landItemWidth(item, landZoom)), landLine * landZoom);
     };
 
     addSide(
@@ -435,7 +447,7 @@ export class GameComponent implements OnInit, OnDestroy {
   get battlefieldZoom(): number {
     const { width, height } = this.battlefieldAreaSize();
     if (!width || !height) return 1;
-    for (let z = 1; z > GameComponent.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
+    for (let z = GameComponent.MAX_BATTLEFIELD_ZOOM; z > GameComponent.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
       if (this.modeledBoardHeight(z, width) <= height) {
         return Math.round(z * 100) / 100;
       }

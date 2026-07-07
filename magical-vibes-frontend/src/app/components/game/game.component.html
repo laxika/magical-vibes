@@ -261,6 +261,24 @@
       </div>
     }
 
+    <div class="board-row">
+    <div class="phase-tracker">
+      @for (group of phaseGroups; track group.phaseName) {
+        <div class="phase-group">
+          @for (stepInfo of group.steps; track stepInfo.step) {
+            <div class="step-pip"
+                 [class.active]="game()?.currentStep === stepInfo.step"
+                 [class.auto-stop]="isAutoStop(stepInfo.step)"
+                 [class.force-stop]="isForceStop(stepInfo.step)"
+                 [attr.data-tip]="group.steps.length > 1 ? group.phaseName + ' — ' + stepInfo.displayName : group.phaseName"
+                 (click)="toggleAutoStop(stepInfo.step)">
+              {{ stepInfo.icon }}
+            </div>
+          }
+        </div>
+      }
+    </div>
+
     <div class="battlefield-area" #battlefieldArea [style.--density-zoom]="battlefieldZoom">
       <div class="battlefield-row">
         <div class="battlefield-label">{{ game()?.playerNames?.[opponentPlayerIndex] }}'s Battlefield</div>
@@ -547,25 +565,6 @@
         }
       </div>
     </div>
-
-    <div class="phase-tracker">
-      @for (group of phaseGroups; track group.phaseName) {
-        <div class="phase-group" [style.flex-grow]="group.steps.length">
-          <div class="phase-label">{{ group.phaseName }}</div>
-          <div class="phase-steps">
-            @for (stepInfo of group.steps; track stepInfo.step) {
-              <div class="step-pip"
-                   [class.active]="game()?.currentStep === stepInfo.step"
-                   [class.auto-stop]="isAutoStop(stepInfo.step)"
-                   [class.force-stop]="isForceStop(stepInfo.step)"
-                   [title]="stepInfo.displayName"
-                   (click)="toggleAutoStop(stepInfo.step)">
-                {{ stepInfo.displayName }}
-              </div>
-            }
-          </div>
-        </div>
-      }
     </div>
 
     @if (choice.choosingGraveyardCards) {

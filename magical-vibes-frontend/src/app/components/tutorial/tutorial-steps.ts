@@ -49,9 +49,9 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: 'phase-tracker',
     title: 'Phase Tracker',
-    description: 'The phase tracker shows which step of the turn you\'re in. The highlighted step is the current one. You can click steps to set auto-stops — the game will pause and give you priority at those steps. Main phases always auto-stop.',
+    description: 'The phase tracker shows which step of the turn you\'re in. The highlighted step is the current one — hover a step to see its name. You can click steps to set auto-stops — the game will pause and give you priority at those steps. Main phases always auto-stop.',
     targetSelector: '.phase-tracker',
-    tooltipPosition: 'bottom'
+    tooltipPosition: 'right'
   },
   {
     id: 'tap-land',

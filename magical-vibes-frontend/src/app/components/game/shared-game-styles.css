@@ -58,71 +58,94 @@
   overflow-y: auto;
 }
 
-/* Only the battlefield gives up height; banners, tracker, and hand keep theirs. */
-.game-area > :not(.battlefield-area) {
+/* Only the board row gives up height; banners and hand keep theirs. */
+.game-area > :not(.board-row) {
   flex-shrink: 0;
+}
+
+/* Phase rail on the left, battlefield filling the rest. The row absorbs all
+   leftover height so the battlefield gets the tallest possible allocation. */
+.board-row {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 4px;
+  margin-bottom: 4px;
 }
 
 .phase-tracker {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
   background: var(--gradient-parchment);
-  padding: 4px 8px;
+  padding: 6px 4px;
   border-radius: 4px;
-  margin-bottom: 4px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-  overflow-x: auto;
 }
 
-/* Groups share the row proportionally to their step count (flex-grow is bound
-   in the template); pips never wrap, so every group stays two rows tall:
-   header line + pip line. */
 .phase-group {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  flex: 1 1 0;
+  gap: 3px;
 }
 
 .phase-group + .phase-group {
-  border-left: 1px solid var(--color-border-tan);
-  padding-left: 8px;
-}
-
-.phase-label {
-  font-size: 9px;
-  font-weight: 600;
-  color: var(--color-text-brown);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 3px;
-  white-space: nowrap;
-  font-family: var(--font-display);
-}
-
-.phase-steps {
-  display: flex;
-  gap: 3px;
-  flex-wrap: nowrap;
-  justify-content: center;
+  border-top: 1px solid var(--color-border-tan);
+  padding-top: 4px;
 }
 
 .step-pip {
-  padding: 2px 6px;
+  position: relative;
+  width: 24px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 3px;
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   color: #4a2c17;
   background: #e8d5a3;
-  white-space: nowrap;
   transition: background 0.2s, color 0.2s, border-color 0.2s;
   cursor: pointer;
   border-bottom: 2px solid transparent;
 }
 
+/* The hover opacity creates a stacking context on the pip, trapping the
+   tooltip's z-index inside it — the explicit z-index lifts that context
+   above the (transformed) battlefield cards. */
 .step-pip:hover {
   opacity: 0.8;
+  z-index: 60;
+}
+
+/* Hover tooltip with the full phase/step name, floating over the battlefield. */
+.step-pip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--gradient-dark-wood);
+  color: var(--color-parchment);
+  border: 1px solid var(--color-border-tan);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 60;
+}
+
+.step-pip:hover::after {
+  opacity: 1;
 }
 
 .step-pip.auto-stop {
@@ -256,14 +279,14 @@
   background: var(--gradient-parchment);
   padding: 8px 10px;
   border-radius: 4px;
-  margin-bottom: 4px;
   border: 2px solid var(--color-border-tan);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
-  /* Fill the viewport between the tracker and the hand; card zoom is computed
-     from this allocated height. Overflow scrolls internally: growing past the
-     allocation would feed the inflated height back into the zoom model (via
-     the ResizeObserver) and push the hand off-screen. */
+  /* Fill the board row next to the phase rail; card zoom is computed from the
+     allocated size. Overflow scrolls internally: growing past the allocation
+     would feed the inflated height back into the zoom model (via the
+     ResizeObserver) and push the hand off-screen. */
   flex: 1;
+  min-width: 0;
   min-height: 200px;
   display: flex;
   flex-direction: column;
@@ -289,7 +312,6 @@
 }
 
 .battlefield-row {
-  margin-bottom: 8px;
   /* Each side grows into the leftover space but never squeezes its content. */
   flex: 1 0 auto;
   display: flex;
@@ -297,7 +319,6 @@
 }
 
 .battlefield-row:last-child {
-  margin-bottom: 0;
   /* Our side hangs from the bottom edge, next to the hand, so the combat zone
      opening only consumes the empty middle instead of shoving our cards up. */
   justify-content: flex-end;
@@ -305,10 +326,9 @@
 
 /* The label stays glued to the divider at the top of the row while the cards
    keep hanging from the bottom edge: the auto margin absorbs the leftover
-   space, and the padding preserves the 8px gap when there is none. */
+   space. */
 .battlefield-row:last-child .battlefield-label {
   margin-bottom: auto;
-  padding-bottom: 8px;
 }
 
 .battlefield-label {
@@ -317,7 +337,6 @@
   color: var(--color-text-brown);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-bottom: 8px;
   font-family: var(--font-display);
 }
 
@@ -332,7 +351,6 @@
 .battlefield-divider {
   height: 1px;
   background: var(--color-border-tan);
-  margin: 12px 0;
 }
 
 .battlefield-empty {
