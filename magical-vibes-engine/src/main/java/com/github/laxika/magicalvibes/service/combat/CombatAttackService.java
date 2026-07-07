@@ -24,11 +24,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessControllerControlsMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderControlsMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessDefenderPoisonedEffect;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessOpponentDealtDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
@@ -80,12 +76,10 @@ public class CombatAttackService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         if (battlefield == null) return List.of();
         if (isPlayerPreventedFromAttacking(gameData, playerId)) return List.of();
-        UUID defenderId = gameQueryService.getOpponentId(gameData, playerId);
-        List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(defenderId);
         List<Integer> indices = new ArrayList<>();
         for (int i = 0; i < battlefield.size(); i++) {
             Permanent p = battlefield.get(i);
-            if (canCreatureAttack(gameData, p, defenderId, defenderBattlefield)) {
+            if (canCreatureAttack(gameData, p, playerId)) {
                 indices.add(i);
             }
         }
@@ -563,8 +557,7 @@ public class CombatAttackService {
     }
 
 
-    private boolean canCreatureAttack(GameData gameData, Permanent creature,
-                                       UUID defenderId, List<Permanent> defenderBattlefield) {
+    private boolean canCreatureAttack(GameData gameData, Permanent creature, UUID controllerId) {
         if (!gameQueryService.isCreature(gameData, creature)) return false;
         if (creature.isTapped()) return false;
         if (creature.isSummoningSick() && !gameQueryService.hasKeyword(gameData, creature, Keyword.HASTE)) return false;
@@ -573,76 +566,25 @@ public class CombatAttackService {
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackOrBlockEffect.class)) return false;
         if (gameQueryService.hasAuraWithEffect(gameData, creature, EnchantedCreatureCantAttackEffect.class)) return false;
         if (CombatHelper.isCantAttackOrBlockUnlessEquipped(gameQueryService, gameData, creature)) return false;
-        if (isCantAttackDueToLandRestriction(gameData, creature, defenderBattlefield)) return false;
-        if (isCantAttackUnlessBattlefieldCount(gameData, creature)) return false;
-        if (isCantAttackUnlessControllerControls(gameData, creature)) return false;
-        if (isCantAttackUnlessDefenderPoisoned(gameData, creature, defenderId)) return false;
-        if (isCantAttackUnlessOpponentDealtDamage(gameData, creature)) return false;
+        if (isCantAttackUnlessConditionUnmet(gameData, creature, controllerId)) return false;
         if (isCantAttackDueToGlobalRestriction(gameData, creature)) return false;
         return true;
     }
 
-    private boolean isCantAttackUnlessDefenderPoisoned(GameData gameData, Permanent creature, UUID defenderId) {
-        boolean hasRestriction = creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackUnlessDefenderPoisonedEffect.class::isInstance);
-        if (!hasRestriction) return false;
-        int poison = gameData.playerPoisonCounters.getOrDefault(defenderId, 0);
-        return poison <= 0;
-    }
-
-    private boolean isCantAttackUnlessOpponentDealtDamage(GameData gameData, Permanent creature) {
-        boolean hasRestriction = creature.getCard().getEffects(EffectSlot.STATIC).stream()
-                .anyMatch(CantAttackUnlessOpponentDealtDamageThisTurnEffect.class::isInstance);
-        if (!hasRestriction) return false;
-        UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-        // Check if any opponent of the creature's controller has been dealt damage this turn
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(controllerId) && gameData.playersDealtDamageThisTurn.contains(playerId)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean isCantAttackDueToLandRestriction(GameData gameData, Permanent attacker,
-                                                      List<Permanent> defenderBattlefield) {
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantAttackUnlessDefenderControlsMatchingPermanentEffect restriction) {
-                boolean defenderMatches = defenderBattlefield != null && defenderBattlefield.stream()
-                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.defenderPermanentPredicate()));
-                if (!defenderMatches) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isCantAttackUnlessBattlefieldCount(GameData gameData, Permanent attacker) {
-        for (CardEffect effect : attacker.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect restriction) {
-                int[] count = {0};
-                gameData.forEachBattlefield((playerId, battlefield) ->
-                        count[0] += (int) battlefield.stream()
-                                .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.permanentPredicate()))
-                                .count()
-                );
-                if (count[0] < restriction.minimumCount()) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isCantAttackUnlessControllerControls(GameData gameData, Permanent creature) {
+    /**
+     * Evaluates the creature's {@link CantAttackUnlessEffect} restrictions (CR 508.1a): the
+     * creature can't attack while any attached condition is unmet. Each restriction's condition
+     * (controller controls a permanent, defending player poisoned, N Islands on the battlefield, …)
+     * is routed through {@link ConditionEvaluationService} with the attacker as source.
+     */
+    private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
+        ConditionContext ctx = null;
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
-            if (effect instanceof CantAttackUnlessControllerControlsMatchingPermanentEffect restriction) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
-                List<Permanent> controllerBattlefield = gameData.playerBattlefields.get(controllerId);
-                boolean controllerMatches = controllerBattlefield != null && controllerBattlefield.stream()
-                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, restriction.controllerPermanentPredicate()));
-                if (!controllerMatches) {
+            if (effect instanceof CantAttackUnlessEffect restriction) {
+                if (ctx == null) {
+                    ctx = ConditionContext.forPermanent(creature, controllerId);
+                }
+                if (!conditionEvaluationService.isMet(gameData, restriction.condition(), ctx)) {
                     return true;
                 }
             }

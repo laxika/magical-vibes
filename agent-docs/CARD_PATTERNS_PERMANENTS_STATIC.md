@@ -27,10 +27,11 @@ All paths relative to `cards/`.
 | Unblockable | `p/PhantomWarrior.java` | STATIC CantBeBlockedEffect |
 | Conditional unblockable | `s/ScrapdiverSerpent.java` | STATIC CantBeBlockedIfDefenderControlsMatchingPermanentEffect |
 | Grant unblockable to own creatures | `t/TetsukoUmezawaFugitive.java` | STATIC GrantEffectEffect(CantBeBlockedEffect, ALL_OWN_CREATURES, PermanentAnyOfPredicate(power/toughness filter)) |
-| Attack restriction (defender) | `s/SeaMonster.java` | STATIC CantAttackUnlessDefenderControlsMatchingPermanentEffect |
-| Attack restriction (controller controls) | `d/DesperateCastaways.java` | STATIC CantAttackUnlessControllerControlsMatchingPermanentEffect(predicate, desc) — can't attack unless controller controls a matching permanent |
-| Attack restriction (battlefield count) | `h/HarborSerpent.java` | STATIC CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect(predicate, 5, desc) — can't attack unless N+ matching permanents across all battlefields |
-| Attack restriction (opponent damage) | `b/BloodcrazedGoblin.java` | STATIC CantAttackUnlessOpponentDealtDamageThisTurnEffect — can't attack unless an opponent was dealt damage this turn |
+| Attack restriction (defender controls) | `s/SeaMonster.java` | STATIC CantAttackUnlessEffect(new DefendingPlayerControlsPermanent(predicate), desc) — can't attack unless defending player controls a matching permanent |
+| Attack restriction (controller controls) | `d/DesperateCastaways.java` | STATIC CantAttackUnlessEffect(new ControlsPermanentCount(1, predicate), desc) — can't attack unless controller controls a matching permanent |
+| Attack restriction (battlefield count) | `h/HarborSerpent.java` | STATIC CantAttackUnlessEffect(new AnyPlayerControlsPermanentCount(5, predicate), desc) — can't attack unless N+ matching permanents across all battlefields |
+| Attack restriction (defender poisoned) | `c/ChainedThroatseeker.java` | STATIC CantAttackUnlessEffect(new DefendingPlayerPoisoned(), desc) — can't attack unless defending player is poisoned |
+| Attack restriction (opponent damage) | `b/BloodcrazedGoblin.java` | STATIC CantAttackUnlessEffect(new OpponentDealtDamageThisTurn(), desc) — can't attack unless an opponent was dealt damage this turn |
 | Block restriction | `c/CloudElemental.java` | STATIC CanBlockOnlyIfAttackerMatchesPredicateEffect |
 | Protection from colors | `p/PaladinEnVec.java` | STATIC ProtectionFromColorsEffect |
 | Prevent all damage to self | `c/ChoMannoRevolutionary.java` | STATIC PreventAllDamageEffect |

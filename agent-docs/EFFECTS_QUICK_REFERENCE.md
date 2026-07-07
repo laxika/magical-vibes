@@ -42,6 +42,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `EnchantedPermanentConditionalEffect(PermanentPredicate, CardEffect ifMatch, CardEffect ifNotMatch)` — aura active branch based on enchanted permanent predicate
 - `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` — opponent controls matching
 - `ConditionalEffect(new HasAttacker(predicate), wrapped)` — one or more matching attackers
+- `CantAttackUnlessEffect(Condition, "unless clause")` — STATIC attack restriction; condition = `ControlsPermanentCount(1, filter)` / `DefendingPlayerControlsPermanent(filter)` / `AnyPlayerControlsPermanentCount(N, filter)` / `DefendingPlayerPoisoned()` / `OpponentDealtDamageThisTurn()`
 - `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` — graveyard threshold
 - `ConditionalEffect(new SourceCounterThreshold(threshold, counterType), wrapped)` — source counter threshold (e.g. 5+ growth counters)
 - `EnteringCreatureMinPowerConditionalEffect(int, CardEffect)` — entering power >= N

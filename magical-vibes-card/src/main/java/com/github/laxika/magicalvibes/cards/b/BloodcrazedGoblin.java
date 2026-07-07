@@ -3,12 +3,16 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessOpponentDealtDamageThisTurnEffect;
+import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
+import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 
 @CardRegistration(set = "M11", collectorNumber = "125")
 public class BloodcrazedGoblin extends Card {
 
     public BloodcrazedGoblin() {
-        addEffect(EffectSlot.STATIC, new CantAttackUnlessOpponentDealtDamageThisTurnEffect());
+        addEffect(EffectSlot.STATIC, new CantAttackUnlessEffect(
+                new OpponentDealtDamageThisTurn(),
+                "an opponent was dealt damage this turn"
+        ));
     }
 }

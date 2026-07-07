@@ -80,6 +80,9 @@ Game-state conditions are **data**, not classes: the sealed interface
 `model/condition/Condition` has one small record per condition (`Metalcraft`, `Morbid`,
 `Kicked`, `Raid`, `Equipped`, `ControlsPermanent(filter)`,
 `ControlsPermanentCount(minCount, filter)` (at least), `ControlsPermanentCountAtMost(maxCount, filter)` (at most),
+`AnyPlayerControlsPermanent(filter)`, `AnyPlayerControlsPermanentCount(minCount, filter)` (N+ across all battlefields),
+`OpponentControlsPermanent(filter)`, `DefendingPlayerControlsPermanent(filter)`, `DefendingPlayerPoisoned`,
+`OpponentPoisoned`, `OpponentDealtDamageThisTurn`,
 `ControllerLifeAtLeast(n)`,
 `ControllerLifeAtMost(n)`, `GraveyardCardThreshold(n, filter)`, `CastFromZone(zone)`,
 `AttacksAlone`, `MinimumAttackers(n)`, `HasAttacker(predicate)`, `NoSpellsCastLastTurn`,
@@ -962,11 +965,8 @@ Pass `null` as filter to allow any card.
 | `CanBlockAnyNumberOfCreaturesEffect` | `()` | this creature can block any number of creatures (static) |
 | `CanBlockOnlyIfAttackerMatchesPredicateEffect` | `(PermanentPredicate attackerPredicate, String allowedAttackersDescription)` | this creature can only block attackers matching predicate (static) |
 | `CantAttackOrBlockUnlessEquippedEffect` | `()` | this creature can't attack or block unless it's equipped (static) |
-| `CantAttackUnlessBattlefieldHasMatchingPermanentCountEffect` | `(PermanentPredicate permanentPredicate, int minimumCount, String requirementDescription)` | can't attack unless there are N or more matching permanents across all battlefields (static) |
-| `CantAttackUnlessControllerControlsMatchingPermanentEffect` | `(PermanentPredicate controllerPermanentPredicate, String requirementDescription)` | can't attack unless controller controls a matching permanent (static) |
-| `CantAttackUnlessDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate, String requirementDescription)` | can't attack unless defender controls matching permanent (static) |
-| `CreaturesCantAttackUnlessPredicateEffect` | `(PermanentPredicate exemptionPredicate)` | global static: ALL creatures can't attack unless they match the exemption predicate (e.g. flying or islandwalk) |
-| `CantAttackUnlessOpponentDealtDamageThisTurnEffect` | `()` | can't attack unless an opponent has been dealt damage this turn from any source (static) |
+| `CantAttackUnlessEffect` | `(Condition condition, String requirementDescription)` | can't attack unless the condition is met (static, evaluated at attack-declaration legality via ConditionEvaluationService). Map the "unless" clause to a Condition: `ControlsPermanentCount(1, filter)` = controller controls a matching permanent (Desperate Castaways); `DefendingPlayerControlsPermanent(filter)` = defending player controls a matching permanent (Sea Monster, Serpent of the Endless Sea); `AnyPlayerControlsPermanentCount(N, filter)` = N+ matching permanents across all battlefields (Harbor Serpent, N=5); `DefendingPlayerPoisoned()` = defending player poisoned (Chained Throatseeker); `OpponentDealtDamageThisTurn()` = an opponent was dealt damage this turn (Bloodcrazed Goblin). requirementDescription is the user-facing "unless" clause. |
+| `CreaturesCantAttackUnlessPredicateEffect` | `(PermanentPredicate exemptionPredicate)` | global static: ALL creatures can't attack unless they match the exemption predicate (e.g. flying or islandwalk). NOT folded into CantAttackUnlessEffect — it is a per-attacker exemption applied from any permanent, not a source-creature condition. |
 | `CantBeBlockedIfDefenderControlsMatchingPermanentEffect` | `(PermanentPredicate defenderPermanentPredicate)` | can't be blocked as long as defender controls matching permanent (static) |
 | `CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect` | `()` | can't be blocked as long as controller cast a historic spell (artifact, legendary, or Saga) this turn (static) |
 | `CanAttackAsThoughNoDefenderEffect` | `()` | this creature can attack as though it didn't have defender (static, typically wrapped in ConditionalEffect(new Metalcraft(), wrapped)) |
