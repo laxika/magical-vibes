@@ -312,7 +312,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "CARDNAME doesn't untap during your untap step" | `DoesntUntapDuringUntapStepEffect()` | STATIC | |
 | "tap all attacking creatures" | `TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())` | SPELL/trigger | no targeting |
 | "untap all creatures that attacked this turn" | `UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES)` | SPELL/trigger | Relentless Assault |
-| "those creatures don't untap during their controller's next untap step" (attacking creatures) | `SkipNextUntapAllAttackingCreaturesEffect()` | SPELL/trigger | pair with `TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())` |
+| "target permanent doesn't untap during its controller's next untap step" | `SkipNextUntapEffect(TapUntapScope.TARGET)` | ability/trigger | piggybacks on companion targeting effect (e.g. `TapPermanentsEffect(TapUntapScope.TARGET)`); Frost Titan, Watertrap Weaver, Wall of Frost |
+| "those creatures don't untap during that player's next untap step" (all creatures target player controls) | `SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsCreaturePredicate())` | SPELL/trigger | targets a player; pair with `TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, …)`; Sleep |
+| "those creatures don't untap during their controller's next untap step" (attacking creatures) | `SkipNextUntapEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())` | SPELL/trigger | pair with `TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())`; Clinging Mists |
 
 ## Control / steal
 
