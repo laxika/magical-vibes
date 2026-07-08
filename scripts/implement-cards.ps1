@@ -12,7 +12,7 @@ param(
     [int] $To,
 
     # The Cursor agent model to run. Change if you want a different model.
-    [string] $Model = "composer-2.5"
+    [string] $Model = "claude-opus-4-8"
 )
 
 $ErrorActionPreference = "Stop"
@@ -37,7 +37,7 @@ for ($cardId = $From; $cardId -le $To; $cardId++) {
     Write-Host "# [$index/$total] implement-card $SetCode $cardId"
     Write-Host "############################################################"
 
-    & agent --model $Model -p --force "/implement-card $SetCode $cardId"
+    & claude --permission-mode auto --model $Model -p "/implement-card $SetCode $cardId" --append-system-prompt "Do not ask clarifying questions, wait for confirmation, or present multiple options. Simply choose the recommended/best approach and implement the code immediately. If I instruct you to implement a card do it even if it require substantial work."
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error "agent exited with code $LASTEXITCODE for $SetCode $cardId. Stopping."
