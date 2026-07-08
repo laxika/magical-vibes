@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -85,7 +86,7 @@ public class StaticEffectSupport {
         if (scope == GrantScope.ENCHANTED_CREATURE || scope == GrantScope.ENCHANTED_PERMANENT || scope == GrantScope.EQUIPPED_CREATURE) {
             return context.source().isAttached()
                     && context.source().getAttachedTo().equals(context.target().getId())
-                    && matchesStaticFilter(context.target(), filter);
+                    && matchesStaticFilter(context, filter);
         }
         if (scope == GrantScope.ENCHANTED_PLAYER_CREATURES) {
             if (!context.source().isAttached()) return false;
@@ -94,7 +95,7 @@ public class StaticEffectSupport {
             if (attachedPlayerBf == null || !attachedPlayerBf.contains(context.target())) return false;
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
             return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context.target(), filter);
+                    && matchesStaticFilter(context, filter);
         }
         if (scope == GrantScope.OWN_TAPPED_CREATURES) {
             return context.targetOnSameBattlefield() && context.target().isTapped();
@@ -108,9 +109,21 @@ public class StaticEffectSupport {
             if (!ownCheck) return false;
             boolean hasAnimateArtifacts = hasAnimateArtifactEffect(context.gameData());
             return isEffectivelyCreature(context.gameData(), context.target(), hasAnimateArtifacts)
-                    && matchesStaticFilter(context.target(), filter);
+                    && matchesStaticFilter(context, filter);
         }
         return false;
+    }
+
+    /**
+     * Context-aware static-filter check. Handles predicates that need game data (e.g.
+     * {@link PermanentHasGreatestManaValueAmongAllCreaturesPredicate}) and delegates everything
+     * else to the target-only {@link #matchesStaticFilter(Permanent, PermanentPredicate)}.
+     */
+    private boolean matchesStaticFilter(StaticEffectContext context, PermanentPredicate filter) {
+        if (filter instanceof PermanentHasGreatestManaValueAmongAllCreaturesPredicate) {
+            return gameQueryService.hasGreatestManaValueAmongAllCreatures(context.gameData(), context.target());
+        }
+        return matchesStaticFilter(context.target(), filter);
     }
 
     public boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts) {

@@ -15,6 +15,7 @@ public sealed interface PermanentPredicate permits
         PermanentDealtDamageThisTurnPredicate,
         PermanentHasAnySubtypePredicate,
         PermanentHasCountersPredicate,
+        PermanentHasGreatestManaValueAmongAllCreaturesPredicate,
         PermanentHasGreatestPowerAmongControlledCreaturesPredicate,
         PermanentHasKeywordPredicate,
         PermanentHasSameNameAsSourcePredicate,

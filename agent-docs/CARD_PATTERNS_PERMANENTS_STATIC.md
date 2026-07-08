@@ -34,6 +34,7 @@ All paths relative to `cards/`.
 | Attack restriction (opponent damage) | `b/BloodcrazedGoblin.java` | STATIC CantAttackUnlessEffect(new OpponentDealtDamageThisTurn(), desc) — can't attack unless an opponent was dealt damage this turn |
 | Block restriction | `c/CloudElemental.java` | STATIC CanBlockOnlyIfAttackerMatchesPredicateEffect |
 | Protection from colors | `p/PaladinEnVec.java` | STATIC ProtectionFromColorsEffect |
+| Grant protection from colors to greatest-MV creatures | `f/FavorOfTheMighty.java` | STATIC GrantEffectEffect(ProtectionFromColorsEffect(all 5 colors), ALL_CREATURES, PermanentHasGreatestManaValueAmongAllCreaturesPredicate) — granted protection is read by GameQueryService.hasProtectionFrom via the static bonus's grantedEffects |
 | Prevent all damage to self | `c/ChoMannoRevolutionary.java` | STATIC PreventAllDamageEffect |
 | Can't lose game | `p/PlatinumAngel.java` | STATIC CantLoseGameEffect |
 | Can't lose from life + damage as infect | `p/PhyrexianUnlife.java` | STATIC CantLoseGameFromLifeEffect + DamageDealtAsInfectBelowZeroLifeEffect |

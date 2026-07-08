@@ -41,6 +41,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceCo
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
@@ -442,6 +443,8 @@ public class PredicateEvaluationService {
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
             case PermanentTruePredicate ignored ->
                     true;
+            case PermanentHasGreatestManaValueAmongAllCreaturesPredicate ignored ->
+                    gameQueryService.hasGreatestManaValueAmongAllCreatures(gameData, permanent);
             case PermanentHasGreatestPowerAmongControlledCreaturesPredicate ignored -> {
                 if (gameData == null || sourceControllerId == null) yield false;
                 List<Permanent> controllerBf = gameData.playerBattlefields.get(sourceControllerId);

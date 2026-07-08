@@ -1013,8 +1013,17 @@ public class GameQueryService {
                 return true;
             }
         }
-        if (computeStaticBonus(gameData, target).protectionColors().contains(sourceColor)) {
+        StaticBonus bonus = computeStaticBonus(gameData, target);
+        if (bonus.protectionColors().contains(sourceColor)) {
             return true;
+        }
+        // Protection granted by another permanent's static effect (e.g. Favor of the Mighty
+        // via GrantEffectEffect(ProtectionFromColorsEffect, ...)).
+        for (CardEffect effect : bonus.grantedEffects()) {
+            if (effect instanceof ProtectionFromColorsEffect protection
+                    && protection.colors().contains(sourceColor)) {
+                return true;
+            }
         }
         if (target.getChosenColor() != null && target.getChosenColor() == sourceColor) {
             return true;
@@ -1023,6 +1032,28 @@ public class GameQueryService {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Returns {@code true} if the given permanent is a creature with the greatest mana value
+     * among all creatures on the battlefield (across every player's battlefield). Ties allowed.
+     * Used by Favor of the Mighty.
+     */
+    public boolean hasGreatestManaValueAmongAllCreatures(GameData gameData, Permanent permanent) {
+        if (gameData == null || !isCreature(gameData, permanent)) {
+            return false;
+        }
+        int greatest = -1;
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+            for (Permanent candidate : battlefield) {
+                if (isCreature(gameData, candidate)) {
+                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                }
+            }
+        }
+        return permanent.getCard().getManaValue() == greatest;
     }
 
     /**
