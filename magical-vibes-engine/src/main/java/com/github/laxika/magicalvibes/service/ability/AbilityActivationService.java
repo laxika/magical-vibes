@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
+import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChargeCountersFromSourceCost;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
@@ -641,6 +642,21 @@ public class AbilityActivationService {
 
         // Compute targeting tax from effects like Kopala, Warden of Waves (feeds the mana affordability check)
         int targetingTax = castingCostService.getTargetingSubtypeTax(gameData, playerId, targetId, targetIds);
+
+        // Apply per-counter generic cost reduction (e.g. Diary of Dreams: costs {1} less per page counter).
+        // Threaded through the additional-generic-cost path as a negative value, floored so the generic
+        // portion of the cost never drops below zero; feeds both the affordability check and payment.
+        if (abilityCost != null) {
+            for (CardEffect e : abilityEffects) {
+                if (e instanceof ReduceActivationCostPerCounterEffect reduce) {
+                    int genericCost = new ManaCost(abilityCost).getGenericCost();
+                    int reduction = Math.min(
+                            permanent.getCounterCount(reduce.counterType()) * reduce.reductionPerCounter(),
+                            genericCost);
+                    targetingTax -= reduction;
+                }
+            }
+        }
 
         // All state-based legality checks, shared with the AI's dry-run query. Nothing is mutated
         // until every check (including targeting below) has passed, so an illegal activation

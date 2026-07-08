@@ -23,6 +23,7 @@ public sealed interface DynamicAmount permits
         Divided,
         EventValue,
         Fixed,
+        FixedIfControlledCreaturesTotalToughnessAtLeast,
         GreatestPowerAmongControlled,
         ImprintedCreaturePower,
         ImprintedCreatureToughness,

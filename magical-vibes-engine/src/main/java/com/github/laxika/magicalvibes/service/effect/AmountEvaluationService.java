@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfControlledCreaturesTotalToughnessAtLeast;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreaturePower;
 import com.github.laxika.magicalvibes.model.amount.ImprintedCreatureToughness;
@@ -64,6 +65,8 @@ public class AmountEvaluationService {
         return switch (amount) {
             case Fixed f ->
                     f.value();
+            case FixedIfControlledCreaturesTotalToughnessAtLeast a ->
+                    totalToughnessOfControlledCreatures(gameData, ctx) >= a.minTotalToughness() ? a.amount() : 0;
             case XValue ignored ->
                     ctx.xValue();
             case ManaSpentToCast ignored ->
@@ -213,6 +216,23 @@ public class AmountEvaluationService {
             List<Card> hand = gameData.playerHands.get(playerId);
             if (hand != null) {
                 total += hand.size();
+            }
+        }
+        return total;
+    }
+
+    private int totalToughnessOfControlledCreatures(GameData gameData, AmountContext ctx) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
+        if (battlefield == null) return 0;
+        int total = 0;
+        for (Permanent permanent : battlefield) {
+            if (gameQueryService.isCreature(gameData, permanent)) {
+                // In static evaluation, sum intrinsic toughness so we never call computeStaticBonus
+                // (which could recurse back into the amount being computed). At cast time
+                // (staticEvaluation=false), use full effective toughness so anthems count.
+                total += ctx.staticEvaluation()
+                        ? permanent.getEffectiveToughness()
+                        : gameQueryService.getEffectiveToughness(gameData, permanent);
             }
         }
         return total;

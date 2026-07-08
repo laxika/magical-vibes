@@ -19,6 +19,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.condition.CardsLeftGraveyardThisTurn;
+import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
@@ -1506,6 +1508,34 @@ public class StepTriggerService {
                             gameBroadcastService.logAndBroadcast(gameData, logEntry);
                             log.info("Game {} - {} controller end-step graveyard-target trigger queued", gameData.id, perm.getCard().getName());
                         } else if (wrapped.canTargetPermanent() || wrapped.canTargetPlayer()) {
+                            gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
+                                    perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
+                        } else {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    perm.getCard(),
+                                    activePlayerId,
+                                    perm.getCard().getName() + "'s end step ability",
+                                    new ArrayList<>(List.of(wrapped)),
+                                    null,
+                                    perm.getId()
+                            ));
+                            String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                            log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
+                        }
+                    } else if (effect instanceof ConditionalEffect conditional
+                            && (conditional.condition() instanceof CreatureDiedUnderYourControlThisTurn
+                                || conditional.condition() instanceof CardsLeftGraveyardThisTurn)) {
+                        // Intervening-if (CR 603.4): only trigger if the controller-scoped condition holds this turn
+                        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
+                                ConditionContext.forPermanent(perm, activePlayerId))) {
+                            log.info("Game {} - {} end-step trigger skipped ({} not met)",
+                                    gameData.id, perm.getCard().getName(), conditional.condition().conditionName());
+                            continue;
+                        }
+                        CardEffect wrapped = conditional.wrapped();
+                        if (wrapped.canTargetPermanent() || wrapped.canTargetPlayer()) {
                             gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
                                     perm.getCard(), activePlayerId, new ArrayList<>(List.of(wrapped)), perm.getId()));
                         } else {

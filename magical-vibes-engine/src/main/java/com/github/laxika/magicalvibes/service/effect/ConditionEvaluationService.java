@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatu
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
+import com.github.laxika.magicalvibes.model.condition.CreatureDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
@@ -88,6 +89,9 @@ public class ConditionEvaluationService {
                     isMetalcraftMet(gameData, ctx);
             case Morbid ignored ->
                     gameQueryService.isMorbidMet(gameData);
+            case CreatureDiedUnderYourControlThisTurn ignored ->
+                    ctx.controllerId() != null
+                            && gameData.creatureDeathCountThisTurn.getOrDefault(ctx.controllerId(), 0) > 0;
             case Kicked ignored ->
                     ctx.kicked();
             case NotKicked ignored ->

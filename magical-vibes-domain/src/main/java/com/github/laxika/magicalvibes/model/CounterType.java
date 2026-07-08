@@ -17,5 +17,6 @@ public enum CounterType {
     STUDY,
     WISH,
     LORE,
-    SILVER
+    SILVER,
+    PAGE
 }

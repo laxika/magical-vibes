@@ -23,6 +23,7 @@ public sealed interface Condition permits
         ControlsPermanent,
         ControlsPermanentCount,
         ControlsPermanentCountAtMost,
+        CreatureDiedUnderYourControlThisTurn,
         DefendingPlayerControlsPermanent,
         DefendingPlayerPoisoned,
         DidntAttack,

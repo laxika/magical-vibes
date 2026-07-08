@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -27,12 +29,29 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantEffectToTargetUntilEndOfTurnEffect) effect;
+
+        // Multi-target: grant the ability to each valid target (any number of target creatures).
+        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
+            for (UUID targetId : entry.getTargetIds()) {
+                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+                if (target == null) {
+                    continue; // Partially resolves — skip removed targets
+                }
+                grantTo(gameData, entry, e, target);
+            }
+            return;
+        }
+
+        // Single-target fallback
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (target == null) {
             log.info("Game {} - Target creature no longer on battlefield, effect fizzles", gameData.id);
             return;
         }
+        grantTo(gameData, entry, e, target);
+    }
 
+    private void grantTo(GameData gameData, StackEntry entry, GrantEffectToTargetUntilEndOfTurnEffect e, Permanent target) {
         target.addTemporaryTriggeredEffect(e.slot(), e.grantedEffect());
 
         String logEntry = entry.getCard().getName() + " grants a temporary " + e.slot().name()

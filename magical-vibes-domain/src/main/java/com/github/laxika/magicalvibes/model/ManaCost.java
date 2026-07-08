@@ -104,6 +104,11 @@ public class ManaCost {
         return Collections.unmodifiableMap(coloredCosts);
     }
 
+    /** The generic (colorless-symbol) portion of the cost, e.g. 5 for "{5}" or "{5}{W}". */
+    public int getGenericCost() {
+        return genericCost;
+    }
+
     public int getManaValue() {
         int total = genericCost;
         for (int count : coloredCosts.values()) {
