@@ -192,6 +192,8 @@ public class ChoiceHandlerService {
             }
         } else if (ctx.restrictedToCreatureSubtype() != null) {
             manaPool.addSubtypeCreatureMana(ctx.restrictedToCreatureSubtype(), manaColor, amount);
+        } else if (ctx.instantSorceryOnly()) {
+            manaPool.addInstantSorceryOnlyColored(manaColor, amount);
         } else {
             manaPool.add(manaColor, amount);
             if (ctx.fromCreature()) {

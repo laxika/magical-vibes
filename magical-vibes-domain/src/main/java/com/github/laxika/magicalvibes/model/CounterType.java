@@ -15,6 +15,7 @@ public enum CounterType {
     PLUS_ONE_PLUS_ONE,
     SLIME,
     STUDY,
+    STUN,
     WISH,
     LORE,
     SILVER,

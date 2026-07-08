@@ -46,8 +46,12 @@ public class PlayerInputService {
     }
 
     public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt) {
+        beginCardChoice(gameData, playerId, validIndices, prompt, false);
+    }
+
+    public void beginCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, boolean enterTapped) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.HandCardChoice(
-                playerId, new ArrayList<>(validIndices), prompt));
+                playerId, new ArrayList<>(validIndices), prompt, enterTapped));
     }
 
     public void beginTargetedCardChoice(GameData gameData, UUID playerId, List<Integer> validIndices, String prompt, UUID targetId) {

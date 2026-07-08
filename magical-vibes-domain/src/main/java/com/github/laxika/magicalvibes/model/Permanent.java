@@ -296,6 +296,13 @@ public class Permanent {
     }
 
     public void untap() {
+        // Stun counters (CR 122.1c / 701.x): if a tapped permanent would become untapped,
+        // remove a stun counter from it instead. This is the single funnel point for all
+        // untap sources (untap step, Seedborn Muse, "untap target", etc.).
+        if (this.tapped && getCounterCount(CounterType.STUN) > 0) {
+            setCounterCount(CounterType.STUN, getCounterCount(CounterType.STUN) - 1);
+            return;
+        }
         this.tapped = false;
     }
 

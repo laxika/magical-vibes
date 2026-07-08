@@ -311,9 +311,16 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         String prompt();
     }
 
-    /** Put a card from hand onto the battlefield, declinable (CARD_CHOICE). */
-    record HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
+    /**
+     * Put a card from hand onto the battlefield, declinable (CARD_CHOICE).
+     * {@code enterTapped} makes the chosen card enter the battlefield tapped (e.g. Embrace the Paradox).
+     */
+    record HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt, boolean enterTapped)
             implements PendingInteraction, HandChoice {
+
+        public HandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt) {
+            this(playerId, validIndices, prompt, false);
+        }
     }
 
     /**

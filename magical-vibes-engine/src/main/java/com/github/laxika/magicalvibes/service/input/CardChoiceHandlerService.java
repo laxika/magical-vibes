@@ -56,11 +56,13 @@ public class CardChoiceHandlerService {
         List<Integer> validIndices;
         UUID targetId;
         boolean isTargeted;
+        boolean enterTapped = false;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
             targetId = null;
             isTargeted = false;
+            enterTapped = hc.enterTapped();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -92,7 +94,7 @@ public class CardChoiceHandlerService {
             if (isTargeted) {
                 resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetId);
             } else {
-                resolveUntargetedCardChoice(gameData, player, playerId, hand, card);
+                resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped);
             }
         }
 
@@ -478,12 +480,18 @@ public class CardChoiceHandlerService {
         }
     }
 
-    private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card) {
-        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, new Permanent(card));
+    private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, boolean enterTapped) {
+        Permanent permanent = new Permanent(card);
+        if (enterTapped) {
+            permanent.tap();
+        }
+        battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
 
-        String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield.";
+        String logEntry = player.getUsername() + " puts " + card.getName() + " onto the battlefield"
+                + (enterTapped ? " tapped" : "") + ".";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} puts {} onto the battlefield", gameData.id, player.getUsername(), card.getName());
+        log.info("Game {} - {} puts {} onto the battlefield{}", gameData.id, player.getUsername(), card.getName(),
+                enterTapped ? " tapped" : "");
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
     }

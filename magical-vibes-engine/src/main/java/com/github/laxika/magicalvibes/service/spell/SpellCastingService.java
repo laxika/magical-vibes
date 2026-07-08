@@ -51,6 +51,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHa
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardsAndSeparateIntoPilesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
@@ -146,6 +147,47 @@ public class SpellCastingService {
                 .findFirst().orElse(null);
         if (cost != null) effects.removeIf(ExileNCardsFromGraveyardCost.class::isInstance);
         return cost;
+    }
+
+    private DiscardCardTypeCost extractAndRemoveDiscardCost(List<CardEffect> effects) {
+        DiscardCardTypeCost cost = (DiscardCardTypeCost) effects.stream()
+                .filter(DiscardCardTypeCost.class::isInstance)
+                .findFirst().orElse(null);
+        if (cost != null) effects.removeIf(DiscardCardTypeCost.class::isInstance);
+        return cost;
+    }
+
+    /**
+     * Pays a spell's "as an additional cost to cast this spell, discard a card" cost
+     * (e.g. Seize the Spoils). {@code discardHandCardIndex} is the index into the caster's hand
+     * as it was <em>before</em> the spell left the hand (i.e. the index the caller/UI sees), so it
+     * is adjusted for the already-removed spell at {@code spellCardIndex}. The chosen card must
+     * match the cost's predicate and cannot be the spell being cast. Fires discard triggers.
+     */
+    private void payDiscardCost(GameData gameData, Player player, Card card, DiscardCardTypeCost cost,
+                                Integer discardHandCardIndex, int spellCardIndex) {
+        if (cost == null) return;
+        UUID playerId = player.getId();
+        List<Card> hand = gameData.playerHands.get(playerId);
+        String label = cost.label() != null ? cost.label() + " card" : "a card";
+        if (discardHandCardIndex == null || discardHandCardIndex == spellCardIndex || hand == null) {
+            throw new IllegalStateException("Must discard " + label + " to cast " + card.getName());
+        }
+        // The spell has already been removed from hand at spellCardIndex, so shift indices past it down.
+        int effectiveIndex = discardHandCardIndex > spellCardIndex ? discardHandCardIndex - 1 : discardHandCardIndex;
+        if (effectiveIndex < 0 || effectiveIndex >= hand.size()) {
+            throw new IllegalStateException("Must discard " + label + " to cast " + card.getName());
+        }
+        Card toDiscard = hand.get(effectiveIndex);
+        if (cost.predicate() != null
+                && !predicateEvaluationService.matchesCardPredicate(toDiscard, cost.predicate(), toDiscard.getId())) {
+            throw new IllegalStateException("Discarded card must be " + label);
+        }
+        hand.remove(effectiveIndex);
+        graveyardService.addCardToGraveyard(gameData, playerId, toDiscard);
+        gameBroadcastService.logAndBroadcast(gameData,
+                player.getUsername() + " discards " + toDiscard.getName() + " to cast " + card.getName() + ".");
+        triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
     }
 
     private int unwrapChooseOneEffect(Card card, List<CardEffect> effects, int effectiveXValue) {
@@ -256,20 +298,28 @@ public class SpellCastingService {
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices) {
-        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, false);
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, false, null);
     }
 
     public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
                   List<Integer> exileGraveyardCardIndices, boolean kicked) {
+        playCard(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds, convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount, alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked, null);
+    }
+
+    public void playCard(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
+                  List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
+                  Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
+                  List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex) {
         List<Card> hand = gameData.playerHands.get(player.getId());
         Card attempted = !fromGraveyard && hand != null && cardIndex >= 0 && cardIndex < hand.size()
                 ? hand.get(cardIndex) : null;
         try {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
                     convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
-                    alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked);
+                    alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
+                    discardHandCardIndex);
         } catch (IllegalArgumentException | IllegalStateException e) {
             // CR 730: an illegal cast rewinds. The internal flow removes the card from hand before
             // some validations run (e.g. target-based cost reduction) — if the failed cast left the
@@ -285,7 +335,7 @@ public class SpellCastingService {
     private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
-                  List<Integer> exileGraveyardCardIndices, boolean kicked) {
+                  List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -370,6 +420,7 @@ public class SpellCastingService {
         ExileCardFromGraveyardCost exileGraveyardCost = extractAndRemoveExileGraveyardCost(filteredSpellEffects);
         ExileXCardsFromGraveyardCost exileXCardsGraveyardCost = extractAndRemoveExileXCardsFromGraveyardCost(filteredSpellEffects);
         ExileNCardsFromGraveyardCost exileNCardsGraveyardCost = extractAndRemoveExileNCardsFromGraveyardCost(filteredSpellEffects);
+        DiscardCardTypeCost discardCost = extractAndRemoveDiscardCost(filteredSpellEffects);
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
@@ -793,6 +844,7 @@ public class SpellCastingService {
             resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
             resolvedXValue = payExileXCardsFromGraveyardCost(gameData, player, card, exileXCardsGraveyardCost, exileGraveyardCardIndices, resolvedXValue);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
+            payDiscardCost(gameData, player, card, discardCost, discardHandCardIndex, cardIndex);
             KickerEffect kickerEffect = findKickerEffect(card);
             if (kicked && kickerEffect != null) {
                 payKickerCost(gameData, player, card, kickerEffect, sacrificePermanentId);

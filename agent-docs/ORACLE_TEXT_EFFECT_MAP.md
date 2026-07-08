@@ -90,6 +90,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "enchanted creature has [keyword]" | `GrantKeywordEffect(Keyword.X, GrantScope.ENCHANTED_CREATURE)` | STATIC | |
 | "equipped creature has [keyword]" | `GrantKeywordEffect(Keyword.X, GrantScope.EQUIPPED_CREATURE)` | STATIC | |
 | "other [subtype] creatures you control have [keyword]" | `GrantKeywordEffect(Keyword.X, GrantScope.OWN_CREATURES, predicate)` | STATIC | |
+| "Lands you control have '[activated ability]'" | `GrantActivatedAbilityEffect(ability, GrantScope.OWN_PERMANENTS, new PermanentIsLandPredicate())` | STATIC | Grants an activated ability to all lands you control. Resonating Lute |
+| "As an additional cost to cast this spell, discard a card" | `new DiscardCardTypeCost(null, null)` in the SPELL slot | SPELL | Paid at cast from a caller-provided hand index (`castSorceryWithDiscard` / `PlayCardRequest.discardHandCardIndex`); spell is unplayable without another card to discard. Seize the Spoils |
+| "{cost}: [effect]. Activate only if you have N or more cards in your hand." | `new ActivatedAbility(...).withMinCardsInHand(N)` | ability | Validated in `AbilityActivationService`. Resonating Lute |
 | "target creature can't be blocked this turn" | `MakeCreatureUnblockableEffect()` | SPELL | |
 | "regenerate target creature" | `RegenerateEffect(true)` | ability effect | targetsPermanent=true |
 | "regenerate CARDNAME" | `RegenerateEffect()` | ability effect | Self |
@@ -140,8 +143,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "draw a card for each creature you control" | `DrawCardEffect(new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER))` | trigger | Tishana |
 | "draw a card for each creature card in your graveyard" | `DrawCardEffect(new CardsInGraveyard(new CardTypePredicate(CREATURE), CountScope.CONTROLLER))` | SPELL | Grim Flowering |
 | "draw a card for each charge counter on [source]" | `DrawCardEffect(new CountersOnSource(CounterType.CHARGE))` | ability | Culling Dais; survives sacrifice via sourcePermanentSnapshot |
-| "target player draws N cards" | `DrawCardForTargetPlayerEffect(N)` | SPELL | |
+| "target player draws N cards" | `DrawCardForTargetPlayerEffect(N)` | SPELL | For explicit `target(player…)` groups use the 3-arg `DrawCardForTargetPlayerEffect(N, false, true)` so the group advertises a player target (unless another effect in the group already `canTargetPlayer()`) |
 | "target player draws X cards" | `DrawCardForTargetPlayerEffect(new XValue(), false, true)` | SPELL | Blue Sun's Zenith |
+| "target player draws 2ˣ cards" | `DrawTwoToTheXCardsForTargetPlayerEffect()` | SPELL | 2^X from stack xValue; target a player. Mathemagics |
 | "each player draws N cards" | `EachPlayerDrawsCardEffect(N)` | SPELL | |
 | "draw N cards, then discard M cards" | `DrawAndDiscardCardEffect(N, M)` | SPELL | Loot |
 | "discard N cards, then draw M cards" | `DiscardAndDrawCardEffect(N, M)` | SPELL | Rummage |
@@ -253,6 +257,9 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "create N 2/2 black Zombie creature tokens" | `CreateTokenEffect.blackZombie(N)` | SPELL/trigger | Static factory |
 | "create N 1/1 white Soldier creature tokens" | `CreateTokenEffect.whiteSoldier(N)` | SPELL/trigger | Static factory |
 | "create a Treasure token" | `CreateTokenEffect.ofTreasureToken(1)` | SPELL/trigger | Static factory |
+| "you may put a land/permanent card from your hand onto the battlefield tapped" | `MayEffect(new PutCardToBattlefieldEffect(predicate, "land", true))` | SPELL | `enterTapped=true` (3rd arg). Embrace the Paradox |
+| "you may put a permanent card with mana value X or less from your hand onto the battlefield tapped" | `MayEffect(new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent", true, true))` | SPELL | `enterTapped=true`, `maxManaValueBoundedByX=true` (filters hand by MV ≤ stack X). Mind into Matter |
+| "create a 0/0 green and blue Fractal token, put X +1/+1 counters where X = cards drawn this turn" | `CreateFractalTokenWithCountersFromCardsDrawnThisTurnEffect()` | SPELL | Reads `GameData.cardsDrawnThisTurn`. Fractal Anomaly |
 | "create a N/N [color] [Subtype] creature token" | `CreateTokenEffect("name", N, N, color, subtype)` | SPELL/trigger | Custom token |
 | "create a 0/0 [color] and [color] [Subtype] creature token. Put N +1/+1 counters on it" | `CreateTokenEffect("name", 0, 0, color, Set.of(colors), List.of(subtype), N)` | SPELL/trigger/ETB | `initialPlusOnePlusOneCounters` on `CreateTokenEffect` (e.g. Additive Evolution) |
 | "{X}, {T}: Create a 0/0 [color] and [color] [Subtype] creature token and put X +1/+1 counters on it" | `CreateXTokenWithXCountersEffect("name", 0, 0, color, Set.of(colors), List.of(subtype), CounterType.PLUS_ONE_PLUS_ONE)` | activated ability | X from `StackEntry.getXValue()` (e.g. Berta, Wise Extrapolator) |
@@ -284,6 +291,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "If CARDNAME was kicked, it enters the battlefield with N +1/+1 counters on it" | `ConditionalEffect(new Kicked(), new EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, new Fixed(N)))` | `ON_ENTER_BATTLEFIELD` | Pair with `KickerEffect` on STATIC. Academy Drake, Baloth Gorger, Grunn the Lonely King |
 | "Raid — CARDNAME enters the battlefield with a +1/+1 counter on it if you attacked this turn" | `ConditionalEffect(new Raid(), new EnterWithCountersEffect(PLUS_ONE_PLUS_ONE, new Fixed(1)))` | `ON_ENTER_BATTLEFIELD` | Rigging Runner, Storm Fleet Aerialist |
 | "put a +1/+1 counter on target creature" | `PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1)` | SPELL/trigger | |
+| "put a stun counter on [target]" / "if it's your turn, put a stun counter on it" | `PutCounterOnTargetPermanentEffect(CounterType.STUN)` (optionally wrapped in `ConditionalEffect(new ControllerTurn(), …)`) | SPELL/ability | Stun counters are consumed instead of untapping (handled in `Permanent.untap()`). Works in multi-target groups (a stun counter is placed on each targeted permanent — Homesickness). Rapier Wit, Homesickness |
 | "Whenever one or more +1/+1 counters are put on CARDNAME" | `AwardAnyColorManaEffect()` (or other effects) | `ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` | Fired from `PermanentCounterSupport` after each +1/+1 placement event (once per event). Used by Berta, Wise Extrapolator |
 | "put N +1/+1 counters on target creature" | `PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, N)` | SPELL/trigger | `(…, new XValue())` for "X +1/+1 counters" |
 | "put a +1/+1 counter on each creature you control" | `PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate())` | SPELL/trigger | |
@@ -335,6 +343,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "add {C} for each charge counter on it" | `AwardManaEffect(ManaColor.COLORLESS, new CountersOnSource(CounterType.CHARGE))` | ability | Shrine of Boundless Growth |
 | "add [color] equal to its power" | `AwardManaEffect(ManaColor.X, new SourcePower())` | ability/trigger | Marwyn, the Nurturer; Molten-Core Maestro |
 | "add one mana of any color" | `AwardAnyColorManaEffect()` | ON_TAP/ability/`ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT` | |
+| "add N mana of any one color. Spend this mana only to cast instant and sorcery spells." | `AwardAnyOneColorInstantSorceryOnlyManaEffect(N)` | ability | Chooses one color, adds N instant/sorcery-only mana. Handled in `ActivatedAbilityExecutionService.resolveManaAbility`. Resonating Lute (granted to lands) |
 | "add N mana of any one color" | `AwardAnyColorManaEffect(N)` | ability | |
 
 ## Prevention

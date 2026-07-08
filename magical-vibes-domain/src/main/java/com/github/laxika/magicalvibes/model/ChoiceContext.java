@@ -12,18 +12,28 @@ public sealed interface ChoiceContext {
 
     record TextChangeToWord(UUID targetId, String fromWord, boolean isColor) implements ChoiceContext {}
 
-    record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype, boolean flashbackOnly) implements ChoiceContext {
+    record ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype,
+                           boolean flashbackOnly, boolean instantSorceryOnly) implements ChoiceContext {
 
         public ManaColorChoice(UUID playerId, boolean fromCreature) {
-            this(playerId, fromCreature, 1, null, false);
+            this(playerId, fromCreature, 1, null, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount) {
-            this(playerId, fromCreature, amount, null, false);
+            this(playerId, fromCreature, amount, null, false, false);
         }
 
         public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype) {
-            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, false);
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, false, false);
+        }
+
+        public ManaColorChoice(UUID playerId, boolean fromCreature, int amount, CardSubtype restrictedToCreatureSubtype, boolean flashbackOnly) {
+            this(playerId, fromCreature, amount, restrictedToCreatureSubtype, flashbackOnly, false);
+        }
+
+        /** "Add N mana of any one color, spendable only to cast instant/sorcery spells" (e.g. Resonating Lute). */
+        public static ManaColorChoice instantSorceryOnly(UUID playerId, int amount) {
+            return new ManaColorChoice(playerId, false, amount, null, false, true);
         }
     }
 

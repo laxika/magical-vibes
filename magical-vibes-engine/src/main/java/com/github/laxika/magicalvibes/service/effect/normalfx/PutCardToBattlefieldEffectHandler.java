@@ -22,7 +22,7 @@ public class PutCardToBattlefieldEffectHandler implements NormalEffectHandlerBea
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCardToBattlefieldEffect) effect;
 
-        playerInteractionSupport.applyPutCardToBattlefield(gameData, entry.getControllerId(), e);
-    
+        playerInteractionSupport.applyPutCardToBattlefield(gameData, entry.getControllerId(), e, entry.getXValue());
+
     }
 }

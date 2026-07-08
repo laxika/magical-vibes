@@ -61,15 +61,24 @@ public class PlayerInteractionSupport {
     
     }
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect) {
+        applyPutCardToBattlefield(gameData, playerId, effect, 0);
+    }
+
+    public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect, int xValue) {
 
         List<Card> hand = gameData.playerHands.get(playerId);
         List<Integer> validIndices = new ArrayList<>();
         if (hand != null) {
             for (int i = 0; i < hand.size(); i++) {
                 Card handCard = hand.get(i);
-                if (predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), handCard.getId())) {
-                    validIndices.add(i);
+                if (!predicateEvaluationService.matchesCardPredicate(handCard, effect.predicate(), handCard.getId())) {
+                    continue;
                 }
+                // Mind into Matter: "mana value X or less".
+                if (effect.maxManaValueBoundedByX() && handCard.getManaValue() > xValue) {
+                    continue;
+                }
+                validIndices.add(i);
             }
         }
 
@@ -81,9 +90,10 @@ public class PlayerInteractionSupport {
             return;
         }
 
-        String prompt = "Choose a " + effect.label() + " card from your hand to put onto the battlefield.";
-        playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt);
-    
+        String tappedSuffix = effect.enterTapped() ? " tapped" : "";
+        String prompt = "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
+        playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped());
+
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {
 

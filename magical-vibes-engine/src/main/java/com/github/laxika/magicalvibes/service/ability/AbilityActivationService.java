@@ -1354,6 +1354,16 @@ public class AbilityActivationService {
                         + " or more " + ability.getRequiredControlledSubtype().name() + "s");
             }
         }
+
+        // Hand-size restriction (e.g. Resonating Lute's "Activate only if you have seven or more cards in your hand")
+        if (ability.getMinCardsInHandToActivate() > 0) {
+            List<Card> hand = gameData.playerHands.get(playerId);
+            int handSize = hand != null ? hand.size() : 0;
+            if (handSize < ability.getMinCardsInHandToActivate()) {
+                throw new IllegalStateException("Activate only if you have " + ability.getMinCardsInHandToActivate()
+                        + " or more cards in your hand");
+            }
+        }
     }
 
     private void validateGraveyardTimingRestrictions(GameData gameData, UUID playerId, ActivatedAbility ability) {

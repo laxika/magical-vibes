@@ -65,12 +65,14 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
             return;
         }
 
-        // Multi-group spell (e.g. River Heralds' Boon): each effect uses its own target,
-        // remapped onto entry.targetId by EffectResolutionService. A null target means the
-        // optional target for this group wasn't chosen — do nothing.
+        // Single-target group within a multi-group spell (e.g. River Heralds' Boon): this effect
+        // is bound to a group that targets exactly one permanent, remapped onto entry.targetId by
+        // EffectResolutionService. A null target means the optional target for this group wasn't
+        // chosen — do nothing. Groups that target several permanents (e.g. Homesickness's "each of
+        // them") fall through to the multi-target branch below.
         if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                 && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                && entry.getCard().getSpellTargets().size() > 1) {
+                && isSingleTargetGroupInMultiGroupSpell(entry, effect)) {
             if (entry.getTargetId() != null) {
                 placeOnTarget(gameData, entry, entry.getTargetId(), e, count);
             }
@@ -91,6 +93,24 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
             return;
         }
         placeOnTarget(gameData, entry, entry.getTargetId(), e, count);
+    }
+
+    /**
+     * True when this effect is bound to a target group that takes exactly one target and the spell
+     * has more than one target group — i.e. the effect's target has been remapped onto
+     * {@code entry.targetId} by {@code EffectResolutionService}. Mirrors the equivalent guard in
+     * {@code TapPermanentsEffectHandler} so mixed spells (a single-target group alongside a
+     * multi-target group, e.g. Homesickness) route each effect correctly.
+     */
+    private boolean isSingleTargetGroupInMultiGroupSpell(StackEntry entry, CardEffect effect) {
+        if (entry.getCard() == null) {
+            return false;
+        }
+        int targetIdx = entry.getCard().getEffectTargetIndex(effect);
+        return targetIdx >= 0
+                && entry.getCard().getSpellTargets().size() > 1
+                && targetIdx < entry.getCard().getSpellTargets().size()
+                && entry.getCard().getSpellTargets().get(targetIdx).getMaxTargets() == 1;
     }
 
     private void placeOnTarget(GameData gameData, StackEntry entry, UUID targetId,

@@ -11,9 +11,21 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>
  * Typically wrapped in a {@link MayEffect} for "you may put" wording.
  *
- * @param predicate filter for eligible cards in hand (e.g. {@code CardTypePredicate(CREATURE)},
- *                  {@code CardAllOfPredicate(CardIsHistoricPredicate, CardIsPermanentPredicate)})
- * @param label     human-readable description of the card type for prompts (e.g. "creature", "historic permanent")
+ * @param predicate               filter for eligible cards in hand (e.g. {@code CardTypePredicate(CREATURE)},
+ *                                {@code CardAllOfPredicate(CardIsHistoricPredicate, CardIsPermanentPredicate)})
+ * @param label                   human-readable description of the card type for prompts (e.g. "creature", "historic permanent")
+ * @param enterTapped             if {@code true}, the chosen card enters the battlefield tapped (e.g. Embrace the Paradox)
+ * @param maxManaValueBoundedByX  if {@code true}, only cards whose mana value is at most the spell's X value
+ *                                are eligible (e.g. Mind into Matter's "mana value X or less")
  */
-public record PutCardToBattlefieldEffect(CardPredicate predicate, String label) implements CardEffect {
+public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
+                                         boolean enterTapped, boolean maxManaValueBoundedByX) implements CardEffect {
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label) {
+        this(predicate, label, false, false);
+    }
+
+    public PutCardToBattlefieldEffect(CardPredicate predicate, String label, boolean enterTapped) {
+        this(predicate, label, enterTapped, false);
+    }
 }

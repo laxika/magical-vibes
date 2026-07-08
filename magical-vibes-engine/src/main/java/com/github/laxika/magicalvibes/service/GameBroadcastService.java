@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
@@ -310,6 +311,12 @@ public class GameBroadcastService {
                 playable.add(i);
             }
         }
+
+        // MTG rule 601.2b: "as an additional cost, discard a card" — need another card in hand to
+        // discard. The spell itself is still in hand here, so at least 2 cards are required.
+        playable.removeIf(i -> hand.get(i).getEffects(EffectSlot.SPELL).stream()
+                .anyMatch(DiscardCardTypeCost.class::isInstance) && hand.size() < 2);
+
         return playable;
     }
 

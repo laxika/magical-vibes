@@ -25,6 +25,8 @@ public class ActivatedAbility {
     private final UUID grantSourcePermanentId;
     private final CardSubtype requiredControlledSubtype;
     private final int requiredControlledSubtypeCount;
+    /** Minimum number of cards the controller must have in hand to activate (0 = no restriction). Set via {@link #withMinCardsInHand(int)}. */
+    private int minCardsInHandToActivate;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -117,9 +119,20 @@ public class ActivatedAbility {
      * Used by the static bonus system to track which permanent granted this ability.
      */
     public ActivatedAbility withGrantSource(UUID sourcePermanentId) {
-        return new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
+        ActivatedAbility copy = new ActivatedAbility(requiresTap, manaCost, effects, description, targetFilter, loyaltyCost,
                 maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
+        copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
+        return copy;
+    }
+
+    /**
+     * Fluent setter for a "activate only if you have N or more cards in your hand" restriction
+     * (e.g. Resonating Lute). Returns this ability for chaining in card constructors.
+     */
+    public ActivatedAbility withMinCardsInHand(int minCards) {
+        this.minCardsInHandToActivate = minCards;
+        return this;
     }
 
     public boolean isNeedsTarget() {
