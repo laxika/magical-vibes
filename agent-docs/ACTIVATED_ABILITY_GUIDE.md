@@ -134,7 +134,7 @@ new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
 
 // Sorcery-speed sacrifice ability
 new ActivatedAbility(false, null,
-    List.of(new SacrificeSelfCost(), new ChooseCardFromTargetHandToDiscardEffect(1, List.of())),
+    List.of(new SacrificeSelfCost(), new ChooseCardsFromTargetHandEffect(1, List.of(), HandChoiceDestination.DISCARD)),
     "Sacrifice: Target player reveals their hand...",
     ActivationTimingRestriction.SORCERY_SPEED)
 ```

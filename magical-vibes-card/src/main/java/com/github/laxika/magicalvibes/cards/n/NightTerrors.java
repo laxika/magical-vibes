@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromTargetHandToExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 
 import java.util.List;
 
@@ -12,6 +13,6 @@ import java.util.List;
 public class NightTerrors extends Card {
 
     public NightTerrors() {
-        addEffect(EffectSlot.SPELL, new ChooseCardFromTargetHandToExileEffect(1, List.of(CardType.LAND)));
+        addEffect(EffectSlot.SPELL, new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE));
     }
 }
