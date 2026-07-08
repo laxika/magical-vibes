@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
 
 import java.util.ArrayList;
@@ -87,6 +88,14 @@ public final class EffectResolution {
             collectTargetTypes(e, result);
         }
         for (CardEffect e : etbEffects) {
+            // A "may" ETB ability (e.g. Leonin Relic-Warder's "you may exile target
+            // artifact or enchantment") chooses its target when the trigger is put on the
+            // stack after the permanent enters (CR 603.3d), never at cast time. It must not
+            // make the spell report a cast-time target requirement — otherwise the permanent
+            // couldn't be cast when no legal target exists, which is illegal (CR 601.2c only
+            // the spell's own targets gate casting). The trigger still resolves its own
+            // targeting after entry, doing nothing when there are no legal targets.
+            if (e instanceof MayEffect) continue;
             if (e.canTargetPlayer()) result.add(TargetType.PLAYER);
             if (e.canTargetPermanent()) result.add(TargetType.PERMANENT);
         }
