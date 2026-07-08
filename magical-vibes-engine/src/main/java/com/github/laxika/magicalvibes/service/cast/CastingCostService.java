@@ -16,6 +16,12 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TapUntappedPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
@@ -358,5 +364,53 @@ public class CastingCostService {
                         tapCost.get().filter(), FilterContext.of(gameData).withSourceControllerId(playerId)))
                 .count();
         return matchingCount >= tapCost.get().count();
+    }
+
+    /**
+     * CR 601.2b/601.2f: can the player currently satisfy every non-mana additional cost baked into
+     * the card's SPELL effects that must be paid from a zone other than the mana pool — sacrifice
+     * costs (creature / artifact / filtered-permanent) and graveyard-exile costs (a single card, a
+     * fixed count, or all-cards-for-X)? Pure query over the player's battlefield and graveyard;
+     * never mutates state.
+     *
+     * <p>This is the single source of truth for the "additional costs are payable" gate that
+     * {@code SpellCastingService.playCard} enforces card-by-card at cast time. Callers that offer a
+     * spell before the player commits to it (the playable-card previews and the AI's move
+     * generation) consult it so they never advertise a spell whose additional costs can't be paid.
+     * It deliberately does NOT re-check the mana affordability, targeting, or ExileN 601.2b gates
+     * that {@code GameBroadcastService.isCardPlayable} already covers (ExileN is included here too
+     * so the query stands alone as a complete additional-cost check).
+     */
+    public boolean canPayAdditionalSpellCosts(GameData gameData, UUID playerId, Card card) {
+        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(playerId, List.of());
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(playerId, List.of());
+        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+            switch (effect) {
+                case SacrificeCreatureCost ignored -> {
+                    if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gameData, p))) return false;
+                }
+                case SacrificeArtifactCost ignored -> {
+                    if (battlefield.stream().noneMatch(p -> gameQueryService.isArtifact(gameData, p))) return false;
+                }
+                case SacrificePermanentCost sacCost -> {
+                    if (battlefield.stream().noneMatch(p ->
+                            predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()))) return false;
+                }
+                case ExileNCardsFromGraveyardCost cost -> {
+                    long matchingCount = graveyard.stream()
+                            .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
+                            .count();
+                    if (matchingCount < cost.count()) return false;
+                }
+                case ExileCardFromGraveyardCost cost -> {
+                    if (graveyard.stream().noneMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
+                }
+                case ExileXCardsFromGraveyardCost ignored -> {
+                    if (graveyard.isEmpty()) return false;
+                }
+                default -> { }
+            }
+        }
+        return true;
     }
 }

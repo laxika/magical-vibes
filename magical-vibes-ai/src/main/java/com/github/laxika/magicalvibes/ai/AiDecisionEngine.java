@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.TapXPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
@@ -446,10 +445,9 @@ public abstract class AiDecisionEngine {
         if (!canAffordSpell(gameData, card, virtualPool)) {
             return false;
         }
-        if (!canPaySacrificeCosts(gameData, card)) {
-            return false;
-        }
-        if (!canPayGraveyardExileCosts(gameData, card)) {
+        // Non-mana additional costs (sacrifice / graveyard-exile) — the engine's single
+        // satisfiability query, shared with the MCTS simulator so the two can never disagree.
+        if (!castingCostService.canPayAdditionalSpellCosts(gameData, aiPlayer.getId(), card)) {
             return false;
         }
         // For X spells that exile creatures from graveyard, ensure at least 1 creature exists
@@ -492,54 +490,6 @@ public abstract class AiDecisionEngine {
         return castingCostService.getTargetingSubtypeTax(gameData, aiPlayer.getId(), targetId, multiTargetIds);
     }
 
-    /**
-     * Checks whether the player's battlefield can satisfy all sacrifice costs
-     * in the card's SPELL effects (e.g. SacrificeArtifactCost, SacrificeCreatureCost,
-     * SacrificePermanentCost). Returns false if any sacrifice cost cannot be paid.
-     */
-    protected boolean canPaySacrificeCosts(GameData gameData, Card card) {
-        List<Permanent> battlefield = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof SacrificeArtifactCost) {
-                boolean hasArtifact = battlefield.stream()
-                        .anyMatch(p -> gameQueryService.isArtifact(gameData, p));
-                if (!hasArtifact) return false;
-            } else if (effect instanceof SacrificeCreatureCost) {
-                boolean hasCreature = battlefield.stream()
-                        .anyMatch(p -> gameQueryService.isCreature(gameData, p));
-                if (!hasCreature) return false;
-            } else if (effect instanceof SacrificePermanentCost sacCost) {
-                boolean hasMatch = battlefield.stream()
-                        .anyMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, sacCost.filter()));
-                if (!hasMatch) return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Checks whether the player's graveyard can satisfy all graveyard exile costs
-     * in the card's SPELL effects (e.g. ExileNCardsFromGraveyardCost, ExileCardFromGraveyardCost).
-     * Returns false if any graveyard exile cost cannot be paid.
-     */
-    protected boolean canPayGraveyardExileCosts(GameData gameData, Card card) {
-        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(aiPlayer.getId(), List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
-                long matchingCount = graveyard.stream()
-                        .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
-                        .count();
-                if (matchingCount < cost.count()) return false;
-            } else if (effect instanceof ExileCardFromGraveyardCost cost) {
-                boolean hasMatch = graveyard.stream()
-                        .anyMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()));
-                if (!hasMatch) return false;
-            } else if (effect instanceof ExileXCardsFromGraveyardCost) {
-                if (graveyard.isEmpty()) return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * Returns the maximum X value allowed by graveyard creature requirements.

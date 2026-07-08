@@ -23,9 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCre
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -126,30 +124,35 @@ public class GameSimulator {
                     ManaPool virtualPool = manaManager.buildVirtualManaPool(gd, playerId);
                     for (int i = 0; i < hand.size(); i++) {
                         Card card = hand.get(i);
+                        // Policy (which legal moves to try): rollouts don't sequence land drops
+                        // here and only cast at sorcery speed, so lands and instants are skipped.
                         if (card.hasType(CardType.LAND)) continue;
                         if (card.hasType(CardType.INSTANT)) continue;
+                        // The simulator's downstream mana-payment / X helpers dereference the mana
+                        // cost, so costless alternate-cast cards are out of its scope.
                         if (card.getManaCost() == null) continue;
-                        ManaCost cost = new ManaCost(card.getManaCost());
-                        if (cost.hasX()) {
-                            if (!cost.canPay(virtualPool, 1)) continue;
-                        } else {
-                            if (!cost.canPay(virtualPool)) continue;
-                        }
-                        if (card.isRequiresCreatureMana() && !cost.canPayCreatureOnly(virtualPool)) {
+                        boolean hasX = new ManaCost(card.getManaCost()).hasX();
+                        // Legality/affordability is the engine's call: isCardPlayable covers mana
+                        // (every cost modifier / alternative-cost route, requiresCreatureMana),
+                        // timing, spell limits, target availability, ExileN and legendary-sorcery
+                        // rules. X>=1 stays AI policy — passed as the extra generic requirement,
+                        // mirroring AiDecisionEngine.canAffordSpell.
+                        int minXPolicy = hasX ? 1 : 0;
+                        if (!gameBroadcastService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)) {
                             continue;
                         }
-                        // Skip cards whose additional costs can't be paid in simulation
-                        if (!canPayAdditionalCosts(gd, playerId, card)) {
+                        // Non-mana additional costs (sacrifice / graveyard-exile) must be payable.
+                        if (!castingCostService.canPayAdditionalSpellCosts(gd, playerId, card)) {
                             continue;
                         }
-                        // For targeted spells, try to find a target
+                        // For targeted spells, try to find a target (policy: which target to try)
                         UUID targetId = null;
                         if (EffectResolution.needsTarget(card) || card.isAura()) {
                             targetId = findBestTarget(gd, card, playerId);
                             if (targetId == null) continue; // no valid target
                         }
                         int xValue = 0;
-                        if (cost.hasX()) {
+                        if (hasX) {
                             xValue = calculateSmartX(gd, card, targetId, virtualPool);
                             if (xValue <= 0) continue;
                         }
@@ -674,36 +677,6 @@ public class GameSimulator {
             }
             if (canPayNow) return;
         }
-    }
-
-    /**
-     * Checks whether the player can pay all additional (non-mana) costs for the card,
-     * including graveyard exile costs and sacrifice costs.
-     */
-    private boolean canPayAdditionalCosts(GameData gd, UUID playerId, Card card) {
-        List<Card> graveyard = gd.playerGraveyards.getOrDefault(playerId, List.of());
-        List<Permanent> battlefield = gd.playerBattlefields.getOrDefault(playerId, List.of());
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
-            if (effect instanceof ExileNCardsFromGraveyardCost cost) {
-                long matchingCount = graveyard.stream()
-                        .filter(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))
-                        .count();
-                if (matchingCount < cost.count()) return false;
-            } else if (effect instanceof ExileCardFromGraveyardCost cost) {
-                boolean hasMatch = graveyard.stream()
-                        .anyMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()));
-                if (!hasMatch) return false;
-            } else if (effect instanceof ExileXCardsFromGraveyardCost) {
-                if (graveyard.isEmpty()) return false;
-            } else if (effect instanceof SacrificeCreatureCost) {
-                if (battlefield.stream().noneMatch(p -> gameQueryService.isCreature(gd, p))) return false;
-            } else if (effect instanceof SacrificeArtifactCost) {
-                if (battlefield.stream().noneMatch(p -> gameQueryService.isArtifact(gd, p))) return false;
-            } else if (effect instanceof SacrificePermanentCost sacCost) {
-                if (battlefield.stream().noneMatch(p -> predicateEvaluationService.matchesPermanentPredicate(gd, p, sacCost.filter()))) return false;
-            }
-        }
-        return true;
     }
 
     /**

@@ -1038,3 +1038,86 @@ GameData.X(id))` (record value equality); `.isEmpty()`/`.hasSize`/`.getFirst().f
 Dominaria, Tiana, Protean Hydra, Jace Cunning Castaway, Sudden Disappearance, Valduk, Postmortem
 Lunge, Gruesome Encore, Choreographed Sparks, Time Stop, Venser, Glimmerpoint Stag, Oath of
 Teferi, Conciliator's Duelist).
+
+## Stage 8 — DONE: the THIRD castability copy (GameSimulator) delegated to engine queries
+
+Goal: kill the last hand-rolled "can this spell be cast / is this cost payable" copy, in
+`magical-vibes-ai/.../ai/simulation/GameSimulator.java` (the headless MCTS move generator).
+Two prior drift-kill passes already unified the ability validator
+(`AbilityActivationService.validateActivationLegality`) and the outer-AI spell query
+(`GameBroadcastService.isCardPlayable`, delegated to by
+`AiDecisionEngine.isSpellCastable/canAffordSpell`); GameSimulator was the remaining copy.
+
+**What delegated to what:**
+- **Mana affordability in move generation** (`getLegalActions`, the castable-spell loop): the
+  hand-rolled `ManaCost.canPay` / `canPay(pool,1)` / `canPayCreatureOnly` checks are gone.
+  It now calls `gameBroadcastService.isCardPlayable(gd, playerId, card, virtualPool, minXPolicy)`
+  — the same engine query the outer AI uses (mana with every cost modifier / alternative-cost
+  route, `requiresCreatureMana`, timing, spell limits, target availability, ExileN 601.2b and
+  the legendary-sorcery rule). The virtual pool is still built by `AiManaManager
+  .buildVirtualManaPool` (unchanged), exactly as `AiDecisionEngine.canAffordSpell` feeds it a
+  hypothetical pool. The `X>=1` filter stays AI **policy** (passed as the extra generic
+  requirement `minXPolicy`, mirroring `AiDecisionEngine.canAffordSpell`); `calculateSmartX`
+  (which X to try) stays policy too.
+- **Non-mana additional-cost satisfiability**: GameSimulator's `canPayAdditionalCosts`
+  (sacrifice creature/artifact/permanent + graveyard-exile one/N/X) is **deleted**. Both it and
+  `AiDecisionEngine`'s equivalent pair (`canPaySacrificeCosts` + `canPayGraveyardExileCosts`,
+  also **deleted**) now delegate to one new engine query.
+
+**Engine query extracted** — `CastingCostService.canPayAdditionalSpellCosts(gameData, playerId,
+card)` (pure, no mutation): scans the card's SPELL effects and answers whether the player's
+battlefield/graveyard can satisfy every non-mana additional cost (CR 601.2b/601.2f) —
+`SacrificeCreatureCost`/`SacrificeArtifactCost` (via `GameQueryService.isCreature/isArtifact`),
+`SacrificePermanentCost` (via `PredicateEvaluationService.matchesPermanentPredicate`),
+`ExileNCardsFromGraveyardCost`/`ExileCardFromGraveyardCost`/`ExileXCardsFromGraveyardCost`.
+This is the byte-for-byte union of the two AI copies it replaces (identical predicates), now
+owned by the engine and unit-tested (`CastingCostServiceTest.CanPayAdditionalSpellCostsTests`,
+8 cases). `SpellCastingService.playCard` was **not** changed: it validates the *specific*
+sacrifice-id / exile-index payment the caller submits (with detailed per-cost error texts), a
+distinct concern from upfront satisfiability — folding the new query in would risk changing its
+error behavior for no gain. So the query is the shared *pre-offer* gate for the two advertise-a-
+spell paths (AI move-gen + `isSpellCastable`); the *pay-the-cost* path stays as-is (scope note).
+
+**Left as move-performance / policy (justified `ManaCost` / `Sacrifice*Cost` /
+`Exile*GraveyardCost` grep hits that remain in GameSimulator):**
+- `tapLandsForCard` + `tapOrActivateMana` + `scoreAbilityForSim` — *perform* the simulated mana
+  taps (they move, they don't judge legality). Explicitly in scope to keep (task step 5).
+- `calculateSmartX` — computes which X to try (policy).
+- `computeSacrificeTarget` (`SacrificeCreature/Artifact/PermanentCost`) and
+  `computeExileNGraveyardIndices` (`ExileNCardsFromGraveyardCost`) — compute *which* permanent /
+  graveyard cards to pay with, then hand them to `gameService.playCard`. Move-performance, not a
+  legality judgment; their candidate filtering already uses the same engine predicates
+  (`isCreature`/`isArtifact`/`matchesPermanentPredicate`) the validator uses.
+- The `card.getManaCost() == null` skip in move-gen is kept: it is not an affordability judgment
+  but a guard for the simulator's downstream mana-payment/X helpers, which dereference the cost
+  (costless alternate-cast cards are out of the simulator's scope).
+
+**Ability activation (task step 4): no-op.** `GameSimulator.getLegalActions` never generates
+activated-ability moves (verified — `activateAbility` appears only in `applyAction` /
+`resolveInteraction` / `tapOrActivateMana`, all move-performance). There was no hand-rolled
+ability-affordability judgment in move generation to delegate.
+
+**Drift disagreements found:** none that changed a test expectation. GameSimulator's old
+`ManaCost.canPay` path and the engine's `isCardPlayable` agree on every case the AI suites and
+the 20-game fuzz batch exercised; the difference is only that `isCardPlayable` *additionally*
+rejects illegal moves the old copy would have generated (timing / spell-limit / no-legal-target /
+legendary-sorcery), which is the whole point (the engine is authoritative). No previously-legal
+move became illegal in a way any test caught. The **third castability copy is now dead.**
+
+**AI lockstep:** `AiDecisionEngine.isSpellCastable` now calls the engine query instead of its own
+two methods (removing the AI's *second* copy of additional-cost logic — a bonus drift kill).
+The mock-wired AI unit tests get the new delegation handled centrally in
+`AiTestPlayabilityStub.install`, which gives the mocked `castingCostService
+.canPayAdditionalSpellCosts` a **board-driven** answer (scans the card's SPELL cost effects
+against the player's battlefield/graveyard), mirroring the real engine query the way that helper
+already mirrors `isCardPlayable`'s affordability. A blanket `true` was wrong: the Easy/Hard
+"skip the sacrifice-cost spell when there's no creature/artifact to sacrifice" tests must still
+see the AI decline. No GameSimulator constructor change was needed — it already held both
+`gameBroadcastService` and `castingCostService`.
+
+**Tests run green** (targeted; full suite left to the user): `CastingCostServiceTest` (incl. the
+8 new cases), `MCTSEngineTest` (minus the documented pre-existing "MCTS selects removal over
+creature when opponent has a blocker" failure, which reproduces identically on a clean checkout),
+`HardAiDecisionEngineTest`, `MediumAiDecisionEngineTest`, `EasyAiDecisionEngineTest`,
+`AiDecisionEngineTest`, `CombatSimulatorTest`, `GameSimulatorTest`, and the 20-game
+`RandomAiFuzzTest` batch.

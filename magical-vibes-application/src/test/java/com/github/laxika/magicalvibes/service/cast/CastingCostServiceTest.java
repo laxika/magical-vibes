@@ -22,6 +22,12 @@ import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostForCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -719,6 +725,122 @@ class CastingCostServiceTest {
             gd.playerBattlefields.get(player1Id).add(merfolkPermanent);
 
             assertThat(svc.getTargetingSubtypeTax(gd, player1Id, merfolkPermanent.getId(), null)).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("canPayAdditionalSpellCosts — non-mana additional cost satisfiability")
+    class CanPayAdditionalSpellCostsTests {
+
+        private Card spellWith(com.github.laxika.magicalvibes.model.effect.CardEffect... costs) {
+            Card card = new Card();
+            card.setName("Spell");
+            card.setType(CardType.SORCERY);
+            for (com.github.laxika.magicalvibes.model.effect.CardEffect cost : costs) {
+                card.addEffect(EffectSlot.SPELL, cost);
+            }
+            return card;
+        }
+
+        private Card graveyardCard(String name, CardType type) {
+            Card c = new Card();
+            c.setName(name);
+            c.setType(type);
+            return c;
+        }
+
+        @Test
+        @DisplayName("No additional costs → always payable")
+        void noAdditionalCosts() {
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spellWith())).isTrue();
+        }
+
+        @Test
+        @DisplayName("SacrificeCreatureCost — false with no creature, true with one")
+        void sacrificeCreatureCost() {
+            Card spell = spellWith(new SacrificeCreatureCost());
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            Permanent creature = new Permanent(graveyardCard("Bear", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("SacrificeArtifactCost — false with no artifact, true with one")
+        void sacrificeArtifactCost() {
+            Card spell = spellWith(new SacrificeArtifactCost());
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            Permanent artifact = new Permanent(graveyardCard("Trinket", CardType.ARTIFACT));
+            gd.playerBattlefields.get(player1Id).add(artifact);
+            when(gameQueryService.isArtifact(gd, artifact)).thenReturn(true);
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("SacrificePermanentCost — uses the predicate to find a matching sacrifice")
+        void sacrificePermanentCost() {
+            var filter = new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate();
+            Card spell = spellWith(new SacrificePermanentCost(filter, "a creature"));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            Permanent perm = new Permanent(graveyardCard("Bear", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(perm);
+            when(predicateEvaluationService.matchesPermanentPredicate(gd, perm, filter)).thenReturn(true);
+
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("ExileNCardsFromGraveyardCost — needs N cards of the required type")
+        void exileNCardsFromGraveyardCost() {
+            Card spell = spellWith(new ExileNCardsFromGraveyardCost(2, CardType.CREATURE));
+            gd.playerGraveyards.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            gd.playerGraveyards.get(player1Id).add(graveyardCard("Bolt", CardType.INSTANT));
+            // Only one creature card — not enough
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerGraveyards.get(player1Id).add(graveyardCard("Elf", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("ExileCardFromGraveyardCost — needs a matching card in graveyard")
+        void exileCardFromGraveyardCost() {
+            Card spell = spellWith(new ExileCardFromGraveyardCost(CardType.CREATURE));
+            gd.playerGraveyards.get(player1Id).add(graveyardCard("Bolt", CardType.INSTANT));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerGraveyards.get(player1Id).add(graveyardCard("Bear", CardType.CREATURE));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("ExileXCardsFromGraveyardCost — needs a non-empty graveyard")
+        void exileXCardsFromGraveyardCost() {
+            Card spell = spellWith(new ExileXCardsFromGraveyardCost());
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerGraveyards.get(player1Id).add(graveyardCard("Bolt", CardType.INSTANT));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Every additional cost must be satisfiable — one unmet fails the whole check")
+        void allCostsMustBeMet() {
+            Card spell = spellWith(new SacrificeCreatureCost(), new ExileXCardsFromGraveyardCost());
+            Permanent creature = new Permanent(graveyardCard("Bear", CardType.CREATURE));
+            gd.playerBattlefields.get(player1Id).add(creature);
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            // Sacrifice is payable but the graveyard is empty → overall false
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isFalse();
+
+            gd.playerGraveyards.get(player1Id).add(graveyardCard("Bolt", CardType.INSTANT));
+            assertThat(svc.canPayAdditionalSpellCosts(gd, player1Id, spell)).isTrue();
         }
     }
 }
