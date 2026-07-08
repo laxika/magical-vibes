@@ -34,7 +34,11 @@
   --card-lift: -4px;
 }
 
-/* Reserve the rotated footprint: (231 - 165) / 2 = 33px on each axis. */
+/* Reserve the rotated footprint: (231 - 165) / 2 = 33px on each axis, so a
+   tapped card stays FULL SIZE and neighbours shift aside to make room
+   (MTGO-style) rather than being overlapped (rejected) or the card shrinking
+   to fit its upright box (rejected as too small). The fit model mirrors this
+   via TAPPED_CARD_WIDTH. */
 :host(.is-tapped) {
   --card-tap-rotate: 90deg;
   margin: -33px 33px;

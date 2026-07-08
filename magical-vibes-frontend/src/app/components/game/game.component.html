@@ -364,6 +364,7 @@
                 [class.blocking]="ip.perm.blocking"
                 [class.combat-nudge]="ip.perm.attacking || ip.perm.blocking"
                 [class.block-target]="isBlockTarget(ip.originalIndex)"
+                [class.blocked-attacker]="declaringBlockers() && isAttackerBlocked(ip.originalIndex)"
                 [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (choice.damage.distributingDamage && ip.perm.attacking)"
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
@@ -374,7 +375,10 @@
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()">
                 @if (ip.perm.attacking) { <div class="card-combat-badge attacking-badge">Attacking</div> }
-                @if (ip.perm.blocking) { <div class="card-combat-badge blocking-badge">Blocking</div> }
+                @if (ip.perm.blocking) { <div class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, false) }}</div> }
+                @if (declaringBlockers() && isAttackerBlocked(ip.originalIndex)) {
+                  <div class="card-combat-badge blocked-badge">Blocked</div>
+                }
                 @if (declaringBlockers() && mustBeBlockedAttackerIndices().has(ip.originalIndex)) {
                   <div class="card-combat-badge must-block-badge">Must Block</div>
                 }
@@ -453,8 +457,13 @@
                 (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()">
-                @if (ip.perm.attacking) { <div class="card-combat-badge attacking-badge">Attacking</div> }
-                @if (ip.perm.blocking) { <div class="card-combat-badge blocking-badge">Blocking</div> }
+                @if (isAttackingCreature(ip.originalIndex, true)) { <div class="card-combat-badge attacking-badge">Attacking</div> }
+                @if (declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
+                  <div class="card-combat-badge attack-target-badge"
+                    title="Click to change attack target"
+                    (click)="$event.stopPropagation(); cycleAttackTarget(ip.originalIndex)">&#8594; {{ getAttackTargetName(ip.originalIndex) }}</div>
+                }
+                @if (isBlockingCreature(ip.originalIndex, true)) { <div class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, true) }}</div> }
                 @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
                   <div class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
                 }

@@ -132,9 +132,11 @@
   cursor: pointer;
 }
 
+/* Red like a committed attacker (vs the gold "can attack" outline), so the
+   attack is readable while it is being declared, not only after confirming. */
 .card.selected-attacker {
-  outline: 2px solid var(--color-gold);
-  box-shadow: 0 0 16px rgba(200, 169, 81, 0.7);
+  outline: 3px solid #c04040;
+  box-shadow: 0 0 16px rgba(192, 64, 64, 0.7);
   cursor: pointer;
 }
 
@@ -156,6 +158,14 @@
 }
 
 .card.assigned-blocker {
+  outline: 2px solid #5878a0;
+  box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
+}
+
+/* An attacker that already has a blocker assigned during declaration.
+   Declared before .block-target so the dashed "assign here" cue wins while a
+   blocker is being pointed. */
+.card.blocked-attacker {
   outline: 2px solid #5878a0;
   box-shadow: 0 0 12px rgba(88, 120, 160, 0.5);
 }
@@ -192,6 +202,10 @@
   text-transform: uppercase;
   font-family: var(--font-display);
   z-index: 10;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .attacking-badge {
@@ -199,9 +213,25 @@
   color: var(--color-parchment);
 }
 
+/* Below the Attacking badge while declaring: which player/planeswalker this
+   attacker is pointed at; clicking cycles through the available targets. */
+.attack-target-badge {
+  top: 14px;
+  background: #b8860b;
+  color: var(--color-parchment);
+  cursor: pointer;
+}
+
 .blocking-badge {
   background: var(--color-blue-primary);
   color: var(--color-parchment);
+}
+
+.blocked-badge {
+  background: var(--color-blue-primary);
+  color: var(--color-parchment);
+  left: auto;
+  right: -8px;
 }
 
 .damage-badge {

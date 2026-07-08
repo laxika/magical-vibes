@@ -281,6 +281,9 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  /* Safety: card visuals (lift/rotate transforms) must never grow a
+     horizontal scrollbar. */
+  overflow-x: hidden;
   scrollbar-gutter: stable;
   scrollbar-color: #c4a06a #e8d5b0;
   scrollbar-width: thin;
@@ -336,6 +339,12 @@
      never shrinks: the rows don't shrink either, so without this the divider
      would be the only flex-shrinkable item and collapse to 0px on a full board. */
   flex-shrink: 0;
+  /* Permanent 30px combat corridor on each side: attacking/blocking creatures
+     advance into it (the ±30px --card-lift nudge) and land exactly on the line
+     instead of overlapping the opposing row. Kept in and out of combat so the
+     zoom never changes when combat starts; mirrored by COMBAT_CORRIDOR in the
+     fit model. */
+  margin: 30px 0;
   background: var(--color-border-tan);
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
@@ -431,14 +440,18 @@
   }
 }
 
-/* Stack overlap sized in card-zoom units: cards are 165px (231px tapped)
-   wide at zoom 1, leaving a ~45px (~31px tapped) strip of each land visible. */
-.land-stack .land-stack-item:not(:first-child) {
+/* Stack overlap sized in card-zoom units: each land keeps a 32px strip of its
+   box visible. The pull-back depends on the PREVIOUS item's width — an
+   upright box is 165px, a tapped one reserves the rotated 231px footprint —
+   so the strip stays constant in any tapped/untapped mix (stacks are grouped
+   by name only; members rotate in place). Mirrored by STACK_STRIP /
+   TAPPED_CARD_WIDTH in the fit model. */
+.land-stack .land-stack-item + .land-stack-item {
   margin-left: calc(var(--land-zoom, 0.9) * -133px);
 }
 
-.land-stack:has(.tapped) .land-stack-item:not(:first-child) {
-  margin-left: calc(var(--land-zoom, 0.9) * -200px);
+.land-stack .land-stack-item:has(.tapped) + .land-stack-item {
+  margin-left: calc(var(--land-zoom, 0.9) * -199px);
 }
 
 .land-stack .land-stack-item:hover {

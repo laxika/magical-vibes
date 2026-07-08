@@ -299,9 +299,13 @@ export class GameComponent implements OnInit, OnDestroy {
      battlefields into the area's flex-allocated size. */
   private static readonly CARD_HEIGHT = 231;
   private static readonly CARD_WIDTH = 165;
+  /* A tapped card reserves its full rotated footprint (full size, neighbours
+     shift aside — overlapping or shrinking tapped cards were both rejected).
+     Widths are therefore tap-accurate: tapping can re-wrap a crowded row and,
+     rarely, change the side's zoom — the accepted tradeoff. */
   private static readonly TAPPED_CARD_WIDTH = 231;
+  /* Box offset between stacked basic lands: the visible strip of each land. */
   private static readonly STACK_STRIP = 32;
-  private static readonly TAPPED_STACK_STRIP = 31;
   private static readonly ROW_GAP = 10;
   /* Attached auras peek out from under their host: 50px to the side
      (margin-left) and 41px above (231px card minus the -190px overlap). */
@@ -320,6 +324,10 @@ export class GameComponent implements OnInit, OnDestroy {
   private static readonly REVEALED_ROW_HEIGHT = 250;
   /* The divider between the two halves; grows to a visible red line during combat. */
   private static readonly DIVIDER_HEIGHT = 3;
+  /* Clear strip between each side and the divider (the divider's CSS margin)
+     that attacking/blocking creatures advance into via the ±30px combat nudge,
+     so combat cards never overlap the opposing row. */
+  private static readonly COMBAT_CORRIDOR = 30;
   /* Low floor so an unbalanced board (one side's content is much taller than
      half) scales its cards down to stay inside its half instead of scrolling. */
   private static readonly MIN_BATTLEFIELD_ZOOM = 0.3;
@@ -378,10 +386,12 @@ export class GameComponent implements OnInit, OnDestroy {
     };
     const landItemWidth = (item: IndexedPermanent | LandStack, landZoom: number): number => {
       if (isLandStack(item)) {
-        const tapped = item.lands.some(l => l.perm.tapped);
-        const base = tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
-        const strip = tapped ? C.TAPPED_STACK_STRIP : C.STACK_STRIP;
-        return (base + (item.lands.length - 1) * strip) * landZoom;
+        /* Each land after the first advances by its predecessor's visible
+           strip, so the stack ends at the LAST land's box: strips + that
+           land's (tap-dependent) width. Mirrors the land-stack CSS margins. */
+        const last = item.lands[item.lands.length - 1].perm;
+        const lastWidth = last.tapped ? C.TAPPED_CARD_WIDTH : C.CARD_WIDTH;
+        return ((item.lands.length - 1) * C.STACK_STRIP + lastWidth) * landZoom;
       }
       return this.stackWidth(item.perm) * landZoom;
     };
@@ -436,16 +446,17 @@ export class GameComponent implements OnInit, OnDestroy {
     const total = 2 * Math.max(
       this.opponentSideHeight(zoom, rowWidth),
       this.mySideHeight(zoom, rowWidth));
-    return total + C.DIVIDER_HEIGHT;
+    return total + C.DIVIDER_HEIGHT + 2 * C.COMBAT_CORRIDOR;
   }
 
   /** Largest zoom (MAX→MIN) at which one side's content fits in its half of the
-      area. Each half = (area - safety - divider) / 2, matching the flex layout. */
+      area. Each half = (area - safety - divider - corridors) / 2, matching the
+      flex layout. */
   private sideZoom(sideHeightAtZoom: (zoom: number, width: number) => number): number {
     const C = GameComponent;
     const { width, height } = this.battlefieldAreaSize();
     if (!width || !height) return 1;
-    const budget = (height - C.FIT_SAFETY - C.DIVIDER_HEIGHT) / 2;
+    const budget = (height - C.FIT_SAFETY - C.DIVIDER_HEIGHT) / 2 - C.COMBAT_CORRIDOR;
     for (let z = C.MAX_BATTLEFIELD_ZOOM; z > C.MIN_BATTLEFIELD_ZOOM; z -= 0.02) {
       if (sideHeightAtZoom(z, width) <= budget) {
         return Math.round(z * 100) / 100;
@@ -1054,6 +1065,32 @@ export class GameComponent implements OnInit, OnDestroy {
     const perm = (isMine ? this.myBattlefield : this.opponentBattlefield)[index];
     if (perm?.blocking) return true;
     return isMine && this.isAssignedBlocker(index);
+  }
+
+  /** During blocker declaration: whether a blocker is already assigned to the
+      opponent's attacker at the given index. */
+  isAttackerBlocked(attackerIndex: number): boolean {
+    for (const assigned of this.blockerAssignments().values()) {
+      if (assigned === attackerIndex) return true;
+    }
+    return false;
+  }
+
+  /** Badge text for a blocking creature: names the blocked attacker(s) — from
+      the local assignment while declaring, from the committed combat state
+      (blockingTargets index into the attacker's battlefield) afterwards. */
+  getBlockingBadgeText(index: number, isMine: boolean): string {
+    const own = isMine ? this.myBattlefield : this.opponentBattlefield;
+    const enemy = isMine ? this.opponentBattlefield : this.myBattlefield;
+    if (isMine && this.declaringBlockers()) {
+      const attackerIndex = this.blockerAssignments().get(index);
+      const name = attackerIndex != null ? enemy[attackerIndex]?.card.name : null;
+      return name ? `Blocks ${name}` : 'Blocking';
+    }
+    const names = (own[index]?.blockingTargets ?? [])
+      .map(t => enemy[t]?.card.name)
+      .filter(n => n != null);
+    return names.length > 0 ? `Blocks ${names.join(', ')}` : 'Blocking';
   }
 
   // ========== Click dispatch ==========
