@@ -32,6 +32,8 @@ public class StackEntry {
     @Setter private boolean castWithFlashback;
     @Setter private Zone sourceZone;
     @Setter private boolean kicked;
+    /** Whether this spell was cast for its evoke (alternate) cost — carried to the entering permanent. */
+    @Setter private boolean evoked;
     @Setter private Card damageSourceCard;
     @Setter private int stateTriggerEffectIndex = -1;
     @Setter private UUID attackedTargetId;
@@ -231,6 +233,7 @@ public class StackEntry {
         this.castWithFlashback = source.castWithFlashback;
         this.sourceZone = source.sourceZone;
         this.kicked = source.kicked;
+        this.evoked = source.evoked;
         this.damageSourceCard = source.damageSourceCard;
         this.stateTriggerEffectIndex = source.stateTriggerEffectIndex;
         this.attackedTargetId = source.attackedTargetId;

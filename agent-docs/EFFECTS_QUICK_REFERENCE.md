@@ -140,6 +140,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `SacrificeAttackingCreaturesEffect(int base, int metalcraft)` — sacrifice attackers
 - `EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(int, CardPredicate)` — mass reanimate
 - `SacrificeSelfEffect()` — sacrifice self
+- `SacrificeSelfIfEvokedEffect()` — evoke sacrifice; ON_ENTER_BATTLEFIELD, fires only when cast for evoke cost
 - `SacrificeUnlessDiscardCardTypeEffect(CardType)` — sacrifice unless discard
 - `SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType)` — sacrifice unless bounce own
 - `ChampionCreatureEffect(CardSubtype)` — champion a creature (null subtype = any creature); exile on ETB, return when source leaves

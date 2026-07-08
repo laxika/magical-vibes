@@ -330,7 +330,7 @@ public class SpellCastingService {
             playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments, targetIds,
                     convokeCreatureIds, fromGraveyard, sacrificePermanentId, phyrexianLifeCount,
                     alternateCostSacrificePermanentIds, exileGraveyardCardIndex, exileGraveyardCardIndices, kicked,
-                    discardHandCardIndex);
+                    discardHandCardIndex, false);
         } catch (IllegalArgumentException | IllegalStateException e) {
             // CR 730: an illegal cast rewinds. The internal flow removes the card from hand before
             // some validations run (e.g. target-based cost reduction) — if the failed cast left the
@@ -343,10 +343,33 @@ public class SpellCastingService {
         }
     }
 
+    /**
+     * Casts a card for its evoke (or other pure-mana alternate) cost (CR 702.75). Unlike the
+     * sacrifice/tap-based alternate casts, evoke's alternate cost has no permanent components, so
+     * it cannot be inferred from a non-empty sacrifice list — this entry point forces the alternate
+     * cost explicitly. {@code targetId} carries any target the spell's ETB ability requires.
+     */
+    public void playCardWithEvoke(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId,
+                                  Map<UUID, Integer> damageAssignments, List<UUID> targetIds) {
+        List<Card> hand = gameData.playerHands.get(player.getId());
+        Card attempted = hand != null && cardIndex >= 0 && cardIndex < hand.size() ? hand.get(cardIndex) : null;
+        try {
+            playCardInternal(gameData, player, cardIndex, xValue, targetId, damageAssignments,
+                    targetIds != null ? targetIds : List.of(), List.of(), false, null, null, List.of(),
+                    null, null, false, null, true);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            if (attempted != null && !hand.contains(attempted)
+                    && gameData.stack.stream().noneMatch(entry -> entry.getCard() == attempted)) {
+                hand.add(Math.min(cardIndex, hand.size()), attempted);
+            }
+            throw e;
+        }
+    }
+
     private void playCardInternal(GameData gameData, Player player, int cardIndex, Integer xValue, UUID targetId, Map<UUID, Integer> damageAssignments,
                   List<UUID> targetIds, List<UUID> convokeCreatureIds, boolean fromGraveyard, UUID sacrificePermanentId,
                   Integer phyrexianLifeCount, List<UUID> alternateCostSacrificePermanentIds, Integer exileGraveyardCardIndex,
-                  List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex) {
+                  List<Integer> exileGraveyardCardIndices, boolean kicked, Integer discardHandCardIndex, boolean forceAlternateCost) {
         int effectiveXValue = xValue != null ? xValue : 0;
         if (targetIds == null) targetIds = List.of();
         if (convokeCreatureIds == null) convokeCreatureIds = List.of();
@@ -365,7 +388,8 @@ public class SpellCastingService {
         boolean hasSacrificeForCostReduction = !alternateCostSacrificePermanentIds.isEmpty() && !fromGraveyard
                 && handEarly.get(cardIndex).getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(SacrificeCreaturesForCostReductionEffect.class::isInstance);
-        boolean usingAlternateCost = !alternateCostSacrificePermanentIds.isEmpty() && !hasSacrificeForCostReduction;
+        boolean usingAlternateCost = forceAlternateCost
+                || (!alternateCostSacrificePermanentIds.isEmpty() && !hasSacrificeForCostReduction);
 
         // Handle playing a land from graveyard (e.g. via Crucible of Worlds)
         if (fromGraveyard) {
@@ -819,6 +843,12 @@ public class SpellCastingService {
             }
             if (kicked && kickerEffect != null) {
                 entry.setKicked(true);
+            }
+            // Evoke (CR 702.75): a permanent cast for its alternate (evoke) cost is flagged so its
+            // "when it enters, sacrifice it" ETB trigger fires. Harmless for non-evoke alternate
+            // casts (e.g. Demon of Death's Gate), which have no evoke sacrifice ETB effect.
+            if (usingAlternateCost) {
+                entry.setEvoked(true);
             }
             entry.setSourceZone(Zone.HAND);
             gameData.stack.add(entry);

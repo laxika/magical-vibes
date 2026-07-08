@@ -338,6 +338,11 @@ public class GameTestHarness {
         gameService.playCard(gameData, player, cardIndex, 0, null, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);
     }
 
+    public void castCreatureWithEvoke(Player player, int cardIndex, UUID targetId) {
+        ensurePriority(player);
+        gameService.playCardWithEvoke(gameData, player, cardIndex, 0, targetId, null, List.of());
+    }
+
     public void castCreatureWithSacrificeForReduction(Player player, int cardIndex, UUID targetId, List<UUID> sacrificePermanentIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, targetId, null, List.of(), List.of(), false, null, null, sacrificePermanentIds);

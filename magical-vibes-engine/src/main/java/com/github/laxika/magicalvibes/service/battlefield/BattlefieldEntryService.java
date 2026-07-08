@@ -455,9 +455,13 @@ public class BattlefieldEntryService {
             }
 
             List<CardEffect> mayEffects = triggeredEffects.stream().filter(e -> e instanceof MayEffect).toList();
+            // Evoke sacrifice gate (CR 603.4): read the just-entered permanent's evoked flag, which
+            // was stamped from the spell's cast context at resolution time.
+            List<Permanent> evokeBf = gameData.playerBattlefields.get(controllerId);
+            boolean evoked = evokeBf != null && !evokeBf.isEmpty() && evokeBf.getLast().isEvoked();
             // Resolve each mandatory effect into its trigger-time form: modal unwrap, value
             // materialisation, and intervening-if gating (CR 603.4) — a null result drops the trigger.
-            EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode, kicked);
+            EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, evoked);
             List<CardEffect> mandatoryEffects = triggeredEffects.stream()
                     .filter(e -> !(e instanceof MayEffect))
                     .map(e -> etbEffectResolver.resolve(etbCtx, e))

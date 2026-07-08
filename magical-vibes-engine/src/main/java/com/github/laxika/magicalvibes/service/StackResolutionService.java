@@ -195,6 +195,8 @@ public class StackResolutionService {
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
                 entry.getXValue(), entry.isKicked());
+        // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
+        perm.setEvoked(entry.isEvoked());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing
@@ -379,6 +381,8 @@ public class StackResolutionService {
         // battlefield entry; pass the spell's cast context (X paid, kicked) along.
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, perm,
                 entry.getXValue(), entry.isKicked());
+        // Carry evoke cast context to the permanent so its evoke sacrifice ETB trigger can gate on it.
+        perm.setEvoked(entry.isEvoked());
 
         // After putPermanentOntoBattlefield, the permanent's card may have been replaced by
         // a copy (e.g. Essence of the Wild). Use the permanent's current card for ETB processing

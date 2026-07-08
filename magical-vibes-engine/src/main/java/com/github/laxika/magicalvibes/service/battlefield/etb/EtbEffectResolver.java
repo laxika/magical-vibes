@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -63,6 +65,11 @@ public class EtbEffectResolver {
             }
             return coe.options().getFirst().effect();
         });
+
+        // Evoke sacrifice (CR 702.75e) — intervening-if (CR 603.4): resolve to a plain sacrifice
+        // when the evoke cost was paid, otherwise drop the trigger entirely.
+        register(SacrificeSelfIfEvokedEffect.class, (ctx, effect) ->
+                ctx.evoked() ? new SacrificeSelfEffect() : null);
 
         // "Gain life equal to that creature's toughness" — read toughness at trigger time.
         register(GainLifeEqualToToughnessEffect.class, (ctx, effect) ->

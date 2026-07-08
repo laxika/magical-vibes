@@ -48,6 +48,7 @@ class ExileTargetPermanentEffectHandlerTest {
     @Mock private TriggerCollectionService triggerCollectionService;
     @Mock private BattlefieldEntryService battlefieldEntryService;
     @Mock private ExileService exileService;
+    @Mock private DestructionSupport destructionSupport;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -75,7 +76,7 @@ class ExileTargetPermanentEffectHandlerTest {
         gd.playerGraveyards.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService);
+        exileTargetPermanentHandler = new ExileTargetPermanentEffectHandler(gameQueryService, gameBroadcastService, permanentRemovalService, destructionSupport);
 
     }
 

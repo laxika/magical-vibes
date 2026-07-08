@@ -22,6 +22,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     private final GameQueryService gameQueryService;
     private final GameBroadcastService gameBroadcastService;
     private final PermanentRemovalService permanentRemovalService;
+    private final DestructionSupport destructionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,6 +31,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var exile = (ExileTargetPermanentEffect) effect;
         List<UUID> targetIds = entry.getTargetIds().isEmpty()
                 ? List.of(entry.getTargetId())
                 : entry.getTargetIds();
@@ -40,11 +42,19 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
                 continue;
             }
 
+            // Capture the controller before exile (needed for token creation)
+            UUID controllerId = gameQueryService.findPermanentController(gameData, target.getId());
+
             permanentRemovalService.removePermanentToExile(gameData, target);
             String logEntry = target.getCard().getName() + " is exiled.";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
+
+            // Create a token for the exiled permanent's controller if specified
+            if (exile.tokenForController() != null && controllerId != null) {
+                destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(), entry.getCard().getName());
+            }
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

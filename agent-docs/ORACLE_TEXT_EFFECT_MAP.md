@@ -361,6 +361,12 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "prevent all combat damage that would be dealt this turn" | `PreventAllCombatDamageEffect()` | SPELL | |
 | "prevent the next N damage that would be dealt to target" | `PreventDamageToTargetEffect(N)` | SPELL | |
 
+## Alternate casting costs / keywords
+
+| Oracle text phrase | How | Notes |
+|---|---|---|
+| "Evoke {cost}" (cast for alternate cost; sacrificed when it enters) | `addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{W}"))))` + `addEffect(ON_ENTER_BATTLEFIELD, new SacrificeSelfIfEvokedEffect())` | Dawnfluke. Pure-mana alternate cost, so it can't be inferred from a sacrifice list — cast via `GameService.playCardWithEvoke`. The evoke flag rides `StackEntry`/`Permanent`; `EtbEffectResolver` resolves `SacrificeSelfIfEvokedEffect` to a `SacrificeSelfEffect` only when evoked (intervening-if, CR 603.4). Keep the actual ETB effect(s) as separate `ON_ENTER_BATTLEFIELD` entries. |
+
 ## Conditional wrappers
 
 | Oracle text phrase | Wrapper | Notes |

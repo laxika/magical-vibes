@@ -151,6 +151,8 @@ public class Permanent {
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
     /** Whether this permanent was kicked when cast (tracked for "if wasn't kicked" triggers). */
     @Setter private boolean kicked;
+    /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
+    @Setter private boolean evoked;
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
@@ -272,6 +274,7 @@ public class Permanent {
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
         this.kicked = source.kicked;
+        this.evoked = source.evoked;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
