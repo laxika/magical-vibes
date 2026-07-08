@@ -15,6 +15,7 @@ public sealed interface CardPredicate permits
         CardIsAuraPredicate,
         CardIsHistoricPredicate,
         CardIsPermanentPredicate,
+        CardIsTokenPredicate,
         CardIsSelfPredicate,
         CardKeywordPredicate,
         CardMaxManaValuePredicate,

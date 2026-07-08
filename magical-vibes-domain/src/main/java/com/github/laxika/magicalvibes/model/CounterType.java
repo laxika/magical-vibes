@@ -8,6 +8,7 @@ public enum CounterType {
     EYEBALL,
     GROWTH,
     HATCHLING,
+    HOOFPRINT,
     LANDMARK,
     LOYALTY,
     MINUS_ONE_MINUS_ONE,

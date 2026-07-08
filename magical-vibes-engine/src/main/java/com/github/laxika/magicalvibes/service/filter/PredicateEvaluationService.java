@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -164,6 +165,8 @@ public class PredicateEvaluationService {
                     card.getCastingOption(FlashbackCast.class).isPresent();
             case CardIsPermanentPredicate ignored ->
                     card.getType().isPermanentType();
+            case CardIsTokenPredicate ignored ->
+                    card.isToken();
             case CardIsHistoricPredicate ignored ->
                     card.hasType(CardType.ARTIFACT)
                             || card.getSupertypes().contains(CardSupertype.LEGENDARY)

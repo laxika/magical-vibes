@@ -795,6 +795,9 @@ public class AbilityActivationService {
                 case HATCHLING -> {
                     permanent.setCounterCount(CounterType.HATCHLING, permanent.getCounterCount(CounterType.HATCHLING) - count);
                 }
+                case HOOFPRINT -> {
+                    permanent.setCounterCount(CounterType.HOOFPRINT, permanent.getCounterCount(CounterType.HOOFPRINT) - count);
+                }
                 case MINUS_ONE_MINUS_ONE -> {
                     removedMinus = count;
                     permanent.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, permanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) - count);

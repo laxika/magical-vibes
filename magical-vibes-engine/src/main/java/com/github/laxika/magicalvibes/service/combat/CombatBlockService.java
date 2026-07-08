@@ -289,6 +289,36 @@ public class CombatBlockService {
             combatTriggerService.checkAuraTriggersForCreature(gameData, blockerForAura, EffectSlot.ON_BLOCK, attackerForAura);
         }
 
+        // Check for "whenever this creature blocks two or more creatures" triggers (fires once,
+        // not per blocker assignment). Defending player's / NAP's triggers.
+        Map<Integer, Long> blocksPerBlocker = blockerAssignments.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        BlockerAssignment::blockerIndex, java.util.stream.Collectors.counting()));
+        for (Map.Entry<Integer, Long> entry : blocksPerBlocker.entrySet()) {
+            if (entry.getValue() < 2) {
+                continue;
+            }
+            Permanent blocker = defenderBattlefield.get(entry.getKey());
+            List<CardEffect> multiBlockEffects = blocker.getCard().getEffects(EffectSlot.ON_BLOCKS_MULTIPLE_CREATURES);
+            if (multiBlockEffects.isEmpty()) {
+                continue;
+            }
+            StackEntry multiBlockTrigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    blocker.getCard(),
+                    defenderId,
+                    blocker.getCard().getName() + "'s multi-block trigger",
+                    new ArrayList<>(multiBlockEffects),
+                    blocker.getId(),
+                    blocker.getId()
+            );
+            multiBlockTrigger.setNonTargeting(true);
+            gameData.stack.add(multiBlockTrigger);
+            String triggerLog = blocker.getCard().getName() + "'s block ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+            log.info("Game {} - {} multi-block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
+        }
+
         // Check for "when this creature becomes blocked" triggers (active player's / AP's)
         Set<Integer> blockedAttackerIndices = new LinkedHashSet<>();
         for (BlockerAssignment assignment : blockerAssignments) {

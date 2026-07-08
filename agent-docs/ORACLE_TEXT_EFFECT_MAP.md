@@ -83,6 +83,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 
 | Oracle text phrase | Effect | Slot | Notes |
 |---|---|---|---|
+| "whenever this creature blocks two or more creatures, it gains [keyword] until end of turn" | `GrantKeywordEffect(Keyword.X, GrantScope.SELF)` in `EffectSlot.ON_BLOCKS_MULTIPLE_CREATURES` | TRIGGER | fires once (not per blocker) when the creature is declared blocking 2+ attackers; resolved against the blocker itself. Lairwatch Giant. Usually paired with `GrantAdditionalBlockEffect(1)` in STATIC |
 | "target creature gains [keyword] until end of turn" | `GrantKeywordEffect(Keyword.X, GrantScope.TARGET)` | SPELL | default duration is `END_OF_TURN` |
 | "creatures you control gain [keyword] until end of turn" | `GrantKeywordEffect(Keyword.X, GrantScope.OWN_CREATURES)` | SPELL | |
 | "target creature gains [keyword] until your next turn" | `GrantKeywordEffect(Keyword.X, GrantScope.TARGET, GrantDuration.UNTIL_YOUR_NEXT_TURN)` | SPELL | pass `GrantDuration` for non-default expiry |
@@ -184,6 +185,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "each player loses N life" | `LoseLifeEffect(N, LoseLifeRecipient.EACH_PLAYER)` | SPELL/trigger | |
 | "each opponent loses N life" | `LoseLifeEffect(N, LoseLifeRecipient.EACH_OPPONENT)` | SPELL/trigger | |
 | "each opponent loses N life and you gain life equal to the life lost" | `LoseLifeEffect(N, LoseLifeRecipient.EACH_OPPONENT, true)` | SPELL | Drain; Exsanguinate = `LoseLifeEffect(new XValue(), EACH_OPPONENT, true)` |
+| "whenever a [Subtype] you control becomes tapped, you may gain 1 life" | `TriggeringPermanentConditionalEffect(new PermanentHasSubtypePredicate(subtype), new MayEffect(new GainLifeEffect(1), "prompt"))` | `ON_ALLY_PERMANENT_BECOMES_TAPPED` | Judge of Currents. Fires on every permanent with this slot on the tapped permanent's controller's battlefield (driven by the same tap call sites as `ON_ENCHANTED_PERMANENT_TAPPED`, incl. attacking/tapping for mana); the conditional filters by the tapped permanent. Includes the source itself if it matches |
 | "whenever you gain life, draw a card" | `DrawCardEffect(1)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `d/DrogskolReaver.java` |
 | "whenever you gain life, put a growth counter on this enchantment" | `PutCountersOnSelfEffect(CounterType.GROWTH)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `c/ComfortingCounsel.java` |
 | "as long as there are five or more growth counters on this enchantment, creatures you control get +3/+3" | `ConditionalEffect(new SourceCounterThreshold(5, CounterType.GROWTH), StaticBoostEffect(3, 3, OWN_CREATURES))` | STATIC | |

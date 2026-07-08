@@ -45,6 +45,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ENCHANTED_PERMANENT_TAPPED,
+    /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
+     *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the
+     *  effect in {@code TriggeringPermanentConditionalEffect} to filter by the tapped permanent
+     *  (e.g. Judge of Currents — "whenever a Merfolk you control becomes tapped"). Checked in
+     *  {@code TriggerCollectionService.checkEnchantedPermanentTapTriggers}, driven by the same
+     *  tap-event call sites as {@code ON_ENCHANTED_PERMANENT_TAPPED}. */
+    ON_ALLY_PERMANENT_BECOMES_TAPPED,
     /** Triggers whenever the permanent this aura is attached to is dealt damage (combat or non-combat).
      *  Fires on the aura permanent; the dealt damage amount is passed via {@code TriggerContext.DamageToCreature}. */
     ON_ENCHANTED_CREATURE_DEALT_DAMAGE,
@@ -173,5 +180,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Note: this engine is strictly 2-player and the game ends the instant a player
      *  loses, so in practice this trigger goes onto the stack but the game finishes
      *  before it can resolve. Used by Withengar Unbound. */
-    ON_PLAYER_LOSES_GAME
+    ON_PLAYER_LOSES_GAME,
+    /** Triggers once when this creature blocks two or more creatures. Unlike ON_BLOCK (which fires
+     *  per blocker assignment), this fires exactly once during the declare-blockers step when the
+     *  creature is assigned to block 2+ attackers. The effect is resolved against the blocker itself
+     *  (sourcePermanentId), so self-scoped effects like {@code GrantKeywordEffect(FIRST_STRIKE, SELF)}
+     *  apply to the blocker. Checked in {@code CombatBlockService}. Used by Lairwatch Giant. */
+    ON_BLOCKS_MULTIPLE_CREATURES
 }

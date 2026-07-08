@@ -762,6 +762,33 @@ public class TriggerCollectionService {
                 registry.dispatch(match, EffectSlot.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
             }
         });
+
+        // "Whenever a permanent you control becomes tapped" triggers (e.g. Judge of Currents).
+        UUID controllerId = tappedPermanentControllerId;
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (!ownerId.equals(controllerId)) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED)) {
+                CardEffect resolved = effect;
+                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, tappedPermanent, conditional.predicate())) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} triggers on ally permanent tap ({})",
+                        gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
+            }
+        });
     }
 
     // ── Life-loss triggers ─────────────────────────────────────────────
