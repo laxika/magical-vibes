@@ -157,19 +157,20 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
     // ===== Target restrictions =====
 
     @Test
-    @DisplayName("Cannot target a non-historic creature you control")
+    @DisplayName("Non-historic creature you control is not a legal target — ETB never triggers")
     void cannotTargetNonHistoricCreature() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.setHand(player1, List.of(new SentinelOfThePearlTrident()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters; ETB finds no legal target
 
-        // May prompt appears, but declining leaves Grizzly Bears untouched
-        harness.handleMayAbilityChosen(player1, false);
-
+        // Grizzly Bears isn't historic, so the "may exile target historic permanent you control"
+        // ETB has no legal target and isn't put on the stack (CR 603.3c) — no prompt appears.
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Sentinel of the Pearl Trident"));
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -177,19 +178,20 @@ class SentinelOfThePearlTridentTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot target opponent's historic permanent")
+    @DisplayName("Opponent's historic permanent is not a legal target — ETB never triggers")
     void cannotTargetOpponentHistoricPermanent() {
         harness.addToBattlefield(player2, new Ornithopter());
         harness.setHand(player1, List.of(new SentinelOfThePearlTrident()));
         harness.addMana(player1, ManaColor.BLUE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> ETB MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> creature enters; ETB finds no legal target
 
-        // May prompt appears, but declining leaves Ornithopter untouched
-        harness.handleMayAbilityChosen(player1, false);
-
+        // The Ornithopter is historic but an opponent controls it; the ETB may only target a
+        // historic permanent you control, so it has no legal target and never triggers (CR 603.3c).
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Ornithopter"));
     }
