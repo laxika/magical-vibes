@@ -63,7 +63,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "CARDNAME's power and toughness are each equal to the number of lands you control" | `SetPowerToughnessToAmountEffect(a, a)` where `a = new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER)` | STATIC | Pass the same amount instance for both fields |
 | "CARDNAME's power and toughness are each equal to the number of creatures you control" | `SetPowerToughnessToAmountEffect(a, a)` where `a = new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)` | STATIC | Swap the predicate/amount for other "…are each equal to the number of X" wordings: `CardsInGraveyard`, `CardsInHand`, `ControllerLifeTotal`, etc. |
 | "switch target creature's power and toughness" | `SwitchPowerToughnessEffect()` | SPELL | |
-| "target creature has base power and toughness X/Y" | `SetBasePowerToughnessUntilEndOfTurnEffect(X, Y)` | SPELL | |
+| "target creature has base power and toughness X/Y" | `SetBasePowerToughnessEffect(X, Y)` | SPELL | scope defaults to `TARGET` (until end of turn); pass a `GrantScope` (e.g. `ENCHANTED_CREATURE`) for continuous static auras |
 | "double target creature's power and toughness" | `DoubleSelfPowerToughnessEffect()` | — | Self only |
 
 ## Static boost (permanents on battlefield)

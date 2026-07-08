@@ -304,7 +304,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `BoostAllOwnCreaturesEffect(DynamicAmount, DynamicAmount)` or `(…, PermanentPredicate)` — all own +X/+Y; `(int, int[, PermanentPredicate])` convenience wraps in `Fixed`. Any "where X is …" / power- or graveyard-derived mass own-pump = this effect + a `DynamicAmount` (evaluated once at resolution) — e.g. `new GreatestPowerAmongControlled()` (Overwhelming Stampede), `new CardsInGraveyard(new CardTypePredicate(CREATURE), CONTROLLER)` (Garruk, the Veil-Cursed). Never a new per-variant class
 - `BoostAllCreaturesEffect(DynamicAmount, DynamicAmount)` or `(…, PermanentPredicate)` — all creatures (both sides) +X/+Y; `(int, int[, PermanentPredicate])` convenience wraps in `Fixed`. "X paid" mass pump = `new Scaled(new XValue(), mult)` / `new XValue()` (Ichor Explosion, Flowstone Slide)
 - `StaticBoostEffect(int, int, Set<Keyword>, GrantScope, PermanentPredicate)` — static +X/+Y + keywords
-- `SetBasePowerToughnessUntilEndOfTurnEffect(int, int)` — set base P/T
+- `SetBasePowerToughnessEffect(int, int)` — set target creature's base P/T until end of turn; `(int, int, GrantScope)` for continuous static (e.g. `ENCHANTED_CREATURE`, Deep Freeze)
 - `SwitchPowerToughnessEffect()` — switch P/T
 
 ## P/T setting / counters

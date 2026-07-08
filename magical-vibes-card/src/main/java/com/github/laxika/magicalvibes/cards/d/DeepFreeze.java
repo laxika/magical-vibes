@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessStaticEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -25,7 +25,7 @@ public class DeepFreeze extends Card {
                 "Target must be a creature"
         ))
         // Enchanted creature has base power and toughness 0/4
-        .addEffect(EffectSlot.STATIC, new SetBasePowerToughnessStaticEffect(0, 4, GrantScope.ENCHANTED_CREATURE))
+        .addEffect(EffectSlot.STATIC, new SetBasePowerToughnessEffect(0, 4, GrantScope.ENCHANTED_CREATURE))
         // Enchanted creature has defender
         .addEffect(EffectSlot.STATIC, new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.ENCHANTED_CREATURE))
         // Enchanted creature loses all other abilities
