@@ -16,7 +16,7 @@ All paths relative to `cards/`.
 | Fast land | `b/BlackcleaveCliffs.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCount(3, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 3+ other lands |
 | Slow land | `d/DeathcapGlade.java` | STATIC `ConditionalReplacementEffect(new ControlsPermanentCountAtMost(1, new PermanentIsLandPredicate()), new EntersTappedEffect())` + 2 mana abilities — enters tapped if you control 1 or fewer other lands |
 | Utility land | `q/Quicksand.java` | mana ability + sacrifice-to-debuff ability |
-| Utility land (exile-return) | `m/MystifyingMaze.java` | colorless mana ability + {4},{T}: exile target attacking creature, return tapped at end step (ExileTargetPermanentAndReturnAtEndStepEffect(true) + PermanentIsAttackingPredicate) |
+| Utility land (exile-return) | `m/MystifyingMaze.java` | colorless mana ability + {4},{T}: exile target attacking creature, return tapped at end step (FlickerEffect.exileTargetReturnAtEndStep(true) + PermanentIsAttackingPredicate) |
 | Utility land (destroy + each player search) | `f/FieldOfRuin.java` | colorless mana ability + {2},{T},Sacrifice: DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect + opponent nonbasic land filter (PermanentAllOfPredicate: land + not basic + not controlled by source controller) |
 
 ## Spells
@@ -84,7 +84,7 @@ All paths relative to `cards/`.
 | Bounce mass | `e/Evacuation.java` | ReturnToHandEffect.allPermanentsMatching(new PermanentIsCreaturePredicate()) — all creatures (ALL_MATCHING is permanent-general; put the type in the filter) |
 | Bounce mass (target player, filtered) | `r/RiversRebuke.java` | ReturnToHandEffect.permanentsTargetPlayerControls(PermanentNotPredicate(PermanentIsLandPredicate())) — return all nonland permanents target player controls (TARGET_PLAYERS_PERMANENTS scope, sets canTargetPlayer) |
 | Bounce all artifacts target player owns | `h/HurkylsRecall.java` | ReturnToHandEffect.permanentsTargetPlayerOwns(new PermanentIsArtifactPredicate()) — owner-based (TARGET_PLAYERS_OWNED scope; returns artifacts the target owns even if another player controls them) |
-| Mass exile + return at step (target player, filtered) | `s/SuddenDisappearance.java` | ExilePermanentsTargetPlayerControlsAndReturnAtStepEffect(PermanentNotPredicate(PermanentIsLandPredicate()), TurnStep.END_STEP) — exile all nonland permanents target player controls, return at next end step |
+| Mass exile + return at step (target player, filtered) | `s/SuddenDisappearance.java` | FlickerEffect.exilePlayersPermanentsReturnAtStep(PermanentNotPredicate(PermanentIsLandPredicate()), TurnStep.END_STEP) — exile all nonland permanents target player controls, return at next end step |
 | Pure draw | `c/CounselOfTheSoratami.java` | DrawCardEffect |
 | Draw + discard | `s/Sift.java` | DrawCardEffect + DiscardEffect(1, CONTROLLER) |
 | Each player draw + random discard | `b/BurningInquiry.java` | EachPlayerDrawsCardEffect + DiscardEffect(3, EACH_PLAYER, true) |

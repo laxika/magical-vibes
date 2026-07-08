@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
@@ -33,7 +33,7 @@ public class ConciliatorsDuelist extends Card {
                 new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY))),
-                List.of(new ExileTargetPermanentAndReturnAtEndStepEffect()),
+                List.of(FlickerEffect.exileTargetReturnAtEndStep()),
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),
                         "Target must be a creature"),

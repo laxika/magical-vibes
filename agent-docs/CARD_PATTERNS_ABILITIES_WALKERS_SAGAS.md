@@ -41,7 +41,7 @@ All paths relative to `cards/`.
 | Mana dork (ON_TAP) | `l/LlanowarElves.java` | addEffect(ON_TAP, AwardManaEffect) |
 | Animate self (X/X) | `c/ChimericStaff.java` | AnimatePermanentsEffect(XValue, XValue, subtypes, …, SELF, UEOT) |
 | Sorcery-speed ability | `t/ThrullSurgeon.java` | ActivationTimingRestriction.SORCERY_SPEED |
-| Metalcraft exile-flicker | `a/ArgentSphinx.java` | ExileSelfAndReturnAtEndStepEffect + METALCRAFT restriction |
+| Metalcraft exile-flicker | `a/ArgentSphinx.java` | FlickerEffect.exileSelfReturnAtEndStep() + METALCRAFT restriction |
 | Metalcraft tap ability | `v/VedalkenCertarch.java` | ActivationTimingRestriction.METALCRAFT + target filter |
 | Power-gated tap ability | `b/BloodshotTrainee.java` | ActivationTimingRestriction.POWER_4_OR_GREATER + creature target filter |
 | Attack-only ability | `a/AncientHellkite.java` | ActivationTimingRestriction.ONLY_WHILE_ATTACKING + opponent creature filter (PermanentNotPredicate(PermanentControlledBySourceControllerPredicate)) |
