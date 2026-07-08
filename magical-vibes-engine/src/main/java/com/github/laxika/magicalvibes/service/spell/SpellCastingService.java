@@ -193,29 +193,40 @@ public class SpellCastingService {
     private int unwrapChooseOneEffect(Card card, List<CardEffect> effects, int effectiveXValue) {
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ChooseOneEffect coe) {
-                if (effectiveXValue < 0 || effectiveXValue >= coe.options().size()) {
-                    throw new IllegalStateException("Invalid mode index: " + effectiveXValue);
-                }
-                ChooseOneEffect.ChooseOneOption chosen = coe.options().get(effectiveXValue);
-                // A mode may carry multiple effects (e.g. "Surveil 2, then draw a card"); splice them
-                // all in at the modal effect's position so each resolves in order.
+                List<Integer> chosenModeIndices = coe.decodeModeIndices(effectiveXValue);
+                List<ChooseOneEffect.ChooseOneOption> chosenModes = chosenModeIndices.stream()
+                        .map(idx -> coe.options().get(idx))
+                        .toList();
+
                 effects.remove(i);
-                effects.addAll(i, chosen.effects());
-                // Reset any target declarations left over from a previous cast of this card instance.
+                int insertAt = i;
+                for (ChooseOneEffect.ChooseOneOption chosen : chosenModes) {
+                    effects.addAll(insertAt, chosen.effects());
+                    insertAt += chosen.effects().size();
+                }
+
                 card.clearRuntimeSpellTargets();
                 card.setCastTimeTargetFilter(null);
-                if (chosen.targetFilters() != null) {
-                    // Multi-target mode (e.g. Choreographed Sparks' "both"): declare one target slot
-                    // per filter and map each of the mode's effects positionally to its own target.
-                    for (int t = 0; t < chosen.targetFilters().size(); t++) {
-                        SpellTarget spellTarget = card.target(chosen.targetFilters().get(t));
-                        if (t < chosen.effects().size()) {
-                            card.registerEffectTargetIndex(chosen.effects().get(t), spellTarget.getIndex());
+
+                if (chosenModes.size() == 1) {
+                    ChooseOneEffect.ChooseOneOption chosen = chosenModes.getFirst();
+                    if (chosen.targetFilters() != null) {
+                        for (int t = 0; t < chosen.targetFilters().size(); t++) {
+                            SpellTarget spellTarget = card.target(chosen.targetFilters().get(t));
+                            if (t < chosen.effects().size()) {
+                                card.registerEffectTargetIndex(chosen.effects().get(t), spellTarget.getIndex());
+                            }
+                        }
+                    } else if (chosen.targetFilter() != null) {
+                        card.setCastTimeTargetFilter(chosen.targetFilter());
+                    }
+                } else {
+                    for (ChooseOneEffect.ChooseOneOption chosen : chosenModes) {
+                        if (chosen.targetFilters() != null || chosen.targetFilter() != null) {
+                            throw new IllegalStateException(
+                                    "Choose-multiple modal spells do not support per-mode targeting yet");
                         }
                     }
-                } else if (chosen.targetFilter() != null) {
-                    // Apply per-mode target filter so downstream validation uses the correct filter
-                    card.setCastTimeTargetFilter(chosen.targetFilter());
                 }
                 return 0;
             }

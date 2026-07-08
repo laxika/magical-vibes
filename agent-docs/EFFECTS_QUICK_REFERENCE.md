@@ -92,6 +92,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(int opponentDamage, int creatureDamage, int maxCreatureTargets)` — target opponent plus up to N creatures that player controls
 - `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(int)` — all target controls
 - `DealDamageToAllCreaturesTargetControlsEffect(int)` — creatures target controls
+- `DealDamageToEachMatchingPermanentEffect(int, PermanentPredicate, EachPermanentScope)` — damage each matching permanent across `ALL_PLAYERS`/`TARGET_PLAYER`
 - `DealDamageToPlayersEffect(DynamicAmount, DamageRecipient)`; `(int, recipient)`; `.enchantedAttachedCount(PermanentPredicate)` — **unified player damage.** Recipients: `TARGET_PLAYER` (only targeting one; `Fixed`/`CardsInGraveyard` Scrapyard Salvo/`CardsInHand(TARGET_PLAYER)` Sudden Impact + Sword of War and Peace), `EACH_OPPONENT` (single eval, same value; `Fixed`/`CountersOnSource` Hallar), `EACH_PLAYER` (Slagstorm), `CONTROLLER` (self/pain lands), `ENCHANTED_PLAYER` (curse upkeep; `.enchantedAttachedCount` Curse of Thirst), `TARGET_PERMANENT_CONTROLLER` (Chandra's Outrage), `TRIGGERING_PERMANENT_CONTROLLER` (Magnetic Mine)
 - `DealDamageToSecondaryTargetEffect(int)` — secondary target
 - `MassDamageEffect(int)` or `(int, boolean, boolean, PermanentPredicate)` + overloads — mass damage
@@ -141,6 +142,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `SacrificeSelfEffect()` — sacrifice self
 - `SacrificeUnlessDiscardCardTypeEffect(CardType)` — sacrifice unless discard
 - `SacrificeUnlessReturnOwnPermanentTypeToHandEffect(CardType)` — sacrifice unless bounce own
+- `ChampionCreatureEffect(CardSubtype)` — champion a creature (null subtype = any creature); exile on ETB, return when source leaves
 - `SacrificeSelfAndDrawCardsEffect(int)` — sacrifice + draw
 - `SacrificeAtEndOfCombatEffect()` — sacrifice at EOC
 - `SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set<CardType>)` — Polymorph

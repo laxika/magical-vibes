@@ -666,6 +666,22 @@ public abstract class AiDecisionEngine {
         ChooseOneEffect coe = findChooseOneEffect(card);
         if (coe == null) return null;
 
+        if (coe.choicesRequired() > 1) {
+            List<Integer> validModes = new java.util.ArrayList<>();
+            for (int i = 0; i < coe.options().size(); i++) {
+                ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
+                if (isModalModeValid(gameData, card, option)) {
+                    validModes.add(i);
+                    if (validModes.size() == coe.choicesRequired()) {
+                        int[] modeIndices = validModes.stream().mapToInt(Integer::intValue).toArray();
+                        return new ModalCastPlan(
+                                ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), modeIndices), null);
+                    }
+                }
+            }
+            return null;
+        }
+
         for (int i = 0; i < coe.options().size(); i++) {
             ChooseOneEffect.ChooseOneOption option = coe.options().get(i);
             CardEffect effect = option.effect();

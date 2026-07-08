@@ -50,9 +50,17 @@ public final class EffectResolution {
                     && cre.condition() instanceof Kicked && kicked != null) {
                 resolved.add(kicked ? cre.upgradedEffect() : cre.baseEffect());
             } else if (effect instanceof ChooseOneEffect coe && modeIndex != null) {
-                List<ChooseOneEffect.ChooseOneOption> options = coe.options();
-                if (modeIndex >= 0 && modeIndex < options.size()) {
-                    resolved.add(options.get(modeIndex).effect());
+                if (coe.choicesRequired() == 1) {
+                    List<ChooseOneEffect.ChooseOneOption> options = coe.options();
+                    if (modeIndex >= 0 && modeIndex < options.size()) {
+                        resolved.addAll(options.get(modeIndex).effects());
+                    } else {
+                        resolved.add(effect);
+                    }
+                } else if (modeIndex < 0) {
+                    for (int chosenModeIndex : coe.decodeModeIndices(modeIndex)) {
+                        resolved.addAll(coe.options().get(chosenModeIndex).effects());
+                    }
                 } else {
                     resolved.add(effect);
                 }

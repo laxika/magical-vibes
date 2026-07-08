@@ -50,6 +50,7 @@ All of these base interfaces are **sealed**: a new predicate/filter must be adde
 | `PermanentPowerAtLeastPredicate` | `(int minPower)` | creatures with power >= N |
 | `PermanentPowerAtMostPredicate` | `(int maxPower)` | creatures with power <= N |
 | `PermanentMaxManaValuePredicate` | `(int maxManaValue)` | permanents with mana value <= N (e.g. Witherbloom Charm) |
+| `PermanentMinManaValuePredicate` | `(int minManaValue)` | permanents with mana value >= N (e.g. Austere Command) |
 | `PermanentToughnessAtMostPredicate` | `(int maxToughness)` | creatures with toughness <= N |
 
 ### Dynamic/game-state predicates (require FilterContext)

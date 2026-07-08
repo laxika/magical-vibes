@@ -66,6 +66,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB control handoff | `s/SleeperAgent.java` | TargetPlayerGainsControlOfSourceCreatureEffect |
 | ETB drawback (discard) | `h/HiddenHorror.java` | SacrificeUnlessDiscardCardTypeEffect |
 | ETB drawback (bounce artifact) | `g/GlintHawk.java` | SacrificeUnlessReturnOwnPermanentTypeToHandEffect(ARTIFACT) — sacrifice unless return own artifact to hand |
+| ETB champion | `c/ChangelingHero.java` | ChampionCreatureEffect() — sacrifice unless exile another creature you control; exiled creature returns when this leaves |
 | ETB -1/-1 counters + counter removal ability | `b/BurdenedStoneback.java` | PutCountersOnSourceEffect(-1,-1,2) + RemoveCounterFromSourceCost + GrantKeywordEffect |
 | ETB -1/-1 counters + mass -1/-1 ability | `c/CarnifexDemon.java` | PutCountersOnSourceEffect(-1,-1,2) + RemoveCounterFromSourceCost + PutCounterOnEachMatchingPermanentEffect(MINUS_ONE_MINUS_ONE, 1, AllOf(IsCreature, Not(IsSourceCard)), ALL_PLAYERS) for "each other creature" |
 | ETB -1/-1 counters + multi-counter removal + player draw | `e/EtchedMonstrosity.java` | PutCountersOnSourceEffect(-1,-1,5) + RemoveCounterFromSourceCost(5) + DrawCardForTargetPlayerEffect(3, false, true) with PlayerPredicateTargetFilter |

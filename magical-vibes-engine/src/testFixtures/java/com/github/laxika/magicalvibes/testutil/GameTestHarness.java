@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.testutil;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -446,6 +447,13 @@ public class GameTestHarness {
     public void castModalInstant(Player player, int cardIndex, int modeIndex, List<UUID> targetIds) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, modeIndex, null, null, targetIds, List.of());
+    }
+
+    /** Cast a modal sorcery that chooses multiple modes (e.g. Austere Command). */
+    public void castSorceryWithModes(Player player, int cardIndex, int choicesRequired, int... modeIndices) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices), null, null);
     }
 
     public void castInstant(Player player, int cardIndex, UUID spellTargetId, UUID permanentTargetId) {

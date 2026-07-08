@@ -22,7 +22,7 @@ All paths relative to `cards/`.
 | Sacrifice self for effect | `b/BottleGnomes.java` | SacrificeSelfCost + effect |
 | Sacrifice self + multi-target creature damage | `f/FireShrineKeeper.java` | tap+mana+SacrificeSelfCost+DealDamageToTargetCreatureEffect(3) with multi-target ability constructor (0-2 creature targets) — "up to two target creatures" pattern |
 | Sacrifice self + damage player/pw | `v/VulshokReplica.java` | SacrificeSelfCost + DealDamageToAnyTargetEffect + PermanentIsPlaneswalkerPredicate filter (restricts to players + planeswalkers) |
-| Sacrifice self + choose source prevention | `a/AuriokReplica.java` | SacrificeSelfCost + PreventAllDamageFromChosenSourceEffect (prompts permanent choice on resolution) |
+| Sacrifice self + choose source prevention | `a/AuriokReplica.java` | SacrificeSelfCost + PreventAllDamageFromChosenSourceEffect() (controller-only). `b/BurrentonForgeTender.java` uses `(false, Set.of(RED))` for global red-source prevention |
 | Target prevention from chosen source + life gain | `h/HealingGrace.java` | PreventDamageToTargetFromChosenSourceEffect(3) + GainLifeEffect(3) — target chosen on cast, source chosen on resolution |
 | Sacrifice subtype for effect | `s/SiegeGangCommander.java` | SacrificePermanentCost(PermanentAllOfPredicate(creature + PermanentHasSubtypePredicate(GOBLIN)), description, false) + DealDamageToAnyTargetEffect |
 | Sacrifice subtype for +1/+1 counters on target | `d/DerangedOutcast.java` | SacrificePermanentCost(PermanentAllOfPredicate(creature + PermanentHasSubtypePredicate(HUMAN)), description, false) + PutCounterOnTargetPermanentEffect(PLUS_ONE_PLUS_ONE, 2) — source is itself a Human, so it can sacrifice itself |

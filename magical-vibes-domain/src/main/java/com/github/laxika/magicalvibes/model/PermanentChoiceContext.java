@@ -49,7 +49,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record MayAbilityTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects) implements PermanentChoiceContext {}
 
-    record PreventDamageSourceChoice(UUID controllerId) implements PermanentChoiceContext {}
+    record PreventDamageSourceChoice(UUID controllerId, boolean controllerOnly, Set<CardColor> colorFilter)
+            implements PermanentChoiceContext {
+
+        public PreventDamageSourceChoice(UUID controllerId) {
+            this(controllerId, true, Set.of());
+        }
+    }
 
     record RedirectDamageSourceChoice(UUID controllerId, int amount, UUID redirectTargetId) implements PermanentChoiceContext {}
 
@@ -74,6 +80,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     }
 
     record BounceOwnPermanentOrSacrificeSelf(UUID controllerId, UUID sourceCardId) implements PermanentChoiceContext {}
+
+    /** Champion a creature: exile the chosen creature until the source permanent leaves the battlefield. */
+    record ChampionCreature(UUID sourcePermanentId, UUID controllerId) implements PermanentChoiceContext {}
 
     record EmblemTriggerTarget(String emblemDescription, UUID controllerId, List<CardEffect> effects, Card sourceCard, boolean opponentControlledOnly) implements PermanentChoiceContext {
         /** Convenience constructor for backwards compatibility (targets any permanent). */

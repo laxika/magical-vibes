@@ -11,10 +11,63 @@ import java.util.List;
  * Used by cards like Slagstorm: "Choose one — Slagstorm deals 3 damage to each creature.
  * — Slagstorm deals 3 damage to each player."
  */
-public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional) implements CardEffect {
+public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired) implements CardEffect {
 
     public ChooseOneEffect(List<ChooseOneOption> options) {
-        this(options, false);
+        this(options, false, 1);
+    }
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional) {
+        this(options, optional, 1);
+    }
+
+    public ChooseOneEffect(List<ChooseOneOption> options, int choicesRequired) {
+        this(options, false, choicesRequired);
+    }
+
+    /**
+     * Encodes a modal selection for casting. Choose-one spells use a 0-based mode index;
+     * choose-two (or higher) spells use a negative bitmask ({@code -(1 << mode0 | 1 << mode1 | ...)}).
+     */
+    public static int encodeModeSelection(int choicesRequired, int... modeIndices) {
+        if (choicesRequired == 1) {
+            if (modeIndices.length != 1) {
+                throw new IllegalArgumentException("Choose-one requires exactly one mode index");
+            }
+            return modeIndices[0];
+        }
+        if (modeIndices.length != choicesRequired) {
+            throw new IllegalArgumentException("Expected " + choicesRequired + " mode indices");
+        }
+        int mask = 0;
+        for (int modeIndex : modeIndices) {
+            mask |= (1 << modeIndex);
+        }
+        return -mask;
+    }
+
+    /** Returns the chosen mode indices in card-text order. */
+    public List<Integer> decodeModeIndices(int xValue) {
+        if (choicesRequired == 1) {
+            if (xValue < 0 || xValue >= options.size()) {
+                throw new IllegalStateException("Invalid mode index: " + xValue);
+            }
+            return List.of(xValue);
+        }
+        if (xValue >= 0) {
+            throw new IllegalStateException("Invalid mode bitmask: " + xValue);
+        }
+        int mask = -xValue;
+        List<Integer> chosen = new java.util.ArrayList<>();
+        for (int i = 0; i < options.size(); i++) {
+            if ((mask & (1 << i)) != 0) {
+                chosen.add(i);
+            }
+        }
+        if (chosen.size() != choicesRequired) {
+            throw new IllegalStateException("Expected " + choicesRequired + " modes, got " + chosen.size());
+        }
+        return chosen;
     }
 
     /**

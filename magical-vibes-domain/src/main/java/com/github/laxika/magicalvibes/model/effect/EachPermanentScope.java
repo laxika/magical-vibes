@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Which battlefield(s) a {@link PutCounterOnEachMatchingPermanentEffect} scans, relative to the
+ * Which battlefield(s) a {@link PutCounterOnEachMatchingPermanentEffect} or
+ * {@link DealDamageToEachMatchingPermanentEffect} scans, relative to the
  * resolving effect. The effect's {@code PermanentPredicate} narrows the set further (creature,
  * attacking, not-the-source, …).
  */

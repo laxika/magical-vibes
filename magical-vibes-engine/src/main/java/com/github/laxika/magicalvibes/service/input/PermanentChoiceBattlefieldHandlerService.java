@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -313,6 +314,35 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
+    public void handleChampionCreature(GameData gameData, UUID championedPermanentId,
+                                       PermanentChoiceContext.ChampionCreature context) {
+        Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
+        if (source == null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        Permanent target = gameQueryService.findPermanentById(gameData, championedPermanentId);
+        if (target == null) {
+            throw new IllegalStateException("Chosen creature no longer exists");
+        }
+
+        Card card = target.getOriginalCard();
+        UUID ownerId = gameData.stolenCreatures.getOrDefault(target.getId(), context.controllerId());
+
+        permanentRemovalService.removePermanentToExile(gameData, target);
+
+        String logEntry = card.getName() + " is exiled by " + source.getCard().getName() + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} champions {} (exiled until source leaves)",
+                gameData.id, source.getCard().getName(), card.getName());
+
+        gameData.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(card, ownerId));
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handlePreventDamageSourceChoice(GameData gameData, UUID permanentId, PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
         if (chosenPermanent == null) {
@@ -320,14 +350,22 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         UUID controllerId = preventSource.controllerId();
-        gameData.playerSourceDamagePreventionIds
-                .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
-                .add(permanentId);
-
         String playerName = gameData.playerIdToName.get(controllerId);
-        String logEntry = "All damage " + chosenPermanent.getCard().getName() + " would deal to " + playerName + " is prevented this turn.";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} chose {} as prevented damage source", gameData.id, playerName, chosenPermanent.getCard().getName());
+        String sourceName = chosenPermanent.getCard().getName();
+
+        if (preventSource.controllerOnly()) {
+            gameData.playerSourceDamagePreventionIds
+                    .computeIfAbsent(controllerId, k -> java.util.concurrent.ConcurrentHashMap.newKeySet())
+                    .add(permanentId);
+            String logEntry = "All damage " + sourceName + " would deal to " + playerName + " is prevented this turn.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        } else {
+            gameData.permanentsPreventedFromDealingDamage.add(permanentId);
+            String logEntry = "All damage " + sourceName + " would deal this turn is prevented.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        }
+
+        log.info("Game {} - {} chose {} as prevented damage source", gameData.id, playerName, sourceName);
 
         stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
