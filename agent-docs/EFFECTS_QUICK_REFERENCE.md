@@ -361,6 +361,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `UntapPermanentsEffect(TapUntapScope.CONTROLLED, filter)` — untap all you control matching · `.OTHER_CONTROLLED_CREATURES` — untap each other creature you control · `.ATTACKED_CREATURES` — untap creatures that attacked this turn
 - `DoesntUntapEffect.self()` — this permanent doesn't untap (static) · `.enchanted()` — attached aura/equipment's host doesn't untap (static) · `.targetWhileSourceOnBattlefield()` — target doesn't untap while source on battlefield (Dungeon Geists / Time of Ice) · `.targetWhileSourceTapped()` — while source stays tapped (Rust Tick); TARGET factories piggyback on a companion `TapPermanentsEffect(TapUntapScope.TARGET)`
 - `SkipNextUntapEffect(TapUntapScope.TARGET)` — target permanent skips next untap (piggybacks on companion targeting effect) · `.TARGET_PLAYERS_PERMANENTS, filter` — that player's matching permanents · `.ALL_CREATURES, filter` — all creatures matching filter (`PermanentIsAttackingPredicate` = all attackers)
+- `IfWonClashEffect(wrapped)` — clash-only marker on `EffectSlot.ON_CONTROLLER_CLASHES`: the wrapped effect applies only if the controller won the clash ("If you won, ..."). Consumed by `TriggerCollectionService.performClash` at trigger time (not a stack effect). See Entangling Trap: tap target opponent creature + `IfWonClashEffect(SkipNextUntapEffect(TARGET))`. Clash is performed via `performClash` (2-player: both reveal top card, strictly-higher mana value wins); no clash-source card exists yet.
 
 ## Control / steal
 

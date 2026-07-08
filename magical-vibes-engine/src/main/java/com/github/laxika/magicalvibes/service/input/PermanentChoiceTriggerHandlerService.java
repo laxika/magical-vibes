@@ -185,6 +185,37 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleClashTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.ClashTriggerTarget ctt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ctt.sourceCard(),
+                ctt.controllerId(),
+                ctt.sourceCard().getName() + "'s ability",
+                new ArrayList<>(ctt.effects()),
+                permanentId,
+                ctt.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String targetName = getTargetDisplayName(gameData, permanentId);
+        String logEntry = ctt.sourceCard().getName() + "'s clash trigger targets " + targetName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} clash trigger targets {}", gameData.id, ctt.sourceCard().getName(), targetName);
+
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
+            triggerCollectionService.processNextClashTriggerTarget(gameData);
+            return;
+        }
+
+        if (!gameData.pendingMayAbilities.isEmpty()) {
+            playerInputService.processNextMayAbility(gameData);
+            return;
+        }
+
+        gameData.priorityPassedBy.clear();
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleTransformOpponentTarget(GameData gameData, UUID opponentId,
                                               PermanentChoiceContext.TransformOpponentThenCreatureTarget tot) {
         int maxCreatureTargets = maxTransformCreatureTargets(tot.effects());

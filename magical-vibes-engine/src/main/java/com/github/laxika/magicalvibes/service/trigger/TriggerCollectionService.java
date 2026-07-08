@@ -947,6 +947,82 @@ public class TriggerCollectionService {
         triggeredAbilityQueueService.processNextExploreTriggerTarget(gameData);
     }
 
+    // ── Clash ──────────────────────────────────────────────────────────
+
+    /**
+     * Performs a clash for {@code clashingPlayerId} against their (single, 2-player) opponent
+     * (MTG rule 701.29): both players reveal the top card of their library, the clashing player
+     * wins if their revealed card's mana value is strictly greater than the opponent's, and then
+     * {@link EffectSlot#ON_CONTROLLER_CLASHES} triggers on the clashing player's permanents.
+     *
+     * <p>Each player may put their revealed card on the bottom of their library; this engine leaves
+     * the revealed cards on top (a legal choice), so no clash-source card yet mutates library order.
+     * The "whenever you clash" triggers fire after the clash ends. Intended to be invoked from a
+     * clash-source card's effect resolution (none exist yet) or a test.
+     */
+    public void performClash(GameData gameData, UUID clashingPlayerId) {
+        UUID opponentId = gameData.orderedPlayerIds.stream()
+                .filter(id -> !id.equals(clashingPlayerId))
+                .findFirst().orElse(null);
+
+        Card clashingCard = topCard(gameData, clashingPlayerId);
+        Card opponentCard = opponentId != null ? topCard(gameData, opponentId) : null;
+
+        String clashingName = clashingCard != null ? clashingCard.getName() : "no card (empty library)";
+        String opponentName = opponentCard != null ? opponentCard.getName() : "no card (empty library)";
+        gameBroadcastService.logAndBroadcast(gameData, gameData.playerIdToName.get(clashingPlayerId)
+                + " clashes: reveals " + clashingName + "; opponent reveals " + opponentName + ".");
+
+        // 701.29c: win if your revealed card's mana value is higher than each other revealed card.
+        boolean won = clashingCard != null
+                && (opponentCard == null || clashingCard.getManaValue() > opponentCard.getManaValue());
+
+        String outcome = won
+                ? gameData.playerIdToName.get(clashingPlayerId) + " won the clash."
+                : "No one won the clash.";
+        gameBroadcastService.logAndBroadcast(gameData, outcome);
+        log.info("Game {} - {} clashes (won={})", gameData.id, clashingPlayerId, won);
+
+        fireClashTriggers(gameData, clashingPlayerId, won);
+    }
+
+    private Card topCard(GameData gameData, UUID playerId) {
+        List<Card> deck = gameData.playerDecks.get(playerId);
+        return (deck == null || deck.isEmpty()) ? null : deck.getFirst();
+    }
+
+    private void fireClashTriggers(GameData gameData, UUID clashingPlayerId, boolean won) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(clashingPlayerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : new ArrayList<>(battlefield)) {
+            if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_CLASHES);
+            if (effects == null || effects.isEmpty()) continue;
+
+            // Resolve win-conditional clauses now: the clash has ended, so the winner is fixed.
+            List<CardEffect> resolvedEffects = new ArrayList<>();
+            for (CardEffect effect : effects) {
+                if (effect instanceof com.github.laxika.magicalvibes.model.effect.IfWonClashEffect ifWon) {
+                    if (won) resolvedEffects.add(ifWon.wrapped());
+                } else {
+                    resolvedEffects.add(effect);
+                }
+            }
+            if (resolvedEffects.isEmpty()) continue;
+
+            gameData.queueInteraction(new PermanentChoiceContext.ClashTriggerTarget(
+                    perm.getCard(), clashingPlayerId, resolvedEffects, perm.getId()));
+            log.info("Game {} - {} clash trigger queued", gameData.id, perm.getCard().getName());
+        }
+
+        triggeredAbilityQueueService.processNextClashTriggerTarget(gameData);
+    }
+
+    public void processNextClashTriggerTarget(GameData gameData) {
+        triggeredAbilityQueueService.processNextClashTriggerTarget(gameData);
+    }
+
     // ── Death / leaves-battlefield triggers ───────────────────────────
 
     public void collectDeathTrigger(GameData gameData, Card dyingCard, UUID controllerId, boolean wasCreature) {

@@ -108,6 +108,11 @@ public class AutoPassService {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
         }
 
+        // Process any pending clash targeted triggers
+        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
+            triggerCollectionService.processNextClashTriggerTarget(gameData);
+        }
+
         // Process any pending life-gain targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);

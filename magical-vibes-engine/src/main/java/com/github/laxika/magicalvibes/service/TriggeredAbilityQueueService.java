@@ -505,6 +505,43 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    public void processNextClashTriggerTarget(GameData gameData) {
+        while (gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
+            PermanentChoiceContext.ClashTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class);
+
+            // Collect valid targets: only creatures controlled by opponents.
+            List<UUID> validTargets = new ArrayList<>();
+            for (UUID pid : gameData.orderedPlayerIds) {
+                if (pid.equals(pending.controllerId())) continue; // opponent only
+                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+                if (battlefield == null) continue;
+                for (Permanent p : battlefield) {
+                    if (!gameQueryService.isCreature(gameData, p)) continue;
+                    validTargets.add(p.getId());
+                }
+            }
+
+            if (validTargets.isEmpty()) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class);
+                String logEntry = pending.sourceCard().getName() + "'s clash trigger has no valid targets.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} clash trigger skipped (no valid creature targets)",
+                        gameData.id, pending.sourceCard().getName());
+                continue;
+            }
+
+            gameData.pollPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class);
+            gameData.interaction.setPermanentChoiceContext(pending);
+            playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
+                    pending.sourceCard().getName() + "'s ability — Choose target creature an opponent controls.");
+
+            String logEntry = pending.sourceCard().getName() + "'s clash trigger — choose target creature.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} clash trigger awaiting target selection", gameData.id, pending.sourceCard().getName());
+            return;
+        }
+    }
+
     /**
      * Collects valid creature targets for a saga chapter, applying any target predicate
      * declared by the chapter's effects and any chapter-level target filters.

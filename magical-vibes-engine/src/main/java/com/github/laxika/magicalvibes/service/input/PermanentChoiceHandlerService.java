@@ -131,6 +131,8 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleBeginningOfCombatTrigger(gameData, permanentId, boct);
         } else if (context instanceof PermanentChoiceContext.ExploreTriggerTarget ett) {
             triggerHandler.handleExploreTrigger(gameData, permanentId, ett);
+        } else if (context instanceof PermanentChoiceContext.ClashTriggerTarget ctt) {
+            triggerHandler.handleClashTrigger(gameData, permanentId, ctt);
         } else if (context instanceof PermanentChoiceContext.TransformOpponentThenCreatureTarget tot) {
             triggerHandler.handleTransformOpponentTarget(gameData, permanentId, tot);
         } else if (context instanceof PermanentChoiceContext.TransformCreatureTarget tct) {

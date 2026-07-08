@@ -161,6 +161,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. Used by the SOS Infusion copy cycle
      *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
     ON_SELF_CAST,
+    /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
+     *  {@code TriggerCollectionService.performClash} after the clash ends. Routed through the
+     *  {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller chooses a
+     *  target creature an opponent controls. Effects wrapped in {@code IfWonClashEffect} are only
+     *  applied when the controller won the clash. Used by Entangling Trap. */
+    ON_CONTROLLER_CLASHES,
     /** Triggers whenever a player loses the game. Fired from {@code GameOutcomeService}
      *  at the moment a player is determined to lose (life/poison loss in
      *  {@code checkWinCondition}, or a direct loss via {@code declareWinner}).

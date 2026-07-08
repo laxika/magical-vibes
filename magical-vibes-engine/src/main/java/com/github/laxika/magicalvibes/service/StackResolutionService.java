@@ -145,6 +145,13 @@ public class StackResolutionService {
             }
         }
 
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
+            triggerCollectionService.processNextClashTriggerTarget(gameData);
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+        }
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
             triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {
