@@ -100,6 +100,13 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // Optional grant condition: the target stays legal either way; only the keyword grant
+        // is conditional (e.g. Vampire's Zeal grants first strike only if the target is a Vampire).
+        if (grant.grantCondition() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.grantCondition())) {
+            return;
+        }
+
         bucketFor(target, grant.duration()).addAll(grant.keywords());
         String keywordNames = formatKeywords(grant.keywords());
         String logEntry = target.getCard().getName() + " gains " + keywordNames + " " + durationLabel(grant.duration()) + ".";

@@ -327,9 +327,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Keywords / abilities
 
-- `GrantKeywordEffect(Keyword, GrantScope)` or `(Keyword, GrantScope, PermanentPredicate)` or `(Set<Keyword>, GrantScope)` — grant keywords. Add a trailing `GrantDuration` (`(Keyword, GrantScope, GrantDuration)` / `(Set<Keyword>, GrantScope, GrantDuration)`) for one-shot duration: `END_OF_TURN` (default) or `UNTIL_YOUR_NEXT_TURN`. In `STATIC` slot the grant is continuous and the duration is ignored.
+- `GrantKeywordEffect(Keyword, GrantScope)` or `(Keyword, GrantScope, PermanentPredicate)` or `(Set<Keyword>, GrantScope)` — grant keywords. Add a trailing `GrantDuration` (`(Keyword, GrantScope, GrantDuration)` / `(Set<Keyword>, GrantScope, GrantDuration)`) for one-shot duration: `END_OF_TURN` (default) or `UNTIL_YOUR_NEXT_TURN`. In `STATIC` slot the grant is continuous and the duration is ignored. `GrantKeywordEffect.toTargetIf(Keyword, PermanentPredicate grantCondition)` — grant to target ONLY if it matches `grantCondition` (checked at resolution; target stays legal, only the grant is conditional — Vampire's Zeal, Blessing of Belzenlok). `grantCondition` is distinct from `filter`/`targetPredicate()`.
 - `GrantChosenKeywordToSecondTargetEffect(List<Keyword> options)` — prompt to choose one keyword from options, grant to second target permanent until end of turn (multi-target: creature at `targetIds[1]`)
-- `GrantKeywordToTargetIfPermanentEffect(Keyword, PermanentPredicate)` — grant keyword to target only if it matches predicate
 - `GrantFlashToCardTypeEffect(CardPredicate)` — flash to card types (static)
 - `GrantActivatedAbilityEffect(ActivatedAbility, GrantScope)` or `(ActivatedAbility, GrantScope, PermanentPredicate)` — grant ability
 - `GrantAdditionalBlockEffect(int)` — block N additional
