@@ -187,6 +187,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "whenever you gain life, put a growth counter on this enchantment" | `PutCountersOnSelfEffect(CounterType.GROWTH)` | ON_CONTROLLER_GAINS_LIFE | Fires once per life-gain event; see `c/ComfortingCounsel.java` |
 | "as long as there are five or more growth counters on this enchantment, creatures you control get +3/+3" | `ConditionalEffect(new SourceCounterThreshold(5, CounterType.GROWTH), StaticBoostEffect(3, 3, OWN_CREATURES))` | STATIC | |
 | "double target player's life total" | `DoubleTargetPlayerLifeEffect()` | SPELL | |
+| "each player's life total becomes the highest life total among all players" | `SetEachPlayerLifeToHighestAmongPlayersEffect()` | ON_ENTER_BATTLEFIELD | Arbiter of Knollridge |
 | "players can't gain life" | `PlayersCantGainLifeEffect()` | STATIC | |
 
 ## Graveyard / library hate (static, global)
