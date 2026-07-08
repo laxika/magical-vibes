@@ -110,23 +110,25 @@ class LeoninRelicWarderTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Casts with no artifacts or enchantments in play and enters the battlefield")
+    @DisplayName("Casts with no artifacts or enchantments and the ETB never triggers")
     void castsWithNoLegalTargets() {
-        // No artifacts or enchantments anywhere — the optional ETB target is chosen when the
-        // trigger goes on the stack, so the creature must still be castable (CR 601.2c).
+        // No artifacts or enchantments anywhere — the creature must still be castable
+        // (CR 601.2c), and its targeted "may" ETB has no legal target so it isn't put on the
+        // stack at all (CR 603.3c): the controller is never prompted.
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.setHand(player1, List.of(new LeoninRelicWarder()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> creature enters, MayEffect on stack
-        harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> no valid targets, nothing exiled
+        harness.passBothPriorities(); // resolve creature spell -> creature enters; ETB finds no legal target
 
-        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Leonin Relic-Warder"));
+        // No may prompt and nothing left on the stack — the ETB never triggered.
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.exileReturnOnPermanentLeave).isEmpty();
     }
 

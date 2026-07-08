@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveCountersEffect;
@@ -38,6 +40,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.extern.slf4j.Slf4j;
@@ -66,6 +69,7 @@ public class BattlefieldEntryService {
     private final EtbEffectResolver etbEffectResolver;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     // @Lazy on triggerCollectionService breaks the constructor cycle:
     // BattlefieldEntryService → TriggerCollectionService → PlayerInputService/queue services →
@@ -79,7 +83,8 @@ public class BattlefieldEntryService {
                                    ETBTokenTargetService etbTokenTargetService,
                                    EtbEffectResolver etbEffectResolver,
                                    AmountEvaluationService amountEvaluationService,
-                                   ConditionEvaluationService conditionEvaluationService) {
+                                   ConditionEvaluationService conditionEvaluationService,
+                                   PredicateEvaluationService predicateEvaluationService) {
         this.gameQueryService = gameQueryService;
         this.gameBroadcastService = gameBroadcastService;
         this.playerInputService = playerInputService;
@@ -90,6 +95,7 @@ public class BattlefieldEntryService {
         this.etbEffectResolver = etbEffectResolver;
         this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
+        this.predicateEvaluationService = predicateEvaluationService;
     }
 
 
@@ -459,6 +465,14 @@ public class BattlefieldEntryService {
 
             for (CardEffect effect : mayEffects) {
                 MayEffect may = (MayEffect) effect;
+                // CR 603.3c: a "may [do X to] target permanent" ETB (e.g. Leonin Relic-Warder)
+                // targets, so with no legal target the ability isn't put onto the stack at all —
+                // the controller isn't even prompted. Skip queueing it in that case.
+                if (mayEtbTargetsPermanentButHasNoLegalTarget(gameData, controllerId, card, may)) {
+                    log.info("Game {} - {} may ETB ability not put on stack (no legal targets)",
+                            gameData.id, card.getName());
+                    continue;
+                }
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = bf != null && !bf.isEmpty() ? bf.getLast().getId() : null;
                 gameData.queueMayAbility(card, controllerId, may, null, sourcePermanentId);
@@ -485,6 +499,41 @@ public class BattlefieldEntryService {
             triggerCollectionService.checkOpponentLandEntersTriggers(gameData, controllerId, card);
             triggerCollectionService.checkAllyLandEntersTriggers(gameData, controllerId, card);
         }
+    }
+
+    /**
+     * True when a "may" ETB ability targets a permanent (and only a permanent) via a concrete
+     * predicate filter but no permanent on the battlefield satisfies it — meaning the targeted
+     * triggered ability has no legal target and must not be put onto the stack (CR 603.3c).
+     *
+     * <p>Deliberately narrow: it mirrors the pure permanent-target branch of
+     * {@code MayAbilityHandlerService.handleTargetedMayAbilityAccepted}. Abilities that can also
+     * target a player (a player is always a legal target), that target a graveyard card (resolved
+     * on a separate path), or that lack a {@link PermanentPredicateTargetFilter} (e.g. Clone-style
+     * copy effects, which don't target) are left untouched and queue as before.
+     */
+    private boolean mayEtbTargetsPermanentButHasNoLegalTarget(GameData gameData, UUID controllerId,
+                                                              Card card, MayEffect may) {
+        CardEffect wrapped = may.wrapped();
+        if (!wrapped.canTargetPermanent() || wrapped.canTargetPlayer() || wrapped.canTargetGraveyard()) {
+            return false;
+        }
+        if (!(card.getTargetFilter() instanceof PermanentPredicateTargetFilter filter)) {
+            return false;
+        }
+        FilterContext ctx = FilterContext.of(gameData)
+                .withSourceCardId(card.getId())
+                .withSourceControllerId(controllerId);
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent p : battlefield) {
+                if (predicateEvaluationService.matchesPermanentPredicate(p, filter.predicate(), ctx)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**

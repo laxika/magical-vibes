@@ -70,7 +70,7 @@ class BattlefieldEntryServiceTest {
                 graveyardTargetingService, etbTokenTargetService,
                 new EtbEffectResolver(conditionEvaluationService),
                 new AmountEvaluationService(predicateEvaluationService, gameQueryService),
-                conditionEvaluationService);
+                conditionEvaluationService, predicateEvaluationService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
