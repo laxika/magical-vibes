@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCreaturesCantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 @CardRegistration(set = "MBS", collectorNumber = "60")
 public class ConcussiveBolt extends Card {
@@ -18,6 +19,6 @@ public class ConcussiveBolt extends Card {
         // can't block this turn.
         addEffect(EffectSlot.SPELL, new DealDamageToPlayersEffect(4, DamageRecipient.TARGET_PLAYER));
         addEffect(EffectSlot.SPELL, new ConditionalEffect(new Metalcraft(), 
-                new TargetPlayerCreaturesCantBlockThisTurnEffect()));
+                new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS)));
     }
 }

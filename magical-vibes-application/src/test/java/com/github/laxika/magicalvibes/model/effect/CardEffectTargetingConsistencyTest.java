@@ -50,13 +50,15 @@ class CardEffectTargetingConsistencyTest {
      * <ul>
      *   <li>a piggyback effect that rides on a target already chosen by a sibling effect, or</li>
      *   <li>a pre-resolved effect whose target UUID is baked into the record / pushed with
-     *       {@code nonTargeting=true}.</li>
+     *       {@code nonTargeting=true}, or</li>
+     *   <li>a static marker that is scanned in place (e.g. at targeting-legality time) and never
+     *       itself enters the targeting pipeline.</li>
      * </ul>
      */
     private static final Set<String> ALLOWLIST = Set.of(
-            // Piggyback: rides on the shared target of the stack entry (the targeted planeswalker's
-            // controller / targeted player). Does not add its own targeting.
-            "TargetPlayerCreaturesCantBlockThisTurnEffect",
+            // Static marker: TargetingRestrictionEffect is a "can't be targeted by X" property read
+            // by the target-legality services; it never resolves or targets anything itself.
+            "TargetingRestrictionEffect",
             // Pre-resolved: the losing player's UUID is stored in the record constructor
             // (used by emblem/delayed effects that already know the player).
             "TargetPlayerLosesGameEffect",

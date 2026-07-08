@@ -347,6 +347,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `MustBeBlockedByAllCreaturesEffect()` — Lure (static)
 - `EnchantedCreatureCantAttackOrBlockEffect()` — Pacifism (static)
 - `MakeCreatureUnblockableEffect()` — target unblockable this turn
+- `CantBlockThisTurnEffect(TapUntapScope scope[, PermanentPredicate filter])` — creature(s) can't block this turn (one-shot). `TARGET` (target creature, multi-target-group), `TARGET_PLAYERS_PERMANENTS` (target player's / targeted planeswalker's controller's creatures), `ALL_CREATURES` (mass, filtered). NOT the static `CantBlockEffect()`.
 
 ## Tap / untap
 

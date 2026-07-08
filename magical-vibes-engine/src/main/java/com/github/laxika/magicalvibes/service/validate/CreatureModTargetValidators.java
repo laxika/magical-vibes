@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessUntilEnd
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentFromTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureCantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -71,10 +71,14 @@ public class CreatureModTargetValidators {
         tvs.requireCreature(ctx, target);
     }
 
-    @ValidatesTarget(TargetCreatureCantBlockThisTurnEffect.class)
-    public void validateTargetCreatureCantBlock(TargetValidationContext ctx) {
-        Permanent target = tvs.requireBattlefieldTarget(ctx);
-        tvs.requireCreature(ctx, target);
+    @ValidatesTarget(CantBlockThisTurnEffect.class)
+    public void validateCantBlockThisTurn(TargetValidationContext ctx, CantBlockThisTurnEffect effect) {
+        // Only the single-target scope validates a chosen creature; the TARGET_PLAYERS_PERMANENTS
+        // and ALL_CREATURES scopes don't target a permanent.
+        if (effect.scope() == TapUntapScope.TARGET) {
+            Permanent target = tvs.requireBattlefieldTarget(ctx);
+            tvs.requireCreature(ctx, target);
+        }
     }
 
     @ValidatesTarget(MustBlockSourceEffect.class)
