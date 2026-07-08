@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -24,7 +24,7 @@ public class NumbingDose extends Card {
                 "Target must be an artifact or creature"
         ))
                 // Enchanted permanent doesn't untap during its controller's untap step.
-                .addEffect(EffectSlot.STATIC, new AttachedCreatureDoesntUntapEffect())
+                .addEffect(EffectSlot.STATIC, DoesntUntapEffect.enchanted())
 
                 // At the beginning of the upkeep of enchanted permanent's controller, that player loses 1 life.
                 .addEffect(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED, new EnchantedCreatureControllerLosesLifeEffect(1));

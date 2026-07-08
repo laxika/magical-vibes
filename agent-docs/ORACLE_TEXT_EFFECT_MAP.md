@@ -317,7 +317,10 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "untap all [permanents] you control" | `UntapPermanentsEffect(TapUntapScope.CONTROLLED, predicate)` | SPELL | |
 | "untap each other [creature] you control" | `UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES, predicate)` | trigger/ability | Copperhorn Scout, Myr Galvanizer |
 | "tap/untap this permanent" | `TapPermanentsEffect(TapUntapScope.SELF)` / `UntapPermanentsEffect(TapUntapScope.SELF)` | ability/trigger | self as effect (not cost) |
-| "CARDNAME doesn't untap during your untap step" | `DoesntUntapDuringUntapStepEffect()` | STATIC | |
+| "CARDNAME doesn't untap during your untap step" | `DoesntUntapEffect.self()` | STATIC | |
+| "enchanted/equipped permanent doesn't untap during its controller's untap step" | `DoesntUntapEffect.enchanted()` | STATIC (on aura/equipment) | Claustrophobia, Dehydration, Numbing Dose, Heavy Arbalest |
+| "target permanent doesn't untap … for as long as you control CARDNAME" | `DoesntUntapEffect.targetWhileSourceOnBattlefield()` | ability/trigger/saga | piggybacks on companion `TapPermanentsEffect(TapUntapScope.TARGET)`; Dungeon Geists, Time of Ice |
+| "target permanent doesn't untap … for as long as CARDNAME remains tapped" | `DoesntUntapEffect.targetWhileSourceTapped()` | ability | piggybacks on companion `TapPermanentsEffect(TapUntapScope.TARGET)`; Rust Tick |
 | "tap all attacking creatures" | `TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())` | SPELL/trigger | no targeting |
 | "untap all creatures that attacked this turn" | `UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES)` | SPELL/trigger | Relentless Assault |
 | "target permanent doesn't untap during its controller's next untap step" | `SkipNextUntapEffect(TapUntapScope.TARGET)` | ability/trigger | piggybacks on companion targeting effect (e.g. `TapPermanentsEffect(TapUntapScope.TARGET)`); Frost Titan, Watertrap Weaver, Wall of Frost |

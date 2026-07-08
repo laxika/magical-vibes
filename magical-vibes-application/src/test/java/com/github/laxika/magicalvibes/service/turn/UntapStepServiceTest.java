@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -138,10 +137,10 @@ class UntapStepServiceTest {
     class DoesntUntap {
 
         @Test
-        @DisplayName("Permanent with DoesntUntapDuringUntapStepEffect stays tapped")
+        @DisplayName("Permanent with self-scoped DoesntUntapEffect stays tapped")
         void doesntUntapWithStaticEffect() {
             Card card = createCardWithName("Colossus of Sardia");
-            card.addEffect(EffectSlot.STATIC, new DoesntUntapDuringUntapStepEffect());
+            card.addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
 
@@ -151,12 +150,12 @@ class UntapStepServiceTest {
         }
 
         @Test
-        @DisplayName("Permanent with AttachedCreatureDoesntUntapEffect stays tapped")
+        @DisplayName("Permanent with enchanted-scope DoesntUntapEffect stays tapped")
         void doesntUntapWithAttachedAuraEffect() {
             Permanent perm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
             perm.tap();
 
-            when(gameQueryService.hasAuraWithEffect(gd, perm, AttachedCreatureDoesntUntapEffect.class))
+            when(gameQueryService.hasAuraWithEffect(gd, perm, DoesntUntapEffect.class))
                     .thenReturn(true);
 
             sut.untapPermanents(gd, player1Id);
@@ -232,10 +231,10 @@ class UntapStepServiceTest {
         }
 
         @Test
-        @DisplayName("Permanent with DoesntUntapDuringUntapStepEffect still clears summoning sickness")
+        @DisplayName("Permanent with self-scoped DoesntUntapEffect still clears summoning sickness")
         void clearsSummoningSicknessEvenWhenDoesntUntap() {
             Card card = createCardWithName("Colossus of Sardia");
-            card.addEffect(EffectSlot.STATIC, new DoesntUntapDuringUntapStepEffect());
+            card.addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
             Permanent perm = addPermanent(player1Id, card);
             perm.tap();
             perm.setSummoningSick(true);

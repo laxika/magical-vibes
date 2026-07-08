@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
@@ -28,7 +28,7 @@ public class GrimgrinCorpseBorn extends Card {
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
 
         // Doesn't untap during your untap step
-        addEffect(EffectSlot.STATIC, new DoesntUntapDuringUntapStepEffect());
+        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
 
         // Sacrifice another creature: Untap Grimgrin and put a +1/+1 counter on it
         addActivatedAbility(new ActivatedAbility(

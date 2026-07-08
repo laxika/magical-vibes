@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.AttachedCreatureDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -45,9 +45,9 @@ public class UntapStepService {
      * <ol>
      *   <li>Removes stale untap-prevention locks whose source permanent has left
      *       the battlefield or is no longer tapped.</li>
-     *   <li>Untaps each of the active player's permanents unless it has a
-     *       {@link DoesntUntapDuringUntapStepEffect}, an attached
-     *       {@link AttachedCreatureDoesntUntapEffect}, or an active untap lock.</li>
+     *   <li>Untaps each of the active player's permanents unless it has a self-scoped
+     *       {@link DoesntUntapEffect}, an attached (enchanted-scope) {@link DoesntUntapEffect},
+     *       or an active untap lock.</li>
      *   <li>Queues a {@code PendingMayAbility} for each tapped permanent with
      *       {@link MayNotUntapDuringUntapStepEffect}, letting the controller choose.</li>
      *   <li>Clears summoning sickness and loyalty-ability-used flags.</li>
@@ -85,9 +85,10 @@ public class UntapStepService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(activePlayerId);
         if (battlefield != null) {
             battlefield.forEach(p -> {
-                boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, AttachedCreatureDoesntUntapEffect.class);
+                // ENCHANTED-scope DoesntUntapEffect on an attached aura keeps the host tapped.
+                boolean hasAttachedDoesntUntap = gameQueryService.hasAuraWithEffect(gameData, p, DoesntUntapEffect.class);
                 boolean hasSelfDoesntUntap = p.getCard().getEffects(EffectSlot.STATIC).stream()
-                        .anyMatch(e -> e instanceof DoesntUntapDuringUntapStepEffect);
+                        .anyMatch(e -> e instanceof DoesntUntapEffect d && d.scope() == TapUntapScope.SELF);
                 boolean hasMayNotUntap = p.isTapped() && p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof MayNotUntapDuringUntapStepEffect);
                 boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()

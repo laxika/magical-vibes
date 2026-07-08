@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -19,7 +19,7 @@ public class TraxosScourgeOfKroog extends Card {
     public TraxosScourgeOfKroog() {
         // Traxos enters tapped and doesn't untap during your untap step.
         addEffect(EffectSlot.STATIC, new EntersTappedEffect());
-        addEffect(EffectSlot.STATIC, new DoesntUntapDuringUntapStepEffect());
+        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
 
         // Whenever you cast a historic spell, untap Traxos.
         addEffect(EffectSlot.ON_CONTROLLER_CASTS_SPELL, new SpellCastTriggerEffect(

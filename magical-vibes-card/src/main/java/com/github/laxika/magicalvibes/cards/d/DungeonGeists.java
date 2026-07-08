@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.PreventTargetUntapWhileSourceOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,6 +31,6 @@ public class DungeonGeists extends Card {
                 "Target must be a creature an opponent controls"
         ))
                 .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new PreventTargetUntapWhileSourceOnBattlefieldEffect());
+                .addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, DoesntUntapEffect.targetWhileSourceOnBattlefield());
     }
 }

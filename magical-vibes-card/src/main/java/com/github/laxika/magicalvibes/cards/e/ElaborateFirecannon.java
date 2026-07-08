@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardAndUntapSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class ElaborateFirecannon extends Card {
 
     public ElaborateFirecannon() {
         // Elaborate Firecannon doesn't untap during your untap step.
-        addEffect(EffectSlot.STATIC, new DoesntUntapDuringUntapStepEffect());
+        addEffect(EffectSlot.STATIC, DoesntUntapEffect.self());
 
         // {4}, {T}: Elaborate Firecannon deals 2 damage to any target.
         addActivatedAbility(new ActivatedAbility(
