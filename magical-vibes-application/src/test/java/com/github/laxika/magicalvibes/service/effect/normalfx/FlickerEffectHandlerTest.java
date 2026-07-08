@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -121,7 +122,7 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, target);
-            assertThat(gd.pendingExileReturns)
+            assertThat(gd.getDelayedActions(PendingExileReturn.class))
                     .anyMatch(per -> per.card().getName().equals("Grizzly Bears")
                             && per.controllerId().equals(player1Id));
         }
@@ -139,7 +140,7 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
-            assertThat(gd.pendingExileReturns).isEmpty();
+            assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
         }
 
         @Test
@@ -158,7 +159,7 @@ class FlickerEffectHandlerTest {
 
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
-            assertThat(gd.pendingExileReturns)
+            assertThat(gd.getDelayedActions(PendingExileReturn.class))
                     .anyMatch(per -> per.card().getName().equals("Grizzly Bears")
                             && per.controllerId().equals(player2Id));
         }
@@ -205,7 +206,7 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService).removePermanentToExile(gd, source);
-            assertThat(gd.pendingExileReturns)
+            assertThat(gd.getDelayedActions(PendingExileReturn.class))
                     .anyMatch(per -> per.card().getName().equals("Argent Sphinx")
                             && per.controllerId().equals(player1Id));
         }
@@ -223,7 +224,7 @@ class FlickerEffectHandlerTest {
             handler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
             verify(permanentRemovalService, never()).removePermanentToExile(any(), any());
-            assertThat(gd.pendingExileReturns).isEmpty();
+            assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
         }
 
         @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
+import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
@@ -78,7 +80,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // The delayed return should be registered
-        assertThat(gd.pendingDelayedGraveyardToHandReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
 
         // Advance to end step to trigger the delayed return
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -92,7 +94,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .noneMatch(c -> c.getName().equals("Holy Strength"));
         // Pending list should be cleared
-        assertThat(gd.pendingDelayedGraveyardToHandReturns).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
     }
 
     @Test
@@ -118,7 +120,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         // No delayed return should be registered
-        assertThat(gd.pendingDelayedGraveyardToHandReturns).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
 
         // Aura stays in graveyard
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -181,7 +183,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.pendingDelayedGraveyardToHandReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
 
         // Advance to end step
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -211,7 +213,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         // No triggered abilities should be on the stack
         assertThat(gd.stack).noneMatch(e ->
                 e.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.pendingDelayedGraveyardToHandReturns).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).isEmpty();
     }
 
     // ===== Card removed from graveyard before end step =====
@@ -236,7 +238,7 @@ class TianaShipsCaretakerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        assertThat(gd.pendingDelayedGraveyardToHandReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedGraveyardToHandReturn.class)).hasSize(1);
 
         // Manually remove the card from graveyard (simulating exile or other effect)
         gd.playerGraveyards.get(player1.getId()).clear();

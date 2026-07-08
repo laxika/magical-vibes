@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.g;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -67,7 +69,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
 
         // Creature should be marked for exile at end step
-        assertThat(gd.pendingTokenExilesAtEndStep).contains(creature.getId());
+        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).contains(new ExileTokenAtEndStep(creature.getId()));
 
         // Creature should be tracked as stolen
         assertThat(gd.stolenCreatures).containsKey(creature.getId());

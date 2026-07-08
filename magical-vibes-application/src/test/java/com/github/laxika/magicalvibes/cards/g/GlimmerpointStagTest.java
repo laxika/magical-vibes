@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -154,7 +155,7 @@ class GlimmerpointStagTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         // Nothing should be pending to return
-        assertThat(gd.pendingExileReturns).isEmpty();
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
     }
 
     @Test

@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.j;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -49,10 +50,10 @@ class JaceCunningCastawayTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(4); // 3 + 1
-        assertThat(gd.pendingDelayedCombatDamageLoots).hasSize(1);
-        assertThat(gd.pendingDelayedCombatDamageLoots.getFirst().controllerId()).isEqualTo(player1.getId());
-        assertThat(gd.pendingDelayedCombatDamageLoots.getFirst().drawAmount()).isEqualTo(1);
-        assertThat(gd.pendingDelayedCombatDamageLoots.getFirst().discardAmount()).isEqualTo(1);
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().drawAmount()).isEqualTo(1);
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst().discardAmount()).isEqualTo(1);
     }
 
     @Test
@@ -64,8 +65,8 @@ class JaceCunningCastawayTest extends BaseCardTest {
         harness.passBothPriorities();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingDelayedCombatDamageLoots).hasSize(1);
-        GameData.DelayedCombatDamageLoot loot = gd.pendingDelayedCombatDamageLoots.getFirst();
+        assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).hasSize(1);
+        DelayedCombatDamageLoot loot = gd.getDelayedActions(DelayedCombatDamageLoot.class).getFirst();
         assertThat(loot.sourceCard()).isNotNull();
         assertThat(loot.sourceCard().getName()).isEqualTo("Jace, Cunning Castaway");
     }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -69,7 +69,7 @@ public class ExileSupport {
         log.info("Game {} - {} exiles {}; will return at next {}",
                 gameData.id, entry.getCard().getName(), card.getName(), returnStep);
 
-        gameData.pendingExileReturns.add(new PendingExileReturn(card, ownerId, returnTapped, false, returnStep));
+        gameData.queueDelayedAction(new PendingExileReturn(card, ownerId, returnTapped, false, returnStep));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

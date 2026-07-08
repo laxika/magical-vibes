@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.cards.t;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -278,12 +279,12 @@ class TimeStopTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 6);
 
         GameData gd = harness.getGameData();
-        gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
+        gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
 
         harness.castInstant(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
+        assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
     }
 }
 

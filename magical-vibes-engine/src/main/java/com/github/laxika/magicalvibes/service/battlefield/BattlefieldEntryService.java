@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.battlefield;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -149,7 +150,7 @@ public class BattlefieldEntryService {
                 .add(permanent.getCard());
         // Delayed "sacrifice this token at the beginning of the next end step" (Choreographed Sparks).
         if (permanent.getCard().isSacrificeAtEndStep()) {
-            gameData.permanentsToSacrificeAtEndStep.add(permanent.getId());
+            gameData.queueDelayedAction(new SacrificeAtEndStep(permanent.getId()));
         }
     }
 

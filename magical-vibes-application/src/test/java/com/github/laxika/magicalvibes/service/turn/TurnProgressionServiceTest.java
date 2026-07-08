@@ -1,4 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -284,7 +287,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Processes sacrifices when leaving END_OF_COMBAT with pending sacrifices")
         void processesEndOfCombatSacrifices() {
             gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
 
             turnProgressionService.advanceStep(gd);
 
@@ -298,7 +301,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Processes exiles when leaving END_OF_COMBAT with pending token exiles")
         void processesEndOfCombatExiles() {
             gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.pendingTokenExilesAtEndOfCombat.add(UUID.randomUUID());
+            gd.queueDelayedAction(new ExileTokenAtEndOfCombat(UUID.randomUUID()));
 
             turnProgressionService.advanceStep(gd);
 
@@ -311,7 +314,7 @@ class TurnProgressionServiceTest {
         @DisplayName("Clears priority passed after processing end-of-combat sacrifices")
         void clearsPriorityAfterSacrifices() {
             gd.currentStep = TurnStep.END_OF_COMBAT;
-            gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
+            gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
             gd.priorityPassedBy.add(player1Id);
 
             turnProgressionService.advanceStep(gd);
@@ -544,7 +547,7 @@ class TurnProgressionServiceTest {
             gd.cardsDrawnThisTurn.put(player1Id, 3);
             gd.lifeGainedThisTurn.put(player1Id, 4);
             gd.combatDamageToPlayersThisTurn.put(UUID.randomUUID(), new HashSet<>());
-            gd.pendingDelayedCombatDamageLoots.add(new GameData.DelayedCombatDamageLoot(player1Id, 1, 1, new Card()));
+            gd.queueDelayedAction(new DelayedCombatDamageLoot(player1Id, 1, 1, new Card()));
             gd.playersDealtDamageThisTurn.add(player1Id);
             gd.permanentsDealtDamageThisTurn.add(UUID.randomUUID());
             gd.creatureCardsDamagedThisTurnBySourcePermanent.put(UUID.randomUUID(), new HashSet<>());
@@ -563,7 +566,7 @@ class TurnProgressionServiceTest {
             assertThat(gd.cardsDrawnThisTurn).isEmpty();
             assertThat(gd.lifeGainedThisTurn).isEmpty();
             assertThat(gd.combatDamageToPlayersThisTurn).isEmpty();
-            assertThat(gd.pendingDelayedCombatDamageLoots).isEmpty();
+            assertThat(gd.getDelayedActions(DelayedCombatDamageLoot.class)).isEmpty();
             assertThat(gd.playersDealtDamageThisTurn).isEmpty();
             assertThat(gd.permanentsDealtDamageThisTurn).isEmpty();
             assertThat(gd.creatureCardsDamagedThisTurnBySourcePermanent).isEmpty();

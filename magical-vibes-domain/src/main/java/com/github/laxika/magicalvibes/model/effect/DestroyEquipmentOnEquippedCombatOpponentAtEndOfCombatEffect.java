@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * At trigger creation time (in CombatBlockService), the combat opponent is checked for attached
  * Equipment. If equipped, the trigger is placed on the stack with the equipped creature as the
  * target. When the trigger resolves, the target creature's ID is recorded in
- * {@code GameData.creaturesWithEquipmentToDestroyAtEndOfCombat}. At end of combat, all Equipment
+ * a {@code DestroyEquipmentAtEndOfCombat} delayed action. At end of combat, all Equipment
  * currently attached to those creatures is destroyed.
  * <p>
  * Use with {@code EffectSlot.ON_BLOCK} (non-per-blocker) and

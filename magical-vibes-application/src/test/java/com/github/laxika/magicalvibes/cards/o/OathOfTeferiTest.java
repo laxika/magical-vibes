@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.g.GarrukWildspeaker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -118,7 +119,7 @@ class OathOfTeferiTest extends BaseCardTest {
             harness.passBothPriorities(); // resolve ETB → fizzles
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingExileReturns).isEmpty();
+            assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
         }
     }
 

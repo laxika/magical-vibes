@@ -1,4 +1,8 @@
 package com.github.laxika.magicalvibes.service.combat;
+import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,11 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Facade for the complete combat phase lifecycle. Delegates to focused sub-services:
@@ -132,9 +136,12 @@ public class CombatService {
      * Sacrifices all permanents marked for end-of-combat sacrifice.
      */
     public void processEndOfCombatSacrifices(GameData gameData) {
+        Set<UUID> toSacrificeIds = gameData.drainDelayedActions(SacrificeAtEndOfCombat.class).stream()
+                .map(SacrificeAtEndOfCombat::permanentId)
+                .collect(Collectors.toSet());
         gameData.forEachBattlefield((playerId, battlefield) -> {
             List<Permanent> toSacrifice = battlefield.stream()
-                    .filter(p -> gameData.permanentsToSacrificeAtEndOfCombat.contains(p.getId()))
+                    .filter(p -> toSacrificeIds.contains(p.getId()))
                     .toList();
             for (Permanent perm : toSacrifice) {
                 permanentRemovalService.removePermanentToGraveyard(gameData, perm);
@@ -143,7 +150,6 @@ public class CombatService {
                 log.info("Game {} - {} sacrificed at end of combat", gameData.id, perm.getCard().getName());
             }
         });
-        gameData.permanentsToSacrificeAtEndOfCombat.clear();
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
@@ -151,9 +157,12 @@ public class CombatService {
      * Exiles all tokens marked for end-of-combat exile (e.g. Geist of Saint Traft's Angel token).
      */
     public void processEndOfCombatExiles(GameData gameData) {
+        Set<UUID> toExileIds = gameData.drainDelayedActions(ExileTokenAtEndOfCombat.class).stream()
+                .map(ExileTokenAtEndOfCombat::permanentId)
+                .collect(Collectors.toSet());
         gameData.forEachBattlefield((playerId, battlefield) -> {
             List<Permanent> toExile = battlefield.stream()
-                    .filter(p -> gameData.pendingTokenExilesAtEndOfCombat.contains(p.getId()))
+                    .filter(p -> toExileIds.contains(p.getId()))
                     .toList();
             for (Permanent perm : toExile) {
                 permanentRemovalService.removePermanentToExile(gameData, perm);
@@ -162,7 +171,6 @@ public class CombatService {
                 log.info("Game {} - {} exiled at end of combat", gameData.id, perm.getCard().getName());
             }
         });
-        gameData.pendingTokenExilesAtEndOfCombat.clear();
         permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
@@ -172,8 +180,9 @@ public class CombatService {
      * {@link PermanentRemovalService#tryDestroyPermanent}.
      */
     public void processEndOfCombatEquipmentDestruction(GameData gameData) {
-        Set<UUID> creatureIds = new HashSet<>(gameData.creaturesWithEquipmentToDestroyAtEndOfCombat);
-        gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.clear();
+        List<UUID> creatureIds = gameData.drainDelayedActions(DestroyEquipmentAtEndOfCombat.class).stream()
+                .map(DestroyEquipmentAtEndOfCombat::creatureId)
+                .toList();
 
         for (UUID creatureId : creatureIds) {
             List<Permanent> equipmentToDestroy = new ArrayList<>();
@@ -202,8 +211,9 @@ public class CombatService {
      * to the battlefield transformed (as its back face) under its controller's control.
      */
     public void processEndOfCombatExileAndReturnTransformed(GameData gameData) {
-        Set<UUID> toProcess = new HashSet<>(gameData.pendingExileAndReturnTransformedAtEndOfCombat);
-        gameData.pendingExileAndReturnTransformedAtEndOfCombat.clear();
+        List<UUID> toProcess = gameData.drainDelayedActions(ExileAndReturnTransformedAtEndOfCombat.class).stream()
+                .map(ExileAndReturnTransformedAtEndOfCombat::permanentId)
+                .toList();
 
         for (UUID permId : toProcess) {
             // Find the permanent and its controller

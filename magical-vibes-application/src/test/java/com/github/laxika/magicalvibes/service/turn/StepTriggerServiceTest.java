@@ -1,4 +1,8 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -8,7 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
-import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
@@ -1159,7 +1163,7 @@ class StepTriggerServiceTest {
             Card tokenCard = createCardWithName("Token");
             Permanent token = new Permanent(tokenCard);
             gd.playerBattlefields.get(player1Id).add(token);
-            gd.pendingTokenExilesAtEndStep.add(token.getId());
+            gd.queueDelayedAction(new ExileTokenAtEndStep(token.getId()));
 
             when(gameQueryService.findPermanentById(gd, token.getId())).thenReturn(token);
 
@@ -1167,7 +1171,7 @@ class StepTriggerServiceTest {
 
             verify(permanentRemovalService).removePermanentToExile(gd, token);
             verify(permanentRemovalService).removeOrphanedAuras(gd);
-            assertThat(gd.pendingTokenExilesAtEndStep).isEmpty();
+            assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).isEmpty();
         }
 
         @Test
@@ -1176,14 +1180,14 @@ class StepTriggerServiceTest {
             Card tokenCard = createCardWithName("Spark Token");
             Permanent token = new Permanent(tokenCard);
             gd.playerBattlefields.get(player1Id).add(token);
-            gd.permanentsToSacrificeAtEndStep.add(token.getId());
+            gd.queueDelayedAction(new SacrificeAtEndStep(token.getId()));
 
             when(gameQueryService.findPermanentById(gd, token.getId())).thenReturn(token);
 
             sut.handleEndStepTriggers(gd);
 
             verify(permanentRemovalService).removePermanentToGraveyard(gd, token);
-            assertThat(gd.permanentsToSacrificeAtEndStep).isEmpty();
+            assertThat(gd.getDelayedActions(SacrificeAtEndStep.class)).isEmpty();
         }
 
         @Test
@@ -1192,7 +1196,7 @@ class StepTriggerServiceTest {
             Card card = createCardWithName("Doomed Creature");
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
-            gd.pendingDestroyAtEndStep.add(perm.getId());
+            gd.queueDelayedAction(new DestroyAtEndStep(perm.getId()));
 
             when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
             when(permanentRemovalService.tryDestroyPermanent(gd, perm)).thenReturn(true);
@@ -1200,7 +1204,7 @@ class StepTriggerServiceTest {
             sut.handleEndStepTriggers(gd);
 
             verify(permanentRemovalService).tryDestroyPermanent(gd, perm);
-            assertThat(gd.pendingDestroyAtEndStep).isEmpty();
+            assertThat(gd.getDelayedActions(DestroyAtEndStep.class)).isEmpty();
         }
 
         @Test
@@ -1208,14 +1212,14 @@ class StepTriggerServiceTest {
         void pendingExileReturnsProcessed() {
             Card card = createCardWithName("Exiled Card");
             gd.getPlayerExiledCards(player1Id).add(card);
-            gd.pendingExileReturns.add(new PendingExileReturn(card, player1Id, false));
+            gd.queueDelayedAction(new PendingExileReturn(card, player1Id, false));
 
             sut.processPendingExileReturns(gd, TurnStep.END_STEP);
 
             verify(battlefieldEntryService).putPermanentOntoBattlefield(eq(gd), eq(player1Id), any(Permanent.class));
             verify(battlefieldEntryService).handleCreatureEnteredBattlefield(eq(gd), eq(player1Id), eq(card), any(), eq(false));
             assertThat(gd.getPlayerExiledCards(player1Id)).doesNotContain(card);
-            assertThat(gd.pendingExileReturns).isEmpty();
+            assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
         }
 
         @Test
@@ -1223,7 +1227,7 @@ class StepTriggerServiceTest {
         void pendingExileReturnsTapped() {
             Card card = createCardWithName("Exiled Card");
             gd.getPlayerExiledCards(player1Id).add(card);
-            gd.pendingExileReturns.add(new PendingExileReturn(card, player1Id, true));
+            gd.queueDelayedAction(new PendingExileReturn(card, player1Id, true));
 
             sut.processPendingExileReturns(gd, TurnStep.END_STEP);
 
@@ -1237,7 +1241,7 @@ class StepTriggerServiceTest {
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
             // 4 total counters to add = 2 triggers (each adds 2)
-            gd.pendingDelayedPlusOnePlusOneCounters.put(perm.getId(), 4);
+            gd.addDelayedPlusOneCounters(perm.getId(), 4);
 
             when(gameQueryService.findPermanentById(gd, perm.getId())).thenReturn(perm);
             when(gameQueryService.findPermanentController(gd, perm.getId())).thenReturn(player1Id);
@@ -1246,7 +1250,7 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).hasSize(2);
             assertThat(gd.stack.getFirst().getDescription()).contains("Protean Hydra");
-            assertThat(gd.pendingDelayedPlusOnePlusOneCounters).isEmpty();
+            assertThat(gd.getDelayedActions(DelayedPlusOneCounters.class)).isEmpty();
         }
     }
 

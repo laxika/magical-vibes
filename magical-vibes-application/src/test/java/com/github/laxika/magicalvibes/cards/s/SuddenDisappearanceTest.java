@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GloriousAnthem;
 import com.github.laxika.magicalvibes.cards.g.GoldMyr;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -55,7 +56,7 @@ class SuddenDisappearanceTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears", "Gold Myr", "Glorious Anthem");
-        assertThat(gd.pendingExileReturns).hasSize(3);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(3);
     }
 
     @Test
@@ -75,7 +76,7 @@ class SuddenDisappearanceTest extends BaseCardTest {
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears")
                 .doesNotContain("Forest");
-        assertThat(gd.pendingExileReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
     }
 
     @Test
@@ -96,7 +97,7 @@ class SuddenDisappearanceTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(c -> c.getName())
                 .contains("Grizzly Bears");
-        assertThat(gd.pendingExileReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
     }
 
     @Test
@@ -110,14 +111,14 @@ class SuddenDisappearanceTest extends BaseCardTest {
         harness.castSorcery(player1, 0, player2.getId());
         harness.passBothPriorities();
 
-        assertThat(gd.pendingExileReturns).hasSize(2);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(2);
 
         advanceToEndStep();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .anyMatch(p -> p.getCard().getName().equals("Gold Myr"));
-        assertThat(gd.pendingExileReturns).isEmpty();
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
     }
 
     @Test
@@ -136,7 +137,7 @@ class SuddenDisappearanceTest extends BaseCardTest {
                 .anyMatch(p -> p.getCard().getName().equals("Forest"))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"))
                 .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
-        assertThat(gd.pendingExileReturns).hasSize(2);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(2);
     }
 
     @Test
@@ -151,7 +152,7 @@ class SuddenDisappearanceTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Forest"));
-        assertThat(gd.pendingExileReturns).isEmpty();
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
         assertThat(gd.stack).isEmpty();
     }
 

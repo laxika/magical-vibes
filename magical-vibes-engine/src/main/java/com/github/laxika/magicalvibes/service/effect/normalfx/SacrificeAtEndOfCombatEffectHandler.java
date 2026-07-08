@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +26,7 @@ public class SacrificeAtEndOfCombatEffectHandler implements NormalEffectHandlerB
         
                 Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
                 if (self != null) {
-                    gameData.permanentsToSacrificeAtEndOfCombat.add(self.getId());
+                    gameData.queueDelayedAction(new SacrificeAtEndOfCombat(self.getId()));
                     String logEntry = entry.getCard().getName() + " will be sacrificed at end of combat.";
                     gameData.gameLog.add(logEntry);
                 }

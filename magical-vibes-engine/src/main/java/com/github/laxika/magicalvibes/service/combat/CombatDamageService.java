@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.combat;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -847,10 +848,10 @@ public class CombatDamageService {
     private void processDelayedCombatDamageLootTriggers(GameData gameData,
                                                          Map<Permanent, Integer> combatDamageDealtToPlayer,
                                                          UUID attackerId) {
-        if (gameData.pendingDelayedCombatDamageLoots.isEmpty()) return;
+        if (!gameData.hasDelayedAction(DelayedCombatDamageLoot.class)) return;
 
         // Check if any creature controlled by the trigger's controller dealt combat damage to a player
-        for (GameData.DelayedCombatDamageLoot loot : gameData.pendingDelayedCombatDamageLoots) {
+        for (DelayedCombatDamageLoot loot : gameData.getDelayedActions(DelayedCombatDamageLoot.class)) {
             boolean creatureDealtDamage = false;
             if (loot.controllerId().equals(attackerId)) {
                 for (var dmgEntry : combatDamageDealtToPlayer.entrySet()) {

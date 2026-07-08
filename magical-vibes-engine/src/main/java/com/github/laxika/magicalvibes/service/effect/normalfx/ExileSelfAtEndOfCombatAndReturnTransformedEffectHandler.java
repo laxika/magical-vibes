@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,7 +29,7 @@ public class ExileSelfAtEndOfCombatAndReturnTransformedEffectHandler implements 
         if (source == null) {
             return;
         }
-        gameData.pendingExileAndReturnTransformedAtEndOfCombat.add(source.getId());
+        gameData.queueDelayedAction(new ExileAndReturnTransformedAtEndOfCombat(source.getId()));
         log.info("Game {} - {} scheduled for exile and return transformed at end of combat",
                 gameData.id, source.getCard().getName());
     }

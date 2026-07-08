@@ -146,8 +146,7 @@ public class DamagePreventionService {
     void registerDelayedRegrowth(GameData gameData, Permanent permanent, int countersRemoved) {
         if (permanent.getCard().getEffects(EffectSlot.STATIC).stream()
                 .anyMatch(e -> e instanceof DelayedPlusOnePlusOneCounterRegrowthEffect)) {
-            int pending = gameData.pendingDelayedPlusOnePlusOneCounters.getOrDefault(permanent.getId(), 0);
-            gameData.pendingDelayedPlusOnePlusOneCounters.put(permanent.getId(), pending + countersRemoved * 2);
+            gameData.addDelayedPlusOneCounters(permanent.getId(), countersRemoved * 2);
         }
     }
 

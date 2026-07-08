@@ -1,4 +1,11 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldTransformedReturn;
+import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
+import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
+import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.DestroyAtEndStep;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -6,7 +13,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
-import com.github.laxika.magicalvibes.model.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1018,25 +1025,11 @@ public class StepTriggerService {
      * under their owner's control.
      */
     public void processPendingExileReturns(GameData gameData, TurnStep step) {
-        if (gameData.pendingExileReturns.isEmpty()) {
-            return;
-        }
-
-        List<PendingExileReturn> matching = new ArrayList<>();
-        List<PendingExileReturn> remaining = new ArrayList<>();
-        for (PendingExileReturn pending : gameData.pendingExileReturns) {
-            if (pending.returnStep() == step) {
-                matching.add(pending);
-            } else {
-                remaining.add(pending);
-            }
-        }
+        List<PendingExileReturn> matching =
+                gameData.drainDelayedActions(PendingExileReturn.class, p -> p.returnStep() == step);
         if (matching.isEmpty()) {
             return;
         }
-
-        gameData.pendingExileReturns.clear();
-        gameData.pendingExileReturns.addAll(remaining);
 
         for (PendingExileReturn pending : matching) {
             Card card = pending.card();
@@ -1065,10 +1058,10 @@ public class StepTriggerService {
      */
     public void handleEndStepTriggers(GameData gameData) {
         // Process pending token exiles (e.g. Mimic Vat tokens)
-        if (!gameData.pendingTokenExilesAtEndStep.isEmpty()) {
-            Set<UUID> toExile = new HashSet<>(gameData.pendingTokenExilesAtEndStep);
-            gameData.pendingTokenExilesAtEndStep.clear();
-            for (UUID permId : toExile) {
+        if (gameData.hasDelayedAction(ExileTokenAtEndStep.class)) {
+            List<ExileTokenAtEndStep> toExile = gameData.drainDelayedActions(ExileTokenAtEndStep.class);
+            for (ExileTokenAtEndStep action : toExile) {
+                UUID permId = action.permanentId();
                 Permanent token = gameQueryService.findPermanentById(gameData, permId);
                 if (token != null) {
                     permanentRemovalService.removePermanentToExile(gameData, token);
@@ -1081,10 +1074,10 @@ public class StepTriggerService {
         }
 
         // Process pending end-step sacrifices (e.g. Choreographed Sparks' creature-copy token)
-        if (!gameData.permanentsToSacrificeAtEndStep.isEmpty()) {
-            Set<UUID> toSacrifice = new HashSet<>(gameData.permanentsToSacrificeAtEndStep);
-            gameData.permanentsToSacrificeAtEndStep.clear();
-            for (UUID permId : toSacrifice) {
+        if (gameData.hasDelayedAction(SacrificeAtEndStep.class)) {
+            List<SacrificeAtEndStep> toSacrifice = gameData.drainDelayedActions(SacrificeAtEndStep.class);
+            for (SacrificeAtEndStep action : toSacrifice) {
+                UUID permId = action.permanentId();
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     permanentRemovalService.removePermanentToGraveyard(gameData, perm);
@@ -1097,10 +1090,10 @@ public class StepTriggerService {
         }
 
         // Process pending end-step destructions (e.g. Stone Giant)
-        if (!gameData.pendingDestroyAtEndStep.isEmpty()) {
-            Set<UUID> toDestroy = new HashSet<>(gameData.pendingDestroyAtEndStep);
-            gameData.pendingDestroyAtEndStep.clear();
-            for (UUID permId : toDestroy) {
+        if (gameData.hasDelayedAction(DestroyAtEndStep.class)) {
+            List<DestroyAtEndStep> toDestroy = gameData.drainDelayedActions(DestroyAtEndStep.class);
+            for (DestroyAtEndStep action : toDestroy) {
+                UUID permId = action.permanentId();
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     if (permanentRemovalService.tryDestroyPermanent(gameData, perm)) {
@@ -1117,12 +1110,12 @@ public class StepTriggerService {
         // Each removed counter creates a separate delayed trigger that adds 2 +1/+1 counters.
         // The pending map stores countersRemoved * 2 (total counters to add), so we divide by 2
         // to get the number of individual triggers, each adding 2 counters.
-        if (!gameData.pendingDelayedPlusOnePlusOneCounters.isEmpty()) {
-            Map<UUID, Integer> pendingCounters = new HashMap<>(gameData.pendingDelayedPlusOnePlusOneCounters);
-            gameData.pendingDelayedPlusOnePlusOneCounters.clear();
-            for (Map.Entry<UUID, Integer> counterEntry : pendingCounters.entrySet()) {
-                UUID permanentId = counterEntry.getKey();
-                int totalCountersToAdd = counterEntry.getValue();
+        if (gameData.hasDelayedAction(DelayedPlusOneCounters.class)) {
+            List<DelayedPlusOneCounters> pendingCounters =
+                    gameData.drainDelayedActions(DelayedPlusOneCounters.class);
+            for (DelayedPlusOneCounters counterEntry : pendingCounters) {
+                UUID permanentId = counterEntry.permanentId();
+                int totalCountersToAdd = counterEntry.totalCounters();
                 Permanent perm = gameQueryService.findPermanentById(gameData, permanentId);
                 if (perm == null) continue;
                 UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
@@ -1149,10 +1142,10 @@ public class StepTriggerService {
         }
 
         // Process delayed untap permanents triggers (e.g. Teferi, Hero of Dominaria +1)
-        if (!gameData.pendingDelayedUntapPermanents.isEmpty()) {
-            List<GameData.DelayedUntapPermanents> pendingUntaps = new ArrayList<>(gameData.pendingDelayedUntapPermanents);
-            gameData.pendingDelayedUntapPermanents.clear();
-            for (GameData.DelayedUntapPermanents pending : pendingUntaps) {
+        if (gameData.hasDelayedAction(DelayedUntapPermanents.class)) {
+            List<DelayedUntapPermanents> pendingUntaps =
+                    gameData.drainDelayedActions(DelayedUntapPermanents.class);
+            for (DelayedUntapPermanents pending : pendingUntaps) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pending.sourceCard(),
@@ -1168,10 +1161,10 @@ public class StepTriggerService {
         }
 
         // Process delayed graveyard-to-hand returns (e.g. Tiana, Ship's Caretaker)
-        if (!gameData.pendingDelayedGraveyardToHandReturns.isEmpty()) {
-            List<GameData.DelayedGraveyardToHandReturn> pendingReturns = new ArrayList<>(gameData.pendingDelayedGraveyardToHandReturns);
-            gameData.pendingDelayedGraveyardToHandReturns.clear();
-            for (GameData.DelayedGraveyardToHandReturn pending : pendingReturns) {
+        if (gameData.hasDelayedAction(DelayedGraveyardToHandReturn.class)) {
+            List<DelayedGraveyardToHandReturn> pendingReturns =
+                    gameData.drainDelayedActions(DelayedGraveyardToHandReturn.class);
+            for (DelayedGraveyardToHandReturn pending : pendingReturns) {
                 List<Card> graveyard = gameData.playerGraveyards.get(pending.ownerId());
                 if (graveyard == null) continue;
                 Card cardToReturn = null;
@@ -1197,11 +1190,10 @@ public class StepTriggerService {
         }
 
         // Process delayed graveyard-to-battlefield transformed returns (e.g. Loyal Cathar)
-        if (!gameData.pendingDelayedGraveyardToBattlefieldTransformedReturns.isEmpty()) {
-            List<GameData.DelayedGraveyardToBattlefieldTransformedReturn> pendingReturns =
-                    new ArrayList<>(gameData.pendingDelayedGraveyardToBattlefieldTransformedReturns);
-            gameData.pendingDelayedGraveyardToBattlefieldTransformedReturns.clear();
-            for (GameData.DelayedGraveyardToBattlefieldTransformedReturn pending : pendingReturns) {
+        if (gameData.hasDelayedAction(DelayedGraveyardToBattlefieldTransformedReturn.class)) {
+            List<DelayedGraveyardToBattlefieldTransformedReturn> pendingReturns =
+                    gameData.drainDelayedActions(DelayedGraveyardToBattlefieldTransformedReturn.class);
+            for (DelayedGraveyardToBattlefieldTransformedReturn pending : pendingReturns) {
                 List<Card> graveyard = gameData.playerGraveyards.get(pending.ownerId());
                 if (graveyard == null) continue;
                 Card cardToReturn = null;

@@ -1,6 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.PendingKarnRestart;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
@@ -151,11 +156,11 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.untilEndOfTurnStolenCreatures.clear();
         gameData.enchantmentDependentStolenCreatures.clear();
         gameData.permanentControlStolenCreatures.clear();
-        gameData.pendingExileReturns.clear();
+        gameData.clearDelayedActions(PendingExileReturn.class);
         gameData.exileReturnOnPermanentLeave.clear();
         gameData.sourceLinkedAnimations.clear();
-        gameData.pendingTokenExilesAtEndStep.clear();
-        gameData.permanentsToSacrificeAtEndStep.clear();
+        gameData.clearDelayedActions(ExileTokenAtEndStep.class);
+        gameData.clearDelayedActions(SacrificeAtEndStep.class);
         gameData.pendingMayAbilities.clear();
         gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
@@ -173,8 +178,8 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.playersWhoCastFirstSpellInGame.clear();
         gameData.playersWithNoMaximumHandSize.clear();
         gameData.priorityPassedBy.clear();
-        gameData.permanentsToSacrificeAtEndOfCombat.clear();
-        gameData.pendingTokenExilesAtEndOfCombat.clear();
+        gameData.clearDelayedActions(SacrificeAtEndOfCombat.class);
+        gameData.clearDelayedActions(ExileTokenAtEndOfCombat.class);
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.drawReplacementTargetToController.clear();
         gameData.playerSpellsCantBeCounteredByColorsThisTurn.clear();

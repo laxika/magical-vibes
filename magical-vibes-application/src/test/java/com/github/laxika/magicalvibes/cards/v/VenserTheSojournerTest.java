@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -74,14 +75,14 @@ class VenserTheSojournerTest extends BaseCardTest {
         // Bears should be exiled
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.pendingExileReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
 
         // Advance to end step — bears should return
         advanceToEndStep();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Grizzly Bears"));
-        assertThat(gd.pendingExileReturns).isEmpty();
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).isEmpty();
     }
 
     @Test
@@ -111,7 +112,7 @@ class VenserTheSojournerTest extends BaseCardTest {
         assertThat(venser.getCounterCount(CounterType.LOYALTY)).isEqualTo(5);
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(p -> p.getCard().getName().equals("Gold Myr"));
-        assertThat(gd.pendingExileReturns).hasSize(1);
+        assertThat(gd.getDelayedActions(PendingExileReturn.class)).hasSize(1);
     }
 
     // ===== -1 ability: Creatures can't be blocked this turn =====

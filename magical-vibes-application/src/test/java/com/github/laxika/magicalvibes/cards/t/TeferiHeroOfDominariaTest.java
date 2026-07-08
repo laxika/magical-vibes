@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
+import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -57,9 +59,9 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         // Loyalty should increase
         assertThat(teferi.getCounterCount(CounterType.LOYALTY)).isEqualTo(5); // 4 + 1
         // Delayed trigger should be registered
-        assertThat(gd.pendingDelayedUntapPermanents).hasSize(1);
-        assertThat(gd.pendingDelayedUntapPermanents.getFirst().count()).isEqualTo(2);
-        assertThat(gd.pendingDelayedUntapPermanents.getFirst().controllerId()).isEqualTo(player1.getId());
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class).getFirst().count()).isEqualTo(2);
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class).getFirst().controllerId()).isEqualTo(player1.getId());
     }
 
     @Test
@@ -82,7 +84,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.passBothPriorities();
 
         // Delayed trigger registered
-        assertThat(gd.pendingDelayedUntapPermanents).hasSize(1);
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).hasSize(1);
 
         // Advance to end step to fire delayed trigger
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -98,7 +100,7 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         assertThat(plains.isTapped()).isFalse();
         assertThat(island.isTapped()).isFalse();
         // Pending list should be cleared
-        assertThat(gd.pendingDelayedUntapPermanents).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedUntapPermanents.class)).isEmpty();
     }
 
     @Test

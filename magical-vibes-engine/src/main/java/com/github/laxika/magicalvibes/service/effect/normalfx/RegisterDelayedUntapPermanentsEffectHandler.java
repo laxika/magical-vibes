@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -24,8 +25,8 @@ public class RegisterDelayedUntapPermanentsEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedUntapPermanentsEffect) effect;
         UUID controllerId = entry.getControllerId();
-        gameData.pendingDelayedUntapPermanents.add(
-                new GameData.DelayedUntapPermanents(controllerId, e.count(), e.filter(), entry.getCard()));
+        gameData.queueDelayedAction(
+                new DelayedUntapPermanents(controllerId, e.count(), e.filter(), entry.getCard()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - {} registers delayed untap up to {} permanents at next end step",

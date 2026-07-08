@@ -904,6 +904,11 @@ interaction):
   (`pendingDelayed*`, `pendingDestroyAtEndStep`, `pendingTokenExiles*`,
   `pendingLethalDamageDestructions`, `pendingManaAbilityTriggers`, `pendingTurnControl`,
   `pendingNextInstantSorceryCopyCount`, `pendingExileReturns`, …) — out of scope.
+  **(Superseded by stage 7 below: the delayed-action / turn-scoped subset — `pendingDelayed*`,
+  `pendingDestroyAtEndStep`, `pendingTokenExiles*`, `pendingExileReturns`, and the end-of-combat
+  sac/exile/equipment/transform fields — were later collapsed onto one `delayedActions` queue.
+  The truly-not-migrated ones stay: `pendingLethalDamageDestructions`,
+  `pendingManaAbilityTriggers`, `pendingTurnControl`, `pendingNextInstantSorceryCopyCount`.)**
 
 ## Constraints (from the task)
 
@@ -913,3 +918,123 @@ interaction):
 - AI (`magical-vibes-ai`) must be updated in lockstep with each migrated kind.
 - Keep the codebase consistent (compiles, targeted tests green, no half-wired kind) at every
   stop point; the user runs the full suite after each commit.
+
+## Stage 7 — DONE: delayed-action / turn-scoped `pending*` fields → one `delayedActions` queue
+
+Goal: collapse the 13 ad-hoc "do X later at timing point Y" fields that stage 6 explicitly
+scoped OUT ("delayed-trigger or turn-scoped state rather than interaction state … out of
+scope") into a single unified queue, the delayed-action analogue of stage 1's
+`pendingInteractions`. Same motivation: each field needed hand-written add/drain discipline, its
+own `simulationCopy` line (repeated copy-gap findings — stage 6 batch 4/5), and often a
+Karn-restart clear.
+
+**Design** (mirrors `PendingInteraction`):
+- New **`com.github.laxika.magicalvibes.model.action` package** (domain module) holding the
+  **marker** sealed interface `DelayedAction` (no methods) plus one file per record family — all 13
+  are standalone top-level records in that package, referenced by simple name (each consumer imports
+  the specific records it uses). This keeps them OUT of the already-large `GameData` god-class.
+  `PendingExileReturn` moved here from `model` too (it must share the sealed interface's package —
+  the domain module is an unnamed module, so a sealed interface's permitted types must be
+  same-package); it stays a standalone record because it is also the value type of the unrelated
+  `exileReturnOnPermanentLeave` O-ring map. **Deliberate divergence from the task's suggested
+  `Timing` enum**: nothing dispatches on timing — the drain happens by record `Class` at fixed call
+  sites, and the cross-family order is a property of those call-site chains (below), exactly as
+  `PendingInteraction` keeps its cross-kind order at the call sites. A `timing()` method would be
+  dead code, so it was omitted; the `PendingInteraction` marker precedent won over the suggestion.
+- `GameData` gained ONE field `public final List<DelayedAction> delayedActions =
+  Collections.synchronizedList(new ArrayList<>())` plus type-filtered helpers copied from the
+  `pendingInteractions` pattern: `queueDelayedAction`, `hasDelayedAction(Class)`,
+  `getDelayedActions(Class)` (read-only snapshot, insertion order — for the per-combat-step loot
+  read), `drainDelayedActions(Class)` (remove+return all of a kind, insertion order),
+  `drainDelayedActions(Class, Predicate)` (filtered drain, leaves non-matching in place — for the
+  per-step exile returns), `clearDelayedActions(Class)`, plus the two keyed-accumulator helpers
+  `addDelayedPlusOneCounters(id, delta)` / `getDelayedPlusOneCounters(id)` (see below).
+- ONE `simulationCopy` line — `copy.delayedActions.addAll(this.delayedActions)` — replacing 13
+  scattered lines. Every record holds only UUIDs / ints / enums / immutable `PermanentPredicate` /
+  shared `Card` refs, so the shallow `addAll` reproduces the exact copy depth of the fields it
+  replaced (the old lines were all `addAll`/`putAll` shallow copies; `Card` was shared before and
+  is shared now). Covered by a new `GameDataDeepCopyTest.deepCopyPreservesDelayedActions` case
+  (value + insertion-order equality, list independence).
+
+**Records** (removed field → record; each its own file in `model.action`, referenced by simple
+name). New: `SacrificeAtEndOfCombat(permanentId)`, `ExileTokenAtEndOfCombat(permanentId)`,
+`DestroyEquipmentAtEndOfCombat(creatureId)`, `ExileAndReturnTransformedAtEndOfCombat(permanentId)`,
+`ExileTokenAtEndStep(permanentId)`, `SacrificeAtEndStep(permanentId)`, `DestroyAtEndStep(permanentId)`,
+`DelayedPlusOneCounters(permanentId, totalCounters)`. Four records that were previously nested in
+`GameData` moved here unchanged apart from `implements DelayedAction`: `DelayedUntapPermanents`,
+`DelayedGraveyardToHandReturn`, `DelayedGraveyardToBattlefieldTransformedReturn`,
+`DelayedCombatDamageLoot`. `PendingExileReturn` is the 13th (moved `model` → `model.action`).
+
+**Cross-family servicing order (rules-relevant — do not change; preserved at the drain call sites):**
+- **End of combat** — `TurnProgressionService.advanceStep` guard (now four `hasDelayedAction`
+  checks) then `CombatService` in this exact order:
+  `processEndOfCombatSacrifices` (SacrificeAtEndOfCombat) → `processEndOfCombatExiles`
+  (ExileTokenAtEndOfCombat) → `processEndOfCombatEquipmentDestruction`
+  (DestroyEquipmentAtEndOfCombat) → `processEndOfCombatExileAndReturnTransformed`
+  (ExileAndReturnTransformedAtEndOfCombat).
+- **End step** — `StepTriggerService.handleEndStepTriggers` in this exact order:
+  ExileTokenAtEndStep → SacrificeAtEndStep → DestroyAtEndStep → DelayedPlusOneCounters →
+  DelayedUntapPermanents → DelayedGraveyardToHandReturn →
+  DelayedGraveyardToBattlefieldTransformedReturn (the pre-existing non-delayed end-step steps that
+  follow — saga chapters, etc. — are unchanged).
+- **Per turn step** — `StepTriggerService.processPendingExileReturns(step)`, called from
+  `advanceStep` with the upcoming step, drains only `PendingExileReturn`s whose `returnStep()`
+  matches (via the filtered `drainDelayedActions` overload; non-matching entries stay in place in
+  their original order, exactly as the old collect-remaining-and-re-add did).
+- **Combat damage step** — `CombatDamageService.processDelayedCombatDamageLootTriggers` READS
+  (does not drain) `DelayedCombatDamageLoot` via `getDelayedActions`, firing once per combat-damage
+  step; the family is drained (cleared) only at turn cleanup (`TurnProgressionService`, via
+  `clearDelayedActions`).
+
+**Set→ordered-iteration notes** (the same arbitrary-to-ordered change stage 3 documented
+repeatedly). The seven families that were `Set<UUID>` (`ConcurrentHashMap.newKeySet()`) or a
+`Map<UUID,Integer>` had NO deterministic iteration order; the `List`-backed queue makes each
+family's drain iterate in **insertion order**. Observable only in the relative order of the
+independent per-permanent log lines within one family's drain (e.g. two Mimic Vat tokens exiling
+at the same end step, two equipped creatures losing Equipment at end of combat). No rules effect.
+The end-of-combat sacrifice/exile drains were already deterministic there (they iterate the
+battlefield and test set membership) — that battlefield-order iteration is unchanged; only the
+membership set is now built from the drained list.
+
+**Keyed-accumulator family (`DelayedPlusOneCounters`).** The old
+`pendingDelayedPlusOnePlusOneCounters` was a `Map<UUID,Integer>` accumulated via
+`getOrDefault + put` (Protean Hydra: each removed +1/+1 counter schedules 2, summed per permanent,
+and the drain emits ONE merged log line + `total/2` triggers per permanent). To preserve that
+exactly, `addDelayedPlusOneCounters(id, delta)` keeps the at-most-one-record-per-permanent
+invariant (removes any existing record for the id, adds a fresh one with the summed total). This
+is the "set-membership/dedup semantics" the task flagged — handled with a per-family accumulate
+helper rather than a generic dedup on `queueDelayedAction`. The two producers
+(`DamagePreventionService`, `StateBasedActionService`) call it; the drain sums are byte-identical
+because each producer's delta is even, so `sum/2 == Σ(delta/2)`.
+
+**Karn-restart / end-the-turn partial clears — pre-existing gaps preserved (NOT fixed).**
+`KarnRestartGameEffectHandler` clears ONLY 5 of the 13 families today
+(`PendingExileReturn`, `ExileTokenAtEndStep`, `SacrificeAtEndStep`, `SacrificeAtEndOfCombat`,
+`ExileTokenAtEndOfCombat`) and `TurnSupport.clearCombatState` (Time Stop / end-the-turn) clears
+ONLY 2 (`SacrificeAtEndOfCombat`, `ExileTokenAtEndOfCombat`). The other 8 families
+(`DestroyEquipmentAtEndOfCombat`, `ExileAndReturnTransformedAtEndOfCombat`, `DestroyAtEndStep`,
+`DelayedPlusOneCounters`, `DelayedUntapPermanents`, `DelayedGraveyardToHandReturn`,
+`DelayedGraveyardToBattlefieldTransformedReturn`, `DelayedCombatDamageLoot`) were never reset in
+either place. Both sites therefore use **per-kind `clearDelayedActions(...)` calls, NOT a blanket
+`delayedActions.clear()`**, preserving the exact pre-existing behavior (a blanket clear would be a
+behavior change — documenting the gap rather than silently fixing it, per the task).
+
+**AI:** `magical-vibes-ai` reads none of these 13 fields (verified by grep across
+`GameSimulator`/`CombatSimulator`/decision engines) — no lockstep change needed.
+
+**Tests** (~25 files, targeted-green): direct `gd.<field>` reads/writes rewritten to the new
+accessors — writes → `queueDelayedAction(new GameData.X(id))` (plus counters →
+`addDelayedPlusOneCounters`); `.contains(id)` → `getDelayedActions(GameData.X.class)).contains(new
+GameData.X(id))` (record value equality); `.isEmpty()`/`.hasSize`/`.getFirst().field()` →
+`getDelayedActions(GameData.X.class)` (record accessors unchanged); plus-counter map reads
+(`.get(id)`/`.doesNotContainKey`) → `getDelayedPlusOneCounters(id)` (`isZero()` for absence).
+`GameDataDeepCopyTest` gained the delayed-action copy case. agent-docs field references
+(`EFFECTS_INDEX`, `ORACLE_TEXT_EFFECT_MAP`, `EFFECTS_QUICK_REFERENCE`) updated to the record /
+`delayedActions` names. Ran green: `StepTriggerServiceTest`, `TurnProgressionServiceTest`,
+`CombatServiceTest`, `StateBasedActionServiceTest`, `EndTurnEffectHandlerTest`,
+`FlickerEffectHandlerTest`, `RegisterDelayedCombatDamageLootEffectHandlerTest`,
+`PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandlerTest`,
+`GameDataDeepCopyTest`, and the 15 affected card tests (Geist of Saint Traft, Teferi Hero of
+Dominaria, Tiana, Protean Hydra, Jace Cunning Castaway, Sudden Disappearance, Valduk, Postmortem
+Lunge, Gruesome Encore, Choreographed Sparks, Time Stop, Venser, Glimmerpoint Stag, Oath of
+Teferi, Conciliator's Duelist).

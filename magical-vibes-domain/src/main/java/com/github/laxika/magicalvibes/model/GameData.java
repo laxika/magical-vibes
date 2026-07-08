@@ -17,6 +17,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import com.github.laxika.magicalvibes.model.action.DelayedAction;
+import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
+import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -122,10 +125,17 @@ public class GameData {
     /** CR 603.5 — stores the StackEntry for resolution-time target selection so the target can be set on it. */
     public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
-    public final Set<UUID> permanentsToSacrificeAtEndOfCombat = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> pendingTokenExilesAtEndOfCombat = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> creaturesWithEquipmentToDestroyAtEndOfCombat = ConcurrentHashMap.newKeySet();
-    public final Set<UUID> pendingExileAndReturnTransformedAtEndOfCombat = ConcurrentHashMap.newKeySet();
+    /**
+     * Unified queue of scheduled {@link DelayedAction}s ("do X later at timing point Y"). Replaces the
+     * former per-mechanic ad-hoc fields (end-of-combat sacrifice/exile/equipment-destruction, end-step
+     * token-exile/sacrifice/destroy/counter/untap/graveyard-returns, exile-until-step returns,
+     * delayed combat-damage loot). Every producer appends via {@link #queueDelayedAction}; every drain
+     * site takes all entries of its own kind in insertion order via {@link #drainDelayedActions}, so
+     * the cross-family servicing order is fixed by the drain call-site chains, not the field layout.
+     * Accessed under {@code synchronized (gameData)} in the engine, like the fields it replaced.
+     */
+    public final List<DelayedAction> delayedActions = Collections.synchronizedList(new ArrayList<>());
+
     public PendingAbilityActivation pendingAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
@@ -156,16 +166,10 @@ public class GameData {
     public final Deque<LibraryBottomReorderRequest> pendingLibraryBottomReorders = new ArrayDeque<>();
     public final WarpWorldOperationState warpWorldOperation = new WarpWorldOperationState();
     public boolean cleanupDiscardPending;
-    public final List<PendingExileReturn> pendingExileReturns = Collections.synchronizedList(new ArrayList<>());
     /** Tracks exile-until-source-leaves connections (O-ring style).
      *  Maps source permanent UUID to the exiled card + owner info.
      *  When the source permanent leaves the battlefield, the exiled card returns. */
     public final Map<UUID, PendingExileReturn> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
-    public final Set<UUID> pendingTokenExilesAtEndStep = ConcurrentHashMap.newKeySet();
-    /** Permanent IDs scheduled for sacrifice at the beginning of the next end step (e.g. Choreographed Sparks' creature-copy token). */
-    public final Set<UUID> permanentsToSacrificeAtEndStep = ConcurrentHashMap.newKeySet();
-    /** Permanent IDs scheduled for destruction at the beginning of the next end step (e.g. Stone Giant). */
-    public final Set<UUID> pendingDestroyAtEndStep = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
@@ -185,22 +189,6 @@ public class GameData {
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
-    /** Delayed triggers that untap up to N permanents matching a filter at the beginning of the next end step. */
-    public final List<DelayedUntapPermanents> pendingDelayedUntapPermanents = Collections.synchronizedList(new ArrayList<>());
-
-    public record DelayedUntapPermanents(UUID controllerId, int count, PermanentPredicate filter, Card sourceCard) {}
-
-    /** Delayed trigger: card UUID → owner UUID, return from graveyard to owner's hand at the beginning
-     *  of the next end step. Used by Tiana, Ship's Caretaker. */
-    public final List<DelayedGraveyardToHandReturn> pendingDelayedGraveyardToHandReturns = Collections.synchronizedList(new ArrayList<>());
-
-    public record DelayedGraveyardToHandReturn(UUID cardId, UUID ownerId) {}
-
-    /** Delayed trigger: card UUID to owner/controller UUIDs, return from graveyard transformed at the beginning
-     *  of the next end step. Used by Loyal Cathar. */
-    public final List<DelayedGraveyardToBattlefieldTransformedReturn> pendingDelayedGraveyardToBattlefieldTransformedReturns = Collections.synchronizedList(new ArrayList<>());
-
-    public record DelayedGraveyardToBattlefieldTransformedReturn(UUID cardId, UUID ownerId, UUID controllerId) {}
     /** Players who have been granted "no maximum hand size" for the rest of the game. */
     public final Set<UUID> playersWithNoMaximumHandSize = ConcurrentHashMap.newKeySet();
 
@@ -303,17 +291,6 @@ public class GameData {
     /** Tracks how much life each player has gained so far this turn (for "if you gained life this turn"
      *  conditions, e.g. Streets of New Capenna's Infusion cards). Cleared at the start of each turn. */
     public final Map<UUID, Integer> lifeGainedThisTurn = new ConcurrentHashMap<>();
-
-    /** Delayed trigger: permanent ID → total +1/+1 counters to put on it at the beginning of the next end step.
-     *  Used by Protean Hydra's regrowth ability: "Whenever a +1/+1 counter is removed from this creature,
-     *  put two +1/+1 counters on it at the beginning of the next end step." */
-    public final Map<UUID, Integer> pendingDelayedPlusOnePlusOneCounters = new ConcurrentHashMap<>();
-
-    /** Delayed triggers: "Whenever one or more creatures you control deal combat damage to a player this turn,
-     *  draw N, then discard N." Registered by Jace, Cunning Castaway's +1. Cleared at start of new turn. */
-    public final List<DelayedCombatDamageLoot> pendingDelayedCombatDamageLoots = Collections.synchronizedList(new ArrayList<>());
-
-    public record DelayedCombatDamageLoot(UUID controllerId, int drawAmount, int discardAmount, Card sourceCard) {}
 
     /** Tracks which permanents dealt combat damage to which players this turn.
      *  Maps source permanent UUID → set of damaged player UUIDs. */
@@ -455,6 +432,112 @@ public class GameData {
      */
     public void clearPendingInteractions(Class<? extends PendingInteraction> type) {
         pendingInteractions.removeIf(type::isInstance);
+    }
+
+    // ===== Delayed-action queue helpers (mirror the pendingInteractions helpers above) =====
+
+    /**
+     * Appends a scheduled {@link DelayedAction} to the tail of the unified delayed-action queue.
+     */
+    public void queueDelayedAction(DelayedAction action) {
+        delayedActions.add(action);
+    }
+
+    /**
+     * Returns {@code true} if the queue holds at least one delayed action of the given kind.
+     */
+    public boolean hasDelayedAction(Class<? extends DelayedAction> type) {
+        for (DelayedAction action : delayedActions) {
+            if (type.isInstance(action)) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns an unmodifiable snapshot of all queued delayed actions of the given kind in insertion
+     * order, WITHOUT removing them (for read-only consumers such as the per-combat-step loot check).
+     */
+    public <T extends DelayedAction> List<T> getDelayedActions(Class<T> type) {
+        List<T> result = new ArrayList<>();
+        for (DelayedAction action : delayedActions) {
+            if (type.isInstance(action)) result.add(type.cast(action));
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    /**
+     * Removes and returns all queued delayed actions of the given kind, preserving insertion order.
+     */
+    public <T extends DelayedAction> List<T> drainDelayedActions(Class<T> type) {
+        List<T> drained = new ArrayList<>();
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (type.isInstance(action)) {
+                drained.add(type.cast(action));
+                it.remove();
+            }
+        }
+        return drained;
+    }
+
+    /**
+     * Removes and returns the queued delayed actions of the given kind that match {@code filter},
+     * preserving insertion order and leaving non-matching entries in place (used by the per-step
+     * exile-return drain, which fires only entries whose scheduled step is the current one).
+     */
+    public <T extends DelayedAction> List<T> drainDelayedActions(Class<T> type, Predicate<T> filter) {
+        List<T> drained = new ArrayList<>();
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (type.isInstance(action)) {
+                T typed = type.cast(action);
+                if (filter.test(typed)) {
+                    drained.add(typed);
+                    it.remove();
+                }
+            }
+        }
+        return drained;
+    }
+
+    /**
+     * Removes every queued delayed action of the given kind (e.g. Karn restart wiping scheduled state,
+     * or turn cleanup clearing the delayed combat-damage loot triggers).
+     */
+    public void clearDelayedActions(Class<? extends DelayedAction> type) {
+        delayedActions.removeIf(type::isInstance);
+    }
+
+    /**
+     * Accumulates {@code delta} pending +1/+1 counters for {@code permanentId} at the next end step,
+     * preserving the legacy keyed-map semantics (at most one {@link DelayedPlusOneCounters} per
+     * permanent, holding the running total).
+     */
+    public void addDelayedPlusOneCounters(UUID permanentId, int delta) {
+        int total = delta;
+        var it = delayedActions.iterator();
+        while (it.hasNext()) {
+            DelayedAction action = it.next();
+            if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
+                total += existing.totalCounters();
+                it.remove();
+            }
+        }
+        delayedActions.add(new DelayedPlusOneCounters(permanentId, total));
+    }
+
+    /**
+     * Returns the pending +1/+1 counter total scheduled for {@code permanentId} (0 if none).
+     */
+    public int getDelayedPlusOneCounters(UUID permanentId) {
+        for (DelayedAction action : delayedActions) {
+            if (action instanceof DelayedPlusOneCounters existing && existing.permanentId().equals(permanentId)) {
+                return existing.totalCounters();
+            }
+        }
+        return 0;
     }
 
     /**
@@ -760,10 +843,6 @@ public class GameData {
         copy.playerKeptHand.addAll(this.playerKeptHand);
         copy.priorityPassedBy.addAll(this.priorityPassedBy);
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);
-        copy.permanentsToSacrificeAtEndOfCombat.addAll(this.permanentsToSacrificeAtEndOfCombat);
-        copy.pendingTokenExilesAtEndOfCombat.addAll(this.pendingTokenExilesAtEndOfCombat);
-        copy.creaturesWithEquipmentToDestroyAtEndOfCombat.addAll(this.creaturesWithEquipmentToDestroyAtEndOfCombat);
-        copy.pendingExileAndReturnTransformedAtEndOfCombat.addAll(this.pendingExileAndReturnTransformedAtEndOfCombat);
         copy.untilEndOfTurnStolenCreatures.addAll(this.untilEndOfTurnStolenCreatures);
         copy.enchantmentDependentStolenCreatures.addAll(this.enchantmentDependentStolenCreatures);
         copy.permanentControlStolenCreatures.addAll(this.permanentControlStolenCreatures);
@@ -806,8 +885,6 @@ public class GameData {
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));
         copy.combatDamageSourcesWithChangelingThisTurn.addAll(this.combatDamageSourcesWithChangelingThisTurn);
-        copy.pendingDelayedPlusOnePlusOneCounters.putAll(this.pendingDelayedPlusOnePlusOneCounters);
-        copy.pendingDelayedCombatDamageLoots.addAll(this.pendingDelayedCombatDamageLoots);
 
         // --- Map<UUID, Set<TurnStep>> ---
         this.playerAutoStopSteps.forEach((k, v) -> copy.playerAutoStopSteps.put(k, new HashSet<>(v)));
@@ -853,20 +930,12 @@ public class GameData {
         // --- PendingMayAbility list (records with shared Card refs) ---
         copy.pendingMayAbilities.addAll(this.pendingMayAbilities);
 
-        // --- PendingExileReturn list (records with shared Card refs) ---
-        copy.pendingExileReturns.addAll(this.pendingExileReturns);
+        // --- Unified delayed-action queue (immutable records, shallow copy — shared Card refs, as the
+        //     per-mechanic fields it replaced were copied) ---
+        copy.delayedActions.addAll(this.delayedActions);
 
         // --- Exile-until-source-leaves map (O-ring style) ---
         copy.exileReturnOnPermanentLeave.putAll(this.exileReturnOnPermanentLeave);
-
-        // --- Pending token exiles at end step (Mimic Vat) ---
-        copy.pendingTokenExilesAtEndStep.addAll(this.pendingTokenExilesAtEndStep);
-
-        // --- Pending sacrifices at end step (Choreographed Sparks) ---
-        copy.permanentsToSacrificeAtEndStep.addAll(this.permanentsToSacrificeAtEndStep);
-
-        // --- Pending destroy at end step (Stone Giant) ---
-        copy.pendingDestroyAtEndStep.addAll(this.pendingDestroyAtEndStep);
 
         // --- Map<UUID, Set<UUID>> (source damage prevention) ---
         this.playerSourceDamagePreventionIds.forEach((k, v) ->
@@ -915,15 +984,6 @@ public class GameData {
 
         // --- Emblems (records are immutable) ---
         copy.emblems.addAll(this.emblems);
-
-        // --- Delayed untap permanents (records are immutable) ---
-        copy.pendingDelayedUntapPermanents.addAll(this.pendingDelayedUntapPermanents);
-
-        // --- Delayed graveyard-to-hand returns (records are immutable) ---
-        copy.pendingDelayedGraveyardToHandReturns.addAll(this.pendingDelayedGraveyardToHandReturns);
-
-        // --- Delayed graveyard-to-battlefield transformed returns (records are immutable) ---
-        copy.pendingDelayedGraveyardToBattlefieldTransformedReturns.addAll(this.pendingDelayedGraveyardToBattlefieldTransformedReturns);
 
         // --- Permanent no-max-hand-size grants ---
         copy.playersWithNoMaximumHandSize.addAll(this.playersWithNoMaximumHandSize);

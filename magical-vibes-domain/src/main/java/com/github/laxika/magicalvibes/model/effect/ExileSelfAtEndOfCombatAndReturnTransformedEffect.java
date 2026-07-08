@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * transformed under its controller's control. Used on ON_ATTACK effect slot.
  *
  * <p>Resolution adds the source permanent ID to
- * {@code GameData.pendingExileAndReturnTransformedAtEndOfCombat}. At end of combat,
+ * a {@code ExileAndReturnTransformedAtEndOfCombat} delayed action. At end of combat,
  * the permanent is exiled and immediately returned as its back face.</p>
  */
 public record ExileSelfAtEndOfCombatAndReturnTransformedEffect() implements CardEffect {

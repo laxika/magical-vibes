@@ -1,4 +1,9 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
+import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -34,10 +39,10 @@ public class TurnProgressionService {
     public void advanceStep(GameData gameData) {
         // Process end-of-combat sacrifices, exiles, and equipment destruction when leaving END_OF_COMBAT
         if (gameData.currentStep == TurnStep.END_OF_COMBAT
-                && (!gameData.permanentsToSacrificeAtEndOfCombat.isEmpty()
-                    || !gameData.pendingTokenExilesAtEndOfCombat.isEmpty()
-                    || !gameData.creaturesWithEquipmentToDestroyAtEndOfCombat.isEmpty()
-                    || !gameData.pendingExileAndReturnTransformedAtEndOfCombat.isEmpty())) {
+                && (gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(ExileTokenAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
@@ -166,7 +171,7 @@ public class TurnProgressionService {
         gameData.cardsDrawnThisTurn.clear();
         gameData.lifeGainedThisTurn.clear();
         gameData.combatDamageToPlayersThisTurn.clear();
-        gameData.pendingDelayedCombatDamageLoots.clear();
+        gameData.clearDelayedActions(DelayedCombatDamageLoot.class);
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();

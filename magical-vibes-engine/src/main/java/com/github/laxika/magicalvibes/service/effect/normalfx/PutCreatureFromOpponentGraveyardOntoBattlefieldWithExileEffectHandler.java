@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -41,7 +42,7 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, result.permanent(), enterTappedTypes);
 
         graveyardReturnSupport.trackStolenCreature(gameData, result.permanent().getId(), result.originalOwnerId());
-        gameData.pendingTokenExilesAtEndStep.add(result.permanent().getId());
+        gameData.queueDelayedAction(new ExileTokenAtEndStep(result.permanent().getId()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         gameBroadcastService.logAndBroadcast(gameData,

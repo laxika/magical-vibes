@@ -634,7 +634,7 @@ class StateBasedActionServiceTest {
             sut.performStateBasedActions(gd);
 
             // 3 counters cancelled => 3*2 = 6 pending regrowth counters
-            assertThat(gd.pendingDelayedPlusOnePlusOneCounters.get(perm.getId())).isEqualTo(6);
+            assertThat(gd.getDelayedPlusOneCounters(perm.getId())).isEqualTo(6);
         }
 
         @Test
@@ -648,7 +648,7 @@ class StateBasedActionServiceTest {
 
             sut.performStateBasedActions(gd);
 
-            assertThat(gd.pendingDelayedPlusOnePlusOneCounters).doesNotContainKey(perm.getId());
+            assertThat(gd.getDelayedPlusOneCounters(perm.getId())).isZero();
         }
 
         @Test
@@ -660,12 +660,12 @@ class StateBasedActionServiceTest {
             perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 4);
             perm.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
             gd.playerBattlefields.get(player1Id).add(perm);
-            gd.pendingDelayedPlusOnePlusOneCounters.put(perm.getId(), 4);
+            gd.addDelayedPlusOneCounters(perm.getId(), 4);
 
             sut.performStateBasedActions(gd);
 
             // existing 4 + (2 cancelled * 2) = 8
-            assertThat(gd.pendingDelayedPlusOnePlusOneCounters.get(perm.getId())).isEqualTo(8);
+            assertThat(gd.getDelayedPlusOneCounters(perm.getId())).isEqualTo(8);
         }
     }
 

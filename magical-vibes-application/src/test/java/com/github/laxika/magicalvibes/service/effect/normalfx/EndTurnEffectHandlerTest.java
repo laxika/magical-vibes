@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -166,16 +168,16 @@ class EndTurnEffectHandlerTest {
             @Test
             @DisplayName("Clears sacrifice-at-end-of-combat and token-exile-at-end-of-combat sets")
             void clearsCombatEndSets() {
-                gd.permanentsToSacrificeAtEndOfCombat.add(UUID.randomUUID());
-                gd.pendingTokenExilesAtEndOfCombat.add(UUID.randomUUID());
+                gd.queueDelayedAction(new SacrificeAtEndOfCombat(UUID.randomUUID()));
+                gd.queueDelayedAction(new ExileTokenAtEndOfCombat(UUID.randomUUID()));
 
                 Card card = createCard("Time Stop", CardType.INSTANT);
                 StackEntry entry = createUntargetedEntry(card, player1Id, List.of(new EndTurnEffect()));
 
                 endTurnEffectHandler.resolve(gd, entry, new EndTurnEffect());
 
-                assertThat(gd.permanentsToSacrificeAtEndOfCombat).isEmpty();
-                assertThat(gd.pendingTokenExilesAtEndOfCombat).isEmpty();
+                assertThat(gd.getDelayedActions(SacrificeAtEndOfCombat.class)).isEmpty();
+                assertThat(gd.getDelayedActions(ExileTokenAtEndOfCombat.class)).isEmpty();
             }
 
             @Test

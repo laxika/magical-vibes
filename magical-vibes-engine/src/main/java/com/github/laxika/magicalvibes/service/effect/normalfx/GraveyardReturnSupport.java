@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -599,7 +600,7 @@ public class GraveyardReturnSupport {
         permanent.setEnteredFromGraveyardOwnerId(controllerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         if (exileAtEndStep) {
-            gameData.pendingTokenExilesAtEndStep.add(permanent.getId());
+            gameData.queueDelayedAction(new ExileTokenAtEndStep(permanent.getId()));
         }
 
         String playerName = gameData.playerIdToName.get(controllerId);
@@ -778,7 +779,7 @@ public class GraveyardReturnSupport {
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, tokenPermanent);
 
             if (exileAtEndStep) {
-                gameData.pendingTokenExilesAtEndStep.add(tokenPermanent.getId());
+                gameData.queueDelayedAction(new ExileTokenAtEndStep(tokenPermanent.getId()));
             }
 
             String logMsg = grantHaste

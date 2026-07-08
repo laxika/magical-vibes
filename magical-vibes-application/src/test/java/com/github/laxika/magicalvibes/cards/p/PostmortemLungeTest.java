@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.cards.p;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -65,7 +67,7 @@ class PostmortemLungeTest extends BaseCardTest {
         assertThat(creature.getGrantedKeywords()).contains(Keyword.HASTE);
 
         // Creature should be marked for exile at end step
-        assertThat(gd.pendingTokenExilesAtEndStep).contains(creature.getId());
+        assertThat(gd.getDelayedActions(ExileTokenAtEndStep.class)).contains(new ExileTokenAtEndStep(creature.getId()));
     }
 
     @Test

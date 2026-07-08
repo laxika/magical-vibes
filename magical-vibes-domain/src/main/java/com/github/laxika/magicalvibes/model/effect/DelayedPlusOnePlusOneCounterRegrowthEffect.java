@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * (e.g. Protean Hydra)
  *
  * When +1/+1 counters are removed, this registers a delayed trigger in
- * GameData.pendingDelayedPlusOnePlusOneCounters which fires at the next end step.
+ * DelayedPlusOneCounters delayed actions which fire at the next end step.
  */
 public record DelayedPlusOnePlusOneCounterRegrowthEffect() implements CardEffect {
 }
