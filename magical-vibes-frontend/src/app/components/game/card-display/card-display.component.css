@@ -10,10 +10,12 @@
   height: 231px;
   box-sizing: border-box;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-  /* Composed from custom properties so tap rotation and hover lift combine
-     instead of overriding. Sizing uses zoom (not transform scale) so smaller
-     cards actually occupy less layout space, MTGO-style. */
-  transform: translateY(var(--card-lift, 0px)) rotate(var(--card-tap-rotate, 0deg));
+  /* Composed from custom properties so tap rotation, hover/combat lift and
+     the blocker alignment shift combine instead of overriding. --card-shift-x
+     slides a blocker in front of the attacker it blocks without affecting
+     layout. Sizing uses zoom (not transform scale) so smaller cards actually
+     occupy less layout space, MTGO-style. */
+  transform: translate(var(--card-shift-x, 0px), var(--card-lift, 0px)) rotate(var(--card-tap-rotate, 0deg));
   zoom: var(--card-zoom, 1);
   transition: transform 0.25s ease, margin 0.25s ease;
   position: relative;

@@ -36,10 +36,14 @@ export class GameComponent implements OnInit, OnDestroy {
   @ViewChild('battlefieldArea')
   set battlefieldArea(ref: ElementRef<HTMLElement> | undefined) {
     this.battlefieldAreaObserver?.disconnect();
+    this.battlefieldAreaEl = ref?.nativeElement ?? null;
     if (!ref) return;
     this.battlefieldAreaObserver ??= new ResizeObserver(entries => {
       const rect = entries[entries.length - 1].contentRect;
-      this.ngZone.run(() => this.battlefieldAreaSize.set({ width: rect.width, height: rect.height }));
+      this.ngZone.run(() => {
+        this.battlefieldAreaSize.set({ width: rect.width, height: rect.height });
+        this.scheduleCombatShiftUpdate();
+      });
     });
     this.battlefieldAreaObserver.observe(ref.nativeElement);
   }
@@ -94,6 +98,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
     this.stackTargetId.set(null);
+    this.combatShiftX.set(new Map());
 
     this.choice.init(
       this.game,
@@ -130,6 +135,9 @@ export class GameComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.subscriptions.forEach(s => s.unsubscribe());
     this.battlefieldAreaObserver?.disconnect();
+    if (this.combatShiftFrame != null) {
+      cancelAnimationFrame(this.combatShiftFrame);
+    }
     this.websocketService.pendingGameInputMessage = null;
   }
 
@@ -668,6 +676,8 @@ export class GameComponent implements OnInit, OnDestroy {
     if (!this.declaringBlockers()) {
       this.blockerAssignments.set(new Map());
     }
+
+    this.scheduleCombatShiftUpdate();
   }
 
   // ========== Mulligan ==========
@@ -843,6 +853,7 @@ export class GameComponent implements OnInit, OnDestroy {
       reqs.set(Number(key), value);
     }
     this.mustBlockRequirements.set(reqs);
+    this.scheduleCombatShiftUpdate();
   }
 
   private handleGameOver(msg: GameOverNotification): void {
@@ -946,6 +957,7 @@ export class GameComponent implements OnInit, OnDestroy {
       const updated = new Map(this.blockerAssignments());
       updated.delete(index);
       this.blockerAssignments.set(updated);
+      this.scheduleCombatShiftUpdate();
       return;
     }
     this.selectedBlockerIndex.set(index);
@@ -968,6 +980,7 @@ export class GameComponent implements OnInit, OnDestroy {
     updated.set(this.selectedBlockerIndex()!, attackerIndex);
     this.blockerAssignments.set(updated);
     this.selectedBlockerIndex.set(null);
+    this.scheduleCombatShiftUpdate();
   }
 
   confirmBlockers(): void {
@@ -1065,6 +1078,153 @@ export class GameComponent implements OnInit, OnDestroy {
     const perm = (isMine ? this.myBattlefield : this.opponentBattlefield)[index];
     if (perm?.blocking) return true;
     return isMine && this.isAssignedBlocker(index);
+  }
+
+  // ========== Blocker alignment ==========
+
+  /* Blockers slide horizontally to sit directly in front of the attacker they
+     block (MTGO-style). The shift is pure transform (--card-shift-x), so the
+     blocker keeps its layout slot and the fit/zoom model is unaffected.
+     Positions are measured from the .permanent-stack wrappers, which never
+     carry transforms, making the measurement stable and idempotent; the screen
+     delta is divided by the blocker side's zoom because the transform runs
+     inside the zoomed card. */
+  private static readonly BLOCKER_SPREAD = 110;
+
+  private battlefieldAreaEl: HTMLElement | null = null;
+  private combatShiftFrame: number | null = null;
+  readonly combatShiftX = signal(new Map<string, number>());
+
+  /** Style value for a creature's --card-shift-x, or null when unshifted. */
+  combatShift(permId: string): string | null {
+    const v = this.combatShiftX().get(permId);
+    return v ? `${v}px` : null;
+  }
+
+  /** Coalesces recomputes to one per frame, after layout has settled. */
+  private scheduleCombatShiftUpdate(): void {
+    if (this.combatShiftFrame != null) return;
+    this.combatShiftFrame = requestAnimationFrame(() => {
+      this.combatShiftFrame = null;
+      this.updateCombatShifts();
+    });
+  }
+
+  private updateCombatShifts(): void {
+    const area = this.battlefieldAreaEl;
+    const next = new Map<string, number>();
+    if (area) {
+      type Pair = { blockerId: string; attackerId: string; zoom: number };
+      const pairs: Pair[] = [];
+      // Local assignments while declaring (cleared once the server state lands)
+      for (const [bIdx, aIdx] of this.blockerAssignments()) {
+        const b = this.myBattlefield[bIdx];
+        const a = this.opponentBattlefield[aIdx];
+        if (b && a) pairs.push({ blockerId: b.id, attackerId: a.id, zoom: this.myBattlefieldZoom });
+      }
+      // Committed blocks from the game state, either side
+      const addCommitted = (own: Permanent[], enemy: Permanent[], zoom: number) => {
+        for (const p of own) {
+          if (p.blocking && p.blockingTargets?.length > 0) {
+            const a = enemy[p.blockingTargets[0]];
+            if (a && !pairs.some(pr => pr.blockerId === p.id)) {
+              pairs.push({ blockerId: p.id, attackerId: a.id, zoom });
+            }
+          }
+        }
+      };
+      addCommitted(this.myBattlefield, this.opponentBattlefield, this.myBattlefieldZoom);
+      addCommitted(this.opponentBattlefield, this.myBattlefield, this.opponentBattlefieldZoom);
+
+      const centerX = (id: string): number | null => {
+        const el = area.querySelector(`[data-combat-id="${id}"]`);
+        if (!el) return null;
+        const rect = el.getBoundingClientRect();
+        return rect.left + rect.width / 2;
+      };
+
+      const byAttacker = new Map<string, Pair[]>();
+      for (const pr of pairs) {
+        const group = byAttacker.get(pr.attackerId);
+        if (group) group.push(pr); else byAttacker.set(pr.attackerId, [pr]);
+      }
+      for (const [attackerId, group] of byAttacker) {
+        const aCx = centerX(attackerId);
+        if (aCx == null) continue;
+        // Multiple blockers fan out side by side under their attacker,
+        // ordered by their natural row position to avoid crossing paths.
+        const blockers = group
+          .map(pr => ({ pr, cx: centerX(pr.blockerId) }))
+          .filter((b): b is { pr: Pair; cx: number } => b.cx != null)
+          .sort((x, y) => x.cx - y.cx);
+        blockers.forEach((b, i) => {
+          const slot = (i - (blockers.length - 1) / 2) * GameComponent.BLOCKER_SPREAD * b.pr.zoom;
+          next.set(b.pr.blockerId, Math.round((aCx + slot - b.cx) / b.pr.zoom));
+        });
+      }
+
+      this.resolveRowOverlaps(this.myCreatures(), this.myBattlefieldZoom, next, area);
+      this.resolveRowOverlaps(this.opponentCreatures(), this.opponentBattlefieldZoom, next, area);
+    }
+    const current = this.combatShiftX();
+    if (next.size !== current.size || [...next].some(([k, v]) => current.get(k) !== v)) {
+      this.combatShiftX.set(next);
+    }
+  }
+
+  /** After blockers align with their attackers, push aside any same-line
+      creature an aligned blocker would come to rest on, cascading so a pushed
+      card can't just land on the next one — no two cards end up on top of
+      each other. Works in screen px on the transform-free stack rects; pushes
+      go into the same local-px shift map as the blocker alignment. */
+  private resolveRowOverlaps(creatures: IndexedPermanent[], zoom: number, next: Map<string, number>, area: HTMLElement): void {
+    const gap = GameComponent.ROW_GAP * zoom;
+    type Box = { id: string; left: number; right: number; top: number; bottom: number; aligned: boolean };
+    const boxes: Box[] = [];
+    for (const ip of creatures) {
+      const el = area.querySelector(`[data-combat-id="${ip.perm.id}"]`);
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      const shift = (next.get(ip.perm.id) ?? 0) * zoom;
+      boxes.push({
+        id: ip.perm.id,
+        left: rect.left + shift,
+        right: rect.right + shift,
+        top: rect.top,
+        bottom: rect.bottom,
+        aligned: next.has(ip.perm.id)
+      });
+    }
+    if (!boxes.some(b => b.aligned)) return;
+
+    const push = new Map<string, number>();
+    const pos = (b: Box) => {
+      const p = push.get(b.id) ?? 0;
+      return { left: b.left + p, right: b.right + p, moved: b.aligned || p !== 0 };
+    };
+    for (let pass = 0, changed = true; pass < 4 && changed; pass++) {
+      changed = false;
+      for (const m of boxes) {
+        if (m.aligned) continue;
+        const mp = pos(m);
+        for (const o of boxes) {
+          if (o.id === m.id) continue;
+          const op = pos(o);
+          // Only moved cards repel; untouched neighbours are already spaced.
+          if (!op.moved) continue;
+          const sameLine = m.top < o.bottom && m.bottom > o.top;
+          if (!sameLine || mp.left >= op.right + gap || mp.right <= op.left - gap) continue;
+          const escapesLeft = (mp.left + mp.right) / 2 <= (op.left + op.right) / 2;
+          push.set(m.id, escapesLeft ? op.left - gap - m.right : op.right + gap - m.left);
+          changed = true;
+          break;
+        }
+      }
+    }
+    for (const [id, p] of push) {
+      const local = Math.round(p / zoom);
+      if (local !== 0) next.set(id, local);
+    }
   }
 
   /** During blocker declaration: whether a blocker is already assigned to the

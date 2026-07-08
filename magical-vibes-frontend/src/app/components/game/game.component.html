@@ -344,7 +344,7 @@
         </div>
         <div class="battlefield-sub-row creatures-row">
           @for (ip of opponentCreatures(); track ip.originalIndex) {
-            <div class="permanent-stack">
+            <div class="permanent-stack" [attr.data-combat-id]="ip.perm.id">
               @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
                 <app-card-display
                   [card]="aura.perm.card"
@@ -365,6 +365,7 @@
                 [class.combat-nudge]="ip.perm.attacking || ip.perm.blocking"
                 [class.block-target]="isBlockTarget(ip.originalIndex)"
                 [class.blocked-attacker]="declaringBlockers() && isAttackerBlocked(ip.originalIndex)"
+                [style.--card-shift-x]="combatShift(ip.perm.id)"
                 [class.targetable]="((choice.targeting.selectingTarget || choice.targeting.multiTargeting) && choice.targeting.isValidTarget(ip.perm)) || (choice.damage.distributingDamage && ip.perm.attacking)"
                 [class.stack-targeted]="stackTargetId() === ip.perm.id"
                 [class.choosable-permanent]="(choice.choosingPermanent && choice.choosablePermanentIds().has(ip.perm.id)) || (choice.choosingMultiplePermanents && choice.multiPermanentChoiceIds().has(ip.perm.id))"
@@ -422,7 +423,7 @@
       <div class="battlefield-row" [style.--density-zoom]="myBattlefieldZoom">
         <div class="battlefield-sub-row creatures-row">
           @for (ip of myCreatures(); track ip.originalIndex) {
-            <div class="permanent-stack">
+            <div class="permanent-stack" [attr.data-combat-id]="ip.perm.id">
               @for (aura of getAttachedAuras(ip.perm.id); track aura.perm.id) {
                 <app-card-display
                   [card]="aura.perm.card"
@@ -442,6 +443,7 @@
                 [class.attacking]="ip.perm.attacking"
                 [class.blocking]="ip.perm.blocking"
                 [class.combat-nudge]="isAttackingCreature(ip.originalIndex, true) || isBlockingCreature(ip.originalIndex, true)"
+                [style.--card-shift-x]="combatShift(ip.perm.id)"
                 [class.can-attack]="canAttack(ip.originalIndex) && !isSelectedAttacker(ip.originalIndex)"
                 [class.selected-attacker]="declaringAttackers() && isSelectedAttacker(ip.originalIndex)"
                 [class.must-attack]="mustAttackIndices().has(ip.originalIndex)"
