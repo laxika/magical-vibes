@@ -80,6 +80,10 @@ not through the handler registry.
   (`battlefieldHandlers`, `spellSelfHandlers`); `register(...)` routes by `onSpellItself()`.
 - `cast/costmod/ReduceOwnCastCostEffectHandler.java` — spell-self handler for
   `ReduceOwnCastCostEffect(DynamicAmount)`; evaluates via `AmountEvaluationService`.
+- `cast/costmod/IncreaseOwnCastCostUnlessRevealSubtypeEffectHandler.java` — spell-self handler for
+  `IncreaseOwnCastCostUnlessRevealSubtypeEffect(int amount, CardSubtype)`; returns `+amount` unless the
+  caster holds a card of the subtype (other than the spell itself) to reveal from hand (Lorwyn
+  "reveal a creature-type card or pay {N}" cycle, e.g. Goldmeadow Stalwart).
 - `cast/costmod/ConditionalCostModificationHandler.java` — spell-self handler for
   `ConditionalEffect`; evaluates the `Condition` via `ConditionEvaluationService` and delegates to
   the wrapped effect's registered spell-self handler (it injects the registry, like
