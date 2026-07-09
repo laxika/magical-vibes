@@ -10,19 +10,19 @@ import java.util.concurrent.ConcurrentHashMap;
 @RequiredArgsConstructor
 public enum CardSet {
 
-    TENTH_EDITION("10E"),
-    MAGIC_2010("M10"),
-    MAGIC_2011("M11"),
-    LORWYN("LRW"),
-    LORWYN_ECLIPSED("ECL"),
-    SCARS_OF_MIRRODIN("SOM"),
-    MIRRODIN_BESIEGED("MBS"),
-    NEW_PHYREXIA("NPH"),
-    INNISTRAD("ISD"),
-    DARK_ASCENSION("DKA"),
-    IXALAN("XLN"),
-    DOMINARIA("DOM"),
-    SECRETS_OF_STRIXHAVEN("SOS");
+    SET_10E("10E"),
+    SET_M10("M10"),
+    SET_M11("M11"),
+    SET_LRW("LRW"),
+    SET_ECL("ECL"),
+    SET_SOM("SOM"),
+    SET_MBS("MBS"),
+    SET_NPH("NPH"),
+    SET_ISD("ISD"),
+    SET_DKA("DKA"),
+    SET_XLN("XLN"),
+    SET_DOM("DOM"),
+    SET_SOS("SOS");
 
     private static final Map<String, String> setNameRegistry = new ConcurrentHashMap<>();
     private static volatile Map<CardSet, List<CardPrinting>> scannedPrintings;

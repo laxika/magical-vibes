@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.fail;
 /**
  * Infinite soak test that pits two Hard AI players against each other with randomly
  * built 2-color decks. Detects game-engine deadlocks and stuck states by monitoring
- * the game state fingerprint — if the same fingerprint is observed {@value #MAX_SAME_STATE_COUNT}
+ * the game state fingerprint â€” if the same fingerprint is observed {@value #MAX_SAME_STATE_COUNT}
  * consecutive times the test fails, pointing at the stuck state for debugging.
  *
  * <p>Disabled by default; enable manually to run.</p>
@@ -121,7 +121,7 @@ class AiVsAiStressTest {
         sessionManager.setInGame("ai-stress-1");
         sessionManager.setInGame("ai-stress-2");
 
-        // 5. Both AIs keep their opening hand — transitions the game to RUNNING
+        // 5. Both AIs keep their opening hand â€” transitions the game to RUNNING
         harness.getGameService().keepHand(gd, player1);
         harness.getGameService().keepHand(gd, player2);
 
@@ -143,7 +143,7 @@ class AiVsAiStressTest {
                 sameCount++;
                 if (sameCount >= MAX_SAME_STATE_COUNT) {
                     dumpGameState(gameNumber, gd, player1, player2);
-                    fail("Game #" + gameNumber + " stuck — same state observed "
+                    fail("Game #" + gameNumber + " stuck â€” same state observed "
                             + MAX_SAME_STATE_COUNT + " consecutive times:\n" + fingerprint);
                 }
             } else {
@@ -238,7 +238,7 @@ class AiVsAiStressTest {
 
     private void dumpGameState(int gameNumber, GameData gd, Player p1, Player p2) {
         synchronized (gd) {
-            System.err.println("=== STUCK GAME STATE — Game #" + gameNumber + " ===");
+            System.err.println("=== STUCK GAME STATE â€” Game #" + gameNumber + " ===");
             System.err.println("Turn:            " + gd.turnNumber);
             System.err.println("Step:            " + gd.currentStep);
             System.err.println("Active player:   " + gd.activePlayerId);
@@ -283,12 +283,12 @@ class AiVsAiStressTest {
             return;
         }
 
-        // Basic lands — using Scars of Mirrodin printings (confirmed present in all 5 colors)
-        BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("230"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("234"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("238"));
-        BASIC_LAND_PRINTINGS.put(CardColor.RED, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("242"));
-        BASIC_LAND_PRINTINGS.put(CardColor.GREEN, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("246"));
+        // Basic lands â€” using Scars of Mirrodin printings (confirmed present in all 5 colors)
+        BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SET_SOM.findByCollectorNumber("230"));
+        BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SET_SOM.findByCollectorNumber("234"));
+        BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SET_SOM.findByCollectorNumber("238"));
+        BASIC_LAND_PRINTINGS.put(CardColor.RED, CardSet.SET_SOM.findByCollectorNumber("242"));
+        BASIC_LAND_PRINTINGS.put(CardColor.GREEN, CardSet.SET_SOM.findByCollectorNumber("246"));
 
         allNonLandPrintings = new ArrayList<>();
         for (CardSet set : CardSet.values()) {

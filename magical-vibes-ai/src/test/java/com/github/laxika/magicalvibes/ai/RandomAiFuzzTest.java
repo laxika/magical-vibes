@@ -40,9 +40,9 @@ import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Fuzz test that pits two Random AI players against each other with randomly built
- * 1–3-color decks (up to 4 copies per card). Unlike {@link AiVsAiStressTest} which
+ * 1â€“3-color decks (up to 4 copies per card). Unlike {@link AiVsAiStressTest} which
  * uses the smart Hard AI, this test uses purely random decision-making to exercise
- * far more edge cases — unusual spell timing, bizarre combat assignments, random
+ * far more edge cases â€” unusual spell timing, bizarre combat assignments, random
  * targets, random ability activations, occasional mulligans, etc.
  *
  * <p>Each game prints its random seed so failures can be reproduced by hardcoding
@@ -205,7 +205,7 @@ class RandomAiFuzzTest {
                 sameCount++;
 
                 if (sameCount >= MAX_SAME_STATE_COUNT) {
-                    failGame("stuck — same state observed " + MAX_SAME_STATE_COUNT
+                    failGame("stuck â€” same state observed " + MAX_SAME_STATE_COUNT
                             + " consecutive times:\n" + fingerprint,
                             gameNumber, seed, gd, player1, player2, aiConn1, aiConn2);
                 }
@@ -272,7 +272,7 @@ class RandomAiFuzzTest {
             }
 
             // Skip zone-content checks while the engine is holding cards aside for a
-            // pending choice (e.g. "look at the top N") — they are legitimately
+            // pending choice (e.g. "look at the top N") â€” they are legitimately
             // outside every zone at that moment.
             if (gd.interaction.isAwaitingInput()) {
                 return null;
@@ -355,7 +355,7 @@ class RandomAiFuzzTest {
     /**
      * With an empty stack and no pending input, state-based actions must have
      * finished: no creature with toughness &le; 0 may still be on a battlefield.
-     * (Toughness only — lethal-damage SBAs are excluded because indestructible
+     * (Toughness only â€” lethal-damage SBAs are excluded because indestructible
      * and regeneration make them unreliable to verify from outside the engine.)
      */
     private String findSbaViolation(GameData gd, GameQueryService gqs) {
@@ -451,7 +451,7 @@ class RandomAiFuzzTest {
 
     private void dumpGameState(int gameNumber, GameData gd, Player p1, Player p2) {
         synchronized (gd) {
-            System.err.println("=== STUCK GAME STATE — Game #" + gameNumber + " ===");
+            System.err.println("=== STUCK GAME STATE â€” Game #" + gameNumber + " ===");
             System.err.println("Turn:            " + gd.turnNumber);
             System.err.println("Step:            " + gd.currentStep);
             System.err.println("Active player:   " + gd.activePlayerId);
@@ -496,11 +496,11 @@ class RandomAiFuzzTest {
             return;
         }
 
-        BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("230"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("234"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("238"));
-        BASIC_LAND_PRINTINGS.put(CardColor.RED, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("242"));
-        BASIC_LAND_PRINTINGS.put(CardColor.GREEN, CardSet.SCARS_OF_MIRRODIN.findByCollectorNumber("246"));
+        BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SET_SOM.findByCollectorNumber("230"));
+        BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SET_SOM.findByCollectorNumber("234"));
+        BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SET_SOM.findByCollectorNumber("238"));
+        BASIC_LAND_PRINTINGS.put(CardColor.RED, CardSet.SET_SOM.findByCollectorNumber("242"));
+        BASIC_LAND_PRINTINGS.put(CardColor.GREEN, CardSet.SET_SOM.findByCollectorNumber("246"));
 
         allNonLandPrintings = new ArrayList<>();
         for (CardSet set : CardSet.values()) {
