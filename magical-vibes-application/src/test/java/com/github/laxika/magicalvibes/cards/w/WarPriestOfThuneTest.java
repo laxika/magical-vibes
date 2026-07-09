@@ -123,34 +123,22 @@ class WarPriestOfThuneTest extends BaseCardTest {
     // ===== No enchantment scenarios =====
 
     @Test
-    @DisplayName("May prompt still fires when no enchantment on battlefield")
-    void mayPromptFiresWithoutEnchantment() {
+    @DisplayName("May prompt does not fire when no enchantment on battlefield")
+    void noMayPromptWithoutEnchantment() {
+        // A "you may destroy target enchantment" trigger requires a legal target. With only a
+        // non-enchantment permanent (Grizzly Bears) present the ability is never put on the stack
+        // (CR 601.2c / 603.3b), so the controller is never prompted to make the "may" choice.
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new WarPriestOfThune()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-    }
-
-    @Test
-    @DisplayName("Accepting may with no enchantment results in no valid targets")
-    void acceptingMayWithNoEnchantmentHasNoValidTargets() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new WarPriestOfThune()));
-        harness.addMana(player1, ManaColor.WHITE, 2);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature spell -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> no targets
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("War Priest of Thune"));
     }
 
     // ===== Fizzle =====

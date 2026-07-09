@@ -29,6 +29,19 @@ public abstract class BaseCardTest {
         gd = harness.getGameData();
         harness.skipMulligan();
         harness.clearMessages();
+
+        // Auto-pass halts for a merely-playable card only when the priority holder is AI-controlled
+        // or the game is a headless simulation; a human otherwise stops solely at configured
+        // auto-stop steps (see AutoPassService#shouldStopForPlayableCards). Card tests drive
+        // priority deterministically and rely on the older "stop whenever you can act" behavior:
+        // passPriority(activePlayer) must leave the opponent holding priority so they can respond
+        // at instant speed (combat tricks, counterspells), while combat with no available response
+        // must still cascade to the damage step. Marking both players AI-controlled flips
+        // shouldStopForPlayableCards to true, reproducing exactly that behavior. Within the engine,
+        // aiPlayerIds is read only by auto-pass — no decision is auto-made from it — so this is a
+        // pure priority-window toggle for tests.
+        gd.aiPlayerIds.add(player1.getId());
+        gd.aiPlayerIds.add(player2.getId());
     }
 
     protected Permanent addCreatureReady(Player player, Card card) {

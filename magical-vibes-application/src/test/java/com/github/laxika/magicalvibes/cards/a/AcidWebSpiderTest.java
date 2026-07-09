@@ -176,50 +176,20 @@ class AcidWebSpiderTest extends BaseCardTest {
     // ===== No Equipment scenarios =====
 
     @Test
-    @DisplayName("May prompt still fires when no Equipment on battlefield")
-    void mayPromptFiresWithoutEquipment() {
+    @DisplayName("May prompt does not fire when no Equipment on battlefield")
+    void noMayPromptWhenNoEquipment() {
+        // A "you may destroy target Equipment" trigger requires a legal target. With no
+        // Equipment present the ability is never put on the stack (CR 601.2c / 603.3b), so
+        // the controller is never prompted to make the "may" choice.
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new AcidWebSpider()));
         harness.addMana(player1, ManaColor.GREEN, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-    }
-
-    @Test
-    @DisplayName("Accepting may with no Equipment results in no valid targets")
-    void acceptingMayWithNoEquipmentHasNoValidTargets() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> no targets
-
-        // Stack should be empty since there are no valid Equipment targets
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
-    }
-
-    @Test
-    @DisplayName("Declining may with no Equipment on battlefield")
-    void decliningMayWithNoEquipment() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new AcidWebSpider()));
-        harness.addMana(player1, ManaColor.GREEN, 5);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, false); // decline
-
+        // No may prompt, nothing waiting on the stack, and the Spider is on the battlefield.
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getCard().getName().equals("Acid Web Spider"));

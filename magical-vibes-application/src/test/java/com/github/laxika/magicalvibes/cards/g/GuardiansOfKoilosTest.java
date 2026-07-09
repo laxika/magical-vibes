@@ -110,33 +110,35 @@ class GuardiansOfKoilosTest extends BaseCardTest {
     class TargetingRestrictions {
 
         @Test
-        @DisplayName("Cannot target opponent's historic permanent — auto-skips when no own historic exists")
+        @DisplayName("Cannot target opponent's historic permanent — may never triggers with no own historic")
         void cannotTargetOpponentHistoric() {
+            // The bounce targets "another target historic permanent you control". An opponent's
+            // Gilded Lotus is not a legal target, so the targeted "may" ETB has no legal target and
+            // is never put on the stack (CR 601.2c / 603.3b) — the controller is never prompted.
             harness.addToBattlefield(player2, new GildedLotus());
             castGuardians();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, true); // accept -> no valid targets, auto-skips
+            harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.stack).isEmpty();
             // Opponent's Gilded Lotus is still on the battlefield
             assertThat(gd.playerBattlefields.get(player2.getId()))
                     .anyMatch(p -> p.getCard().getName().equals("Gilded Lotus"));
-            assertThat(gd.stack).isEmpty();
         }
 
         @Test
-        @DisplayName("Cannot target itself — 'another' excludes source, auto-skips with no other historics")
+        @DisplayName("Cannot target itself — 'another' excludes source, may never triggers with no other historics")
         void cannotTargetItself() {
-            // No other historic permanents — only Guardians itself
+            // No other historic permanents — only Guardians itself, which "another" excludes. With
+            // no legal target the "may" ETB is never put on the stack, so no prompt appears.
             castGuardians();
-            harness.passBothPriorities(); // resolve creature spell
-            harness.passBothPriorities(); // resolve MayEffect from stack -> may prompt
-            harness.handleMayAbilityChosen(player1, true); // accept -> no valid targets, auto-skips
+            harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
+            assertThat(gd.interaction.activeInteraction()).isNull();
+            assertThat(gd.stack).isEmpty();
             // Guardians is still on the battlefield (wasn't bounced)
             assertThat(gd.playerBattlefields.get(player1.getId()))
                     .anyMatch(p -> p.getCard().getName().equals("Guardians of Koilos"));
-            assertThat(gd.stack).isEmpty();
         }
 
         @Test

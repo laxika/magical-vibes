@@ -186,34 +186,22 @@ class SlayerOfTheWickedTest extends BaseCardTest {
     // ===== No valid targets =====
 
     @Test
-    @DisplayName("May prompt still fires when no valid targets on battlefield")
-    void mayPromptFiresWithoutValidTargets() {
+    @DisplayName("May prompt does not fire when no valid targets on battlefield")
+    void noMayPromptWithoutValidTargets() {
+        // A "you may destroy target black or red creature" trigger requires a legal target. With
+        // only an ineligible creature (green Grizzly Bears) present the ability is never put on the
+        // stack (CR 601.2c / 603.3b), so the controller is never prompted to make the "may" choice.
         harness.addToBattlefield(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new SlayerOfTheWicked()));
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
+        harness.passBothPriorities(); // resolve creature spell -> enters battlefield
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-    }
-
-    @Test
-    @DisplayName("Accepting may with no valid targets results in no valid targets")
-    void acceptingMayWithNoValidTargetsHasNoEffect() {
-        harness.forceActivePlayer(player1);
-        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.setHand(player1, List.of(new SlayerOfTheWicked()));
-        harness.addMana(player1, ManaColor.WHITE, 4);
-
-        harness.castCreature(player1, 0);
-        harness.passBothPriorities(); // resolve creature -> may on stack
-        harness.passBothPriorities(); // resolve MayEffect -> may prompt
-        harness.handleMayAbilityChosen(player1, true); // accept -> no targets
-
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.gameLog).anyMatch(log -> log.contains("no valid targets"));
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(p -> p.getCard().getName().equals("Slayer of the Wicked"));
     }
 
     // ===== Can target own creatures =====
