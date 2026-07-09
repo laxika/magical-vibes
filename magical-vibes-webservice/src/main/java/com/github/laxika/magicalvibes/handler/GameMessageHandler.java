@@ -197,7 +197,8 @@ public class GameMessageHandler implements MessageHandler {
             return;
         }
 
-        LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player, request.deckId());
+        LobbyService.GameResult result = lobbyService.createGame(request.gameName(), player, request.deckId(),
+                Boolean.TRUE.equals(request.allRandom()));
 
         // Mark creator as in-game
         sessionManager.setInGame(connection.getId());
@@ -1062,7 +1063,7 @@ public class GameMessageHandler implements MessageHandler {
             if (gameData.status == GameStatus.WAITING) {
                 // Leaving a WAITING game: cancel it and notify lobby users
                 LobbyGame lobbyGame = new LobbyGame(gameData.id, gameData.gameName,
-                        gameData.createdByUsername, gameData.playerIds.size(), gameData.status);
+                        gameData.createdByUsername, gameData.playerIds.size(), gameData.status, gameData.allRandom);
                 gameRegistry.remove(gameData.id);
                 broadcastToLobby(MessageType.GAME_REMOVED, lobbyGame);
             } else if (gameData.status != GameStatus.FINISHED) {

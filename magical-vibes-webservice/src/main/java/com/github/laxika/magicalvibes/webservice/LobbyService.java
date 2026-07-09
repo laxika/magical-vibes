@@ -28,8 +28,8 @@ public class LobbyService {
     private final GameBroadcastService gameBroadcastService;
     private final GameSetupService gameSetupService;
 
-    public GameResult createGame(String gameName, Player player, String deckId) {
-        GameData gameData = gameSetupService.createGame(gameName, player, deckId);
+    public GameResult createGame(String gameName, Player player, String deckId, boolean allRandom) {
+        GameData gameData = gameSetupService.createGame(gameName, player, deckId, allRandom);
         return new GameResult(gameBroadcastService.getJoinGame(gameData, null), toLobbyGame(gameData));
     }
 
@@ -50,7 +50,8 @@ public class LobbyService {
                 data.gameName,
                 data.createdByUsername,
                 data.playerIds.size(),
-                data.status
+                data.status,
+                data.allRandom
         );
     }
 }

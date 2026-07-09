@@ -32,6 +32,8 @@ public class GameData {
     public final String createdByUsername;
     public final LocalDateTime createdAt;
     public volatile GameStatus status;
+    /** "All Random" game mode: every player is dealt a randomly generated deck. */
+    public volatile boolean allRandom;
     public final Set<UUID> playerIds = ConcurrentHashMap.newKeySet();
     public final List<UUID> orderedPlayerIds = Collections.synchronizedList(new ArrayList<>());
     public final List<String> playerNames = Collections.synchronizedList(new ArrayList<>());

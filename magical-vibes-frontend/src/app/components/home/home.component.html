@@ -43,6 +43,13 @@
           </button>
           <button
             class="tab-button"
+            [class.active]="activeTab() === 'allrandom'"
+            (click)="activeTab.set('allrandom')"
+          >
+            All Random
+          </button>
+          <button
+            class="tab-button"
             [class.active]="activeTab() === 'draft'"
             (click)="activeTab.set('draft')"
           >
@@ -94,6 +101,48 @@
                   @for (deck of websocketService.availableDecks; track deck.id) {
                     <option [value]="deck.id">{{ deck.name }}</option>
                   }
+                </select>
+              </div>
+            }
+            <button class="btn-primary" (click)="createGame()" [disabled]="creating()">
+              @if (creating()) {
+                Creating...
+              } @else {
+                Create Game
+              }
+            </button>
+          </div>
+        }
+
+        @if (activeTab() === 'allrandom') {
+          <div class="tab-content">
+            <p class="mode-description">Each player starts with a randomly generated deck.</p>
+            <div class="form-group">
+              <label for="allRandomGameName">Game Name</label>
+              <input
+                type="text"
+                id="allRandomGameName"
+                [(ngModel)]="newGameName"
+                placeholder="Enter game name"
+              />
+            </div>
+            <div class="form-group">
+              <label class="toggle-label">
+                <input
+                  type="checkbox"
+                  [ngModel]="vsAi()"
+                  (ngModelChange)="vsAi.set($event)"
+                />
+                Play vs AI
+              </label>
+            </div>
+            @if (vsAi()) {
+              <div class="form-group">
+                <label for="allRandomAiDifficulty">AI Difficulty</label>
+                <select id="allRandomAiDifficulty" [ngModel]="aiDifficulty()" (ngModelChange)="aiDifficulty.set($event)">
+                  <option value="EASY">Easy</option>
+                  <option value="MEDIUM">Medium</option>
+                  <option value="HARD">Hard</option>
                 </select>
               </div>
             }
@@ -175,6 +224,9 @@
           @for (game of games(); track game.id) {
             <div class="game-card">
               <h3>{{ game.gameName }}</h3>
+              @if (game.allRandom) {
+                <span class="mode-badge">All Random</span>
+              }
               <div class="game-info">
                 <p><strong>Created by:</strong> {{ game.createdByUsername }}</p>
                 <p><strong>Players:</strong> {{ game.playerCount }}</p>

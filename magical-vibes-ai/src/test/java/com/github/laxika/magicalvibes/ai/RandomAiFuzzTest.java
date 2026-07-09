@@ -1,11 +1,8 @@
 package com.github.laxika.magicalvibes.ai;
 
-import com.github.laxika.magicalvibes.cards.CardPrinting;
-import com.github.laxika.magicalvibes.cards.CardSet;
+import com.github.laxika.magicalvibes.cards.RandomDeckGenerator;
 import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameStatus;
@@ -26,8 +23,6 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -55,17 +50,11 @@ import static org.assertj.core.api.Assertions.fail;
 class RandomAiFuzzTest {
 
     private static final int DEFAULT_GAME_COUNT = 50;
-    private static final int DECK_SIZE = 40;
-    private static final int LAND_COUNT = 18;
-    private static final int SPELL_COUNT = DECK_SIZE - LAND_COUNT;
     private static final int MAX_SAME_STATE_COUNT = 30;
     private static final int MAX_TURNS = 250;
     private static final long POLL_INTERVAL_MS = 200;
     private static final long MAX_GAME_DURATION_MS = 300_000;
     private static final long AI_DECISION_DELAY_MS = 10;
-
-    private static final Map<CardColor, CardPrinting> BASIC_LAND_PRINTINGS = new EnumMap<>(CardColor.class);
-    private static List<CardPrinting> allNonLandPrintings;
 
     @Test
     void fuzzTestRandomAi() throws Exception {
@@ -101,7 +90,6 @@ class RandomAiFuzzTest {
     private void runOneGameInternal(int gameNumber, long seed, Random rng, FuzzLogWatcher watcher) throws Exception {
         // 1. Bootstrap the full service graph via the test harness
         GameTestHarness harness = new GameTestHarness();
-        initializeCardPool();
 
         WebSocketSessionManager sessionManager = harness.getSessionManager();
         GameService gameService = harness.getGameService();
@@ -111,15 +99,14 @@ class RandomAiFuzzTest {
         Player player1 = harness.getPlayer1();
         Player player2 = harness.getPlayer2();
 
-        // 2. Pick random color combinations (independently for each player)
-        Set<CardColor> p1Colors = pickDeckColors(rng);
-        Set<CardColor> p2Colors = pickDeckColors(rng);
+        // 2-3. Generate random decks (colors + cards) and assign them
+        RandomDeckGenerator.GeneratedDeck gen1 = RandomDeckGenerator.generate(rng);
+        RandomDeckGenerator.GeneratedDeck gen2 = RandomDeckGenerator.generate(rng);
 
-        System.out.printf("  Player 1: %s  |  Player 2: %s%n", p1Colors, p2Colors);
+        System.out.printf("  Player 1: %s  |  Player 2: %s%n", gen1.colors(), gen2.colors());
 
-        // 3. Build random decks and assign them
-        List<Card> deck1 = buildRandomDeck(p1Colors, rng);
-        List<Card> deck2 = buildRandomDeck(p2Colors, rng);
+        List<Card> deck1 = gen1.cards();
+        List<Card> deck2 = gen2.cards();
         Collections.shuffle(deck1, rng);
         Collections.shuffle(deck2, rng);
         assignDeck(gd, player1.getId(), deck1);
@@ -375,49 +362,8 @@ class RandomAiFuzzTest {
     }
 
     // ------------------------------------------------------------------
-    // Random deck construction (same as AiVsAiStressTest)
+    // Deck assignment
     // ------------------------------------------------------------------
-
-    private Set<CardColor> pickDeckColors(Random rng) {
-        // 20% mono-color, 60% two-color, 20% three-color
-        int roll = rng.nextInt(10);
-        int colorCount = roll < 2 ? 1 : roll < 8 ? 2 : 3;
-        List<CardColor> all = new ArrayList<>(List.of(CardColor.values()));
-        Collections.shuffle(all, rng);
-        return EnumSet.copyOf(all.subList(0, colorCount));
-    }
-
-    private List<Card> buildRandomDeck(Set<CardColor> deckColors, Random rng) {
-        List<CardPrinting> playable = new ArrayList<>();
-        for (CardPrinting printing : allNonLandPrintings) {
-            Card sample = printing.createCard();
-            if (deckColors.containsAll(sample.getColors())) {
-                playable.add(printing);
-            }
-        }
-
-        // Sample with replacement, up to 4 copies per printing, so same-card
-        // interactions (multiple copies in play, in the graveyard, legend rule)
-        // get exercised too.
-        List<Card> deck = new ArrayList<>();
-        Map<CardPrinting, Integer> copiesUsed = new HashMap<>();
-        while (deck.size() < SPELL_COUNT && !playable.isEmpty()) {
-            int idx = rng.nextInt(playable.size());
-            CardPrinting printing = playable.get(idx);
-            deck.add(printing.createCard());
-            if (copiesUsed.merge(printing, 1, Integer::sum) >= 4) {
-                playable.remove(idx);
-            }
-        }
-
-        // Distribute lands as evenly as possible across the deck's colors
-        List<CardColor> colors = new ArrayList<>(deckColors);
-        for (int i = 0; i < LAND_COUNT; i++) {
-            deck.add(BASIC_LAND_PRINTINGS.get(colors.get(i % colors.size())).createCard());
-        }
-
-        return deck;
-    }
 
     private void assignDeck(GameData gd, UUID playerId, List<Card> fullDeck) {
         List<Card> hand = new ArrayList<>(fullDeck.subList(0, 7));
@@ -487,32 +433,4 @@ class RandomAiFuzzTest {
         }
     }
 
-    // ------------------------------------------------------------------
-    // One-time card-pool initialization (reused across games)
-    // ------------------------------------------------------------------
-
-    private static synchronized void initializeCardPool() {
-        if (allNonLandPrintings != null) {
-            return;
-        }
-
-        BASIC_LAND_PRINTINGS.put(CardColor.WHITE, CardSet.SET_SOM.findByCollectorNumber("230"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLUE, CardSet.SET_SOM.findByCollectorNumber("234"));
-        BASIC_LAND_PRINTINGS.put(CardColor.BLACK, CardSet.SET_SOM.findByCollectorNumber("238"));
-        BASIC_LAND_PRINTINGS.put(CardColor.RED, CardSet.SET_SOM.findByCollectorNumber("242"));
-        BASIC_LAND_PRINTINGS.put(CardColor.GREEN, CardSet.SET_SOM.findByCollectorNumber("246"));
-
-        allNonLandPrintings = new ArrayList<>();
-        for (CardSet set : CardSet.values()) {
-            for (CardPrinting printing : set.getPrintings()) {
-                Card sample = printing.createCard();
-                if (!sample.hasType(CardType.LAND) && sample.getManaCost() != null) {
-                    allNonLandPrintings.add(printing);
-                }
-            }
-        }
-
-        System.out.printf("Card pool initialized: %d non-land printings, %d basic-land printings%n",
-                allNonLandPrintings.size(), BASIC_LAND_PRINTINGS.size());
-    }
 }

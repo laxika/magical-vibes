@@ -860,6 +860,10 @@ public class GameTestHarness {
         return gameRegistry;
     }
 
+    public GameSetupService getGameSetupService() {
+        return gameSetupService;
+    }
+
     public GameQueryService getGameQueryService() {
         return gameQueryService;
     }

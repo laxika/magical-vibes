@@ -22,7 +22,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   errorMessage = signal('');
   showCreateForm = signal(false);
   creating = signal(false);
-  activeTab = signal<'1v1' | 'draft'>('1v1');
+  activeTab = signal<'1v1' | 'allrandom' | 'draft'>('1v1');
   draftAiCount = signal(7);
   draftSetCode = signal('');
   draftGameName = signal('');
@@ -150,7 +150,8 @@ export class HomeComponent implements OnInit, OnDestroy {
       deckId: this.selectedDeckId(),
       vsAi: this.vsAi(),
       aiDeckId: this.aiDeckId(),
-      aiDifficulty: this.aiDifficulty()
+      aiDifficulty: this.aiDifficulty(),
+      allRandom: this.activeTab() === 'allrandom'
     });
   }
 

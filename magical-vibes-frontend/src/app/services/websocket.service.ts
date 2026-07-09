@@ -273,6 +273,7 @@ export interface LobbyGame {
   createdByUsername: string;
   playerCount: number;
   status: GameStatus;
+  allRandom: boolean;
 }
 
 export interface DeckInfo {
