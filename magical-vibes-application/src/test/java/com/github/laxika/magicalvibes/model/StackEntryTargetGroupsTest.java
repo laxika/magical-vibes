@@ -121,6 +121,42 @@ class StackEntryTargetGroupsTest {
     }
 
     @Test
+    @DisplayName("Aura entries keep the enchant target in targetId; the flat list starts at group 1")
+    void auraEnchantTargetHeldSeparately() {
+        Card card = new Card();
+        card.setSubtypes(List.of(CardSubtype.AURA));
+        CardEffect etbEffect = new BoostTargetCreatureEffect(1, 1);
+        card.target(1, 1); // group 0: the enchant target
+        card.target(1, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, etbEffect);
+
+        UUID enchanted = UUID.randomUUID();
+        UUID etbTarget = UUID.randomUUID();
+        StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, card, CONTROLLER, "test",
+                List.of(), 0, enchanted, null, java.util.Map.of(), null, List.of(), List.of(etbTarget));
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(enchanted);
+        assertThat(entry.targetsForGroup(1)).containsExactly(etbTarget);
+        assertThat(entry.targetsForEffect(etbEffect)).containsExactly(etbTarget);
+    }
+
+    @Test
+    @DisplayName("Aura entry with no ETB targets: a later-group effect gets nothing, not the enchant target")
+    void auraWithoutEtbTargets() {
+        Card card = new Card();
+        card.setSubtypes(List.of(CardSubtype.AURA));
+        CardEffect etbEffect = new BoostTargetCreatureEffect(1, 1);
+        card.target(1, 1); // group 0: the enchant target
+        card.target(0, 1).addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, etbEffect);
+
+        UUID enchanted = UUID.randomUUID();
+        StackEntry entry = new StackEntry(StackEntryType.ENCHANTMENT_SPELL, card, CONTROLLER, "test",
+                List.of(), 0, enchanted, null, java.util.Map.of(), null, List.of(), List.of());
+
+        assertThat(entry.targetsForGroup(0)).containsExactly(enchanted);
+        assertThat(entry.targetsForEffect(etbEffect)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Wrapper effects register their inner effect under the same group")
     void wrapperInnerEffectSharesGroup() {
         Card card = new Card();

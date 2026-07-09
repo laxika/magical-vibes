@@ -301,14 +301,29 @@ public class StackEntry {
      * <p>When the card declares no spell targets (e.g. activated abilities with their own
      * multi-target filter list), the flat list is treated as positional: group {@code g} is
      * {@code targetIds.get(g)}.</p>
+     *
+     * <p>Aura entries are the exception: the enchant target (group 0) is stored separately in
+     * {@link #targetId} — both on the spell entry (see {@code SpellCastingService}'s aura split)
+     * and on the aura's ETB trigger entry, which inherits that shape — so the flat list holds
+     * only the later groups' targets and slicing starts at group 1.</p>
      */
     public List<UUID> targetsForGroup(int group) {
         List<SpellTarget> groups = card == null ? List.of() : card.getSpellTargets();
         if (groups.isEmpty()) {
             return group >= 0 && group < targetIds.size() ? List.of(targetIds.get(group)) : List.of();
         }
+        int firstFlatGroup = 0;
+        if (card.isAura() && targetId != null) {
+            if (group == 0) {
+                return List.of(targetId);
+            }
+            firstFlatGroup = 1;
+        }
         int consumed = 0;
         for (SpellTarget g : groups) {
+            if (g.getIndex() < firstFlatGroup) {
+                continue;
+            }
             int size = Math.min(Math.max(g.getMaxTargets(), 0), targetIds.size() - consumed);
             if (g.getIndex() == group) {
                 return List.copyOf(targetIds.subList(consumed, consumed + size));
@@ -333,6 +348,11 @@ public class StackEntry {
             return targetIds;
         }
         if (targetIds.isEmpty()) {
+            // On an aura the lone targetId is the enchant target (group 0), never a later
+            // group's target — an effect bound to a later group simply has no target chosen.
+            if (card.isAura() && group != 0) {
+                return List.of();
+            }
             return targetId != null ? List.of(targetId) : List.of();
         }
         return targetsForGroup(group);
