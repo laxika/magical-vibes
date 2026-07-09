@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.MCTSEngine;
 import com.github.laxika.magicalvibes.ai.simulation.SimulationAction;
@@ -2896,8 +2897,8 @@ class HardAiDecisionEngineTest {
 
             // Opponent attacks with a 2/3 — profitable to block with a 5/5 absent tricks.
             Permanent opp2_3 = new Permanent(new GrizzlyBears());
-            opp2_3.getCard().setPower(2);
-            opp2_3.getCard().setToughness(3);
+            TestCards.mutableCard(opp2_3).setPower(2);
+            TestCards.mutableCard(opp2_3).setToughness(3);
             opp2_3.setSummoningSick(false);
             opp2_3.setAttacking(true);
             gd.playerBattlefields.get(player1.getId()).add(opp2_3);
@@ -2905,8 +2906,8 @@ class HardAiDecisionEngineTest {
             // AI has a single 5/5 blocker — a +3/+3 pump on the attacker would flip
             // the combat (5/5 vs 5/6 → blocker dies, attacker survives).
             Permanent ai5_5 = new Permanent(new GrizzlyBears());
-            ai5_5.getCard().setPower(5);
-            ai5_5.getCard().setToughness(5);
+            TestCards.mutableCard(ai5_5).setPower(5);
+            TestCards.mutableCard(ai5_5).setToughness(5);
             ai5_5.setSummoningSick(false);
             gd.playerBattlefields.get(player2.getId()).add(ai5_5);
 

@@ -30,7 +30,7 @@ public class ReduceOwnCastCostForSharedCardTypeWithImprintEffectHandler implemen
         if (!source.controlledBy(context.castingPlayerId())) {
             return 0;
         }
-        Card imprinted = source.sourcePermanent().getCard().getImprintedCard();
+        Card imprinted = context.gameData().getImprintedCard(source.sourcePermanent().getCard());
         if (imprinted == null || !support.sharesCardType(context.spell(), imprinted)) {
             return 0;
         }

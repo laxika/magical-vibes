@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -211,7 +212,7 @@ class BattlefieldEntryServiceTest {
     void cantHaveCountersPreventsEntersWithCounters() {
         Permanent entering = enteringWithEffect(
                 new EnterWithCountersEffect(CounterType.CHARGE, new Fixed(3)));
-        entering.getCard().addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
+        TestCards.mutableCard(entering).addEffect(EffectSlot.STATIC, new CantHaveCountersEffect());
 
         service.putPermanentOntoBattlefield(gd, player1Id, entering);
 

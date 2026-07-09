@@ -696,7 +696,7 @@ public class CardChoiceHandlerService {
         // Imprint on source permanent
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (sourcePermanent != null) {
-            sourcePermanent.getCard().setImprintedCard(card);
+            gameData.setImprintedCard(sourcePermanent.getCard(), card);
 
             String logEntry = card.getName() + " is exiled and imprinted on " + sourcePermanent.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);

@@ -141,6 +141,29 @@ class BorrowedKnowledgeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Modal cast writes mode targeting onto a runtime copy, never the shared original card")
+    void modalCastDoesNotMutateOriginalCard() {
+        setDeck(player1, List.of(new Island()));
+        BorrowedKnowledge original = new BorrowedKnowledge();
+        // Deck cards are frozen at game setup; setHand bypasses setup, so freeze explicitly.
+        // If the modal cast mutated the original instead of a runtime copy, casting would throw.
+        original.freeze();
+        harness.setHand(player1, List.of(original));
+        addManaForCast(player1);
+
+        harness.castSorcery(player1, 0, 0, player2.getId());
+
+        Card onStack = gd.stack.getLast().getCard();
+        assertThat(onStack).isNotSameAs(original);
+        assertThat(onStack.getId()).isEqualTo(original.getId());
+        assertThat(original.getCastTimeTargetFilter()).isNull();
+
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(c -> c.getId().equals(original.getId()));
+    }
+
+    @Test
     @DisplayName("Choosing invalid mode is rejected at cast time")
     void invalidModeIsRejected() {
         harness.setHand(player1, List.of(new BorrowedKnowledge()));

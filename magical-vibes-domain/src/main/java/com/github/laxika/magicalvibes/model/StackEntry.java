@@ -53,10 +53,21 @@ public class StackEntry {
     @Setter private Permanent sourcePermanentSnapshot;
     private final List<UUID> targetIds;
 
+    /**
+     * A card referenced by a stack entry is live game state shared with AI simulation copies —
+     * freeze it so any later mutation of the Card object fails fast instead of leaking.
+     */
+    private static Card freezeCard(Card card) {
+        if (card != null) {
+            card.freeze();
+        }
+        return card;
+    }
+
     // Creature spell constructor
     public StackEntry(Card card, UUID controllerId) {
         this.entryType = StackEntryType.CREATURE_SPELL;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = card.getName();
         this.effectsToResolve = List.of();
@@ -73,7 +84,7 @@ public class StackEntry {
     // Triggered ability constructor
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -90,7 +101,7 @@ public class StackEntry {
     // General constructor with xValue (for sorcery spells)
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -107,7 +118,7 @@ public class StackEntry {
     // Targeted or damage distribution spell constructor
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, UUID targetId, Map<UUID, Integer> damageAssignments) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -125,7 +136,7 @@ public class StackEntry {
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
                       List<CardEffect> effectsToResolve, int xValue, UUID sourcePermanentId) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -142,7 +153,7 @@ public class StackEntry {
     // Triggered ability with source and target permanent constructor
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetId, UUID sourcePermanentId) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -159,7 +170,7 @@ public class StackEntry {
     // Zone-aware targeted ability constructor (e.g. target a card in graveyard)
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetId, Zone targetZone) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -179,7 +190,7 @@ public class StackEntry {
                       UUID sourcePermanentId, Map<UUID, Integer> damageAssignments,
                       Zone targetZone, List<UUID> targetCardIds, List<UUID> targetIds) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -196,7 +207,7 @@ public class StackEntry {
     // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, List<UUID> targetCardIds) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -245,7 +256,7 @@ public class StackEntry {
     // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID sourcePermanentId, List<UUID> targetIds) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;
@@ -262,7 +273,7 @@ public class StackEntry {
     // Multi-target permanent spell constructor (e.g. "one or two target creatures")
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, List<UUID> targetIds) {
         this.entryType = entryType;
-        this.card = card;
+        this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
         this.effectsToResolve = effectsToResolve;

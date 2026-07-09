@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -152,8 +153,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
         Permanent goblinPerm = addGoblinReady(player1);
-        goblinPerm.getCard().setPower(4);
-        goblinPerm.getCard().setToughness(4);
+        TestCards.mutableCard(goblinPerm).setPower(4);
+        TestCards.mutableCard(goblinPerm).setToughness(4);
         goblinPerm.setAttacking(true);
 
         Permanent blocker1 = new Permanent(new GrizzlyBears());
@@ -216,8 +217,8 @@ class GoblinEliteInfantryTest extends BaseCardTest {
     void modifierResetsAtEndOfTurn() {
         Permanent goblinPerm = addGoblinReady(player2);
         // Increase toughness so goblin survives combat damage from Bears
-        goblinPerm.getCard().setPower(4);
-        goblinPerm.getCard().setToughness(4);
+        TestCards.mutableCard(goblinPerm).setPower(4);
+        TestCards.mutableCard(goblinPerm).setToughness(4);
 
         Permanent atkPerm = new Permanent(new GrizzlyBears());
         atkPerm.setSummoningSick(false);

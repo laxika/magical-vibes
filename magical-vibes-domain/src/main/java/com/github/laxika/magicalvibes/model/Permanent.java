@@ -166,6 +166,13 @@ public class Permanent {
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final List<ActivatedAbility> temporaryActivatedAbilities = new ArrayList<>();
+    /** Activated abilities granted for as long as this permanent remains on the battlefield
+     *  (e.g. Aquitect's Will making a land an Island in addition to its other types — the
+     *  granted "{T}: Add {U}" has no duration). Stored on the permanent rather than mutating
+     *  the {@link Card}: Card instances are shared with AI simulation copies (see the copy
+     *  constructor) and must stay immutable after construction.
+     *  NOT cleared by {@link #resetModifiers()}. */
+    private final List<ActivatedAbility> persistentGrantedActivatedAbilities = new ArrayList<>();
     /** When true, this permanent is a temporary copy (until end of turn) of another creature.
      *  At the cleanup step, the card reverts to {@link #preCopyCard}.
      *  Used by Tilonalli's Skinshifter and similar shapeshifters. */
@@ -207,6 +214,9 @@ public class Permanent {
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
+        // A card wrapped in a Permanent is live game state shared with AI simulation copies —
+        // freeze it so any later mutation of the Card object fails fast instead of leaking.
+        card.freeze();
         this.card = card;
         this.originalCard = card;
         this.tapped = false;
@@ -297,6 +307,7 @@ public class Permanent {
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
+        this.persistentGrantedActivatedAbilities.addAll(source.persistentGrantedActivatedAbilities);
         this.copyUntilEndOfTurn = source.copyUntilEndOfTurn;
         this.preCopyCard = source.preCopyCard;
         this.untilNextTurnActivatedAbilities.addAll(source.untilNextTurnActivatedAbilities);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.e.EntrancingMelody;
@@ -771,10 +772,10 @@ class EasyAiDecisionEngineTest {
         // 3 creatures on the AI battlefield
         for (int i = 0; i < 3; i++) {
             Permanent creature = new Permanent(new Card());
-            creature.getCard().setName("Bear " + i);
-            creature.getCard().setType(CardType.CREATURE);
-            creature.getCard().setPower(2);
-            creature.getCard().setToughness(2);
+            TestCards.mutableCard(creature).setName("Bear " + i);
+            TestCards.mutableCard(creature).setType(CardType.CREATURE);
+            TestCards.mutableCard(creature).setPower(2);
+            TestCards.mutableCard(creature).setToughness(2);
             creature.setSummoningSick(false);
             gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
         }
@@ -1111,20 +1112,20 @@ class EasyAiDecisionEngineTest {
 
         // AI has a 2/2
         Permanent creature = new Permanent(new Card());
-        creature.getCard().setName("Bear");
-        creature.getCard().setType(CardType.CREATURE);
-        creature.getCard().setPower(2);
-        creature.getCard().setToughness(2);
+        TestCards.mutableCard(creature).setName("Bear");
+        TestCards.mutableCard(creature).setType(CardType.CREATURE);
+        TestCards.mutableCard(creature).setPower(2);
+        TestCards.mutableCard(creature).setToughness(2);
         creature.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
 
         // Opponent has a 5/5 blocker — AI would normally choose not to attack
         UUID opponentId = gd.orderedPlayerIds.get(1);
         Permanent blocker = new Permanent(new Card());
-        blocker.getCard().setName("Big Blocker");
-        blocker.getCard().setType(CardType.CREATURE);
-        blocker.getCard().setPower(5);
-        blocker.getCard().setToughness(5);
+        TestCards.mutableCard(blocker).setName("Big Blocker");
+        TestCards.mutableCard(blocker).setType(CardType.CREATURE);
+        TestCards.mutableCard(blocker).setPower(5);
+        TestCards.mutableCard(blocker).setToughness(5);
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(opponentId).add(blocker);
 
@@ -1160,19 +1161,19 @@ class EasyAiDecisionEngineTest {
 
         // AI has a 2/2 but strong opponent blocker — Easy AI should choose not to attack
         Permanent creature = new Permanent(new Card());
-        creature.getCard().setName("Bear");
-        creature.getCard().setType(CardType.CREATURE);
-        creature.getCard().setPower(2);
-        creature.getCard().setToughness(2);
+        TestCards.mutableCard(creature).setName("Bear");
+        TestCards.mutableCard(creature).setType(CardType.CREATURE);
+        TestCards.mutableCard(creature).setPower(2);
+        TestCards.mutableCard(creature).setToughness(2);
         creature.setSummoningSick(false);
         gd.playerBattlefields.get(aiPlayer.getId()).add(creature);
 
         UUID opponentId = gd.orderedPlayerIds.get(1);
         Permanent blocker = new Permanent(new Card());
-        blocker.getCard().setName("Big Blocker");
-        blocker.getCard().setType(CardType.CREATURE);
-        blocker.getCard().setPower(5);
-        blocker.getCard().setToughness(5);
+        TestCards.mutableCard(blocker).setName("Big Blocker");
+        TestCards.mutableCard(blocker).setType(CardType.CREATURE);
+        TestCards.mutableCard(blocker).setPower(5);
+        TestCards.mutableCard(blocker).setToughness(5);
         blocker.setSummoningSick(false);
         gd.playerBattlefields.get(opponentId).add(blocker);
 

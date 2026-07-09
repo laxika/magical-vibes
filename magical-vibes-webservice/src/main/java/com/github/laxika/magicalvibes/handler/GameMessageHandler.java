@@ -967,7 +967,7 @@ public class GameMessageHandler implements MessageHandler {
                         return;
                     }
                     com.github.laxika.magicalvibes.model.Permanent permanent = battlefield.get(request.permanentIndex());
-                    java.util.List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities = permanent.getCard().getActivatedAbilities();
+                    java.util.List<com.github.laxika.magicalvibes.model.ActivatedAbility> abilities = gameService.getEffectiveActivatedAbilities(gameData, permanent);
                     if (request.abilityIndex() < 0 || request.abilityIndex() >= abilities.size()) {
                         handleError(connection, "Invalid ability index");
                         return;

@@ -1298,12 +1298,7 @@ export class GameComponent implements OnInit, OnDestroy {
     }
     if (this.choice.awaitingXValueChoice || (this.choice.awaitingMayAbility && this.choice.mayAbilityManaCost != null)) {
       if (perm && this.choice.canTapForMana(perm)) {
-        const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);
-        if (manaAbilityIndex >= 0) {
-          this.websocketService.send({ type: MessageType.ACTIVATE_ABILITY, permanentIndex: index, abilityIndex: manaAbilityIndex });
-        } else {
-          this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
-        }
+        this.tapPermanentForMana(index, perm);
       }
       return;
     }
@@ -1342,6 +1337,12 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private tapPermanentForMana(index: number, perm: Permanent): void {
+    // Prefer the intrinsic ON_TAP mana (a basic land's own color) over granted/activated
+    // mana abilities so e.g. a Plains that also gained "{T}: Add {U}" still pays white
+    if (perm.card.hasTapAbility && !perm.tapped) {
+      this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
+      return;
+    }
     const manaAbilityIndex = perm.card.activatedAbilities.findIndex(a => a.isManaAbility);
     if (manaAbilityIndex >= 0) {
       this.websocketService.send({ type: MessageType.ACTIVATE_ABILITY, permanentIndex: index, abilityIndex: manaAbilityIndex });

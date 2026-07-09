@@ -77,11 +77,13 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
             }
             targetLand.getTemporaryActivatedAbilities().add(manaAbility);
         } else {
-            // Permanent: survives turn resets
+            // Permanent: survives turn resets. Stored on the Permanent, never on the Card —
+            // the Card instance is shared with AI simulation copies, so mutating it here
+            // would leak a simulated grant into the real game.
             if (!targetLand.getGrantedSubtypes().contains(subtype)) {
                 targetLand.getGrantedSubtypes().add(subtype);
             }
-            targetLand.getCard().addActivatedAbility(manaAbility);
+            targetLand.getPersistentGrantedActivatedAbilities().add(manaAbility);
         }
     }
 

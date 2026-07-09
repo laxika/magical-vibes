@@ -148,7 +148,7 @@ public class CastingPermissionService {
                         if (cantCast.opponentsOnly() && pid.equals(castingPlayerId)) {
                             continue;
                         }
-                        Card imprinted = perm.getCard().getImprintedCard();
+                        Card imprinted = gameData.getImprintedCard(perm.getCard());
                         if (imprinted != null) {
                             forbidden.add(imprinted.getName());
                         }

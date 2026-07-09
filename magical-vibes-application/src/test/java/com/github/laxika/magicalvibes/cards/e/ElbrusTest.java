@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WithengarUnbound;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -90,13 +91,13 @@ class ElbrusTest extends BaseCardTest {
         @DisplayName("No transform when equipped creature is blocked and deals no player damage")
         void noTransformWhenBlocked() {
             Permanent creature = addReadyCreature(player1);
-            creature.getCard().setToughness(10); // survives the blocker so the test isolates the "blocked" case
+            TestCards.mutableCard(creature).setToughness(10); // survives the blocker so the test isolates the "blocked" case
             Permanent elbrus = addElbrusReady(player1);
             elbrus.setAttachedTo(creature.getId());
             creature.setAttacking(true);
 
             Permanent blocker = addReadyCreature(player2);
-            blocker.getCard().setToughness(10);
+            TestCards.mutableCard(blocker).setToughness(10);
             blocker.setBlocking(true);
             blocker.addBlockingTarget(0);
 

@@ -4,9 +4,12 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JudgeOfCurrents;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +52,39 @@ class AquitectsWillTest extends BaseCardTest {
         mountain.resetModifiers();
 
         assertThat(mountain.getGrantedSubtypes()).contains(CardSubtype.ISLAND);
+        assertThat(gs.getEffectiveActivatedAbilities(gd, mountain)).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Grant lives on the permanent, not the shared Card instance")
+    void grantDoesNotMutateSharedCard() {
+        UUID mountainId = castWillOnMountain();
+
+        Permanent mountain = gqs.findPermanentById(gd, mountainId);
+        // The Card object is shared with AI simulation copies and must stay unmodified
+        assertThat(mountain.getCard().getActivatedAbilities()).isEmpty();
+        assertThat(mountain.getPersistentGrantedActivatedAbilities()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Grant resolved in an AI simulation copy does not leak into the real game")
+    void simulatedGrantDoesNotLeakIntoRealGame() {
+        harness.addToBattlefield(player1, new Mountain());
+        UUID mountainId = harness.getPermanentId(player1, "Mountain");
+        Permanent realMountain = gqs.findPermanentById(gd, mountainId);
+
+        GameData simCopy = gd.simulationCopy();
+        Permanent simMountain = simCopy.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getId().equals(mountainId))
+                .findFirst().orElseThrow();
+        GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(
+                simMountain, CardSubtype.ISLAND, EffectDuration.CONTINUOUS, false);
+
+        assertThat(simMountain.getPersistentGrantedActivatedAbilities()).hasSize(1);
+        assertThat(realMountain.getPersistentGrantedActivatedAbilities()).isEmpty();
+        assertThat(realMountain.getGrantedSubtypes()).doesNotContain(CardSubtype.ISLAND);
+        assertThat(realMountain.getCard().getActivatedAbilities()).isEmpty();
+        assertThat(gs.getEffectiveActivatedAbilities(gd, realMountain)).isEmpty();
     }
 
     @Test

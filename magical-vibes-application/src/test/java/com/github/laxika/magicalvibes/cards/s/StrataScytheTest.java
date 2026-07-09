@@ -93,8 +93,8 @@ class StrataScytheTest extends BaseCardTest {
 
         // Strata Scythe should have Plains imprinted
         Permanent scythe = findPermanent(player1, "Strata Scythe");
-        assertThat(scythe.getCard().getImprintedCard()).isNotNull();
-        assertThat(scythe.getCard().getImprintedCard().getName()).isEqualTo("Plains");
+        assertThat(gd.getImprintedCard(scythe.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(scythe.getCard()).getName()).isEqualTo("Plains");
 
         // Library should be shuffled (only Forest remains)
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
@@ -121,7 +121,7 @@ class StrataScytheTest extends BaseCardTest {
 
         // No imprint
         Permanent scythe = findPermanent(player1, "Strata Scythe");
-        assertThat(scythe.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(scythe.getCard())).isNull();
     }
 
     @Test
@@ -166,7 +166,7 @@ class StrataScytheTest extends BaseCardTest {
 
         // Imprint Plains
         Plains imprintedPlains = new Plains();
-        scythe.getCard().setImprintedCard(imprintedPlains);
+        gd.setImprintedCard(scythe.getCard(), imprintedPlains);
 
         // Attach to creature
         scythe.setAttachedTo(creature.getId());
@@ -187,7 +187,7 @@ class StrataScytheTest extends BaseCardTest {
         Permanent scythe = addReadyScythe(player1);
 
         // Imprint Plains
-        scythe.getCard().setImprintedCard(new Plains());
+        gd.setImprintedCard(scythe.getCard(), new Plains());
         scythe.setAttachedTo(creature.getId());
 
         // 1 Plains on player1's battlefield
@@ -208,7 +208,7 @@ class StrataScytheTest extends BaseCardTest {
         Permanent scythe = addReadyScythe(player1);
 
         // Imprint Plains
-        scythe.getCard().setImprintedCard(new Plains());
+        gd.setImprintedCard(scythe.getCard(), new Plains());
         scythe.setAttachedTo(creature.getId());
 
         // Only Mountains on battlefield, no Plains
@@ -241,7 +241,7 @@ class StrataScytheTest extends BaseCardTest {
         Permanent creature2 = addReadyCreature(player1); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
-        scythe.getCard().setImprintedCard(new Plains());
+        gd.setImprintedCard(scythe.getCard(), new Plains());
         scythe.setAttachedTo(creature1.getId());
         addReadyLand(player1, new Plains());
 
@@ -257,7 +257,7 @@ class StrataScytheTest extends BaseCardTest {
         Permanent creature2 = addReadyCreature(player1); // 2/2
         Permanent scythe = addReadyScythe(player1);
 
-        scythe.getCard().setImprintedCard(new Plains());
+        gd.setImprintedCard(scythe.getCard(), new Plains());
         scythe.setAttachedTo(creature1.getId());
         addReadyLand(player1, new Plains());
 

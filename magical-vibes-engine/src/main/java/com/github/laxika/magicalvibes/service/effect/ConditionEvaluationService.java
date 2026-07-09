@@ -506,7 +506,7 @@ public class ConditionEvaluationService {
         if (ctx.triggeringCard() == null) return false;
         Permanent source = sourcePermanent(gameData, ctx);
         if (source == null) return false;
-        Card imprintedCard = source.getCard().getImprintedCard();
+        Card imprintedCard = gameData.getImprintedCard(source.getCard());
         return imprintedCard != null && imprintedCard.getName().equals(ctx.triggeringCard().getName());
     }
 }

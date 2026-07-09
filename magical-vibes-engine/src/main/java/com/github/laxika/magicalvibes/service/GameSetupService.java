@@ -116,8 +116,11 @@ public class GameSetupService {
 
             // Stamp card ownership: each card is owned by the player whose deck it started in.
             // Preserved across zone changes; used to evaluate "a spell you don't own".
+            // Then freeze: from here on the Card objects are shared with AI simulation copies
+            // and must never be mutated (runtime state lives on Permanent/StackEntry/GameData).
             for (Card card : deck) {
                 card.setOwnerId(playerId);
+                card.freeze();
             }
 
             Collections.shuffle(deck, random);

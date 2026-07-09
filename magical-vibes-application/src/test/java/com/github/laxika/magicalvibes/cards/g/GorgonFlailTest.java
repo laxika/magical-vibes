@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -124,8 +125,8 @@ class GorgonFlailTest extends BaseCardTest {
 
         // 5/5 blocker — deathtouch means any damage is lethal
         Permanent blocker = addReadyCreature(player2);
-        blocker.getCard().setPower(5);
-        blocker.getCard().setToughness(5);
+        TestCards.mutableCard(blocker).setPower(5);
+        TestCards.mutableCard(blocker).setToughness(5);
         blocker.setBlocking(true);
         blocker.addBlockingTarget(0);
 

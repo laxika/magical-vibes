@@ -223,6 +223,31 @@ public class SpellCastingService {
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, toDiscard);
     }
 
+    /**
+     * True when casting this card writes mode-dependent state onto it: modal spells
+     * (ChooseOneEffect) rebuild the card's spell targets and cast-time target filter at cast
+     * time ({@link #unwrapChooseOneEffect}, {@link #applyModalEtbTargetFilter}). Live cards are
+     * frozen and shared with AI simulation copies, so every modal cast must first swap in an
+     * unfrozen {@link Card#createRuntimeCopy()} that replaces the original in the casting zone.
+     */
+    private static boolean isModalSpell(Card card) {
+        return card.getEffects(EffectSlot.SPELL).stream().anyMatch(ChooseOneEffect.class::isInstance)
+                || card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream().anyMatch(ChooseOneEffect.class::isInstance);
+    }
+
+    /**
+     * Returns the card at {@code cardIndex}, swapping in an unfrozen runtime copy (replacing the
+     * original in hand) first when the spell is modal — see {@link #isModalSpell}.
+     */
+    private static Card modalRuntimeCopyForHandCast(List<Card> hand, int cardIndex) {
+        Card card = hand.get(cardIndex);
+        if (isModalSpell(card)) {
+            card = card.createRuntimeCopy();
+            hand.set(cardIndex, card);
+        }
+        return card;
+    }
+
     private int unwrapChooseOneEffect(Card card, List<CardEffect> effects, int effectiveXValue) {
         for (int i = 0; i < effects.size(); i++) {
             if (effects.get(i) instanceof ChooseOneEffect coe) {
@@ -497,7 +522,7 @@ public class SpellCastingService {
         }
 
         List<Card> hand = gameData.playerHands.get(playerId);
-        Card card = hand.get(cardIndex);
+        Card card = modalRuntimeCopyForHandCast(hand, cardIndex);
         applyModalEtbTargetFilter(card, effectiveXValue);
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
         SacrificeCostFlags sacFlags = extractAndRemoveSacrificeCosts(filteredSpellEffects);
@@ -1808,6 +1833,10 @@ public class SpellCastingService {
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());
 
+        if (isModalSpell(card)) {
+            card = card.createRuntimeCopy();
+        }
+
         // Sorceries and instants need their spell effects for resolution;
         // permanent spells (creature, enchantment, artifact, planeswalker) use List.of()
         // because they resolve by entering the battlefield, not via effects.
@@ -1977,6 +2006,10 @@ public class SpellCastingService {
         paySpellManaCost(gameData, playerId, card, effectiveXValue, List.of(), null);
 
         StackEntryType entryType = cardTypeToStackEntryType(card.getType());
+
+        if (isModalSpell(card)) {
+            card = card.createRuntimeCopy();
+        }
 
         List<CardEffect> effectsToResolve;
         if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {

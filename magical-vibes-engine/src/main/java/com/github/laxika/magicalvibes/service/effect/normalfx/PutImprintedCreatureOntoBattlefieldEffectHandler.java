@@ -33,7 +33,7 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID controllerId = entry.getControllerId();
-        Card imprintedCard = entry.getCard().getImprintedCard();
+        Card imprintedCard = gameData.getImprintedCard(entry.getCard());
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (imprintedCard == null) {

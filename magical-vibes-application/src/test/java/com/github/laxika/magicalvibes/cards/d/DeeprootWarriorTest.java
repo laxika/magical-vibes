@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -57,8 +58,8 @@ class DeeprootWarriorTest extends BaseCardTest {
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
         Permanent warriorPerm = addWarriorReady(player1);
-        warriorPerm.getCard().setPower(4);
-        warriorPerm.getCard().setToughness(4);
+        TestCards.mutableCard(warriorPerm).setPower(4);
+        TestCards.mutableCard(warriorPerm).setToughness(4);
         warriorPerm.setAttacking(true);
 
         addReadyBears(player2);
@@ -86,8 +87,8 @@ class DeeprootWarriorTest extends BaseCardTest {
     @DisplayName("+1/+1 modifier resets at end of turn cleanup")
     void modifierResetsAtEndOfTurn() {
         Permanent warriorPerm = addWarriorReady(player1);
-        warriorPerm.getCard().setPower(4);
-        warriorPerm.getCard().setToughness(4);
+        TestCards.mutableCard(warriorPerm).setPower(4);
+        TestCards.mutableCard(warriorPerm).setToughness(4);
         warriorPerm.setAttacking(true);
 
         addReadyBears(player2);

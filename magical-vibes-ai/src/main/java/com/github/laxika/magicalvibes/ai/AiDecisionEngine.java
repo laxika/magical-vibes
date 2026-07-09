@@ -723,22 +723,21 @@ public abstract class AiDecisionEngine {
     }
 
     private UUID findModalPermanentTarget(GameData gameData, Card card, ChooseOneEffect.ChooseOneOption option) {
-        var savedFilter = card.getCastTimeTargetFilter();
-        card.setCastTimeTargetFilter(option.targetFilter());
-        try {
-            UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
-            for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
-                if (playerId == null) continue;
-                for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                    if (targetSelector.isValidPermanentTarget(gameData, card, p, aiPlayer.getId())) {
-                        return p.getId();
-                    }
+        // Evaluate the mode's targeting on an unfrozen runtime copy — the real card is frozen
+        // (live cards are shared with simulation copies and must not be mutated, not even
+        // temporarily with a restore).
+        Card evalCard = card.createRuntimeCopy();
+        evalCard.setCastTimeTargetFilter(option.targetFilter());
+        UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
+        for (UUID playerId : new UUID[]{opponentId, aiPlayer.getId()}) {
+            if (playerId == null) continue;
+            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
+                if (targetSelector.isValidPermanentTarget(gameData, evalCard, p, aiPlayer.getId())) {
+                    return p.getId();
                 }
             }
-            return null;
-        } finally {
-            card.setCastTimeTargetFilter(savedFilter);
         }
+        return null;
     }
 
     /**

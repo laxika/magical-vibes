@@ -709,7 +709,7 @@ public class AbilityActivationService {
                 abilityCost = graveyard.get(exileGraveyardCardIndex).getManaCost();
             }
             if (exileGraveyardCost.imprintOnSource()) {
-                permanent.getCard().setImprintedCard(graveyard.get(exileGraveyardCardIndex));
+                gameData.setImprintedCard(permanent.getCard(), graveyard.get(exileGraveyardCardIndex));
             }
         }
 
@@ -746,7 +746,7 @@ public class AbilityActivationService {
         // Validate X for Prototype Portal-style abilities here rather than in the shared legality
         // check alone: when the same ability's exile cost just imprinted a card (re-entry after the
         // graveyard choice), the imprint only exists at this point.
-        validateImprintedCopyXValue(permanent, abilityEffects, effectiveXValue);
+        validateImprintedCopyXValue(gameData, permanent, abilityEffects, effectiveXValue);
 
         // Pay mana cost (including targeting tax if applicable)
         if (abilityCost != null) {
@@ -1020,6 +1020,7 @@ public class AbilityActivationService {
             abilities = new ArrayList<>(permanent.getCard().getActivatedAbilities());
             abilities.addAll(staticBonus.grantedActivatedAbilities());
         }
+        abilities.addAll(permanent.getPersistentGrantedActivatedAbilities());
         abilities.addAll(permanent.getTemporaryActivatedAbilities());
         abilities.addAll(permanent.getUntilNextTurnActivatedAbilities());
         return abilities;
@@ -1241,7 +1242,7 @@ public class AbilityActivationService {
         // Imprinted-copy X requirement — unless this same ability's exile cost sets the imprint
         // during payment, in which case the check runs after that cost (validateImprintedCopyXValue)
         if (exileGraveyardCost == null || !exileGraveyardCost.imprintOnSource()) {
-            validateImprintedCopyXValue(permanent, abilityEffects, xValue);
+            validateImprintedCopyXValue(gameData, permanent, abilityEffects, xValue);
         }
     }
 
@@ -1250,13 +1251,13 @@ public class AbilityActivationService {
      * second ability if no card has been exiled with Prototype Portal." X is defined by the exiled
      * card's mana value (not chosen freely), so no imprint = can't activate.
      */
-    private void validateImprintedCopyXValue(Permanent permanent, List<CardEffect> abilityEffects, int effectiveXValue) {
+    private void validateImprintedCopyXValue(GameData gameData, Permanent permanent, List<CardEffect> abilityEffects, int effectiveXValue) {
         CreateTokenCopyOfImprintedCardEffect imprintedCopyEffect = abilityEffects.stream()
                 .filter(CreateTokenCopyOfImprintedCardEffect.class::isInstance)
                 .map(CreateTokenCopyOfImprintedCardEffect.class::cast)
                 .findFirst().orElse(null);
         if (imprintedCopyEffect != null && !imprintedCopyEffect.exileAtEndStep()) {
-            Card imprintedCard = permanent.getCard().getImprintedCard();
+            Card imprintedCard = gameData.getImprintedCard(permanent.getCard());
             if (imprintedCard == null) {
                 throw new IllegalStateException("No card has been exiled with " + permanent.getCard().getName());
             }

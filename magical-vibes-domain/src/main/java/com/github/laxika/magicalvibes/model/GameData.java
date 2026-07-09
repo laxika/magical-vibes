@@ -76,6 +76,15 @@ public class GameData {
      * the {@code WonClash} condition (e.g. Whirlpool Whelm's "if you win, ..." clause).
      */
     public final Map<UUID, Boolean> lastClashWonByController = new ConcurrentHashMap<>();
+    /**
+     * Imprinted cards (Mimic Vat, Semblance Anvil, Prototype Portal, ...), keyed by the
+     * imprinting card's id. Lives on GameData rather than as a field on {@link Card} so that
+     * AI simulation copies (which share Card instances with the real game) can't leak a
+     * simulated imprint into the real game. Keyed by card id (not permanent id) because
+     * imprint-consuming abilities may resolve after the source permanent left the battlefield
+     * (e.g. Hoarding Dragon's death trigger, Clone Shell's sacrifice ability).
+     */
+    public final Map<UUID, Card> imprintedCards = new ConcurrentHashMap<>();
     public final Map<UUID, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
@@ -768,6 +777,20 @@ public class GameData {
                 .orElse(null);
     }
 
+    /** The card imprinted on {@code source} (see {@link #imprintedCards}), or null if none. */
+    public Card getImprintedCard(Card source) {
+        return source != null ? imprintedCards.get(source.getId()) : null;
+    }
+
+    /** Imprints {@code imprinted} on {@code source}; a null {@code imprinted} clears the imprint. */
+    public void setImprintedCard(Card source, Card imprinted) {
+        if (imprinted == null) {
+            imprintedCards.remove(source.getId());
+        } else {
+            imprintedCards.put(source.getId(), imprinted);
+        }
+    }
+
     /** Removes all exile entries tracked with the given source permanent. */
     public void clearExiledByPermanent(UUID sourcePermanentId) {
         exiledCards.removeIf(e -> sourcePermanentId.equals(e.sourcePermanentId()));
@@ -917,6 +940,7 @@ public class GameData {
 
         // --- Map<UUID, String/Integer> ---
         copy.playerIdToName.putAll(this.playerIdToName);
+        copy.imprintedCards.putAll(this.imprintedCards);
         copy.playerDeckChoices.putAll(this.playerDeckChoices);
         copy.mulliganCounts.putAll(this.mulliganCounts);
         copy.playerNeedsToBottom.putAll(this.playerNeedsToBottom);

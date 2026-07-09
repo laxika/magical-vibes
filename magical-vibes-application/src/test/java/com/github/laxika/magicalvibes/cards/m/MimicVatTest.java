@@ -68,8 +68,8 @@ class MimicVatTest extends BaseCardTest {
         Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Mimic Vat"))
                 .findFirst().orElseThrow();
-        assertThat(vat.getCard().getImprintedCard()).isNotNull();
-        assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.getImprintedCard(vat.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(vat.getCard()).getName()).isEqualTo("Grizzly Bears");
     }
 
     @Test
@@ -96,7 +96,22 @@ class MimicVatTest extends BaseCardTest {
         Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Mimic Vat"))
                 .findFirst().orElseThrow();
-        assertThat(vat.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(vat.getCard())).isNull();
+    }
+
+    @Test
+    @DisplayName("Imprint set in an AI simulation copy does not leak into the real game")
+    void simulatedImprintDoesNotLeakIntoRealGame() {
+        harness.addToBattlefield(player1, new MimicVat());
+        Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard().getName().equals("Mimic Vat"))
+                .findFirst().orElseThrow();
+
+        GameData simCopy = gd.simulationCopy();
+        simCopy.setImprintedCard(vat.getCard(), new GrizzlyBears());
+
+        assertThat(simCopy.getImprintedCard(vat.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(vat.getCard())).isNull();
     }
 
     // ===== Imprint replacement =====
@@ -126,7 +141,7 @@ class MimicVatTest extends BaseCardTest {
         Permanent vat = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Mimic Vat"))
                 .findFirst().orElseThrow();
-        assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.getImprintedCard(vat.getCard()).getName()).isEqualTo("Grizzly Bears");
 
         // Kill second creature (Giant Spider): now player2 has only one, auto-sacrificed
         harness.forceActivePlayer(player1);
@@ -152,8 +167,8 @@ class MimicVatTest extends BaseCardTest {
         assertThat(oldCardInGraveyard).isTrue();
 
         // Giant Spider should now be imprinted
-        assertThat(vat.getCard().getImprintedCard()).isNotNull();
-        assertThat(vat.getCard().getImprintedCard().getName()).isEqualTo("Giant Spider");
+        assertThat(gd.getImprintedCard(vat.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(vat.getCard()).getName()).isEqualTo("Giant Spider");
     }
 
     // ===== Token creation =====

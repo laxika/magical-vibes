@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -172,7 +173,7 @@ class PistonSledgeTest extends BaseCardTest {
 
         // Add a second creature and another artifact to sacrifice
         Permanent secondCreature = new Permanent(new GrizzlyBears());
-        secondCreature.getCard().setName("Second Bear");
+        TestCards.mutableCard(secondCreature).setName("Second Bear");
         secondCreature.setSummoningSick(false);
         gd.playerBattlefields.get(player1.getId()).add(secondCreature);
         harness.addToBattlefield(player1, new Spellbook());

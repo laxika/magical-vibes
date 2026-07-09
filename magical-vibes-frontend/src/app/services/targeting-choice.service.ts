@@ -1215,6 +1215,9 @@ export class TargetingChoiceService {
 
   // ========== Tap / ability activation ==========
 
+  /** Sentinel ability index for the intrinsic ON_TAP mana option in the ability picker. */
+  static readonly INTRINSIC_TAP_INDEX = -1;
+
   tapPermanent(index: number): void {
     const g = this.gameSignal();
     if (g && this.canTapPermanent(index)) {
@@ -1228,27 +1231,57 @@ export class TargetingChoiceService {
         return;
       }
 
+      // Intrinsic ON_TAP mana (e.g. a basic land's own mana) — must stay reachable even
+      // when the permanent also has activated abilities (e.g. a Plains that gained
+      // "{T}: Add {U}" can still produce white)
+      const canIntrinsicTap = perm.card.hasTapAbility && !perm.tapped
+        && !(perm.summoningSick && isPermanentCreature(perm));
+
       // Filter to usable abilities
       const usable = abilities.filter(a => this.canUseAbility(perm, a));
       if (usable.length === 0) {
         // Has abilities but none usable — fall back to tap for mana if ON_TAP
-        if (perm.card.hasTapAbility && !perm.tapped) {
+        if (canIntrinsicTap) {
           this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: index });
         }
         return;
       }
 
-      if (usable.length === 1) {
-        // Single usable ability — activate directly
+      if (usable.length === 1 && !canIntrinsicTap) {
+        // Single usable ability and no intrinsic tap — activate directly
         const abilityIndex = abilities.indexOf(usable[0]);
         this.activateAbilityAtIndex(index, abilityIndex, perm);
       } else {
-        // Multiple usable abilities — show picker
+        // Multiple options — show picker
         this.choosingAbility = true;
         this.abilityChoicePermanentIndex = index;
         this.abilityChoices = abilities.map((a, i) => ({ ability: a, index: i, usable: this.canUseAbility(perm, a) }));
+        if (canIntrinsicTap) {
+          this.abilityChoices.unshift({
+            ability: this.intrinsicTapAbilityView(perm),
+            index: TargetingChoiceService.INTRINSIC_TAP_INDEX,
+            usable: true
+          });
+        }
       }
     }
+  }
+
+  private intrinsicTapAbilityView(perm: Permanent): ActivatedAbilityView {
+    // Show the land's own printed mana line when derivable (e.g. Plains: "({T}: Add {W}.)")
+    const printed = perm.card.cardText?.match(/\{T\}: Add [^)\n]+/);
+    return {
+      description: printed ? printed[0] : '{T}: Tap for mana.',
+      requiresTap: true,
+      needsTarget: false,
+      needsSpellTarget: false,
+      manaCost: null,
+      loyaltyCost: null,
+      minTargets: 0,
+      maxTargets: 0,
+      isManaAbility: true,
+      variableLoyaltyCost: false
+    };
   }
 
   canUseAbility(perm: Permanent, ability: ActivatedAbilityView): boolean {
@@ -1379,7 +1412,11 @@ export class TargetingChoiceService {
     if (!choice.usable) return;
     const perm = this.myBattlefieldFn()[this.abilityChoicePermanentIndex];
     if (!perm) return;
-    this.activateAbilityAtIndex(this.abilityChoicePermanentIndex, choice.index, perm);
+    if (choice.index === TargetingChoiceService.INTRINSIC_TAP_INDEX) {
+      this.websocketService.send({ type: MessageType.TAP_PERMANENT, permanentIndex: this.abilityChoicePermanentIndex });
+    } else {
+      this.activateAbilityAtIndex(this.abilityChoicePermanentIndex, choice.index, perm);
+    }
     this.choosingAbility = false;
     this.abilityChoicePermanentIndex = -1;
     this.abilityChoices = [];

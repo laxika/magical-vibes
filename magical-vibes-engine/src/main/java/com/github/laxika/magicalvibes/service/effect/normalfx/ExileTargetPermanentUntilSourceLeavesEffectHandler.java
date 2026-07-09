@@ -67,7 +67,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
 
         // Imprint the exiled card onto the source (e.g. Ixalan's Binding)
         if (e.imprint() && sourcePermanent != null) {
-            sourcePermanent.getCard().setImprintedCard(card);
+            gameData.setImprintedCard(sourcePermanent.getCard(), card);
         }
 
         String logEntry = card.getName() + " is exiled by " + entry.getCard().getName() + ".";

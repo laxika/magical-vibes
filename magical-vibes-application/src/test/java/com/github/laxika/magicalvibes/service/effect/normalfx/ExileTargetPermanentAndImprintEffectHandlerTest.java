@@ -168,7 +168,7 @@ class ExileTargetPermanentAndImprintEffectHandlerTest {
                 exileTargetPermanentAndImprintHandler.resolve(gd, entry, entry.getEffectsToResolve().getFirst());
 
                 verify(permanentRemovalService).removePermanentToExile(gd, target);
-                assertThat(source.getCard().getImprintedCard()).isSameAs(targetCard);
+                assertThat(gd.getImprintedCard(source.getCard())).isSameAs(targetCard);
                 verify(gameBroadcastService).logAndBroadcast(eq(gd),
                         eq("Grizzly Bears is exiled by Exclusion Ritual."));
                 verify(permanentRemovalService).removeOrphanedAuras(gd);

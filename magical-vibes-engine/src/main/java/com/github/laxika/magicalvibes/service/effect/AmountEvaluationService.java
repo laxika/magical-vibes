@@ -107,9 +107,9 @@ public class AmountEvaluationService {
                     ctx.targetPermanentId() == null ? 0
                             : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
             case ImprintedCreaturePower ignored ->
-                    imprintedCreaturePT(ctx, true);
+                    imprintedCreaturePT(gameData, ctx, true);
             case ImprintedCreatureToughness ignored ->
-                    imprintedCreaturePT(ctx, false);
+                    imprintedCreaturePT(gameData, ctx, false);
             case LandsMatchingImprintedName ignored ->
                     countLandsMatchingImprintedName(gameData, ctx);
             case SourcePower ignored ->
@@ -329,7 +329,7 @@ public class AmountEvaluationService {
 
     private int countLandsMatchingImprintedName(GameData gameData, AmountContext ctx) {
         if (ctx.sourcePermanent() == null) return 0;
-        Card imprinted = ctx.sourcePermanent().getCard().getImprintedCard();
+        Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
         if (imprinted == null) return 0;
         String imprintedName = imprinted.getName();
         final int[] count = {0};
@@ -342,9 +342,9 @@ public class AmountEvaluationService {
         return count[0];
     }
 
-    private int imprintedCreaturePT(AmountContext ctx, boolean power) {
+    private int imprintedCreaturePT(GameData gameData, AmountContext ctx, boolean power) {
         if (ctx.sourcePermanent() == null) return 0;
-        Card imprinted = ctx.sourcePermanent().getCard().getImprintedCard();
+        Card imprinted = gameData.getImprintedCard(ctx.sourcePermanent().getCard());
         if (imprinted == null || imprinted.getPower() == null || imprinted.getToughness() == null) {
             return 0;
         }

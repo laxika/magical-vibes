@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -56,8 +57,8 @@ class RadiatingLightningTest extends BaseCardTest {
         harness.setLife(player2, 20);
         // Add a 1/1 creature to player2
         Permanent oneOne = new Permanent(new GrizzlyBears());
-        oneOne.getCard().setToughness(1);
-        oneOne.getCard().setPower(1);
+        TestCards.mutableCard(oneOne).setToughness(1);
+        TestCards.mutableCard(oneOne).setPower(1);
         gd.playerBattlefields.get(player2.getId()).add(oneOne);
 
         harness.setHand(player1, List.of(new RadiatingLightning()));

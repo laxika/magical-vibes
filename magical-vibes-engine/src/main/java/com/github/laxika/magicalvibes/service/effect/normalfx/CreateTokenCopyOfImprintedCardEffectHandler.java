@@ -44,8 +44,8 @@ public class CreateTokenCopyOfImprintedCardEffectHandler implements NormalEffect
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
 
                 Card imprintedCard = sourcePermanent != null
-                        ? sourcePermanent.getCard().getImprintedCard()
-                        : entry.getCard().getImprintedCard();
+                        ? gameData.getImprintedCard(sourcePermanent.getCard())
+                        : gameData.getImprintedCard(entry.getCard());
                 if (imprintedCard == null) {
                     log.info("Game {} - No card imprinted on {}, no token created", gameData.id, entry.getCard().getName());
                     return;

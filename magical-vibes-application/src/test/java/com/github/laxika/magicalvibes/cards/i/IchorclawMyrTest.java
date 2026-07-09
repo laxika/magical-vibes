@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -57,8 +58,8 @@ class IchorclawMyrTest extends BaseCardTest {
     @DisplayName("Becomes-blocked trigger fires only once even with multiple blockers")
     void becomesBlockedFiresOnceWithMultipleBlockers() {
         Permanent myrPerm = addMyrReady(player1);
-        myrPerm.getCard().setPower(4);
-        myrPerm.getCard().setToughness(4);
+        TestCards.mutableCard(myrPerm).setPower(4);
+        TestCards.mutableCard(myrPerm).setToughness(4);
         myrPerm.setAttacking(true);
 
         addReadyBears(player2);
@@ -86,8 +87,8 @@ class IchorclawMyrTest extends BaseCardTest {
     @DisplayName("+2/+2 modifier resets at end of turn cleanup")
     void modifierResetsAtEndOfTurn() {
         Permanent myrPerm = addMyrReady(player1);
-        myrPerm.getCard().setPower(4);
-        myrPerm.getCard().setToughness(4);
+        TestCards.mutableCard(myrPerm).setPower(4);
+        TestCards.mutableCard(myrPerm).setToughness(4);
         myrPerm.setAttacking(true);
 
         addReadyBears(player2);

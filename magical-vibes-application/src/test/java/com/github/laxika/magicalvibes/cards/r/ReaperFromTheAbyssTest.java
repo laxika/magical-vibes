@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -169,7 +170,7 @@ class ReaperFromTheAbyssTest extends BaseCardTest {
 
         // Create another target for Reaper (since Bears will be dead)
         Permanent elk = new Permanent(new GrizzlyBears());
-        elk.getCard().setName("Runeclaw Bear");
+        TestCards.mutableCard(elk).setName("Runeclaw Bear");
         gd.playerBattlefields.get(player2.getId()).add(elk);
 
         harness.forceActivePlayer(player1);

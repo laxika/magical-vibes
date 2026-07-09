@@ -65,8 +65,8 @@ class SemblanceAnvilTest extends BaseCardTest {
         Permanent anvil = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Semblance Anvil"))
                 .findFirst().orElseThrow();
-        assertThat(anvil.getCard().getImprintedCard()).isNotNull();
-        assertThat(anvil.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.getImprintedCard(anvil.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(anvil.getCard()).getName()).isEqualTo("Grizzly Bears");
     }
 
     @Test
@@ -91,7 +91,7 @@ class SemblanceAnvilTest extends BaseCardTest {
         Permanent anvil = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Semblance Anvil"))
                 .findFirst().orElseThrow();
-        assertThat(anvil.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(anvil.getCard())).isNull();
     }
 
     @Test
@@ -116,7 +116,7 @@ class SemblanceAnvilTest extends BaseCardTest {
         Permanent anvil = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Semblance Anvil"))
                 .findFirst().orElseThrow();
-        assertThat(anvil.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(anvil.getCard())).isNull();
     }
 
     // ===== Cost reduction =====
@@ -127,7 +127,7 @@ class SemblanceAnvilTest extends BaseCardTest {
         // Set up Anvil with a creature imprinted
         SemblanceAnvil anvilCard = new SemblanceAnvil();
         GrizzlyBears imprintedBears = new GrizzlyBears();
-        anvilCard.setImprintedCard(imprintedBears);
+        gd.setImprintedCard(anvilCard, imprintedBears);
         harness.addToBattlefield(player1, anvilCard);
 
         // Grizzly Bears costs {1}{G}. With {2} reduction, only needs {G}.
@@ -147,7 +147,7 @@ class SemblanceAnvilTest extends BaseCardTest {
         // Set up Anvil with a creature imprinted
         SemblanceAnvil anvilCard = new SemblanceAnvil();
         GrizzlyBears imprintedBears = new GrizzlyBears();
-        anvilCard.setImprintedCard(imprintedBears);
+        gd.setImprintedCard(anvilCard, imprintedBears);
         harness.addToBattlefield(player1, anvilCard);
 
         // Golem's Heart costs {2}. No reduction (artifact ≠ creature).
@@ -166,7 +166,7 @@ class SemblanceAnvilTest extends BaseCardTest {
         // Set up Anvil with an artifact imprinted
         SemblanceAnvil anvilCard = new SemblanceAnvil();
         GolemsHeart imprintedHeart = new GolemsHeart();
-        anvilCard.setImprintedCard(imprintedHeart);
+        gd.setImprintedCard(anvilCard, imprintedHeart);
         harness.addToBattlefield(player1, anvilCard);
 
         // Golem's Heart costs {2}. With {2} reduction, it's free.
@@ -199,11 +199,11 @@ class SemblanceAnvilTest extends BaseCardTest {
     void twoAnvilsStackReduction() {
         // Set up two Anvils, both with creatures imprinted
         SemblanceAnvil anvil1 = new SemblanceAnvil();
-        anvil1.setImprintedCard(new GrizzlyBears());
+        gd.setImprintedCard(anvil1, new GrizzlyBears());
         harness.addToBattlefield(player1, anvil1);
 
         SemblanceAnvil anvil2 = new SemblanceAnvil();
-        anvil2.setImprintedCard(new GrizzlyBears());
+        gd.setImprintedCard(anvil2, new GrizzlyBears());
         harness.addToBattlefield(player1, anvil2);
 
         // Grizzly Bears costs {1}{G}. With {4} total reduction, only needs {G}.
@@ -222,7 +222,7 @@ class SemblanceAnvilTest extends BaseCardTest {
     void costReductionDoesNotAffectOpponent() {
         // Set up Anvil under player1's control with a creature imprinted
         SemblanceAnvil anvilCard = new SemblanceAnvil();
-        anvilCard.setImprintedCard(new GrizzlyBears());
+        gd.setImprintedCard(anvilCard, new GrizzlyBears());
         harness.addToBattlefield(player1, anvilCard);
 
         // Player 2 tries to cast a creature — should not get reduction

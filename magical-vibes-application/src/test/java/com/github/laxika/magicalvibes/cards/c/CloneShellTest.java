@@ -69,8 +69,8 @@ class CloneShellTest extends BaseCardTest {
         Permanent cloneShell = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Clone Shell"))
                 .findFirst().orElseThrow();
-        assertThat(cloneShell.getCard().getImprintedCard()).isNotNull();
-        assertThat(cloneShell.getCard().getImprintedCard().getName()).isEqualTo("Grizzly Bears");
+        assertThat(gd.getImprintedCard(cloneShell.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(cloneShell.getCard()).getName()).isEqualTo("Grizzly Bears");
 
         // Remaining 3 cards should be awaiting reorder
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryReorder.class);
@@ -126,7 +126,7 @@ class CloneShellTest extends BaseCardTest {
 
         // Manually imprint a creature card
         GrizzlyBears bears = new GrizzlyBears();
-        cloneShell.getCard().setImprintedCard(bears);
+        gd.setImprintedCard(cloneShell.getCard(), bears);
         gd.addToExile(player1.getId(), bears);
 
         // Kill Clone Shell with Shock (2 damage to a 2/2)
@@ -166,7 +166,7 @@ class CloneShellTest extends BaseCardTest {
 
         // Manually imprint a non-creature card
         Spellbook spellbook = new Spellbook();
-        cloneShell.getCard().setImprintedCard(spellbook);
+        gd.setImprintedCard(cloneShell.getCard(), spellbook);
         gd.addToExile(player1.getId(), spellbook);
 
         int battlefieldSizeBefore = gd.playerBattlefields.get(player1.getId()).size();

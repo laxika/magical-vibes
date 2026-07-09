@@ -36,7 +36,8 @@ application → engine, websocket, ai (config @Imports)
 ### Key Patterns
 
 - **Jackson 3.x**: Import `tools.jackson.databind.ObjectMapper` (not `com.fasterxml`).
-- **Domain model is mutable, views are immutable**: `Card` uses `@Setter` with defaults; `Permanent` has mutable state. View records (`CardView`, `PermanentView`) are created by factory services for serialization — never mutate domain objects for serialization purposes.
+- **Domain model is mutable, views are immutable**: `Permanent` has mutable state. View records (`CardView`, `PermanentView`) are created by factory services for serialization — never mutate domain objects for serialization purposes.
+- **Cards freeze once live**: `Card` objects are shared between the real game and AI simulation copies. They are mutable during construction/assembly but freeze (every mutator throws) once they join a game — deck stamping, `Permanent` or `StackEntry` creation. Runtime state belongs on the `Permanent`, the `StackEntry`, or `GameData` (e.g. imprint: `gameData.get/setImprintedCard`); modal casts mutate a `Card.createRuntimeCopy()`. Enforced by `Card.freeze()` at runtime and `CardImmutabilityArchTest` at build time; tests that tweak a wrapped card's stats use `TestCards.mutableCard(permanent)`. When adding a field to `Card`, also copy it in `Card(Card source)` and bump the count in `CardFreezeTest`.
 - **Effect system**: Effects are records implementing the marker interface `CardEffect`. `GameService.resolveStackEntry()` dispatches each effect to a `resolve*` method via `instanceof` pattern matching.
 - **Static/continuous effects**: Computed on-the-fly via `computeStaticBonus()` and baked into `PermanentView`, never stored on the `Permanent`.
 - **Thread safety**: `GameData` uses `ConcurrentHashMap` + `synchronized(gameData)` blocks in `GameService`. Validation checks must go INSIDE synchronized blocks.

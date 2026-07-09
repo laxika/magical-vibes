@@ -155,6 +155,7 @@ public class GameBroadcastService {
                     int adjustedBonusPower = gameQueryService.getEffectivePower(p, bonus) - p.getEffectivePower();
                     int adjustedBonusToughness = gameQueryService.getEffectiveToughness(p, bonus) - p.getEffectiveToughness();
                     List<ActivatedAbility> allGrantedAbilities = new ArrayList<>(bonus.grantedActivatedAbilities());
+                    allGrantedAbilities.addAll(p.getPersistentGrantedActivatedAbilities());
                     allGrantedAbilities.addAll(p.getTemporaryActivatedAbilities());
                     allGrantedAbilities.addAll(p.getUntilNextTurnActivatedAbilities());
                     views.add(permanentViewFactory.create(p, adjustedBonusPower, adjustedBonusToughness, bonus.keywords(), bonus.animatedCreature(), allGrantedAbilities, bonus.grantedColors(), bonus.grantedSubtypes(), bonus.grantedCardTypes(), bonus.colorOverriding(), bonus.subtypeOverriding(), bonus.landSubtypeOverriding(), bonus.removedKeywords(), bonus.losesAllAbilities() || p.isLosesAllAbilitiesUntilEndOfTurn(), bonus.grantedSupertypes()));

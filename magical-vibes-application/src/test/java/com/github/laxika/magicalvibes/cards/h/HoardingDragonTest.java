@@ -84,8 +84,8 @@ class HoardingDragonTest extends BaseCardTest {
 
         // Hoarding Dragon should have Spellbook imprinted
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
-        assertThat(dragon.getCard().getImprintedCard()).isNotNull();
-        assertThat(dragon.getCard().getImprintedCard().getName()).isEqualTo("Spellbook");
+        assertThat(gd.getImprintedCard(dragon.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(dragon.getCard()).getName()).isEqualTo("Spellbook");
     }
 
     @Test
@@ -116,7 +116,7 @@ class HoardingDragonTest extends BaseCardTest {
         // Manually imprint an artifact
         Spellbook spellbook = new Spellbook();
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
-        dragon.getCard().setImprintedCard(spellbook);
+        gd.setImprintedCard(dragon.getCard(), spellbook);
         gd.addToExile(player1.getId(), spellbook);
 
         // Kill Hoarding Dragon with Doom Blade
@@ -157,7 +157,7 @@ class HoardingDragonTest extends BaseCardTest {
         // Manually imprint an artifact
         Spellbook spellbook = new Spellbook();
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
-        dragon.getCard().setImprintedCard(spellbook);
+        gd.setImprintedCard(dragon.getCard(), spellbook);
         gd.addToExile(player1.getId(), spellbook);
 
         // Kill Hoarding Dragon with Doom Blade

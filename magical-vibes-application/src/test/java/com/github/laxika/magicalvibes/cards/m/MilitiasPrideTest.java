@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -72,7 +73,7 @@ class MilitiasPrideTest extends BaseCardTest {
     void tokenAttackerDoesNotTrigger() {
         addCreatureReady(player1, new MilitiasPride());
         Permanent tokenAttacker = addCreatureReady(player1, nontokenCreature());
-        tokenAttacker.getCard().setToken(true);
+        TestCards.mutableCard(tokenAttacker).setToken(true);
         harness.addMana(player1, ManaColor.WHITE, 1);
 
         declareAttackers(player1, List.of(1));

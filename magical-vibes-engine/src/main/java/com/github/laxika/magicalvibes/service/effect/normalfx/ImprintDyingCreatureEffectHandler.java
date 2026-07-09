@@ -66,7 +66,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
         }
 
         // Return previously imprinted card to its owner's graveyard
-        Card previouslyImprinted = sourcePermanent.getCard().getImprintedCard();
+        Card previouslyImprinted = gameData.getImprintedCard(sourcePermanent.getCard());
         if (previouslyImprinted != null) {
             // Find and remove from exile, tracking the owner
             var previousExiledEntry = gameData.findExiledCard(previouslyImprinted.getId());
@@ -88,7 +88,7 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
         exileService.exileCard(gameData, graveyardOwnerId, dyingCard);
 
         // Set as imprinted on the source permanent
-        sourcePermanent.getCard().setImprintedCard(dyingCard);
+        gameData.setImprintedCard(sourcePermanent.getCard(), dyingCard);
 
         String logMsg = dyingCard.getName() + " is exiled and imprinted on " + sourcePermanent.getCard().getName() + ".";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);

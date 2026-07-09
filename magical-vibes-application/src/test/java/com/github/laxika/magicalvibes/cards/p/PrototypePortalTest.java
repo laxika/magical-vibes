@@ -66,8 +66,8 @@ class PrototypePortalTest extends BaseCardTest {
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Prototype Portal"))
                 .findFirst().orElseThrow();
-        assertThat(portal.getCard().getImprintedCard()).isNotNull();
-        assertThat(portal.getCard().getImprintedCard().getName()).isEqualTo("Golem's Heart");
+        assertThat(gd.getImprintedCard(portal.getCard())).isNotNull();
+        assertThat(gd.getImprintedCard(portal.getCard()).getName()).isEqualTo("Golem's Heart");
     }
 
     @Test
@@ -92,7 +92,7 @@ class PrototypePortalTest extends BaseCardTest {
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Prototype Portal"))
                 .findFirst().orElseThrow();
-        assertThat(portal.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(portal.getCard())).isNull();
     }
 
     @Test
@@ -117,7 +117,7 @@ class PrototypePortalTest extends BaseCardTest {
         Permanent portal = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard().getName().equals("Prototype Portal"))
                 .findFirst().orElseThrow();
-        assertThat(portal.getCard().getImprintedCard()).isNull();
+        assertThat(gd.getImprintedCard(portal.getCard())).isNull();
     }
 
     // ===== Token creation =====
@@ -128,7 +128,7 @@ class PrototypePortalTest extends BaseCardTest {
         // Set up Portal with an imprinted artifact via addToBattlefield
         PrototypePortal portalCard = new PrototypePortal();
         GolemsHeart heartCard = new GolemsHeart();
-        portalCard.setImprintedCard(heartCard);
+        gd.setImprintedCard(portalCard, heartCard);
         harness.addToBattlefield(player1, portalCard);
 
         // Golem's Heart has mana value 2, so X=2
@@ -150,7 +150,7 @@ class PrototypePortalTest extends BaseCardTest {
     void tokenIsPermanent() {
         PrototypePortal portalCard = new PrototypePortal();
         AccordersShield shieldCard = new AccordersShield();
-        portalCard.setImprintedCard(shieldCard);
+        gd.setImprintedCard(portalCard, shieldCard);
         harness.addToBattlefield(player1, portalCard);
 
         // Accorder's Shield has mana value 0, so X=0
@@ -190,7 +190,7 @@ class PrototypePortalTest extends BaseCardTest {
     void xMustMatchManaValue() {
         PrototypePortal portalCard = new PrototypePortal();
         GolemsHeart heartCard = new GolemsHeart();
-        portalCard.setImprintedCard(heartCard);
+        gd.setImprintedCard(portalCard, heartCard);
         harness.addToBattlefield(player1, portalCard);
 
         // Golem's Heart has mana value 2, so X=3 should fail

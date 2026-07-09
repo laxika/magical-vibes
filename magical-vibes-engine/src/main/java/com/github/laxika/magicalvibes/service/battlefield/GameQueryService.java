@@ -269,7 +269,7 @@ public class GameQueryService {
     public void setImprintedCardOnPermanent(GameData gameData, UUID sourcePermanentId, Card card) {
         Permanent perm = findPermanentById(gameData, sourcePermanentId);
         if (perm != null) {
-            perm.getCard().setImprintedCard(card);
+            gameData.setImprintedCard(perm.getCard(), card);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -425,7 +426,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             // Put the spell on the stack with a single target
             Permanent targetPerm = createPermanent("Goblin Guide");
-            targetPerm.getCard().setSubtypes(List.of(CardSubtype.GOBLIN));
+            TestCards.mutableCard(targetPerm).setSubtypes(List.of(CardSubtype.GOBLIN));
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
             spellOnStack.setTargetId(targetPerm.getId());
             gd.stack.add(spellOnStack);

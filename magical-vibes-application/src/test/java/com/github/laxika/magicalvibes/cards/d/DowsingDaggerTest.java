@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LostVale;
@@ -204,7 +205,7 @@ class DowsingDaggerTest extends BaseCardTest {
 
             // Add blocker with high toughness
             Permanent blocker = addReadyCreature(player2);
-            blocker.getCard().setToughness(10);
+            TestCards.mutableCard(blocker).setToughness(10);
             blocker.setBlocking(true);
             blocker.addBlockingTarget(0);
 
