@@ -1,7 +1,14 @@
 <div class="side-panel">
   <div class="tab-header">
     <div class="tab" [class.active]="activeTab() === 'game'" (click)="activeTab.set('game')">Game</div>
-    <div class="tab" [class.active]="activeTab() === 'log'" (click)="activeTab.set('log')">Log</div>
+    <div class="tab" [class.active]="activeTab() === 'log'" (click)="openLogTab()">
+      Log
+      @if (logUnreadCount() > 0) {
+        <span class="tab-badges">
+          <span class="tab-badge">{{ logUnreadCount() }}</span>
+        </span>
+      }
+    </div>
     <div class="tab" [class.active]="activeTab() === 'stack'" (click)="activeTab.set('stack')">
       Stack
       <span class="tab-badges">
@@ -76,7 +83,7 @@
       </div>
     } @else if (activeTab() === 'log') {
       <div class="log-tab">
-        <div class="log-entries">
+        <div class="log-entries" #logEntries (scroll)="onLogScroll()">
           @if (gameLog.length === 0) {
             <div class="log-entry empty">Waiting for game to start...</div>
           } @else {

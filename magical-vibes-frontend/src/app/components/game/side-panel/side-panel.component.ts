@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, inject, HostListener } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, inject, HostListener, ViewChild, ElementRef, OnChanges, SimpleChanges, AfterViewChecked } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Card, Permanent, StackEntry } from '../../../services/websocket.service';
 import { GameChoiceService } from '../../../services/game-choice.service';
@@ -12,7 +12,7 @@ import { CardDisplayComponent } from '../card-display/card-display.component';
   templateUrl: './side-panel.component.html',
   styleUrl: './side-panel.component.css'
 })
-export class SidePanelComponent {
+export class SidePanelComponent implements OnChanges, AfterViewChecked {
   readonly choice = inject(GameChoiceService);
   private manaSymbolService = inject(ManaSymbolService);
   private sanitizer = inject(DomSanitizer);
@@ -77,6 +77,48 @@ export class SidePanelComponent {
 
   activeTab = signal<'game' | 'log' | 'stack' | 'graveyard'>('game');
   showPlayerMenu = signal(false);
+  logUnreadCount = signal(0);
+
+  @ViewChild('logEntries') private logEntriesRef?: ElementRef<HTMLElement>;
+  private logPinnedToBottom = true;
+  private shouldScrollLog = false;
+  private seenLogCount = 0;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['gameLog']) {
+      if (this.activeTab() === 'log') {
+        this.seenLogCount = this.gameLog.length;
+        if (this.logPinnedToBottom) {
+          this.shouldScrollLog = true;
+        }
+      } else {
+        this.logUnreadCount.set(this.gameLog.length - this.seenLogCount);
+      }
+    }
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.shouldScrollLog && this.logEntriesRef) {
+      const el = this.logEntriesRef.nativeElement;
+      el.scrollTop = el.scrollHeight;
+      this.shouldScrollLog = false;
+    }
+  }
+
+  openLogTab(): void {
+    this.activeTab.set('log');
+    this.seenLogCount = this.gameLog.length;
+    this.logUnreadCount.set(0);
+    this.logPinnedToBottom = true;
+    this.shouldScrollLog = true;
+  }
+
+  onLogScroll(): void {
+    const el = this.logEntriesRef?.nativeElement;
+    if (el) {
+      this.logPinnedToBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+    }
+  }
 
   // Opponent is always shown on the left, my player on the right
   get opponentPlayerIndex(): number { return 1 - this.myPlayerIndex; }
