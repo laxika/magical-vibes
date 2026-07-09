@@ -155,7 +155,7 @@ public class AutoPassService {
             }
 
             List<Integer> playable = gameBroadcastService.getPlayableCardIndices(gameData, priorityHolder);
-            if (!playable.isEmpty()) {
+            if (!playable.isEmpty() && shouldStopForPlayableCards(gameData, priorityHolder)) {
                 // Priority holder can act — stop and let them decide
                 gameBroadcastService.broadcastGameState(gameData);
                 return;
@@ -189,9 +189,10 @@ public class AutoPassService {
                 return;
             }
 
-            // Priority holder has nothing to play — auto-pass for them
+            // Priority holder has nothing to play, or is a human with no auto-stop configured
+            // for this step — auto-pass for them.
             String playerName = gameData.playerIdToName.get(priorityHolder);
-            log.info("Game {} - Auto-passing priority for {} on step {} (no playable cards)",
+            log.info("Game {} - Auto-passing priority for {} on step {}",
                     gameData.id, playerName, gameData.currentStep);
 
             gameData.priorityPassedBy.add(priorityHolder);
@@ -249,6 +250,21 @@ public class AutoPassService {
             // Auto-pass for this player
             gameData.priorityPassedBy.add(stackPriorityHolder);
         }
+    }
+
+    /**
+     * Decides whether a merely-playable card should halt auto-pass for the given priority holder.
+     *
+     * <p>AI-controlled players (and headless simulation, where every player is policy-driven)
+     * must always be handed a priority window whenever they can act, so the AI gets a chance to
+     * respond at instant speed. Human players, by contrast, only stop where they have explicitly
+     * configured an auto-stop (handled later in the loop) — otherwise a single always-castable
+     * card in hand (e.g. a free Phyrexian-mana instant like Mutagenic Growth, which
+     * {@code getPlayableCardIndices} reports as playable every step) would defeat auto-pass and
+     * force the player to manually pass at every phase.
+     */
+    private boolean shouldStopForPlayableCards(GameData gameData, UUID priorityHolder) {
+        return gameData.simulation || gameData.aiPlayerIds.contains(priorityHolder);
     }
 
     /**

@@ -71,6 +71,12 @@ public class GameData {
     public final Map<UUID, List<Permanent>> playerBattlefields = new ConcurrentHashMap<>();
     public final Map<UUID, ManaPool> playerManaPools = new ConcurrentHashMap<>();
     public final Map<UUID, Set<TurnStep>> playerAutoStopSteps = new ConcurrentHashMap<>();
+    /**
+     * Player ids controlled by an AI opponent. Auto-pass must always hand these players a
+     * priority window whenever they can act (so the AI can respond at instant speed), whereas
+     * human players are auto-passed through any step outside their configured auto-stop set.
+     */
+    public final Set<UUID> aiPlayerIds = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerLifeTotals = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> playerPoisonCounters = new ConcurrentHashMap<>();
     public final InteractionState interaction = new InteractionState();
@@ -840,6 +846,7 @@ public class GameData {
 
         // --- Set<UUID> (ConcurrentHashMap.newKeySet()) ---
         copy.playerIds.addAll(this.playerIds);
+        copy.aiPlayerIds.addAll(this.aiPlayerIds);
         copy.playerKeptHand.addAll(this.playerKeptHand);
         copy.priorityPassedBy.addAll(this.priorityPassedBy);
         copy.preventDamageFromColors.addAll(this.preventDamageFromColors);

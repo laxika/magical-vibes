@@ -88,6 +88,10 @@ public class AiPlayerService {
         sessionManager.registerPlayer(aiConnection, aiPlayerId, "AI Opponent");
         sessionManager.setInGame(connectionId);
 
+        // Mark this player as AI-controlled so auto-pass always hands it a priority window
+        // when it can act, instead of treating it like a human bound by auto-stop settings.
+        gameData.aiPlayerIds.add(aiPlayerId);
+
         // Join the game — this triggers initializeGame() which sets status to MULLIGAN
         gameSetupService.joinGame(gameData, aiPlayer, aiDeckId);
 

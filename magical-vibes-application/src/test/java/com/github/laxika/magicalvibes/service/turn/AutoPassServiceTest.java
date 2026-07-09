@@ -119,14 +119,52 @@ class AutoPassServiceTest {
         }
 
         @Test
-        @DisplayName("Stops when priority holder has playable cards")
-        void stopsWhenPriorityHolderHasPlayableCards() {
+        @DisplayName("Stops when AI priority holder has playable cards")
+        void stopsWhenAiPriorityHolderHasPlayableCards() {
+            gd.aiPlayerIds.add(player1Id);
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
             when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
 
             sut.resolveAutoPass(gd, ignored -> {});
 
             assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+            verify(gameBroadcastService).broadcastGameState(gd);
+        }
+
+        @Test
+        @DisplayName("Auto-passes human priority holder with playable cards at a non-stop step")
+        void autoPassesHumanWithPlayableCardsAtNonStopStep() {
+            // Human (not in aiPlayerIds) holds a castable instant (e.g. Mutagenic Growth) but the
+            // current step is not in their auto-stop set — they should be auto-passed, not stopped.
+            gd.currentStep = TurnStep.UPKEEP;
+            gd.playerAutoStopSteps.put(player1Id,
+                    java.util.Set.of(TurnStep.PRECOMBAT_MAIN, TurnStep.POSTCOMBAT_MAIN));
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id, (UUID) null);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+            when(gameBroadcastService.getPlayableCardIndices(gd, player2Id)).thenReturn(List.of());
+
+            boolean[] advanceCalled = {false};
+            sut.resolveAutoPass(gd, ignored -> {
+                advanceCalled[0] = true;
+                ignored.status = GameStatus.FINISHED;
+            });
+
+            assertThat(advanceCalled[0]).isTrue();
+            assertThat(gd.priorityPassedBy).contains(player1Id);
+        }
+
+        @Test
+        @DisplayName("Stops human priority holder with playable cards at a configured stop step")
+        void stopsHumanWithPlayableCardsAtConfiguredStopStep() {
+            gd.currentStep = TurnStep.PRECOMBAT_MAIN;
+            gd.playerAutoStopSteps.put(player1Id, java.util.Set.of(TurnStep.PRECOMBAT_MAIN));
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of(0));
+
+            sut.resolveAutoPass(gd, ignored -> {});
+
+            assertThat(gd.currentStep).isEqualTo(TurnStep.PRECOMBAT_MAIN);
+            assertThat(gd.priorityPassedBy).doesNotContain(player1Id);
             verify(gameBroadcastService).broadcastGameState(gd);
         }
 
@@ -403,7 +441,8 @@ class AutoPassServiceTest {
         @DisplayName("Broadcasts once when second player has playable cards after first auto-passes")
         void broadcastsAfterSingleAutoPass() {
             // First call: player1 has priority, nothing to play → auto-pass
-            // Second call: player2 has priority, has playable cards → stop
+            // Second call: player2 (AI) has priority, has playable cards → stop
+            gd.aiPlayerIds.add(player2Id);
             when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id, player2Id);
             when(gameBroadcastService.getPlayableCardIndices(gd, player1Id)).thenReturn(List.of());
             when(gameBroadcastService.getPlayableCardIndices(gd, player2Id)).thenReturn(List.of(0));
