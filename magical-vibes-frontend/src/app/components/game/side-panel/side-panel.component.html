@@ -36,7 +36,6 @@
     @if (activeTab() === 'game') {
       <div class="game-tab">
         <div class="mana-strip">
-          <div class="mana-strip-label">Mana Pool</div>
           <div class="mana-strip-pips">
             @for (color of manaColors; track color) {
               <div class="mana-socket" [class.filled]="manaCount(color) > 0" [attr.data-color]="color">
