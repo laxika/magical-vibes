@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicat
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnDamageDealerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
@@ -820,25 +819,7 @@ public class CombatDamageService {
         for (Permanent perm : attackerBattlefield) {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER);
             for (CardEffect effect : effects) {
-                if (effect instanceof PutCountersOnDamageDealerEffect dealerEffect) {
-                    if (dealerEffect.predicate() != null
-                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, dealerEffect.predicate())) {
-                        continue;
-                    }
-                    StackEntry se = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            attackerId,
-                            perm.getCard().getName() + "'s triggered ability",
-                            List.of(new PutCountersOnSourceEffect(dealerEffect.powerModifier(), dealerEffect.toughnessModifier(), dealerEffect.amount())),
-                            null,
-                            creature.getId()
-                    );
-                    se.setNonTargeting(true);
-                    gameData.stack.add(se);
-                    gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName()
-                            + "'s triggered ability goes on the stack.");
-                } else if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
+                if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
                     if (trigger.dealerPredicate() != null
                             && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
                         continue;
@@ -850,7 +831,7 @@ public class CombatDamageService {
                             perm.getCard().getName() + "'s triggered ability",
                             List.of(trigger.effect()),
                             null,
-                            perm.getId()
+                            trigger.bindSourceToDealer() ? creature.getId() : perm.getId()
                     );
                     se.setNonTargeting(true);
                     gameData.stack.add(se);
