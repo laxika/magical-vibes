@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -23,6 +25,7 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameOutcomeService gameOutcomeService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +38,16 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
-        int baseDamage = e.usesXValue() ? entry.getXValue() : e.damage();
+        // Source-relative amounts use the live source permanent when present, else the
+        // last-known snapshot (matching LoseLifeEffectHandler).
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int baseDamage = amountEvaluationService.evaluate(gameData, e.amount(),
+                AmountContext.forStackEntry(entry, source));
         int damage = gameQueryService.applyDamageMultiplier(gameData, baseDamage, entry);
 
         FilterContext filterContext = FilterContext.of(gameData)
@@ -57,6 +69,5 @@ public class MassDamageEffectHandler implements NormalEffectHandlerBean {
             }
             gameOutcomeService.checkWinCondition(gameData);
         }
-    
     }
 }

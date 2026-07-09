@@ -41,6 +41,7 @@ public sealed interface Condition permits
         NoSpellsCastLastTurn,
         NotControllerTurn,
         NotKicked,
+        NthAbilityResolutionThisTurn,
         OpponentControlsMoreCreatures,
         OpponentControlsMoreLands,
         OpponentControlsPermanent,

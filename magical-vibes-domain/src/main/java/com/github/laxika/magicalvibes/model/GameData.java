@@ -153,8 +153,9 @@ public class GameData {
     public PendingAbilityActivation pendingAbilityActivation;
     public final Map<UUID, UUID> drawReplacementTargetToController = new ConcurrentHashMap<>();
     public final Map<UUID, Map<Integer, Integer>> activatedAbilityUsesThisTurn = new ConcurrentHashMap<>();
-    /** Per-permanent count of how many times its resolution-counting ability has resolved this turn
-     *  (Ashling the Pilgrim). Keyed by source permanent id; reset at the start of each turn. */
+    /** Per-permanent count of how many times its resolution-counting activated ability has resolved
+     *  this turn (the {@code NthAbilityResolutionThisTurn} condition, e.g. Ashling the Pilgrim).
+     *  Keyed by source permanent id; reset at the start of each turn. */
     public final Map<UUID, Integer> permanentAbilityResolutionsThisTurn = new ConcurrentHashMap<>();
     public final Map<UUID, UUID> stolenCreatures = new ConcurrentHashMap<>();
     public final Set<UUID> untilEndOfTurnStolenCreatures = ConcurrentHashMap.newKeySet();

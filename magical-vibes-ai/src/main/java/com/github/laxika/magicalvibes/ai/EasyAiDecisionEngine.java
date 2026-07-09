@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
@@ -380,16 +381,19 @@ public class EasyAiDecisionEngine extends AiDecisionEngine {
         // Mass damage spells are only beneficial if they kill more opponent creatures than our own
         for (var effect : card.getEffects(EffectSlot.SPELL)) {
             if (effect instanceof MassDamageEffect aoe) {
+                // Easy AI only reasons about fixed damage; dynamic amounts (X, event value)
+                // estimate as 0, matching the former int-field behavior for X spells.
+                int aoeDamage = aoe.amount() instanceof Fixed fixed ? fixed.value() : 0;
                 UUID opponentId = AiUtils.getOpponentId(gameData, aiPlayer.getId());
                 List<Permanent> oppField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
                 List<Permanent> aiField = gameData.playerBattlefields.getOrDefault(aiPlayer.getId(), List.of());
                 long oppKilled = oppField.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p)
-                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoe.damage())
+                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoeDamage)
                         .count();
                 long aiKilled = aiField.stream()
                         .filter(p -> gameQueryService.isCreature(gameData, p)
-                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoe.damage())
+                                && gameQueryService.getEffectiveToughness(gameData, p) <= aoeDamage)
                         .count();
                 if (oppKilled <= aiKilled) {
                     return 0;

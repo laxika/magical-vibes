@@ -480,7 +480,8 @@ public class SpellEvaluator {
 
         // Board wipes
         if (effect instanceof MassDamageEffect aoe) {
-            return evaluateBoardWipeDamage(gameData, aoe.damage(), aiPlayerId, opponentId,
+            int damage = estimateDamageAmount(gameData, card, aoe.amount(), aiPlayerId);
+            return evaluateBoardWipeDamage(gameData, damage, aiPlayerId, opponentId,
                     aiBattlefield, oppBattlefield);
         }
         if (effect instanceof DestroyAllPermanentsEffect wipe) {

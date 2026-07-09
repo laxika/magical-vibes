@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
@@ -484,6 +485,7 @@ public class StackResolutionService {
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
+            countAbilityResolution(gameData, entry);
             effectResolutionService.resolveEffects(gameData, entry);
 
             // Rule 723.1b: "End the turn" exiles the resolving spell itself (copies cease to exist per rule 707.10a)
@@ -501,6 +503,27 @@ public class StackResolutionService {
 
         if (entry.getCard() != null) {
             gameData.clearSpellCastConvergeValue(entry.getCard().getId());
+        }
+    }
+
+    /**
+     * Counts this resolution in {@code GameData.permanentAbilityResolutionsThisTurn} when the
+     * entry is an activated ability whose effects branch on {@code NthAbilityResolutionThisTurn}
+     * ("if this is the Nth time this ability has resolved this turn", e.g. Ashling the Pilgrim).
+     * Counted at resolution (not activation), so copies of the ability count but activations
+     * countered on the stack do not; fizzled abilities never reach this point. Incremented before
+     * effect dispatch so the condition sees the count including the current resolution, and only
+     * here (not on async resume) so each resolution counts exactly once.
+     */
+    private void countAbilityResolution(GameData gameData, StackEntry entry) {
+        if (entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY || entry.getSourcePermanentId() == null) {
+            return;
+        }
+        boolean countsResolutions = entry.getEffectsToResolve().stream()
+                .anyMatch(e -> e instanceof ConditionalEffect conditional
+                        && conditional.condition() instanceof NthAbilityResolutionThisTurn);
+        if (countsResolutions) {
+            gameData.permanentAbilityResolutionsThisTurn.merge(entry.getSourcePermanentId(), 1, Integer::sum);
         }
     }
 

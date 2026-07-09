@@ -12,9 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link ClashEffect}: "Clash with an opponent. If you win, [wrapped effect]."
- * Performs the clash for the controller via {@link TriggerCollectionService#performClash}; on a win,
- * dispatches the wrapped effect against the same stack entry (so it acts on the source permanent).
+ * Resolves {@link ClashEffect}: each iteration dispatches the {@code beforeClash} effects in
+ * order, performs the clash for the controller via {@link TriggerCollectionService#performClash},
+ * and on a win dispatches the {@code onWin} effect against the same stack entry (so it acts on
+ * the source permanent). With {@code repeatWhileWinning} the whole sequence repeats until the
+ * controller loses a clash (or decks out, which counts as a loss in {@code performClash}).
  * Mirrors {@link FlipCoinWinEffectHandler}.
  */
 @Slf4j
@@ -34,20 +36,29 @@ public class ClashEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ClashEffect) effect;
 
-        boolean won = triggerCollectionService.performClash(gameData, entry.getControllerId());
-        // Record the result so a later effect on the same stack entry can branch on it via the
-        // WonClash condition (e.g. Whirlpool Whelm's optional "put on top of library instead").
-        gameData.lastClashWonByController.put(entry.getControllerId(), won);
-        if (!won || e.wrapped() == null) {
-            return;
-        }
+        boolean won;
+        do {
+            for (CardEffect beforeEffect : e.beforeClash()) {
+                dispatch(gameData, entry, beforeEffect);
+            }
 
-        EffectHandler handler = effectHandlerRegistry.getHandler(e.wrapped());
+            won = triggerCollectionService.performClash(gameData, entry.getControllerId());
+            // Record the result so a later effect on the same stack entry can branch on it via the
+            // WonClash condition (e.g. Whirlpool Whelm's optional "put on top of library instead").
+            gameData.lastClashWonByController.put(entry.getControllerId(), won);
+
+            if (won && e.onWin() != null) {
+                dispatch(gameData, entry, e.onWin());
+            }
+        } while (won && e.repeatWhileWinning());
+    }
+
+    private void dispatch(GameData gameData, StackEntry entry, CardEffect effect) {
+        EffectHandler handler = effectHandlerRegistry.getHandler(effect);
         if (handler != null) {
-            handler.resolve(gameData, entry, e.wrapped());
+            handler.resolve(gameData, entry, effect);
         } else {
-            log.warn("No handler for wrapped effect in ClashEffect: {}",
-                    e.wrapped().getClass().getSimpleName());
+            log.warn("No handler for effect in ClashEffect: {}", effect.getClass().getSimpleName());
         }
     }
 }

@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.condition.NoOtherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
+import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
@@ -158,6 +159,12 @@ public class ConditionEvaluationService {
                     wasAnyOpponentDealtDamageThisTurn(gameData, ctx.controllerId());
             case ActivationCount c ->
                     activationCountThisTurn(gameData, ctx, c.abilityIndex()) >= c.threshold();
+            // Exact equality: "if this is the Nth time this ability has resolved this turn"
+            // fires on the exact n-th resolution and never on a later one.
+            case NthAbilityResolutionThisTurn c ->
+                    ctx.sourcePermanentId() != null
+                            && gameData.permanentAbilityResolutionsThisTurn
+                                    .getOrDefault(ctx.sourcePermanentId(), 0) == c.n();
             case PermanentEnteredThisTurn c ->
                     countPermanentsEnteredThisTurn(gameData, ctx, c) >= c.minCount();
             case ControllerCastAnotherSpellThisTurn c ->
