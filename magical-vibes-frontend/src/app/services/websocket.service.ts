@@ -188,6 +188,16 @@ export interface Card {
   graveyardActivatedAbilities: ActivatedAbilityView[];
   transformable: boolean;
   kickerCost: string | null;
+  modalChoicesRequired: number;
+  modalOptional: boolean;
+  modalOptions: ModalOptionView[] | null;
+}
+
+export interface ModalOptionView {
+  label: string;
+  needsTarget: boolean;
+  needsSpellTarget: boolean;
+  targetCount: number;
 }
 
 export interface Permanent {

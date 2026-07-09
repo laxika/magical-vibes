@@ -514,6 +514,17 @@
   cursor: not-allowed;
 }
 
+.btn-side-prompt.mode-option {
+  text-align: left;
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.btn-side-prompt.mode-option-selected {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 3px 0 0 var(--color-parchment);
+}
+
 .side-prompt.prompt-targeting {
   background: linear-gradient(135deg, var(--color-green-primary), var(--color-green-dark));
   border-color: var(--color-green-dark);

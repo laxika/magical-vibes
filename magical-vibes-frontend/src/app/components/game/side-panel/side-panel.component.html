@@ -171,7 +171,11 @@
 
     @if (choice.targeting.targetingSpell) {
       <div class="side-prompt prompt-spell-targeting">
-        <span class="side-prompt-text">Select a spell on the stack to counter with {{ choice.targeting.targetingSpellCardName }}</span>
+        @if (choice.targeting.spellTargetCount > 1) {
+          <span class="side-prompt-text">Select target spells on the stack for {{ choice.targeting.targetingSpellCardName }} ({{ choice.targeting.spellTargetSelectedIds.length }}/{{ choice.targeting.spellTargetCount }})</span>
+        } @else {
+          <span class="side-prompt-text">Select a target spell on the stack for {{ choice.targeting.targetingSpellCardName }}</span>
+        }
         <div class="side-prompt-buttons">
           <button class="btn-side-prompt" (click)="choice.targeting.cancelSpellTargeting()">Cancel</button>
         </div>
@@ -239,6 +243,31 @@
           <button class="btn-side-prompt" (click)="choice.targeting.confirmKicker()">Pay Kicker</button>
           <button class="btn-side-prompt" (click)="choice.targeting.skipKicker()">Skip Kicker</button>
           <button class="btn-side-prompt" (click)="choice.targeting.cancelKicker()">Cancel</button>
+        </div>
+      </div>
+    }
+
+    @if (choice.targeting.choosingMode) {
+      <div class="side-prompt prompt-targeting">
+        <span class="side-prompt-text">
+          {{ choice.targeting.modeCardName }} &mdash; choose
+          {{ choice.targeting.modeChoicesRequired === 1 ? (choice.targeting.modeOptional ? 'up to one' : 'one') : (choice.targeting.modeChoicesRequired === 2 ? 'two' : choice.targeting.modeChoicesRequired) }}
+        </span>
+        <div class="side-prompt-buttons side-prompt-buttons-stacked">
+          @for (option of choice.targeting.modeOptions; track $index) {
+            <button class="btn-side-prompt mode-option"
+                    [class.mode-option-selected]="choice.targeting.isModeSelected($index)"
+                    (click)="choice.targeting.toggleMode($index)">
+              {{ option.label }}
+            </button>
+          }
+          <button class="btn-side-prompt"
+                  [disabled]="choice.targeting.modeSelectedIndices.length !== choice.targeting.modeChoicesRequired"
+                  (click)="choice.targeting.confirmModes()">Confirm</button>
+          @if (choice.targeting.modeOptional) {
+            <button class="btn-side-prompt" (click)="choice.targeting.skipModes()">Choose None</button>
+          }
+          <button class="btn-side-prompt" (click)="choice.targeting.cancelModes()">Cancel</button>
         </div>
       </div>
     }

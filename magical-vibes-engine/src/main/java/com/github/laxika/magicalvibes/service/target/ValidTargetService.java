@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
@@ -57,13 +58,23 @@ public class ValidTargetService {
 
     public ValidTargetsResponse computeValidTargetsForSpell(GameData gameData, Card card, UUID controllerId, List<UUID> alreadySelectedIds, Integer xValue, Boolean kicked) {
         boolean isMultiTarget = card.getMaxTargets() > 1;
+
+        // For modal spells (and modal ETB creatures) the request's xValue carries the encoded
+        // mode selection; resolve to the chosen mode's effects so targeting reflects that mode.
+        ChooseOneEffect.ChooseOneOption chosenMode = findChosenMode(card, xValue);
+        Integer modeSelection = chosenMode != null || hasModalEffect(card) && xValue != null ? xValue : null;
+
+        List<CardEffect> spellEffects = card.getEffects(EffectSlot.SPELL);
+        List<CardEffect> etbEffects = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD);
+        TargetFilter modeFilter = chosenMode != null ? chosenMode.targetFilter() : null;
         Set<TargetType> allowedTargets;
-        if (kicked != null) {
-            List<CardEffect> resolvedEffects = EffectResolution.resolveEffects(
-                    card.getEffects(EffectSlot.SPELL), kicked, null);
+        if (kicked != null || modeSelection != null) {
+            spellEffects = EffectResolution.resolveEffects(spellEffects, kicked, modeSelection);
+            if (modeSelection != null) {
+                etbEffects = EffectResolution.resolveEffects(etbEffects, kicked, modeSelection);
+            }
             allowedTargets = EffectResolution.computeAllowedTargets(
-                    resolvedEffects, card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD),
-                    card.isAura(), card.isEnchantPlayer());
+                    spellEffects, etbEffects, card.isAura(), card.isEnchantPlayer());
         } else {
             allowedTargets = EffectResolution.computeAllowedTargets(card);
         }
@@ -76,14 +87,16 @@ public class ValidTargetService {
         int positionIndex = alreadySelectedIds != null ? alreadySelectedIds.size() : 0;
 
         if (allowedTargets.contains(TargetType.PERMANENT)) {
-            // Determine per-position filter for multi-target spells
+            // Determine per-position filter for multi-target spells; a chosen mode's
+            // filter override plays the same role for modal spells.
             TargetFilter positionFilter = isMultiTarget && positionIndex < card.getMultiTargetFilters().size()
                     ? card.getMultiTargetFilters().get(positionIndex)
-                    : null;
+                    : modeFilter;
 
+            List<CardEffect> effectiveSpellEffects = spellEffects;
             gameData.forEachPermanent((playerId, perm) -> {
                 if (excludeIds.contains(perm.getId())) return;
-                if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter)) {
+                if (isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter, effectiveSpellEffects)) {
                     validPermanentIds.add(perm.getId());
                 }
             });
@@ -100,7 +113,7 @@ public class ValidTargetService {
             if (positionAllowsPlayers) {
                 for (UUID playerId : gameData.playerIds) {
                     if (excludeIds.contains(playerId)) continue;
-                    if (isValidPlayerTarget(gameData, card.getTargetFilter(), playerId, controllerId)) {
+                    if (isValidPlayerTarget(gameData, modeFilter != null ? modeFilter : card.getTargetFilter(), playerId, controllerId)) {
                         validPlayerIds.add(playerId);
                     }
                 }
@@ -108,7 +121,7 @@ public class ValidTargetService {
         }
 
         if (allowedTargets.contains(TargetType.GRAVEYARD)) {
-            validGraveyardCardIds.addAll(computeValidGraveyardTargets(gameData, card, controllerId, xValue));
+            validGraveyardCardIds.addAll(computeValidGraveyardTargets(gameData, card, spellEffects, controllerId, xValue));
         }
 
         String prompt = "Select a target for " + card.getName();
@@ -117,6 +130,34 @@ public class ValidTargetService {
         }
 
         return new ValidTargetsResponse(validPermanentIds, validPlayerIds, validGraveyardCardIds, card.getMinTargets(), card.getMaxTargets(), prompt);
+    }
+
+    /** Finds the card's modal effect in the SPELL or ON_ENTER_BATTLEFIELD slot, if any. */
+    private ChooseOneEffect findModalEffect(Card card) {
+        for (CardEffect e : card.getEffects(EffectSlot.SPELL)) {
+            if (e instanceof ChooseOneEffect coe) return coe;
+        }
+        for (CardEffect e : card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD)) {
+            if (e instanceof ChooseOneEffect coe) return coe;
+        }
+        return null;
+    }
+
+    private boolean hasModalEffect(Card card) {
+        return findModalEffect(card) != null;
+    }
+
+    /**
+     * Resolves the single chosen mode of a modal card from the request's encoded xValue.
+     * Returns null for non-modal cards, missing/skip ({@code < 0}) selections, and
+     * choose-multiple selections (whose modes may not declare per-mode filters).
+     */
+    private ChooseOneEffect.ChooseOneOption findChosenMode(Card card, Integer xValue) {
+        if (xValue == null) return null;
+        ChooseOneEffect modal = findModalEffect(card);
+        if (modal == null || modal.choicesRequired() != 1) return null;
+        if (xValue < 0 || xValue >= modal.options().size()) return null;
+        return modal.options().get(xValue);
     }
 
     public ValidTargetsResponse computeValidTargetsForAbility(GameData gameData, Card sourceCard, ActivatedAbility ability, UUID controllerId, int permanentIndex) {
@@ -271,6 +312,13 @@ public class ValidTargetService {
 
     private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
                                             boolean isMultiTarget, TargetFilter positionFilter) {
+        return isValidPermanentTarget(gameData, card, perm, controllerId, isMultiTarget, positionFilter,
+                card.getEffects(EffectSlot.SPELL));
+    }
+
+    private boolean isValidPermanentTarget(GameData gameData, Card card, Permanent perm, UUID controllerId,
+                                            boolean isMultiTarget, TargetFilter positionFilter,
+                                            List<CardEffect> spellEffects) {
         // For multi-target spells with per-position filters, use protection/hexproof checks
         // but skip the global targetFilter from canPermanentBeTargetedBySpell, since the
         // per-position filter below handles type restriction for each target group.
@@ -293,7 +341,7 @@ public class ValidTargetService {
         // When all permanent-targeting spell effects also target players (i.e. "any target"),
         // restrict valid permanent targets to creatures and planeswalkers.
         if (card.getTargetFilter() == null && positionFilter == null) {
-            List<CardEffect> permanentEffects = card.getEffects(EffectSlot.SPELL).stream()
+            List<CardEffect> permanentEffects = spellEffects.stream()
                     .filter(CardEffect::canTargetPermanent)
                     .toList();
             boolean allAnyTarget = !permanentEffects.isEmpty()
@@ -467,11 +515,11 @@ public class ValidTargetService {
      * Computes valid graveyard card targets for a spell. Handles scope filtering (controller's
      * graveyard, opponent's, or all), card predicate filtering, and X-value mana value matching.
      */
-    private List<UUID> computeValidGraveyardTargets(GameData gameData, Card card, UUID controllerId, Integer xValue) {
+    private List<UUID> computeValidGraveyardTargets(GameData gameData, Card card, List<CardEffect> spellEffects, UUID controllerId, Integer xValue) {
         int effectiveXValue = xValue != null ? xValue : 0;
         List<UUID> validIds = new ArrayList<>();
 
-        for (CardEffect effect : card.getEffects(EffectSlot.SPELL)) {
+        for (CardEffect effect : spellEffects) {
             if (!effect.canTargetGraveyard()) continue;
 
             if (effect instanceof ReturnCardFromGraveyardEffect rge) {

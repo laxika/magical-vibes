@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -28,9 +30,13 @@ import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGravey
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.junit.jupiter.api.BeforeEach;
@@ -572,6 +578,166 @@ class ValidTargetServiceTest {
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);
+
+            assertThat(response.validPermanentIds()).isEmpty();
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+    }
+
+    // =====================================================================
+    // computeValidTargetsForSpell – modal spells
+    // =====================================================================
+
+    @Nested
+    @DisplayName("computeValidTargetsForSpell - modal spells")
+    class ModalSpellTargets {
+
+        private final TargetFilter mode0Filter = new PermanentPredicateTargetFilter(
+                new PermanentIsCreaturePredicate(), "Target must be a creature");
+        private final TargetFilter mode1Filter = new PermanentPredicateTargetFilter(
+                new PermanentIsEnchantmentPredicate(), "Target must be an enchantment");
+
+        private Card createModalSpell() {
+            Card spell = createCard();
+            spell.setColor(CardColor.GREEN);
+            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Destroy target creature",
+                            new DestroyTargetPermanentEffect(), mode0Filter),
+                    new ChooseOneEffect.ChooseOneOption("Destroy target enchantment",
+                            new DestroyTargetPermanentEffect(), mode1Filter)
+            )));
+            return spell;
+        }
+
+        private Permanent addEnchantmentToBattlefield(UUID playerId) {
+            Card enchantmentCard = new Card();
+            enchantmentCard.setName("Test Enchantment");
+            enchantmentCard.setType(CardType.ENCHANTMENT);
+            return addPermanentToBattlefield(playerId, enchantmentCard);
+        }
+
+        @Test
+        @DisplayName("reports no targets when no mode has been selected yet")
+        void reportsNoTargets_withoutModeSelection() {
+            Card spell = createModalSpell();
+            addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, null);
+
+            assertThat(response.validPermanentIds()).isEmpty();
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("applies mode 0's target filter when mode 0 is selected")
+        void appliesChosenModeFilter_mode0() {
+            Card spell = createModalSpell();
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+            Permanent enchantment = addEnchantmentToBattlefield(player2Id);
+
+            lenient().doThrow(new IllegalStateException("not a creature"))
+                    .when(predicateEvaluationService).validateTargetFilter(eq(mode0Filter), eq(enchantment), any(FilterContext.class));
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of(), 0);
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
+        }
+
+        @Test
+        @DisplayName("applies mode 1's target filter when mode 1 is selected")
+        void appliesChosenModeFilter_mode1() {
+            Card spell = createModalSpell();
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+            Permanent enchantment = addEnchantmentToBattlefield(player2Id);
+
+            lenient().doThrow(new IllegalStateException("not an enchantment"))
+                    .when(predicateEvaluationService).validateTargetFilter(eq(mode1Filter), eq(creature), any(FilterContext.class));
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of(), 1);
+
+            assertThat(response.validPermanentIds()).containsExactly(enchantment.getId());
+        }
+
+        @Test
+        @DisplayName("resolves modal ETB triggers whose mode is picked at cast time")
+        void resolvesModalEtbMode() {
+            Card creatureSpell = createCreatureCard();
+            creatureSpell.setColor(CardColor.BLUE);
+            creatureSpell.addEffect(EffectSlot.ON_ENTER_BATTLEFIELD, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Deal 2 damage to target creature",
+                            new DealDamageToTargetCreatureEffect(2), mode0Filter),
+                    new ChooseOneEffect.ChooseOneOption("Deal 2 damage to target enchantment",
+                            new DealDamageToTargetCreatureEffect(2), mode1Filter)
+            )));
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, creatureSpell, player1Id, List.of(), 0);
+
+            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
+        }
+
+        @Test
+        @DisplayName("restricts player targets with the chosen mode's player filter")
+        void appliesModePlayerFilter() {
+            Card spell = createCard();
+            spell.setColor(CardColor.BLACK);
+            TargetFilter opponentFilter = new PlayerPredicateTargetFilter(
+                    new PlayerRelationPredicate(PlayerRelation.OPPONENT), "target opponent");
+            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target opponent",
+                            new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER), opponentFilter),
+                    new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
+                            new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER))
+            )));
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of(), 0);
+
+            assertThat(response.validPlayerIds()).containsExactly(player2Id);
+        }
+
+        @Test
+        @DisplayName("resolves choose-two selections from the encoded negative bitmask")
+        void resolvesChooseTwoBitmask() {
+            Card spell = createCard();
+            spell.setColor(CardColor.WHITE);
+            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target creature",
+                            new DealDamageToTargetCreatureEffect(3)),
+                    new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
+                            new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER)),
+                    new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target player",
+                            new DealDamageToPlayersEffect(3, DamageRecipient.TARGET_PLAYER))
+            ), 2));
+            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            int encoded = ChooseOneEffect.encodeModeSelection(2, 0, 1);
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of(), encoded);
+
+            assertThat(response.validPermanentIds()).contains(creature.getId());
+            assertThat(response.validPlayerIds()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("no-target modes report no targets once selected")
+        void noTargetMode_reportsNoTargets() {
+            Card spell = createCard();
+            spell.setColor(CardColor.RED);
+            spell.addEffect(EffectSlot.SPELL, new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Each player is dealt 3 damage",
+                            new DealDamageToPlayersEffect(3, DamageRecipient.EACH_PLAYER)),
+                    new ChooseOneEffect.ChooseOneOption("Deal 3 damage to target creature",
+                            new DealDamageToTargetCreatureEffect(3))
+            )));
+            addPermanentToBattlefield(player2Id, createCreatureCard());
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
+                    gameData, spell, player1Id, List.of(), 0);
 
             assertThat(response.validPermanentIds()).isEmpty();
             assertThat(response.validPlayerIds()).isEmpty();

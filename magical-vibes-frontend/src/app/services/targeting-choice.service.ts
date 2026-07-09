@@ -1,7 +1,7 @@
 import { Injectable, Signal, signal } from '@angular/core';
 import {
   WebsocketService, Game, MessageType, Card, Permanent, StackEntry, ActivatedAbilityView,
-  ValidTargetsResponse
+  ValidTargetsResponse, ModalOptionView
 } from './websocket.service';
 import { isPermanentCreature } from '../components/game/battlefield.utils';
 
@@ -80,6 +80,16 @@ export class TargetingChoiceService {
     this.kickerCardName = '';
     this.kickerCost = '';
     this.pendingKicked = false;
+    // Modal mode picker
+    this.choosingMode = false;
+    this.modeCardIndex = -1;
+    this.modeCardName = '';
+    this.modeOptions = [];
+    this.modeChoicesRequired = 1;
+    this.modeOptional = false;
+    this.modeSelectedIndices = [];
+    this.spellTargetCount = 1;
+    this.spellTargetSelectedIds = [];
     // Flashback
     this.pendingFlashback = false;
     // Alternate casting cost
@@ -115,6 +125,18 @@ export class TargetingChoiceService {
   xValueCardName = '';
   xValueInput = 0;
   xValueMaximum = 0;
+
+  // --- Modal mode picker state ---
+  choosingMode = false;
+  modeCardIndex = -1;
+  modeCardName = '';
+  modeOptions: ModalOptionView[] = [];
+  modeChoicesRequired = 1;
+  modeOptional = false;
+  modeSelectedIndices: number[] = [];
+  // Multi-spell-target modal modes (e.g. "copy target instant and target creature spell")
+  spellTargetCount = 1;
+  spellTargetSelectedIds: string[] = [];
 
   // --- Targeting state (for instants and activated abilities) ---
   selectingTarget = false;
@@ -314,6 +336,18 @@ export class TargetingChoiceService {
     const card = g.hand[index];
     if (!card) return;
 
+    // Modal ("choose one/two") spell or ETB — pick mode(s) before anything else
+    if (card.modalChoicesRequired > 0 && card.modalOptions && card.modalOptions.length > 0) {
+      this.choosingMode = true;
+      this.modeCardIndex = index;
+      this.modeCardName = card.name;
+      this.modeOptions = card.modalOptions;
+      this.modeChoicesRequired = card.modalChoicesRequired;
+      this.modeOptional = card.modalOptional;
+      this.modeSelectedIndices = [];
+      return;
+    }
+
     const hasXCost = card.manaCost?.includes('{X}') ?? false;
 
     if (hasXCost) {
@@ -405,6 +439,106 @@ export class TargetingChoiceService {
     this.kickerCardName = '';
     this.kickerCost = '';
     this.pendingKicked = false;
+  }
+
+  // ========== Modal mode picker ==========
+
+  toggleMode(optionIndex: number): void {
+    if (!this.choosingMode) return;
+    if (this.modeChoicesRequired === 1) {
+      this.modeSelectedIndices = [optionIndex];
+      return;
+    }
+    if (this.modeSelectedIndices.includes(optionIndex)) {
+      this.modeSelectedIndices = this.modeSelectedIndices.filter(i => i !== optionIndex);
+    } else if (this.modeSelectedIndices.length < this.modeChoicesRequired) {
+      this.modeSelectedIndices = [...this.modeSelectedIndices, optionIndex];
+    }
+  }
+
+  isModeSelected(optionIndex: number): boolean {
+    return this.modeSelectedIndices.includes(optionIndex);
+  }
+
+  /**
+   * Encodes the mode selection the same way the engine's ChooseOneEffect.encodeModeSelection
+   * does: choose-one spells use the 0-based mode index, choose-two (or higher) spells use a
+   * negative bitmask.
+   */
+  private encodeModeSelection(indices: number[]): number {
+    if (this.modeChoicesRequired === 1) {
+      return indices[0];
+    }
+    let mask = 0;
+    for (const i of indices) {
+      mask |= (1 << i);
+    }
+    return -mask;
+  }
+
+  confirmModes(): void {
+    if (!this.choosingMode || this.modeSelectedIndices.length !== this.modeChoicesRequired) return;
+    const g = this.gameSignal();
+    if (!g) return;
+
+    const cardIndex = this.modeCardIndex;
+    const cardName = this.modeCardName;
+    const card = g.hand[cardIndex];
+    const chosen = this.modeSelectedIndices.map(i => this.modeOptions[i]);
+    const encoded = this.encodeModeSelection(this.modeSelectedIndices);
+    this.resetModeState();
+
+    if (chosen.some(o => o.needsSpellTarget)) {
+      this.targetingSpell = true;
+      this.targetingSpellCardIndex = cardIndex;
+      this.targetingSpellCardName = cardName;
+      this.pendingAbilityXValue = encoded;
+      this.spellTargetCount = Math.max(...chosen.map(o => o.targetCount));
+      this.spellTargetSelectedIds = [];
+      return;
+    }
+    if (chosen.some(o => o.needsTarget)) {
+      this.targetingCardIndex = cardIndex;
+      this.targetingCardName = cardName;
+      this.targetingForAbility = false;
+      this.targetingAbilityIndex = -1;
+      this.pendingAbilityXValue = encoded;
+      this.pendingConvokeCard = card?.hasConvoke ? card : null;
+      this.sendValidTargetsRequest(cardIndex, null, null, [], encoded);
+      return;
+    }
+    if (card?.hasConvoke) {
+      this.pendingAbilityXValue = encoded;
+      this.pendingConvokeCard = card;
+      this.pendingMultiTargetIds = [];
+      this.enterConvokeMode(cardIndex, card);
+      return;
+    }
+    this.sendPlayCardMessage(cardIndex, null, { xValue: encoded });
+  }
+
+  /** "Choose up to one" — decline to pick any mode (engine encodes the skip as -1). */
+  skipModes(): void {
+    if (!this.choosingMode || !this.modeOptional) return;
+    const cardIndex = this.modeCardIndex;
+    this.resetModeState();
+    this.sendPlayCardMessage(cardIndex, null, { xValue: -1 });
+  }
+
+  cancelModes(): void {
+    this.resetModeState();
+    this.pendingPhyrexianLifeCount = null;
+    this.pendingKicked = false;
+  }
+
+  private resetModeState(): void {
+    this.choosingMode = false;
+    this.modeCardIndex = -1;
+    this.modeCardName = '';
+    this.modeOptions = [];
+    this.modeChoicesRequired = 1;
+    this.modeOptional = false;
+    this.modeSelectedIndices = [];
   }
 
   startFlashbackTargeting(graveyardIndex: number, card: Card): void {
@@ -534,11 +668,14 @@ export class TargetingChoiceService {
       }
       this.websocketService.send(msg);
     } else if (this.pendingConvokeCard?.hasConvoke) {
-      // Single-target spell with convoke — save target and enter convoke mode
+      // Single-target spell with convoke — save target and enter convoke mode.
+      // Preserve a pending X value / mode selection across the targeting-state reset.
       const cardIndex = this.targetingCardIndex;
       const card = this.pendingConvokeCard;
+      const savedXValue = this.pendingAbilityXValue;
       this.pendingMultiTargetIds = [permanentId];
       this.resetTargetingState();
+      this.pendingAbilityXValue = savedXValue;
       this.enterConvokeMode(cardIndex, card);
       return;
     } else {
@@ -625,23 +762,40 @@ export class TargetingChoiceService {
         abilityIndex: this.targetingAbilityIndex,
         targetId: entry.cardId
       });
+    } else if (this.spellTargetCount > 1) {
+      // Modal mode targeting several spells (one per declared target slot, in card-text order)
+      if (this.spellTargetSelectedIds.includes(entry.cardId)) return;
+      this.spellTargetSelectedIds = [...this.spellTargetSelectedIds, entry.cardId];
+      if (this.spellTargetSelectedIds.length < this.spellTargetCount) return;
+      const extra: Record<string, any> = { targetIds: this.spellTargetSelectedIds };
+      if (this.pendingAbilityXValue != null) {
+        extra['xValue'] = this.pendingAbilityXValue;
+      }
+      this.sendPlayCardMessage(this.targetingSpellCardIndex, null, extra);
     } else {
-      this.sendPlayCardMessage(this.targetingSpellCardIndex, entry.cardId);
+      const extra: Record<string, any> = {};
+      if (this.pendingAbilityXValue != null) {
+        extra['xValue'] = this.pendingAbilityXValue;
+      }
+      this.sendPlayCardMessage(this.targetingSpellCardIndex, entry.cardId, extra);
     }
-    this.targetingSpell = false;
-    this.targetingSpellCardIndex = -1;
-    this.targetingSpellCardName = '';
-    this.targetingForAbility = false;
-    this.targetingAbilityIndex = -1;
+    this.resetSpellTargetingState();
   }
 
   cancelSpellTargeting(): void {
+    this.resetSpellTargetingState();
+    this.pendingPhyrexianLifeCount = null;
+  }
+
+  private resetSpellTargetingState(): void {
     this.targetingSpell = false;
     this.targetingSpellCardIndex = -1;
     this.targetingSpellCardName = '';
     this.targetingForAbility = false;
     this.targetingAbilityIndex = -1;
-    this.pendingPhyrexianLifeCount = null;
+    this.pendingAbilityXValue = null;
+    this.spellTargetCount = 1;
+    this.spellTargetSelectedIds = [];
   }
 
   isValidTarget(perm: Permanent): boolean {
@@ -802,6 +956,7 @@ export class TargetingChoiceService {
     this.addPendingTargetsToMsg(msg);
     this.addPendingPhyrexianToMsg(msg);
     this.addPendingKickedToMsg(msg);
+    this.addPendingXValueToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
     this.resetMultiTargetState();
@@ -816,6 +971,7 @@ export class TargetingChoiceService {
     this.addPendingTargetsToMsg(msg);
     this.addPendingPhyrexianToMsg(msg);
     this.addPendingKickedToMsg(msg);
+    this.addPendingXValueToMsg(msg);
     this.websocketService.send(msg);
     this.cancelConvoke();
     this.resetMultiTargetState();
@@ -843,6 +999,13 @@ export class TargetingChoiceService {
     if (this.pendingKicked) {
       msg.kicked = true;
       this.pendingKicked = false;
+    }
+  }
+
+  private addPendingXValueToMsg(msg: any): void {
+    if (this.pendingAbilityXValue != null) {
+      msg.xValue = this.pendingAbilityXValue;
+      this.pendingAbilityXValue = null;
     }
   }
 

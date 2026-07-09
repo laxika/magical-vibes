@@ -35,6 +35,9 @@ function makeCard(overrides: Partial<Card>): Card {
     graveyardActivatedAbilities: [],
     transformable: false,
     kickerCost: null,
+    modalChoicesRequired: 0,
+    modalOptional: false,
+    modalOptions: null,
     ...overrides
   };
 }

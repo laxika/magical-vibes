@@ -143,7 +143,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -171,7 +174,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -197,7 +203,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -223,7 +232,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -249,7 +261,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -278,7 +293,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -306,7 +324,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -334,7 +355,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -402,7 +426,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -426,7 +453,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 
@@ -478,7 +508,10 @@ public class PermanentViewFactory {
                 cardView.alternateCostManaCost(),
                 cardView.graveyardActivatedAbilities(),
                 cardView.transformable(),
-                cardView.kickerCost()
+                cardView.kickerCost(),
+                cardView.modalChoicesRequired(),
+                cardView.modalOptional(),
+                cardView.modalOptions()
         );
     }
 }

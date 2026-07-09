@@ -43,6 +43,9 @@ public record CardView(
         String alternateCostManaCost,
         List<ActivatedAbilityView> graveyardActivatedAbilities,
         boolean transformable,
-        String kickerCost
+        String kickerCost,
+        int modalChoicesRequired,
+        boolean modalOptional,
+        List<ModalOptionView> modalOptions
 ) {
 }
