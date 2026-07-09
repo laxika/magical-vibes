@@ -159,9 +159,15 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
     return this.stackTargetId === entry.cardId;
   }
 
-  formatManaEntry(entry: { color: string; count: number }): SafeHtml {
+  readonly manaColors = ['W', 'U', 'B', 'R', 'G', 'C'];
+
+  manaCount(color: string): number {
+    return this.manaEntries.find(e => e.color === color)?.count ?? 0;
+  }
+
+  manaSymbol(color: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(
-      this.manaSymbolService.replaceSymbols(`${entry.count} x {${entry.color}}`)
+      this.manaSymbolService.replaceSymbols(`{${color}}`)
     );
   }
 
