@@ -391,12 +391,12 @@
 .land-stack {
   display: inline-flex;
   position: relative;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .land-stack .land-stack-item {
   position: relative;
-  transition: margin-left 0.25s ease;
+  transition: margin-left 0.25s ease, margin-top 0.25s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -417,6 +417,31 @@
 
 .land-stack .land-stack-item:has(.tapped) + .land-stack-item {
   margin-left: calc(var(--land-zoom, 0.9) * -199px);
+}
+
+/* MTGO-style diagonal fan: each land in a stack also steps down by the same
+   32px as the horizontal strip, so the back cards peek out above the front
+   one. Max stack size is 4 (see stackBasicLands). Mirrored by
+   LAND_STACK_Y_STEP in the fit model. */
+.land-stack .land-stack-item:nth-child(2) {
+  margin-top: calc(var(--land-zoom, 0.9) * 32px);
+}
+
+.land-stack .land-stack-item:nth-child(3) {
+  margin-top: calc(var(--land-zoom, 0.9) * 64px);
+}
+
+.land-stack .land-stack-item:nth-child(4) {
+  margin-top: calc(var(--land-zoom, 0.9) * 96px);
+}
+
+/* A tapped card's margin box is only 165px tall (the :host(.is-tapped)
+   -33px margins), which would make it jump up against the stack's
+   flex-start axis. Reserve the upright height and center the card so
+   tapping rotates in place within the fan. */
+.land-stack .permanent-stack {
+  min-height: calc(var(--land-zoom, 0.9) * 231px);
+  justify-content: center;
 }
 
 .land-stack .land-stack-item:hover {

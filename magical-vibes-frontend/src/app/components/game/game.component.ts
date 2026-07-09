@@ -322,6 +322,9 @@ export class GameComponent implements OnInit, OnDestroy {
   private static readonly TAPPED_CARD_WIDTH = 231;
   /* Box offset between stacked basic lands: the visible strip of each land. */
   private static readonly STACK_STRIP = 32;
+  /* Vertical step between stacked basic lands (MTGO-style diagonal fan);
+     matches the horizontal STACK_STRIP. */
+  private static readonly LAND_STACK_Y_STEP = 32;
   private static readonly ROW_GAP = 10;
   /* Attached auras peek out from under their host: 50px to the side
      (margin-left) and 41px above (231px card minus the -190px overlap). */
@@ -415,7 +418,9 @@ export class GameComponent implements OnInit, OnDestroy {
        (and thus the side's zoom) doesn't jump when lands tap/untap; see stackHeight. */
     const landItemHeight = (item: IndexedPermanent | LandStack): number => {
       if (isLandStack(item)) {
-        return C.CARD_HEIGHT;
+        /* Each land after the first steps down by LAND_STACK_Y_STEP, so the
+           stack is one card plus the accumulated vertical fan. */
+        return C.CARD_HEIGHT + (item.lands.length - 1) * C.LAND_STACK_Y_STEP;
       }
       return this.stackHeight(item.perm);
     };
