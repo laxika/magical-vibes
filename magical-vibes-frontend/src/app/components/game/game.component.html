@@ -596,7 +596,22 @@
             <div class="revealed-hand-label">Revealed Library Top</div>
             <div class="revealed-hand-cards">
               @for (card of myRevealedTopCard; track $index) {
-                <app-card-display [card]="card" class="revealed-hand-card" (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+                <app-card-display [card]="card" class="revealed-hand-card"
+                  [class.playable]="isLibraryTopPlayable"
+                  (click)="playLibraryTopCard()"
+                  (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
+              }
+            </div>
+          </div>
+        }
+        @if (playableExileCards().length > 0) {
+          <div class="revealed-hand-row">
+            <div class="revealed-hand-label">Playable From Exile</div>
+            <div class="revealed-hand-cards">
+              @for (card of playableExileCards(); track card.id) {
+                <app-card-display [card]="card" class="revealed-hand-card playable"
+                  (click)="playExileCard(card)"
+                  (mouseenter)="onCardHover(card)" (mouseleave)="onCardHoverEnd()" />
               }
             </div>
           </div>

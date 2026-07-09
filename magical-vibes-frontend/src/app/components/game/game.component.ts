@@ -448,7 +448,7 @@ export class GameComponent implements OnInit, OnDestroy {
       this.myCreatures(),
       this.myLandStacks,
       this.myBattlefield.length === 0,
-      this.myRevealedTopCard.length > 0 ? 1 : 0,
+      (this.myRevealedTopCard.length > 0 ? 1 : 0) + (this.playableExileCards().length > 0 ? 1 : 0),
       zoom, rowWidth);
   }
 
@@ -762,12 +762,19 @@ export class GameComponent implements OnInit, OnDestroy {
 
   playExileCard(card: Card): void {
     if (card.id) {
-      this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetId: null, fromExileCardId: card.id });
+      this.choice.targeting.startExilePlay(card);
     }
   }
 
+  get isLibraryTopPlayable(): boolean {
+    return this.playableLibraryTopCards().length > 0;
+  }
+
   playLibraryTopCard(): void {
-    this.websocketService.send({ type: MessageType.PLAY_CARD, cardIndex: 0, targetId: null, fromLibraryTop: true });
+    const card = this.playableLibraryTopCards()[0];
+    if (card) {
+      this.choice.targeting.startLibraryTopPlay(card);
+    }
   }
 
   passPriority(): void {

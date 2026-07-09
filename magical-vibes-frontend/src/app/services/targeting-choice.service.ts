@@ -92,6 +92,10 @@ export class TargetingChoiceService {
     this.spellTargetSelectedIds = [];
     // Flashback
     this.pendingFlashback = false;
+    // Exile / library-top casting
+    this.pendingFromExileCardId = null;
+    this.pendingFromLibraryTop = false;
+    this.pendingZoneCard = null;
     // Alternate casting cost
     this.choosingAlternateCost = false;
     this.selectingAlternateCostCreatures = false;
@@ -188,6 +192,11 @@ export class TargetingChoiceService {
 
   // --- Flashback state ---
   private pendingFlashback = false;
+
+  // --- Exile / library-top casting state ---
+  private pendingFromExileCardId: string | null = null;
+  private pendingFromLibraryTop = false;
+  private pendingZoneCard: Card | null = null;
 
   // --- Alternate casting cost state ---
   choosingAlternateCost = false;
@@ -483,12 +492,15 @@ export class TargetingChoiceService {
 
     const cardIndex = this.modeCardIndex;
     const cardName = this.modeCardName;
-    const card = g.hand[cardIndex];
+    const zoneCard = this.pendingZoneCard;
+    const card = zoneCard ?? g.hand[cardIndex];
     const chosen = this.modeSelectedIndices.map(i => this.modeOptions[i]);
     const encoded = this.encodeModeSelection(this.modeSelectedIndices);
     this.resetModeState();
 
     if (chosen.some(o => o.needsSpellTarget)) {
+      // Works for zone plays too: selectSpellTarget sends via sendPlayCardMessage,
+      // which attaches the pending fromExileCardId/fromLibraryTop flags.
       this.targetingSpell = true;
       this.targetingSpellCardIndex = cardIndex;
       this.targetingSpellCardName = cardName;
@@ -498,6 +510,12 @@ export class TargetingChoiceService {
       return;
     }
     if (chosen.some(o => o.needsTarget)) {
+      if (zoneCard) {
+        // Zone plays can't use VALID_TARGETS_REQUEST (it only knows hand cards)
+        this.pendingZoneCard = null;
+        this.enterZoneTargeting(zoneCard, encoded);
+        return;
+      }
       this.targetingCardIndex = cardIndex;
       this.targetingCardName = cardName;
       this.targetingForAbility = false;
@@ -507,7 +525,7 @@ export class TargetingChoiceService {
       this.sendValidTargetsRequest(cardIndex, null, null, [], encoded);
       return;
     }
-    if (card?.hasConvoke) {
+    if (!zoneCard && card?.hasConvoke) {
       this.pendingAbilityXValue = encoded;
       this.pendingConvokeCard = card;
       this.pendingMultiTargetIds = [];
@@ -529,6 +547,9 @@ export class TargetingChoiceService {
     this.resetModeState();
     this.pendingPhyrexianLifeCount = null;
     this.pendingKicked = false;
+    this.pendingFromExileCardId = null;
+    this.pendingFromLibraryTop = false;
+    this.pendingZoneCard = null;
   }
 
   private resetModeState(): void {
@@ -568,6 +589,90 @@ export class TargetingChoiceService {
     this.targetingPrompt = 'Choose a target for ' + card.name + ' (flashback).';
   }
 
+  // ========== Casting from exile / top of library ==========
+
+  /** Cast a card the server marked playable from exile (impulse draw, prepare
+      spells, ExileCast cards). The PLAY_CARD message identifies the card by
+      fromExileCardId, so its cardIndex is unused and sent as 0. */
+  startExilePlay(card: Card): void {
+    if (!card.id) return;
+    this.pendingFromExileCardId = card.id;
+    this.pendingFromLibraryTop = false;
+    this.continueZonePlay(card);
+  }
+
+  /** Cast the top card of the library (AllowCastFromTopOfLibraryEffect). */
+  startLibraryTopPlay(card: Card): void {
+    this.pendingFromExileCardId = null;
+    this.pendingFromLibraryTop = true;
+    this.continueZonePlay(card);
+  }
+
+  private continueZonePlay(card: Card): void {
+    // Modal ("choose one/two") spell — pick mode(s) before anything else
+    if (card.modalChoicesRequired > 0 && card.modalOptions && card.modalOptions.length > 0) {
+      this.pendingZoneCard = card;
+      this.choosingMode = true;
+      this.modeCardIndex = 0;
+      this.modeCardName = card.name;
+      this.modeOptions = card.modalOptions;
+      this.modeChoicesRequired = card.modalChoicesRequired;
+      this.modeOptional = card.modalOptional;
+      this.modeSelectedIndices = [];
+      return;
+    }
+
+    const hasXCost = card.manaCost?.includes('{X}') ?? false;
+    if (hasXCost) {
+      const baseCost = (card.manaCost ?? '').replace('{X}', '');
+      let base = 0;
+      const matches = baseCost.match(/\{([^}]+)\}/g) || [];
+      for (const m of matches) {
+        const inner = m.slice(1, -1);
+        const num = parseInt(inner);
+        base += isNaN(num) ? 1 : num;
+      }
+      this.pendingZoneCard = card;
+      this.choosingXValue = true;
+      this.xValueCardIndex = 0;
+      this.xValueCardName = card.name;
+      this.xValueInput = 0;
+      this.xValueMaximum = this.totalManaFn() - base;
+      return;
+    }
+    if (card.needsSpellTarget) {
+      this.targetingSpell = true;
+      this.targetingSpellCardIndex = 0;
+      this.targetingSpellCardName = card.name;
+      return;
+    }
+    if (card.needsTarget) {
+      this.enterZoneTargeting(card, null);
+      return;
+    }
+    this.sendPlayCardMessage(0, null);
+  }
+
+  /** Like flashback targeting: the VALID_TARGETS_REQUEST handler only knows
+      hand cards and abilities, so offer every permanent and player and let the
+      engine's on-resolution legality check fizzle illegal choices. */
+  private enterZoneTargeting(card: Card, xValue: number | null): void {
+    this.selectingTarget = true;
+    this.targetingCardIndex = 0;
+    this.targetingCardName = card.name;
+    this.targetingForAbility = false;
+    this.targetingAbilityIndex = -1;
+    this.pendingAbilityXValue = xValue;
+    this.pendingConvokeCard = null;
+    const allIds = new Set<string>();
+    for (const p of this.myBattlefieldFn()) allIds.add(p.id);
+    for (const p of this.opponentBattlefieldFn()) allIds.add(p.id);
+    this.validTargetIds.set(allIds);
+    const g = this.gameSignal();
+    this.validTargetPlayerIds.set(new Set(g?.playerIds ?? []));
+    this.targetingPrompt = 'Choose a target for ' + card.name + '.';
+  }
+
   private sendPlayCardMessage(cardIndex: number, targetId: string | null, extra?: Record<string, any>): void {
     const msg: any = {
       type: MessageType.PLAY_CARD,
@@ -581,6 +686,15 @@ export class TargetingChoiceService {
       msg.flashback = true;
       this.pendingFlashback = false;
     }
+    if (this.pendingFromExileCardId != null) {
+      msg.fromExileCardId = this.pendingFromExileCardId;
+      this.pendingFromExileCardId = null;
+    }
+    if (this.pendingFromLibraryTop) {
+      msg.fromLibraryTop = true;
+      this.pendingFromLibraryTop = false;
+    }
+    this.pendingZoneCard = null;
     if (this.pendingKicked) {
       msg.kicked = true;
       this.pendingKicked = false;
@@ -616,7 +730,18 @@ export class TargetingChoiceService {
         xValue: this.xValueInput
       });
     } else {
-      const card = g.hand[this.xValueCardIndex];
+      const card = this.pendingZoneCard ?? g.hand[this.xValueCardIndex];
+      if (this.pendingZoneCard && card?.needsTarget) {
+        // Exile / library-top cast with X and a target — enter manual targeting
+        const zoneCard = this.pendingZoneCard;
+        const savedXValue = this.xValueInput;
+        this.pendingZoneCard = null;
+        this.choosingXValue = false;
+        this.xValueCardIndex = -1;
+        this.xValueCardName = '';
+        this.enterZoneTargeting(zoneCard, savedXValue);
+        return;
+      }
       if (card?.needsTarget) {
         // Store X value and request valid targets from backend
         const savedXValue = this.xValueInput;
@@ -651,6 +776,9 @@ export class TargetingChoiceService {
     this.targetingForAbility = false;
     this.targetingAbilityIndex = -1;
     this.pendingPhyrexianLifeCount = null;
+    this.pendingFromExileCardId = null;
+    this.pendingFromLibraryTop = false;
+    this.pendingZoneCard = null;
   }
 
   selectTarget(permanentId: string): void {
@@ -745,6 +873,12 @@ export class TargetingChoiceService {
     this.targetingPrompt = '';
     this.pendingAbilityXValue = null;
     this.pendingConvokeCard = null;
+    // A completed cast consumes these in sendPlayCardMessage before we get here;
+    // clearing them covers the cancel paths so the flags can't leak into a later cast.
+    this.pendingFlashback = false;
+    this.pendingFromExileCardId = null;
+    this.pendingFromLibraryTop = false;
+    this.pendingZoneCard = null;
     // Note: don't reset pendingPhyrexianLifeCount here — it carries through to the final send
   }
 
@@ -796,6 +930,9 @@ export class TargetingChoiceService {
     this.pendingAbilityXValue = null;
     this.spellTargetCount = 1;
     this.spellTargetSelectedIds = [];
+    this.pendingFromExileCardId = null;
+    this.pendingFromLibraryTop = false;
+    this.pendingZoneCard = null;
   }
 
   isValidTarget(perm: Permanent): boolean {

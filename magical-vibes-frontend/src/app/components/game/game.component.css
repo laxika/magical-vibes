@@ -503,6 +503,10 @@
   transform: scale(0.85);
 }
 
+.card.revealed-hand-card.playable {
+  opacity: 1;
+}
+
 /* Stack target highlight (hover over stack entry to show its target) */
 
 .card.stack-targeted {
