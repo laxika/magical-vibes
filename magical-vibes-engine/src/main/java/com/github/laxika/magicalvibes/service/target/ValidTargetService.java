@@ -28,9 +28,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGravey
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import lombok.RequiredArgsConstructor;
@@ -386,18 +388,29 @@ public class ValidTargetService {
         }
 
         // PlayerPredicateTargetFilter (e.g. "target opponent")
-        if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter) {
-            if (playerFilter.predicate() instanceof PlayerRelationPredicate rel) {
-                if (rel.relation() == PlayerRelation.OPPONENT && controllerId.equals(playerId)) {
-                    return false;
-                }
-                if (rel.relation() == PlayerRelation.SELF && !controllerId.equals(playerId)) {
-                    return false;
-                }
-            }
+        if (targetFilter instanceof PlayerPredicateTargetFilter playerFilter
+                && !matchesPlayerPredicate(gameData, controllerId, playerId, playerFilter.predicate())) {
+            return false;
+        }
+
+        // Any-target restriction: the player side is checked against the player predicate.
+        if (targetFilter instanceof AnyTargetPredicateTargetFilter anyFilter
+                && !matchesPlayerPredicate(gameData, controllerId, playerId, anyFilter.playerPredicate())) {
+            return false;
         }
 
         return true;
+    }
+
+    private boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID playerId, PlayerPredicate predicate) {
+        return switch (predicate) {
+            case PlayerRelationPredicate rel -> switch (rel.relation()) {
+                case ANY -> true;
+                case SELF -> controllerId.equals(playerId);
+                case OPPONENT -> !controllerId.equals(playerId);
+            };
+            case PlayerDealtDamageThisTurnPredicate ignored -> gameData.playersDealtDamageThisTurn.contains(playerId);
+        };
     }
 
     private boolean isValidAbilityPermanentTarget(GameData gameData, Card sourceCard, ActivatedAbility ability,

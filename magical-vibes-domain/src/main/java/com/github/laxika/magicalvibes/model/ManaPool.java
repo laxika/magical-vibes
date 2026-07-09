@@ -25,6 +25,12 @@ public class ManaPool {
     private final EnumMap<ManaColor, Integer> flashbackOnlyMana = new EnumMap<>(ManaColor.class);
     /** Per-subtype, per-color mana that can only be spent to cast creature spells with a matching subtype (e.g. Pillar of Origins). */
     private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeCreatureMana = new HashMap<>();
+    /**
+     * Per-subtype, per-color mana that can only be spent to cast spells with a matching subtype OR to
+     * activate abilities of permanents with that subtype (e.g. Smokebraider). Distinct from
+     * {@link #subtypeCreatureMana}, which is spell-only.
+     */
+    private final Map<CardSubtype, EnumMap<ManaColor, Integer>> subtypeSpellOrAbilityMana = new HashMap<>();
 
     public ManaPool() {
         for (ManaColor color : ManaColor.values()) {
@@ -53,6 +59,9 @@ public class ManaPool {
         for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeCreatureMana.entrySet()) {
             subtypeCreatureMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
         }
+        for (Map.Entry<CardSubtype, EnumMap<ManaColor, Integer>> entry : source.subtypeSpellOrAbilityMana.entrySet()) {
+            subtypeSpellOrAbilityMana.put(entry.getKey(), new EnumMap<>(entry.getValue()));
+        }
     }
 
     public void add(ManaColor color) {
@@ -78,6 +87,7 @@ public class ManaPool {
             instantSorceryOnlyColored.put(color, 0);
         }
         subtypeCreatureMana.clear();
+        subtypeSpellOrAbilityMana.clear();
     }
 
     public int get(ManaColor color) {
@@ -125,6 +135,11 @@ public class ManaPool {
         total += instantSorceryOnlyColorless;
         total += getFlashbackOnlyManaTotal();
         for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
+            for (int value : colorMap.values()) {
+                total += value;
+            }
+        }
+        for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOrAbilityMana.values()) {
             for (int value : colorMap.values()) {
                 total += value;
             }
@@ -316,6 +331,58 @@ public class ManaPool {
         }
     }
 
+    public void addSubtypeSpellOrAbilityMana(CardSubtype subtype, ManaColor color, int amount) {
+        subtypeSpellOrAbilityMana.computeIfAbsent(subtype, k -> {
+            EnumMap<ManaColor, Integer> m = new EnumMap<>(ManaColor.class);
+            for (ManaColor c : ManaColor.values()) m.put(c, 0);
+            return m;
+        }).merge(color, amount, Integer::sum);
+    }
+
+    /** Total spell-or-ability mana of the given color available across all matching subtypes. */
+    public int getSubtypeSpellOrAbilityManaForColor(Set<CardSubtype> subtypes, ManaColor color) {
+        int total = 0;
+        for (CardSubtype subtype : subtypes) {
+            EnumMap<ManaColor, Integer> colorMap = subtypeSpellOrAbilityMana.get(subtype);
+            if (colorMap != null) {
+                total += colorMap.getOrDefault(color, 0);
+            }
+        }
+        return total;
+    }
+
+    /** Total spell-or-ability mana of all colors available across all matching subtypes. */
+    public int getSubtypeSpellOrAbilityManaTotal(Set<CardSubtype> subtypes) {
+        int total = 0;
+        for (CardSubtype subtype : subtypes) {
+            EnumMap<ManaColor, Integer> colorMap = subtypeSpellOrAbilityMana.get(subtype);
+            if (colorMap != null) {
+                for (int v : colorMap.values()) {
+                    total += v;
+                }
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Removes mana of the given color from spell-or-ability mana pools matching any of the given
+     * subtypes. Distributes the removal across matching subtypes.
+     */
+    public void removeSubtypeSpellOrAbilityMana(Set<CardSubtype> subtypes, ManaColor color, int amount) {
+        int remaining = amount;
+        for (CardSubtype subtype : subtypes) {
+            if (remaining <= 0) break;
+            EnumMap<ManaColor, Integer> colorMap = subtypeSpellOrAbilityMana.get(subtype);
+            if (colorMap != null) {
+                int available = colorMap.getOrDefault(color, 0);
+                int toRemove = Math.min(remaining, available);
+                colorMap.put(color, available - toRemove);
+                remaining -= toRemove;
+            }
+        }
+    }
+
     /**
      * Adds mana that persists through step/phase transitions until end of turn.
      * The mana is added to both the regular pool and the persistent tracker.
@@ -354,6 +421,7 @@ public class ManaPool {
             instantSorceryOnlyColored.put(color, 0);
         }
         subtypeCreatureMana.clear();
+        subtypeSpellOrAbilityMana.clear();
     }
 
     /**
@@ -388,6 +456,9 @@ public class ManaPool {
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
+            for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOrAbilityMana.values()) {
+                amount += colorMap.getOrDefault(color, 0);
+            }
             map.put(color.getCode(), amount);
         }
         return map;
@@ -413,6 +484,9 @@ public class ManaPool {
                 amount += kickedOnlyGreen;
             }
             for (EnumMap<ManaColor, Integer> colorMap : subtypeCreatureMana.values()) {
+                amount += colorMap.getOrDefault(color, 0);
+            }
+            for (EnumMap<ManaColor, Integer> colorMap : subtypeSpellOrAbilityMana.values()) {
                 amount += colorMap.getOrDefault(color, 0);
             }
             totals.put(color, amount);

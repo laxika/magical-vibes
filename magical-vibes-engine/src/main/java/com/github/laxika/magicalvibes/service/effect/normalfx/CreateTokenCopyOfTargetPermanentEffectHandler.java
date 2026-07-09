@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -90,8 +92,15 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                 tokenCard.setAdditionalTypes(merged);
             }
 
-            if (sourceCard.getKeywords() != null && !sourceCard.getKeywords().isEmpty()) {
-                tokenCard.setKeywords(EnumSet.copyOf(sourceCard.getKeywords()));
+            Set<Keyword> keywords = EnumSet.noneOf(Keyword.class);
+            if (sourceCard.getKeywords() != null) {
+                keywords.addAll(sourceCard.getKeywords());
+            }
+            if (e.grantHaste()) {
+                keywords.add(Keyword.HASTE);
+            }
+            if (!keywords.isEmpty()) {
+                tokenCard.setKeywords(keywords);
             }
 
             for (EffectSlot slot : EffectSlot.values()) {
@@ -111,6 +120,10 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
 
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), tokenPermanent);
+
+            if (e.exileAtEndStep()) {
+                gameData.queueDelayedAction(new ExileTokenAtEndStep(tokenPermanent.getId()));
+            }
 
             String logMsg = "A token copy of " + sourceCard.getName() + " is created.";
             gameBroadcastService.logAndBroadcast(gameData, logMsg);

@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.action.SacrificeAtEndStep;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
@@ -57,12 +59,16 @@ public class CardChoiceHandlerService {
         UUID targetId;
         boolean isTargeted;
         boolean enterTapped = false;
+        boolean grantHaste = false;
+        boolean sacrificeAtEndStep = false;
         if (active instanceof PendingInteraction.HandCardChoice hc) {
             choicePlayerId = hc.playerId();
             validIndices = hc.validIndices();
             targetId = null;
             isTargeted = false;
             enterTapped = hc.enterTapped();
+            grantHaste = hc.grantHaste();
+            sacrificeAtEndStep = hc.sacrificeAtEndStep();
         } else if (active instanceof PendingInteraction.TargetedHandCardChoice thc) {
             choicePlayerId = thc.playerId();
             validIndices = thc.validIndices();
@@ -94,7 +100,7 @@ public class CardChoiceHandlerService {
             if (isTargeted) {
                 resolveTargetedCardChoice(gameData, player, playerId, hand, card, targetId);
             } else {
-                resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped);
+                resolveUntargetedCardChoice(gameData, player, playerId, hand, card, enterTapped, grantHaste, sacrificeAtEndStep);
             }
         }
 
@@ -722,10 +728,14 @@ public class CardChoiceHandlerService {
         }
     }
 
-    private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card, boolean enterTapped) {
+    private void resolveUntargetedCardChoice(GameData gameData, Player player, UUID playerId, List<Card> hand, Card card,
+                                             boolean enterTapped, boolean grantHaste, boolean sacrificeAtEndStep) {
         Permanent permanent = new Permanent(card);
         if (enterTapped) {
             permanent.tap();
+        }
+        if (grantHaste) {
+            permanent.getGrantedKeywords().add(Keyword.HASTE);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
 
@@ -736,6 +746,10 @@ public class CardChoiceHandlerService {
                 enterTapped ? " tapped" : "");
 
         battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, card, null, false);
+
+        if (sacrificeAtEndStep) {
+            gameData.queueDelayedAction(new SacrificeAtEndStep(permanent.getId()));
+        }
     }
 
     private void checkPendingReturnToHandOnDiscard(GameData gameData, Card discardedCard) {

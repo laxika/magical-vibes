@@ -194,10 +194,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  (e.g. Lumaret's Favor) via {@code CopyThisSpellIfConditionEffect}. */
     ON_SELF_CAST,
     /** Triggers whenever the controller clashes (MTG rule 701.29). Fired from
-     *  {@code TriggerCollectionService.performClash} after the clash ends. Routed through the
-     *  {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller chooses a
-     *  target creature an opponent controls. Effects wrapped in {@code IfWonClashEffect} are only
-     *  applied when the controller won the clash. Used by Entangling Trap. */
+     *  {@code TriggerCollectionService.performClash} after the clash ends. Targeting triggers route
+     *  through the {@code PermanentChoiceContext.ClashTriggerTarget} interaction so the controller
+     *  chooses a target creature an opponent controls (Entangling Trap); non-targeting triggers go
+     *  straight onto the stack as a triggered ability (Rebellion of the Flamekin). Effects wrapped in
+     *  {@code IfWonClashEffect} apply only when the controller won the clash, and effects wrapped in
+     *  {@code IfLostClashEffect} only when they did not win — exactly one branch fires when both are
+     *  listed. */
     ON_CONTROLLER_CLASHES,
     /** Triggers whenever a player loses the game. Fired from {@code GameOutcomeService}
      *  at the moment a player is determined to lose (life/poison loss in
@@ -217,5 +220,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  right after the championed creature is exiled. Effects that target a player are routed through
      *  the {@code PermanentChoiceContext.ChampionedTriggerTarget} interaction. Used by Mistbind Clique
      *  ("When a Faerie is championed with this creature, tap all lands target player controls"). */
-    ON_CHAMPIONED
+    ON_CHAMPIONED,
+    /** Triggers whenever the controller of this permanent activates an activated ability (including
+     *  mana abilities) of a permanent they control. Fires on every permanent with this slot on the
+     *  activating player's battlefield. Wrap the effect in {@code TriggeringPermanentConditionalEffect}
+     *  to filter by the permanent whose ability was activated (e.g. Ceaseless Searblades —
+     *  "whenever you activate an ability of an Elemental"). Checked in
+     *  {@code TriggerCollectionService.checkControllerActivatesAbilityTriggers}, driven from
+     *  {@code ActivatedAbilityExecutionService.completeActivationAfterCosts}. */
+    ON_CONTROLLER_ACTIVATES_ABILITY
 }

@@ -92,11 +92,13 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToTargetCreatureEffect(DynamicAmount, boolean unpreventable)`; `(int)`, `(int, boolean)`, `(DynamicAmount)` — target creature. Amounts: `Fixed`, `XValue`, `SourceToughness`, `PermanentCount` (subtype counts), `ManaSpentToCast`
 - `DealDamageToTargetCreatureOrPlaneswalkerEffect(int)` — creature or planeswalker
 - `DealDamageToTargetOpponentOrPlaneswalkerEffect(int)` — opponent or planeswalker
+- `DealDamageToTargetPlayerOrPlaneswalkerEffect(int)` — any player (incl. controller) or planeswalker (Boggart Shenanigans)
 - `DealDamageToTargetOpponentAndUpToCreaturesThatPlayerControlsEffect(int opponentDamage, int creatureDamage, int maxCreatureTargets)` — target opponent plus up to N creatures that player controls
 - `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(int)` — all target controls
 - `DealDamageToAllCreaturesTargetControlsEffect(int)` — creatures target controls
 - `DealDamageToEachMatchingPermanentEffect(int, PermanentPredicate, EachPermanentScope)` — damage each matching permanent across `ALL_PLAYERS`/`TARGET_PLAYER`
 - "If this is the Nth time this ability has resolved this turn, [X]" — `ConditionalEffect(new NthAbilityResolutionThisTurn(n), X)` on an activated ability; the engine counts resolutions per source permanent (`GameData.permanentAbilityResolutionsThisTurn`), condition is met only on the exact n-th resolution. Ashling the Pilgrim = `PutCountersOnSelfEffect(PLUS_ONE_PLUS_ONE)` + `ConditionalEffect(NthAbilityResolutionThisTurn(3), RemoveAllCountersFromSelfEffect(PLUS_ONE_PLUS_ONE))` + `ConditionalEffect(NthAbilityResolutionThisTurn(3), MassDamageEffect(new EventValue(), true))`
+- `InnerFlameIgniterEffect()` — **card-specific.** On the exact third resolution this turn, creatures you control gain first strike until end of turn. Pair with `BoostAllOwnCreaturesEffect(1, 0)` in the same ability for the unconditional +1/+0 (Inner-Flame Igniter)
 - `DealDamageToPlayersEffect(DynamicAmount, DamageRecipient)`; `(int, recipient)`; `.enchantedAttachedCount(PermanentPredicate)` — **unified player damage.** Recipients: `TARGET_PLAYER` (only targeting one; `Fixed`/`CardsInGraveyard` Scrapyard Salvo/`CardsInHand(TARGET_PLAYER)` Sudden Impact + Sword of War and Peace), `EACH_OPPONENT` (single eval, same value; `Fixed`/`CountersOnSource` Hallar), `EACH_PLAYER` (Slagstorm), `CONTROLLER` (self/pain lands), `ENCHANTED_PLAYER` (curse upkeep; `.enchantedAttachedCount` Curse of Thirst), `TARGET_PERMANENT_CONTROLLER` (Chandra's Outrage), `TRIGGERING_PERMANENT_CONTROLLER` (Magnetic Mine)
 - `DealDamageToAnyTargetEffect.forTargetGroup(int damage, int targetGroup)` — damage aimed at a target group's chosen target (Goblin Barrage kicked target)
 - `MassDamageEffect(DynamicAmount, damagesPlayers, damagesPlaneswalkers, PermanentPredicate)` — mass damage; convenience ctors `(int)`, `(int, damagesPlayers)`, `(DynamicAmount, damagesPlayers)`, `(int, usesXValue, damagesPlayers, filter)` (+ planeswalker overload)
@@ -110,6 +112,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `FightTargetsEffect()` — fight (group indices `(firstTargetGroup, secondTargetGroup)` default to 0, 1)
 - `MassFightTargetCreatureEffect()` — Alpha Brawl-style mass fight
 - `PreventNoncombatDamageToControllerAndGainLifeEffect()` — STATIC: prevent all noncombat damage to controller; they gain life equal to the damage prevented (Purity). Hooked in `DamageSupport.dealDamageToPlayer`
+- `PreventSpellDamageToOpponentAndCreateTokensEffect(CreateTokenEffect token)` — STATIC: if a spell you control would deal damage to an opponent, prevent it and create one `token` per 1 damage prevented (Hostility). Hooked in `DamageSupport.dealDamageToPlayer`
 - `PreventAllDamageToTargetCreatureEffect()` — prevent all damage to target creature this turn (Wellgabber Apothecary). Adds target to `GameData.creaturesWithAllDamagePrevented`, checked in `DamagePreventionService.applyCreaturePreventionShield`, cleared at turn cleanup
 - `PreventNextDamageFromChosenColoredSourceEffect(CardColor color)` — one-shot: prevent the *next* damage event a chosen source of that color would deal to you this turn (Circle of Protection cycle). Source chosen on resolution; shield in `GameData.playerSourceNextDamageShields`, consumed by `DamagePreventionService.applyPlayerNextSourceDamageShield`
 - `PreventNextDamageFromChosenSourceAndGainLifeEffect()` — one-shot: prevent the *next* damage event a chosen source (any color) would deal to you this turn and gain that much life (Reverse Damage). Source chosen on resolution; shield in `GameData.playerSourceNextDamageShields` with `gainLife=true`, consumed by `DamagePreventionService.applyPlayerNextSourceDamageShield` (which grants the life via `LifeSupport`)
@@ -130,6 +133,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 
 - `DestroyTargetPermanentEffect(boolean cantRegen)` or `(boolean, CreateTokenEffect)` — destroy target
 - `DestroyTargetPermanentAtEndStepEffect()` — destroy at end step
+- `SacrificeTargetPermanentAtEndStepEffect()` — sacrifice the target at next end step (Lowland Oaf); sacrifice, not destruction (ignores indestructible/regeneration)
 - `DestroyAllPermanentsEffect(PermanentPredicate)` or `(PermanentPredicate, boolean)` — board wipe
 - `DestroyAllPermanentsAndGainLifePerDestroyedEffect(PermanentPredicate, int)` — wipe + life
 - `EachPlayerChoosesCreatureDestroyRestEffect()` — choose one, destroy rest
@@ -239,6 +243,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DiscardHandEffect(DiscardRecipient)` — discard entire hand(s); no-arg = controller
 - `DiscardOwnHandThenDrawThatManyEffect()` — discard entire hand, then draw that many
 - `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` — discard entire hand, then draw equal to target player's hand size (counted at draw time)
+- `EachPlayerDiscardsHandThenDrawsThatManyEffect()` — each player (APNAP) discards their entire hand, then draws that many
 - `ExileTopCardsMayPlayUntilNextTurnEffect(DynamicAmount count)` or `(int count)` — exile top N from library, may play until end of your next turn (owner-relative expiry via `ExileSupport.grantPlayUntilOwnersNextTurn`). Use `EventValue()` for "equal to the excess damage dealt this way" (Archaic's Agony)
 - `ExileTargetPermanentMayPlayUntilNextTurnEffect()` — exile the target permanent, its owner may play it until end of their next turn (e.g. Suspend Aggression; pair with a permanent target filter). Tokens exiled this way cease to exist
 - `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(CardPredicate filter, boolean ownGraveyardOnly)` — exile a targeted graveyard card matching the filter, controller may play it until end of their next turn (e.g. Practiced Scrollsmith; ETB graveyard-target flow via `MultiGraveyardChoice`)
@@ -262,7 +267,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `RevealTopCardsAndSeparateEffect(int)` — reveal + separate into piles
 - `ScryEffect(int)` — scry N
 - `SurveilEffect(int)` — surveil N
-- `ShuffleLibraryEffect()` — shuffle library
+- `ShuffleLibraryEffect(boolean targetPlayer)` — shuffle library (false=controller's, true=target player's)
 - `ShuffleIntoLibraryEffect()` — shuffle spell into library
 - `ShuffleSelfAndGraveyardIntoLibraryEffect()` — shuffle self + graveyard into library
 - `ShuffleSelfFromGraveyardIntoLibraryEffect()` — triggered ability: shuffle the source card from its owner's graveyard into their library (pair with `ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE`, e.g. Purity)
@@ -301,7 +306,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - For "create a token that gains [keyword] until end of turn", set `CreateTokenEffect`'s `grantedKeywordsUntilEndOfTurn` (e.g. `new CreateTokenEffect(amount, name, p, t, color, colors, subtypes, innateKeywords, Set.of(Keyword.HASTE))` — Artistic Process Elemental gains haste). Distinct from the token's innate `keywords`.
 - `CreateXTokenWithXCountersEffect(String tokenName, int power, int toughness, CardColor color, Set<CardColor> colors, List<CardSubtype> subtypes, CounterType counterType)` — create one token with X counters of `counterType` from ability/spell X value (e.g. Berta's Fractal with `PLUS_ONE_PLUS_ONE`)
 - `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect(CardPredicate, ownGraveyardOnly, additionalSubtypes, grantHaste, exileAtEndStep)` — exile graveyard target, create token copy with optional extra subtypes/haste/end-step exile
-- `CreateTokenCopyOfTargetPermanentEffect()` or `(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, Map<CounterType, Integer> initialCounters)` — create token copy of targeted permanent; optional type/subtype/P/T overrides and post-ETB counters
+- `CreateTokenCopyOfTargetPermanentEffect()` or `(grantHaste, exileAtEndStep)` or `(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, Map<CounterType, Integer> initialCounters)` — create token copy of targeted permanent; optional type/subtype/P/T overrides, post-ETB counters, granted haste, and exile at next end step (Heat Shimmer)
 - `CreateTokenCopyOfTargetCreatureForTargetPlayerEffect()` — target player creates a token copy of target creature you control (two targets: player + creature); Echocasting Symposium
 
 ## Life
@@ -338,6 +343,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `SetPowerToughnessToAmountEffect(DynamicAmount power, DynamicAmount toughness)` — CDA that sets P/T on a 0/0 base (pass the same amount for both). Replaced the `PowerToughnessEqualTo*` family + `BoostSelfBySlimeCountersOnLinkedPermanentEffect`. Amounts: `PermanentCount(IsLand/IsCreature/IsArtifact/HasSubtype…, CONTROLLER)` (lands/creatures/artifacts/Swamps you control), `CardsInGraveyard(filter, CONTROLLER|ANY_PLAYER)`, `CardsInHand(CONTROLLER)` (hand size), `ControllerLifeTotal()` (life total), `CountersOnLinkedPermanent(type, id)` (linked-permanent counters)
 - `PutCountersOnSourceEffect(int power, int toughness, int amount)` — counters on self
+- `PutCountersOnSourceEqualToEnteringPowerEffect(int power, int toughness, boolean optional)` — ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD: put counters on self = entering creature's power; `optional` = "you may" (Hamletback Goliath)
 - `PutCountersOnSelfEffect(CounterType)` — one counter of a type on self (charge, +1/+1, study, etc.)
 - `PutCountersOnSelfEffect(CounterType, int count)` — N counters of a type on self (e.g. Withengar Unbound: 13 +1/+1)
 - `PutCounterOnTargetPermanentEffect(CounterType, int)` — counters on target permanent (`PLUS_ONE_PLUS_ONE`/`MINUS_ONE_MINUS_ONE`/…); `(…, new XValue())` for "X counters"; `(…, count, boolean regenerateIfSurvives)` (Gore Vassal); `withTargetRestriction(…, targetPredicate)` to restrict legal targets; `(…, count, PermanentPredicate)` for a non-targeting own-permanent choice
@@ -391,7 +397,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `MatchingPermanentsDoesntUntapEffect(PermanentPredicate)` — global static: every permanent matching the predicate (any controller, incl. the source) doesn't untap during its controller's untap step; Marble Titan (`PermanentPowerAtLeastPredicate(3)`)
 - `DoesntUntapEffect.self()` — this permanent doesn't untap (static) · `.enchanted()` — attached aura/equipment's host doesn't untap (static) · `.targetWhileSourceOnBattlefield()` — target doesn't untap while source on battlefield (Dungeon Geists / Time of Ice) · `.targetWhileSourceTapped()` — while source stays tapped (Rust Tick); TARGET factories piggyback on a companion `TapPermanentsEffect(TapUntapScope.TARGET)`
 - `SkipNextUntapEffect(TapUntapScope.TARGET)` — target permanent skips next untap (piggybacks on companion targeting effect) · `.TARGET_PLAYERS_PERMANENTS, filter` — that player's matching permanents · `.ALL_CREATURES, filter` — all creatures matching filter (`PermanentIsAttackingPredicate` = all attackers)
-- `IfWonClashEffect(wrapped)` — clash-only marker on `EffectSlot.ON_CONTROLLER_CLASHES`: the wrapped effect applies only if the controller won the clash ("If you won, ..."). Consumed by `TriggerCollectionService.performClash` at trigger time (not a stack effect). See Entangling Trap: tap target opponent creature + `IfWonClashEffect(SkipNextUntapEffect(TARGET))`. Clash is performed via `performClash` (2-player: both reveal top card, strictly-higher mana value wins).
+- `IfWonClashEffect(wrapped)` — clash-only marker on `EffectSlot.ON_CONTROLLER_CLASHES`: the wrapped effect applies only if the controller won the clash ("If you won, ..."). Consumed by `TriggerCollectionService.fireClashTriggers` at trigger time (not a stack effect). See Entangling Trap: tap target opponent creature + `IfWonClashEffect(SkipNextUntapEffect(TARGET))`. Clash is performed via `performClash` (2-player: both reveal top card, strictly-higher mana value wins).
+- `IfLostClashEffect(wrapped)` — mirror of `IfWonClashEffect`: applies only when the controller did **not** win. Pair a won- and lost-variant so exactly one branch fires when the base effect happens regardless of outcome but only a detail differs (Rebellion of the Flamekin: two `MayPayManaEffect("{1}", CreateTokenEffect(...))` differing only in granted `HASTE` on the won branch). Non-targeting clash triggers go straight onto the stack.
 - `ClashEffect(List<CardEffect> beforeClash, CardEffect onWin, boolean repeatWhileWinning)` — the clash-*source* stack effect; convenience ctor `ClashEffect(onWin)` = `(List.of(), onWin, false)`. Each iteration dispatches `beforeClash` (via each effect's own handler, against the same entry), performs the clash for the controller via `performClash`, dispatches `onWin` on a win, and with `repeatWhileWinning` repeats the whole sequence until a lost clash (deck-out counts as a loss). "Clash with an opponent. If you win, [X]" = `ClashEffect(X)`; `onWin` may be null for a bare "clash with an opponent". Mirrors `FlipCoinWinEffect`. E.g. Oaken Brawler = `ClashEffect(new PutCountersOnSourceEffect(1, 1, 1))`. "[body], then clash with an opponent. If you win, repeat this process" = `ClashEffect(body, null, true)`: Hoarder's Greed = `ClashEffect(List.of(new LoseLifeEffect(2), new DrawCardEffect(2)), null, true)`. Wrap in `MayEffect` for "you may clash" (Sentry Oak = `MayEffect(ClashEffect(new BoostSelfAndLoseKeywordEffect(2, 0, Keyword.DEFENDER)), ...)`). Delegates `canTargetPermanent`/`canTargetPlayer` to `onWin`/`beforeClash`, so a **targeted** win reward works on any targeting slot: e.g. Springjack Knight "whenever this attacks, clash; if you win, target creature gains double strike" = `target(...)` + `ClashEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET))` on `ON_ATTACK` (target chosen when the trigger goes on the stack; grant only on a win). Do **not** wrap an interactive `MayEffect` as a `ClashEffect` win reward — the may-pause re-runs the `ClashEffect` (re-clash). For an *optional* win reward, use a bare `ClashEffect(null)` (records its result on the entry) followed by `ConditionalEffect(new WonClash(), new MayEffect(reward, prompt))`: Whirlpool Whelm = `ClashEffect(null)` + `ConditionalEffect(new WonClash(), new MayEffect(new PutTargetOnTopOfLibraryEffect(), prompt))` + `ReturnToHandEffect.target()`.
 
 ## Control / steal
@@ -410,6 +417,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DoubleManaPoolEffect()` — double mana pool
 - `AwardRestrictedManaEffect(ManaColor, int, ManaRestriction)` — restricted mana (`ManaRestriction`: `SpellTypes(Set<CardType>)`, `ArtifactSpells()`, `SubtypeSpells(CardSubtype)`, `KickedCosts()`)
 - `AwardFlashbackOnlyAnyColorManaEffect(int)` — flashback-only mana (any-color choice; separate record)
+- `AwardAnyColorChosenSubtypeCreatureManaEffect()` — one mana of any color, spendable only on creature spells of the source's chosen subtype (Pillar of Origins / Unclaimed Territory; spell-only)
+- `AwardAnyColorSubtypeSpellOrAbilityManaEffect(int, CardSubtype)` — N mana in any combination of colors, spendable only to cast spells of the subtype **or** activate abilities of permanents of that subtype (Smokebraider = `(2, ELEMENTAL)`)
 
 ## Copy / clone
 

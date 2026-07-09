@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -44,6 +45,7 @@ public class DamageSupport {
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
     private final LifeSupport lifeSupport;
+    private final PermanentControlSupport permanentControlSupport;
 
     /**
      * Applies damage to a creature, handling prevention shield, recording, logging,
@@ -316,6 +318,19 @@ public class DamageSupport {
                 gameBroadcastService.logAndBroadcast(gameData, cardName + "'s damage is prevented.");
                 return;
             }
+            if (targetPermanent.getCard().hasType(CardType.PLANESWALKER)) {
+                // CR 306.8: damage dealt to a planeswalker removes that many loyalty counters from it
+                // (SBAs then move it to the graveyard once it has 0 loyalty). Mirrors the combat path.
+                int loyaltyDamage = Math.max(0, rawDamage);
+                if (loyaltyDamage > 0) {
+                    targetPermanent.setCounterCount(CounterType.LOYALTY,
+                            targetPermanent.getCounterCount(CounterType.LOYALTY) - loyaltyDamage);
+                    gameBroadcastService.logAndBroadcast(gameData, cardName + " deals " + loyaltyDamage
+                            + " damage to " + targetPermanent.getCard().getName() + " ("
+                            + targetPermanent.getCounterCount(CounterType.LOYALTY) + " loyalty remaining).");
+                }
+                return;
+            }
             if (cantRegenerate) {
                 targetPermanent.setCantRegenerateThisTurn(true);
             }
@@ -384,6 +399,18 @@ public class DamageSupport {
                 gameBroadcastService.logAndBroadcast(gameData,
                         cardName + "'s " + purityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
                 lifeSupport.applyGainLife(gameData, playerId, purityPrevented, "prevented damage");
+            }
+
+            // Hostility: prevent all remaining damage a spell you control would deal to an opponent and
+            // create one token per 1 damage prevented (for the spell's controller).
+            var hostility = damagePreventionService.findSpellDamageToOpponentPrevention(gameData, entry, playerId, effectiveDamage);
+            if (hostility != null) {
+                int hostilityPrevented = effectiveDamage;
+                effectiveDamage = 0;
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + "'s " + hostilityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+                permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
+                        hostility.token(), hostilityPrevented, entry.getCard().getSetCode());
             }
 
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);

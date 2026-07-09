@@ -42,6 +42,7 @@ public class PermanentChoiceSpellHandlerService {
     // → ImprovisationCapstoneCastSupport.
     private final ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport;
     private final ExileCastTargetSupport exileCastTargetSupport;
+    private final InputCompletionService inputCompletionService;
 
     public PermanentChoiceSpellHandlerService(GameQueryService gameQueryService,
                                               GraveyardService graveyardService,
@@ -50,7 +51,8 @@ public class PermanentChoiceSpellHandlerService {
                                               PlayerInputService playerInputService,
                                               TurnProgressionService turnProgressionService,
                                               @Lazy ImprovisationCapstoneCastSupport improvisationCapstoneCastSupport,
-                                              ExileCastTargetSupport exileCastTargetSupport) {
+                                              ExileCastTargetSupport exileCastTargetSupport,
+                                              @Lazy InputCompletionService inputCompletionService) {
         this.gameQueryService = gameQueryService;
         this.graveyardService = graveyardService;
         this.gameBroadcastService = gameBroadcastService;
@@ -59,6 +61,7 @@ public class PermanentChoiceSpellHandlerService {
         this.turnProgressionService = turnProgressionService;
         this.improvisationCapstoneCastSupport = improvisationCapstoneCastSupport;
         this.exileCastTargetSupport = exileCastTargetSupport;
+        this.inputCompletionService = inputCompletionService;
     }
 
     public void handleSpellRetarget(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellRetarget retarget) {
@@ -84,6 +87,14 @@ public class PermanentChoiceSpellHandlerService {
             // Check becomes-target-of-spell triggers for the new target (e.g. Livewire Lash)
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, targetSpell);
             if (gameData.interaction.isAwaitingInput()) return;
+        }
+
+        // Resume any remaining effects on the retargeting spell/ability that were paused for this
+        // async retarget (e.g. Wild Ricochet's "Then copy that spell" after retargeting the original).
+        // For flows with nothing left to resolve this is a no-op that falls through to auto-pass.
+        if (gameData.pendingEffectResolutionEntry != null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
         }
 
         turnProgressionService.resolveAutoPass(gameData);

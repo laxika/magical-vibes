@@ -752,7 +752,8 @@ public class AbilityActivationService {
         if (abilityCost != null) {
             boolean artifactContext = gameQueryService.isArtifact(permanent);
             boolean myrContext = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
-            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, targetingTax);
+            Set<CardSubtype> subtypeSpellOrAbilityContext = effectiveSubtypes(permanent);
+            payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, subtypeSpellOrAbilityContext, targetingTax);
         } else if (targetingTax > 0) {
             // No base mana cost but targeting tax applies — pay generic mana for the tax
             ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -1152,12 +1153,13 @@ public class AbilityActivationService {
             ManaCost preCheck = new ManaCost(abilityCost);
             boolean artifactCtx = gameQueryService.isArtifact(permanent);
             boolean myrCtx = permanent.getCard().getSubtypes().contains(CardSubtype.MYR);
+            Set<CardSubtype> soaCtx = effectiveSubtypes(permanent);
             if (preCheck.hasX()) {
-                if (!preCheck.canPay(manaPool, xValue + additionalGenericCost, artifactCtx, myrCtx)) {
+                if (!preCheck.canPay(manaPool, xValue + additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             } else {
-                if (!preCheck.canPay(manaPool, additionalGenericCost, artifactCtx, myrCtx)) {
+                if (!preCheck.canPay(manaPool, additionalGenericCost, artifactCtx, myrCtx, false, false, false, null, soaCtx)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
             }
@@ -1456,13 +1458,14 @@ public class AbilityActivationService {
     }
 
     private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext) {
-        payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, 0);
+        payManaCost(gameData, playerId, abilityCost, effectiveXValue, artifactContext, myrContext, null, 0);
     }
 
-    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext, int additionalCost) {
+    private void payManaCost(GameData gameData, UUID playerId, String abilityCost, int effectiveXValue, boolean artifactContext, boolean myrContext, Set<CardSubtype> subtypeSpellOrAbilityContext, int additionalCost) {
         ManaCost cost = new ManaCost(abilityCost);
         ManaPool pool = gameData.playerManaPools.get(playerId);
-        boolean hasRestricted = artifactContext || myrContext;
+        boolean hasSubtypeSoa = subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty();
+        boolean hasRestricted = artifactContext || myrContext || hasSubtypeSoa;
 
         // Pay Phyrexian mana first so colored mana is reserved for Phyrexian symbols before
         // generic costs consume it — but only where the rest of the cost stays payable,
@@ -1478,10 +1481,10 @@ public class AbilityActivationService {
                 throw new IllegalStateException("X value cannot be negative");
             }
             if (hasRestricted) {
-                if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext)) {
+                if (!cost.canPay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext);
+                cost.pay(pool, effectiveXValue + additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext);
             } else {
                 if (!cost.canPay(pool, effectiveXValue + additionalCost)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
@@ -1490,10 +1493,10 @@ public class AbilityActivationService {
             }
         } else {
             if (hasRestricted) {
-                if (!cost.canPay(pool, additionalCost, artifactContext, myrContext)) {
+                if (!cost.canPay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext)) {
                     throw new IllegalStateException("Not enough mana to activate ability");
                 }
-                cost.pay(pool, additionalCost, artifactContext, myrContext);
+                cost.pay(pool, additionalCost, artifactContext, myrContext, false, false, false, null, subtypeSpellOrAbilityContext);
             } else {
                 if (additionalCost > 0) {
                     if (!cost.canPay(pool, additionalCost)) {
@@ -1516,6 +1519,17 @@ public class AbilityActivationService {
             gameBroadcastService.logAndBroadcast(gameData,
                     playerName + " pays " + phyrexianLifeCost + " life for Phyrexian mana.");
         }
+    }
+
+    /**
+     * The permanent's effective creature subtypes (base + transient + granted). Used as the context
+     * for spell-or-ability restricted mana (e.g. Smokebraider) when paying an activated ability's cost.
+     */
+    private Set<CardSubtype> effectiveSubtypes(Permanent permanent) {
+        Set<CardSubtype> subtypes = new HashSet<>(permanent.getCard().getSubtypes());
+        subtypes.addAll(permanent.getTransientSubtypes());
+        subtypes.addAll(permanent.getGrantedSubtypes());
+        return subtypes;
     }
 
     private List<Integer> collectDiscardIndices(List<Card> hand, DiscardCardTypeCost cost) {

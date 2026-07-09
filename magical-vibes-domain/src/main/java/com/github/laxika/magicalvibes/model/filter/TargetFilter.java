@@ -6,6 +6,7 @@ package com.github.laxika.magicalvibes.model.filter;
  * services for stack/player filters), which dispatch over this sealed hierarchy.
  */
 public sealed interface TargetFilter permits
+        AnyTargetPredicateTargetFilter,
         ControlledPermanentPredicateTargetFilter,
         OwnedPermanentPredicateTargetFilter,
         PermanentPredicateTargetFilter,

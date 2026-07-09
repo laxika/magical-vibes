@@ -117,32 +117,40 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        UUID targetId = switch (grant.scope()) {
-            case SELF -> entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-            case TARGET -> entry.getTargetId();
-            default -> null;
-        };
-        if (targetId == null) {
+        // SELF resolves against the source; TARGET may cover multiple targets when the effect is
+        // bound to a target group (e.g. Blades of Velis Vel: "up to two target creatures").
+        List<UUID> ids;
+        if (grant.scope() == GrantScope.SELF) {
+            UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+            ids = selfId != null ? List.of(selfId) : List.of();
+        } else if (grant.scope() == GrantScope.TARGET) {
+            ids = entry.targetsForEffect(effect);
+            if (ids.isEmpty() && entry.getTargetId() != null) {
+                ids = List.of(entry.getTargetId());
+            }
+        } else {
             return;
         }
 
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-        if (target == null) {
-            return;
-        }
+        for (UUID id : ids) {
+            Permanent target = gameQueryService.findPermanentById(gameData, id);
+            if (target == null) {
+                continue; // Partially resolves — skip removed targets
+            }
 
-        // Optional grant condition: the target stays legal either way; only the keyword grant
-        // is conditional (e.g. Vampire's Zeal grants first strike only if the target is a Vampire).
-        if (grant.grantCondition() != null
-                && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.grantCondition())) {
-            return;
-        }
+            // Optional grant condition: the target stays legal either way; only the keyword grant
+            // is conditional (e.g. Vampire's Zeal grants first strike only if the target is a Vampire).
+            if (grant.grantCondition() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, grant.grantCondition())) {
+                continue;
+            }
 
-        bucketFor(target, grant.duration()).addAll(grant.keywords());
-        String keywordNames = formatKeywords(grant.keywords());
-        String logEntry = target.getCard().getName() + " gains " + keywordNames + " " + durationLabel(grant.duration()) + ".";
-        gameBroadcastService.logAndBroadcast(gameData, logEntry);
-        log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keywords(), grant.scope());
+            bucketFor(target, grant.duration()).addAll(grant.keywords());
+            String keywordNames = formatKeywords(grant.keywords());
+            String logEntry = target.getCard().getName() + " gains " + keywordNames + " " + durationLabel(grant.duration()) + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} gains {} ({})", gameData.id, target.getCard().getName(), grant.keywords(), grant.scope());
+        }
     }
 
     private Set<Keyword> bucketFor(Permanent permanent, GrantDuration duration) {

@@ -92,7 +92,8 @@ public class PlayerInteractionSupport {
 
         String tappedSuffix = effect.enterTapped() ? " tapped" : "";
         String prompt = "Choose a " + effect.label() + " card from your hand to put onto the battlefield" + tappedSuffix + ".";
-        playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped());
+        playerInputService.beginCardChoice(gameData, playerId, validIndices, prompt, effect.enterTapped(),
+                effect.grantHaste(), effect.sacrificeAtEndStep());
 
     }
     public void resolvePlayerMayPlayCreature(GameData gameData, UUID playerId) {

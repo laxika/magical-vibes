@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
@@ -654,6 +655,9 @@ public class PredicateEvaluationService {
             }
             case PermanentPredicateTargetFilter f ->
                     matchesPermanentPredicate(target, f.predicate(), filterContext);
+            // Any-target restriction: the permanent side is checked against the permanent predicate.
+            case AnyTargetPredicateTargetFilter f ->
+                    matchesPermanentPredicate(target, f.permanentPredicate(), filterContext);
             case PlayerPredicateTargetFilter ignored -> false;
             // Stack-entry filters never restrict a permanent target.
             case StackEntryPredicateTargetFilter ignored -> true;
@@ -665,6 +669,7 @@ public class PredicateEvaluationService {
             case ControlledPermanentPredicateTargetFilter f -> f.errorMessage();
             case OwnedPermanentPredicateTargetFilter f -> f.errorMessage();
             case PermanentPredicateTargetFilter f -> f.errorMessage();
+            case AnyTargetPredicateTargetFilter f -> f.errorMessage();
             case PlayerPredicateTargetFilter f -> f.errorMessage();
             case StackEntryPredicateTargetFilter f -> f.errorMessage();
         };

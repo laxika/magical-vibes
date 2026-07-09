@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorChosenSubtypeCreatureManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorSubtypeSpellOrAbilityManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyOneColorInstantSorceryOnlyManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardFlashbackOnlyAnyColorManaEffect;
@@ -238,6 +239,17 @@ public class ActivatedAbilityExecutionService {
             gameData.stack.subList(stackBeforeCosts, gameData.stack.size()).clear();
         }
 
+        // "Whenever you activate an ability of ..." triggers (e.g. Ceaseless Searblades). Collected
+        // here so they end up ON TOP of the activated ability (non-mana), or deferred to the next
+        // priority window alongside cost triggers (mana abilities, per CR 603.3).
+        int stackBeforeActivationTriggers = gameData.stack.size();
+        triggerCollectionService.checkControllerActivatesAbilityTriggers(gameData, playerId, permanent);
+        List<StackEntry> deferredActivationTriggers = List.of();
+        if (gameData.stack.size() > stackBeforeActivationTriggers) {
+            deferredActivationTriggers = new ArrayList<>(gameData.stack.subList(stackBeforeActivationTriggers, gameData.stack.size()));
+            gameData.stack.subList(stackBeforeActivationTriggers, gameData.stack.size()).clear();
+        }
+
         String logEntry = player.getUsername() + " activates " + permanent.getCard().getName() + "'s ability.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
@@ -257,9 +269,10 @@ public class ActivatedAbilityExecutionService {
             // wait until the next time a player would receive priority before going
             // on the stack.  This prevents them from blocking sorcery-speed spell
             // casting when a mana ability is activated to pay for a spell.
-            if (!deferredTapTriggers.isEmpty() || !deferredCostTriggers.isEmpty()) {
+            if (!deferredTapTriggers.isEmpty() || !deferredCostTriggers.isEmpty() || !deferredActivationTriggers.isEmpty()) {
                 gameData.pendingManaAbilityTriggers.addAll(deferredTapTriggers);
                 gameData.pendingManaAbilityTriggers.addAll(deferredCostTriggers);
+                gameData.pendingManaAbilityTriggers.addAll(deferredActivationTriggers);
             }
             return;
         }
@@ -273,6 +286,8 @@ public class ActivatedAbilityExecutionService {
         if (sacrificedEquipmentCard != null && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setDamageSourceCard(sacrificedEquipmentCard);
         }
+        // Add "whenever you activate an ability" triggers ON TOP so they resolve first (per CR rules)
+        gameData.stack.addAll(deferredActivationTriggers);
         // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)
         gameData.stack.addAll(deferredTapTriggers);
         // Add death triggers from sacrifice/exile ON TOP so they resolve first (per CR 603.3)
@@ -376,6 +391,14 @@ public class ActivatedAbilityExecutionService {
                             playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
                     log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} creatures)", gameData.id, player.getUsername(), chosenSubtype);
                 }
+            } else if (effect instanceof AwardAnyColorSubtypeSpellOrAbilityManaEffect soa) {
+                ChoiceContext.ManaColorChoice choiceContext =
+                        ChoiceContext.ManaColorChoice.subtypeSpellOrAbility(playerId, soa.amount(), soa.subtype());
+                List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                        playerId, null, null, choiceContext, colors, "Choose a color of mana to add."));
+                log.info("Game {} - Awaiting {} to choose a mana color (restricted to {} spells/abilities)",
+                        gameData.id, player.getUsername(), soa.subtype());
             } else if (effect instanceof AwardAnyColorManaWithInstantSorceryCopyEffect aacse) {
                 ChoiceContext.ManaColorChoice choiceContext = new ChoiceContext.ManaColorChoice(playerId, isCreatureSource, aacse.amount());
                 List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
@@ -552,6 +575,8 @@ public class ActivatedAbilityExecutionService {
                 total += arm.amount();
             } else if (effect instanceof AwardFlashbackOnlyAnyColorManaEffect fba) {
                 total += fba.amount();
+            } else if (effect instanceof AwardAnyColorSubtypeSpellOrAbilityManaEffect soa) {
+                total += soa.amount();
             } else if (effect instanceof AwardManaOfColorsAmongControlledEffect manaAmong) {
                 Set<CardColor> colors = collectColorsAmongControlled(gameData, playerId, manaAmong);
                 if (!colors.isEmpty()) {

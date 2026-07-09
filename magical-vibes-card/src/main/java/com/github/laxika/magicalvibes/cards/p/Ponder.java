@@ -14,7 +14,7 @@ public class Ponder extends Card {
 
     public Ponder() {
         addEffect(EffectSlot.SPELL, new ReorderTopCardsOfLibraryEffect(3));
-        addEffect(EffectSlot.SPELL, new MayEffect(new ShuffleLibraryEffect(), "You may shuffle your library."));
+        addEffect(EffectSlot.SPELL, new MayEffect(new ShuffleLibraryEffect(false), "You may shuffle your library."));
         addEffect(EffectSlot.SPELL, new DrawCardEffect(1));
     }
 }

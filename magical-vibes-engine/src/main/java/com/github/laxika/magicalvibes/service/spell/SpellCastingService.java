@@ -109,8 +109,12 @@ public class SpellCastingService {
             SacrificePermanentCost sacrificePermanentCost
     ) {}
 
-    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext) {
-        boolean hasRestricted() { return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless || (subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty()); }
+    private record ManaRestrictionFlags(boolean isArtifact, boolean isMyr, boolean hasRestrictedRedContext, boolean kickedOnlyGreen, boolean instantSorceryOnlyColorless, Set<CardSubtype> subtypeCreatureContext, Set<CardSubtype> subtypeSpellOrAbilityContext) {
+        boolean hasRestricted() {
+            return isArtifact || isMyr || hasRestrictedRedContext || kickedOnlyGreen || instantSorceryOnlyColorless
+                    || (subtypeCreatureContext != null && !subtypeCreatureContext.isEmpty())
+                    || (subtypeSpellOrAbilityContext != null && !subtypeSpellOrAbilityContext.isEmpty());
+        }
     }
 
     // --- Helper methods ---
@@ -250,10 +254,23 @@ public class SpellCastingService {
                         card.setCastTimeTargetFilter(chosen.targetFilter());
                     }
                 } else {
+                    // Choose-multiple with per-mode targeting: declare one target slot per chosen
+                    // mode's filter(s), in card-text order, and bind each mode's effect(s) to their
+                    // slot index. Modes with no explicit filter keep their effects' intrinsic
+                    // targeting channel (spell targetId / permanent targetIds), e.g. Cryptic Command.
                     for (ChooseOneEffect.ChooseOneOption chosen : chosenModes) {
-                        if (chosen.targetFilters() != null || chosen.targetFilter() != null) {
-                            throw new IllegalStateException(
-                                    "Choose-multiple modal spells do not support per-mode targeting yet");
+                        if (chosen.targetFilters() != null) {
+                            for (int t = 0; t < chosen.targetFilters().size(); t++) {
+                                SpellTarget spellTarget = card.target(chosen.targetFilters().get(t));
+                                if (t < chosen.effects().size()) {
+                                    card.registerEffectTargetIndex(chosen.effects().get(t), spellTarget.getIndex());
+                                }
+                            }
+                        } else if (chosen.targetFilter() != null) {
+                            SpellTarget spellTarget = card.target(chosen.targetFilter());
+                            for (CardEffect modeEffect : chosen.effects()) {
+                                card.registerEffectTargetIndex(modeEffect, spellTarget.getIndex());
+                            }
                         }
                     }
                 }
@@ -295,7 +312,10 @@ public class SpellCastingService {
         boolean hasRestrictedRedContext = isArtifact || card.hasType(CardType.CREATURE);
         boolean instantSorceryOnlyColorless = card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
         Set<CardSubtype> subtypeCreatureContext = card.hasType(CardType.CREATURE) ? gameQueryService.getCardSubtypes(card, gameData, playerId) : Set.of();
-        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless, subtypeCreatureContext);
+        // Spell-or-ability restricted mana (e.g. Smokebraider) can pay for any spell of the matching
+        // subtype, so compute subtypes for every spell (Elemental spells are creatures in practice).
+        Set<CardSubtype> subtypeSpellOrAbilityContext = gameQueryService.getCardSubtypes(card, gameData, playerId);
+        return new ManaRestrictionFlags(isArtifact, isMyr, hasRestrictedRedContext, kicked, instantSorceryOnlyColorless, subtypeCreatureContext, subtypeSpellOrAbilityContext);
     }
 
     private StackEntryType cardTypeToStackEntryType(CardType type) {
@@ -612,7 +632,7 @@ public class SpellCastingService {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (flags.hasRestricted()) {
-                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext())) {
+                            if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext())) {
                                 throw new IllegalStateException("Not enough mana to pay for X=" + effectiveXValue);
                             }
                         } else if (!cost.canPay(pool, effectiveXValue + totalAdditionalCost)) {
@@ -2057,13 +2077,13 @@ public class SpellCastingService {
             cost.pay(pool, effectiveXValue, card.getXColorRestriction(), additionalCost);
         } else if (cost.hasX()) {
             if (flags.hasRestricted()) {
-                cost.pay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext());
+                cost.pay(pool, effectiveXValue + additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext());
             } else {
                 cost.pay(pool, effectiveXValue + additionalCost);
             }
         } else {
             if (flags.hasRestricted()) {
-                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext());
+                cost.pay(pool, additionalCost, flags.isArtifact(), flags.isMyr(), flags.hasRestrictedRedContext(), flags.kickedOnlyGreen(), flags.instantSorceryOnlyColorless(), flags.subtypeCreatureContext(), flags.subtypeSpellOrAbilityContext());
             } else {
                 cost.pay(pool, additionalCost);
             }

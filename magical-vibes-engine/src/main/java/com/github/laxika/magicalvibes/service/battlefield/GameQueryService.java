@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEf
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquippedEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
@@ -1607,7 +1608,29 @@ public class GameQueryService {
                 && !hasAuraWithEffect(gameData, creature, CantBlockEffect.class)
                 && !(creature.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(CantAttackOrBlockUnlessEquippedEffect.class::isInstance)
-                        && !isEquipped(gameData, creature));
+                        && !isEquipped(gameData, creature))
+                && !isCantBlockUnlessConditionUnmet(gameData, creature);
+    }
+
+    /**
+     * Returns {@code true} if the creature has a {@link CantAttackOrBlockUnlessEffect} whose condition
+     * is not met (block side, mirrors the attack side in {@code CombatAttackService}).
+     */
+    private boolean isCantBlockUnlessConditionUnmet(GameData gameData, Permanent creature) {
+        UUID controllerId = null;
+        for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            if (effect instanceof CantAttackOrBlockUnlessEffect restriction) {
+                if (controllerId == null) {
+                    controllerId = findPermanentController(gameData, creature.getId());
+                    if (controllerId == null) return false;
+                }
+                if (!conditionEvaluationService.isMet(gameData, restriction.condition(),
+                        ConditionContext.forPermanent(creature, controllerId))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

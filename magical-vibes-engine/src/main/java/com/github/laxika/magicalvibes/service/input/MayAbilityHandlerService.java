@@ -804,8 +804,15 @@ public class MayAbilityHandlerService {
         // Redirect retarget — ChooseNewTargetsForTargetSpellEffect needs the full retarget UI flow
         boolean isRedirectRetarget = ability.effects().stream().anyMatch(e -> e instanceof ChooseNewTargetsForTargetSpellEffect);
         if (isRedirectRetarget) {
-            gameData.pendingEffectResolutionEntry = null;
-            gameData.pendingEffectResolutionIndex = 0;
+            // Advance past this "may choose new targets" effect (the stored index points at the
+            // MayEffect for re-run) so any following effects on the same spell continue after the
+            // retarget completes — e.g. Wild Ricochet's "Then copy that spell." The entry is kept
+            // so the retarget-completion path (handleSpellRetarget / the decline branch) resumes
+            // the remaining effects. For a standalone Redirect the resumed index is past the end,
+            // so it is a harmless no-op.
+            if (gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionIndex = gameData.pendingEffectResolutionIndex + 1;
+            }
             mayCopyHandlerService.handleRedirectRetargetChoice(gameData, player, accepted, ability);
             return;
         }

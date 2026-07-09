@@ -18,7 +18,10 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCount
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.extern.slf4j.Slf4j;
@@ -401,6 +404,36 @@ public class DamagePreventionService {
                 p.getCard().getEffects(EffectSlot.STATIC).stream()
                         .anyMatch(e -> e instanceof PreventNoncombatDamageToControllerAndGainLifeEffect));
         return hasEffect ? damage : 0;
+    }
+
+    /**
+     * Hostility-style prevention: if the damage source is a spell controlled by a player who controls a
+     * permanent with {@link PreventSpellDamageToOpponentAndCreateTokensEffect}, and the damaged player is
+     * an opponent of that controller, all of that damage is prevented. Returns the matching effect (whose
+     * token blueprint the caller uses to create one token per 1 damage prevented), or {@code null} when it
+     * doesn't apply (damage can't be prevented, the source isn't a spell, or no such permanent is present).
+     */
+    public PreventSpellDamageToOpponentAndCreateTokensEffect findSpellDamageToOpponentPrevention(
+            GameData gameData, StackEntry entry, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return null;
+        if (damage <= 0 || entry == null) return null;
+
+        // Only damage dealt by a spell qualifies (not abilities or combat).
+        StackEntryType type = entry.getEntryType();
+        if (type == StackEntryType.TRIGGERED_ABILITY || type == StackEntryType.ACTIVATED_ABILITY) return null;
+
+        // The damaged player must be an opponent of the spell's controller.
+        UUID spellControllerId = entry.getControllerId();
+        if (spellControllerId == null || spellControllerId.equals(playerId)) return null;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(spellControllerId);
+        if (battlefield == null) return null;
+
+        return battlefield.stream()
+                .flatMap(p -> p.getCard().getEffects(EffectSlot.STATIC).stream())
+                .filter(e -> e instanceof PreventSpellDamageToOpponentAndCreateTokensEffect)
+                .map(e -> (PreventSpellDamageToOpponentAndCreateTokensEffect) e)
+                .findFirst().orElse(null);
     }
 
     /**

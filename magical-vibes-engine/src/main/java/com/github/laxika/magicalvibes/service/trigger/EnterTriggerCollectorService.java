@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEqualToEnteringPowerEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -154,6 +156,26 @@ public class EnterTriggerCollectorService {
                 cardName + " triggers — deals " + damageEffect.amount() + " damage to " + targetName + ".");
         log.info("Game {} - {} triggers for {} entering (deal {} damage to controller)",
                 gameData.id, cardName, pe.enteringCard().getName(), damageEffect.amount());
+        return true;
+    }
+
+    @CollectsTrigger(value = PutCountersOnSourceEqualToEnteringPowerEffect.class,
+            slot = EffectSlot.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
+    private boolean handleAnyCreaturePutCountersEqualToPower(TriggerMatchContext match,
+            PutCountersOnSourceEqualToEnteringPowerEffect effect, TriggerContext ctx) {
+        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        int power = Math.max(0, pe.enteringCard().getPower());
+        Card sourceCard = match.permanent().getCard();
+        var counters = new PutCountersOnSourceEffect(effect.powerModifier(), effect.toughnessModifier(), power);
+        if (effect.optional()) {
+            var may = new MayEffect(counters, "Put " + power + " counter(s) on " + sourceCard.getName() + "?");
+            match.gameData().queueMayAbility(sourceCard, match.controllerId(), may, null, match.permanent().getId());
+        } else {
+            enqueue(match, counters, pe.defaultTargetPlayerId(), pe.perEffectTriggerCount());
+        }
+        logTriggered(match);
+        log.info("Game {} - {} triggers for {} entering (put {} +1/+1 counter(s))",
+                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName(), power);
         return true;
     }
 

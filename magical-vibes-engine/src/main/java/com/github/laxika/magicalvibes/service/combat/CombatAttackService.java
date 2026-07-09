@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -24,6 +25,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
+import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
@@ -580,11 +582,17 @@ public class CombatAttackService {
     private boolean isCantAttackUnlessConditionUnmet(GameData gameData, Permanent creature, UUID controllerId) {
         ConditionContext ctx = null;
         for (CardEffect effect : creature.getCard().getEffects(EffectSlot.STATIC)) {
+            Condition condition = null;
             if (effect instanceof CantAttackUnlessEffect restriction) {
+                condition = restriction.condition();
+            } else if (effect instanceof CantAttackOrBlockUnlessEffect restriction) {
+                condition = restriction.condition();
+            }
+            if (condition != null) {
                 if (ctx == null) {
                     ctx = ConditionContext.forPermanent(creature, controllerId);
                 }
-                if (!conditionEvaluationService.isMet(gameData, restriction.condition(), ctx)) {
+                if (!conditionEvaluationService.isMet(gameData, condition, ctx)) {
                     return true;
                 }
             }

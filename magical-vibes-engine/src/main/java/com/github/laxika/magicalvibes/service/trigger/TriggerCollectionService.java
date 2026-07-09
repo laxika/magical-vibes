@@ -877,6 +877,44 @@ public class TriggerCollectionService {
         });
     }
 
+    // ── Ability-activation triggers ────────────────────────────────────
+
+    /**
+     * "Whenever you activate an ability of {a permanent}" triggers (e.g. Ceaseless Searblades).
+     * Fires on every permanent the activating player controls that has an
+     * {@link EffectSlot#ON_CONTROLLER_ACTIVATES_ABILITY} effect, filtered (when wrapped in
+     * {@link TriggeringPermanentConditionalEffect}) by the permanent whose ability was activated.
+     */
+    public void checkControllerActivatesAbilityTriggers(GameData gameData, UUID activatingPlayerId, Permanent activatedPermanent) {
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (!ownerId.equals(activatingPlayerId)) return;
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_CONTROLLER_ACTIVATES_ABILITY)) {
+                CardEffect resolved = effect;
+                if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceCardId(perm.getOriginalCard().getId())
+                            .withSourceControllerId(ownerId);
+                    if (!predicateEvaluationService.matchesPermanentPredicate(activatedPermanent, conditional.predicate(), filterContext)) {
+                        continue;
+                    }
+                    resolved = conditional.wrapped();
+                }
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        ownerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(resolved)),
+                        null,
+                        perm.getId()
+                ));
+                gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName() + "'s ability triggers.");
+                log.info("Game {} - {} triggers on ability activation ({})",
+                        gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
+            }
+        });
+    }
+
     // ── Life-loss triggers ─────────────────────────────────────────────
 
     public void checkLifeLossTriggers(GameData gameData, UUID losingPlayerId, int lifeLostAmount) {
@@ -1122,15 +1160,34 @@ public class TriggerCollectionService {
             for (CardEffect effect : effects) {
                 if (effect instanceof com.github.laxika.magicalvibes.model.effect.IfWonClashEffect ifWon) {
                     if (won) resolvedEffects.add(ifWon.wrapped());
+                } else if (effect instanceof com.github.laxika.magicalvibes.model.effect.IfLostClashEffect ifLost) {
+                    if (!won) resolvedEffects.add(ifLost.wrapped());
                 } else {
                     resolvedEffects.add(effect);
                 }
             }
             if (resolvedEffects.isEmpty()) continue;
 
-            gameData.queueInteraction(new PermanentChoiceContext.ClashTriggerTarget(
-                    perm.getCard(), clashingPlayerId, resolvedEffects, perm.getId()));
-            log.info("Game {} - {} clash trigger queued", gameData.id, perm.getCard().getName());
+            // Targeting clash triggers (Entangling Trap) route through the ClashTriggerTarget
+            // interaction to pick an opponent's creature; non-targeting ones (Rebellion of the
+            // Flamekin) go straight onto the stack as a triggered ability.
+            boolean needsTarget = resolvedEffects.stream()
+                    .anyMatch(e -> e.canTargetPermanent() || e.canTargetPlayer());
+            if (needsTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.ClashTriggerTarget(
+                        perm.getCard(), clashingPlayerId, resolvedEffects, perm.getId()));
+                log.info("Game {} - {} clash trigger queued", gameData.id, perm.getCard().getName());
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        clashingPlayerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(resolvedEffects),
+                        null,
+                        perm.getId()));
+                log.info("Game {} - {} clash trigger pushed to stack", gameData.id, perm.getCard().getName());
+            }
         }
 
         triggeredAbilityQueueService.processNextClashTriggerTarget(gameData);
@@ -1653,12 +1710,20 @@ public class TriggerCollectionService {
             List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ALLY_LAND_ENTERS_BATTLEFIELD);
             if (effects == null || effects.isEmpty()) continue;
 
+            List<CardEffect> resolvedEffects = new ArrayList<>();
+            for (CardEffect effect : effects) {
+                CardEffect resolved = unwrapTriggeringCardConditional(effect, enteringLand, gameData, landControllerId);
+                if (resolved == null) continue;
+                resolvedEffects.add(resolved);
+            }
+            if (resolvedEffects.isEmpty()) continue;
+
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     landControllerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
+                    resolvedEffects,
                     null,
                     perm.getId()
             ));

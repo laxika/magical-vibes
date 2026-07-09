@@ -473,6 +473,18 @@ public class GameTestHarness {
                 targetId, null, targetIds, List.of());
     }
 
+    /**
+     * Cast a modal sorcery that chooses multiple modes, supplying per-mode permanent/player
+     * targets ({@code targetIds}, in chosen-mode order) (e.g. Incendiary Command).
+     */
+    public void castModalSorceryWithModes(Player player, int cardIndex, int choicesRequired,
+                                          int[] modeIndices, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
+                null, null, targetIds, List.of());
+    }
+
     public void castInstant(Player player, int cardIndex, UUID spellTargetId, UUID permanentTargetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, spellTargetId, null, List.of(permanentTargetId), List.of());

@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -161,7 +163,7 @@ public class TargetLegalityService {
                     throw new IllegalStateException("Invalid player target");
                 }
                 validatePlayerTargetable(gameData, targetId, playerId);
-                validatePlayerPredicate(playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
+                validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
                 continue;
             }
 
@@ -211,7 +213,7 @@ public class TargetLegalityService {
                         filterContext(gameData, sourceCard.getId(), playerId).withXValue(xValue));
             } else if (gameData.playerIds.contains(targetId)
                     && ability.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter) {
-                validatePlayerPredicate(playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
+                validatePlayerPredicate(gameData, playerId, targetId, playerFilter.predicate(), playerFilter.errorMessage());
             }
         }
 
@@ -314,8 +316,14 @@ public class TargetLegalityService {
 
         if (target == null
                 && card.getTargetFilter() instanceof PlayerPredicateTargetFilter playerFilter
-                && !matchesPlayerPredicate(controllerId, targetId, playerFilter.predicate())) {
+                && !matchesPlayerPredicate(gameData, controllerId, targetId, playerFilter.predicate())) {
             return Optional.of(playerFilter.errorMessage());
+        }
+
+        if (target == null
+                && card.getTargetFilter() instanceof AnyTargetPredicateTargetFilter anyFilter
+                && !matchesPlayerPredicate(gameData, controllerId, targetId, anyFilter.playerPredicate())) {
+            return Optional.of(anyFilter.errorMessage());
         }
 
         if (card.getTargetFilter() != null && target != null) {
@@ -736,8 +744,8 @@ public class TargetLegalityService {
         }
     }
 
-    private void validatePlayerPredicate(UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate, String errorMessage) {
-        if (!matchesPlayerPredicate(controllerId, targetPlayerId, predicate)) {
+    private void validatePlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate, String errorMessage) {
+        if (!matchesPlayerPredicate(gameData, controllerId, targetPlayerId, predicate)) {
             throw new IllegalStateException(errorMessage);
         }
     }
@@ -974,14 +982,15 @@ public class TargetLegalityService {
         return false;
     }
 
-    private boolean matchesPlayerPredicate(UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
-        if (predicate instanceof PlayerRelationPredicate relationPredicate) {
-            return switch (relationPredicate.relation()) {
+    private boolean matchesPlayerPredicate(GameData gameData, UUID controllerId, UUID targetPlayerId, PlayerPredicate predicate) {
+        return switch (predicate) {
+            case PlayerRelationPredicate relationPredicate -> switch (relationPredicate.relation()) {
                 case ANY -> true;
                 case SELF -> controllerId != null && controllerId.equals(targetPlayerId);
                 case OPPONENT -> controllerId != null && !controllerId.equals(targetPlayerId);
             };
-        }
-        return false;
+            case PlayerDealtDamageThisTurnPredicate ignored ->
+                    gameData.playersDealtDamageThisTurn.contains(targetPlayerId);
+        };
     }
 }
