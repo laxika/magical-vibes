@@ -117,6 +117,12 @@ export class SidePanelComponent {
     return this.stackTargetId === entry.cardId;
   }
 
+  formatManaEntry(entry: { color: string; count: number }): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.manaSymbolService.replaceSymbols(`${entry.count} x {${entry.color}}`)
+    );
+  }
+
   formatAbilityDescription(description: string): SafeHtml {
     return this.sanitizer.bypassSecurityTrustHtml(
       this.manaSymbolService.replaceSymbols(description)

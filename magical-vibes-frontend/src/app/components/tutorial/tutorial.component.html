@@ -119,9 +119,7 @@
       <div class="mana-pool-bar">
         <div class="mana-pool">
           @for (entry of manaEntries; track entry.color) {
-            <div class="mana-pip" [attr.data-color]="entry.color">
-              <span class="mana-count">{{ entry.count }}</span>
-            </div>
+            <div class="mana-pool-entry" [innerHTML]="formatManaEntry(entry)"></div>
           }
         </div>
       </div>

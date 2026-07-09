@@ -85,47 +85,13 @@
   gap: 6px;
 }
 
-.mana-pip-sm {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+.mana-pool-entry {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 700;
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(0, 0, 0, 0.25);
-}
-
-.mana-pip-sm[data-color="W"] {
-  background: linear-gradient(135deg, #f6d365, #d4a828);
-  color: #333;
-  text-shadow: none;
-}
-
-.mana-pip-sm[data-color="U"] {
-  background: linear-gradient(135deg, #4a90d9, var(--color-blue-primary));
-}
-
-.mana-pip-sm[data-color="B"] {
-  background: linear-gradient(135deg, #555, #222);
-}
-
-.mana-pip-sm[data-color="R"] {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-}
-
-.mana-pip-sm[data-color="G"] {
-  background: linear-gradient(135deg, #27ae60, #1e8449);
-}
-
-.mana-pip-sm[data-color="C"] {
-  background: linear-gradient(135deg, #b0b0b0, #808080);
-  color: #333;
-  text-shadow: none;
+  color: var(--color-border-tan);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .tab-header {

@@ -1,6 +1,8 @@
-import { Component, AfterViewInit, OnDestroy, signal, computed, ElementRef } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, signal, computed, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
+import { ManaSymbolService } from '../../services/mana-symbol.service';
 import { Game, Card, Permanent, StackEntry, TurnStep, PHASE_GROUPS } from '../../services/websocket.service';
 import { CardDisplayComponent } from '../game/card-display/card-display.component';
 import { SidePanelComponent } from '../game/side-panel/side-panel.component';
@@ -48,6 +50,8 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
   readonly boundGetStackEntryTargetName = () => null;
 
   private resizeObserver: ResizeObserver | null = null;
+  private manaSymbolService = inject(ManaSymbolService);
+  private sanitizer = inject(DomSanitizer);
 
   constructor(
     private router: Router,
@@ -267,6 +271,12 @@ export class TutorialComponent implements AfterViewInit, OnDestroy {
     return Object.entries(this.game().manaPool ?? {})
       .filter(([, count]) => count > 0)
       .map(([color, count]) => ({ color, count }));
+  }
+
+  formatManaEntry(entry: { color: string; count: number }): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      this.manaSymbolService.replaceSymbols(`${entry.count} x {${entry.color}}`)
+    );
   }
 
   get totalMana(): number {

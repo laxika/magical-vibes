@@ -32,7 +32,7 @@
           <div class="mana-strip-label">Mana Pool</div>
           <div class="mana-strip-pips">
             @for (entry of manaEntries; track entry.color) {
-              <div class="mana-pip-sm" [attr.data-color]="entry.color">{{ entry.count }}</div>
+              <div class="mana-pool-entry" [innerHTML]="formatManaEntry(entry)"></div>
             }
           </div>
         </div>
