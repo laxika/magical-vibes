@@ -30,9 +30,11 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -831,6 +833,10 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryColorInPredicate colorInPredicate) {
             return colorInPredicate.colors().contains(stackEntry.getCard().getColor());
         }
+        if (predicate instanceof StackEntrySubtypeInPredicate subtypeInPredicate) {
+            return stackEntry.getCard().getSubtypes().stream()
+                    .anyMatch(subtypeInPredicate.subtypes()::contains);
+        }
         if (predicate instanceof StackEntryIsSingleTargetPredicate) {
             return stackEntry.isSingleTarget();
         }
@@ -841,6 +847,10 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryManaValuePredicate manaValuePredicate) {
             return stackEntry.getCard().getManaValue() == manaValuePredicate.manaValue();
+        }
+        if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
+            int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());
+            return stackEntry.getCard().getManaValue() <= count;
         }
         if (predicate instanceof StackEntryControlledByPredicate) {
             return stackEntry.getControllerId().equals(controllerId);
@@ -874,6 +884,19 @@ public class TargetLegalityService {
             return !matchesStackEntryPredicate(gameData, stackEntry, notPredicate.predicate(), controllerId);
         }
         return false;
+    }
+
+    private int countControlledMatching(GameData gameData, UUID controllerId, PermanentPredicate filter) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return 0;
+        FilterContext ctx = FilterContext.of(gameData).withSourceControllerId(controllerId);
+        int count = 0;
+        for (Permanent p : battlefield) {
+            if (predicateEvaluationService.matchesPermanentPredicate(p, filter, ctx)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private boolean targetsAPermanentControlledBy(GameData gameData, StackEntry stackEntry, UUID controllerId) {

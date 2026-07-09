@@ -105,6 +105,8 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `TargetCreatureDealsPowerDamageToSelfEffect()` — target deals its power to itself
 - `FightTargetsEffect()` — fight (group indices `(firstTargetGroup, secondTargetGroup)` default to 0, 1)
 - `MassFightTargetCreatureEffect()` — Alpha Brawl-style mass fight
+- `PreventNoncombatDamageToControllerAndGainLifeEffect()` — STATIC: prevent all noncombat damage to controller; they gain life equal to the damage prevented (Purity). Hooked in `DamageSupport.dealDamageToPlayer`
+- `PreventAllDamageToTargetCreatureEffect()` — prevent all damage to target creature this turn (Wellgabber Apothecary). Adds target to `GameData.creaturesWithAllDamagePrevented`, checked in `DamagePreventionService.applyCreaturePreventionShield`, cleared at turn cleanup
 - `DoubleDamageEffect()` — double all damage (static)
 - `DoubleDamageToEnchantedPlayerEffect()` — double damage dealt to enchanted player (static Curse)
 - `DoubleControllerDamageEffect(StackEntryPredicate, boolean)` — double controller's damage
@@ -147,6 +149,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `SacrificeSelfAndDrawCardsEffect(int)` — sacrifice + draw
 - `SacrificeAtEndOfCombatEffect()` — sacrifice at EOC
 - `SacrificeTargetThenRevealUntilTypeToBattlefieldEffect(Set<CardType>)` — Polymorph
+- `RevealUntilNonlandCardsToHandRestToBottomEffect(int)` — reveal until N nonland to hand, rest (lands) to bottom in any order (Fathom Trawl)
 
 See EFFECTS_INDEX.md "Destruction" section for 10+ additional niche destruction/sacrifice effects.
 
@@ -164,6 +167,7 @@ See EFFECTS_INDEX.md "Destruction" section for 10+ additional niche destruction/
 - `TapCreatureCost(PermanentPredicate)` — tap creature
 - `PayLifeCost(int)` — pay life
 - `ExileCardFromGraveyardCost(CardType)` + overloads — exile graveyard card
+- `ReturnCreatureToHandCost()` — additional spell cost: return a creature you control to hand (Familiar's Ruse)
 
 See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
@@ -178,7 +182,10 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `CounterUnlessPaysEffect(int)` or `(int, boolean useX, boolean exileIfCountered)` — counter unless pays
 - `CounterUnlessDiscardsEffect()` — counter unless controller discards a card (Ward—Discard a card)
 - `CounterlashEffect()` — counter target spell, then may cast from hand sharing a card type without paying mana cost
+- `RegisterDelayedManaEqualToTargetSpellManaValueEffect(ManaColor)` — Scattering Stroke clash reward: wrap in `ClashEffect` before the counter; may add {C} equal to the countered spell's mana value at your next main phase
 - `MayCastFromHandWithoutPayingManaCostEffect()` — marker for may-cast-from-hand routing in PendingMayAbility
+- `ReplaceControlledCounterWithExileAndPlayEffect()` — STATIC (Guile): your counters exile the spell instead and you may play it free
+- `MayPlayExiledCounteredCardEffect()` — marker for the Guile free-play routing in PendingMayAbility
 - `CantBeCounteredEffect()` — can't be countered (static)
 - `CreatureSpellsCantBeCounteredEffect()` — creatures can't be countered (static)
 - `CreatureEnteringDontCauseTriggersEffect()` — Torpor Orb (static)
@@ -244,6 +251,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ShuffleLibraryEffect()` — shuffle library
 - `ShuffleIntoLibraryEffect()` — shuffle spell into library
 - `ShuffleSelfAndGraveyardIntoLibraryEffect()` — shuffle self + graveyard into library
+- `ShuffleSelfFromGraveyardIntoLibraryEffect()` — triggered ability: shuffle the source card from its owner's graveyard into their library (pair with `ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE`, e.g. Purity)
 - `ShuffleGraveyardIntoLibraryEffect(boolean targetPlayer)` — shuffle graveyard into library (targetPlayer=true targets, false=controller's)
 - `ShuffleTargetCardsFromGraveyardIntoLibraryEffect(CardPredicate, int)` — shuffle N cards from graveyard
 - `CastTopOfLibraryWithoutPayingManaCostEffect(Set<CardType>)` — cast top free
@@ -306,9 +314,10 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `AttachedBoostEffect(DynamicAmount, DynamicAmount, GrantScope)` — STATIC +X/+Y on the enchanted/equipped creature (`ENCHANTED_CREATURE`/`EQUIPPED_CREATURE`). Attached-scope sibling of `BoostSelfEffect`; any "for each …" aura/equipment boost = this effect + a `DynamicAmount`. `CountScope.CONTROLLER` = the aura/equipment's controller (CR 109.5). Negative per-count = wrap in `Scaled(…, -1)`. Blanchwood Armor, Blackblade Reforged, Bonehoard, Runechanter's Pike, Quag Sickness, Strata Scythe — never a new `BoostCreaturePer*` class
 - `DoubleSelfPowerToughnessEffect()` — double self P/T
 - `BoostAllOwnCreaturesEffect(DynamicAmount, DynamicAmount)` or `(…, PermanentPredicate)` — all own +X/+Y; `(int, int[, PermanentPredicate])` convenience wraps in `Fixed`. Any "where X is …" / power- or graveyard-derived mass own-pump = this effect + a `DynamicAmount` (evaluated once at resolution) — e.g. `new GreatestPowerAmongControlled()` (Overwhelming Stampede), `new CardsInGraveyard(new CardTypePredicate(CREATURE), CONTROLLER)` (Garruk, the Veil-Cursed). Never a new per-variant class
-- `BoostAllCreaturesEffect(DynamicAmount, DynamicAmount)` or `(…, PermanentPredicate)` — all creatures (both sides) +X/+Y; `(int, int[, PermanentPredicate])` convenience wraps in `Fixed`. "X paid" mass pump = `new Scaled(new XValue(), mult)` / `new XValue()` (Ichor Explosion, Flowstone Slide)
+- `BoostAllCreaturesEffect(DynamicAmount, DynamicAmount)` or `(…, PermanentPredicate)` or `(…, PermanentPredicate, EachPermanentScope)` — creatures +X/+Y; `(int, int[, PermanentPredicate])` / `(int, int, EachPermanentScope)` convenience wraps in `Fixed`. Scope `ALL_PLAYERS` (default, both sides) or `TARGET_PLAYER` ("creatures target player controls", `canTargetPlayer`, Shields of Velis Vel). "X paid" mass pump = `new Scaled(new XValue(), mult)` / `new XValue()` (Ichor Explosion, Flowstone Slide)
 - `StaticBoostEffect(int, int, Set<Keyword>, GrantScope, PermanentPredicate)` — static +X/+Y + keywords
 - `SetBasePowerToughnessEffect(int, int)` — set target creature's base P/T until end of turn; `(int, int, GrantScope)` for continuous static (e.g. `ENCHANTED_CREATURE`, Deep Freeze)
+- `SetAllOwnCreaturesBasePowerToughnessEffect(DynamicAmount, DynamicAmount)` or `(int, int)` — set base P/T of all creatures you control to X/X until end of turn (layer 7b, modifiers apply on top). X-cost ability = `new XValue()` (Mirror Entity)
 - `SwitchPowerToughnessEffect()` — switch P/T
 
 ## P/T setting / counters
@@ -337,11 +346,15 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `RegenerateEffect()` or `(boolean targetsPermanent)` — regenerate
 - `ProtectionFromColorsEffect(Set<CardColor>)` — protection from colors (static)
 - `ProtectionFromSubtypesEffect(Set<CardSubtype>)` — protection from subtypes (static)
+- `GrantSubtypeToTargetCreatureEffect(CardSubtype)` — target creature "becomes a [subtype] in addition to its other types" (permanent, added to `grantedSubtypes`)
+- `GrantBasicLandTypeToTargetEffect(EffectDuration[, CardSubtype fixedSubtype][, boolean replacing])` — target land becomes a chosen basic land type. Default adds "in addition to its other types" (Navigator's Compass / Aquitect's Will); `replacing=true` makes the land **become** the type, losing its others per rule 305.7 (Tideshaper Mystic, UNTIL_END_OF_TURN only)
+- `LoseAllCreatureTypesEffect(GrantScope)` — creatures lose all creature types until end of turn; `TARGET` = single creature (Amoeboid Changeling), `TARGET_PLAYERS_CREATURES` = all creatures target player controls (Ego Erasure); "gains all creature types" = `GrantKeywordEffect(Keyword.CHANGELING, sameScope)`
 - **Paradigm** (`Keyword.PARADIGM` on card, not an effect) — engine handled by `ParadigmService`: first resolve exiles spell + registers `GameData.ParadigmDelayedTrigger`; each precombat main fires `ParadigmCastCopyEffect` → copy in exile + `ParadigmMayCastFromExileEffect` may-cast (`ParadigmCastSupport`)
 
 ## Combat restrictions / evasion
 
 - `CantBeBlockedEffect()` — unblockable (static)
+- `CantBeBlockedByFewerThanNCreaturesEffect(int minBlockers)` — generalized menace: can't be blocked except by N+ creatures (static). Menace = 2; Guile = 3
 - `CantBlockEffect()` — can't block (static)
 - `MustAttackEffect()` — must attack (static)
 - `MustBeBlockedIfAbleEffect()` — must be blocked (static)
@@ -362,7 +375,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `UntapPermanentsEffect(TapUntapScope.CONTROLLED, filter)` — untap all you control matching · `.OTHER_CONTROLLED_CREATURES` — untap each other creature you control · `.ATTACKED_CREATURES` — untap creatures that attacked this turn
 - `DoesntUntapEffect.self()` — this permanent doesn't untap (static) · `.enchanted()` — attached aura/equipment's host doesn't untap (static) · `.targetWhileSourceOnBattlefield()` — target doesn't untap while source on battlefield (Dungeon Geists / Time of Ice) · `.targetWhileSourceTapped()` — while source stays tapped (Rust Tick); TARGET factories piggyback on a companion `TapPermanentsEffect(TapUntapScope.TARGET)`
 - `SkipNextUntapEffect(TapUntapScope.TARGET)` — target permanent skips next untap (piggybacks on companion targeting effect) · `.TARGET_PLAYERS_PERMANENTS, filter` — that player's matching permanents · `.ALL_CREATURES, filter` — all creatures matching filter (`PermanentIsAttackingPredicate` = all attackers)
-- `IfWonClashEffect(wrapped)` — clash-only marker on `EffectSlot.ON_CONTROLLER_CLASHES`: the wrapped effect applies only if the controller won the clash ("If you won, ..."). Consumed by `TriggerCollectionService.performClash` at trigger time (not a stack effect). See Entangling Trap: tap target opponent creature + `IfWonClashEffect(SkipNextUntapEffect(TARGET))`. Clash is performed via `performClash` (2-player: both reveal top card, strictly-higher mana value wins); no clash-source card exists yet.
+- `IfWonClashEffect(wrapped)` — clash-only marker on `EffectSlot.ON_CONTROLLER_CLASHES`: the wrapped effect applies only if the controller won the clash ("If you won, ..."). Consumed by `TriggerCollectionService.performClash` at trigger time (not a stack effect). See Entangling Trap: tap target opponent creature + `IfWonClashEffect(SkipNextUntapEffect(TARGET))`. Clash is performed via `performClash` (2-player: both reveal top card, strictly-higher mana value wins).
+- `ClashEffect(wrapped)` — clash-*source*: "Clash with an opponent. If you win, [wrapped]." A stack-resolution effect (e.g. on `ON_ENTER_BATTLEFIELD`) that *initiates* a clash for the controller via `performClash`; on a win it dispatches `wrapped` against the same entry (so it acts on the source). `wrapped` may be null for a bare "clash with an opponent". Mirrors `FlipCoinWinEffect`. E.g. Oaken Brawler = `ClashEffect(new PutCountersOnSourceEffect(1, 1, 1))`. Wrap in `MayEffect` for "you may clash" (Sentry Oak = `MayEffect(ClashEffect(new BoostSelfAndLoseKeywordEffect(2, 0, Keyword.DEFENDER)), ...)`). Delegates `canTargetPermanent`/`canTargetPlayer` to `wrapped`, so a **targeted** win reward works on any targeting slot: e.g. Springjack Knight "whenever this attacks, clash; if you win, target creature gains double strike" = `target(...)` + `ClashEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET))` on `ON_ATTACK` (target chosen when the trigger goes on the stack; grant only on a win). Do **not** wrap an interactive `MayEffect` as a `ClashEffect` win reward — the may-pause re-runs the `ClashEffect` (re-clash). For an *optional* win reward, use a bare `ClashEffect(null)` (records its result on the entry) followed by `ConditionalEffect(new WonClash(), new MayEffect(reward, prompt))`: Whirlpool Whelm = `ClashEffect(null)` + `ConditionalEffect(new WonClash(), new MayEffect(new PutTargetOnTopOfLibraryEffect(), prompt))` + `ReturnToHandEffect.target()`.
 
 ## Control / steal
 
@@ -370,6 +384,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `GainControlOfTargetEffect(ControlDuration.END_OF_TURN)` — gain control until EOT
 - `GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)` — control while source on battlefield
 - `GainControlOfEnchantedTargetEffect()` — Control Magic (static)
+- `ClashForControlOfEnchantedCreatureEffect()` — Captivating Glance: `CONTROLLER_END_STEP_TRIGGERED` Aura effect; clash, then the winner (controller on win, else clash opponent) gains control of the enchanted creature
 
 ## Mana
 
@@ -382,6 +397,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Copy / clone
 
 - `CopyPermanentOnEnterEffect(PermanentPredicate, String)` + overloads — Clone-style
+- `MakeTargetCopyOfTargetCreatureUntilNextTurnEffect()` — **two targets**: target Shapeshifter (`targetIds[0]`) becomes a copy of target creature (`targetIds[1]`) until the controller's next turn (Shapesharer). Wire via the multi-target `ActivatedAbility` ctor
+- `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect()` — source permanent becomes a copy of target creature until end of turn (Tilonalli's Skinshifter); `BecomeCopyOfTargetCreatureEffect()` — same, retaining the granting ability (Cryptoplasm)
 - `CopySpellEffect()` or `(StackEntryPredicate)` — copy target spell; for "copy twice if cast from a graveyard" add `ConditionalEffect(new CastFromZone(Zone.GRAVEYARD), new CopySpellEffect())` (Increasing Vengeance). Full form `(StackEntryPredicate spellFilter, boolean tokenWithHaste, boolean sacrificeAtEndStep)`: for "copy target **creature** spell; the copy gains haste and is sacrificed at the beginning of the end step", use `new CopySpellEffect(null, true, true)` — the copy becomes a token, gains `HASTE`, and its permanent is registered in `GameData.delayedActions` (a `SacrificeAtEndStep`) (drained by `StepTriggerService.handleEndStepTriggers` via `removePermanentToGraveyard`). `tokenWithHaste` also suppresses the "choose new targets" retarget prompt. Filter which spells are targetable via the mode's `target(...)`/`ChooseOneOption` filter, not `spellFilter`. To make a spell uncopyable, set `card.setCantBeCopied(true)` — honored by every copy handler. See Choreographed Sparks.
 - `CopyThisSpellIfConditionEffect(Condition)` — "When you cast this spell, copy it if <condition>. You may choose new targets for the copy." Place in the `ON_SELF_CAST` slot (the spell's own cast trigger); the copy is created with an optional choose-new-targets prompt only when the condition holds at resolution. Used by the SOS Infusion copy cycle (e.g. Lumaret's Favor with `new GainedLifeThisTurn()`)
 - `CopyControllerCastSpellOnSpellCastEffect(CardPredicate, TapMultiplePermanentsCost)` — ON_CONTROLLER_CASTS_SPELL: copy cast instant/sorcery; optional tap cost wraps `MayPayTapPermanentsEffect` + `CopyControllerCastSpellEffect` (Aziza, Mage Tower Captain)

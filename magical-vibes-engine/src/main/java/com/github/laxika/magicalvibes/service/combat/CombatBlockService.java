@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.TriggerMode;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -201,6 +202,11 @@ public class CombatBlockService {
                     throw new IllegalStateException(attacker.getCard().getName()
                             + " can't be blocked by more than " + restriction.maxBlockers()
                             + " creature" + (restriction.maxBlockers() == 1 ? "" : "s"));
+                }
+                if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
+                        && blockerCount < restriction.minBlockers()) {
+                    throw new IllegalStateException(attacker.getCard().getName()
+                            + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
                 }
             }
         }

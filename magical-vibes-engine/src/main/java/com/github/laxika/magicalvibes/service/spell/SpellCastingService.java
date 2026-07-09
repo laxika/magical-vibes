@@ -56,6 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAllCreaturesYouControlCost;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
@@ -147,6 +148,34 @@ public class SpellCastingService {
                 .findFirst().orElse(null);
         if (cost != null) effects.removeIf(ExileNCardsFromGraveyardCost.class::isInstance);
         return cost;
+    }
+
+    private boolean extractAndRemoveReturnCreatureToHandCost(List<CardEffect> effects) {
+        return effects.removeIf(ReturnCreatureToHandCost.class::isInstance);
+    }
+
+    /**
+     * Pays a spell's "as an additional cost to cast this spell, return a creature you control to its
+     * owner's hand" cost (e.g. Familiar's Ruse). The creature is supplied via {@code sacrificePermanentId}.
+     */
+    private void payReturnCreatureToHandCost(GameData gameData, Player player, Card card, UUID returnPermanentId) {
+        if (returnPermanentId == null) {
+            throw new IllegalStateException("Must return a creature you control to cast " + card.getName());
+        }
+        Permanent toReturn = gameQueryService.findPermanentById(gameData, returnPermanentId);
+        if (toReturn == null) {
+            throw new IllegalStateException("Return target not found on battlefield");
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, returnPermanentId);
+        if (!player.getId().equals(controllerId)) {
+            throw new IllegalStateException("Can only return creatures you control");
+        }
+        if (!gameQueryService.isCreature(gameData, toReturn)) {
+            throw new IllegalStateException("Return target must be a creature");
+        }
+        permanentRemovalService.removePermanentToHand(gameData, toReturn);
+        gameBroadcastService.logAndBroadcast(gameData,
+                player.getUsername() + " returns " + toReturn.getCard().getName() + " to hand for " + card.getName() + ".");
     }
 
     private DiscardCardTypeCost extractAndRemoveDiscardCost(List<CardEffect> effects) {
@@ -456,6 +485,7 @@ public class SpellCastingService {
         ExileXCardsFromGraveyardCost exileXCardsGraveyardCost = extractAndRemoveExileXCardsFromGraveyardCost(filteredSpellEffects);
         ExileNCardsFromGraveyardCost exileNCardsGraveyardCost = extractAndRemoveExileNCardsFromGraveyardCost(filteredSpellEffects);
         DiscardCardTypeCost discardCost = extractAndRemoveDiscardCost(filteredSpellEffects);
+        boolean usesReturnCreatureCost = extractAndRemoveReturnCreatureToHandCost(filteredSpellEffects);
 
         // Handle modal spells (Choose one): unwrap at cast time per MTG CR 700.2a
         boolean wasModal = filteredSpellEffects.stream().anyMatch(ChooseOneEffect.class::isInstance);
@@ -882,6 +912,9 @@ public class SpellCastingService {
                 paySpellManaCost(gameData, playerId, card, resolvedXValue + perTargetCost, convokeContributions, phyrexianLifeCount, kicked, targetSubtypeCostReduction, targetingTax);
             }
             resolvedXValue = payAllSacrificeCosts(gameData, player, card, sacrificePermanentId, sacFlags, resolvedXValue);
+            if (usesReturnCreatureCost) {
+                payReturnCreatureToHandCost(gameData, player, card, sacrificePermanentId);
+            }
             resolvedXValue = payExileGraveyardCost(gameData, player, card, exileGraveyardCost, exileGraveyardCardIndex, resolvedXValue);
             resolvedXValue = payExileXCardsFromGraveyardCost(gameData, player, card, exileXCardsGraveyardCost, exileGraveyardCardIndices, resolvedXValue);
             payExileNCardsFromGraveyardCost(gameData, player, card, exileNCardsGraveyardCost, exileGraveyardCardIndices);
@@ -1762,6 +1795,7 @@ public class SpellCastingService {
         if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
             effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             extractAndRemoveSacrificeCosts(effectsToResolve);
+            extractAndRemoveReturnCreatureToHandCost(effectsToResolve);
             effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);
         } else {
             effectsToResolve = List.of();
@@ -1928,6 +1962,7 @@ public class SpellCastingService {
         if (card.hasType(CardType.SORCERY) || card.hasType(CardType.INSTANT)) {
             effectsToResolve = new ArrayList<>(card.getEffects(EffectSlot.SPELL));
             extractAndRemoveSacrificeCosts(effectsToResolve);
+            extractAndRemoveReturnCreatureToHandCost(effectsToResolve);
             effectiveXValue = unwrapChooseOneEffect(card, effectsToResolve, effectiveXValue);
         } else {
             effectsToResolve = List.of();

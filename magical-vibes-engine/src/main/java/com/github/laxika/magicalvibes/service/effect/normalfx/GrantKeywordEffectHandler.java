@@ -62,6 +62,37 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (grant.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+            UUID targetPlayerId = entry.getTargetId();
+            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+                return;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+            FilterContext filterContext = FilterContext.of(gameData)
+                    .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
+                    .withSourceControllerId(entry.getControllerId());
+            int count = 0;
+            if (battlefield != null) {
+                for (Permanent permanent : battlefield) {
+                    if (!gameQueryService.isCreature(gameData, permanent)) {
+                        continue;
+                    }
+                    if (grant.filter() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(permanent, grant.filter(), filterContext)) {
+                        continue;
+                    }
+                    bucketFor(permanent, grant.duration()).addAll(grant.keywords());
+                    count++;
+                }
+            }
+
+            String keywordNames = formatKeywords(grant.keywords());
+            String logEntry = entry.getCard().getName() + " gives " + keywordNames + " to " + count + " creature(s) " + durationLabel(grant.duration()) + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} grants {} to {} creature(s) target player controls", gameData.id, entry.getCard().getName(), grant.keywords(), count);
+            return;
+        }
+
         if (grant.scope() == GrantScope.ALL_CREATURES) {
             FilterContext filterContext = FilterContext.of(gameData)
                     .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)

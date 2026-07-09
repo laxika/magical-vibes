@@ -58,13 +58,20 @@ public sealed interface ChoiceContext {
     record BasicLandTypeChoice(UUID permanentId) implements ChoiceContext {}
 
     /**
-     * Choosing a basic land type to add to a target land "in addition to its other types"
-     * (e.g. Navigator's Compass activated ability).
+     * Choosing a basic land type for a target land: either added "in addition to its other types"
+     * (Navigator's Compass) or, when {@code replacing} is {@code true}, replacing the land's other
+     * types and mana ability per rule 305.7 (Tideshaper Mystic).
      *
-     * @param targetLandId the target land that gains the chosen basic land type
-     * @param duration     how long the granted type lasts
+     * @param targetLandId the target land that gains/becomes the chosen basic land type
+     * @param duration     how long the granted/overriding type lasts
+     * @param replacing    {@code true} to replace the land's types, {@code false} to add
      */
-    record AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration) implements ChoiceContext {}
+    record AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration, boolean replacing) implements ChoiceContext {
+
+        public AddBasicLandTypeChoice(UUID targetLandId, EffectDuration duration) {
+            this(targetLandId, duration, false);
+        }
+    }
 
     /**
      * Tracks the sequential "each player names a card" flow for Conundrum Sphinx etc.

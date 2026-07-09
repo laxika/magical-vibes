@@ -2,9 +2,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCounteredCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ReplaceControlledCounterWithExileAndPlayEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -14,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -71,6 +78,11 @@ public class CounterSupport {
                 || target.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
 
         if (!target.isCopy() && !isAbility) {
+            // Guile (CR 614): "If a spell or ability you control would counter a spell, instead exile
+            // that spell and you may play that card without paying its mana cost."
+            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+                return;
+            }
             graveyardService.addCardToGraveyard(gameData, target.getControllerId(), target.getCard());
         }
 
@@ -87,12 +99,67 @@ public class CounterSupport {
         stateTriggerService.cleanupResolvedStateTrigger(gameData, target);
 
         if (!target.isCopy()) {
+            // Guile replaces the whole "counter" event: exile and offer a free play.
+            if (applyControlledCounterExileReplacement(gameData, source, target)) {
+                return;
+            }
             exileService.exileCard(gameData, target.getControllerId(), target.getCard());
         }
 
         String logMsg = target.getCard().getName() + " is countered and exiled.";
         gameBroadcastService.logAndBroadcast(gameData, logMsg);
         log.info("Game {} - {} countered and exiled {}", gameData.id, source.getCard().getName(), target.getCard().getName());
+    }
+
+    /**
+     * Guile's replacement effect: if the controller of the counter effect controls a permanent with
+     * {@link ReplaceControlledCounterWithExileAndPlayEffect}, the countered spell is exiled instead of
+     * countered and its counter's controller may play it without paying its mana cost. Returns true
+     * when the replacement applied (the caller must not run its normal counter disposition).
+     */
+    private boolean applyControlledCounterExileReplacement(GameData gameData, StackEntry source, StackEntry target) {
+        // Only replaces the countering of spells (CR: "would counter a spell"), never abilities.
+        boolean isAbility = target.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || target.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+        if (isAbility) {
+            return false;
+        }
+
+        UUID counterControllerId = source.getControllerId();
+        if (!controlsCounterExileReplacement(gameData, counterControllerId)) {
+            return false;
+        }
+
+        Card spell = target.getCard();
+        exileService.exileCard(gameData, target.getControllerId(), spell);
+        gameData.pendingMayAbilities.add(new PendingMayAbility(
+                spell,
+                counterControllerId,
+                List.of(new MayPlayExiledCounteredCardEffect()),
+                "Play " + spell.getName() + " without paying its mana cost?",
+                spell.getId()
+        ));
+
+        String logMsg = spell.getName() + " is exiled instead of countered (Guile).";
+        gameBroadcastService.logAndBroadcast(gameData, logMsg);
+        log.info("Game {} - {} exiled {} instead of countering (Guile)", gameData.id,
+                source.getCard().getName(), spell.getName());
+        return true;
+    }
+
+    private boolean controlsCounterExileReplacement(GameData gameData, UUID controllerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) {
+            return false;
+        }
+        for (Permanent permanent : battlefield) {
+            for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof ReplaceControlledCounterWithExileAndPlayEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public boolean sharesCardType(Card card, Set<CardType> types) {

@@ -93,6 +93,10 @@ public class Permanent {
      *  Cleared every turn by {@link #resetModifiers()} and recomputed from active static effect sources.
      *  For persistent subtype grants from one-shot effects, see {@link #grantedSubtypes}. */
     private final List<CardSubtype> transientSubtypes = new ArrayList<>();
+    /** When non-null, this land "becomes the basic land type of your choice" until end of turn,
+     *  replacing its other land types and mana ability (e.g. Tideshaper Mystic). Distinct from
+     *  {@link #transientSubtypes}, which is additive. Cleared every turn by {@link #resetModifiers()}. */
+    @Setter private CardSubtype transientLandTypeOverride;
     private final Set<CardType> grantedCardTypes = EnumSet.noneOf(CardType.class);
     /** Card types permanently granted by one-shot effects (e.g. Phyrexian Scriptures "becomes an artifact").
      *  NOT cleared by {@link #resetModifiers()} — survives turn resets.
@@ -149,6 +153,10 @@ public class Permanent {
      *  Keywords, activated abilities, and triggered abilities are suppressed.
      *  Cleared by {@link #resetModifiers()}. */
     @Setter private boolean losesAllAbilitiesUntilEndOfTurn;
+    /** When true, this permanent has lost all creature types until end of turn (e.g. Amoeboid Changeling).
+     *  All creature subtypes (base, transient, granted) are treated as absent, and the Changeling keyword
+     *  no longer grants any creature types. Cleared by {@link #resetModifiers()}. */
+    @Setter private boolean losesAllCreatureTypesUntilEndOfTurn;
     /** Whether this permanent was kicked when cast (tracked for "if wasn't kicked" triggers). */
     @Setter private boolean kicked;
     /** Whether this permanent was cast for its evoke cost (gates the evoke sacrifice ETB trigger). */
@@ -185,6 +193,16 @@ public class Permanent {
      *  NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
      *  Cleared at the beginning of the controller's next turn by {@link #clearUntilNextTurnEffects()}. */
     private final Set<Keyword> untilNextTurnKeywords = new HashSet<>();
+    /** When true, this permanent is a copy of another creature until {@link #copyUntilNextTurnControllerId}'s
+     *  next turn (e.g. Shapesharer). NOT cleared by {@link #resetModifiers()} — survives end-of-turn cleanup.
+     *  Reverts to {@link #untilNextTurnPreCopyCard} via {@link #revertUntilNextTurnCopy()} at the beginning
+     *  of that player's turn. */
+    @Setter private boolean copyUntilControllerNextTurn;
+    /** The card to revert to when an "until your next turn" copy ends.
+     *  Only non-null when {@link #copyUntilControllerNextTurn} is true. */
+    @Setter private Card untilNextTurnPreCopyCard;
+    /** The player whose next turn ends an "until your next turn" copy (the ability's controller). */
+    @Setter private UUID copyUntilNextTurnControllerId;
 
     public Permanent(Card card) {
         this.id = UUID.randomUUID();
@@ -273,6 +291,7 @@ public class Permanent {
         this.permanentBaseToughnessOverride = source.permanentBaseToughnessOverride;
         this.transformed = source.transformed;
         this.losesAllAbilitiesUntilEndOfTurn = source.losesAllAbilitiesUntilEndOfTurn;
+        this.losesAllCreatureTypesUntilEndOfTurn = source.losesAllCreatureTypesUntilEndOfTurn;
         this.kicked = source.kicked;
         this.evoked = source.evoked;
         this.temporaryActivatedAbilities.addAll(source.temporaryActivatedAbilities);
@@ -284,6 +303,9 @@ public class Permanent {
         this.untilNextTurnAnimatedToughness = source.untilNextTurnAnimatedToughness;
         this.untilNextTurnSubtypes.addAll(source.untilNextTurnSubtypes);
         this.untilNextTurnKeywords.addAll(source.untilNextTurnKeywords);
+        this.copyUntilControllerNextTurn = source.copyUntilControllerNextTurn;
+        this.untilNextTurnPreCopyCard = source.untilNextTurnPreCopyCard;
+        this.copyUntilNextTurnControllerId = source.copyUntilNextTurnControllerId;
     }
 
     public Card getOriginalCard() {
@@ -473,6 +495,8 @@ public class Permanent {
 
     public boolean hasKeyword(Keyword keyword) {
         if (losesAllAbilitiesUntilEndOfTurn) return false;
+        // Changeling grants all creature types; losing all creature types nullifies that grant.
+        if (keyword == Keyword.CHANGELING && losesAllCreatureTypesUntilEndOfTurn) return false;
         if (removedKeywords.contains(keyword)) return false;
         return card.getKeywords().contains(keyword) || grantedKeywords.contains(keyword)
                 || untilNextTurnKeywords.contains(keyword);
@@ -511,6 +535,7 @@ public class Permanent {
         this.transientColors.clear();
         this.colorOverridden = false;
         this.transientSubtypes.clear();
+        this.transientLandTypeOverride = null;
         this.grantedCardTypes.clear();
         this.protectionFromCardTypes.clear();
         this.protectionFromColorsUntilEndOfTurn.clear();
@@ -518,6 +543,7 @@ public class Permanent {
         this.cantBlockIds.clear();
         this.mustBlockIds.clear();
         this.losesAllAbilitiesUntilEndOfTurn = false;
+        this.losesAllCreatureTypesUntilEndOfTurn = false;
         this.temporaryActivatedAbilities.clear();
         if (this.copyUntilEndOfTurn && this.preCopyCard != null) {
             this.card = this.preCopyCard;
@@ -538,5 +564,18 @@ public class Permanent {
         this.untilNextTurnAnimatedToughness = 0;
         this.untilNextTurnSubtypes.clear();
         this.untilNextTurnKeywords.clear();
+    }
+
+    /**
+     * Reverts an "until your next turn" copy (e.g. Shapesharer) back to the permanent's
+     * pre-copy card. Called at the beginning of the ability controller's next turn.
+     */
+    public void revertUntilNextTurnCopy() {
+        if (this.copyUntilControllerNextTurn && this.untilNextTurnPreCopyCard != null) {
+            this.card = this.untilNextTurnPreCopyCard;
+        }
+        this.copyUntilControllerNextTurn = false;
+        this.untilNextTurnPreCopyCard = null;
+        this.copyUntilNextTurnControllerId = null;
     }
 }

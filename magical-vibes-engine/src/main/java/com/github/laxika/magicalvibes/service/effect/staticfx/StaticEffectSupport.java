@@ -247,17 +247,25 @@ public class StaticEffectSupport {
             return (effectiveColor != null && p.colors().contains(effectiveColor))
                     || target.getTransientColors().stream().anyMatch(p.colors()::contains);
         }
-        if (filter instanceof PermanentHasSubtypePredicate p)
+        if (filter instanceof PermanentHasSubtypePredicate p) {
+            // "Loses all creature types" removes every creature subtype (base, transient, granted) and
+            // nullifies the Changeling grant (handled by hasKeyword).
+            if (isCreatureSubtype(p.subtype()) && target.isLosesAllCreatureTypesUntilEndOfTurn()) return false;
             return target.getCard().getSubtypes().contains(p.subtype())
                     || target.getTransientSubtypes().contains(p.subtype())
                     || target.getGrantedSubtypes().contains(p.subtype())
                     || (isCreatureSubtype(p.subtype()) && target.hasKeyword(Keyword.CHANGELING));
-        if (filter instanceof PermanentHasAnySubtypePredicate p)
-            return target.getCard().getSubtypes().stream().anyMatch(p.subtypes()::contains)
-                    || target.getTransientSubtypes().stream().anyMatch(p.subtypes()::contains)
-                    || target.getGrantedSubtypes().stream().anyMatch(p.subtypes()::contains)
-                    || (p.subtypes().stream().anyMatch(StaticEffectSupport::isCreatureSubtype)
+        }
+        if (filter instanceof PermanentHasAnySubtypePredicate p) {
+            Set<CardSubtype> wanted = target.isLosesAllCreatureTypesUntilEndOfTurn()
+                    ? p.subtypes().stream().filter(st -> !isCreatureSubtype(st)).collect(java.util.stream.Collectors.toSet())
+                    : p.subtypes();
+            return target.getCard().getSubtypes().stream().anyMatch(wanted::contains)
+                    || target.getTransientSubtypes().stream().anyMatch(wanted::contains)
+                    || target.getGrantedSubtypes().stream().anyMatch(wanted::contains)
+                    || (wanted.stream().anyMatch(StaticEffectSupport::isCreatureSubtype)
                     && target.hasKeyword(Keyword.CHANGELING));
+        }
         if (filter instanceof PermanentHasKeywordPredicate p)
             return target.hasKeyword(p.keyword());
         if (filter instanceof PermanentIsCreaturePredicate)

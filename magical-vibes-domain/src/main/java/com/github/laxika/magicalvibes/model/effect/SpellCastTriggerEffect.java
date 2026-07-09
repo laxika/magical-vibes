@@ -22,43 +22,54 @@ import java.util.List;
  * own stack entry satisfies the predicate (e.g. "targets a creature" for the Repartee mechanic).
  * This inspects the spell's chosen targets, which {@code spellFilter} (a card-only predicate)
  * cannot express.
+ * <p>
+ * If {@code onlyDuringOpponentTurn} is true, the trigger only fires when the spell is cast on a
+ * turn other than the source's controller's (e.g. Glen Elendra Pranksters).
  *
  * @param spellFilter               what spells trigger this (null = any spell)
  * @param resolvedEffects           effects to put on the stack when this triggers
  * @param manaCost                  optional mana cost string, e.g. "{1}" (null = free)
  * @param targetFilter              optional target filter for triggered abilities that target (null = no targeting)
  * @param castSpellTargetCondition  optional predicate on the cast spell's stack entry / targets (null = no condition)
+ * @param onlyDuringOpponentTurn    only fire when cast during an opponent's turn
  */
 public record SpellCastTriggerEffect(
         CardPredicate spellFilter,
         List<CardEffect> resolvedEffects,
         String manaCost,
         TargetFilter targetFilter,
-        StackEntryPredicate castSpellTargetCondition
+        StackEntryPredicate castSpellTargetCondition,
+        boolean onlyDuringOpponentTurn
 ) implements CardEffect {
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
-        this(spellFilter, resolvedEffects, null, null, null);
+        this(spellFilter, resolvedEffects, null, null, null, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost) {
-        this(spellFilter, resolvedEffects, manaCost, null, null);
+        this(spellFilter, resolvedEffects, manaCost, null, null, false);
     }
 
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects, String manaCost,
                                   TargetFilter targetFilter) {
-        this(spellFilter, resolvedEffects, manaCost, targetFilter, null);
+        this(spellFilter, resolvedEffects, manaCost, targetFilter, null, false);
     }
 
     /** Trigger gated on the cast spell's targets (e.g. Repartee — "spell that targets a creature"). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   StackEntryPredicate castSpellTargetCondition) {
-        this(spellFilter, resolvedEffects, null, null, castSpellTargetCondition);
+        this(spellFilter, resolvedEffects, null, null, castSpellTargetCondition, false);
     }
 
     /** Targets-gated trigger whose resolved effect itself targets (e.g. Graduation Day). */
     public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
                                   TargetFilter targetFilter, StackEntryPredicate castSpellTargetCondition) {
-        this(spellFilter, resolvedEffects, null, targetFilter, castSpellTargetCondition);
+        this(spellFilter, resolvedEffects, null, targetFilter, castSpellTargetCondition, false);
+    }
+
+    /** Trigger that only fires when the spell is cast during an opponent's turn (e.g. Glen Elendra Pranksters). */
+    public SpellCastTriggerEffect(CardPredicate spellFilter, List<CardEffect> resolvedEffects,
+                                  boolean onlyDuringOpponentTurn) {
+        this(spellFilter, resolvedEffects, null, null, null, onlyDuringOpponentTurn);
     }
 }

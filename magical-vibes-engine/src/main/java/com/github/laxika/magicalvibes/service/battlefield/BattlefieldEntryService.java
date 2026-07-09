@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardEnterWithAdditionalC
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectContext;
 import com.github.laxika.magicalvibes.service.battlefield.etb.EtbEffectResolver;
@@ -718,6 +719,10 @@ public class BattlefieldEntryService {
             StackEntryPredicate spellFilter = null;
             if (effect instanceof CopySpellEffect cse) {
                 spellFilter = cse.spellFilter();
+            } else if (card.getTargetFilter() instanceof StackEntryPredicateTargetFilter sf) {
+                // "counter target spell with mana value X or less" (Spellstutter Sprite): the
+                // legal-spell restriction lives on the card's target filter, not the effect.
+                spellFilter = sf.predicate();
             }
             gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                     card, controllerId, List.of(effect), spellFilter));

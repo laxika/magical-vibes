@@ -192,6 +192,14 @@ public class TurnProgressionService {
             activePlayerBf.forEach(Permanent::clearUntilNextTurnEffects);
         }
 
+        // Revert "until your next turn" copies (e.g. Shapesharer) belonging to the player whose
+        // turn is beginning. The copied permanent may be on any player's battlefield.
+        gameData.forEachPermanent((ownerId, p) -> {
+            if (p.isCopyUntilControllerNextTurn() && nextActive.equals(p.getCopyUntilNextTurnControllerId())) {
+                p.revertUntilNextTurnCopy();
+            }
+        });
+
         untapStepService.untapPermanents(gameData, nextActive);
 
         // Process pending may-not-untap choices before continuing turn

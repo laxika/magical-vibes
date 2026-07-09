@@ -15,9 +15,11 @@ public sealed interface StackEntryPredicate permits
         StackEntryHasTargetPredicate,
         StackEntryIsSingleTargetPredicate,
         StackEntryManaValuePredicate,
+        StackEntryManaValueAtMostControlledCountPredicate,
         StackEntryNotPredicate,
         StackEntryTargetsPermanentPredicate,
         StackEntryTargetsYouOrCreatureYouControlPredicate,
         StackEntryTargetsYourPermanentPredicate,
+        StackEntrySubtypeInPredicate,
         StackEntryTypeInPredicate {
 }

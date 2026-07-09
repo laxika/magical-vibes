@@ -461,6 +461,18 @@ public class GameTestHarness {
                 ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices), null, null);
     }
 
+    /**
+     * Cast a modal instant that chooses multiple modes, supplying an optional spell target
+     * ({@code targetId}) and/or permanent targets ({@code targetIds}) (e.g. Cryptic Command).
+     */
+    public void castModalInstantWithModes(Player player, int cardIndex, int choicesRequired,
+                                          int[] modeIndices, UUID targetId, List<UUID> targetIds) {
+        ensurePriority(player);
+        gameService.playCard(gameData, player, cardIndex,
+                ChooseOneEffect.encodeModeSelection(choicesRequired, modeIndices),
+                targetId, null, targetIds, List.of());
+    }
+
     public void castInstant(Player player, int cardIndex, UUID spellTargetId, UUID permanentTargetId) {
         ensurePriority(player);
         gameService.playCard(gameData, player, cardIndex, 0, spellTargetId, null, List.of(permanentTargetId), List.of());

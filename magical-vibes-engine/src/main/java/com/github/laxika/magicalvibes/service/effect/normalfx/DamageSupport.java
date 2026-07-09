@@ -359,6 +359,15 @@ public class DamageSupport {
             processPendingRedirectDamage(gameData);
             effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
 
+            // Purity: prevent all remaining noncombat damage to the controller and gain that much life
+            int purityPrevented = damagePreventionService.applyControllerNoncombatDamagePrevention(gameData, playerId, effectiveDamage);
+            if (purityPrevented > 0) {
+                effectiveDamage -= purityPrevented;
+                gameBroadcastService.logAndBroadcast(gameData,
+                        cardName + "'s " + purityPrevented + " damage to " + gameData.playerIdToName.get(playerId) + " is prevented.");
+                lifeSupport.applyGainLife(gameData, playerId, purityPrevented, "prevented damage");
+            }
+
             boolean sourceHasInfect = gameQueryService.sourceHasKeyword(gameData, entry, null, Keyword.INFECT);
             boolean treatAsInfect = sourceHasInfect || gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId);
 

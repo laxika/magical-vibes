@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffec
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCounteredCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
@@ -60,6 +61,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -93,6 +95,7 @@ public class MayAbilityHandlerService {
     private final DestructionSupport destructionSupport;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
+    private final ExileFreeCastSupport exileFreeCastSupport;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     // @Lazy breaks the circular dependency:
     // MayAbilityHandlerService → ParadigmService → PlayerInputService → MayAbilityChoiceInteractionHandler → MayAbilityHandlerService
@@ -112,6 +115,7 @@ public class MayAbilityHandlerService {
                                     DestructionSupport destructionSupport,
                                     GraveyardReturnSupport graveyardReturnSupport,
                                     MayAbilityTapCostService mayAbilityTapCostService,
+                                    ExileFreeCastSupport exileFreeCastSupport,
                                     com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
                                     @Lazy ParadigmService paradigmService) {
         this.inputCompletionService = inputCompletionService;
@@ -128,6 +132,7 @@ public class MayAbilityHandlerService {
         this.destructionSupport = destructionSupport;
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.mayAbilityTapCostService = mayAbilityTapCostService;
+        this.exileFreeCastSupport = exileFreeCastSupport;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
         this.paradigmService = paradigmService;
     }
@@ -183,6 +188,22 @@ public class MayAbilityHandlerService {
                 .anyMatch(e -> e instanceof ParadigmMayCastFromExileEffect);
         if (isParadigmCast) {
             paradigmService.handleMayCastChoice(gameData, player, accepted, ability);
+            return;
+        }
+
+        // Play-exiled-countered-card-without-paying — e.g. Guile. Declining leaves the card exiled.
+        boolean isMayPlayExiledCountered = ability.effects().stream()
+                .anyMatch(e -> e instanceof MayPlayExiledCounteredCardEffect);
+        if (isMayPlayExiledCountered) {
+            if (accepted && ability.targetCardId() != null) {
+                exileFreeCastSupport.castFromExileWithoutPaying(gameData, player, ability.targetCardId());
+            } else {
+                String logEntry = player.getUsername() + " declines to play " + ability.sourceCard().getName() + ".";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} declines to play exiled {} (Guile)", gameData.id,
+                        player.getUsername(), ability.sourceCard().getName());
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            }
             return;
         }
 

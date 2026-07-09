@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldTransformedReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToHandReturn;
 import com.github.laxika.magicalvibes.model.action.DelayedUntapPermanents;
@@ -37,6 +38,7 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -897,6 +899,30 @@ public class StepTriggerService {
                             gameData.playerIdToName.get(activePlayerId));
                 }
             }
+        }
+
+        // Scattering Stroke's clash-win reward: at the beginning of the controller's next main phase,
+        // they may add mana equal to the countered spell's mana value (snapshotted when it resolved).
+        UUID mainPhasePlayerId = gameData.activePlayerId;
+        List<AddManaAtNextMainPhase> manaRewards = gameData.drainDelayedActions(
+                AddManaAtNextMainPhase.class, a -> a.controllerId().equals(mainPhasePlayerId));
+        for (AddManaAtNextMainPhase reward : manaRewards) {
+            MayEffect mayAddMana = new MayEffect(
+                    new AwardManaEffect(reward.color(), reward.amount()),
+                    "Add " + reward.amount() + " " + reward.color().getCode() + "?");
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    reward.sourceCard(),
+                    reward.controllerId(),
+                    reward.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(mayAddMana))
+            ));
+
+            String logEntry = reward.sourceCard().getName() + "'s delayed ability triggers.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {}'s delayed mana reward fires for {}",
+                    gameData.id, reward.sourceCard().getName(),
+                    gameData.playerIdToName.get(mainPhasePlayerId));
         }
     }
 

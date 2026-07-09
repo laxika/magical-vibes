@@ -85,6 +85,12 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     /** Triggers when this card is put into its owner's graveyard from their library (milled).
      *  Checked per-card inside {@code GraveyardService.resolveMillPlayer}. */
     ON_SELF_MILLED,
+    /** Triggers when this card is put into a graveyard from anywhere (battlefield, hand, library,
+     *  stack, exile). Checked for every card entering a graveyard in
+     *  {@code GraveyardService.addCardToGraveyard}, which is the single choke point for all
+     *  zone→graveyard transitions. Fires as a triggered ability (the card enters the graveyard
+     *  first). Used by Purity ("shuffle it into its owner's library"). */
+    ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
     /** Triggers once when one or more creatures the controller controls are declared as attackers.
      *  Unlike ON_ATTACK (which fires per creature), this fires exactly once per combat. */
     ON_ALLY_CREATURES_ATTACK,
@@ -186,5 +192,11 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  creature is assigned to block 2+ attackers. The effect is resolved against the blocker itself
      *  (sourcePermanentId), so self-scoped effects like {@code GrantKeywordEffect(FIRST_STRIKE, SELF)}
      *  apply to the blocker. Checked in {@code CombatBlockService}. Used by Lairwatch Giant. */
-    ON_BLOCKS_MULTIPLE_CREATURES
+    ON_BLOCKS_MULTIPLE_CREATURES,
+    /** Triggers when a creature is championed with this permanent (i.e. exiled by this permanent's
+     *  Champion ability). Fired from {@code PermanentChoiceBattlefieldHandlerService.handleChampionCreature}
+     *  right after the championed creature is exiled. Effects that target a player are routed through
+     *  the {@code PermanentChoiceContext.ChampionedTriggerTarget} interaction. Used by Mistbind Clique
+     *  ("When a Faerie is championed with this creature, tap all lands target player controls"). */
+    ON_CHAMPIONED
 }

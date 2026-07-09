@@ -51,6 +51,23 @@ public class MillEffectHandler implements NormalEffectHandlerBean {
                     graveyardService.resolveMillPlayer(gameData, playerId, count);
                 }
             }
+            case TARGET_SPELL_CONTROLLER -> {
+                UUID spellControllerId = findTargetSpellControllerId(gameData, entry.getTargetId());
+                if (spellControllerId != null) {
+                    graveyardService.resolveMillPlayer(gameData, spellControllerId, count);
+                }
+            }
         }
+    }
+
+    /** Controller of the spell on the stack whose card id matches {@code targetCardId}, or null. */
+    private UUID findTargetSpellControllerId(GameData gameData, UUID targetCardId) {
+        if (targetCardId == null) return null;
+        for (StackEntry se : gameData.stack) {
+            if (se.getCard().getId().equals(targetCardId)) {
+                return se.getControllerId();
+            }
+        }
+        return null;
     }
 }

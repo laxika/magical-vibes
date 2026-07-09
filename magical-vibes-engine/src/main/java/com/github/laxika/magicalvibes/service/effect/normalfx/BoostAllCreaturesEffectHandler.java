@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import java.util.List;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -46,7 +49,8 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                 .withSourceControllerId(entry.getControllerId());
         final int[] count = {0};
-        gameData.forEachPermanent((playerId, permanent) -> {
+
+        java.util.function.BiConsumer<UUID, Permanent> apply = (playerId, permanent) -> {
             if (gameQueryService.isCreature(gameData, permanent)
                     && (boost.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
@@ -54,7 +58,22 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
                 permanent.setToughnessModifier(permanent.getToughnessModifier() + toughnessBoost);
                 count[0]++;
             }
-        });
+        };
+
+        if (boost.scope() == EachPermanentScope.TARGET_PLAYER) {
+            UUID targetPlayerId = entry.getTargetId();
+            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
+                return;
+            }
+            List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+            if (battlefield != null) {
+                for (Permanent permanent : new java.util.ArrayList<>(battlefield)) {
+                    apply.accept(targetPlayerId, permanent);
+                }
+            }
+        } else {
+            gameData.forEachPermanent(apply);
+        }
 
         String logEntry = String.format("%s gives %+d/%+d to %d creature(s) until end of turn.",
                 entry.getCard().getName(), powerBoost, toughnessBoost, count[0]);

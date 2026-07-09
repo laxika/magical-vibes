@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,10 +16,8 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
+import com.github.laxika.magicalvibes.service.effect.normalfx.GrantBasicLandTypeToTargetEffectHandler;
 import java.util.Collections;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
@@ -565,30 +562,12 @@ public class ChoiceHandlerService {
 
         Permanent targetLand = gameQueryService.findPermanentById(gameData, ctx.targetLandId());
         if (targetLand != null) {
-            ManaColor manaColor = EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(subtype);
-            ActivatedAbility manaAbility = new ActivatedAbility(
-                    true, null, List.of(new AwardManaEffect(manaColor)),
-                    "{T}: Add {" + manaColor.getCode() + "}.");
+            GrantBasicLandTypeToTargetEffectHandler.applyBasicLandType(targetLand, subtype, ctx.duration(), ctx.replacing());
 
-            if (ctx.duration() == EffectDuration.UNTIL_END_OF_TURN) {
-                // Transient: cleared at end of turn by resetModifiers()
-                if (!targetLand.getTransientSubtypes().contains(subtype)) {
-                    targetLand.getTransientSubtypes().add(subtype);
-                }
-                targetLand.getTemporaryActivatedAbilities().add(manaAbility);
-            } else {
-                // Permanent: survives turn resets
-                if (!targetLand.getGrantedSubtypes().contains(subtype)) {
-                    targetLand.getGrantedSubtypes().add(subtype);
-                }
-                targetLand.getCard().addActivatedAbility(manaAbility);
-            }
-
-            String durationText = ctx.duration() == EffectDuration.UNTIL_END_OF_TURN ? " until end of turn" : "";
-            String logEntry = targetLand.getCard().getName() + " becomes a " + subtype.getDisplayName()
-                    + " in addition to its other types" + durationText + ".";
+            String logEntry = GrantBasicLandTypeToTargetEffectHandler.describeBasicLandTypeChange(
+                    targetLand, subtype, ctx.duration(), ctx.replacing());
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
-            log.info("Game {} - {} becomes a {}{}", gameData.id, targetLand.getCard().getName(), subtype, durationText);
+            log.info("Game {} - {} becomes a {} (replacing={})", gameData.id, targetLand.getCard().getName(), subtype, ctx.replacing());
         }
 
         gameData.priorityPassedBy.clear();

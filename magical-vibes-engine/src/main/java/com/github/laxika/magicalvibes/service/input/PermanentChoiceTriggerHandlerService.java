@@ -918,6 +918,29 @@ public class PermanentChoiceTriggerHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleChampionedTrigger(GameData gameData, UUID playerId,
+                                        PermanentChoiceContext.ChampionedTriggerTarget ctt) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                ctt.sourceCard(),
+                ctt.controllerId(),
+                ctt.sourceCard().getName() + "'s ability",
+                new ArrayList<>(ctt.effects()),
+                playerId,
+                ctt.sourcePermanentId()
+        );
+        gameData.stack.add(entry);
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        String logEntry = ctt.sourceCard().getName() + "'s ability targets " + playerName + ".";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} championed trigger targets {}", gameData.id, ctt.sourceCard().getName(), playerName);
+
+        // The championed trigger fired mid-resolution of the Champion ETB; continue the
+        // same completion path as the non-triggering champion case.
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleEndStepTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.EndStepTriggerTarget est) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,

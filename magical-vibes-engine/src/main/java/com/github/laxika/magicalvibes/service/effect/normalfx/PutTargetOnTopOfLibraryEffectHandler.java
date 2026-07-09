@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -28,8 +29,11 @@ public class PutTargetOnTopOfLibraryEffectHandler implements NormalEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
-                Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        var e = (PutTargetOnTopOfLibraryEffect) effect;
+
+                Permanent target = e.scope() == PutOnTopOfLibraryScope.SELF
+                        ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                        : gameQueryService.findPermanentById(gameData, entry.getTargetId());
                 if (target == null) return;
 
                 if (permanentRemovalService.removePermanentToLibraryTop(gameData, target)) {

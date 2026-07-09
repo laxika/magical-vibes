@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "M10", collectorNumber = "68")
+@CardRegistration(set = "LRW", collectorNumber = "79")
 public class Ponder extends Card {
 
     public Ponder() {

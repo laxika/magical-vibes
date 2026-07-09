@@ -12,11 +12,13 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.WarpWorldService;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
@@ -63,6 +65,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PlayerInputService playerInputService;
     private final StateBasedActionService stateBasedActionService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggerTargetCollector triggerTargetCollector;
     private final CreatureControlService creatureControlService;
     private final TurnProgressionService turnProgressionService;
     private final EffectResolutionService effectResolutionService;
@@ -340,7 +343,43 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameData.exileReturnOnPermanentLeave.put(source.getId(), new PendingExileReturn(card, ownerId));
 
         permanentRemovalService.removeOrphanedAuras(gameData);
+
+        // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique).
+        List<CardEffect> championedEffects = source.getCard().getEffects(EffectSlot.ON_CHAMPIONED);
+        if (championedEffects != null && !championedEffects.isEmpty()) {
+            beginChampionedTrigger(gameData, source, context.controllerId(), new ArrayList<>(championedEffects));
+            return;
+        }
+
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    private void beginChampionedTrigger(GameData gameData, Permanent source, UUID controllerId,
+                                        List<CardEffect> effects) {
+        stateBasedActionService.performStateBasedActions(gameData);
+
+        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
+                gameData, effects, source.getCard().getTargetFilter(), controllerId,
+                source.getCard(), TriggerTargetCollector.Options.END_STEP);
+
+        if (result.validTargets().isEmpty()) {
+            String logEntry = source.getCard().getName() + "'s championed trigger has no valid targets.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} championed trigger skipped (no valid targets)",
+                    gameData.id, source.getCard().getName());
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        gameData.interaction.setPermanentChoiceContext(
+                new PermanentChoiceContext.ChampionedTriggerTarget(
+                        source.getCard(), controllerId, effects, source.getId()));
+        playerInputService.beginPermanentChoice(gameData, controllerId, result.validTargets(),
+                source.getCard().getName() + "'s ability — Choose target player.");
+
+        String logEntry = source.getCard().getName() + "'s championed trigger — choose target player.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} championed trigger awaiting target selection", gameData.id, source.getCard().getName());
     }
 
     public void handlePreventDamageSourceChoice(GameData gameData, UUID permanentId, PermanentChoiceContext.PreventDamageSourceChoice preventSource) {

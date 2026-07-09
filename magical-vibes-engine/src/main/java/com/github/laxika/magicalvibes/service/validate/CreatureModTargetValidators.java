@@ -88,7 +88,10 @@ public class CreatureModTargetValidators {
     }
 
     @ValidatesTarget(SwitchPowerToughnessEffect.class)
-    public void validateSwitchPowerToughness(TargetValidationContext ctx) {
+    public void validateSwitchPowerToughness(TargetValidationContext ctx, SwitchPowerToughnessEffect effect) {
+        if (effect.self()) {
+            return;
+        }
         Permanent target = tvs.requireBattlefieldTarget(ctx);
         tvs.requireCreature(ctx, target);
     }

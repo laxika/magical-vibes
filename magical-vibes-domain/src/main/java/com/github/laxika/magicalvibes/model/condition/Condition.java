@@ -53,7 +53,8 @@ public sealed interface Condition permits
         SpellManaSpentAtLeast,
         TargetPermanentMatches,
         TopCardOfLibraryColor,
-        TwoOrMoreSpellsCastLastTurn {
+        TwoOrMoreSpellsCastLastTurn,
+        WonClash {
 
     /** Human-readable condition name for log messages (e.g. "metalcraft", "equipped"). */
     String conditionName();

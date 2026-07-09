@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToAt
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndAddMinusCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageAndRemovePlusOnePlusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSourcesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +87,8 @@ public class DamagePreventionService {
     public int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage, boolean isCombatDamage) {
         // Blinding Fog: prevent all damage to all creatures
         if (gameQueryService.isDamagePreventable(gameData) && gameData.preventAllDamageToAllCreatures) return 0;
+        // Wellgabber Apothecary: prevent all damage to specific target creatures this turn
+        if (gameQueryService.isDamagePreventable(gameData) && gameData.creaturesWithAllDamagePrevented.contains(permanent.getId())) return 0;
         // Safe Passage: prevent all damage to creatures controlled by a player with full prevention
         if (gameQueryService.isDamagePreventable(gameData)) {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -285,6 +288,25 @@ public class DamagePreventionService {
 
         if (totalReduction <= 0) return damage;
         return Math.max(0, damage - totalReduction);
+    }
+
+    /**
+     * Purity-style prevention: if the given player controls a permanent with
+     * {@link PreventNoncombatDamageToControllerAndGainLifeEffect}, all noncombat damage that
+     * would be dealt to them is prevented. Returns the amount prevented (the caller gains that
+     * much life). Returns 0 when damage can't be prevented or no such permanent is present.
+     */
+    public int applyControllerNoncombatDamagePrevention(GameData gameData, UUID playerId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return 0;
+        if (damage <= 0) return 0;
+
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+
+        boolean hasEffect = battlefield.stream().anyMatch(p ->
+                p.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(e -> e instanceof PreventNoncombatDamageToControllerAndGainLifeEffect));
+        return hasEffect ? damage : 0;
     }
 
     /**

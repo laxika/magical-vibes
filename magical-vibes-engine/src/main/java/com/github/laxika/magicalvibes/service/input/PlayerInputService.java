@@ -175,7 +175,11 @@ public class PlayerInputService {
     }
 
     public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, EffectDuration duration) {
-        ChoiceContext.AddBasicLandTypeChoice choiceContext = new ChoiceContext.AddBasicLandTypeChoice(targetLandId, duration);
+        beginAddBasicLandTypeChoice(gameData, playerId, targetLandId, duration, false);
+    }
+
+    public void beginAddBasicLandTypeChoice(GameData gameData, UUID playerId, UUID targetLandId, EffectDuration duration, boolean replacing) {
+        ChoiceContext.AddBasicLandTypeChoice choiceContext = new ChoiceContext.AddBasicLandTypeChoice(targetLandId, duration, replacing);
 
         List<String> basicLandTypes = List.of("PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST");
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

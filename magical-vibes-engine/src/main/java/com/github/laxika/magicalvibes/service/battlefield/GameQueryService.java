@@ -917,6 +917,14 @@ public class GameQueryService {
             }
         }
 
+        // Transient "becomes the basic land type of your choice" override (e.g. Tideshaper Mystic):
+        // replaces the land's subtypes and mana ability until end of turn (rule 305.7).
+        if (target.getTransientLandTypeOverride() != null) {
+            accumulator.addGrantedSubtype(target.getTransientLandTypeOverride());
+            accumulator.setSubtypeOverriding(true);
+            accumulator.setLandSubtypeOverriding(true);
+        }
+
         boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
@@ -1513,6 +1521,11 @@ public class GameQueryService {
      * granted subtypes, and the intrinsic Changeling keyword.
      */
     public static boolean permanentHasSubtype(Permanent permanent, CardSubtype subtype) {
+        // "Loses all creature types" (e.g. Amoeboid Changeling): every creature subtype is treated as absent.
+        // hasKeyword already suppresses the Changeling grant while this flag is set.
+        if (permanent.isLosesAllCreatureTypesUntilEndOfTurn() && !NON_CREATURE_SUBTYPES.contains(subtype)) {
+            return false;
+        }
         return permanent.getCard().getSubtypes().contains(subtype)
                 || permanent.getTransientSubtypes().contains(subtype)
                 || permanent.getGrantedSubtypes().contains(subtype)
@@ -2007,6 +2020,10 @@ public class GameQueryService {
      * the land's type has not been overridden.
      */
     public ManaColor getOverriddenLandManaColor(GameData gameData, Permanent permanent) {
+        // Transient self-override (e.g. Tideshaper Mystic) takes precedence over aura-based overrides.
+        if (permanent.getTransientLandTypeOverride() != null) {
+            return EnchantedPermanentBecomesTypeEffect.manaColorForLandSubtype(permanent.getTransientLandTypeOverride());
+        }
         for (UUID pid : gameData.orderedPlayerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 if (p.isAttached() && p.getAttachedTo().equals(permanent.getId())) {

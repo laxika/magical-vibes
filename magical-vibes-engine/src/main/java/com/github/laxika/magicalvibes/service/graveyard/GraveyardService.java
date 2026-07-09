@@ -168,7 +168,29 @@ public class GraveyardService {
         gameData.playerGraveyards.get(ownerId).add(card);
         updateThisTurnBattlefieldToGraveyardTracking(gameData, ownerId, card, sourceZone);
         updateFromAnywhereThisTurnTracking(gameData, ownerId, card);
+        collectPutIntoGraveyardFromAnywhereTriggers(gameData, ownerId, card);
         return true;
+    }
+
+    /**
+     * Fires "when this card is put into a graveyard from anywhere" triggered abilities
+     * (EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, e.g. Purity). The card has already
+     * entered the graveyard; the trigger goes on the stack under its owner's control.
+     */
+    private void collectPutIntoGraveyardFromAnywhereTriggers(GameData gameData, UUID ownerId, Card card) {
+        for (CardEffect effect : card.getEffects(EffectSlot.ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    ownerId,
+                    card.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    (UUID) null
+            ));
+            gameBroadcastService.logAndBroadcast(gameData, card.getName() + "'s ability triggers.");
+            log.info("Game {} - {} triggers (put into graveyard from anywhere)", gameData.id, card.getName());
+        }
     }
 
 

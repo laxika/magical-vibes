@@ -22,6 +22,8 @@ public enum GrantScope {
     ALL_OWN_CREATURES,
     OPPONENT_CREATURES,
     OWN_PERMANENTS,
+    /** All creatures the targeted player controls (one-shot, e.g. Shields of Velis Vel). */
+    TARGET_PLAYERS_CREATURES,
     ALL_CREATURES,
     ALL_PERMANENTS,
     ENCHANTED_PLAYER_CREATURES,

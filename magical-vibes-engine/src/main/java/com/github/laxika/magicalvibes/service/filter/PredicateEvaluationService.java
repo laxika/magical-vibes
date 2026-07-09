@@ -78,11 +78,13 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySubtypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControlledCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -231,6 +233,11 @@ public class PredicateEvaluationService {
             }
             case PermanentHasSubtypePredicate hasSubtypePredicate -> {
                 boolean creatureSubtype = gameQueryService.isCreatureSubtype(hasSubtypePredicate.subtype());
+                // "Loses all creature types" strips every creature subtype (base/transient/granted) and,
+                // via hasKeyword, the Changeling grant too.
+                if (creatureSubtype && permanent.isLosesAllCreatureTypesUntilEndOfTurn()) {
+                    yield false;
+                }
                 yield permanent.getCard().getSubtypes().contains(hasSubtypePredicate.subtype())
                         || permanent.getTransientSubtypes().contains(hasSubtypePredicate.subtype())
                         || permanent.getGrantedSubtypes().contains(hasSubtypePredicate.subtype())
@@ -239,10 +246,15 @@ public class PredicateEvaluationService {
                         : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
             }
             case PermanentHasAnySubtypePredicate hasAnySubtypePredicate -> {
-                boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains)
-                        || permanent.getTransientSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains)
-                        || permanent.getGrantedSubtypes().stream().anyMatch(hasAnySubtypePredicate.subtypes()::contains);
-                boolean canUseChangeling = hasAnySubtypePredicate.subtypes().stream().anyMatch(gameQueryService::isCreatureSubtype);
+                Set<CardSubtype> wanted = permanent.isLosesAllCreatureTypesUntilEndOfTurn()
+                        ? hasAnySubtypePredicate.subtypes().stream()
+                                .filter(st -> !gameQueryService.isCreatureSubtype(st))
+                                .collect(java.util.stream.Collectors.toSet())
+                        : hasAnySubtypePredicate.subtypes();
+                boolean hasSubtype = permanent.getCard().getSubtypes().stream().anyMatch(wanted::contains)
+                        || permanent.getTransientSubtypes().stream().anyMatch(wanted::contains)
+                        || permanent.getGrantedSubtypes().stream().anyMatch(wanted::contains);
+                boolean canUseChangeling = wanted.stream().anyMatch(gameQueryService::isCreatureSubtype);
                 yield hasSubtype || (canUseChangeling && (gameData == null
                         ? permanent.hasKeyword(Keyword.CHANGELING)
                         : gameQueryService.hasKeyword(gameData, permanent, Keyword.CHANGELING)));
@@ -519,6 +531,8 @@ public class PredicateEvaluationService {
                 }
                 yield false;
             }
+            case StackEntrySubtypeInPredicate subtypeIn ->
+                    entry.getCard().getSubtypes().stream().anyMatch(subtypeIn.subtypes()::contains);
             case StackEntryAllOfPredicate allOf -> {
                 for (StackEntryPredicate nested : allOf.predicates()) {
                     if (!matchesStackEntryPredicate(entry, nested, enchantedPlayerId)) yield false;
@@ -537,6 +551,7 @@ public class PredicateEvaluationService {
             case StackEntryIsSingleTargetPredicate ignored -> false;
             case StackEntryHasTargetPredicate ignored -> false;
             case StackEntryManaValuePredicate ignored -> false;
+            case StackEntryManaValueAtMostControlledCountPredicate ignored -> false;
             case StackEntryControlledByPredicate ignored -> false;
             case StackEntryTargetsYourPermanentPredicate ignored -> false;
             case StackEntryTargetsYouOrCreatureYouControlPredicate ignored -> false;

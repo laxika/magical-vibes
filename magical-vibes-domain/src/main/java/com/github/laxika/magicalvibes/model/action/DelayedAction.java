@@ -30,5 +30,6 @@ public sealed interface DelayedAction permits
         DelayedGraveyardToHandReturn,
         DelayedGraveyardToBattlefieldTransformedReturn,
         DelayedCombatDamageLoot,
+        AddManaAtNextMainPhase,
         PendingExileReturn {
 }

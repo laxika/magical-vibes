@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffec
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringCardConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentConditionalEffect;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -770,7 +771,10 @@ public class TriggerCollectionService {
             for (CardEffect effect : perm.getCard().getEffects(EffectSlot.ON_ALLY_PERMANENT_BECOMES_TAPPED)) {
                 CardEffect resolved = effect;
                 if (effect instanceof TriggeringPermanentConditionalEffect conditional) {
-                    if (!predicateEvaluationService.matchesPermanentPredicate(gameData, tappedPermanent, conditional.predicate())) {
+                    FilterContext filterContext = FilterContext.of(gameData)
+                            .withSourceCardId(perm.getOriginalCard().getId())
+                            .withSourceControllerId(ownerId);
+                    if (!predicateEvaluationService.matchesPermanentPredicate(tappedPermanent, conditional.predicate(), filterContext)) {
                         continue;
                     }
                     resolved = conditional.wrapped();
@@ -984,10 +988,13 @@ public class TriggerCollectionService {
      *
      * <p>Each player may put their revealed card on the bottom of their library; this engine leaves
      * the revealed cards on top (a legal choice), so no clash-source card yet mutates library order.
-     * The "whenever you clash" triggers fire after the clash ends. Intended to be invoked from a
-     * clash-source card's effect resolution (none exist yet) or a test.
+     * The "whenever you clash" triggers fire after the clash ends. Invoked from a clash-source card's
+     * effect resolution (see {@code ClashEffect}) or a test.
+     *
+     * @return {@code true} if the clashing player won the clash (their revealed card had a strictly
+     *         greater mana value), so callers can apply an "if you won" reward.
      */
-    public void performClash(GameData gameData, UUID clashingPlayerId) {
+    public boolean performClash(GameData gameData, UUID clashingPlayerId) {
         UUID opponentId = gameData.orderedPlayerIds.stream()
                 .filter(id -> !id.equals(clashingPlayerId))
                 .findFirst().orElse(null);
@@ -1011,6 +1018,7 @@ public class TriggerCollectionService {
         log.info("Game {} - {} clashes (won={})", gameData.id, clashingPlayerId, won);
 
         fireClashTriggers(gameData, clashingPlayerId, won);
+        return won;
     }
 
     private Card topCard(GameData gameData, UUID playerId) {
