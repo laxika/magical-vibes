@@ -21,6 +21,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   aiDifficulty = signal<string>('EASY');
   errorMessage = signal('');
   showCreateForm = signal(false);
+  creating = signal(false);
   activeTab = signal<'1v1' | 'draft'>('1v1');
   draftAiCount = signal(7);
   draftSetCode = signal('');
@@ -102,6 +103,7 @@ export class HomeComponent implements OnInit, OnDestroy {
         } else if (message.type === MessageType.DRAFT_PACK_UPDATE) {
           this.router.navigate(['/draft']);
         } else if (message.type === MessageType.ERROR) {
+          this.creating.set(false);
           const notification = message as GameNotification;
           if (notification.message) {
             this.errorMessage.set(notification.message);
@@ -132,12 +134,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   createGame() {
+    if (this.creating()) {
+      return;
+    }
     if (!this.newGameName().trim()) {
       this.errorMessage.set('Please enter a game name');
       return;
     }
 
     this.errorMessage.set('');
+    this.creating.set(true);
     this.websocketService.send({
       type: MessageType.CREATE_GAME,
       gameName: this.newGameName(),
@@ -146,18 +152,19 @@ export class HomeComponent implements OnInit, OnDestroy {
       aiDeckId: this.aiDeckId(),
       aiDifficulty: this.aiDifficulty()
     });
-
-    this.newGameName.set('');
-    this.showCreateForm.set(false);
   }
 
   createDraft() {
+    if (this.creating()) {
+      return;
+    }
     if (!this.draftGameName().trim()) {
       this.errorMessage.set('Please enter a draft name');
       return;
     }
 
     this.errorMessage.set('');
+    this.creating.set(true);
     this.websocketService.send({
       type: MessageType.CREATE_DRAFT,
       draftName: this.draftGameName(),
@@ -168,7 +175,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   joinGame(gameId: string) {
+    if (this.creating()) {
+      return;
+    }
     this.errorMessage.set('');
+    this.creating.set(true);
     this.websocketService.send({
       type: MessageType.JOIN_GAME,
       gameId: gameId,

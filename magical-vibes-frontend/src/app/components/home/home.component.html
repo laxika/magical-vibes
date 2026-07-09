@@ -15,7 +15,7 @@
     }
 
     <div class="actions">
-      <button class="btn-primary" (click)="toggleCreateForm()">
+      <button class="btn-primary" (click)="toggleCreateForm()" [disabled]="creating()">
         @if (showCreateForm()) {
           Cancel
         } @else {
@@ -97,8 +97,12 @@
                 </select>
               </div>
             }
-            <button class="btn-primary" (click)="createGame()">
-              Create Game
+            <button class="btn-primary" (click)="createGame()" [disabled]="creating()">
+              @if (creating()) {
+                Creating...
+              } @else {
+                Create Game
+              }
             </button>
           </div>
         }
@@ -138,8 +142,12 @@
                 }
               </select>
             </div>
-            <button class="btn-primary" (click)="createDraft()">
-              Create Draft
+            <button class="btn-primary" (click)="createDraft()" [disabled]="creating()">
+              @if (creating()) {
+                Creating...
+              } @else {
+                Create Draft
+              }
             </button>
           </div>
         }
@@ -172,7 +180,7 @@
                 <p><strong>Players:</strong> {{ game.playerCount }}</p>
                 <p><strong>Status:</strong> {{ game.status }}</p>
               </div>
-              <button class="btn-join" (click)="joinGame(game.id)" [disabled]="game.status !== GameStatus.WAITING">
+              <button class="btn-join" (click)="joinGame(game.id)" [disabled]="creating() || game.status !== GameStatus.WAITING">
                 @if (game.status === GameStatus.WAITING) {
                   Join Game
                 } @else {
