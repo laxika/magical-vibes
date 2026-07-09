@@ -30,7 +30,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any());
+                verify(playerInputService).beginCardChoice(eq(gd), eq(player1Id), any(), any(), anyBoolean());
             }
 
             @Test
@@ -47,7 +47,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any());
+                verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any(), anyBoolean());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no creature cards in hand")));
             }
@@ -62,7 +62,7 @@ class PutCardToBattlefieldEffectHandlerTest extends AbstractPlayerInteractionHan
 
                 resolveEffect(gd, entry, effect);
 
-                verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any());
+                verify(playerInputService, never()).beginCardChoice(any(), any(), any(), any(), anyBoolean());
                 verify(gameBroadcastService).logAndBroadcast(eq(gd), argThat(msg ->
                         msg.contains("no creature cards in hand")));
             }
