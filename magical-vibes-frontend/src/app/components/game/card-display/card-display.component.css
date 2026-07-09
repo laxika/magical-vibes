@@ -18,6 +18,10 @@
   transform: translate(var(--card-shift-x, 0px), var(--card-lift, 0px)) rotate(var(--card-tap-rotate, 0deg));
   zoom: var(--card-zoom, 1);
   transition: transform 0.25s ease, margin 0.25s ease;
+  /* Keep the card on its own compositing layer so the hover/combat lift moves
+     the rasterized card as one unit; without it the fractional zoom makes the
+     browser resample the art at every transition frame, which shimmers. */
+  will-change: transform;
   position: relative;
   overflow: visible;
   user-select: none;
@@ -32,8 +36,11 @@
   pointer-events: none;
 }
 
+/* Divide by the zoom so the lift is a whole 4 screen px regardless of card
+   scale; a zoom-scaled fractional offset would leave the composited layer
+   sitting between device pixels, i.e. permanently blurred while lifted. */
 :host(:hover) {
-  --card-lift: -4px;
+  --card-lift: calc(-4px / var(--card-zoom, 1));
 }
 
 /* Reserve the rotated footprint: (231 - 165) / 2 = 33px on each axis, so a
