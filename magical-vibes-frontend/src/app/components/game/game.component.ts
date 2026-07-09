@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, HostListener, NgZone, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -100,6 +100,7 @@ export class GameComponent implements OnInit, OnDestroy {
     this.hoveredPermanent.set(null);
     this.stackTargetId.set(null);
     this.combatShiftX.set(new Map());
+    this.showShortcutsPopup.set(false);
 
     this.choice.init(
       this.game,
@@ -1414,6 +1415,90 @@ export class GameComponent implements OnInit, OnDestroy {
   onCardHoverEnd(): void {
     this.hoveredCard.set(null);
     this.hoveredPermanent.set(null);
+  }
+
+  // ========== Keyboard shortcuts ==========
+
+  showShortcutsPopup = signal(false);
+
+  toggleShortcutsPopup(event: MouseEvent): void {
+    event.stopPropagation();
+    this.showShortcutsPopup.update(v => !v);
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.showShortcutsPopup.set(false);
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  onKeydown(event: KeyboardEvent): void {
+    if (this.game()?.status !== GameStatus.RUNNING) return;
+    const target = event.target as HTMLElement | null;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) return;
+
+    if (event.key === 'Escape') {
+      if (this.handleEscape()) {
+        event.preventDefault();
+      }
+      return;
+    }
+
+    if (event.key === ' ' || event.key === 'Enter') {
+      // A focused button already handles Space/Enter natively — don't double-fire.
+      if (target && target.tagName === 'BUTTON') return;
+      event.preventDefault();
+      if (event.repeat) return;
+      this.handlePrimaryAction();
+    }
+  }
+
+  /** Space/Enter: the action the big side-panel button would perform. */
+  private handlePrimaryAction(): void {
+    if (this.isChoicePending) return;
+    if (this.declaringAttackers()) {
+      this.confirmAttackers();
+    } else if (this.declaringBlockers()) {
+      this.confirmBlockers();
+    } else if (this.hasPriority) {
+      this.passPriority();
+    }
+  }
+
+  /** Esc: back out of the innermost cancelable interaction. Returns whether it consumed the key. */
+  private handleEscape(): boolean {
+    const t = this.choice.targeting;
+    if (this.showShortcutsPopup()) { this.showShortcutsPopup.set(false); return true; }
+    if (this.showSurrenderConfirm()) { this.cancelSurrender(); return true; }
+    if (t.choosingAbility) { t.cancelAbilityChoice(); return true; }
+    if (t.choosingMode) { t.cancelModes(); return true; }
+    if (t.choosingKicker) { t.cancelKicker(); return true; }
+    if (t.choosingPhyrexianPayment) { t.cancelPhyrexianPayment(); return true; }
+    if (t.choosingAlternateCost || t.selectingAlternateCostCreatures) { t.cancelAlternateCost(); return true; }
+    if (t.choosingXValue) { t.cancelXValue(); return true; }
+    if (t.convoking) { t.cancelConvoke(); return true; }
+    if (t.targetingGraveyard) { t.cancelGraveyardTargeting(); return true; }
+    if (t.multiTargeting) { t.cancelMultiTargeting(); return true; }
+    if (t.targetingSpell) { t.cancelSpellTargeting(); return true; }
+    if (t.selectingTarget) { t.cancelTargeting(); return true; }
+    if (this.declaringBlockers() && this.selectedBlockerIndex() !== null) { this.cancelBlockerSelection(); return true; }
+    return false;
+  }
+
+  /** Any pending choice/targeting flow the server or UI is waiting on — Space
+      must not pass priority (or confirm combat) out from under it. */
+  private get isChoicePending(): boolean {
+    const c = this.choice;
+    const t = c.targeting;
+    return c.choosingFromHand || c.choosingFromList || c.awaitingMayAbility
+      || c.choosingPermanent || c.choosingMultiplePermanents || c.choosingGraveyardCards
+      || c.revealingHand || c.choosingFromGraveyard || c.awaitingXValueChoice
+      || c.library.scrying || c.library.reorderingLibrary || c.library.searchingLibrary || c.library.choosingHandTopBottom
+      || c.damage.assigningCombatDamage || c.damage.distributingDamage
+      || t.selectingTarget || t.targetingSpell || t.multiTargeting || t.convoking
+      || t.choosingAbility || t.choosingXValue || t.choosingMode || t.choosingKicker
+      || t.choosingPhyrexianPayment || t.choosingAlternateCost || t.selectingAlternateCostCreatures
+      || t.targetingGraveyard;
   }
 
   // ========== Formatting ==========
