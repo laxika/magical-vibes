@@ -239,6 +239,75 @@ public class PlayerInteractionSupport {
                 gameData.id, casterName, cardsToChoose, targetName, actionVerb);
     
     }
+    /**
+     * Begins the Blackmail flow: "Target player reveals {@code revealCount} cards from their hand
+     * and you choose one of them. That player discards that card." The target picks which cards to
+     * reveal; if they hold {@code revealCount} or fewer, their whole hand is revealed and the
+     * controller's discard choice begins immediately.
+     */
+    public void beginRevealCardsChooseDiscard(GameData gameData, StackEntry entry, int revealCount) {
+
+        UUID targetPlayerId = entry.getTargetId();
+        UUID controllerId = entry.getControllerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (hand == null || hand.isEmpty()) {
+            gameBroadcastService.logAndBroadcast(gameData, targetName + " reveals their hand. It is empty.");
+            log.info("Game {} - {}'s hand is empty for reveal-and-discard", gameData.id, targetName);
+            return;
+        }
+
+        // A discard forced by an opponent enables replacement effects (e.g. Obstinate Baloth).
+        gameData.discardCausedByOpponent = !controllerId.equals(targetPlayerId);
+
+        if (hand.size() <= revealCount) {
+            // Whole hand is revealed — no choice for the target player.
+            List<UUID> revealedCardIds = hand.stream().map(Card::getId).toList();
+            beginRevealCardsDiscardStage(gameData, targetPlayerId, controllerId, revealedCardIds);
+            return;
+        }
+
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            validIndices.add(i);
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
+                targetPlayerId, targetPlayerId, controllerId, true, validIndices, revealCount,
+                new ArrayList<>(), "Choose " + revealCount + " cards to reveal."));
+
+        log.info("Game {} - {} choosing {} cards to reveal for reveal-and-discard",
+                gameData.id, targetName, revealCount);
+    }
+
+    /**
+     * Logs the revealed cards and begins the controller's discard choice over exactly that
+     * revealed set (the rest of the target's hand stays hidden).
+     */
+    public void beginRevealCardsDiscardStage(GameData gameData, UUID targetPlayerId,
+                                             UUID controllerId, List<UUID> revealedCardIds) {
+
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        List<Card> revealedCards = revealedCardIds.stream()
+                .map(id -> hand.stream().filter(c -> c.getId().equals(id)).findFirst().orElse(null))
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        String cardNames = String.join(", ", revealedCards.stream().map(Card::getName).toList());
+        gameBroadcastService.logAndBroadcast(gameData, targetName + " reveals " + cardNames + ".");
+
+        List<Integer> validIndices = new ArrayList<>();
+        for (int i = 0; i < revealedCardIds.size(); i++) {
+            validIndices.add(i);
+        }
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
+                controllerId, targetPlayerId, controllerId, false, validIndices, 1,
+                new ArrayList<>(revealedCardIds), "Choose a card for " + targetName + " to discard."));
+    }
+
     public boolean sharesCardType(List<Card> cards) {
 
         if (cards.size() < 2) return false;

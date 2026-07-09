@@ -566,6 +566,100 @@ public class CardChoiceHandlerService {
         return -1;
     }
 
+    /**
+     * Answers the Blackmail flow ({@link PendingInteraction.RevealCardsDiscardChoice}). In the
+     * reveal stage the target player picks a card to reveal (transitioning to the controller's
+     * discard choice once the last one is revealed); in the discard stage the controller picks one
+     * revealed card and the target discards it.
+     */
+    public void handleRevealCardsDiscardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.RevealCardsDiscardChoice choice =
+                gameData.interaction.activeInteraction(PendingInteraction.RevealCardsDiscardChoice.class);
+        if (choice == null || !player.getId().equals(choice.decidingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+        if (!choice.validIndices().contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID targetPlayerId = choice.targetPlayerId();
+        List<Card> targetHand = gameData.playerHands.get(targetPlayerId);
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+
+        if (choice.revealStage()) {
+            // The target player picks a card (by hand index) to reveal.
+            Card chosen = targetHand.get(cardIndex);
+            List<UUID> revealed = new ArrayList<>(choice.revealedCardIds());
+            revealed.add(chosen.getId());
+            int remaining = Math.max(choice.remainingCount() - 1, 0);
+
+            if (remaining > 0) {
+                List<Integer> newValid = new ArrayList<>(choice.validIndices());
+                newValid.remove(Integer.valueOf(cardIndex));
+                interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsDiscardChoice(
+                        choice.decidingPlayerId(), targetPlayerId, choice.controllerId(), true,
+                        newValid, remaining, revealed, "Choose another card to reveal."));
+            } else {
+                gameData.interaction.clearAwaitingInput();
+                playerInteractionSupport.beginRevealCardsDiscardStage(gameData, targetPlayerId,
+                        choice.controllerId(), revealed);
+            }
+            return;
+        }
+
+        // Discard stage: cardIndex is into the revealed set; map it back to the hand.
+        UUID chosenId = choice.revealedCardIds().get(cardIndex);
+        int handIndex = -1;
+        for (int i = 0; i < targetHand.size(); i++) {
+            if (targetHand.get(i).getId().equals(chosenId)) {
+                handIndex = i;
+                break;
+            }
+        }
+        gameData.interaction.clearAwaitingInput();
+        if (handIndex < 0) {
+            // Card left the hand between reveal and discard — nothing to discard.
+            turnProgressionService.resolveAutoPass(gameData);
+            return;
+        }
+
+        Card card = targetHand.remove(handIndex);
+        String controllerName = player.getUsername();
+
+        if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    targetName + " discards " + card.getName() + " — it enters the battlefield instead.");
+            log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
+                    gameData.id, targetName, card.getName());
+            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            if (card.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, card, null, false);
+            }
+        } else {
+            graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    controllerName + " chooses " + card.getName() + "; " + targetName + " discards it.");
+            log.info("Game {} - {} discards {} (chosen by {})", gameData.id, targetName, card.getName(), controllerName);
+            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+        }
+
+        // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+            return;
+        }
+
+        // Resume any remaining effects on the same spell/ability.
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+
+        turnProgressionService.resolveAutoPass(gameData);
+    }
     /** Answers IMPRINT_FROM_HAND_CHOICE (exile the chosen card and imprint it on the source permanent). */
     public void handleImprintFromHandCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction.ImprintFromHandChoice imprintChoice =

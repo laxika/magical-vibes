@@ -233,6 +233,9 @@ public class CombatDamageService {
         // Process ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul)
         processDealtDamageTriggers(gameData, dealtDamageTriggerData);
 
+        // Process ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
+        processAnyCreatureDealtDamageTriggers(gameData, state);
+
         // Process ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
         for (var entry : state.defDamageTaken.entrySet()) {
             if (entry.getValue() > 0) {
@@ -919,6 +922,28 @@ public class CombatDamageService {
         }
     }
 
+    /**
+     * Fires ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath) for each creature that
+     * took combat damage this step. Creatures already removed by lethal combat damage are skipped —
+     * they're gone; only surviving damaged creatures are looked up and passed to the trigger scan.
+     */
+    private void processAnyCreatureDealtDamageTriggers(GameData gameData, CombatDamageState state) {
+        Set<UUID> damagedCreatureIds = new LinkedHashSet<>();
+        for (var entry : state.combatDamageDealtToCreatures.entrySet()) {
+            Map<UUID, Integer> amounts = state.combatDamageAmountsToCreatures.getOrDefault(entry.getKey(), Map.of());
+            for (UUID targetId : entry.getValue()) {
+                if (amounts.getOrDefault(targetId, 0) > 0) {
+                    damagedCreatureIds.add(targetId);
+                }
+            }
+        }
+        for (UUID id : damagedCreatureIds) {
+            Permanent damaged = gameQueryService.findPermanentById(gameData, id);
+            if (damaged == null) continue;
+            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, damaged);
+        }
+    }
+
     private record DealtDamageTriggerData(Card card, UUID permanentId, UUID controllerId, int damageDealt, UUID sourceControllerId) {}
 
     private List<DealtDamageTriggerData> collectDealtDamageTriggerData(GameData gameData, CombatDamageState state) {
@@ -1099,10 +1124,20 @@ public class CombatDamageService {
         if (state.damageToDefendingPlayer > 0) {
             if (gameQueryService.canPlayerLifeChange(gameData, defenderId)) {
                 int currentLife = gameData.getLife(defenderId);
-                gameData.playerLifeTotals.put(defenderId, currentLife - state.damageToDefendingPlayer);
+                int newLife = currentLife - state.damageToDefendingPlayer;
+                // Worship: combat damage can't reduce the controller's life total below 1 while they
+                // control a creature. The full damage is still dealt; only the life reduction is capped.
+                if (currentLife >= 1 && newLife < 1
+                        && gameQueryService.damageCantReduceLifeBelowOne(gameData, defenderId)) {
+                    newLife = 1;
+                }
+                gameData.playerLifeTotals.put(defenderId, newLife);
+                int lifeLost = currentLife - newLife;
                 String logEntry = gameData.playerIdToName.get(defenderId) + " takes " + state.damageToDefendingPlayer + " combat damage.";
                 gameBroadcastService.logAndBroadcast(gameData, logEntry);
-                triggerCollectionService.checkLifeLossTriggers(gameData, defenderId, state.damageToDefendingPlayer);
+                if (lifeLost > 0) {
+                    triggerCollectionService.checkLifeLossTriggers(gameData, defenderId, lifeLost);
+                }
             } else {
                 gameBroadcastService.logAndBroadcast(gameData,
                         gameData.playerIdToName.get(defenderId) + "'s life total can't change.");
@@ -1119,7 +1154,8 @@ public class CombatDamageService {
 
         // Track that the defending player was dealt damage this turn (for Bloodcrazed Goblin etc.)
         if (state.damageToDefendingPlayer > 0 || state.poisonDamageToDefendingPlayer > 0) {
-            gameData.playersDealtDamageThisTurn.add(defenderId);
+            gameData.recordDamageToPlayer(defenderId,
+                    state.damageToDefendingPlayer + state.poisonDamageToDefendingPlayer);
         }
     }
 
@@ -1152,7 +1188,7 @@ public class CombatDamageService {
                     int currentLife = gameData.getLife(targetId);
                     gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                 }
-                gameData.playersDealtDamageThisTurn.add(targetId);
+                gameData.recordDamageToPlayer(targetId, redirectEffective);
             }
         }
     }
@@ -1200,7 +1236,7 @@ public class CombatDamageService {
                         int currentLife = gameData.getLife(targetId);
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
-                    gameData.playersDealtDamageThisTurn.add(targetId);
+                    gameData.recordDamageToPlayer(targetId, redirectEffective);
                 }
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);

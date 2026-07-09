@@ -11,6 +11,7 @@ import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "162")
+@CardRegistration(set = "9ED", collectorNumber = "148")
 public class NantukoHusk extends Card {
 
     public NantukoHusk() {

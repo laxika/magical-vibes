@@ -433,6 +433,7 @@ public class TriggerCollectionService {
             collectBecomesTargetTriggers(gameData, targetPermanent, controllerId, targetPermanent);
             collectBecomesTargetOfOpponentSpellTriggers(gameData, targetPermanent, controllerId, spellEntry);
             collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, spellEntry.getControllerId());
+            collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent);
             // Check the targeted permanent itself for "when this becomes the target" triggers.
             // Attached permanents (auras/equipment) use the loop below instead — their triggers
             // monitor the enchanted/equipped creature, not themselves.
@@ -500,6 +501,8 @@ public class TriggerCollectionService {
             if (controllerId != null) {
                 collectAllyCreatureBecomesTargetOfOpponentTriggers(gameData, targetPermanent, controllerId, abilityEntry.getControllerId());
             }
+
+            collectAnyCreatureBecomesTargetTriggers(gameData, targetPermanent);
 
             for (UUID playerId : gameData.orderedPlayerIds) {
                 List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
@@ -671,6 +674,44 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * Checks ALL permanents across every battlefield for
+     * {@link EffectSlot#ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY}. Only fires when the
+     * targeted permanent is a creature. The targeted creature is stored as the non-targeting
+     * {@code targetId} so the resolved effect can act on it. Used by Cowardice.
+     */
+    private void collectAnyCreatureBecomesTargetTriggers(GameData gameData, Permanent targetPermanent) {
+        if (!targetPermanent.getCard().hasType(CardType.CREATURE)) return;
+
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+            if (battlefield == null) continue;
+
+            for (Permanent source : battlefield) {
+                List<CardEffect> effects = source.getCard().getEffects(
+                        EffectSlot.ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY);
+                if (effects.isEmpty()) continue;
+
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source.getCard(),
+                        playerId,
+                        source.getCard().getName() + "'s triggered ability",
+                        new ArrayList<>(effects),
+                        targetPermanent.getId(),
+                        source.getId()
+                );
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+
+                String logEntry = source.getCard().getName() + "'s triggered ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} any-creature-becomes-target trigger queued",
+                        gameData.id, source.getCard().getName());
+            }
+        }
+    }
+
     // ── Dealt-damage-to-creature triggers ──────────────────────────────
 
     public void checkDealtDamageToCreatureTriggers(GameData gameData, Permanent damagedCreature) {
@@ -743,6 +784,39 @@ public class TriggerCollectionService {
                 String triggerLog = perm.getCard().getName() + "'s ability triggers.";
                 gameBroadcastService.logAndBroadcast(gameData, triggerLog);
                 log.info("Game {} - {} triggers (opponent creature dealt damage)", gameData.id, perm.getCard().getName());
+            }
+        });
+    }
+
+    // ── Any-creature-dealt-damage triggers ─────────────────────────────
+
+    /**
+     * Fires ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath) on every permanent
+     * with that slot, regardless of who controls the damaged creature. Each queued stack entry
+     * targets the damaged creature so the effect (e.g. destroy it, can't be regenerated) resolves
+     * against it. Called once per damaged creature.
+     */
+    public void checkAnyCreatureDealtDamageTriggers(GameData gameData, Permanent damagedCreature) {
+        gameData.forEachPermanent((playerId, perm) -> {
+            List<CardEffect> effects = perm.getCard().getEffects(EffectSlot.ON_ANY_CREATURE_DEALT_DAMAGE);
+            if (effects == null || effects.isEmpty()) return;
+
+            for (CardEffect effect : effects) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        playerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                );
+                entry.setTargetId(damagedCreature.getId());
+                entry.setNonTargeting(true);
+                gameData.stack.add(entry);
+                String triggerLog = perm.getCard().getName() + "'s ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, triggerLog);
+                log.info("Game {} - {} triggers (any creature dealt damage)", gameData.id, perm.getCard().getName());
             }
         });
     }

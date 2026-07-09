@@ -106,6 +106,9 @@ public class DamageSupport {
             if (damagedCreatureControllerId != null) {
                 triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
             }
+
+            // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
+            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
         }
 
         String sourceName = damageSource != null ? damageSource.getCard().getName() : entry.getCard().getName();
@@ -170,6 +173,9 @@ public class DamageSupport {
             if (damagedCreatureControllerId != null) {
                 triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
             }
+
+            // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
+            triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target);
         }
 
         String sourceName = entry.getCard().getName();
@@ -397,18 +403,29 @@ public class DamageSupport {
                         playerName + "'s life total can't change.");
             } else {
                 int currentLife = gameData.getLife(playerId);
-                gameData.playerLifeTotals.put(playerId, currentLife - effectiveDamage);
+                int newLife = currentLife - effectiveDamage;
+                // Worship: damage can't reduce the controller's life total below 1 while they control a creature.
+                // The full damage is still dealt (lifelink/damage triggers see the full amount); only the life
+                // total reduction is capped. Does nothing if the player is already at 0 or less life.
+                if (currentLife >= 1 && newLife < 1
+                        && gameQueryService.damageCantReduceLifeBelowOne(gameData, playerId)) {
+                    newLife = 1;
+                }
+                gameData.playerLifeTotals.put(playerId, newLife);
+                int lifeLost = currentLife - newLife;
 
                 if (effectiveDamage > 0) {
                     String playerName = gameData.playerIdToName.get(playerId);
                     gameBroadcastService.logAndBroadcast(gameData,
                             playerName + " takes " + effectiveDamage + " damage from " + cardName + ".");
-                    triggerCollectionService.checkLifeLossTriggers(gameData, playerId, effectiveDamage);
+                    if (lifeLost > 0) {
+                        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLost);
+                    }
                 }
             }
 
             if (effectiveDamage > 0) {
-                gameData.playersDealtDamageThisTurn.add(playerId);
+                gameData.recordDamageToPlayer(playerId, effectiveDamage);
                 triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
                 triggerCollectionService.checkNoncombatDamageToOpponentTriggers(gameData, playerId);
                 checkSpellLifelink(gameData, entry, effectiveDamage);
@@ -448,7 +465,7 @@ public class DamageSupport {
                     int currentLife = gameData.getLife(targetId);
                     gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                 }
-                gameData.playersDealtDamageThisTurn.add(targetId);
+                gameData.recordDamageToPlayer(targetId, redirectEffective);
             }
         }
     }
@@ -481,7 +498,7 @@ public class DamageSupport {
                         int currentLife = gameData.getLife(targetId);
                         gameData.playerLifeTotals.put(targetId, currentLife - redirectEffective);
                     }
-                    gameData.playersDealtDamageThisTurn.add(targetId);
+                    gameData.recordDamageToPlayer(targetId, redirectEffective);
                 }
             } else {
                 Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);

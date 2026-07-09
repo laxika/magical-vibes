@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "9ED", collectorNumber = "67")
 @CardRegistration(set = "10E", collectorNumber = "73")
 @CardRegistration(set = "M10", collectorNumber = "45")
 @CardRegistration(set = "M11", collectorNumber = "49")

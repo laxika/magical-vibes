@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingS
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreaturesForCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayWithHandsRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealOpponentHandsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
@@ -187,17 +188,19 @@ public class GameBroadcastService {
         // Mindslaver: controller always sees the controlled player's hand
         // (handled separately in broadcastGameState — overrides opponentHand for controller)
 
-        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
-        if (bf == null) return List.of();
-        boolean reveals = false;
-        for (Permanent perm : bf) {
-            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
-                if (effect instanceof RevealOpponentHandsEffect) {
-                    reveals = true;
-                    break;
+        boolean reveals = anyPlayerHasPlayWithHandsRevealed(gameData);
+        if (!reveals) {
+            List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+            if (bf == null) return List.of();
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof RevealOpponentHandsEffect) {
+                        reveals = true;
+                        break;
+                    }
                 }
+                if (reveals) break;
             }
-            if (reveals) break;
         }
         if (!reveals) return List.of();
         for (UUID opponentId : gameData.orderedPlayerIds) {
@@ -208,6 +211,21 @@ public class GameBroadcastService {
             }
         }
         return List.of();
+    }
+
+    private boolean anyPlayerHasPlayWithHandsRevealed(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> bf = gameData.playerBattlefields.get(pid);
+            if (bf == null) continue;
+            for (Permanent perm : bf) {
+                for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                    if (effect instanceof PlayWithHandsRevealedEffect) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     List<List<CardView>> getRevealedLibraryTopCards(GameData data, UUID viewerId) {

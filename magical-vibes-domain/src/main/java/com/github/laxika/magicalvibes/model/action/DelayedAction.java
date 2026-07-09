@@ -21,6 +21,7 @@ public sealed interface DelayedAction permits
         SacrificeAtEndOfCombat,
         ExileTokenAtEndOfCombat,
         DestroyEquipmentAtEndOfCombat,
+        DestroyPermanentAtEndOfCombat,
         ExileAndReturnTransformedAtEndOfCombat,
         ExileTokenAtEndStep,
         SacrificeAtEndStep,

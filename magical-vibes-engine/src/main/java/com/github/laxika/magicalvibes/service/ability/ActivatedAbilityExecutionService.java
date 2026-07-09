@@ -461,7 +461,7 @@ public class ActivatedAbilityExecutionService {
                         }
                     }
                     if (effectiveDamage > 0) {
-                        gameData.playersDealtDamageThisTurn.add(playerId);
+                        gameData.recordDamageToPlayer(playerId, effectiveDamage);
                     }
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
@@ -519,7 +519,7 @@ public class ActivatedAbilityExecutionService {
                 }
             }
             if (effectiveDamage > 0) {
-                gameData.playersDealtDamageThisTurn.add(playerId);
+                gameData.recordDamageToPlayer(playerId, effectiveDamage);
             }
         }
     }

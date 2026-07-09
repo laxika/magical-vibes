@@ -527,6 +527,11 @@ public class GameSimulator {
                     gameService.handleCardChosen(gd, player, rhc.validIndices().iterator().next());
                 }
             }
+            case PendingInteraction.RevealCardsDiscardChoice rcdc -> {
+                if (rcdc.validIndices() != null && !rcdc.validIndices().isEmpty()) {
+                    gameService.handleCardChosen(gd, player, rcdc.validIndices().iterator().next());
+                }
+            }
             case PendingInteraction.HandTopBottomChoice ignored -> gameService.handleHandTopBottomChosen(gd, player, 0, 1);
             case PendingInteraction.LibraryRevealChoice lrc -> {
                 if (lrc.validCardIds() != null && !lrc.validCardIds().isEmpty()) {
@@ -585,6 +590,7 @@ public class GameSimulator {
                 case PendingInteraction.MultiGraveyardChoice mgc -> mgc.playerId();
                 case PendingInteraction.ColorChoice cc -> cc.playerId();
                 case PendingInteraction.RevealedHandChoice rhc -> rhc.choosingPlayerId();
+                case PendingInteraction.RevealCardsDiscardChoice rcdc -> rcdc.decidingPlayerId();
                 case PendingInteraction.GraveyardChoice gc -> gc.playerId();
                 case PendingInteraction.GraveyardExileCostChoice gec -> gec.playerId();
                 case PendingInteraction.HandChoice hc -> hc.playerId();

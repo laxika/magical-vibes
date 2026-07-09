@@ -313,15 +313,38 @@ public class DamagePreventionService {
         if (damage <= 0 || protectedPermanentId == null || sourcePermanentId == null
                 || gameData.creatureDamageRedirectShields.isEmpty()) return damage;
 
-        for (CreatureDamageRedirectShield shield : gameData.creatureDamageRedirectShields) {
-            if (shield.protectedPermanentId().equals(protectedPermanentId)
-                    && shield.damageSourceId().equals(sourcePermanentId)) {
+        int remaining = damage;
+        List<CreatureDamageRedirectShield> toReAdd = new ArrayList<>();
+        Iterator<CreatureDamageRedirectShield> it = gameData.creatureDamageRedirectShields.iterator();
+
+        while (it.hasNext() && remaining > 0) {
+            CreatureDamageRedirectShield shield = it.next();
+            if (!shield.protectedPermanentId().equals(protectedPermanentId)) continue;
+            // A null source matches any source (e.g. Zealous Inquisitor); otherwise it must match exactly.
+            if (shield.damageSourceId() != null && !shield.damageSourceId().equals(sourcePermanentId)) continue;
+
+            if (shield.isUnlimited()) {
+                // Unlimited (Oracle's Attendants): redirect all remaining damage; the shield persists.
                 gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
-                        protectedPermanentId, sourcePermanentId, damage, shield.redirectTargetId()));
-                return 0;
+                        protectedPermanentId, sourcePermanentId, remaining, shield.redirectTargetId()));
+                remaining = 0;
+            } else {
+                // Amount-limited (Zealous Inquisitor): redirect up to the remaining amount, then consume.
+                int redirected = Math.min(shield.remainingAmount(), remaining);
+                remaining -= redirected;
+                it.remove();
+                if (redirected < shield.remainingAmount()) {
+                    toReAdd.add(shield.withReducedAmount(redirected));
+                }
+                if (redirected > 0) {
+                    gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                            protectedPermanentId, sourcePermanentId, redirected, shield.redirectTargetId()));
+                }
             }
         }
-        return damage;
+
+        gameData.creatureDamageRedirectShields.addAll(toReAdd);
+        return remaining;
     }
 
     public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {

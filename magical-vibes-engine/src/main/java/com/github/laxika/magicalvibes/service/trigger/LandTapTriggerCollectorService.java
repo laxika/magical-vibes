@@ -69,7 +69,7 @@ public class LandTapTriggerCollectorService {
                 gameData.playerLifeTotals.put(tappingPlayerId, currentLife - effectiveDamage);
             }
             if (effectiveDamage > 0) {
-                gameData.playersDealtDamageThisTurn.add(tappingPlayerId);
+                gameData.recordDamageToPlayer(tappingPlayerId, effectiveDamage);
             }
         }
 

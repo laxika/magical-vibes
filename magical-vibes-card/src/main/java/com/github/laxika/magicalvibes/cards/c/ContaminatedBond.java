@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "132")
+@CardRegistration(set = "9ED", collectorNumber = "120")
 public class ContaminatedBond extends Card {
 
     public ContaminatedBond() {

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLoot;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
@@ -42,10 +43,12 @@ public class TurnProgressionService {
                 && (gameData.hasDelayedAction(SacrificeAtEndOfCombat.class)
                     || gameData.hasDelayedAction(ExileTokenAtEndOfCombat.class)
                     || gameData.hasDelayedAction(DestroyEquipmentAtEndOfCombat.class)
+                    || gameData.hasDelayedAction(DestroyPermanentAtEndOfCombat.class)
                     || gameData.hasDelayedAction(ExileAndReturnTransformedAtEndOfCombat.class))) {
             combatService.processEndOfCombatSacrifices(gameData);
             combatService.processEndOfCombatExiles(gameData);
             combatService.processEndOfCombatEquipmentDestruction(gameData);
+            combatService.processEndOfCombatDestructions(gameData);
             combatService.processEndOfCombatExileAndReturnTransformed(gameData);
             gameData.priorityPassedBy.clear();
             return;
@@ -191,6 +194,7 @@ public class TurnProgressionService {
         gameData.combatDamageSourceSubtypesThisTurn.clear();
         gameData.combatDamageSourcesWithChangelingThisTurn.clear();
         gameData.playersDealtDamageThisTurn.clear();
+        gameData.damageDealtToPlayersThisTurn.clear();
         gameData.permanentsDealtDamageThisTurn.clear();
         gameData.creatureCardsDamagedThisTurnBySourcePermanent.clear();
         gameData.creatureGivingControllerPoisonOnDeathThisTurn.clear();

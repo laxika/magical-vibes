@@ -12,6 +12,8 @@ public sealed interface Condition permits
         AnyPlayerControlsPermanentCount,
         AttacksAlone,
         BlockedByMinCreatures,
+        CardsInLibraryAtLeast,
+        CardsInHandAtLeast,
         CardsLeftGraveyardThisTurn,
         CastFromZone,
         CastNotFromHand,

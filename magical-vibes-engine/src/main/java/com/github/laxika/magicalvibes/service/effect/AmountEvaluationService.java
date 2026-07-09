@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnLinkedPermanent;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.CreatureDeathsThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
+import com.github.laxika.magicalvibes.model.amount.DamageDealtToTargetPlayerThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Divided;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -102,6 +103,9 @@ public class AmountEvaluationService {
                     countOpponentPoisonCounters(gameData, ctx);
             case CreatureDeathsThisTurn c ->
                     countCreatureDeathsThisTurn(gameData, c, ctx);
+            case DamageDealtToTargetPlayerThisTurn ignored ->
+                    ctx.targetPermanentId() == null ? 0
+                            : gameData.damageDealtToPlayersThisTurn.getOrDefault(ctx.targetPermanentId(), 0);
             case ImprintedCreaturePower ignored ->
                     imprintedCreaturePT(ctx, true);
             case ImprintedCreatureToughness ignored ->

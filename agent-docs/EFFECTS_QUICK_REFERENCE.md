@@ -45,6 +45,8 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `ConditionalEffect(new HasAttacker(predicate), wrapped)` — one or more matching attackers
 - `CantAttackUnlessEffect(Condition, "unless clause")` — STATIC attack restriction; condition = `ControlsPermanentCount(1, filter)` / `DefendingPlayerControlsPermanent(filter)` / `AnyPlayerControlsPermanentCount(N, filter)` / `DefendingPlayerPoisoned()` / `OpponentDealtDamageThisTurn()`
 - `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` — graveyard threshold
+- `ConditionalEffect(new CardsInLibraryAtLeast(threshold), wrapped)` — controller has N+ cards in library (Battle of Wits: upkeep + WinGameEffect)
+- `ConditionalEffect(new CardsInHandAtLeast(threshold), wrapped)` — controller has N+ cards in hand (Imaginary Pet: upkeep + ReturnToHandEffect.self())
 - `ConditionalEffect(new SourceCounterThreshold(threshold, counterType), wrapped)` — source counter threshold (e.g. 5+ growth counters)
 - `EnteringCreatureMinPowerConditionalEffect(int, CardEffect)` — entering power >= N
 - `EnteringCreatureMaxPowerConditionalEffect(int, CardEffect)` — entering power <= N
@@ -141,6 +143,7 @@ See EFFECTS_INDEX.md "Damage" section for 15+ additional niche damage effects.
 - `DestroyTargetPermanentThenEffect(EventStat, CardEffect thenEffect, ThenEffectRecipient[, PermanentPredicate])` — collapsed destroy-plus-value family. Destroy the target, then resolve an existing then-effect. `recipient` CONTROLLER (you) / TARGET_CONTROLLER (destroyed permanent's controller). `EventStat` NONE/MANA_VALUE/TOUGHNESS snapshots the destroyed permanent's last-known stat onto `eventValue` for a `GainLifeEffect(EventValue())` / `BoostSelfEffect(EventValue(), Fixed(0))` then-effect. Then-effects: `GainLifeEffect`, `BoostSelfEffect`, `LoseLifeEffect`, `GivePoisonCountersEffect`. Optional `PermanentPredicate` gates the then-effect on the destroyed permanent's state (Death's Caress HUMAN). Then-effect happens even if destruction fails (indestructible)
 - `DestroySourcePermanentEffect()` — destroy source
 - `DestroyCreatureBlockingThisEffect()` — destroy blocker
+- `DestroyCombatOpponentAtEndOfCombatEffect(PermanentPredicate filter, boolean cannotBeRegenerated)` — Basilisk-style "blocks or becomes blocked by a [filter] creature, destroy that creature at end of combat". Put on ON_BLOCK + ON_BECOMES_BLOCKED (`TriggerMode.PER_BLOCKER`); filter re-checked at resolution (Deathgazer nonblack). Destroys at end of combat, not immediately
 - `SacrificePermanentsEffect(count, PermanentPredicate, SacrificeRecipient)` — collapsed forced-sacrifice family. `SacrificeRecipient` = CONTROLLER / TARGET_PLAYER / EACH_PLAYER / EACH_OPPONENT. Bare `PermanentIsCreaturePredicate` → single-select "sacrifice a creature" (Cruel Edict, Grave Pact, Stitcher's Apprentice); any other filter → multi-permanent choice (Storm Fleet Arsonist, Yawning Fissure, Destructive Force). int-count sugar ctor
 - `SacrificeCreatureAndControllerGainsLifeEqualToToughnessEffect()` — sacrifice + life = toughness
 - `SacrificeCreatureToCreateTokensEqualToToughnessEffect(CreateTokenEffect template, PermanentPredicate filter)` — controller sacrifices a matching creature, then creates X copies of `template` where X = sacrificed creature's toughness (template `amount` ignored). Wrap in `MayEffect` for "you may sacrifice" (e.g. Feed the Pack)
@@ -233,7 +236,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `DrawAndDiscardCardEffect(int draw, int discard)` — loot
 - `DiscardAndDrawCardEffect(int discard, int draw)` — rummage
 - `DiscardEffect(DynamicAmount, DiscardRecipient, boolean random)` — the whole discard family; `recipient` ∈ {`CONTROLLER`, `TARGET_PLAYER`, `EACH_PLAYER`, `EACH_OPPONENT`}, `random` picks chosen vs random discard. `(int, recipient, random)` / `(DynamicAmount, recipient)` / `(int, recipient)` convenience ctors (last two non-random). `CountersOnSource(CHARGE)` for per-charge-counter (Shrine of Limitless Power), `XValue()` for Mind Shatter (`TARGET_PLAYER`, random)
-- `DiscardOwnHandEffect()` — discard entire hand
+- `DiscardHandEffect(DiscardRecipient)` — discard entire hand(s); no-arg = controller
 - `DiscardOwnHandThenDrawThatManyEffect()` — discard entire hand, then draw that many
 - `DiscardOwnHandThenDrawEqualToTargetPlayerHandSizeEffect()` — discard entire hand, then draw equal to target player's hand size (counted at draw time)
 - `ExileTopCardsMayPlayUntilNextTurnEffect(DynamicAmount count)` or `(int count)` — exile top N from library, may play until end of your next turn (owner-relative expiry via `ExileSupport.grantPlayUntilOwnersNextTurn`). Use `EventValue()` for "equal to the excess damage dealt this way" (Archaic's Agony)
@@ -242,6 +245,8 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect()` — exile a targeted instant/sorcery from an opponent's graveyard; controller may cast it **this turn**, spending mana of any type, and it is exiled instead of going to a graveyard (Nita, Forum Conciliator). Uses `exilePlayPermissions` + `exilePlayPermissionsExpireEndOfTurn` + `exilePlayAnyManaType` + `exileInsteadOfGraveyard`. Targets graveyard (`canTargetGraveyard()`/`canTargetAnyGraveyard()`)
 - `ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes[, List<CardType> includedTypes], HandChoiceDestination destination[, boolean returnOnSourceLeave])` — reveal target's hand, caster chooses N card(s) → `DISCARD` / `EXILE` / `TOP_OF_LIBRARY` (Duress, Kitesail Freebooter, Agonizing Memories)
 - `RevealCardsChooseOneToDiscardEffect(PermanentPredicate countFilter)` — target reveals X cards **of their choice** (X = number of the caster's permanents matching `countFilter`), then the caster picks one for the target to discard (Thieving Sprite, `PermanentHasAnySubtypePredicate(FAERIE)`). Unlike `ChooseCardsFromTargetHandEffect` the rest of the hand stays hidden; two-phase interaction (`RevealCardsFromHandChoice` → `ChooseRevealedCardToDiscardChoice`), phase 1 skipped when the hand is already ≤ X
+- `TargetRevealsCardsControllerChoosesDiscardEffect(int revealCount)` — target player reveals `revealCount` cards **of their choice** from hand (whole hand if fewer); the controller sees only those and picks one for the target to discard (Blackmail). Two-stage `RevealCardsDiscardChoice` interaction; `canTargetPlayer()`. Contrast `ChooseCardsFromTargetHandEffect` (whole hand revealed, controller chooses)
+- `RevealTargetHandDrawPerMatchingCardEffect(List<CardSubtype> subtypes, List<CardColor> colors)` — target opponent reveals hand; draw one card per card matching any subtype/color (counted once). Pair with `target(PlayerPredicateTargetFilter(OPPONENT))` (Baleful Stare)
 - `LookAtHandEffect()` — look at hand
 - `ShuffleHandIntoLibraryAndDrawEffect()` — wheel
 - `EachPlayerShufflesHandAndGraveyardIntoLibraryEffect()` — Timetwister-style
@@ -364,6 +369,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 - `CantBeBlockedEffect()` — unblockable (static)
 - `CantBeBlockedByFewerThanNCreaturesEffect(int minBlockers)` — generalized menace: can't be blocked except by N+ creatures (static). Menace = 2; Guile = 3
+- `CantBeBlockedIfAttackingAloneEffect()` — can't be blocked while attacking alone (static)
 - `CantBlockEffect()` — can't block (static)
 - `MustAttackEffect()` — must attack (static)
 - `MustBeBlockedIfAbleEffect()` — must be blocked (static)

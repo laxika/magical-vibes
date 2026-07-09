@@ -31,6 +31,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEquipp
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -46,6 +47,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEf
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameFromLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageCantReduceLifeBelowOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealtAsInfectBelowZeroLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantActivateAbilitiesOfGraveyardCardsEffect;
@@ -505,6 +507,21 @@ public class GameQueryService {
         return life <= 0;
     }
 
+    /**
+     * Returns {@code true} if damage dealt to this player can't reduce their life total below 1
+     * (Worship). This is true only when the player controls a permanent with
+     * {@link DamageCantReduceLifeBelowOneEffect} AND currently controls a creature (Worship's
+     * "If you control a creature" clause).
+     */
+    public boolean damageCantReduceLifeBelowOne(GameData gameData, UUID playerId) {
+        if (!playerBattlefieldHasStaticEffect(gameData, playerId, DamageCantReduceLifeBelowOneEffect.class)) {
+            return false;
+        }
+        List<Permanent> bf = gameData.playerBattlefields.get(playerId);
+        if (bf == null) return false;
+        return bf.stream().anyMatch(p -> isCreature(gameData, p));
+    }
+
     // --- Creature / type classification ---
 
     /**
@@ -551,6 +568,34 @@ public class GameQueryService {
                 .filter(p -> isArtifact(gameData, p))
                 .count();
         return artifactCount >= 3;
+    }
+
+    /**
+     * Returns {@code true} if any opponent controls strictly more lands than the given player
+     * (e.g. Gift of Estates, Weathered Wayfarer's "an opponent controls more lands than you").
+     */
+    public boolean anyOpponentControlsMoreLands(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int yourLands = countLandsControlled(gameData, controllerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(controllerId)) continue;
+            if (countLandsControlled(gameData, candidateOpponentId) > yourLands) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int countLandsControlled(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().hasType(CardType.LAND)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /**
@@ -738,6 +783,15 @@ public class GameQueryService {
                 .anyMatch(e -> e instanceof CantBeBlockedEffect)) return true;
         if (hasAuraWithEffect(gameData, creature, CantBeBlockedEffect.class)) return true;
         return hasGrantedEffect(gameData, creature, CantBeBlockedEffect.class);
+    }
+
+    /** True if the given attacker is the only creature its controller declared as an attacker (CR 509.1). */
+    private boolean isAttackingAlone(GameData gameData, Permanent attacker) {
+        UUID controllerId = findPermanentController(gameData, attacker.getId());
+        if (controllerId == null) return false;
+        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+        if (battlefield == null) return false;
+        return battlefield.stream().filter(Permanent::isAttacking).count() == 1;
     }
 
     // --- Stats calculation ---
@@ -1589,6 +1643,9 @@ public class GameQueryService {
                 if (controllerId != null && playerCastHistoricSpellThisTurn(gameData, controllerId)) {
                     return Optional.of(attacker.getCard().getName() + " can't be blocked");
                 }
+            }
+            if (effect instanceof CantBeBlockedIfAttackingAloneEffect && isAttackingAlone(gameData, attacker)) {
+                return Optional.of(attacker.getCard().getName() + " can't be blocked");
             }
         }
         if (hasKeyword(gameData, attacker, Keyword.FLYING)

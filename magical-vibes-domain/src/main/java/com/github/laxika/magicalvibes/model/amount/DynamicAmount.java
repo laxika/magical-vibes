@@ -20,6 +20,7 @@ public sealed interface DynamicAmount permits
         CountersOnSource,
         CreatureDeathsThisTurn,
         CreaturesBlockingSource,
+        DamageDealtToTargetPlayerThisTurn,
         Divided,
         EventValue,
         Fixed,

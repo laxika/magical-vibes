@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeAndContr
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "150")
+@CardRegistration(set = "9ED", collectorNumber = "138")
 public class HighwayRobber extends Card {
 
     public HighwayRobber() {

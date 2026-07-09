@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "61")
+@CardRegistration(set = "9ED", collectorNumber = "56")
 public class WrathOfGod extends Card {
 
     public WrathOfGod() {

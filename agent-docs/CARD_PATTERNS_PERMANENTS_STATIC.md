@@ -26,6 +26,7 @@ All paths relative to `cards/`.
 | Block limit | `s/StalkingTiger.java` | STATIC CanBeBlockedByAtMostNCreaturesEffect |
 | Unblockable | `p/PhantomWarrior.java` | STATIC CantBeBlockedEffect |
 | Conditional unblockable | `s/ScrapdiverSerpent.java` | STATIC CantBeBlockedIfDefenderControlsMatchingPermanentEffect |
+| Unblockable while attacking alone | `d/DreamProwler.java` | STATIC CantBeBlockedIfAttackingAloneEffect |
 | Grant unblockable to own creatures | `t/TetsukoUmezawaFugitive.java` | STATIC GrantEffectEffect(CantBeBlockedEffect, ALL_OWN_CREATURES, PermanentAnyOfPredicate(power/toughness filter)) |
 | Attack restriction (defender controls) | `s/SeaMonster.java` | STATIC CantAttackUnlessEffect(new DefendingPlayerControlsPermanent(predicate), desc) — can't attack unless defending player controls a matching permanent |
 | Attack restriction (controller controls) | `d/DesperateCastaways.java` | STATIC CantAttackUnlessEffect(new ControlsPermanentCount(1, predicate), desc) — can't attack unless controller controls a matching permanent |
@@ -38,6 +39,7 @@ All paths relative to `cards/`.
 | Prevent all damage to self | `c/ChoMannoRevolutionary.java` | STATIC PreventAllDamageEffect |
 | Can't lose game | `p/PlatinumAngel.java` | STATIC CantLoseGameEffect |
 | Can't lose from life + damage as infect | `p/PhyrexianUnlife.java` | STATIC CantLoseGameFromLifeEffect + DamageDealtAsInfectBelowZeroLifeEffect |
+| Damage can't reduce life below 1 (if control creature) | `w/Worship.java` | STATIC DamageCantReduceLifeBelowOneEffect |
 | Can't lose + life gain draw + life loss exile + LTB lose | `l/LichsMastery.java` | STATIC CantLoseGameEffect + GrantKeywordEffect(HEXPROOF, SELF), ON_CONTROLLER_GAINS_LIFE DrawCardsEqualToLifeGainedEffect, ON_CONTROLLER_LOSES_LIFE ExileForEachLifeLostEffect, ON_SELF_LEAVES_BATTLEFIELD ControllerLosesGameOnLeavesEffect |
 | Controller shroud | `t/TrueBeliever.java` | STATIC GrantControllerShroudEffect |
 | Can't cast type | `s/SteelGolem.java` | STATIC CantCastSpellTypeEffect |
@@ -119,6 +121,7 @@ All paths relative to `cards/`.
 | Enchanted permanent death trigger (gain life) | `v/ViridianHarvest.java` | ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD GainLifeEffect(6) — enchants artifact, aura controller gains life when enchanted permanent is put into graveyard |
 | Enchanted permanent LTB trigger (conditional draw) | `c/CuratorsWard.java` | STATIC GrantKeywordEffect(HEXPROOF, ENCHANTED_CREATURE) + ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD EnchantedPermanentLeavesConditionalEffect(CardIsHistoricPredicate, DrawCardEffect(2)) — enchants any permanent, grants hexproof, draws 2 when enchanted permanent leaves battlefield if historic |
 | Enchanted creature dealt damage trigger | `s/SpitefulShadows.java` | ON_ENCHANTED_CREATURE_DEALT_DAMAGE EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect — enchanted creature deals damage equal to amount dealt to its controller |
+| Any creature dealt damage → destroy it | `d/DeathPitsOfRath.java` | ON_ANY_CREATURE_DEALT_DAMAGE DestroyTargetPermanentEffect(true) — global enchantment; fires once per damaged creature (combat + noncombat), queued entry auto-targets the damaged creature and destroys it, no regeneration |
 | Curse (enchant player + static debuff) | `c/CurseOfDeathsHold.java` | STATIC StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_PLAYER_CREATURES) — enchant player aura (auto-detected from CURSE subtype via `isEnchantPlayer()`), creatures enchanted player controls get -1/-1 |
 | Curse (enchant player + combat trigger) | `c/CurseOfStalkedPrey.java` | ON_COMBAT_DAMAGE_TO_PLAYER PutCountersOnSourceEffect(1,1,1) — enchants player (auto-detected from CURSE subtype), whenever a creature deals combat damage to enchanted player, put +1/+1 counter on that creature. CombatDamageService checks curses attached to defending player |
 | Curse (enchant player + upkeep damage) | `c/CurseOfThePiercedHeart.java` | ENCHANTED_PLAYER_UPKEEP_TRIGGERED DealDamageToPlayersEffect(1, DamageRecipient.ENCHANTED_PLAYER) — enchant player curse; at enchanted player's upkeep, deals 1 damage to that player (targetId baked to the enchanted player by StepTriggerService) |

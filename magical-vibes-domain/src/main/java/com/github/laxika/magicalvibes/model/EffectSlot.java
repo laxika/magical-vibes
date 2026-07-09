@@ -121,6 +121,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields
      *  for permanents with this slot whose controller is different from the damaged creature's controller. */
     ON_OPPONENT_CREATURE_DEALT_DAMAGE,
+    /** Triggers whenever any creature (yours or an opponent's) is dealt damage (combat or non-combat).
+     *  Fires on the permanent with this slot, not on the damaged creature. Scans all battlefields;
+     *  the queued stack entry targets the damaged creature (e.g. Death Pits of Rath). */
+    ON_ANY_CREATURE_DEALT_DAMAGE,
     /** Triggers when the controller casts a spell matching the filter, while this card is in
      *  the controller's graveyard.  Checked per-card inside
      *  {@code TriggerCollectionService.checkSpellCastTriggers}. */
@@ -163,6 +167,13 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
      *  Checked in {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers}
      *  and {@code TriggerCollectionService.checkBecomesTargetOfAbilityTriggers}. */
     ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
+    /** Triggers whenever ANY creature (any controller) becomes the target of ANY spell or ability.
+     *  Fires on ALL permanents with this slot across every battlefield (not just the targeted
+     *  creature). The targeted creature's permanent ID is set as the non-targeting {@code targetId}
+     *  on the stack entry so the resolved effect can act on it. Checked in
+     *  {@code TriggerCollectionService.checkBecomesTargetOfSpellTriggers} and
+     *  {@code checkBecomesTargetOfAbilityTriggers}. Used by Cowardice. */
+    ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY,
     /** Triggers when this permanent transforms from its front face to its back face.
      *  Checked in {@code AnimationResolutionService.resolveTransformSelf} after the
      *  permanent's card reference is switched to the back face. */

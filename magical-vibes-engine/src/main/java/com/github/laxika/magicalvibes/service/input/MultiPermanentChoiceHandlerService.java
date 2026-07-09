@@ -631,7 +631,7 @@ public class MultiPermanentChoiceHandlerService {
                         gameBroadcastService.logAndBroadcast(gameData, sourceName + " deals "
                                 + damage + " damage to " + defenderName + ".");
                     }
-                    gameData.playersDealtDamageThisTurn.add(defendingPlayerId);
+                    gameData.recordDamageToPlayer(defendingPlayerId, damage);
                 }
             }
         }

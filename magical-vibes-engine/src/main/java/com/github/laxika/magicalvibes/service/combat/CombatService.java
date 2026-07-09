@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.combat;
 import com.github.laxika.magicalvibes.model.action.ExileAndReturnTransformedAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.DestroyEquipmentAtEndOfCombat;
+import com.github.laxika.magicalvibes.model.action.DestroyPermanentAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.ExileTokenAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.SacrificeAtEndOfCombat;
 
@@ -200,6 +201,33 @@ public class CombatService {
                     log.info("Game {} - {} destroyed at end of combat (equipment destruction)",
                             gameData.id, equipment.getCard().getName());
                 }
+            }
+        }
+        permanentRemovalService.removeOrphanedAuras(gameData);
+    }
+
+    /**
+     * Destroys all permanents marked for end-of-combat destruction (e.g. by a Basilisk-style
+     * "destroy that creature at end of combat" trigger such as Deathgazer). Respects indestructible
+     * and, unless the scheduling effect set {@code cannotBeRegenerated}, regeneration shields via
+     * {@link PermanentRemovalService#tryDestroyPermanent}.
+     */
+    public void processEndOfCombatDestructions(GameData gameData) {
+        List<DestroyPermanentAtEndOfCombat> toDestroy =
+                gameData.drainDelayedActions(DestroyPermanentAtEndOfCombat.class);
+        for (DestroyPermanentAtEndOfCombat action : toDestroy) {
+            Permanent perm = gameData.playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(p -> p.getId().equals(action.permanentId()))
+                    .findFirst()
+                    .orElse(null);
+            if (perm == null) {
+                continue;
+            }
+            if (permanentRemovalService.tryDestroyPermanent(gameData, perm, action.cannotBeRegenerated())) {
+                String logEntry = perm.getCard().getName() + " is destroyed.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} destroyed at end of combat", gameData.id, perm.getCard().getName());
             }
         }
         permanentRemovalService.removeOrphanedAuras(gameData);

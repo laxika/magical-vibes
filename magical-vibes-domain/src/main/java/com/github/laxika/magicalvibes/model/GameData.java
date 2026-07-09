@@ -326,6 +326,21 @@ public class GameData {
     /** Tracks which players have been dealt damage this turn (from any source — combat, spells, abilities). */
     public final Set<UUID> playersDealtDamageThisTurn = ConcurrentHashMap.newKeySet();
 
+    /** Tracks how much damage each player has been dealt this turn (from any source — combat, spells,
+     *  abilities; includes damage dealt as poison). Cleared at turn cleanup. Used by Final Punishment. */
+    public final Map<UUID, Integer> damageDealtToPlayersThisTurn = new ConcurrentHashMap<>();
+
+    /** Records that {@code amount} damage was dealt to {@code playerId} this turn: marks the player as
+     *  having been dealt damage and accumulates the amount (for effects that read the total). No-op for
+     *  non-positive amounts. */
+    public void recordDamageToPlayer(UUID playerId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        playersDealtDamageThisTurn.add(playerId);
+        damageDealtToPlayersThisTurn.merge(playerId, amount, Integer::sum);
+    }
+
     /** Tracks which permanents (by UUID) have been dealt damage this turn (from any source — combat, spells, abilities).
      *  Survives regeneration (which removes marked damage but does not undo "was dealt damage").
      *  Cleared at start of new turn. */
@@ -921,6 +936,7 @@ public class GameData {
         this.combatDamageToPlayersThisTurn.forEach((k, v) ->
                 copy.combatDamageToPlayersThisTurn.put(k, new HashSet<>(v)));
         copy.playersDealtDamageThisTurn.addAll(this.playersDealtDamageThisTurn);
+        copy.damageDealtToPlayersThisTurn.putAll(this.damageDealtToPlayersThisTurn);
         copy.permanentsDealtDamageThisTurn.addAll(this.permanentsDealtDamageThisTurn);
         this.combatDamageSourceSubtypesThisTurn.forEach((k, v) ->
                 copy.combatDamageSourceSubtypesThisTurn.put(k, new HashSet<>(v)));

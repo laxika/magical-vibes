@@ -28,6 +28,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
         PendingInteraction.RevealCardsFromHandChoice,
         PendingInteraction.ChooseRevealedCardToDiscardChoice,
+        PendingInteraction.RevealCardsDiscardChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
@@ -198,6 +199,24 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     record ChooseRevealedCardToDiscardChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                              java.util.List<Card> revealedCards, String prompt)
             implements PendingInteraction {
+    }
+
+    /**
+     * The two-stage Blackmail flow ("Target player reveals N cards from their hand and you choose
+     * one of them. That player discards that card."). In the reveal stage {@code decidingPlayerId}
+     * is the {@code targetPlayerId}, who picks which cards to reveal: {@code validIndices} are the
+     * still-selectable indices into their hand, {@code remainingCount} counts down the reveals, and
+     * {@code revealedCardIds} accumulates the chosen (now public) card ids. When the countdown ends
+     * a fresh record begins the discard stage, where {@code decidingPlayerId} is the
+     * {@code controllerId}: {@code revealedCardIds} is the fixed revealed set shown to the
+     * controller and {@code validIndices} are the indices into that set. Answers are
+     * {@link com.github.laxika.magicalvibes.model.effect.CardEffect}-agnostic {@code CardIndexChosen}
+     * picks, dispatched by the deciding player.
+     */
+    record RevealCardsDiscardChoice(UUID decidingPlayerId, UUID targetPlayerId, UUID controllerId,
+                                    boolean revealStage, java.util.List<Integer> validIndices,
+                                    int remainingCount, java.util.List<UUID> revealedCardIds,
+                                    String prompt) implements PendingInteraction {
     }
 
     /**

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "144")
+@CardRegistration(set = "9ED", collectorNumber = "135")
 public class GravePact extends Card {
 
     public GravePact() {

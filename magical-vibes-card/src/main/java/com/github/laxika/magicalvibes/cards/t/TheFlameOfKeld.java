@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 
 /**
@@ -22,7 +22,7 @@ public class TheFlameOfKeld extends Card {
 
     public TheFlameOfKeld() {
         // Chapter I: Discard your hand
-        addEffect(EffectSlot.SAGA_CHAPTER_I, new DiscardOwnHandEffect());
+        addEffect(EffectSlot.SAGA_CHAPTER_I, new DiscardHandEffect());
 
         // Chapter II: Draw two cards
         addEffect(EffectSlot.SAGA_CHAPTER_II, new DrawCardEffect(2));

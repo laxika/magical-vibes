@@ -1328,6 +1328,11 @@ public class AbilityActivationService {
                     throw new IllegalStateException("Morbid — activate only if a creature died this turn");
                 }
             }
+            if (ability.getTimingRestriction() == ActivationTimingRestriction.OPPONENT_CONTROLS_MORE_LANDS) {
+                if (!gameQueryService.anyOpponentControlsMoreLands(gameData, playerId)) {
+                    throw new IllegalStateException("Activate only if an opponent controls more lands than you");
+                }
+            }
             if (ability.getTimingRestriction() == ActivationTimingRestriction.ONLY_WHILE_ATTACKING) {
                 if (!permanent.isAttacking()) {
                     throw new IllegalStateException("Activate only if this creature is attacking");

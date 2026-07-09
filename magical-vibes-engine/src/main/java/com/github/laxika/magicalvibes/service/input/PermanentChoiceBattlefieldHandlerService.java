@@ -473,7 +473,8 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
 
         gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
-                redirectSource.protectedCreatureId(), permanentId, redirectSource.redirectTargetId()));
+                redirectSource.protectedCreatureId(), permanentId,
+                CreatureDamageRedirectShield.UNLIMITED, redirectSource.redirectTargetId()));
 
         Permanent protectedPerm = gameQueryService.findPermanentById(gameData, redirectSource.protectedCreatureId());
         Permanent redirectPerm = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());

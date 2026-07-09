@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCannotDrawCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceSingleDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,30 @@ public class DrawService {
                     List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ABUNDANCE)),
                     "Replace this draw with Abundance?"
             ));
+            return;
+        }
+
+        Card zursWeirdingSource = findZursWeirdingSourceCard(gameData);
+        if (zursWeirdingSource != null) {
+            List<Card> deck = gameData.playerDecks.get(playerId);
+            if (deck != null && !deck.isEmpty()) {
+                UUID otherPlayerId = gameQueryService.getOpponentId(gameData, playerId);
+                Card revealed = deck.getFirst();
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + " reveals " + revealed.getName() + " with " + zursWeirdingSource.getName() + ".");
+
+                if (gameData.getLife(otherPlayerId) >= 2) {
+                    gameData.pendingMayAbilities.add(new PendingMayAbility(
+                            zursWeirdingSource,
+                            otherPlayerId,
+                            List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.ZURS_WEIRDING)),
+                            "Pay 2 life to put " + playerName + "'s revealed " + revealed.getName() + " into their graveyard?"
+                    ));
+                    return;
+                }
+            }
+            performDrawCard(gameData, playerId);
             return;
         }
 
@@ -110,6 +135,21 @@ public class DrawService {
             }
         }
         return false;
+    }
+
+    private Card findZursWeirdingSourceCard(GameData gameData) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
+            if (battlefield == null) continue;
+            for (Permanent permanent : battlefield) {
+                boolean hasEffect = permanent.getCard().getEffects(EffectSlot.STATIC).stream()
+                        .anyMatch(effect -> effect instanceof ZursWeirdingDrawReplacementEffect);
+                if (hasEffect) {
+                    return permanent.getCard();
+                }
+            }
+        }
+        return null;
     }
 
     private Card findAbundanceSourceCard(GameData gameData, UUID playerId) {

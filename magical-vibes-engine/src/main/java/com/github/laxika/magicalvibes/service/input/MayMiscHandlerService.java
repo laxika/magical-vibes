@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,6 +51,7 @@ public class MayMiscHandlerService {
     private final TurnProgressionService turnProgressionService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final LifeSupport lifeSupport;
     // @Lazy to break circular dependency:
     // MayMiscHandlerService → TriggerCollectionService → TriggeredAbilityQueueService → PlayerInputService → MayAbilityHandlerService → MayMiscHandlerService
     @Autowired @Lazy
@@ -185,6 +187,30 @@ public class MayMiscHandlerService {
                     new ChoiceContext.DrawReplacementChoice(drawingPlayerId, effect.kind()),
                     List.of("LAND", "NONLAND"), "Choose land or nonland for Abundance."));
             log.info("Game {} - Awaiting {} to choose land or nonland for Abundance", gameData.id, playerName);
+            return;
+        }
+
+        if (effect.kind() == DrawReplacementKind.ZURS_WEIRDING) {
+            // The choosing player (may-ability controller) pays 2 life; the revealed top card of the
+            // drawing player's library goes into that player's graveyard instead of being drawn.
+            lifeSupport.applyLifeLoss(gameData, player.getId(), 2, ability.sourceCard().getName());
+
+            List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
+            if (deck != null && !deck.isEmpty()) {
+                Card top = deck.removeFirst();
+                gameData.playerGraveyards.get(drawingPlayerId).add(top);
+                gameBroadcastService.logAndBroadcast(gameData,
+                        playerName + "'s " + top.getName() + " is put into their graveyard.");
+                log.info("Game {} - {}'s revealed {} put into graveyard by {}",
+                        gameData.id, playerName, top.getName(), ability.sourceCard().getName());
+            }
+
+            playerInputService.processNextMayAbility(gameData);
+            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
+                gameData.priorityPassedBy.clear();
+                gameBroadcastService.broadcastGameState(gameData);
+                turnProgressionService.resolveAutoPass(gameData);
+            }
             return;
         }
 
