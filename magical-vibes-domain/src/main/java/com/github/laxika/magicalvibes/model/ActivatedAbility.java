@@ -27,6 +27,8 @@ public class ActivatedAbility {
     private final int requiredControlledSubtypeCount;
     /** Minimum number of cards the controller must have in hand to activate (0 = no restriction). Set via {@link #withMinCardsInHand(int)}. */
     private int minCardsInHandToActivate;
+    /** When true, any player (not just the source's controller) may activate this ability, e.g. Oona's Prowler. Set via {@link #withActivatableByAnyPlayer()}. */
+    private boolean activatableByAnyPlayer;
 
     public ActivatedAbility(boolean requiresTap, String manaCost, List<CardEffect> effects, String description) {
         this(requiresTap, manaCost, effects, description, null, null, null, null, List.of(), 1, 1, false, null, null, 0);
@@ -123,6 +125,7 @@ public class ActivatedAbility {
                 maxActivationsPerTurn, timingRestriction, multiTargetFilters, minTargets, maxTargets,
                 variableLoyaltyCost, sourcePermanentId, requiredControlledSubtype, requiredControlledSubtypeCount);
         copy.minCardsInHandToActivate = this.minCardsInHandToActivate;
+        copy.activatableByAnyPlayer = this.activatableByAnyPlayer;
         return copy;
     }
 
@@ -132,6 +135,16 @@ public class ActivatedAbility {
      */
     public ActivatedAbility withMinCardsInHand(int minCards) {
         this.minCardsInHandToActivate = minCards;
+        return this;
+    }
+
+    /**
+     * Fluent setter marking this ability as activatable by any player, not just the source's
+     * controller (e.g. Oona's Prowler's "Any player may activate this ability."). Returns this
+     * ability for chaining in card constructors.
+     */
+    public ActivatedAbility withActivatableByAnyPlayer() {
+        this.activatableByAnyPlayer = true;
         return this;
     }
 

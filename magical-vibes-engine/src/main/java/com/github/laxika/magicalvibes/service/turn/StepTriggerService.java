@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -788,6 +789,14 @@ public class StepTriggerService {
             return;
         }
 
+        // A permanent may instruct its controller to skip their draw step (e.g. Colfenor's Plans).
+        if (controlsSkipDrawStep(gameData, activePlayerId)) {
+            String logEntry = gameData.playerIdToName.get(activePlayerId) + " skips their draw step.";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} skips draw step (SkipDrawStepEffect)", gameData.id, gameData.playerIdToName.get(activePlayerId));
+            return;
+        }
+
         // Normal draw (turn-based action, rule 504.1)
         drawService.resolveDrawCard(gameData, activePlayerId);
 
@@ -797,6 +806,19 @@ public class StepTriggerService {
         if (!gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             playerInputService.processNextMayAbility(gameData);
         }
+    }
+
+    private boolean controlsSkipDrawStep(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return false;
+        for (Permanent perm : battlefield) {
+            for (CardEffect effect : perm.getCard().getEffects(EffectSlot.STATIC)) {
+                if (effect instanceof SkipDrawStepEffect) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void handleDrawStepTriggers(GameData gameData) {
@@ -1592,6 +1614,38 @@ public class StepTriggerService {
                 }
             }
         }
+
+        // Check all battlefields for auras with ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED
+        // effects. These fire during the enchanted permanent's controller's end step (e.g. Nettlevine
+        // Blight). The ability is controlled by the enchanted permanent's controller, so the stack
+        // entry's controller is that player even though the Aura keeps its own controller.
+        gameData.forEachPermanent((auraOwnerId, perm) -> {
+            List<CardEffect> enchantedControllerEndStepEffects =
+                    perm.getCard().getEffects(EffectSlot.ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED);
+            if (enchantedControllerEndStepEffects == null || enchantedControllerEndStepEffects.isEmpty()) return;
+            if (!perm.isAttached()) return;
+
+            UUID enchantedPermanentControllerId = gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
+            if (enchantedPermanentControllerId == null) return;
+            if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
+
+            for (CardEffect effect : enchantedControllerEndStepEffects) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        enchantedPermanentControllerId,
+                        perm.getCard().getName() + "'s end step ability",
+                        new ArrayList<>(List.of(effect)),
+                        null,
+                        perm.getId()
+                ));
+
+                String logEntry = perm.getCard().getName() + "'s end step ability triggers.";
+                gameBroadcastService.logAndBroadcast(gameData, logEntry);
+                log.info("Game {} - {} enchanted-permanent-controller end-step trigger pushed onto stack",
+                        gameData.id, perm.getCard().getName());
+            }
+        });
 
         // Process pending end-step targeted triggers (e.g. Reaper from the Abyss morbid, Voltaic Servant)
         if (gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {

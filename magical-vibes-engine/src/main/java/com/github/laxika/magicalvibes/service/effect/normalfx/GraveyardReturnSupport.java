@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -144,6 +145,19 @@ public class GraveyardReturnSupport {
         } else {
             moveCardToDestination(gameData, destinationPlayerId, targetCard, effect.destination(),
                     effect.grantColor(), effect.grantSubtype(), effect.enterTapped());
+        }
+
+        if (effect.enterWithMannequinCounter()
+                && effect.destination() == GraveyardChoiceDestination.BATTLEFIELD) {
+            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
+            if (battlefield != null) {
+                for (Permanent p : battlefield) {
+                    if (p.getCard().getId().equals(targetCard.getId())) {
+                        p.setCounterCount(CounterType.MANNEQUIN, 1);
+                        break;
+                    }
+                }
+            }
         }
 
         if (effect.gainLifeEqualToManaValue()) {
@@ -370,6 +384,9 @@ public class GraveyardReturnSupport {
         }
         if (effect.grantSubtype() != null) {
             choice.grantSubtype(effect.grantSubtype());
+        }
+        if (effect.grantSourceHasteIfSubtype() != null) {
+            choice.grantSourceHasteIfSubtype(effect.grantSourceHasteIfSubtype(), entry.getSourcePermanentId());
         }
 
         if (effect.attachToSource()) {

@@ -414,8 +414,156 @@ public class CardChoiceHandlerService {
                 return;
             }
 
+            // Resume resolving remaining effects on the same spell/ability
+            // (e.g. Thoughtseize: choose + discard a nonland card, then "you lose 2 life")
+            if (gameData.pendingEffectResolutionEntry != null) {
+                effectResolutionService.resolveEffectsFrom(gameData,
+                        gameData.pendingEffectResolutionEntry,
+                        gameData.pendingEffectResolutionIndex);
+            }
+
+            if (gameData.interaction.isAwaitingInput()) {
+                return;
+            }
+
             turnProgressionService.resolveAutoPass(gameData);
         }
+    }
+
+    /**
+     * Answers the target's reveal picks for Thieving Sprite (phase 1). Each pick keeps the card in hand
+     * (it is only revealed) and accumulates it; when the countdown ends the caster is prompted to choose
+     * one revealed card for the target to discard.
+     */
+    public void handleRevealCardsFromHandChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.RevealCardsFromHandChoice revealChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.RevealCardsFromHandChoice.class);
+        if (revealChoice == null || !player.getId().equals(revealChoice.playerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        List<Integer> validIndices = revealChoice.validIndices();
+        if (!validIndices.contains(cardIndex)) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID targetPlayerId = revealChoice.playerId();
+        UUID casterId = revealChoice.choosingPlayerId();
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        Card revealed = hand.get(cardIndex);
+
+        List<Card> revealedCards = new ArrayList<>(revealChoice.revealedCards());
+        revealedCards.add(revealed);
+
+        List<Integer> remainingIndices = new ArrayList<>(validIndices);
+        remainingIndices.remove(Integer.valueOf(cardIndex));
+        int remainingReveals = Math.max(revealChoice.remainingCount() - 1, 0);
+
+        if (remainingReveals > 0 && !remainingIndices.isEmpty()) {
+            interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealCardsFromHandChoice(
+                    targetPlayerId, casterId, remainingIndices, remainingReveals, revealedCards,
+                    "Choose a card to reveal (" + remainingReveals + " to reveal)."));
+            return;
+        }
+
+        gameData.interaction.clearAwaitingInput();
+
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        String cardNames = String.join(", ", revealedCards.stream().map(Card::getName).toList());
+        gameBroadcastService.logAndBroadcast(gameData, targetName + " reveals " + cardNames + ".");
+        log.info("Game {} - {} reveals {}", gameData.id, targetName, cardNames);
+
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ChooseRevealedCardToDiscardChoice(
+                casterId, targetPlayerId, revealedCards,
+                "Choose a card for " + targetName + " to discard."));
+    }
+
+    /**
+     * Answers the caster's discard pick for Thieving Sprite (phase 2). {@code cardIndex} indexes into the
+     * revealed subset; the matching card is removed from the target's hand and discarded (opponent-caused).
+     */
+    public void handleRevealedCardToDiscardChosen(GameData gameData, Player player, int cardIndex) {
+        PendingInteraction.ChooseRevealedCardToDiscardChoice discardChoice =
+                gameData.interaction.activeInteraction(PendingInteraction.ChooseRevealedCardToDiscardChoice.class);
+        if (discardChoice == null || !player.getId().equals(discardChoice.choosingPlayerId())) {
+            throw new IllegalStateException("Not your turn to choose");
+        }
+
+        List<Card> revealedCards = discardChoice.revealedCards();
+        if (cardIndex < 0 || cardIndex >= revealedCards.size()) {
+            throw new IllegalStateException("Invalid card index: " + cardIndex);
+        }
+
+        UUID targetPlayerId = discardChoice.targetPlayerId();
+        String targetName = gameData.playerIdToName.get(targetPlayerId);
+        Card chosenCard = revealedCards.get(cardIndex);
+
+        gameData.interaction.clearAwaitingInput();
+
+        List<Card> hand = gameData.playerHands.get(targetPlayerId);
+        int handIndex = indexOfByIdentity(hand, chosenCard);
+        if (handIndex < 0) {
+            // The revealed card already left the hand somehow — nothing to discard.
+            log.info("Game {} - revealed card {} no longer in {}'s hand", gameData.id, chosenCard.getName(), targetName);
+            resumeAfterRevealedDiscard(gameData);
+            return;
+        }
+        hand.remove(handIndex);
+
+        String logEntry = player.getUsername() + " chooses " + chosenCard.getName() + " from " + targetName + "'s hand.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+
+        gameData.discardCausedByOpponent = true;
+        discardRevealedCard(gameData, targetPlayerId, targetName, chosenCard);
+
+        // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
+            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
+            return;
+        }
+
+        resumeAfterRevealedDiscard(gameData);
+    }
+
+    private void discardRevealedCard(GameData gameData, UUID targetPlayerId, String targetName, Card card) {
+        if (hasEnterBattlefieldOnDiscardEffect(card) && gameData.discardCausedByOpponent) {
+            Permanent permanent = new Permanent(card);
+            battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent);
+            gameBroadcastService.logAndBroadcast(gameData,
+                    targetName + " discards " + card.getName() + " — it enters the battlefield instead.");
+            log.info("Game {} - {} discards {} — replacement effect puts it onto the battlefield",
+                    gameData.id, targetName, card.getName());
+            triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+            if (card.hasType(CardType.CREATURE)) {
+                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, targetPlayerId, card, null, false);
+            }
+            return;
+        }
+        graveyardService.addCardToGraveyard(gameData, targetPlayerId, card);
+        gameBroadcastService.logAndBroadcast(gameData, targetName + " discards " + card.getName() + ".");
+        log.info("Game {} - {} discards {}", gameData.id, targetName, card.getName());
+        triggerCollectionService.checkDiscardTriggers(gameData, targetPlayerId, card);
+    }
+
+    private void resumeAfterRevealedDiscard(GameData gameData) {
+        if (gameData.pendingEffectResolutionEntry != null) {
+            effectResolutionService.resolveEffectsFrom(gameData,
+                    gameData.pendingEffectResolutionEntry,
+                    gameData.pendingEffectResolutionIndex);
+        }
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private static int indexOfByIdentity(List<Card> cards, Card target) {
+        for (int i = 0; i < cards.size(); i++) {
+            if (cards.get(i) == target) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /** Answers IMPRINT_FROM_HAND_CHOICE (exile the chosen card and imprint it on the source permanent). */

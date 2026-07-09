@@ -152,6 +152,17 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a creature type", gameData.id, playerName);
     }
 
+    public void beginManaValueParityChoice(GameData gameData, UUID playerId, UUID permanentId) {
+        ChoiceContext.ManaValueParityChoice choiceContext = new ChoiceContext.ManaValueParityChoice(permanentId);
+
+        List<String> options = List.of("ODD", "EVEN");
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                playerId, null, null, choiceContext, options, "Choose odd or even."));
+
+        String playerName = gameData.playerIdToName.get(playerId);
+        log.info("Game {} - Awaiting {} to choose odd or even", gameData.id, playerName);
+    }
+
     public void beginPermanentTypeChoice(GameData gameData, UUID playerId, GraveyardChoiceDestination destination, String entryDescription) {
         ChoiceContext.PermanentTypeChoice choiceContext = new ChoiceContext.PermanentTypeChoice(playerId, destination, entryDescription);
 

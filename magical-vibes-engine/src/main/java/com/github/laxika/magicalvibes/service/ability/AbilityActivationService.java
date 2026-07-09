@@ -317,15 +317,15 @@ public class AbilityActivationService {
      * @param targetZone        target zone for zone-targeted effects, or {@code null}
      */
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, null, null);
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, null, null, null);
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, null);
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, null, null);
     }
 
     public void activateAbility(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue, UUID targetId, Zone targetZone, List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
-        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments);
+        activateAbilityInternal(gameData, player, permanentIndex, abilityIndex, xValue, targetId, targetZone, null, null, targetIds, damageAssignments, null);
     }
 
     /**
@@ -553,17 +553,13 @@ public class AbilityActivationService {
             throw new IllegalStateException("Source permanent is no longer on the battlefield");
         }
 
-        int permanentIndex = gameData.playerBattlefields.get(player.getId()).indexOf(source);
-        if (permanentIndex < 0) {
-            clearPendingAbilityActivation(gameData);
-            throw new IllegalStateException("Source permanent is no longer under your control");
-        }
-
+        // The source may be controlled by another player (an "any player may activate" ability such as
+        // Oona's Prowler); re-enter with the already-resolved source rather than an own-battlefield index.
         clearPendingAbilityActivation(gameData);
         activateAbilityInternal(
                 gameData,
                 player,
-                permanentIndex,
+                -1,
                 pending.abilityIndex(),
                 pending.xValue(),
                 pending.targetId(),
@@ -571,7 +567,8 @@ public class AbilityActivationService {
                 cardIndex,
                 null,
                 null,
-                null
+                null,
+                source
         );
     }
 
@@ -596,17 +593,11 @@ public class AbilityActivationService {
             throw new IllegalStateException("Source permanent is no longer on the battlefield");
         }
 
-        int permanentIndex = gameData.playerBattlefields.get(playerId).indexOf(source);
-        if (permanentIndex < 0) {
-            clearPendingAbilityActivation(gameData);
-            throw new IllegalStateException("Source permanent is no longer under your control");
-        }
-
         clearPendingAbilityActivation(gameData);
         activateAbilityInternal(
                 gameData,
                 player,
-                permanentIndex,
+                -1,
                 pending.abilityIndex(),
                 pending.xValue(),
                 pending.targetId(),
@@ -614,22 +605,23 @@ public class AbilityActivationService {
                 null,
                 cardIndex,
                 null,
-                null
+                null,
+                source
         );
     }
 
     private void activateAbilityInternal(GameData gameData, Player player, int permanentIndex, Integer abilityIndex, Integer xValue,
                                          UUID targetId, Zone targetZone, Integer discardCardIndex, Integer exileGraveyardCardIndex,
-                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments) {
+                                         List<UUID> targetIds, Map<UUID, Integer> damageAssignments, Permanent preResolvedSource) {
         int effectiveXValue = xValue != null ? xValue : 0;
 
         UUID playerId = player.getId();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-        if (battlefield == null || permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+        Permanent permanent = preResolvedSource != null
+                ? preResolvedSource
+                : resolveActivationSource(gameData, playerId, permanentIndex, abilityIndex);
+        if (permanent == null) {
             throw new IllegalStateException("Invalid permanent index");
         }
-
-        Permanent permanent = battlefield.get(permanentIndex);
         List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, permanent);
         if (abilities.isEmpty()) {
             throw new IllegalStateException("Permanent has no activated ability");
@@ -705,10 +697,11 @@ public class AbilityActivationService {
                 .orElse(null);
         if (exileGraveyardCost != null) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            List<Integer> validExileIndices = collectGraveyardIndicesForType(graveyard, exileGraveyardCost.requiredType());
+            List<Integer> validExileIndices = collectGraveyardIndicesForType(graveyard, exileGraveyardCost.requiredType(),
+                    exileGraveyardCost.requiredSubtype());
             if (exileGraveyardCardIndex == null) {
                 beginGraveyardExileCostChoice(gameData, playerId, permanent, effectiveIndex, effectiveXValue, targetId, targetZone,
-                        exileGraveyardCost.requiredType(), validExileIndices);
+                        exileGraveyardCost.requiredType(), exileGraveyardCost.requiredSubtype(), validExileIndices);
                 return;
             }
             // Handle "exile and pay its mana cost" abilities (e.g. Back from the Brink)
@@ -779,7 +772,8 @@ public class AbilityActivationService {
         }
 
         if (exileGraveyardCost != null) {
-            payGraveyardExileCost(gameData, player, exileGraveyardCost.requiredType(), exileGraveyardCardIndex);
+            payGraveyardExileCost(gameData, player, exileGraveyardCost.requiredType(),
+                    exileGraveyardCost.requiredSubtype(), exileGraveyardCardIndex);
         }
 
         // Pay remove-counter cost: remove counters respecting counter type
@@ -1030,6 +1024,38 @@ public class AbilityActivationService {
         return abilities;
     }
 
+    /**
+     * Resolves the source permanent for an activation. {@code permanentIndex} is an index into the
+     * activating player's own battlefield for the common case (a player activating an ability of a
+     * permanent they control). If it doesn't resolve there, the ability may be one that
+     * "any player may activate" (e.g. Oona's Prowler): the index is then interpreted against every
+     * other player's battlefield, and only a permanent whose ability at {@code abilityIndex} is
+     * flagged {@link ActivatedAbility#isActivatableByAnyPlayer()} is accepted. Returns {@code null}
+     * if nothing legal is found.
+     */
+    private Permanent resolveActivationSource(GameData gameData, UUID activatorId, int permanentIndex, Integer abilityIndex) {
+        List<Permanent> own = gameData.playerBattlefields.get(activatorId);
+        if (own != null && permanentIndex >= 0 && permanentIndex < own.size()) {
+            return own.get(permanentIndex);
+        }
+        int idx = abilityIndex != null ? abilityIndex : 0;
+        for (Map.Entry<UUID, List<Permanent>> entry : gameData.playerBattlefields.entrySet()) {
+            if (entry.getKey().equals(activatorId)) {
+                continue;
+            }
+            List<Permanent> battlefield = entry.getValue();
+            if (permanentIndex < 0 || permanentIndex >= battlefield.size()) {
+                continue;
+            }
+            Permanent candidate = battlefield.get(permanentIndex);
+            List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, candidate);
+            if (idx >= 0 && idx < abilities.size() && abilities.get(idx).isActivatableByAnyPlayer()) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
     private ActivatedAbility resolveAbility(GameData gameData, Permanent permanent, Integer abilityIndex) {
         List<ActivatedAbility> abilities = getEffectiveActivatedAbilities(gameData, permanent);
         int idx = abilityIndex != null ? abilityIndex : 0;
@@ -1149,9 +1175,9 @@ public class AbilityActivationService {
                 .findFirst()
                 .orElse(null);
         if (exileGraveyardCost != null
-                && collectGraveyardIndicesForType(gameData.playerGraveyards.get(playerId), exileGraveyardCost.requiredType()).isEmpty()) {
-            String typeName = exileGraveyardCost.requiredType() != null
-                    ? exileGraveyardCost.requiredType().name().toLowerCase() + " " : "";
+                && collectGraveyardIndicesForType(gameData.playerGraveyards.get(playerId), exileGraveyardCost.requiredType(),
+                        exileGraveyardCost.requiredSubtype()).isEmpty()) {
+            String typeName = graveyardExileFilterLabel(exileGraveyardCost.requiredType(), exileGraveyardCost.requiredSubtype());
             throw new IllegalStateException("No " + typeName + "card in graveyard to exile");
         }
 
@@ -1539,21 +1565,35 @@ public class AbilityActivationService {
         log.info("Game {} - {} discards {} as activation cost", gameData.id, player.getUsername(), discarded.getName());
     }
 
-    private List<Integer> collectGraveyardIndicesForType(List<Card> graveyard, CardType requiredType) {
+    private List<Integer> collectGraveyardIndicesForType(List<Card> graveyard, CardType requiredType, CardSubtype requiredSubtype) {
         List<Integer> validIndices = new ArrayList<>();
         if (graveyard == null) {
             return validIndices;
         }
         for (int i = 0; i < graveyard.size(); i++) {
-            if (requiredType == null || graveyard.get(i).getType() == requiredType) {
+            Card card = graveyard.get(i);
+            boolean typeMatch = requiredType == null || card.getType() == requiredType;
+            boolean subtypeMatch = requiredSubtype == null || card.getSubtypes().contains(requiredSubtype);
+            if (typeMatch && subtypeMatch) {
                 validIndices.add(i);
             }
         }
         return validIndices;
     }
 
+    private String graveyardExileFilterLabel(CardType requiredType, CardSubtype requiredSubtype) {
+        if (requiredSubtype != null) {
+            return requiredSubtype.getDisplayName() + " ";
+        }
+        if (requiredType != null) {
+            return requiredType.name().toLowerCase() + " ";
+        }
+        return "";
+    }
+
     private void beginGraveyardExileCostChoice(GameData gameData, UUID playerId, Permanent permanent, int abilityIndex, int xValue,
-                                               UUID targetId, Zone targetZone, CardType requiredType, List<Integer> validExileIndices) {
+                                               UUID targetId, Zone targetZone, CardType requiredType, CardSubtype requiredSubtype,
+                                               List<Integer> validExileIndices) {
         gameData.pendingAbilityActivation = new PendingAbilityActivation(
                 permanent.getId(),
                 abilityIndex,
@@ -1562,23 +1602,24 @@ public class AbilityActivationService {
                 targetZone,
                 null
         );
-        String typeName = requiredType != null ? requiredType.name().toLowerCase() + " " : "";
+        String typeName = graveyardExileFilterLabel(requiredType, requiredSubtype);
         interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.GraveyardExileCostChoice(
                 playerId, validExileIndices,
                 "Choose a " + typeName + "card from your graveyard to exile as an activation cost."));
     }
 
-    private void payGraveyardExileCost(GameData gameData, Player player, CardType requiredType, Integer exileCardIndex) {
+    private void payGraveyardExileCost(GameData gameData, Player player, CardType requiredType, CardSubtype requiredSubtype,
+                                       Integer exileCardIndex) {
         if (exileCardIndex == null) {
             throw new IllegalStateException("Must choose a card to exile from graveyard");
         }
 
         UUID playerId = player.getId();
         List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-        List<Integer> validExileIndices = collectGraveyardIndicesForType(graveyard, requiredType);
+        List<Integer> validExileIndices = collectGraveyardIndicesForType(graveyard, requiredType, requiredSubtype);
         Set<Integer> validSet = new HashSet<>(validExileIndices);
         if (!validSet.contains(exileCardIndex)) {
-            String typeName = requiredType != null ? requiredType.name().toLowerCase() + " " : "";
+            String typeName = graveyardExileFilterLabel(requiredType, requiredSubtype);
             throw new IllegalStateException("Must exile a " + typeName + "card from your graveyard");
         }
 

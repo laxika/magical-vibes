@@ -180,6 +180,7 @@ public class TurnProgressionService {
         gameData.playersDeclaredAttackersThisTurn.clear();
         gameData.playersSilencedThisTurn.clear();
         gameData.activatedAbilityUsesThisTurn.clear();
+        gameData.permanentAbilityResolutionsThisTurn.clear();
         gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.clear();
         gameData.cardsPutIntoGraveyardFromAnywhereThisTurn.clear();
         gameData.creatureDeathCountThisTurn.clear();

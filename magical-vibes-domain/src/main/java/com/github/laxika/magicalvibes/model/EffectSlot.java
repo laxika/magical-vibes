@@ -71,6 +71,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_OPPONENT_LOSES_LIFE,
     ON_OPPONENT_SHUFFLES_LIBRARY,
     ENCHANTED_PERMANENT_CONTROLLER_UPKEEP_TRIGGERED,
+    /** Triggers during the end step of the enchanted permanent's controller ("At the beginning of
+     *  your end step" on an ability granted to the enchanted permanent). Checked in
+     *  {@code StepTriggerService.handleEndStepTriggers}. Used by Nettlevine Blight. */
+    ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED,
     ENCHANTED_PLAYER_UPKEEP_TRIGGERED,
     ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD,
     ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD,

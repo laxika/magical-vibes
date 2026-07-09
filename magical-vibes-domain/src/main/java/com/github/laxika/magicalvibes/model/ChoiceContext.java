@@ -55,6 +55,9 @@ public sealed interface ChoiceContext {
 
     record SubtypeChoice(UUID permanentId) implements ChoiceContext {}
 
+    /** Choosing odd or even "as this permanent enters" (Ashling's Prerogative). */
+    record ManaValueParityChoice(UUID permanentId) implements ChoiceContext {}
+
     record BasicLandTypeChoice(UUID permanentId) implements ChoiceContext {}
 
     /**

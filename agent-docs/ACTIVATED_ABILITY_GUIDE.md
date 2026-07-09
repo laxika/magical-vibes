@@ -229,6 +229,31 @@ Cards: `BloodlineKeeper`
 
 ---
 
+### 8b. Ability any player may activate
+
+```java
+new ActivatedAbility(false, null, effects, description).withActivatableByAnyPlayer()
+```
+
+**Use when:** Ability text says "Any player may activate this ability" (e.g. Oona's Prowler).
+The `.withActivatableByAnyPlayer()` fluent flag lets a player who does **not** control the
+source activate it; that activating player pays the costs (mana/discard/etc.) from their own
+resources, while the effect still resolves against the source permanent (e.g. `BoostSelfEffect`
+applies to the source regardless of who activated). Resolution finds the source across all
+battlefields when the activator isn't the controller.
+
+```java
+// Discard a card: Oona's Prowler gets -2/-0 until end of turn. Any player may activate this ability.
+new ActivatedAbility(false, null,
+    List.of(new DiscardCardTypeCost(null, null), new BoostSelfEffect(-2, 0)),
+    "Discard a card: Oona's Prowler gets -2/-0 until end of turn. Any player may activate this ability.")
+    .withActivatableByAnyPlayer()
+```
+
+Cards: `OonasProwler`
+
+---
+
 ### 9. Equipment ability (equip with sorcery speed + controlled creature filter)
 
 ```java
@@ -318,7 +343,7 @@ All cost effects implement the `CostEffect` marker interface (which extends `Car
 | `ReturnMultiplePermanentsToHandCost` | `(int count, PermanentPredicate filter)` | "Return two lands you control to their owner's hand: ..." (bounces N matching permanents as cost). Works with both battlefield and graveyard activated abilities |
 | `SacrificeAllCreaturesYouControlCost` | `()` | "Sacrifice all creatures: ..." |
 | `DiscardCardTypeCost` | `(CardPredicate, String label)` | "Discard a [label] card: ..." (null predicate = any card). E.g. `(new CardTypePredicate(CardType.LAND), "land")`, `(new CardIsHistoricPredicate(), "historic")`, `(null, null)` for any |
-| `ExileCardFromGraveyardCost` | `(CardType)` or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
+| `ExileCardFromGraveyardCost` | `(CardType)`, `(CardSubtype)`, or `(CardType, boolean payManaCost, boolean imprint, boolean trackPower)` | "Exile a [type] card from your graveyard: ..." (null = any type). Use the `(CardSubtype)` ctor for "Exile an Elf card" (Scarred Vinebreeder). For spells: use in SPELL slot with `trackExiledPower=true` to set X to exiled card's power |
 | `RemoveCounterFromSourceCost` | `()` | "Remove a counter from this: ..." |
 
 ```java

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CreaturesOfUnchosenParityEnterTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesEnterAsCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
@@ -143,6 +145,7 @@ public class BattlefieldEntryService {
         applyConditionalEnterTapped(gameData, controllerId, permanent);
         applyAllPermanentsEnterTapped(gameData, permanent);
         applyOpponentOnlyEnterTappedEffects(gameData, controllerId, permanent);
+        applyUnchosenParityEnterTapped(gameData, permanent);
         applyEnterWithCounters(gameData, controllerId, permanent, xValue, kicked);
         applyGraveyardEnterWithAdditionalCounters(gameData, controllerId, permanent, simultaneouslyEntered);
         gameData.playerBattlefields.get(controllerId).add(permanent);
@@ -231,6 +234,30 @@ public class BattlefieldEntryService {
                     if (matchesAnyType(enteringPermanent.getCard(), enterTapped.cardTypes())) {
                         enteringPermanent.tap();
                     }
+                }
+            }
+        });
+    }
+
+    /**
+     * "Each creature without mana value of the chosen quality enters tapped" (Ashling's Prerogative).
+     * For each permanent carrying {@link CreaturesOfUnchosenParityEnterTappedEffect} with a chosen
+     * parity, an entering creature whose mana value does not match that parity enters tapped. Applies
+     * across all battlefields; while the source's parity is unchosen (null) it does nothing.
+     */
+    private void applyUnchosenParityEnterTapped(GameData gameData, Permanent enteringPermanent) {
+        if (!enteringPermanent.getCard().hasType(CardType.CREATURE)) {
+            return;
+        }
+        int manaValue = enteringPermanent.getCard().getManaValue();
+        gameData.forEachPermanent((playerId, source) -> {
+            for (CardEffect effect : source.getCard().getEffects(EffectSlot.STATIC)) {
+                if (!(effect instanceof CreaturesOfUnchosenParityEnterTappedEffect)) {
+                    continue;
+                }
+                ManaValueParity chosen = source.getChosenManaValueParity();
+                if (chosen != null && !chosen.matches(manaValue)) {
+                    enteringPermanent.tap();
                 }
             }
         });

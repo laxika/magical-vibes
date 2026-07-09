@@ -11,6 +11,7 @@ public enum CounterType {
     HOOFPRINT,
     LANDMARK,
     LOYALTY,
+    MANNEQUIN,
     MINUS_ONE_MINUS_ONE,
     PHYLACTERY,
     PLUS_ONE_PLUS_ONE,

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -29,7 +30,7 @@ public class RubbleRouser extends Card {
                 true,
                 null,
                 List.of(
-                        new ExileCardFromGraveyardCost(null),
+                        new ExileCardFromGraveyardCost((CardType) null),
                         new AwardManaEffect(ManaColor.RED, 1),
                         new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)
                 ),

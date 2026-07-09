@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfConditionEffect;
@@ -527,7 +529,13 @@ public class TriggerCollectionService {
     }
 
     private void collectBecomesTargetOfSpellOrAbilityTriggers(GameData gameData, Permanent source, UUID controllerId) {
-        List<CardEffect> effects = source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY);
+        List<CardEffect> effects = new ArrayList<>(
+                source.getCard().getEffects(EffectSlot.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY));
+        // Makeshift Mannequin: while a permanent has a mannequin counter, it has "When this creature
+        // becomes the target of a spell or ability, sacrifice it."
+        if (source.getCounterCount(CounterType.MANNEQUIN) > 0) {
+            effects.add(new SacrificeSelfEffect());
+        }
         if (effects.isEmpty()) return;
 
         StackEntry entry = new StackEntry(

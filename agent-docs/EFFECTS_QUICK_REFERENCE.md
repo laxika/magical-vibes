@@ -94,6 +94,7 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToAllCreaturesAndPlaneswalkersTargetControlsEffect(int)` — all target controls
 - `DealDamageToAllCreaturesTargetControlsEffect(int)` — creatures target controls
 - `DealDamageToEachMatchingPermanentEffect(int, PermanentPredicate, EachPermanentScope)` — damage each matching permanent across `ALL_PLAYERS`/`TARGET_PLAYER`
+- `AshlingThePilgrimEffect()` — **card-specific.** +1/+1 counter on source; on the exact third resolution this turn, remove all +1/+1 counters and deal that much to each creature and each player (Ashling the Pilgrim)
 - `DealDamageToPlayersEffect(DynamicAmount, DamageRecipient)`; `(int, recipient)`; `.enchantedAttachedCount(PermanentPredicate)` — **unified player damage.** Recipients: `TARGET_PLAYER` (only targeting one; `Fixed`/`CardsInGraveyard` Scrapyard Salvo/`CardsInHand(TARGET_PLAYER)` Sudden Impact + Sword of War and Peace), `EACH_OPPONENT` (single eval, same value; `Fixed`/`CountersOnSource` Hallar), `EACH_PLAYER` (Slagstorm), `CONTROLLER` (self/pain lands), `ENCHANTED_PLAYER` (curse upkeep; `.enchantedAttachedCount` Curse of Thirst), `TARGET_PERMANENT_CONTROLLER` (Chandra's Outrage), `TRIGGERING_PERMANENT_CONTROLLER` (Magnetic Mine)
 - `DealDamageToAnyTargetEffect.forTargetGroup(int damage, int targetGroup)` — damage aimed at a target group's chosen target (Goblin Barrage kicked target)
 - `MassDamageEffect(int)` or `(int, boolean, boolean, PermanentPredicate)` + overloads — mass damage
@@ -171,7 +172,7 @@ See EFFECTS_INDEX.md "Destruction" section for 10+ additional niche destruction/
 - `CrewCost(int)` — crew
 - `TapCreatureCost(PermanentPredicate)` — tap creature
 - `PayLifeCost(int)` — pay life
-- `ExileCardFromGraveyardCost(CardType)` + overloads — exile graveyard card
+- `ExileCardFromGraveyardCost(CardType)` / `(CardSubtype)` + overloads — exile graveyard card (subtype ctor for "Exile an Elf card", Scarred Vinebreeder)
 - `ReturnCreatureToHandCost()` — additional spell cost: return a creature you control to hand (Familiar's Ruse)
 
 See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
@@ -239,6 +240,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(CardPredicate filter, boolean ownGraveyardOnly)` — exile a targeted graveyard card matching the filter, controller may play it until end of their next turn (e.g. Practiced Scrollsmith; ETB graveyard-target flow via `MultiGraveyardChoice`)
 - `ExileTargetInstantOrSorceryFromOpponentGraveyardMayCastEffect()` — exile a targeted instant/sorcery from an opponent's graveyard; controller may cast it **this turn**, spending mana of any type, and it is exiled instead of going to a graveyard (Nita, Forum Conciliator). Uses `exilePlayPermissions` + `exilePlayPermissionsExpireEndOfTurn` + `exilePlayAnyManaType` + `exileInsteadOfGraveyard`. Targets graveyard (`canTargetGraveyard()`/`canTargetAnyGraveyard()`)
 - `ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes[, List<CardType> includedTypes], HandChoiceDestination destination[, boolean returnOnSourceLeave])` — reveal target's hand, caster chooses N card(s) → `DISCARD` / `EXILE` / `TOP_OF_LIBRARY` (Duress, Kitesail Freebooter, Agonizing Memories)
+- `RevealCardsChooseOneToDiscardEffect(PermanentPredicate countFilter)` — target reveals X cards **of their choice** (X = number of the caster's permanents matching `countFilter`), then the caster picks one for the target to discard (Thieving Sprite, `PermanentHasAnySubtypePredicate(FAERIE)`). Unlike `ChooseCardsFromTargetHandEffect` the rest of the hand stays hidden; two-phase interaction (`RevealCardsFromHandChoice` → `ChooseRevealedCardToDiscardChoice`), phase 1 skipped when the hand is already ≤ X
 - `LookAtHandEffect()` — look at hand
 - `ShuffleHandIntoLibraryAndDrawEffect()` — wheel
 - `EachPlayerShufflesHandAndGraveyardIntoLibraryEffect()` — Timetwister-style
@@ -384,6 +386,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `SkipNextUntapEffect(TapUntapScope.TARGET)` — target permanent skips next untap (piggybacks on companion targeting effect) · `.TARGET_PLAYERS_PERMANENTS, filter` — that player's matching permanents · `.ALL_CREATURES, filter` — all creatures matching filter (`PermanentIsAttackingPredicate` = all attackers)
 - `IfWonClashEffect(wrapped)` — clash-only marker on `EffectSlot.ON_CONTROLLER_CLASHES`: the wrapped effect applies only if the controller won the clash ("If you won, ..."). Consumed by `TriggerCollectionService.performClash` at trigger time (not a stack effect). See Entangling Trap: tap target opponent creature + `IfWonClashEffect(SkipNextUntapEffect(TARGET))`. Clash is performed via `performClash` (2-player: both reveal top card, strictly-higher mana value wins).
 - `ClashEffect(wrapped)` — clash-*source*: "Clash with an opponent. If you win, [wrapped]." A stack-resolution effect (e.g. on `ON_ENTER_BATTLEFIELD`) that *initiates* a clash for the controller via `performClash`; on a win it dispatches `wrapped` against the same entry (so it acts on the source). `wrapped` may be null for a bare "clash with an opponent". Mirrors `FlipCoinWinEffect`. E.g. Oaken Brawler = `ClashEffect(new PutCountersOnSourceEffect(1, 1, 1))`. Wrap in `MayEffect` for "you may clash" (Sentry Oak = `MayEffect(ClashEffect(new BoostSelfAndLoseKeywordEffect(2, 0, Keyword.DEFENDER)), ...)`). Delegates `canTargetPermanent`/`canTargetPlayer` to `wrapped`, so a **targeted** win reward works on any targeting slot: e.g. Springjack Knight "whenever this attacks, clash; if you win, target creature gains double strike" = `target(...)` + `ClashEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET))` on `ON_ATTACK` (target chosen when the trigger goes on the stack; grant only on a win). Do **not** wrap an interactive `MayEffect` as a `ClashEffect` win reward — the may-pause re-runs the `ClashEffect` (re-clash). For an *optional* win reward, use a bare `ClashEffect(null)` (records its result on the entry) followed by `ConditionalEffect(new WonClash(), new MayEffect(reward, prompt))`: Whirlpool Whelm = `ClashEffect(null)` + `ConditionalEffect(new WonClash(), new MayEffect(new PutTargetOnTopOfLibraryEffect(), prompt))` + `ReturnToHandEffect.target()`.
+- `RepeatWhileWinningClashEffect(List<CardEffect> body)` — clash-*source* loop: "[body], then clash with an opponent. If you win, repeat this process." Unlike `ClashEffect` (clash first, reward only on win), this runs `body` first and clashes after, looping the whole sequence while the controller keeps winning `performClash`. Body effects are dispatched via their own handlers against the same entry. Terminates on the first lost clash (or a deck-out, which counts as a loss). E.g. Hoarder's Greed = `RepeatWhileWinningClashEffect(List.of(new LoseLifeEffect(2), new DrawCardEffect(2)))`.
 
 ## Control / steal
 
@@ -392,6 +395,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `GainControlOfTargetEffect(ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD)` — control while source on battlefield
 - `GainControlOfEnchantedTargetEffect()` — Control Magic (static)
 - `ClashForControlOfEnchantedCreatureEffect()` — Captivating Glance: `CONTROLLER_END_STEP_TRIGGERED` Aura effect; clash, then the winner (controller on win, else clash opponent) gains control of the enchanted creature
+- `SacrificeEnchantedPermanentAndReattachSourceAuraEffect()` — Nettlevine Blight: `ENCHANTED_PERMANENT_CONTROLLER_END_STEP_TRIGGERED` Aura effect; the enchanted permanent's controller sacrifices it and moves this Aura (keeping its controller) onto another creature/land they control
 
 ## Mana
 

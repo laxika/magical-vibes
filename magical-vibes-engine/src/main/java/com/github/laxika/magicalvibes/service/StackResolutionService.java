@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -350,6 +351,15 @@ public class StackResolutionService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 Permanent justEntered = bf.get(bf.size() - 1);
                 playerInputService.beginSubtypeChoice(gameData, controllerId, justEntered.getId());
+            }
+
+            // Check if enchantment has "as enters, choose odd or even" (Ashling's Prerogative)
+            boolean needsParityChoice = card.getEffects(EffectSlot.ON_ENTER_BATTLEFIELD).stream()
+                    .anyMatch(e -> e instanceof ChooseManaValueParityOnEnterEffect);
+            if (needsParityChoice) {
+                List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
+                Permanent justEntered = bf.get(bf.size() - 1);
+                playerInputService.beginManaValueParityChoice(gameData, controllerId, justEntered.getId());
             }
 
             // Process general ETB effects (e.g., token creation, exile-until-leaves)

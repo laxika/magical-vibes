@@ -47,6 +47,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleCloneCopy(gameData, permanentId);
         } else if (context instanceof PermanentChoiceContext.AuraGraft auraGraft) {
             battlefieldHandler.handleAuraGraft(gameData, permanentId, auraGraft);
+        } else if (context instanceof PermanentChoiceContext.ReattachSourceAuraAfterSacrifice reattach) {
+            battlefieldHandler.handleReattachSourceAuraAfterSacrifice(gameData, permanentId, reattach);
         } else if (context instanceof PermanentChoiceContext.LegendRule legendRule) {
             battlefieldHandler.handleLegendRule(gameData, playerId, permanentId, legendRule);
         } else if (context instanceof PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife sacrificeOpp) {

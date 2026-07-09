@@ -26,6 +26,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.MirrorOfFateChoice, PendingInteraction.MultiZoneExileChoice,
         PendingInteraction.MultiPermanentChoice, PendingInteraction.MultiGraveyardChoice,
         PendingInteraction.ColorChoice, PendingInteraction.RevealedHandChoice,
+        PendingInteraction.RevealCardsFromHandChoice,
+        PendingInteraction.ChooseRevealedCardToDiscardChoice,
         PendingInteraction.GraveyardChoice, PendingInteraction.GraveyardExileCostChoice,
         PendingInteraction.HandCardChoice, PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
@@ -174,6 +176,31 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
+     * Phase 1 of Thieving Sprite ({@link com.github.laxika.magicalvibes.model.effect.RevealCardsChooseOneToDiscardEffect}):
+     * the target ({@code playerId}) chooses which cards from their own hand to reveal, one pick at a time.
+     * {@code validIndices} are the still-selectable hand indices (cards stay in hand, so indices are stable
+     * across picks); {@code remainingCount} counts the picks left including the upcoming one; {@code revealedCards}
+     * accumulates the cards revealed so far. When the countdown ends the caster ({@code choosingPlayerId})
+     * is prompted with a {@link ChooseRevealedCardToDiscardChoice} over the revealed cards.
+     */
+    record RevealCardsFromHandChoice(UUID playerId, UUID choosingPlayerId,
+                                     java.util.List<Integer> validIndices, int remainingCount,
+                                     java.util.List<Card> revealedCards, String prompt)
+            implements PendingInteraction {
+    }
+
+    /**
+     * Phase 2 of Thieving Sprite: the caster ({@code choosingPlayerId}) chooses one of the target's
+     * ({@code targetPlayerId}) {@code revealedCards} for the target to discard. The answer's card index
+     * is into {@code revealedCards} (only the revealed subset is shown to the caster, keeping the rest of
+     * the hand hidden).
+     */
+    record ChooseRevealedCardToDiscardChoice(UUID choosingPlayerId, UUID targetPlayerId,
+                                             java.util.List<Card> revealedCards, String prompt)
+            implements PendingInteraction {
+    }
+
+    /**
      * Pick one card from a graveyard (return to hand/battlefield, exile, or may-ability
      * targeting). {@code validIndices} keeps the begin-time order — indices into the player's
      * own graveyard, or into {@code cardPool} when non-null (cross-graveyard choices; it also
@@ -189,7 +216,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                            int gainLifeIfCreatureAmount, UUID gainLifeIfCreaturePlayerId,
                            UUID trackWithSourcePermanentId, Card mayAbilitySourceCard,
                            UUID mayAbilityControllerId, java.util.List<CardEffect> mayAbilityEffects,
-                           UUID mayAbilitySourcePermanentId, String prompt)
+                           UUID mayAbilitySourcePermanentId,
+                           CardSubtype grantSourceHasteIfSubtype, UUID grantSourceHasteSourcePermanentId,
+                           String prompt)
             implements PendingInteraction {
 
         public static Builder builder(UUID playerId, java.util.List<Integer> validIndices,
@@ -216,6 +245,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             private UUID mayAbilityControllerId;
             private java.util.List<CardEffect> mayAbilityEffects;
             private UUID mayAbilitySourcePermanentId;
+            private CardSubtype grantSourceHasteIfSubtype;
+            private UUID grantSourceHasteSourcePermanentId;
 
             private Builder(UUID playerId, java.util.List<Integer> validIndices,
                             GraveyardChoiceDestination destination, String prompt) {
@@ -275,12 +306,19 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return this;
             }
 
+            public Builder grantSourceHasteIfSubtype(CardSubtype subtype, UUID sourcePermanentId) {
+                this.grantSourceHasteIfSubtype = subtype;
+                this.grantSourceHasteSourcePermanentId = sourcePermanentId;
+                return this;
+            }
+
             public GraveyardChoice build() {
                 return new GraveyardChoice(playerId, validIndices, destination, cardPool,
                         gainLifeEqualToManaValue, attachToSourcePermanentId, grantColor, grantSubtype,
                         exileRemainingCount, gainLifeIfCreatureAmount, gainLifeIfCreaturePlayerId,
                         trackWithSourcePermanentId, mayAbilitySourceCard, mayAbilityControllerId,
-                        mayAbilityEffects, mayAbilitySourcePermanentId, prompt);
+                        mayAbilityEffects, mayAbilitySourcePermanentId,
+                        grantSourceHasteIfSubtype, grantSourceHasteSourcePermanentId, prompt);
             }
         }
     }

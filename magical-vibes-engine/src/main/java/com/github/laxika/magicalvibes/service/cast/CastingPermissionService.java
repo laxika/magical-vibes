@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastPermanentSpellsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsFlashbackEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.LimitSpellsForControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsForEnchantedPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitSpellsPerTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
@@ -85,6 +86,11 @@ public class CastingPermissionService {
                     if (effect instanceof LimitSpellsForEnchantedPlayerEffect curse
                             && perm.isAttached() && playerId.equals(perm.getAttachedTo())) {
                         limit = Math.min(limit, curse.maxSpells());
+                    }
+                    // Colfenor's Plans etc.: only applies to the permanent's controller.
+                    if (effect instanceof LimitSpellsForControllerEffect controllerLimit
+                            && pid.equals(playerId)) {
+                        limit = Math.min(limit, controllerLimit.maxSpells());
                     }
                 }
             }

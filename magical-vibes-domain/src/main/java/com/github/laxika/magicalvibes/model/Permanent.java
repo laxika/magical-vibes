@@ -37,6 +37,7 @@ public class Permanent {
     @Setter private CardColor chosenColor;
     @Setter private String chosenName;
     @Setter private CardSubtype chosenSubtype;
+    @Setter private ManaValueParity chosenManaValueParity;
     @Setter private UUID chosenPermanentId;
     @Setter private boolean cantBeBlocked;
     @Setter private boolean cantBlockThisTurn;
@@ -238,6 +239,7 @@ public class Permanent {
         this.chosenColor = source.chosenColor;
         this.chosenName = source.chosenName;
         this.chosenSubtype = source.chosenSubtype;
+        this.chosenManaValueParity = source.chosenManaValueParity;
         this.chosenPermanentId = source.chosenPermanentId;
         this.cantBeBlocked = source.cantBeBlocked;
         this.cantBlockThisTurn = source.cantBlockThisTurn;

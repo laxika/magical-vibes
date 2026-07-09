@@ -17,6 +17,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record AuraGraft(UUID auraPermanentId) implements PermanentChoiceContext {}
 
+    /** Nettlevine Blight: sacrifice {@code permanentToSacrificeId}, then reattach the source Aura
+     *  {@code auraPermanentId} onto the chosen creature or land. */
+    record ReattachSourceAuraAfterSacrifice(UUID auraPermanentId, UUID permanentToSacrificeId) implements PermanentChoiceContext {}
+
     record LegendRule(String cardName) implements PermanentChoiceContext {}
 
     record BounceCreature(UUID bouncingPlayerId) implements PermanentChoiceContext {}

@@ -92,6 +92,15 @@ import lombok.Builder;
  *                             whose mana value is less than or equal to the amount of life the
  *                             controller gained this turn (e.g. Moseo, Vein's New Dean); the cap is
  *                             read from {@code GameData.getLifeGainedThisTurn} at target-selection time
+ * @param enterWithMannequinCounter {@code true} to put a mannequin counter on the returned permanent as
+ *                             it enters the battlefield (e.g. Makeshift Mannequin). While a permanent has
+ *                             a mannequin counter it gains "When this creature becomes the target of a
+ *                             spell or ability, sacrifice it" (enforced in
+ *                             {@code TriggerCollectionService}); only meaningful for {@code BATTLEFIELD}
+ * @param grantSourceHasteIfSubtype when non-null, the source permanent (the one whose effect returned the
+ *                             card) gains haste until end of turn if the returned card has this subtype
+ *                             (e.g. Warren Pilferers — "If that card is a Goblin card, this creature gains
+ *                             haste until end of turn"); only meaningful for {@code HAND} search-and-choose
  */
 @Builder
 public record ReturnCardFromGraveyardEffect(
@@ -117,7 +126,9 @@ public record ReturnCardFromGraveyardEffect(
         boolean choosePermanentType,
         boolean exileSourceFromGraveyard,
         boolean enterAttacking,
-        boolean maxManaValueEqualsLifeGainedThisTurn
+        boolean maxManaValueEqualsLifeGainedThisTurn,
+        boolean enterWithMannequinCounter,
+        CardSubtype grantSourceHasteIfSubtype
 ) implements CardEffect {
 
     /**

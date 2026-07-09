@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.AllyCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -832,6 +833,24 @@ public class CombatDamageService {
                             List.of(new PutCountersOnSourceEffect(dealerEffect.powerModifier(), dealerEffect.toughnessModifier(), dealerEffect.amount())),
                             null,
                             creature.getId()
+                    );
+                    se.setNonTargeting(true);
+                    gameData.stack.add(se);
+                    gameBroadcastService.logAndBroadcast(gameData, perm.getCard().getName()
+                            + "'s triggered ability goes on the stack.");
+                } else if (effect instanceof AllyCombatDamageTriggerEffect trigger) {
+                    if (trigger.dealerPredicate() != null
+                            && !predicateEvaluationService.matchesPermanentPredicate(gameData, creature, trigger.dealerPredicate())) {
+                        continue;
+                    }
+                    StackEntry se = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            attackerId,
+                            perm.getCard().getName() + "'s triggered ability",
+                            List.of(trigger.effect()),
+                            null,
+                            perm.getId()
                     );
                     se.setNonTargeting(true);
                     gameData.stack.add(se);

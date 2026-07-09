@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
 
+@CardRegistration(set = "LRW", collectorNumber = "121")
 @CardRegistration(set = "M10", collectorNumber = "102")
 @CardRegistration(set = "M11", collectorNumber = "102")
 public class LilianaVess extends Card {

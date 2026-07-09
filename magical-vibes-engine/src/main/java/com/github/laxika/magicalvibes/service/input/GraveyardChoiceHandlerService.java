@@ -82,6 +82,8 @@ public class GraveyardChoiceHandlerService {
         int gainLifeIfCreatureAmount = graveyardChoice.gainLifeIfCreatureAmount();
         UUID gainLifeIfCreaturePlayerId = graveyardChoice.gainLifeIfCreaturePlayerId();
         UUID trackWithSourcePermanentId = graveyardChoice.trackWithSourcePermanentId();
+        CardSubtype grantSourceHasteIfSubtype = graveyardChoice.grantSourceHasteIfSubtype();
+        UUID grantSourceHasteSourcePermanentId = graveyardChoice.grantSourceHasteSourcePermanentId();
         // May ability graveyard targeting context
         Card mayAbilitySourceCard = graveyardChoice.mayAbilitySourceCard();
         UUID mayAbilityControllerId = graveyardChoice.mayAbilityControllerId();
@@ -147,6 +149,19 @@ public class GraveyardChoiceHandlerService {
                         int manaValue = card.getManaValue();
                         if (manaValue > 0) {
                             lifeSupport.applyGainLife(gameData, playerId, manaValue);
+                        }
+                    }
+
+                    // Warren Pilferers: "If that card is a Goblin card, this creature gains haste
+                    // until end of turn." The subtype is checked against the returned card (changeling-aware).
+                    if (grantSourceHasteIfSubtype != null && grantSourceHasteSourcePermanentId != null
+                            && (gameQueryService.cardHasSubtype(card, grantSourceHasteIfSubtype, gameData, playerId)
+                                || card.getKeywords().contains(com.github.laxika.magicalvibes.model.Keyword.CHANGELING))) {
+                        Permanent sourcePerm = gameQueryService.findPermanentById(gameData, grantSourceHasteSourcePermanentId);
+                        if (sourcePerm != null) {
+                            sourcePerm.getGrantedKeywords().add(com.github.laxika.magicalvibes.model.Keyword.HASTE);
+                            String hasteLog = sourcePerm.getCard().getName() + " gains haste until end of turn.";
+                            gameBroadcastService.logAndBroadcast(gameData, hasteLog);
                         }
                     }
                 }

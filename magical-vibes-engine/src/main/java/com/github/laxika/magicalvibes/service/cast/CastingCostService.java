@@ -407,7 +407,9 @@ public class CastingCostService {
                     if (matchingCount < cost.count()) return false;
                 }
                 case ExileCardFromGraveyardCost cost -> {
-                    if (graveyard.stream().noneMatch(c -> cost.requiredType() == null || c.hasType(cost.requiredType()))) return false;
+                    if (graveyard.stream().noneMatch(c ->
+                            (cost.requiredType() == null || c.hasType(cost.requiredType()))
+                                    && (cost.requiredSubtype() == null || c.getSubtypes().contains(cost.requiredSubtype())))) return false;
                 }
                 case ExileXCardsFromGraveyardCost ignored -> {
                     if (graveyard.isEmpty()) return false;

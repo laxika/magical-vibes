@@ -124,6 +124,37 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleReattachSourceAuraAfterSacrifice(GameData gameData, UUID permanentId,
+                                                       PermanentChoiceContext.ReattachSourceAuraAfterSacrifice ctx) {
+        Permanent aura = gameQueryService.findPermanentById(gameData, ctx.auraPermanentId());
+        if (aura == null) {
+            throw new IllegalStateException("Aura permanent no longer exists");
+        }
+
+        Permanent newTarget = gameQueryService.findPermanentById(gameData, permanentId);
+        if (newTarget == null) {
+            throw new IllegalStateException("Target permanent no longer exists");
+        }
+
+        // Sacrifice the enchanted permanent, then move the Aura onto the chosen creature or land.
+        Permanent toSacrifice = gameQueryService.findPermanentById(gameData, ctx.permanentToSacrificeId());
+        if (toSacrifice != null) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, ctx.permanentToSacrificeId());
+            permanentRemovalService.removePermanentToGraveyard(gameData, toSacrifice);
+            String playerName = gameData.playerIdToName.get(controllerId);
+            gameBroadcastService.logAndBroadcast(gameData, playerName + " sacrifices " + toSacrifice.getCard().getName() + ".");
+        }
+
+        aura.setAttachedTo(permanentId);
+        gameBroadcastService.logAndBroadcast(gameData,
+                aura.getCard().getName() + " is now attached to " + newTarget.getCard().getName() + ".");
+        log.info("Game {} - {} reattached to {} after sacrifice", gameData.id,
+                aura.getCard().getName(), newTarget.getCard().getName());
+
+        permanentRemovalService.removeOrphanedAuras(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handleLegendRule(GameData gameData, UUID playerId, UUID permanentId, PermanentChoiceContext.LegendRule legendRule) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
         List<Permanent> toRemove = new ArrayList<>();

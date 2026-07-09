@@ -9,6 +9,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link GrantScope#TARGET} — one-shot, resolves off the stack and sets the targeted
  *       permanent's base P/T <em>until end of turn</em> (e.g. Diminish, Quandrix Charm).
  *       Handled by the normalfx {@code SetBasePowerToughnessEffectHandler}.</li>
+ *   <li>{@link GrantScope#SELF} — one-shot, resolves off the stack and sets the <em>source's</em>
+ *       base P/T until end of turn for a non-targeting ability ("this creature has base power and
+ *       toughness X/Y until end of turn", e.g. Marsh Flitter). Also handled by the normalfx handler.</li>
  *   <li>Any other scope (e.g. {@link GrantScope#ENCHANTED_CREATURE}) — a continuous STATIC
  *       effect setting base P/T for as long as it applies (e.g. Deep Freeze, Darksteel Mutation).
  *       Handled by the staticfx {@code SetBasePowerToughnessStaticEffectHandler}.</li>

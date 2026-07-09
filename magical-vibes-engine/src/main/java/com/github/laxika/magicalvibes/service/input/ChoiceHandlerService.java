@@ -118,6 +118,10 @@ public class ChoiceHandlerService {
             handleSubtypeChoice(gameData, player, colorName, ctx);
             return;
         }
+        if (colorChoice.context() instanceof ChoiceContext.ManaValueParityChoice ctx) {
+            handleManaValueParityChoice(gameData, player, colorName, ctx);
+            return;
+        }
         if (colorChoice.context() instanceof ChoiceContext.BasicLandTypeChoice ctx) {
             handleBasicLandTypeChoice(gameData, player, colorName, ctx);
             return;
@@ -529,6 +533,26 @@ public class ChoiceHandlerService {
             String logEntry = player.getUsername() + " chooses " + subtype.getDisplayName() + " for " + perm.getCard().getName() + ".";
             gameBroadcastService.logAndBroadcast(gameData, logEntry);
             log.info("Game {} - {} chooses creature type {} for {}", gameData.id, player.getUsername(), subtype, perm.getCard().getName());
+        }
+
+        gameData.priorityPassedBy.clear();
+        gameBroadcastService.broadcastGameState(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    private void handleManaValueParityChoice(GameData gameData, Player player, String parityName, ChoiceContext.ManaValueParityChoice ctx) {
+        com.github.laxika.magicalvibes.model.ManaValueParity parity =
+                com.github.laxika.magicalvibes.model.ManaValueParity.valueOf(parityName);
+
+        gameData.interaction.clearAwaitingInput();
+
+        Permanent perm = gameQueryService.findPermanentById(gameData, ctx.permanentId());
+        if (perm != null) {
+            perm.setChosenManaValueParity(parity);
+
+            String logEntry = player.getUsername() + " chooses " + parityName.toLowerCase() + " for " + perm.getCard().getName() + ".";
+            gameBroadcastService.logAndBroadcast(gameData, logEntry);
+            log.info("Game {} - {} chooses {} for {}", gameData.id, player.getUsername(), parityName.toLowerCase(), perm.getCard().getName());
         }
 
         gameData.priorityPassedBy.clear();
