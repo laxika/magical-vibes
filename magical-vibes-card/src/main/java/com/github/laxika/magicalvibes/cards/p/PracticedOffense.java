@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToSecondTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -24,13 +24,13 @@ public class PracticedOffense extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ))
-                .addEffect(EffectSlot.SPELL, new PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect());
+                .addEffect(EffectSlot.SPELL, new PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "Target must be a creature"
         ))
-                .addEffect(EffectSlot.SPELL, new GrantChosenKeywordToSecondTargetEffect(
+                .addEffect(EffectSlot.SPELL, new GrantChosenKeywordToTargetEffect(
                         List.of(Keyword.DOUBLE_STRIKE, Keyword.LIFELINK)));
 
         addCastingOption(new FlashbackCast("{1}{W}"));

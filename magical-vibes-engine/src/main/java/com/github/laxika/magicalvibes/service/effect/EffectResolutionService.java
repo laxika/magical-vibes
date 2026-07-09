@@ -134,13 +134,17 @@ public class EffectResolutionService {
                 }
             }
 
-            // Multi-target support: set entry.targetId to the correct target
-            // for this effect based on the Card's SpellTarget declarations.
+            // Multi-target support: set entry.targetId to this effect's group target based on
+            // the Card's SpellTarget declarations (StackEntry.targetsForEffect slices the flat
+            // target list by group). Single-target handlers read the remapped targetId; handlers
+            // that support several targets per group consult targetsForEffect themselves.
             int targetIdx = entry.getCard().getEffectTargetIndex(effect);
             UUID savedTargetId = entry.getTargetId();
-            if (targetIdx >= 0 && entry.getTargetIds() != null
-                    && targetIdx < entry.getTargetIds().size()) {
-                entry.setTargetId(entry.getTargetIds().get(targetIdx));
+            if (targetIdx >= 0) {
+                List<UUID> groupTargets = entry.targetsForEffect(effect);
+                if (!groupTargets.isEmpty()) {
+                    entry.setTargetId(groupTargets.getFirst());
+                }
             }
 
             EffectHandler handler = registry.getHandler(effectToResolve);

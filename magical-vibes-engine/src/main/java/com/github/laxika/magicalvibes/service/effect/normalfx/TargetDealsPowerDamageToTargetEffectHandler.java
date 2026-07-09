@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstTargetDealsPowerDamageToSecondTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardColor;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class FirstTargetDealsPowerDamageToSecondTargetEffectHandler implements NormalEffectHandlerBean {
+public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
@@ -23,22 +23,21 @@ public class FirstTargetDealsPowerDamageToSecondTargetEffectHandler implements N
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return FirstTargetDealsPowerDamageToSecondTargetEffect.class;
+        return TargetDealsPowerDamageToTargetEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (TargetDealsPowerDamageToTargetEffect) effect;
 
-        List<UUID> targets = entry.getTargetIds();
-        if (targets == null || targets.size() < 2) {
-            return; // No second target — "up to one" chose zero
+        List<UUID> sourceGroup = entry.targetsForGroup(e.sourceTargetGroup());
+        List<UUID> victimGroup = entry.targetsForGroup(e.victimTargetGroup());
+        if (sourceGroup.isEmpty() || victimGroup.isEmpty()) {
+            return; // Optional target not chosen ("up to one") — no damage is dealt
         }
 
-        UUID biterId = targets.get(0);
-        UUID targetId = targets.get(1);
-
-        Permanent biter = gameQueryService.findPermanentById(gameData, biterId);
-        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+        Permanent biter = gameQueryService.findPermanentById(gameData, sourceGroup.getFirst());
+        Permanent target = gameQueryService.findPermanentById(gameData, victimGroup.getFirst());
         if (biter == null || target == null) {
             return;
         }
@@ -61,6 +60,5 @@ public class FirstTargetDealsPowerDamageToSecondTargetEffectHandler implements N
         int power = gameQueryService.getPowerBasedDamage(gameData, biter);
         int rawDamage = gameQueryService.applyDamageMultiplier(gameData, power, entry);
         damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, target, rawDamage, biter);
-    
     }
 }

@@ -4,13 +4,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +22,10 @@ import org.springframework.stereotype.Component;
  * <ul>
  *   <li>a non-null {@code predicate} → resolution-time choice among the controller's matching
  *       permanents (non-targeting);</li>
- *   <li>otherwise a targeting effect, resolving the per-effect target set by
- *       {@code EffectResolutionService} for multi-group spells (e.g. River Heralds' Boon), the
- *       full {@code targetIds} list for a single effect that targets several permanents, or the
- *       lone {@code targetId}.</li>
+ *   <li>otherwise a targeting effect, resolving {@code StackEntry.targetsForEffect} — the
+ *       effect's target-group slice for multi-group spells (e.g. River Heralds' Boon), the
+ *       full {@code targetIds} list for an unbound effect that targets several permanents, or
+ *       the lone {@code targetId}.</li>
  * </ul>
  * The counter count is a {@code DynamicAmount} ({@code Fixed}, {@code XValue()}, …). Placement is
  * routed through {@link PermanentCounterSupport#placeCounterOnPermanent} so counter-type-specific
@@ -40,6 +41,7 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
     private final GameBroadcastService gameBroadcastService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,23 +67,14 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
             return;
         }
 
-        // Single-target group within a multi-group spell (e.g. River Heralds' Boon): this effect
-        // is bound to a group that targets exactly one permanent, remapped onto entry.targetId by
-        // EffectResolutionService. A null target means the optional target for this group wasn't
-        // chosen — do nothing. Groups that target several permanents (e.g. Homesickness's "each of
-        // them") fall through to the multi-target branch below.
-        if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                && isSingleTargetGroupInMultiGroupSpell(entry, effect)) {
-            if (entry.getTargetId() != null) {
-                placeOnTarget(gameData, entry, entry.getTargetId(), e, count);
-            }
-            return;
-        }
-
-        // Single-group, multiple targets: apply to each valid target.
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetIds()) {
+        // Targeting mode: apply to each valid target of this effect's target group — the group's
+        // slice of the flat target list for effects bound via target(...).addEffect(...) (e.g.
+        // River Heralds' Boon, Homesickness), the whole flat list for unbound effects, or the
+        // lone targetId for single-target entries. An empty group (optional target not chosen)
+        // does nothing.
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (!targetIds.isEmpty()) {
+            for (UUID targetId : targetIds) {
                 placeOnTarget(gameData, entry, targetId, e, count);
             }
             return;
@@ -95,29 +88,17 @@ public class PutCounterOnTargetPermanentEffectHandler implements NormalEffectHan
         placeOnTarget(gameData, entry, entry.getTargetId(), e, count);
     }
 
-    /**
-     * True when this effect is bound to a target group that takes exactly one target and the spell
-     * has more than one target group — i.e. the effect's target has been remapped onto
-     * {@code entry.targetId} by {@code EffectResolutionService}. Mirrors the equivalent guard in
-     * {@code TapPermanentsEffectHandler} so mixed spells (a single-target group alongside a
-     * multi-target group, e.g. Homesickness) route each effect correctly.
-     */
-    private boolean isSingleTargetGroupInMultiGroupSpell(StackEntry entry, CardEffect effect) {
-        if (entry.getCard() == null) {
-            return false;
-        }
-        int targetIdx = entry.getCard().getEffectTargetIndex(effect);
-        return targetIdx >= 0
-                && entry.getCard().getSpellTargets().size() > 1
-                && targetIdx < entry.getCard().getSpellTargets().size()
-                && entry.getCard().getSpellTargets().get(targetIdx).getMaxTargets() == 1;
-    }
-
     private void placeOnTarget(GameData gameData, StackEntry entry, UUID targetId,
                                PutCounterOnTargetPermanentEffect e, int count) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return; // Partially resolves — skip removed targets.
+        }
+        // Resolution-time gate ("if it's legendary" — Ancient Animus): target stays legal,
+        // the counters just aren't placed when the condition doesn't hold.
+        if (e.resolutionCondition() != null
+                && !predicateEvaluationService.matchesPermanentPredicate(gameData, target, e.resolutionCondition())) {
+            return;
         }
         if (gameQueryService.cantHaveCounters(gameData, target)) {
             return;

@@ -72,8 +72,8 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 
 > **Power-based damage convention.** Any effect that deals damage equal to a creature's power
 > (fight, bite, Pack Hunt, Berserker, Arc-Lightning-style source damage, planeswalker
-> power-to-loyalty, `FirstTargetDealsPowerDamageToSecondTargetEffect`,
-> `FirstTargetFightsSecondTargetEffect`, `MassFightTargetCreatureEffect`,
+> power-to-loyalty, `TargetDealsPowerDamageToTargetEffect`,
+> `FightTargetsEffect`, `MassFightTargetCreatureEffect`,
 > `SourceFightsTargetCreatureEffect`, the `SourcePower` dynamic amount,
 > `PackHuntEffect`) must read the amount via
 > `gameQueryService.getPowerBasedDamage(gameData, source)` — **never** via
@@ -94,16 +94,16 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `DealDamageToAllCreaturesTargetControlsEffect(int)` — creatures target controls
 - `DealDamageToEachMatchingPermanentEffect(int, PermanentPredicate, EachPermanentScope)` — damage each matching permanent across `ALL_PLAYERS`/`TARGET_PLAYER`
 - `DealDamageToPlayersEffect(DynamicAmount, DamageRecipient)`; `(int, recipient)`; `.enchantedAttachedCount(PermanentPredicate)` — **unified player damage.** Recipients: `TARGET_PLAYER` (only targeting one; `Fixed`/`CardsInGraveyard` Scrapyard Salvo/`CardsInHand(TARGET_PLAYER)` Sudden Impact + Sword of War and Peace), `EACH_OPPONENT` (single eval, same value; `Fixed`/`CountersOnSource` Hallar), `EACH_PLAYER` (Slagstorm), `CONTROLLER` (self/pain lands), `ENCHANTED_PLAYER` (curse upkeep; `.enchantedAttachedCount` Curse of Thirst), `TARGET_PERMANENT_CONTROLLER` (Chandra's Outrage), `TRIGGERING_PERMANENT_CONTROLLER` (Magnetic Mine)
-- `DealDamageToSecondaryTargetEffect(int)` — secondary target
+- `DealDamageToAnyTargetEffect.forTargetGroup(int damage, int targetGroup)` — damage aimed at a target group's chosen target (Goblin Barrage kicked target)
 - `MassDamageEffect(int)` or `(int, boolean, boolean, PermanentPredicate)` + overloads — mass damage
 - `DealDamageToAnyTargetAndGainLifeEffect(int damage, int lifeGain)` — damage + life gain
 - `DealDamageToAnyTargetEqualToControlledSubtypeCountAndGainLifeEffect(CardSubtype, boolean)` — any target = subtype count
 - `DealDividedDamageEffect` (unified divided/multi-target damage) — factories: `.chosenAmongAnyTargets(int)` (Fight with Fire kicked), `.chosenAmongTargetCreatures(int)` (Ignite Disorder), `.chosenAmongAnyTargetsEtb(int,int)` (Inferno Titan/Bogardan ETB), `.xAmongAttackingCreatures()` (Hail of Arrows), `.xAmongTargetCreaturesCantBlock()` (Huatli −X), `.xDividedEvenly()` (Fireball), `.ordered(List<Integer>)` (Cone of Flame/Arc Trail)
 - `DealXDamageToAnyTargetAndGainXLifeEffect()` — X damage + X life
 - `DealDamageToEachTargetEffect(DynamicAmount)` — full amount to each of multiple targets (Jaya's Immolating Inferno with `XValue`)
-- `FirstTargetDealsPowerDamageToSecondTargetEffect()` — bite
+- `TargetDealsPowerDamageToTargetEffect()` — bite (group indices `(sourceTargetGroup, victimTargetGroup)` default to 0, 1)
 - `TargetCreatureDealsPowerDamageToSelfEffect()` — target deals its power to itself
-- `FirstTargetFightsSecondTargetEffect()` — fight
+- `FightTargetsEffect()` — fight (group indices `(firstTargetGroup, secondTargetGroup)` default to 0, 1)
 - `MassFightTargetCreatureEffect()` — Alpha Brawl-style mass fight
 - `DoubleDamageEffect()` — double all damage (static)
 - `DoubleDamageToEnchantedPlayerEffect()` — double damage dealt to enchanted player (static Curse)
@@ -318,7 +318,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `PutCountersOnSelfEffect(CounterType)` — one counter of a type on self (charge, +1/+1, study, etc.)
 - `PutCountersOnSelfEffect(CounterType, int count)` — N counters of a type on self (e.g. Withengar Unbound: 13 +1/+1)
 - `PutCounterOnTargetPermanentEffect(CounterType, int)` — counters on target permanent (`PLUS_ONE_PLUS_ONE`/`MINUS_ONE_MINUS_ONE`/…); `(…, new XValue())` for "X counters"; `(…, count, boolean regenerateIfSurvives)` (Gore Vassal); `withTargetRestriction(…, targetPredicate)` to restrict legal targets; `(…, count, PermanentPredicate)` for a non-targeting own-permanent choice
-- `PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect()` — +1/+1 on each creature the first target player controls (multi-target: player at `targetIds[0]`)
+- `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect()` — +1/+1 on each creature the target player controls (bind to the player target group via `target(...).addEffect(...)`)
 - `PutCounterOnEachControlledPermanentEffect(CounterType, int, PermanentPredicate)` — counters on each own permanent matching predicate (use `PermanentIsCreaturePredicate` for "each creature you control")
 - `PutCounterOnEachMatchingPermanentEffect(CounterType, int|DynamicAmount, PermanentPredicate, EachPermanentScope)` — counters on each matching permanent across `ALL_PLAYERS`/`TARGET_PLAYER` (each attacking / other / all creatures; each creature target player controls)
 - `PutCounterOnEnchantedCreatureEffect(CounterType)` or `(CounterType, int)` — counter(s) on enchanted creature
@@ -330,7 +330,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Keywords / abilities
 
 - `GrantKeywordEffect(Keyword, GrantScope)` or `(Keyword, GrantScope, PermanentPredicate)` or `(Set<Keyword>, GrantScope)` — grant keywords. Add a trailing `GrantDuration` (`(Keyword, GrantScope, GrantDuration)` / `(Set<Keyword>, GrantScope, GrantDuration)`) for one-shot duration: `END_OF_TURN` (default) or `UNTIL_YOUR_NEXT_TURN`. In `STATIC` slot the grant is continuous and the duration is ignored. `GrantKeywordEffect.toTargetIf(Keyword, PermanentPredicate grantCondition)` — grant to target ONLY if it matches `grantCondition` (checked at resolution; target stays legal, only the grant is conditional — Vampire's Zeal, Blessing of Belzenlok). `grantCondition` is distinct from `filter`/`targetPredicate()`.
-- `GrantChosenKeywordToSecondTargetEffect(List<Keyword> options)` — prompt to choose one keyword from options, grant to second target permanent until end of turn (multi-target: creature at `targetIds[1]`)
+- `GrantChosenKeywordToTargetEffect(List<Keyword> options)` — prompt to choose one keyword from options, grant to target permanent until end of turn (bind to its target group in multi-target spells — Practiced Offense)
 - `GrantFlashToCardTypeEffect(CardPredicate)` — flash to card types (static)
 - `GrantActivatedAbilityEffect(ActivatedAbility, GrantScope)` or `(ActivatedAbility, GrantScope, PermanentPredicate)` — grant ability
 - `GrantAdditionalBlockEffect(int)` — block N additional

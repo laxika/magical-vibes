@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -15,23 +15,23 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffectHandler implements NormalEffectHandlerBean {
+public class PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return PutPlusOnePlusOneCounterOnEachCreatureFirstTargetPlayerControlsEffect.class;
+        return PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTargetIds() == null || entry.getTargetIds().isEmpty()) {
+        List<UUID> targets = entry.targetsForEffect(effect);
+        UUID targetPlayerId = !targets.isEmpty() ? targets.getFirst() : entry.getTargetId();
+        if (targetPlayerId == null) {
             return;
         }
-
-        UUID targetPlayerId = entry.getTargetIds().getFirst();
         List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
         if (battlefield == null) {
             return;

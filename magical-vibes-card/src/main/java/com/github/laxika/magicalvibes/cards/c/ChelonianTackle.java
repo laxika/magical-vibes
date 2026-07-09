@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.BoostFirstTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstTargetFightsSecondTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -22,7 +22,7 @@ public class ChelonianTackle extends Card {
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(),
                 "First target must be a creature you control"
-        )).addEffect(EffectSlot.SPELL, new BoostFirstTargetCreatureEffect(0, 10));
+        )).addEffect(EffectSlot.SPELL, new BoostTargetCreatureEffect(0, 10));
 
         // Then it fights up to one target creature an opponent controls.
         target(new PermanentPredicateTargetFilter(
@@ -31,6 +31,6 @@ public class ChelonianTackle extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
                 )),
                 "Second target must be a creature an opponent controls"
-        ), 0, 1).addEffect(EffectSlot.SPELL, new FirstTargetFightsSecondTargetEffect());
+        ), 0, 1).addEffect(EffectSlot.SPELL, new FightTargetsEffect());
     }
 }

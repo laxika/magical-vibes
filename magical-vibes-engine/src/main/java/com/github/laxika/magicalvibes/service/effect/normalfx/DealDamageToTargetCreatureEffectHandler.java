@@ -48,7 +48,7 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         // Fire Shrine Keeper targeting up to two creatures via activated ability).
         // Enters this path when targetIds has 2+ entries, or when targetIds has 1 entry but targetId is null
         // (multi-target ability with a single target selected). Skips non-creature UUIDs (e.g. player
-        // targets from kicked spells) since those are handled by other effects like DealDamageToSecondaryTargetEffect.
+        // targets from kicked spells) since those are handled by other effects like a group-aimed DealDamageToAnyTargetEffect.
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
                 && (entry.getTargetIds().size() > 1 || entry.getTargetId() == null)) {
             for (UUID targetId : entry.getTargetIds()) {

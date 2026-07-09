@@ -31,7 +31,12 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToAnyTargetEffect) effect;
 
-        UUID targetId = entry.getTargetId();
+        // Group-aimed damage (e.g. Goblin Barrage's kicked "4 damage to target player or
+        // planeswalker"): resolve against the declared target group's chosen target rather
+        // than the entry's single target.
+        UUID targetId = e.targetGroup() >= 0
+                ? entry.targetsForGroup(e.targetGroup()).stream().findFirst().orElse(null)
+                : entry.getTargetId();
         if (targetId == null) return;
 
         // Mark the target creature for exile-instead-of-die before dealing damage,

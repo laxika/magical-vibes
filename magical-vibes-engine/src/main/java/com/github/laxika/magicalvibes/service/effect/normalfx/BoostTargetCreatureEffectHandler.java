@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -40,9 +41,11 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx);
 
-        // Multi-target: apply boost to each valid target
-        if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
-            for (UUID targetId : entry.getTargetIds()) {
+        // Multi-target: apply boost to each valid target of this effect's target group
+        // (the whole flat list when the effect isn't bound to a group).
+        List<UUID> targetIds = entry.targetsForEffect(effect);
+        if (!targetIds.isEmpty()) {
+            for (UUID targetId : targetIds) {
                 Permanent target = gameQueryService.findPermanentById(gameData, targetId);
                 if (target == null) {
                     continue; // Partially resolves — skip removed targets

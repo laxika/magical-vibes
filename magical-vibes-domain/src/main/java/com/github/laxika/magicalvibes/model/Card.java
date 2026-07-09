@@ -2,6 +2,11 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -152,9 +157,23 @@ public class Card {
 
     /**
      * Called by {@link SpellTarget#addEffect} to map an effect instance to its target index.
+     * Wrapper effects (conditional, may) register their inner effects under the same index,
+     * because resolution unwraps them before dispatching to the handler — the handler must be
+     * able to look up the group by the effect instance it actually receives.
      */
     public void registerEffectTargetIndex(CardEffect effect, int targetIndex) {
         effectTargetIndexMap.put(effect, targetIndex);
+        switch (effect) {
+            case ConditionalEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case ConditionalReplacementEffect e -> {
+                if (e.baseEffect() != null) registerEffectTargetIndex(e.baseEffect(), targetIndex);
+                registerEffectTargetIndex(e.upgradedEffect(), targetIndex);
+            }
+            case MayEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case MayPayManaEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            case MayPayTapPermanentsEffect e -> registerEffectTargetIndex(e.wrapped(), targetIndex);
+            default -> { }
+        }
     }
 
     /**

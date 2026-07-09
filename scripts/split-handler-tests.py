@@ -39,7 +39,7 @@ BASE_CLASS = {
 }
 
 DISPLAY_NAME_TO_HANDLER = {
-    "resolveBite": "FirstTargetDealsPowerDamageToSecondTargetEffectHandler",
+    "resolveBite": "TargetDealsPowerDamageToTargetEffectHandler",
     "resolveSearchLibraryForCardToHand": "SearchLibraryForCardsToHandEffectHandler",
     "resolveMayEffect": "MayEffectHandler",
     "resolveMayPayManaEffect": "MayPayManaEffectHandler",

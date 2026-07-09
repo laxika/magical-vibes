@@ -285,6 +285,59 @@ public class StackEntry {
         return damageSourceCard != null ? damageSourceCard : card;
     }
 
+    /**
+     * Returns the targets chosen for the given target group, resolved against this entry's
+     * flat {@link #targetIds} list.
+     *
+     * <p>For spells, the flat list is sliced by the card's {@link SpellTarget} declarations in
+     * order: the first group's chosen targets come first, then the next group's, and so on —
+     * matching how targets are selected position-by-position against
+     * {@link Card#getMultiTargetFilters()} and validated by the target legality service. Each
+     * group consumes up to its {@code maxTargets} of the remaining ids, so a group with a
+     * variable target count ("up to N") must be the last declared group — with a variable-count
+     * group in any earlier position the flat wire format would be ambiguous (no such card
+     * exists; the DSL assumes declaration-order filling).</p>
+     *
+     * <p>When the card declares no spell targets (e.g. activated abilities with their own
+     * multi-target filter list), the flat list is treated as positional: group {@code g} is
+     * {@code targetIds.get(g)}.</p>
+     */
+    public List<UUID> targetsForGroup(int group) {
+        List<SpellTarget> groups = card == null ? List.of() : card.getSpellTargets();
+        if (groups.isEmpty()) {
+            return group >= 0 && group < targetIds.size() ? List.of(targetIds.get(group)) : List.of();
+        }
+        int consumed = 0;
+        for (SpellTarget g : groups) {
+            int size = Math.min(Math.max(g.getMaxTargets(), 0), targetIds.size() - consumed);
+            if (g.getIndex() == group) {
+                return List.copyOf(targetIds.subList(consumed, consumed + size));
+            }
+            consumed += size;
+        }
+        return List.of();
+    }
+
+    /**
+     * Returns the targets the given effect applies to.
+     *
+     * <p>An effect bound to a target group via {@code target(...).addEffect(...)} applies to
+     * all targets chosen for its group (see {@link #targetsForGroup}). An unbound effect keeps
+     * the legacy semantics: the whole flat {@link #targetIds} list. When the entry was cast
+     * through the single-target path ({@link #targetId} set, flat list empty), a bound effect
+     * resolves against that lone target.</p>
+     */
+    public List<UUID> targetsForEffect(CardEffect effect) {
+        int group = card == null ? -1 : card.getEffectTargetIndex(effect);
+        if (group < 0) {
+            return targetIds;
+        }
+        if (targetIds.isEmpty()) {
+            return targetId != null ? List.of(targetId) : List.of();
+        }
+        return targetsForGroup(group);
+    }
+
     public boolean isSingleTarget() {
         return targetId != null && targetIds.isEmpty() && targetCardIds.isEmpty();
     }

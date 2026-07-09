@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EffectSlot;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToSecondaryTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -32,7 +32,7 @@ public class GoblinBarrage extends Card {
         addEffect(EffectSlot.SPELL, new DealDamageToTargetCreatureEffect(4));
 
         // If this spell was kicked, it also deals 4 damage to target player or planeswalker.
-        // TODO: We should find a way to get rid of DealDamageToSecondaryTargetEffect and use DealDamageToPlayersEffect (TARGET_PLAYER) instead
-        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), new DealDamageToSecondaryTargetEffect(4)));
+        // The kicked target arrives in the additional-target list; group 0 addresses it there.
+        addEffect(EffectSlot.SPELL, new ConditionalEffect(new Kicked(), DealDamageToAnyTargetEffect.forTargetGroup(4, 0)));
     }
 }

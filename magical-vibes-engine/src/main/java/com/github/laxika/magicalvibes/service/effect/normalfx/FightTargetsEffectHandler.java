@@ -3,18 +3,18 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstTargetFightsSecondTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class FirstTargetFightsSecondTargetEffectHandler implements NormalEffectHandlerBean {
+public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
@@ -22,22 +22,21 @@ public class FirstTargetFightsSecondTargetEffectHandler implements NormalEffectH
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return FirstTargetFightsSecondTargetEffect.class;
+        return FightTargetsEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (FightTargetsEffect) effect;
 
-        List<UUID> targets = entry.getTargetIds();
-        if (targets == null || targets.size() < 2) {
-            return;
+        List<UUID> firstGroup = entry.targetsForGroup(e.firstTargetGroup());
+        List<UUID> secondGroup = entry.targetsForGroup(e.secondTargetGroup());
+        if (firstGroup.isEmpty() || secondGroup.isEmpty()) {
+            return; // Optional target not chosen ("up to one") — no fight happens
         }
 
-        UUID firstId = targets.get(0);
-        UUID secondId = targets.get(1);
-
-        Permanent first = gameQueryService.findPermanentById(gameData, firstId);
-        Permanent second = gameQueryService.findPermanentById(gameData, secondId);
+        Permanent first = gameQueryService.findPermanentById(gameData, firstGroup.getFirst());
+        Permanent second = gameQueryService.findPermanentById(gameData, secondGroup.getFirst());
         if (first == null || second == null) {
             return;
         }
@@ -67,6 +66,5 @@ public class FirstTargetFightsSecondTargetEffectHandler implements NormalEffectH
             int damage = gameQueryService.applyDamageMultiplier(gameData, secondPower, entry);
             damageSupport.dealDamageAndDestroyIfLethal(gameData, entry, first, damage, second);
         }
-    
     }
 }
