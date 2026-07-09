@@ -674,7 +674,7 @@ export class GameComponent implements OnInit, OnDestroy {
     if (state.stack.length > 0) {
       this.sidePanel?.switchToStackTab();
     } else {
-      this.sidePanel?.switchToGameTabIfOnStack();
+      this.sidePanel?.switchToLogTabIfOnStack();
     }
 
     // Clear pending combat state when server confirms battlefield

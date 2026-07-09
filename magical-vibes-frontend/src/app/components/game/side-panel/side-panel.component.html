@@ -7,8 +7,77 @@
     }
   </div>
 
+  <div class="mana-strip">
+    <div class="mana-strip-pips">
+      @for (color of manaColors; track color) {
+        <div class="mana-socket" [class.filled]="manaCount(color) > 0" [attr.data-color]="color">
+          <span class="mana-socket-symbol" [innerHTML]="manaSymbol(color)"></span>
+          <!-- keyed on the count so the badge is recreated on change, restarting its pop animation -->
+          @for (count of [manaCount(color)]; track count) {
+            @if (count > 0) {
+              <span class="mana-socket-count">{{ count }}</span>
+            }
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="turn-info">
+    <div class="player-badge-wrapper">
+      <div class="player-badge" [class.active]="opponentBadgeIsActive" [class.inactive]="!opponentBadgeIsActive" [class.has-priority]="opponentBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(opponentBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(opponentPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(opponentBadgePlayerId) || choice.choosablePlayerIds().has(opponentBadgePlayerId))" (click)="onPlayerBadgeClick($event, opponentPlayerIndex)">
+        <span class="badge-name" [title]="opponentPlayerName">{{ opponentPlayerName }}</span>
+        <span class="badge-stats">
+          <span class="badge-stat badge-life" title="Life">
+            <svg viewBox="0 0 12 12"><path d="M6 10.6C3.1 8.2 1.2 6.4 1.2 4.4c0-1.5 1.2-2.7 2.6-2.7 1 0 1.7.5 2.2 1.2.5-.7 1.2-1.2 2.2-1.2 1.4 0 2.6 1.2 2.6 2.7 0 2-1.9 3.8-4.8 6.2z"/></svg>{{ opponentBadgeLifeTotal }}
+          </span>
+          @if (opponentBadgePoisonCounters > 0) {
+            <span class="badge-stat badge-poison" title="Poison">
+              <svg viewBox="0 0 12 12"><path d="M6 1a4 4 0 0 0-4 4c0 1.5.8 2.7 2 3.4V10a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V8.4c1.2-.7 2-1.9 2-3.4a4 4 0 0 0-4-4zM4.4 5.8a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3.2 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>{{ opponentBadgePoisonCounters }}
+            </span>
+          }
+          <span class="badge-stat badge-hand" title="Hand">
+            <svg viewBox="0 0 12 12"><rect x="3" y="1.5" width="6" height="9" rx="1"/></svg>{{ opponentBadgeHandSize }}
+          </span>
+          <span class="badge-stat badge-deck" title="Deck">
+            <svg viewBox="0 0 12 12"><path d="M2 3.5h6a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" opacity=".5"/><path d="M4 0h6a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1z"/></svg>{{ opponentBadgeDeckSize }}
+          </span>
+        </span>
+      </div>
+    </div>
+    <div class="turn-center">
+      <span class="turn-number">Turn {{ turnNumber }}</span>
+      <span class="vs-label">VS</span>
+    </div>
+    <div class="player-badge-wrapper">
+      <div class="player-badge" [class.active]="myBadgeIsActive" [class.inactive]="!myBadgeIsActive" [class.has-priority]="myBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(myBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(myPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(myBadgePlayerId) || choice.choosablePlayerIds().has(myBadgePlayerId))" (click)="onPlayerBadgeClick($event, myPlayerIndex)">
+        <span class="badge-name" [title]="myBadgeName">{{ myBadgeName }}</span>
+        <span class="badge-stats">
+          <span class="badge-stat badge-life" title="Life">
+            <svg viewBox="0 0 12 12"><path d="M6 10.6C3.1 8.2 1.2 6.4 1.2 4.4c0-1.5 1.2-2.7 2.6-2.7 1 0 1.7.5 2.2 1.2.5-.7 1.2-1.2 2.2-1.2 1.4 0 2.6 1.2 2.6 2.7 0 2-1.9 3.8-4.8 6.2z"/></svg>{{ myBadgeLifeTotal }}
+          </span>
+          @if (myBadgePoisonCounters > 0) {
+            <span class="badge-stat badge-poison" title="Poison">
+              <svg viewBox="0 0 12 12"><path d="M6 1a4 4 0 0 0-4 4c0 1.5.8 2.7 2 3.4V10a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V8.4c1.2-.7 2-1.9 2-3.4a4 4 0 0 0-4-4zM4.4 5.8a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3.2 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/></svg>{{ myBadgePoisonCounters }}
+            </span>
+          }
+          <span class="badge-stat badge-hand" title="Hand">
+            <svg viewBox="0 0 12 12"><rect x="3" y="1.5" width="6" height="9" rx="1"/></svg>{{ myBadgeHandSize }}
+          </span>
+          <span class="badge-stat badge-deck" title="Deck">
+            <svg viewBox="0 0 12 12"><path d="M2 3.5h6a1 1 0 0 1 1 1V11a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" opacity=".5"/><path d="M4 0h6a1 1 0 0 1 1 1v6.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V1a1 1 0 0 1 1-1z"/></svg>{{ myBadgeDeckSize }}
+          </span>
+        </span>
+      </div>
+      @if (showPlayerMenu()) {
+        <div class="player-menu" (click)="$event.stopPropagation()">
+          <button class="player-menu-btn player-menu-surrender" (click)="onSurrenderClick()">Surrender</button>
+        </div>
+      }
+    </div>
+  </div>
+
   <div class="tab-header">
-    <div class="tab" [class.active]="activeTab() === 'game'" (click)="activeTab.set('game')">Game</div>
     <div class="tab" [class.active]="activeTab() === 'log'" (click)="openLogTab()">
       Log
       @if (logUnreadCount() > 0) {
@@ -33,62 +102,7 @@
   </div>
 
   <div class="tab-content">
-    @if (activeTab() === 'game') {
-      <div class="game-tab">
-        <div class="mana-strip">
-          <div class="mana-strip-pips">
-            @for (color of manaColors; track color) {
-              <div class="mana-socket" [class.filled]="manaCount(color) > 0" [attr.data-color]="color">
-                <span class="mana-socket-symbol" [innerHTML]="manaSymbol(color)"></span>
-                <!-- keyed on the count so the badge is recreated on change, restarting its pop animation -->
-                @for (count of [manaCount(color)]; track count) {
-                  @if (count > 0) {
-                    <span class="mana-socket-count">{{ count }}</span>
-                  }
-                }
-              </div>
-            }
-          </div>
-        </div>
-
-        <div class="turn-info">
-          <div class="player-badge-wrapper">
-            <div class="player-badge" [class.active]="opponentBadgeIsActive" [class.inactive]="!opponentBadgeIsActive" [class.has-priority]="opponentBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(opponentBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(opponentPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(opponentBadgePlayerId) || choice.choosablePlayerIds().has(opponentBadgePlayerId))" (click)="onPlayerBadgeClick($event, opponentPlayerIndex)">
-              {{ opponentPlayerName }}
-              <span class="life-total">Life: {{ opponentBadgeLifeTotal }}</span>
-              @if (opponentBadgePoisonCounters > 0) {
-                <span class="poison-total">Poison: {{ opponentBadgePoisonCounters }}</span>
-              }
-              <span class="hand-size">Hand: {{ opponentBadgeHandSize }}</span>
-              <span class="deck-size">Deck: {{ opponentBadgeDeckSize }}</span>
-              <span class="priority-indicator" [class.hidden]="!opponentBadgeHoldsPriority">Priority</span>
-            </div>
-          </div>
-          <div class="turn-center">
-            <span class="turn-number">Turn {{ turnNumber }}</span>
-            <span class="vs-label">VS</span>
-          </div>
-          <div class="player-badge-wrapper">
-            <div class="player-badge" [class.active]="myBadgeIsActive" [class.inactive]="!myBadgeIsActive" [class.has-priority]="myBadgeHoldsPriority" [class.targetable]="(choice.targeting.selectingTarget && choice.targeting.validTargetPlayerIds().size > 0) || (choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0)" [class.multi-target-selected]="choice.targeting.multiTargeting && choice.targeting.validTargetPlayerIds().size > 0 && choice.targeting.isMultiTargetSelected(myBadgePlayerId)" [class.stack-targeted]="isStackTargetPlayer(myPlayerIndex)" [class.choosable-permanent]="choice.choosingPermanent && (choice.choosablePermanentIds().has(myBadgePlayerId) || choice.choosablePlayerIds().has(myBadgePlayerId))" (click)="onPlayerBadgeClick($event, myPlayerIndex)">
-              {{ myBadgeName }}
-              <span class="life-total">Life: {{ myBadgeLifeTotal }}</span>
-              @if (myBadgePoisonCounters > 0) {
-                <span class="poison-total">Poison: {{ myBadgePoisonCounters }}</span>
-              }
-              <span class="hand-size">Hand: {{ myBadgeHandSize }}</span>
-              <span class="deck-size">Deck: {{ myBadgeDeckSize }}</span>
-              <span class="priority-indicator" [class.hidden]="!myBadgeHoldsPriority">Priority</span>
-            </div>
-            @if (showPlayerMenu()) {
-              <div class="player-menu" (click)="$event.stopPropagation()">
-                <button class="player-menu-btn player-menu-surrender" (click)="onSurrenderClick()">Surrender</button>
-              </div>
-            }
-          </div>
-        </div>
-
-      </div>
-    } @else if (activeTab() === 'log') {
+    @if (activeTab() === 'log') {
       <div class="log-tab">
         <div class="log-entries" #logEntries (scroll)="onLogScroll()">
           @if (gameLog.length === 0) {

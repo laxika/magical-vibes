@@ -75,7 +75,7 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
   @Output() graveyardAbilityActivate = new EventEmitter<number>();
   @Output() flashbackPlay = new EventEmitter<number>();
 
-  activeTab = signal<'game' | 'log' | 'stack' | 'graveyard'>('game');
+  activeTab = signal<'log' | 'stack' | 'graveyard'>('log');
   showPlayerMenu = signal(false);
   logUnreadCount = signal(0);
 
@@ -144,9 +144,9 @@ export class SidePanelComponent implements OnChanges, AfterViewChecked {
     this.activeTab.set('stack');
   }
 
-  switchToGameTabIfOnStack(): void {
+  switchToLogTabIfOnStack(): void {
     if (this.activeTab() === 'stack') {
-      this.activeTab.set('game');
+      this.openLogTab();
     }
   }
 
