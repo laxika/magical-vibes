@@ -1,62 +1,70 @@
 <div class="login-container">
   <div class="login-card">
-    <h1>Magical Vibes</h1>
-    <h2>Login</h2>
+    <div class="card-header">
+      <h1>Magical Vibes</h1>
+    </div>
 
-    <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-      <div class="form-group">
-        <label for="username">Username</label>
-        <input
-          type="text"
-          id="username"
-          name="username"
-          [(ngModel)]="username"
-          [disabled]="loading()"
-          required
-          autocomplete="username"
-        />
-      </div>
+    <div class="card-body">
+      <h2 class="panel-title">Sign In</h2>
 
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          [(ngModel)]="password"
-          [disabled]="loading()"
-          required
-          autocomplete="current-password"
-        />
-      </div>
-
-      @if (errorMessage()) {
-        <div class="alert alert-error">
-          {{ errorMessage() }}
+      <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            [(ngModel)]="username"
+            [disabled]="loading()"
+            required
+            autocomplete="username"
+          />
         </div>
-      }
 
-      <button
-        type="submit"
-        [disabled]="loading() || !loginForm.form.valid"
-        class="btn-primary"
-      >
-        @if (loading()) {
-          <span class="spinner"></span>
-          Logging in...
-        } @else {
-          Login
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            [(ngModel)]="password"
+            [disabled]="loading()"
+            required
+            autocomplete="current-password"
+          />
+        </div>
+
+        @if (errorMessage()) {
+          <div class="alert-error">{{ errorMessage() }}</div>
         }
-      </button>
-    </form>
 
-    <div class="test-credentials">
-      <p>Test credentials:</p>
-      <ul>
-        <li>admin / admin123</li>
-        <li>testuser / testpass</li>
-        <li>player3 / player3pass</li>
-      </ul>
+        <button
+          type="submit"
+          [disabled]="loading() || !loginForm.form.valid"
+          class="btn-login"
+        >
+          @if (loading()) {
+            <span class="spinner"></span>
+            Logging in...
+          } @else {
+            Log in
+          }
+        </button>
+      </form>
+
+      <div class="test-credentials">
+        <h2 class="panel-title">Test Accounts</h2>
+        @for (account of testAccounts; track account.username) {
+          <button
+            type="button"
+            class="btn-credential"
+            [disabled]="loading()"
+            (click)="fillCredentials(account)"
+          >
+            {{ account.username }} / {{ account.password }}
+          </button>
+        }
+      </div>
     </div>
   </div>
 </div>

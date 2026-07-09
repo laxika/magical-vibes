@@ -17,10 +17,22 @@ export class LoginComponent {
   loading = signal(false);
   errorMessage = signal('');
 
+  readonly testAccounts = [
+    { username: 'admin', password: 'admin123' },
+    { username: 'testuser', password: 'testpass' },
+    { username: 'player3', password: 'player3pass' }
+  ];
+
   constructor(
     private websocketService: WebsocketService,
     private router: Router
   ) {}
+
+  fillCredentials(account: { username: string; password: string }) {
+    this.username.set(account.username);
+    this.password.set(account.password);
+    this.errorMessage.set('');
+  }
 
   onSubmit() {
     this.errorMessage.set('');

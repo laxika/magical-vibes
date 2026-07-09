@@ -20,7 +20,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   aiDeckId = signal<string>('');
   aiDifficulty = signal<string>('EASY');
   errorMessage = signal('');
-  showCreateForm = signal(false);
   creating = signal(false);
   activeTab = signal<'1v1' | 'allrandom' | 'draft'>('1v1');
   draftAiCount = signal(7);
@@ -125,13 +124,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   readonly aiCountOptions = [1, 2, 3, 4, 5, 6, 7];
-
-  toggleCreateForm() {
-    this.showCreateForm.set(!this.showCreateForm());
-    this.newGameName.set('');
-    this.errorMessage.set('');
-    this.activeTab.set('1v1');
-  }
 
   createGame() {
     if (this.creating()) {
