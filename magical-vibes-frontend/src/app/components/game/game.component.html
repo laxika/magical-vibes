@@ -400,19 +400,19 @@
                 (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()">
-                @if (ip.perm.attacking) { <div class="card-combat-badge attacking-badge">Attacking</div> }
-                @if (ip.perm.blocking) { <div class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, false) }}</div> }
+                @if (ip.perm.attacking) { <div badge-tl class="card-combat-badge attacking-badge">Attacking</div> }
+                @if (ip.perm.blocking) { <div badge-tl class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, false) }}</div> }
                 @if (declaringBlockers() && isAttackerBlocked(ip.originalIndex)) {
-                  <div class="card-combat-badge blocked-badge">Blocked</div>
+                  <div badge-tr class="card-combat-badge blocked-badge">Blocked</div>
                 }
                 @if (declaringBlockers() && mustBeBlockedAttackerIndices().has(ip.originalIndex)) {
-                  <div class="card-combat-badge must-block-badge">Must Block</div>
+                  <div badge-bl class="card-combat-badge must-block-badge">Must Block</div>
                 }
                 @if (declaringBlockers() && menaceAttackerIndices().has(ip.originalIndex)) {
-                  <div class="card-combat-badge menace-badge">Needs 2 Blockers</div>
+                  <div badge-br class="card-combat-badge menace-badge">Needs 2 Blockers</div>
                 }
                 @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
-                  <div class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
+                  <div badge-br class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
                 }
               </app-card-display>
             </div>
@@ -484,15 +484,15 @@
                 (contextmenu)="$event.preventDefault(); choice.damage.unassignDamage(ip.perm.id)"
                 (mouseenter)="onCardHover(ip.perm.card, ip.perm)"
                 (mouseleave)="onCardHoverEnd()">
-                @if (isAttackingCreature(ip.originalIndex, true)) { <div class="card-combat-badge attacking-badge">Attacking</div> }
+                @if (isAttackingCreature(ip.originalIndex, true)) { <div badge-tl class="card-combat-badge attacking-badge">Attacking</div> }
                 @if (declaringAttackers() && isSelectedAttacker(ip.originalIndex) && availableAttackTargets().length > 1) {
-                  <div class="card-combat-badge attack-target-badge"
+                  <div badge-tl class="card-combat-badge attack-target-badge"
                     title="Click to change attack target"
                     (click)="$event.stopPropagation(); cycleAttackTarget(ip.originalIndex)">&#8594; {{ getAttackTargetName(ip.originalIndex) }}</div>
                 }
-                @if (isBlockingCreature(ip.originalIndex, true)) { <div class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, true) }}</div> }
+                @if (isBlockingCreature(ip.originalIndex, true)) { <div badge-tl class="card-combat-badge blocking-badge">{{ getBlockingBadgeText(ip.originalIndex, true) }}</div> }
                 @if (choice.damage.distributingDamage && choice.damage.getDamageAssigned(ip.perm.id) > 0) {
-                  <div class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
+                  <div badge-br class="card-combat-badge damage-badge">{{ choice.damage.getDamageAssigned(ip.perm.id) }} dmg</div>
                 }
               </app-card-display>
               @if (choice.targeting.choosingAbility && choice.targeting.abilityChoicePermanentIndex === ip.originalIndex) {
