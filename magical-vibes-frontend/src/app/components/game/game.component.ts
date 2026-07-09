@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ElementRef, NgZone, ChangeDetectorRef, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -49,6 +49,7 @@ export class GameComponent implements OnInit, OnDestroy {
   }
 
   private ngZone = inject(NgZone);
+  private cdr = inject(ChangeDetectorRef);
   readonly choice = inject(GameChoiceService);
   private clickResolver = inject(PermanentClickResolverService);
   private manaSymbolService = inject(ManaSymbolService);
@@ -143,6 +144,12 @@ export class GameComponent implements OnInit, OnDestroy {
 
   private processGameMessage(message: WebSocketMessage): void {
     console.log(message);
+
+    // The app is zoneless, and WebSocket callbacks don't schedule change detection.
+    // Most messages update signals (which do), but some (e.g. VALID_TARGETS_RESPONSE)
+    // only mutate plain service state that templates read — mark the view dirty so
+    // every message renders.
+    this.cdr.markForCheck();
 
     if (message.type === MessageType.OPPONENT_JOINED) {
       const notification = message as GameNotification;

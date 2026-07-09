@@ -195,6 +195,7 @@ export class TargetingChoiceService {
     if (msg.validPermanentIds.length === 0 && msg.validPlayerIds.length === 0
         && !hasGraveyardTargets && msg.minTargets > 0) {
       this.resetTargetingState();
+      this.cancelMultiTargeting();
       return;
     }
 
@@ -226,13 +227,17 @@ export class TargetingChoiceService {
     this.targetingPrompt = msg.prompt;
 
     if (msg.maxTargets > 1) {
-      // Multi-target mode
-      this.multiTargeting = true;
+      // Multi-target mode. Responses also arrive as refreshes after each pick
+      // (addMultiTarget/removeMultiTarget re-request valid targets) — only clear
+      // the selection when first entering the mode, or Confirm becomes unreachable.
+      if (!this.multiTargeting) {
+        this.multiTargeting = true;
+        this.multiTargetCardIndex = this.targetingCardIndex;
+        this.multiTargetCardName = this.targetingCardName;
+        this.multiTargetSelectedIds.set([]);
+      }
       this.multiTargetMinCount = msg.minTargets;
       this.multiTargetMaxCount = msg.maxTargets;
-      this.multiTargetCardIndex = this.targetingCardIndex;
-      this.multiTargetCardName = this.targetingCardName;
-      this.multiTargetSelectedIds.set([]);
     } else {
       // Single target mode
       this.selectingTarget = true;
