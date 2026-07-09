@@ -1,4 +1,12 @@
 <div class="side-panel">
+  <div class="card-preview-panel">
+    @if (hoveredCard) {
+      <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
+    } @else {
+      <div class="card-preview-empty"></div>
+    }
+  </div>
+
   <div class="tab-header">
     <div class="tab" [class.active]="activeTab() === 'game'" (click)="activeTab.set('game')">Game</div>
     <div class="tab" [class.active]="activeTab() === 'log'" (click)="openLogTab()">
@@ -27,14 +35,6 @@
   <div class="tab-content">
     @if (activeTab() === 'game') {
       <div class="game-tab">
-        <div class="card-preview-panel">
-          @if (hoveredCard) {
-            <app-card-display [card]="hoveredCard!" [permanent]="hoveredPermanent" [preview]="true" class="preview-card" />
-          } @else {
-            <div class="card-preview-empty"></div>
-          }
-        </div>
-
         <div class="mana-strip">
           <div class="mana-strip-label">Mana Pool</div>
           <div class="mana-strip-pips">
