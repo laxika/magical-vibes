@@ -97,7 +97,11 @@ Slots that currently **only ever push non-targeting entries** (no pending queue)
 `ON_CONTROLLER_DRAWS`, `ON_OPPONENT_DRAWS`, `ON_OPPONENT_DISCARDS`,
 `ON_ANY_PLAYER_TAPS_LAND`, `ON_ALLY_PERMANENT_SACRIFICED`, `ON_ALLY_CREATURES_ATTACK`,
 `ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD`,
-`ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD`, `ON_ENCHANTED_PERMANENT_TAPPED`,
+`ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD`,
+`ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` (Sacred Ground; fires only on permanents the
+graveyard owner controls, and only when `GameData.currentlyResolvingControllerId` — the controller of
+the resolving spell/ability — is an opponent of the graveyard owner; the collector stamps the dying
+land card id onto a fresh `ReturnTriggeringLandFromGraveyardToBattlefieldEffect`), `ON_ENCHANTED_PERMANENT_TAPPED`,
 `ON_ALLY_PERMANENT_BECOMES_TAPPED`,
 `ON_ENCHANTED_CREATURE_DEALT_DAMAGE`,
 `ON_OPPONENT_LAND_ENTERS_BATTLEFIELD`, `ON_ALLY_LAND_ENTERS_BATTLEFIELD`,

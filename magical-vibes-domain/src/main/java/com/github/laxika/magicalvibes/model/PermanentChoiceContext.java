@@ -59,7 +59,22 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record RedirectDamageSourceChoice(UUID controllerId, int amount, UUID redirectTargetId) implements PermanentChoiceContext {}
 
+    /** "All damage that would be dealt to target creature this turn by a source of your choice is dealt to
+     *  this creature instead." Chooses the source permanent; {@code protectedCreatureId} is the ability's
+     *  target and {@code redirectTargetId} is where redirected damage goes (Oracle's Attendants). */
+    record RedirectCreatureDamageSourceChoice(UUID controllerId, UUID protectedCreatureId, UUID redirectTargetId) implements PermanentChoiceContext {}
+
     record PreventDamageToTargetFromSourceChoice(UUID controllerId, int amount, UUID targetId) implements PermanentChoiceContext {}
+
+    record PreventNextDamageFromColoredSourceChoice(UUID controllerId, CardColor color) implements PermanentChoiceContext {}
+
+    /** "The next time a source of your choice would deal damage to you this turn, prevent that damage.
+     *  You gain life equal to the damage prevented this way." Any-color source (Reverse Damage). */
+    record PreventNextDamageFromSourceAndGainLifeChoice(UUID controllerId) implements PermanentChoiceContext {}
+
+    /** "The next time a source of your choice would deal damage to any target this turn, prevent that
+     *  damage." (Sanctum Guardian). Protects any recipient, not just the controller. */
+    record PreventNextDamageFromSourceToAnyTargetChoice(UUID controllerId) implements PermanentChoiceContext {}
 
     record AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 

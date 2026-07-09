@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageFromOpponentSour
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -35,9 +37,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public class DamagePreventionService {
 
     private final GameQueryService gameQueryService;
+    private final LifeSupport lifeSupport;
 
-    public DamagePreventionService(GameQueryService gameQueryService) {
+    public DamagePreventionService(GameQueryService gameQueryService, LifeSupport lifeSupport) {
         this.gameQueryService = gameQueryService;
+        this.lifeSupport = lifeSupport;
     }
 
     int applyGlobalPreventionShield(GameData gameData, int damage) {
@@ -211,6 +215,45 @@ public class DamagePreventionService {
     }
 
     /**
+     * Applies one-shot Circle-of-Protection shields: if a shield matches this (player, source), the
+     * entire next damage event is prevented and the shield is consumed. Returns the remaining damage.
+     */
+    public int applyPlayerNextSourceDamageShield(GameData gameData, UUID playerId, UUID sourcePermanentId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (damage <= 0 || playerId == null || sourcePermanentId == null
+                || gameData.playerSourceNextDamageShields.isEmpty()) {
+            return damage;
+        }
+        var it = gameData.playerSourceNextDamageShields.iterator();
+        while (it.hasNext()) {
+            var shield = it.next();
+            if (shield.playerId().equals(playerId) && shield.sourceId().equals(sourcePermanentId)) {
+                it.remove();
+                // Reverse Damage: gain life equal to the damage prevented this way.
+                if (shield.gainLife()) {
+                    lifeSupport.applyGainLife(gameData, playerId, damage, "prevented damage");
+                }
+                return 0;
+            }
+        }
+        return damage;
+    }
+
+    /**
+     * Applies one-shot Sanctum Guardian shields: if a shield matches this source, the entire next
+     * damage event it would deal to any target (player, planeswalker, or creature) is prevented and
+     * the shield is consumed. Returns the remaining damage.
+     */
+    public int applyChosenSourceNextDamageToAnyTargetShield(GameData gameData, UUID sourcePermanentId, int damage) {
+        if (!gameQueryService.isDamagePreventable(gameData)) return damage;
+        if (damage <= 0 || sourcePermanentId == null || gameData.sourceNextDamageToAnyTargetShields.isEmpty()) {
+            return damage;
+        }
+        // List.remove(Object) removes the first matching entry — a single shield is consumed per event.
+        return gameData.sourceNextDamageToAnyTargetShields.remove(sourcePermanentId) ? 0 : damage;
+    }
+
+    /**
      * Checks source-specific damage redirect shields (e.g. Harm's Way) for damage dealt to a player
      * or permanents they control. This is a redirection effect (replacement), NOT a prevention effect,
      * so it applies even when damage can't be prevented (e.g. Leyline of Punishment).
@@ -251,6 +294,34 @@ public class DamagePreventionService {
 
         gameData.sourceDamageRedirectShields.addAll(toReAdd);
         return remaining;
+    }
+
+    /**
+     * Checks creature-specific damage redirect shields (e.g. Oracle's Attendants) for damage dealt to a
+     * specific creature by a chosen source. This is a redirection (replacement) effect: when the chosen
+     * source would deal damage to the protected creature this turn, ALL of it (no amount limit) is
+     * redirected to the shield's redirect target. Reuses {@link GameData#pendingSourceRedirectDamage}
+     * so callers deal the redirected damage via their existing {@code processSourceRedirectDamage}.
+     *
+     * @param protectedPermanentId the creature receiving damage
+     * @param sourcePermanentId    the permanent dealing the damage
+     * @param damage               the raw damage amount
+     * @return the remaining damage after redirection (0 if a shield matched)
+     */
+    public int applyCreatureRedirectShields(GameData gameData, UUID protectedPermanentId, UUID sourcePermanentId, int damage) {
+        // No isDamagePreventable check — this is redirection (replacement), not prevention.
+        if (damage <= 0 || protectedPermanentId == null || sourcePermanentId == null
+                || gameData.creatureDamageRedirectShields.isEmpty()) return damage;
+
+        for (CreatureDamageRedirectShield shield : gameData.creatureDamageRedirectShields) {
+            if (shield.protectedPermanentId().equals(protectedPermanentId)
+                    && shield.damageSourceId().equals(sourcePermanentId)) {
+                gameData.pendingSourceRedirectDamage.add(new SourceDamageRedirectShield(
+                        protectedPermanentId, sourcePermanentId, damage, shield.redirectTargetId()));
+                return 0;
+            }
+        }
+        return damage;
     }
 
     public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {

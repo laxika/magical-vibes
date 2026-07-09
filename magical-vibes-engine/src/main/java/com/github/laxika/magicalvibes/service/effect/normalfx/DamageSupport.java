@@ -72,9 +72,17 @@ public class DamageSupport {
             rawDamage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, sourcePermId, rawDamage);
             processSourceRedirectDamage(gameData);
         }
+        // Apply creature-specific redirect shields (e.g. Oracle's Attendants): redirect all damage from
+        // a chosen source to the protected creature onto another permanent.
+        if (sourcePermId != null) {
+            rawDamage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), sourcePermId, rawDamage);
+            processSourceRedirectDamage(gameData);
+        }
         // Apply target+source-specific prevention shields (e.g. Healing Grace)
         if (sourcePermId != null) {
             rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), sourcePermId, rawDamage);
+            // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+            rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, sourcePermId, rawDamage);
         }
         int damage = damagePreventionService.applyCreaturePreventionShield(gameData, target, rawDamage);
 
@@ -354,6 +362,10 @@ public class DamageSupport {
             // Apply target+source-specific prevention shields (e.g. Healing Grace)
             if (entry.getSourcePermanentId() != null) {
                 rawDamage = damagePreventionService.applyTargetSourcePreventionShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+                // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
+                rawDamage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, entry.getSourcePermanentId(), rawDamage);
+                // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+                rawDamage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, entry.getSourcePermanentId(), rawDamage);
             }
             int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, rawDamage);
             processPendingRedirectDamage(gameData);

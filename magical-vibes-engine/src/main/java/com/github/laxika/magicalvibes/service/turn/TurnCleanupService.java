@@ -76,6 +76,7 @@ public class TurnCleanupService {
         gameData.playerDamagePreventionShields.clear();
         gameData.damageRedirectShields.clear();
         gameData.sourceDamageRedirectShields.clear();
+        gameData.creatureDamageRedirectShields.clear();
         gameData.targetSourceDamagePreventionShields.clear();
         gameData.globalDamagePreventionShield = 0;
         gameData.preventAllCombatDamage = false;
@@ -86,6 +87,8 @@ public class TurnCleanupService {
         gameData.combatDamageRedirectTarget = null;
         gameData.playerColorDamagePreventionCount.clear();
         gameData.playerSourceDamagePreventionIds.clear();
+        gameData.playerSourceNextDamageShields.clear();
+        gameData.sourceNextDamageToAnyTargetShields.clear();
         gameData.permanentsPreventedFromDealingDamage.clear();
         gameData.playersWithAllDamagePrevented.clear();
         gameData.creaturesWithAllDamagePrevented.clear();

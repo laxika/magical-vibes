@@ -44,6 +44,10 @@ ON_ALLY_CREATURE_ENTERS_BATTLEFIELD,
     ON_ANY_NONTOKEN_CREATURE_DIES,
     ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
     ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
+    /** Triggers when a land the controller owns is put into their graveyard from the battlefield
+     *  because of a spell or ability an opponent controls (Sacred Ground). Fires only on permanents
+     *  the graveyard owner controls. */
+    ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT,
     ON_ENCHANTED_PERMANENT_TAPPED,
     /** Triggers whenever a permanent the controller controls becomes tapped. Fires on every
      *  permanent with this slot on the tapped permanent's controller's battlefield. Wrap the

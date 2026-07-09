@@ -3,6 +3,7 @@
 Purpose: quickly map oracle text phrases to the correct effect class + slot. Search this file for keywords from the card's oracle text to find the matching effect without reading EFFECTS_QUICK_REFERENCE.md.
 
 - "When [this] dies, return it to the battlefield transformed under your control at the beginning of the next end step." -> `EffectSlot.ON_DEATH` + `RegisterDelayedReturnSourceTransformedEffect()`.
+- "Whenever a spell or ability an opponent controls causes a land to be put into your graveyard from the battlefield, return that card to the battlefield." (Sacred Ground) -> `EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` + `ReturnTriggeringLandFromGraveyardToBattlefieldEffect(null)`. The engine reads `GameData.currentlyResolvingControllerId` (set in `StackResolutionService`) to confirm an opponent's spell/ability caused it.
 
 ## Damage
 
@@ -111,6 +112,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 |---|---|---|---|
 | "destroy target [permanent type]" | `DestroyTargetPermanentEffect(false)` | SPELL | + PermanentPredicate filter |
 | "destroy target creature. It can't be regenerated" | `DestroyTargetPermanentEffect(true)` | SPELL | cantRegenerate=true |
+| "destroy target attacking creature. You gain life equal to its power" | `GainLifeEffect(new TargetPower())` + `DestroyTargetPermanentEffect(false)` | SPELL | target = `PermanentPredicateTargetFilter(PermanentIsAttackingPredicate)`; gain life FIRST so power is read before destruction (Chastise) |
 | "destroy all creatures" | `DestroyAllPermanentsEffect(PermanentIsCreaturePredicate())` | SPELL | |
 | "destroy all [type]" | `DestroyAllPermanentsEffect(predicate)` | SPELL | Filtered wipe |
 | "target player sacrifices a creature" | `SacrificePermanentsEffect(1, PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER)` | SPELL | bare creature filter → single-select sacrifice-a-creature primitive |
@@ -350,6 +352,7 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "tap/untap this permanent" | `TapPermanentsEffect(TapUntapScope.SELF)` / `UntapPermanentsEffect(TapUntapScope.SELF)` | ability/trigger | self as effect (not cost) |
 | "CARDNAME doesn't untap during your untap step" | `DoesntUntapEffect.self()` | STATIC | |
 | "enchanted/equipped permanent doesn't untap during its controller's untap step" | `DoesntUntapEffect.enchanted()` | STATIC (on aura/equipment) | Claustrophobia, Dehydration, Numbing Dose, Heavy Arbalest |
+| "[permanents matching X] don't untap during their controllers' untap steps" (global, any controller) | `MatchingPermanentsDoesntUntapEffect(predicate)` | STATIC | scans all battlefields, locks every matching permanent (incl. the source itself); Marble Titan (`PermanentPowerAtLeastPredicate(3)`) |
 | "target permanent doesn't untap … for as long as you control CARDNAME" | `DoesntUntapEffect.targetWhileSourceOnBattlefield()` | ability/trigger/saga | piggybacks on companion `TapPermanentsEffect(TapUntapScope.TARGET)`; Dungeon Geists, Time of Ice |
 | "target permanent doesn't untap … for as long as CARDNAME remains tapped" | `DoesntUntapEffect.targetWhileSourceTapped()` | ability | piggybacks on companion `TapPermanentsEffect(TapUntapScope.TARGET)`; Rust Tick |
 | "tap all attacking creatures" | `TapPermanentsEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())` | SPELL/trigger | no targeting |
@@ -389,7 +392,11 @@ Purpose: quickly map oracle text phrases to the correct effect class + slot. Sea
 | "prevent the next N damage that would be dealt to target" | `PreventDamageToTargetEffect(N)` | SPELL | |
 | "prevent all damage that would be dealt to target creature this turn" | `PreventAllDamageToTargetCreatureEffect()` | SPELL/ability | Target creature only. Wellgabber Apothecary — combine with a `PermanentPredicateTargetFilter` for subtype/tapped restrictions |
 | "If noncombat damage would be dealt to you, prevent that damage. You gain life equal to the damage prevented this way" | `PreventNoncombatDamageToControllerAndGainLifeEffect()` | STATIC | Purity. Combat damage unaffected (hooked only in the noncombat player-damage path) |
+| "The next time a [color] source of your choice would deal damage to you this turn, prevent that damage" | `PreventNextDamageFromChosenColoredSourceEffect(CardColor.COLOR)` | activated ability | Circle of Protection cycle. One-shot: only the *next* damage event from the chosen source is prevented (double strike's second hit still lands). Not `PreventAllDamageFromChosenSourceEffect`, which prevents all damage that turn |
+| "The next time a source of your choice would deal damage to you this turn, prevent that damage. You gain life equal to the damage prevented this way" | `PreventNextDamageFromChosenSourceAndGainLifeEffect()` | SPELL | Reverse Damage. Like the Circle of Protection effect but no color restriction (any permanent is a valid source) and the controller gains life equal to the damage prevented. One-shot: only the *next* damage event from the chosen source is prevented (combat or noncombat) |
+| "The next time a source of your choice would deal damage to any target this turn, prevent that damage" | `PreventNextDamageFromChosenSourceToAnyTargetEffect()` | activated ability (usually with `SacrificeSelfCost`) | Sanctum Guardian. Like Reverse Damage but protects **any** target (player, planeswalker, or creature), not just the controller, and grants no life. One-shot: only the *next* damage event from the chosen source is prevented (combat or noncombat). Shield keyed by source ID in `GameData.sourceNextDamageToAnyTargetShields`, consumed by `DamagePreventionService.applyChosenSourceNextDamageToAnyTargetShield` (hooked in every player/creature/planeswalker damage path) |
 | "When ~ is put into a graveyard from anywhere, shuffle it into its owner's library" | `ShuffleSelfFromGraveyardIntoLibraryEffect()` | `ON_SELF_PUT_INTO_GRAVEYARD_FROM_ANYWHERE` | Purity. Triggered ability — the card enters the graveyard first. For the *replacement* variant ("If ~ would be put into a graveyard from anywhere, ... shuffle it ... instead", e.g. Blightsteel Colossus) use `ShuffleIntoLibraryReplacementEffect` on `STATIC` |
+| "{T}: All damage that would be dealt to target creature this turn by a source of your choice is dealt to this creature instead" | `RedirectTargetCreatureDamageFromChosenSourceToSelfEffect()` | activated ability (target creature, `requiresTap`) | Oracle's Attendants. Ability targets the protected creature; the source is chosen on resolution. Redirects to the source permanent (self). Works in both combat and noncombat creature-damage paths. Not Harm's Way (`PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect`), which protects a player's permanents with a capped amount |
 
 ## Alternate casting costs / keywords
 
@@ -427,6 +434,7 @@ All spell-self cost reductions use the single `ReduceOwnCastCostEffect(DynamicAm
 | "costs {N} less to cast if you control a [permanent]" | `ConditionalEffect(new ControlsPermanent(predicate), new ReduceOwnCastCostEffect(new Fixed(N)))` | Academy Journeymage / Wizard's Retort / Wizard's Lightning (WIZARD), Lookout's Dispersal (PIRATE) |
 | "costs {N} less to cast if you control three or more artifacts" | `ConditionalEffect(new Metalcraft(), new ReduceOwnCastCostEffect(new Fixed(N)))` | Stoic Rebuttal |
 | "costs {N} less to cast if an opponent controls at least M more creatures than you" | `ConditionalEffect(new OpponentControlsMoreCreatures(M), new ReduceOwnCastCostEffect(new Fixed(N)))` | Avatar of Might (M=4, N=6) |
+| "if an opponent controls more lands than you, [effect]" | `ConditionalEffect(new OpponentControlsMoreLands(), wrapped)` | SPELL | Gift of Estates: wraps `SearchLibraryEffect(new Fixed(3), new CardSubtypePredicate(CardSubtype.PLAINS), LibrarySearchDestination.HAND)`. Condition is strictly-more (difference ≥ 1) |
 | "costs {N} less to cast if one or more cards left your graveyard this turn" | `ConditionalEffect(new CardsLeftGraveyardThisTurn(), new ReduceOwnCastCostEffect(new Fixed(N)))` | Wilt in the Heat |
 | "costs {N} less to cast if it targets [permanent/spell]" | `ReduceOwnCastCostIfTargetingPermanentEffect` / `…IfTargetingControlledPermanentEffect` / `…IfTargetingStackEntryEffect` | **Kept as their own records** — the reduction gates on the being-cast spell's chosen first target (resolved inline in `CastingCostService.computeTargetBasedCostReduction`). Ajani's Response, Savage Stomp, Brush Off |
 | "if you control a [subtype], [effect]" | `ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(subtype)), innerEffect)` | Permanent predicate check |
@@ -445,6 +453,7 @@ All spell-self cost reductions use the single `ReduceOwnCastCostEffect(DynamicAm
 |---|---|---|---|
 | "take an extra turn after this one" | `ControllerExtraTurnEffect(1)` | SPELL | Non-targeting |
 | "untap all creatures that attacked this turn. After this main phase, there is an additional combat phase followed by an additional main phase" | `AdditionalCombatMainPhaseEffect(1)` | SPELL | |
+| "that player skips their next combat phase" (combat-damage trigger) | `SkipNextCombatPhaseEffect()` | ON_COMBAT_DAMAGE_TO_PLAYER | Non-targeting; the damaged player is baked in as `targetId`. Increments per-player `GameData.skipNextCombatPhaseCount`; that player jumps from precombat main straight to postcombat main. Blinding Angel |
 
 ## Copy
 

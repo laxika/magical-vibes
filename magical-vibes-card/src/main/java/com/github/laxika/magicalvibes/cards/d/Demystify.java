@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredica
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
+@CardRegistration(set = "9ED", collectorNumber = "13")
 @CardRegistration(set = "10E", collectorNumber = "14")
 @CardRegistration(set = "XLN", collectorNumber = "8")
 public class Demystify extends Card {

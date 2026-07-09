@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAndAttachSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -431,6 +432,34 @@ public class DeathTriggerCollectorService {
         String triggerLog = match.permanent().getCard().getName() + "'s ability triggers.";
         gameBroadcastService.logAndBroadcast(match.gameData(), triggerLog);
         log.info("Game {} - {} triggers (opponent artifact put into graveyard from battlefield)", match.gameData().id, match.permanent().getCard().getName());
+    }
+
+    // ── ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT ────────────────────
+
+    @CollectsTrigger(value = ReturnTriggeringLandFromGraveyardToBattlefieldEffect.class,
+            slot = EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT)
+    boolean handleLandGraveyardReturn(TriggerMatchContext match,
+            ReturnTriggeringLandFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
+        TriggerContext.LandPutIntoGraveyard lpg = (TriggerContext.LandPutIntoGraveyard) ctx;
+        Card landCard = lpg.landCard();
+        ReturnTriggeringLandFromGraveyardToBattlefieldEffect concrete =
+                new ReturnTriggeringLandFromGraveyardToBattlefieldEffect(landCard.getId());
+        match.gameData().stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                new ArrayList<>(List.of(concrete)),
+                null,
+                match.permanent().getId()
+        ));
+
+        String triggerLog = match.permanent().getCard().getName() + "'s ability triggers (" + landCard.getName()
+                + " was put into a graveyard from the battlefield by an opponent).";
+        gameBroadcastService.logAndBroadcast(match.gameData(), triggerLog);
+        log.info("Game {} - {} triggers (land {} put into graveyard by opponent)",
+                match.gameData().id, match.permanent().getCard().getName(), landCard.getName());
+        return true;
     }
 
     // ── ON_ANY_CREATURE_DIES ───────────────────────────────────────────

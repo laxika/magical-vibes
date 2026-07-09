@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
@@ -94,6 +95,8 @@ public class UntapStepService {
                 boolean hasUntapLock = !p.getUntapPreventedByPermanentIds().isEmpty()
                         || !p.getUntapPreventedWhileSourceOnBattlefieldIds().isEmpty();
                 boolean skipsNextUntap = p.getSkipUntapCount() > 0;
+                // A global static (e.g. Marble Titan) can lock this permanent based on a predicate.
+                boolean hasMatchingDoesntUntap = matchingStaticPreventsUntap(gameData, p);
 
                 if (skipsNextUntap) {
                     // Decrement skip counter but don't untap this step (e.g. Vorinclex)
@@ -101,7 +104,8 @@ public class UntapStepService {
                 } else if (hasMayNotUntap) {
                     // Present choice to controller later — skip untap for now
                     mayNotUntapPermanents.add(p);
-                } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock) {
+                } else if (!hasAttachedDoesntUntap && !hasSelfDoesntUntap && !hasUntapLock
+                        && !hasMatchingDoesntUntap) {
                     p.untap();
                 }
                 p.setSummoningSick(false);
@@ -151,6 +155,17 @@ public class UntapStepService {
                 log.info("Game {} - {} untaps filtered permanents during opponent's untap step", gameData.id, playerName);
             }
         });
+    }
+
+    /**
+     * Returns {@code true} if any permanent on any battlefield carries a
+     * {@link MatchingPermanentsDoesntUntapEffect} whose filter matches the given permanent
+     * (e.g. Marble Titan locking every creature with power 3 or greater, including its own).
+     */
+    private boolean matchingStaticPreventsUntap(GameData gameData, Permanent permanent) {
+        return gameData.anyPermanentMatches(source -> source.getCard().getEffects(EffectSlot.STATIC).stream()
+                .anyMatch(e -> e instanceof MatchingPermanentsDoesntUntapEffect lock
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, lock.filter())));
     }
 
     List<UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect> collectUntapOnEachOtherPlayersStepEffects(

@@ -1224,6 +1224,24 @@ public class TriggerCollectionService {
         });
     }
 
+    /**
+     * Fires ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground). Only fires when a
+     * spell or ability an opponent of the graveyard owner controls caused the land to be put into the
+     * graveyard, and only on permanents the graveyard owner controls.
+     */
+    public void checkLandPutIntoGraveyardByOpponentTriggers(GameData gameData, Card landCard,
+                                                            UUID graveyardOwnerId, UUID causeControllerId) {
+        if (causeControllerId == null || causeControllerId.equals(graveyardOwnerId)) return;
+
+        var ctx = new TriggerContext.LandPutIntoGraveyard(landCard, graveyardOwnerId, causeControllerId);
+        List<Permanent> battlefield = gameData.playerBattlefields.get(graveyardOwnerId);
+        if (battlefield == null) return;
+
+        for (Permanent perm : List.copyOf(battlefield)) {
+            dispatchSlot(gameData, perm, graveyardOwnerId, EffectSlot.ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT, ctx);
+        }
+    }
+
     public void checkAnyCreatureDeathTriggers(GameData gameData, UUID dyingCreatureControllerId, Card dyingCard) {
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId);
 

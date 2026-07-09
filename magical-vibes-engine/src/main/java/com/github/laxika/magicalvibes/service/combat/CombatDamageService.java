@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandEffect;
@@ -722,6 +723,7 @@ public class CombatDamageService {
                         || effect instanceof SphinxAmbassadorEffect
                         || (effect instanceof MillEffect mill && mill.recipient() == MillRecipient.TARGET_PLAYER)
                         || effect instanceof TargetPlayerExilesFromHandEffect
+                        || effect instanceof SkipNextCombatPhaseEffect
                         || (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.TARGET_PLAYER)) {
                     se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
                             desc, List.of(effect), defenderId, creature.getId());
@@ -1263,6 +1265,8 @@ public class CombatDamageService {
             Permanent pw = gameQueryService.findPermanentById(gameData, attackTarget);
             if (pw == null) return;
             // Attacking a planeswalker — damage removes loyalty counters (CR 306.8)
+            // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+            damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
             state.damageToPlaneswalkers.merge(attackTarget, damage, Integer::sum);
             state.combatDamageDealt.merge(atk, damage, Integer::sum);
             return;
@@ -1302,6 +1306,10 @@ public class CombatDamageService {
                 damage = damagePreventionService.applyOpponentSourceDamageReduction(gameData, defenderId, attackerControllerId, damage);
                 // Apply target+source-specific prevention shields (e.g. Healing Grace)
                 damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, defenderId, atk.getId(), damage);
+                // Apply one-shot Circle-of-Protection shields (prevent the next damage event from the chosen source)
+                damage = damagePreventionService.applyPlayerNextSourceDamageShield(gameData, defenderId, atk.getId(), damage);
+                // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+                damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, atk.getId(), damage);
                 if (atkHasInfect) {
                     state.poisonDamageToDefendingPlayer += damage;
                 } else {
@@ -1347,8 +1355,13 @@ public class CombatDamageService {
             damage = damagePreventionService.applySourceRedirectShields(gameData, targetControllerId, source.getId(), damage);
             processSourceRedirectDamage(gameData);
         }
+        // Apply creature-specific redirect shields (e.g. Oracle's Attendants) per-source for creature targets
+        damage = damagePreventionService.applyCreatureRedirectShields(gameData, target.getId(), source.getId(), damage);
+        processSourceRedirectDamage(gameData);
         // Apply target+source-specific prevention shields (e.g. Healing Grace) before generic creature prevention
         damage = damagePreventionService.applyTargetSourcePreventionShield(gameData, target.getId(), source.getId(), damage);
+        // Apply one-shot Sanctum Guardian shields (prevent the next damage from the chosen source to any target)
+        damage = damagePreventionService.applyChosenSourceNextDamageToAnyTargetShield(gameData, source.getId(), damage);
         if (gameQueryService.hasKeyword(gameData, source, Keyword.INFECT)) {
             int afterShield = damagePreventionService.applyCreaturePreventionShield(gameData, target, damage, true);
             if (afterShield > 0 && !gameQueryService.cantHaveCounters(gameData, target)

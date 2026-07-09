@@ -76,6 +76,21 @@ public class TurnProgressionService {
             gameData.additionalCombatMainPhasePairs--;
         }
 
+        // Blinding Angel: the active player skips their next combat phase — jump straight from the
+        // precombat main phase to the postcombat main phase.
+        if (gameData.currentStep == TurnStep.PRECOMBAT_MAIN
+                && gameData.skipNextCombatPhaseCount.getOrDefault(gameData.activePlayerId, 0) > 0) {
+            next = TurnStep.POSTCOMBAT_MAIN;
+            int remaining = gameData.skipNextCombatPhaseCount.get(gameData.activePlayerId) - 1;
+            if (remaining > 0) {
+                gameData.skipNextCombatPhaseCount.put(gameData.activePlayerId, remaining);
+            } else {
+                gameData.skipNextCombatPhaseCount.remove(gameData.activePlayerId);
+            }
+            String skipLog = gameData.playerIdToName.get(gameData.activePlayerId) + " skips their combat phase.";
+            gameBroadcastService.logAndBroadcast(gameData, skipLog);
+        }
+
         turnCleanupService.drainManaPools(gameData);
 
         if (next != null) {

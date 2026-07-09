@@ -135,6 +135,16 @@ public sealed interface TriggerContext {
                              UUID artifactControllerId) implements TriggerContext {}
 
     /**
+     * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
+     *
+     * @param landCard          the land card that was put into the graveyard from the battlefield
+     * @param graveyardOwnerId  the owner of the graveyard the land was put into
+     * @param causeControllerId the controller of the spell or ability that caused it (an opponent)
+     */
+    record LandPutIntoGraveyard(Card landCard, UUID graveyardOwnerId,
+                                UUID causeControllerId) implements TriggerContext {}
+
+    /**
      * Context for ON_SELF_LEAVES_BATTLEFIELD triggers.
      */
     record SelfLeaves(UUID controllerId) implements TriggerContext {}

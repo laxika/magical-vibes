@@ -438,7 +438,8 @@ public class ActivatedAbilityExecutionService {
                         || (!gameQueryService.isDamageFromSourcePrevented(gameData, permanent.getEffectiveColor())
                             && !damagePreventionService.isSourceDamagePreventedForPlayer(gameData, playerId, permanent.getId())
                             && !gameData.permanentsPreventedFromDealingDamage.contains(permanent.getId())
-                            && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor()))) {
+                            && !damagePreventionService.applyColorDamagePreventionForPlayer(gameData, playerId, permanent.getEffectiveColor())
+                            && damagePreventionService.applyPlayerNextSourceDamageShield(gameData, playerId, permanent.getId(), damage) > 0)) {
                     int effectiveDamage = damagePreventionService.applyPlayerPreventionShield(gameData, playerId, damage);
                     effectiveDamage = permanentRemovalService.redirectPlayerDamageToEnchantedCreature(gameData, playerId, effectiveDamage, cardName);
                     if (effectiveDamage > 0 && gameQueryService.shouldDamageBeDealtAsInfect(gameData, playerId)) {

@@ -42,6 +42,7 @@ public sealed interface Condition permits
         NotControllerTurn,
         NotKicked,
         OpponentControlsMoreCreatures,
+        OpponentControlsMoreLands,
         OpponentControlsPermanent,
         OpponentDealtDamageThisTurn,
         OpponentPoisoned,

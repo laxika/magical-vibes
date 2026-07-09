@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "3")
+@CardRegistration(set = "9ED", collectorNumber = "2")
 public class AngelicBlessing extends Card {
 
     public AngelicBlessing() {

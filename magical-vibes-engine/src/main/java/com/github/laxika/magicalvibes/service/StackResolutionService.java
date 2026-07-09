@@ -106,13 +106,21 @@ public class StackResolutionService {
         // CR 603.8 — clean up state-trigger tracking when the ability leaves the stack
         stateTriggerService.cleanupResolvedStateTrigger(gameData, entry);
 
-        switch (entry.getEntryType()) {
-            case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
-            case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
-            case ARTIFACT_SPELL -> resolveArtifactSpell(gameData, entry);
-            case PLANESWALKER_SPELL -> resolvePlaneswalkerSpell(gameData, entry);
-            case TRIGGERED_ABILITY, ACTIVATED_ABILITY, SORCERY_SPELL, INSTANT_SPELL ->
-                    resolveSpellOrAbility(gameData, entry);
+        // Track who controls the resolving spell/ability so that causation-sensitive triggers
+        // (e.g. Sacred Ground) can tell whether a permanent left the battlefield because of an
+        // opponent's spell or ability. Cleared once resolution finishes.
+        gameData.currentlyResolvingControllerId = entry.getControllerId();
+        try {
+            switch (entry.getEntryType()) {
+                case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
+                case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
+                case ARTIFACT_SPELL -> resolveArtifactSpell(gameData, entry);
+                case PLANESWALKER_SPELL -> resolvePlaneswalkerSpell(gameData, entry);
+                case TRIGGERED_ABILITY, ACTIVATED_ABILITY, SORCERY_SPELL, INSTANT_SPELL ->
+                        resolveSpellOrAbility(gameData, entry);
+            }
+        } finally {
+            gameData.currentlyResolvingControllerId = null;
         }
 
         // If the ETB handler already set up a user interaction (e.g. Clone copy choice),

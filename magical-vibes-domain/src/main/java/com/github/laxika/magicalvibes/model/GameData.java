@@ -111,6 +111,8 @@ public class GameData {
     /** Tracks exiled card UUIDs that have silver counters (Karn, Scion of Urza). */
     public final Set<UUID> exiledCardsWithSilverCounters = ConcurrentHashMap.newKeySet();
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
+    /** Player IDs → number of upcoming combat phases they must skip (Blinding Angel). Decremented as each is skipped. */
+    public final Map<UUID, Integer> skipNextCombatPhaseCount = new ConcurrentHashMap<>();
     public int globalDamagePreventionShield;
     public boolean preventAllCombatDamage;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
@@ -183,6 +185,11 @@ public class GameData {
      *  When the source permanent leaves the battlefield, the exiled card returns. */
     public final Map<UUID, PendingExileReturn> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
     public final Map<UUID, Set<UUID>> playerSourceDamagePreventionIds = new ConcurrentHashMap<>();
+    /** One-shot shields (Circle of Protection cycle): prevent the next damage event from a chosen source to a player. */
+    public final List<PlayerSourceNextDamageShield> playerSourceNextDamageShields = Collections.synchronizedList(new ArrayList<>());
+    /** One-shot shields (Sanctum Guardian): prevent the next damage event from a chosen source to ANY target
+     *  (player, planeswalker, or creature). Each entry is a chosen source permanent ID, consumed on first use. */
+    public final List<UUID> sourceNextDamageToAnyTargetShields = Collections.synchronizedList(new ArrayList<>());
     public final Set<UUID> permanentsPreventedFromDealingDamage = ConcurrentHashMap.newKeySet();
     /** Players whose damage (to themselves and their creatures) is fully prevented this turn (Safe Passage). */
     public final Set<UUID> playersWithAllDamagePrevented = ConcurrentHashMap.newKeySet();
@@ -200,6 +207,8 @@ public class GameData {
     public final List<TargetSourceDamagePreventionShield> targetSourceDamagePreventionShields = Collections.synchronizedList(new ArrayList<>());
     /** Pending source redirect damage to deal after source-specific prevention (populated by DamagePreventionService, consumed by callers). */
     public final List<SourceDamageRedirectShield> pendingSourceRedirectDamage = Collections.synchronizedList(new ArrayList<>());
+    /** Creature-specific damage redirect shields (e.g. Oracle's Attendants): redirect all damage a chosen source would deal to a specific creature this turn onto another permanent. */
+    public final List<CreatureDamageRedirectShield> creatureDamageRedirectShields = Collections.synchronizedList(new ArrayList<>());
     /** Queue for "each player returns up to N cards from graveyard to battlefield" choices. */
     public final List<PendingGraveyardReturnChoice> pendingGraveyardReturnQueue = Collections.synchronizedList(new ArrayList<>());
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
@@ -340,6 +349,14 @@ public class GameData {
 
     /** Stores context for a pending Leonin Arbiter search tax MayAbility choice. */
     public PendingSearchContext pendingSearchContext;
+
+    /**
+     * Controller of the spell or ability currently resolving off the stack, or {@code null} when no
+     * spell/ability is resolving (e.g. during cost payment, combat, or state-based actions). Used to
+     * determine causation for effects like Sacred Ground that care whether a permanent left the
+     * battlefield because of "a spell or ability an opponent controls".
+     */
+    public UUID currentlyResolvingControllerId;
 
     /** Damage assignments provided at cast time for an ETB divided-damage effect (e.g. Kuldotha Flamefiend). */
     public Map<UUID, Integer> pendingETBDamageAssignments = Map.of();
@@ -867,7 +884,10 @@ public class GameData {
         copy.damageCantBePreventedThisTurn = this.damageCantBePreventedThisTurn;
         copy.damageRedirectShields.addAll(this.damageRedirectShields);
         copy.sourceDamageRedirectShields.addAll(this.sourceDamageRedirectShields);
+        copy.creatureDamageRedirectShields.addAll(this.creatureDamageRedirectShields);
         copy.targetSourceDamagePreventionShields.addAll(this.targetSourceDamagePreventionShields);
+        copy.playerSourceNextDamageShields.addAll(this.playerSourceNextDamageShields);
+        copy.sourceNextDamageToAnyTargetShields.addAll(this.sourceNextDamageToAnyTargetShields);
         copy.stateTriggerOnStack.addAll(this.stateTriggerOnStack);
 
         // --- List<UUID> (synchronized) ---
@@ -1047,6 +1067,7 @@ public class GameData {
         copy.pendingTurnControl.putAll(this.pendingTurnControl);
         copy.mindControlledPlayerId = this.mindControlledPlayerId;
         copy.mindControllerPlayerId = this.mindControllerPlayerId;
+        copy.currentlyResolvingControllerId = this.currentlyResolvingControllerId;
 
         // --- Opening hand reveal triggers (Chancellor cycle) ---
         copy.openingHandRevealTriggers.addAll(this.openingHandRevealTriggers);

@@ -41,6 +41,7 @@ Core wrappers (all take `CardEffect wrapped` as first/only effect arg):
 - `ConditionalEffect(new ControlsPermanent(filter), wrapped)` — controls matching
 - `EnchantedPermanentConditionalEffect(PermanentPredicate, CardEffect ifMatch, CardEffect ifNotMatch)` — aura active branch based on enchanted permanent predicate
 - `ConditionalEffect(new OpponentControlsPermanent(filter), wrapped)` — opponent controls matching
+- `ConditionalEffect(new OpponentControlsMoreLands(), wrapped)` — an opponent controls strictly more lands than you (Gift of Estates)
 - `ConditionalEffect(new HasAttacker(predicate), wrapped)` — one or more matching attackers
 - `CantAttackUnlessEffect(Condition, "unless clause")` — STATIC attack restriction; condition = `ControlsPermanentCount(1, filter)` / `DefendingPlayerControlsPermanent(filter)` / `AnyPlayerControlsPermanentCount(N, filter)` / `DefendingPlayerPoisoned()` / `OpponentDealtDamageThisTurn()`
 - `ConditionalEffect(new GraveyardCardThreshold(threshold, filter), wrapped)` — graveyard threshold
@@ -107,6 +108,10 @@ See EFFECTS_INDEX.md for 20+ additional conditional wrappers (poison, blocker co
 - `MassFightTargetCreatureEffect()` — Alpha Brawl-style mass fight
 - `PreventNoncombatDamageToControllerAndGainLifeEffect()` — STATIC: prevent all noncombat damage to controller; they gain life equal to the damage prevented (Purity). Hooked in `DamageSupport.dealDamageToPlayer`
 - `PreventAllDamageToTargetCreatureEffect()` — prevent all damage to target creature this turn (Wellgabber Apothecary). Adds target to `GameData.creaturesWithAllDamagePrevented`, checked in `DamagePreventionService.applyCreaturePreventionShield`, cleared at turn cleanup
+- `PreventNextDamageFromChosenColoredSourceEffect(CardColor color)` — one-shot: prevent the *next* damage event a chosen source of that color would deal to you this turn (Circle of Protection cycle). Source chosen on resolution; shield in `GameData.playerSourceNextDamageShields`, consumed by `DamagePreventionService.applyPlayerNextSourceDamageShield`
+- `PreventNextDamageFromChosenSourceAndGainLifeEffect()` — one-shot: prevent the *next* damage event a chosen source (any color) would deal to you this turn and gain that much life (Reverse Damage). Source chosen on resolution; shield in `GameData.playerSourceNextDamageShields` with `gainLife=true`, consumed by `DamagePreventionService.applyPlayerNextSourceDamageShield` (which grants the life via `LifeSupport`)
+- `PreventNextDamageFromChosenSourceToAnyTargetEffect()` — one-shot: prevent the *next* damage event a chosen source (any color) would deal to **any** target this turn — player, planeswalker, or creature, combat or noncombat (Sanctum Guardian; usually an activated ability with `SacrificeSelfCost`). Source chosen on resolution; shield (source ID) in `GameData.sourceNextDamageToAnyTargetShields`, consumed by `DamagePreventionService.applyChosenSourceNextDamageToAnyTargetShield` (hooked in `DamageSupport` and `CombatDamageService` player/creature/planeswalker paths)
+- `RedirectTargetCreatureDamageFromChosenSourceToSelfEffect()` — activated ability targeting a creature: all damage a chosen source (picked on resolution) would deal to that creature this turn is dealt to the source permanent instead (Oracle's Attendants). Shield in `GameData.creatureDamageRedirectShields`, checked in both combat and noncombat creature-damage paths via `DamagePreventionService.applyCreatureRedirectShields`; reuses `pendingSourceRedirectDamage`
 - `DoubleDamageEffect()` — double all damage (static)
 - `DoubleDamageToEnchantedPlayerEffect()` — double damage dealt to enchanted player (static Curse)
 - `DoubleControllerDamageEffect(StackEntryPredicate, boolean)` — double controller's damage
@@ -206,6 +211,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 ## Graveyard return
 
 - `ReturnCardFromGraveyardEffect.builder().destination(HAND|BATTLEFIELD|TOP_OF_OWNERS_LIBRARY)...build()` — unified graveyard return (see EFFECTS_INDEX.md for full builder API)
+- `ReturnTriggeringLandFromGraveyardToBattlefieldEffect(UUID landCardId)` — Sacred Ground's trigger effect: return the identified land from the graveyard to the battlefield under its owner's control. Register the template with `null` on the `ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT` slot; the collector stamps the real card id.
 - `ReturnOneOfEachSubtypeFromGraveyardToHandEffect(List<CardSubtype>)` — one of each subtype
 - `PutTargetCardsFromGraveyardOnTopOfLibraryEffect(CardPredicate)` — graveyard to top of library
 - `ReturnTargetCardsFromGraveyardToHandEffect(CardPredicate, int)` — up to N cards to hand
@@ -292,7 +298,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 
 ## Life
 
-- `GainLifeEffect(DynamicAmount[, GainLifeRecipient])` or `(int)` — gain life; dynamic derivations via `DynamicAmount` (PermanentCount, CardsInHand, CardsInGraveyard, CountersOnSource, GreatestPowerAmongControlled, XValue, Scaled, Sum, …). `recipient=TARGET_CONTROLLER` gives the life to the target permanent's controller: "its controller gains life = its toughness" = `GainLifeEffect(new TargetToughness(), GainLifeRecipient.TARGET_CONTROLLER)` (Condemn)
+- `GainLifeEffect(DynamicAmount[, GainLifeRecipient])` or `(int)` — gain life; dynamic derivations via `DynamicAmount` (PermanentCount, CardsInHand, CardsInGraveyard, CountersOnSource, GreatestPowerAmongControlled, XValue, Scaled, Sum, …). `recipient=TARGET_CONTROLLER` gives the life to the target permanent's controller: "its controller gains life = its toughness" = `GainLifeEffect(new TargetToughness(), GainLifeRecipient.TARGET_CONTROLLER)` (Condemn). `TargetPower()` is the power analogue: "you gain life = target's power, then destroy it" = `GainLifeEffect(new TargetPower())` + `DestroyTargetPermanentEffect(false)` (Chastise)
 - `TargetPlayerGainsLifeEffect(int)` — target gains life
 - `DoubleTargetPlayerLifeEffect()` — double target life
 - `SetTargetPlayerLifeToSpecificValueEffect(int)` — set life to value
@@ -373,6 +379,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `UntapPermanentsEffect(TapUntapScope.TARGET[, PermanentPredicate])` — untap target (predicate restricts targets)
 - `UntapPermanentsEffect(TapUntapScope.SELF)` — untap self · `.ALL_TARGETS` — untap all targets
 - `UntapPermanentsEffect(TapUntapScope.CONTROLLED, filter)` — untap all you control matching · `.OTHER_CONTROLLED_CREATURES` — untap each other creature you control · `.ATTACKED_CREATURES` — untap creatures that attacked this turn
+- `MatchingPermanentsDoesntUntapEffect(PermanentPredicate)` — global static: every permanent matching the predicate (any controller, incl. the source) doesn't untap during its controller's untap step; Marble Titan (`PermanentPowerAtLeastPredicate(3)`)
 - `DoesntUntapEffect.self()` — this permanent doesn't untap (static) · `.enchanted()` — attached aura/equipment's host doesn't untap (static) · `.targetWhileSourceOnBattlefield()` — target doesn't untap while source on battlefield (Dungeon Geists / Time of Ice) · `.targetWhileSourceTapped()` — while source stays tapped (Rust Tick); TARGET factories piggyback on a companion `TapPermanentsEffect(TapUntapScope.TARGET)`
 - `SkipNextUntapEffect(TapUntapScope.TARGET)` — target permanent skips next untap (piggybacks on companion targeting effect) · `.TARGET_PLAYERS_PERMANENTS, filter` — that player's matching permanents · `.ALL_CREATURES, filter` — all creatures matching filter (`PermanentIsAttackingPredicate` = all attackers)
 - `IfWonClashEffect(wrapped)` — clash-only marker on `EffectSlot.ON_CONTROLLER_CLASHES`: the wrapped effect applies only if the controller won the clash ("If you won, ..."). Consumed by `TriggerCollectionService.performClash` at trigger time (not a stack effect). See Entangling Trap: tap target opponent creature + `IfWonClashEffect(SkipNextUntapEffect(TARGET))`. Clash is performed via `performClash` (2-player: both reveal top card, strictly-higher mana value wins).
@@ -410,6 +417,7 @@ See EFFECTS_INDEX.md "Sacrifice costs" for additional cost effects.
 - `ControllerExtraTurnEffect(int)` — extra turns (non-targeting)
 - `ExtraTurnEffect(int)` — target extra turns
 - `AdditionalCombatMainPhaseEffect(int)` — additional combat phases
+- `SkipNextCombatPhaseEffect()` — ON_COMBAT_DAMAGE_TO_PLAYER: the damaged player skips their next combat phase (Blinding Angel)
 - `EndTurnEffect()` — end the turn
 
 ## Animate / transform

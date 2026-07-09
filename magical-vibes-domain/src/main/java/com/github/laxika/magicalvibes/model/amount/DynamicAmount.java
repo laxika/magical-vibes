@@ -36,5 +36,6 @@ public sealed interface DynamicAmount permits
         SourceToughness,
         Sum,
         TargetToughness,
+        TargetPower,
         XValue {
 }

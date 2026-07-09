@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -465,6 +466,10 @@ public class PermanentRemovalService {
             }
             if (wasArtifact) {
                 triggerCollectionService.checkAnyArtifactPutIntoGraveyardFromBattlefieldTriggers(gameData, ownerId, controllerId);
+            }
+            if (target.getCard().hasType(CardType.LAND)) {
+                triggerCollectionService.checkLandPutIntoGraveyardByOpponentTriggers(
+                        gameData, target.getOriginalCard(), ownerId, gameData.currentlyResolvingControllerId);
             }
             triggerCollectionService.checkEnchantedPermanentDeathTriggers(gameData, target.getId(), controllerId, target.getCard().getId());
             // Check if the dying permanent was an Aura or Equipment (Tiana, Ship's Caretaker)

@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
+import com.github.laxika.magicalvibes.model.CreatureDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
@@ -432,6 +434,30 @@ public class PermanentChoiceBattlefieldHandlerService {
         turnProgressionService.resolveAutoPass(gameData);
     }
 
+    public void handleRedirectCreatureDamageSourceChoice(GameData gameData, UUID permanentId,
+                                                         PermanentChoiceContext.RedirectCreatureDamageSourceChoice redirectSource) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        gameData.creatureDamageRedirectShields.add(new CreatureDamageRedirectShield(
+                redirectSource.protectedCreatureId(), permanentId, redirectSource.redirectTargetId()));
+
+        Permanent protectedPerm = gameQueryService.findPermanentById(gameData, redirectSource.protectedCreatureId());
+        Permanent redirectPerm = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
+        String protectedName = protectedPerm != null ? protectedPerm.getCard().getName() : "target creature";
+        String redirectName = redirectPerm != null ? redirectPerm.getCard().getName() : "another creature";
+        String logEntry = "All damage " + chosenPermanent.getCard().getName() + " would deal to " + protectedName
+                + " this turn is dealt to " + redirectName + " instead.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as creature damage redirect source", gameData.id,
+                gameData.playerIdToName.get(redirectSource.controllerId()), chosenPermanent.getCard().getName());
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
     public void handlePreventDamageToTargetFromSourceChoice(GameData gameData, UUID permanentId,
                                                              PermanentChoiceContext.PreventDamageToTargetFromSourceChoice ctx) {
         Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
@@ -464,6 +490,67 @@ public class PermanentChoiceBattlefieldHandlerService {
                     gameData.pendingEffectResolutionIndex);
         }
 
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handlePreventNextDamageFromColoredSourceChoice(GameData gameData, UUID permanentId,
+                                                               PermanentChoiceContext.PreventNextDamageFromColoredSourceChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        UUID controllerId = ctx.controllerId();
+        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(controllerId, permanentId));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = chosenPermanent.getCard().getName();
+        String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
+                + " this turn, it is prevented.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as next-damage prevention source", gameData.id, playerName, sourceName);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handlePreventNextDamageFromSourceAndGainLifeChoice(GameData gameData, UUID permanentId,
+                                                                   PermanentChoiceContext.PreventNextDamageFromSourceAndGainLifeChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        UUID controllerId = ctx.controllerId();
+        gameData.playerSourceNextDamageShields.add(new PlayerSourceNextDamageShield(controllerId, permanentId, true));
+
+        String playerName = gameData.playerIdToName.get(controllerId);
+        String sourceName = chosenPermanent.getCard().getName();
+        String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
+                + " this turn, it is prevented and " + playerName + " gains that much life.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as Reverse Damage prevention source", gameData.id, playerName, sourceName);
+
+        stateBasedActionService.performStateBasedActions(gameData);
+        turnProgressionService.resolveAutoPass(gameData);
+    }
+
+    public void handlePreventNextDamageFromSourceToAnyTargetChoice(GameData gameData, UUID permanentId,
+                                                                   PermanentChoiceContext.PreventNextDamageFromSourceToAnyTargetChoice ctx) {
+        Permanent chosenPermanent = gameQueryService.findPermanentById(gameData, permanentId);
+        if (chosenPermanent == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
+        }
+
+        gameData.sourceNextDamageToAnyTargetShields.add(permanentId);
+
+        String sourceName = chosenPermanent.getCard().getName();
+        String logEntry = "The next time " + sourceName + " would deal damage to any target this turn, it is prevented.";
+        gameBroadcastService.logAndBroadcast(gameData, logEntry);
+        log.info("Game {} - {} chose {} as Sanctum Guardian next-damage prevention source", gameData.id,
+                gameData.playerIdToName.get(ctx.controllerId()), sourceName);
+
+        stateBasedActionService.performStateBasedActions(gameData);
         turnProgressionService.resolveAutoPass(gameData);
     }
 

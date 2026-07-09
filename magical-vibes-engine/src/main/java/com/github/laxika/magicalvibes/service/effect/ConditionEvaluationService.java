@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -40,6 +41,7 @@ import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotKicked;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
+import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.OpponentDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
@@ -189,6 +191,8 @@ public class ConditionEvaluationService {
                     imprintedCardNameMatches(gameData, ctx);
             case OpponentControlsMoreCreatures c ->
                     anyOpponentControlsAtLeastNMoreCreatures(gameData, ctx.controllerId(), c.minimumCreatureDifference());
+            case OpponentControlsMoreLands ignored ->
+                    anyOpponentControlsMoreLands(gameData, ctx.controllerId());
             case CardsLeftGraveyardThisTurn ignored ->
                     ctx.controllerId() != null
                             && gameData.playersWhoseCardsLeftGraveyardThisTurn.contains(ctx.controllerId());
@@ -220,6 +224,31 @@ public class ConditionEvaluationService {
         int count = 0;
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** True if any opponent controls strictly more lands than the controller (Gift of Estates). */
+    private boolean anyOpponentControlsMoreLands(GameData gameData, UUID controllerId) {
+        if (controllerId == null) return false;
+        int yourLands = countLandsControlled(gameData, controllerId);
+        for (UUID candidateOpponentId : gameData.orderedPlayerIds) {
+            if (candidateOpponentId.equals(controllerId)) continue;
+            if (countLandsControlled(gameData, candidateOpponentId) > yourLands) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int countLandsControlled(GameData gameData, UUID playerId) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
+        if (battlefield == null) return 0;
+        int count = 0;
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard().hasType(CardType.LAND)) {
                 count++;
             }
         }

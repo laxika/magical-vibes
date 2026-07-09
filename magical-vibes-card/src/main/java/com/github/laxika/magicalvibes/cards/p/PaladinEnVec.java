@@ -9,6 +9,7 @@ import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "10E", collectorNumber = "32")
+@CardRegistration(set = "9ED", collectorNumber = "32")
 public class PaladinEnVec extends Card {
 
     public PaladinEnVec() {
