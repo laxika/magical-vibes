@@ -232,7 +232,8 @@ public class StaticBonusAccumulator {
                 finalPower, finalToughness, keywords, protectionColors,
                 animated, grantedActivatedAbilities, grantedEffects,
                 grantedColors, grantedSubtypes, grantedCardTypes, grantedSupertypes, colorOverriding, subtypeOverriding, landSubtypeOverriding, removedKeywords,
-                basePTOverridden, basePowerOverride, baseToughnessOverride, losesAllAbilities);
+                basePTOverridden, basePowerOverride, baseToughnessOverride, losesAllAbilities,
+                false);
     }
 }
 

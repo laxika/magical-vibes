@@ -44,7 +44,7 @@ class CastingPermissionServiceTest {
 
     private static final GameQueryService.StaticBonus NO_BONUS = new GameQueryService.StaticBonus(
             0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(),
-            false, false, false, Set.of(), false, 0, 0, false);
+            false, false, false, Set.of(), false, 0, 0, false, false);
 
     @BeforeEach
     void setUp() {

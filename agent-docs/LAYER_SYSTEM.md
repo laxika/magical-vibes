@@ -215,12 +215,38 @@ only, applies ONLY when no 7b entry exists — any real setter beats it regardle
 order; cleanup debt): `animatedUntilEndOfCombat` (Jade Statue — `UNTIL_END_OF_COMBAT` floating
 expiry is not plumbed) and the AWAKENING-counter 8/8 (counters carry no timestamp; writers in
 `MultiPermanentChoiceHandlerService`). **Cleanup debt — direct `Permanent.getEffectivePower()/
-getEffectiveToughness()` callers that bypass the layered numbers:** the power/toughness
-predicate leaves (`PredicateEvaluationService`, `StaticEffectSupport.matchesStaticFilter`),
-`AmountEvaluationService` toughness-based amounts, `TriggerCollectionService`/
-`IncrementTriggerEffectHandler` mana-spent-vs-P/T checks, `DeathTriggerCollectorService`
-last-known-information power, and `PermanentViewFactory`'s raw term (already corrected by the
-broadcast diff).
+getEffectiveToughness()` callers that bypass the layered numbers** (the mana-spent-vs-P/T
+checks in `TriggerCollectionService`/`IncrementTriggerEffectHandler` were migrated to the
+layered queries in step 7): the power/toughness predicate leaves (`PredicateEvaluationService`,
+`StaticEffectSupport.matchesStaticFilter` — both can run DURING a pass, where reading layered
+P/T would violate "layer N never reads layer ≥N"), `AmountEvaluationService` toughness-based
+amounts (the `staticEvaluation` branch is a deliberate recursion guard),
+`DeathTriggerCollectorService` last-known-information power (the permanent has left the
+battlefield, so the layered pass carries no state; since step 7 this LKI read also misses an
+active 7d switch — the floating effect can't be resolved against a departed permanent), and
+`PermanentViewFactory`'s raw term (already corrected by the broadcast diff, which since step 7
+also carries the 7d switch to the views).
+
+**Implementation status (step 7 — layer 7d switches as floating effects):**
+`Permanent.powerToughnessSwitched` is **deleted** — the first legacy field fully replaced by
+floating effects with NO dual-write (nothing needed the intrinsic read: combat, SBAs,
+power-based damage and the views all go through the layered queries, and the broadcast diff
+carries the swap to `PermanentView`). Each resolution of `SwitchPowerToughnessEffect`
+(Twisted Image, Turtleshell Changeling's own ability — the only producers in the card module)
+adds ONE floating `L7D_SWITCH_PT` effect (`UNTIL_END_OF_TURN`, `affectedPermanentId` = the
+switched permanent; expiry via the step-2 lifecycle). `LayerSystemService.applyLayer7d` (runs
+after `applyLayer7b`) applies each active switch as its own step — since switches only swap,
+all that survives is the per-permanent parity, kept in `LayeredBoardState.switchedPt7d` (odd
+count = swapped; also vetoes the assembly's `StaticBonus.NONE` early-out). `StaticBonus` grew
+`ptSwitched`, and `GameQueryService.getEffectivePower/getEffectiveToughness(Permanent,
+StaticBonus)` now compute the FULL pre-switch power and toughness through 7c (7b winner or
+legacy base, plus own modifiers, plus the bonus sum) and swap the finished values when the
+parity is odd — CR 613.4d rules fix over the old flag implementation, which swapped
+base+own-modifiers but added the static-bonus term post-swap, mis-assigning asymmetric static
+boosts (a +2/+0 aura granted before a switch used to land on the switched power; it now
+correctly follows the pre-switch power into toughness). `Permanent.getEffectivePower()/
+getEffectiveToughness()` are plain pre-switch accessors (base + modifiers + counters) for the
+debt-listed direct readers above.
 
 ## 6. Sources of continuous effects
 
@@ -233,9 +259,9 @@ Each source is classified into one or more layers:
 3. **Floating effects** created by resolved spells/abilities (`FloatingContinuousEffect`,
    stored on `GameData` — introduced in step 2). These replace today's scattered
    `Permanent` fields (`powerModifier`, `grantedKeywords`, `basePowerToughnessOverriddenUntilEndOfTurn`,
-   `powerToughnessSwitched`, `losesAllAbilitiesUntilEndOfTurn`, `transientColors`, steal
-   tracking sets on `GameData`, ...) and expire by duration instead of by
-   `resetModifiers()` bucket.
+   `losesAllAbilitiesUntilEndOfTurn`, `transientColors`, steal tracking sets on `GameData`,
+   ...) and expire by duration instead of by `resetModifiers()` bucket.
+   (`powerToughnessSwitched` was the first field fully deleted this way — step 7.)
 
 ### Duration enum
 
@@ -557,3 +583,40 @@ and any deviations from this document.
    ElvishBranchbender, FellFlagship, ConquerorsGalleon, ShadowedCaravel, DuskLegionDreadnought)
    and the full AI module suite — all green (two MCTS time-budget tests flaked under load and
    pass in isolation).
+
+7. **2026-07-10 — Step 7: layer 7d switches as floating effects; `powerToughnessSwitched`
+   deleted.** Each `SwitchPowerToughnessEffect` resolution now adds ONE floating
+   `L7D_SWITCH_PT` effect (`UNTIL_END_OF_TURN`; expiry was already plumbed in step 2);
+   `LayerSystemService.applyLayer7d` reduces the active switches to a per-permanent parity in
+   `LayeredBoardState.switchedPt7d`; `StaticBonus.ptSwitched` carries it to
+   `GameQueryService.getEffectivePower/getEffectiveToughness`, which compute the FULL
+   pre-switch P and T through 7c and swap the finished values (CR 613.4d) — see the new §5
+   step-7 status note, including the rules fix over the old flag path (the static-bonus term
+   used to be added post-swap). The `Permanent` flag is deleted outright — first floating-
+   effect migration with NO dual-write (every consumer that must see the switch — combat
+   damage, SBA lethal/zero-toughness checks, power-based damage, AI evaluators, view
+   broadcast diff — already reads the layered queries); `Permanent.getEffectivePower()/
+   getEffectiveToughness()` are now plain pre-switch raw accessors,
+   `TurnCleanupService`'s reset condition dropped the flag. Zero-arg P/T reads in
+   `TriggerCollectionService`/`IncrementTriggerEffectHandler` (Increment's
+   mana-spent-vs-P/T checks) migrated to the layered queries; the remaining direct readers
+   are re-listed in the step-6 debt note with reasons (predicate leaves and
+   `StaticEffectSupport` can run mid-pass, `AmountEvaluationService`'s static branch is a
+   recursion guard, `DeathTriggerCollectorService` LKI has no battlefield state — a dying
+   switched creature's LKI power now misses the switch, new debt), plus
+   `PermanentViewFactory`'s raw term. **Rules adjudication** (cache + live Scryfall):
+   Turtleshell Changeling is **1/4**, not the 0/4 the test setup claimed —
+   `selfSwitchToZeroToughnessDies` could never die off one self-switch with correct data; the
+   setup now puts a -1/-1 counter on it (0/3 → switch → 3/0), keeping the pinned rule (a 7d
+   swap of the 7c-finished values must kill via SBAs) intact per the step-4/5 wrong-card-data
+   precedent. SevenLayerTest 89 → **90 green (10 red)**: the flip is `selfSwitchToZeroToughnessDies`;
+   `secondSwitchCancelsFirst` (named as a step target) was already green at baseline — the
+   boolean toggle also cancelled pairs — and stays green via even parity, as do the other
+   eight Layer7dSwitch tests and all Layer7a/7b/7c tests. Remaining 10 red = L2 control (3),
+   L3 text (7). Test updates: white-box `isPowerToughnessSwitched()` assertions in
+   TwistedImageTest/TurtleshellChangelingTest replaced with layered-query assertions; the
+   three unit tests hand-building `StaticBonus` gained the new `ptSwitched=false` arg. Ran
+   SevenLayerTest, TwistedImage/TurtleshellChangeling, the staticfx/state/turn/battlefield/
+   filter/ability/cast/combat/trigger/spell unit suites, FloatingEffectLifecycleTest, the
+   setter/boost/CDA card tests (Diminish, Lignify, GiantGrowth, MarchOfTheMachines,
+   DeepFreeze, WingsOfVelisVel, Maro, Nightmare) and the full AI module suite — all green.

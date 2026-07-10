@@ -70,7 +70,7 @@ public class TurnCleanupService {
                     || p.isMustAttackThisTurn() || p.isBasePowerToughnessOverriddenUntilEndOfTurn()
                     || !p.getTemporaryActivatedAbilities().isEmpty() || !p.getTransientSubtypes().isEmpty()
                     || p.isCopyUntilEndOfTurn() || !p.getTemporaryTriggeredEffects().isEmpty()
-                    || p.isLosesAllAbilitiesUntilEndOfTurn() || p.isPowerToughnessSwitched()
+                    || p.isLosesAllAbilitiesUntilEndOfTurn()
                     || !p.getProtectionFromColorsUntilEndOfTurn().isEmpty()
                     || !p.getProtectionFromNonSubtypeCreaturesUntilEndOfTurn().isEmpty()) {
                 p.resetModifiers();

@@ -18,15 +18,14 @@ class TurtleshellChangelingTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         Permanent changeling = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
-        assertThat(changeling.getEffectivePower()).isEqualTo(1);
-        assertThat(changeling.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(4);
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(changeling.isPowerToughnessSwitched()).isTrue();
-        assertThat(changeling.getEffectivePower()).isEqualTo(4);
-        assertThat(changeling.getEffectiveToughness()).isEqualTo(1);
+        assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(4);
+        assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(1);
     }
 
     @Test
@@ -41,14 +40,13 @@ class TurtleshellChangelingTest extends BaseCardTest {
         Permanent changeling = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        assertThat(changeling.isPowerToughnessSwitched()).isTrue();
+        assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(4);
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThat(changeling.isPowerToughnessSwitched()).isFalse();
-        assertThat(changeling.getEffectivePower()).isEqualTo(1);
-        assertThat(changeling.getEffectiveToughness()).isEqualTo(4);
+        assertThat(gqs.getEffectivePower(gd, changeling)).isEqualTo(1);
+        assertThat(gqs.getEffectiveToughness(gd, changeling)).isEqualTo(4);
     }
 }

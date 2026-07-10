@@ -1855,7 +1855,8 @@ public class TriggerCollectionService {
             if (!playerId.equals(castingPlayerId)) return;
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) return;
             if (!gameQueryService.hasKeyword(gameData, perm, Keyword.INCREMENT)) return;
-            if (manaSpent <= perm.getEffectivePower() && manaSpent <= perm.getEffectiveToughness()) return;
+            if (manaSpent <= gameQueryService.getEffectivePower(gameData, perm)
+                    && manaSpent <= gameQueryService.getEffectiveToughness(gameData, perm)) return;
 
             gameData.stack.add(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,

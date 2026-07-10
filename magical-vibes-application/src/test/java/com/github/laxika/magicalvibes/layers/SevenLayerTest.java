@@ -1604,7 +1604,11 @@ class SevenLayerTest extends BaseCardTest {
         @Test
         @DisplayName("A self-switch to X/0 kills the creature via state-based actions")
         void selfSwitchToZeroToughnessDies() {
-            Permanent turtleshell = addReady(player1, new TurtleshellChangeling()); // 0/4
+            // Turtleshell Changeling is 1/4 (Scryfall-verified; an earlier 0/4 assumption here
+            // was wrong card data). A -1/-1 counter makes it 0/3 in 7c; the self-switch then
+            // swaps the finished values to 3/0 (CR 613.4d) and SBAs must see toughness 0.
+            Permanent turtleshell = addReady(player1, new TurtleshellChangeling()); // 1/4
+            turtleshell.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1); // 0/3
             harness.addMana(player1, ManaColor.BLUE, 1);
             harness.addMana(player1, ManaColor.COLORLESS, 1);
 

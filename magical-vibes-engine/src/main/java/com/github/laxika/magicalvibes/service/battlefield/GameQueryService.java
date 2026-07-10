@@ -173,8 +173,8 @@ public class GameQueryService {
      * @param colorOverriding           whether granted colors replace the permanent's natural color
      * @param subtypeOverriding         whether granted subtypes replace the permanent's natural subtypes
      */
-    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, Set<CardSupertype> grantedSupertypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities) {
-        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, Set.of(), false, 0, 0, false);
+    public record StaticBonus(int power, int toughness, Set<Keyword> keywords, Set<CardColor> protectionColors, boolean animatedCreature, List<ActivatedAbility> grantedActivatedAbilities, List<CardEffect> grantedEffects, Set<CardColor> grantedColors, List<CardSubtype> grantedSubtypes, Set<CardType> grantedCardTypes, Set<CardSupertype> grantedSupertypes, boolean colorOverriding, boolean subtypeOverriding, boolean landSubtypeOverriding, Set<Keyword> removedKeywords, boolean basePTOverridden, int basePowerOverride, int baseToughnessOverride, boolean losesAllAbilities, boolean ptSwitched) {
+        static final StaticBonus NONE = new StaticBonus(0, 0, Set.of(), Set.of(), false, List.of(), List.of(), Set.of(), List.of(), Set.of(), Set.of(), false, false, false, Set.of(), false, 0, 0, false, false);
     }
 
     // --- Lookup helpers ---
@@ -868,19 +868,15 @@ public class GameQueryService {
      * {@code bonus.basePTOverridden()} carries the CR 613 layer 7a/7b result (the object's CDA
      * overridden by the timestamp-resolved base-P/T setter winner from the layered pass) — it
      * takes precedence over every legacy {@code Permanent} base field; modifiers (7c) and the
-     * bonus sum apply on top.
+     * bonus sum apply on top. {@code bonus.ptSwitched()} carries the layer-7d switch parity:
+     * a switch swaps the values calculated through 7c (CR 613.4d), so a switched permanent's
+     * power is the fully-resolved pre-switch toughness — 7b setters and 7c boosts resolving
+     * after the switch still apply before the swap, because layers order them, not timestamps.
      */
     public int getEffectivePower(Permanent permanent, StaticBonus bonus) {
-        if (bonus.basePTOverridden()) {
-            int power;
-            if (permanent.isPowerToughnessSwitched()) {
-                power = bonus.baseToughnessOverride() + permanent.getToughnessModifiers();
-            } else {
-                power = bonus.basePowerOverride() + permanent.getPowerModifiers();
-            }
-            return power + bonus.power();
-        }
-        return permanent.getEffectivePower() + bonus.power();
+        return bonus.ptSwitched()
+                ? preSwitchToughness(permanent, bonus)
+                : preSwitchPower(permanent, bonus);
     }
 
     /**
@@ -893,17 +889,27 @@ public class GameQueryService {
 
     /**
      * Returns the permanent's effective toughness using a pre-computed static bonus.
-     * See {@link #getEffectivePower(Permanent, StaticBonus)} — the layered 7a/7b base wins.
+     * See {@link #getEffectivePower(Permanent, StaticBonus)} — the layered 7a/7b base wins
+     * and the layer-7d switch parity swaps the finished values.
      */
     public int getEffectiveToughness(Permanent permanent, StaticBonus bonus) {
+        return bonus.ptSwitched()
+                ? preSwitchPower(permanent, bonus)
+                : preSwitchToughness(permanent, bonus);
+    }
+
+    /** The permanent's power through layer 7c (base + modifiers + static bonuses), before 7d. */
+    private int preSwitchPower(Permanent permanent, StaticBonus bonus) {
         if (bonus.basePTOverridden()) {
-            int toughness;
-            if (permanent.isPowerToughnessSwitched()) {
-                toughness = bonus.basePowerOverride() + permanent.getPowerModifiers();
-            } else {
-                toughness = bonus.baseToughnessOverride() + permanent.getToughnessModifiers();
-            }
-            return toughness + bonus.toughness();
+            return bonus.basePowerOverride() + permanent.getPowerModifiers() + bonus.power();
+        }
+        return permanent.getEffectivePower() + bonus.power();
+    }
+
+    /** The permanent's toughness through layer 7c (base + modifiers + static bonuses), before 7d. */
+    private int preSwitchToughness(Permanent permanent, StaticBonus bonus) {
+        if (bonus.basePTOverridden()) {
+            return bonus.baseToughnessOverride() + permanent.getToughnessModifiers() + bonus.toughness();
         }
         return permanent.getEffectiveToughness() + bonus.toughness();
     }
@@ -1172,8 +1178,12 @@ public class GameQueryService {
             accumulator.setLandSubtypeOverriding(true);
         }
 
+        // Sublayer 7d: the parity of the active floating switch effects, resolved by the
+        // layered pass; the effective-P/T queries swap the finished 7a-7c values when set.
+        boolean ptSwitched = board.switchedPt7d().contains(target.getId());
+
         boolean layeredTouched = state != null
-                && (board.l56Touched().contains(target.getId()) || basePt7b != null);
+                && (board.l56Touched().contains(target.getId()) || basePt7b != null || ptSwitched);
         boolean isSelfAnimated = target.isAnimatedUntilEndOfTurn() || target.isAnimatedUntilEndOfCombat() || target.isAnimatedUntilNextTurn() || target.getCounterCount(CounterType.AWAKENING) > 0 || accumulator.isSelfBecomeCreature();
         if (!isNaturalCreature
                 && !accumulator.isAnimatedCreature()
@@ -1260,7 +1270,7 @@ public class GameQueryService {
                 accumulator.isSubtypeOverriding(), accumulator.isLandSubtypeOverriding(),
                 removedKeywords, accumulator.isBasePTOverridden(),
                 accumulator.getBasePowerOverride(), accumulator.getBaseToughnessOverride(),
-                losesAllAbilities);
+                losesAllAbilities, ptSwitched);
     }
 
     // --- CR 614.12 replacement-effect lookahead ---

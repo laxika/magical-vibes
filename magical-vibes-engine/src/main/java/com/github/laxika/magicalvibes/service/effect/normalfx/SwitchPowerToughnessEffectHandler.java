@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameBroadcastService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +37,12 @@ public class SwitchPowerToughnessEffectHandler implements NormalEffectHandlerBea
             return;
         }
 
-        target.setPowerToughnessSwitched(!target.isPowerToughnessSwitched());
+        // CR 613 layer engine: each resolution adds ONE floating layer-7d switch. The layered
+        // pass applies every active switch as its own step on the finished 7a-7c values
+        // (CR 613.4d) — an even count is a no-op, an odd count swaps the final P/T.
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
+                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                switchEffect, target.getId(), null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
         String logEntry = target.getCard().getName() + "'s power and toughness are switched until end of turn.";
         gameBroadcastService.logAndBroadcast(gameData, logEntry);

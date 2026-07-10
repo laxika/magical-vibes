@@ -65,7 +65,10 @@ import java.util.UUID;
  * is resolved by {@link #applyLayer7b}: every setter — static, floating one-shot, animation,
  * permanent exchange — applies in one timestamp order and the per-component winner lands in
  * {@code LayeredBoardState.basePt7b}, which the assembly merges over the 7a/intrinsic base.
- * Sublayers 7a/7c/7d still run through the legacy {@code StaticBonusAccumulator} in
+ * <b>Sublayer 7d</b> (P/T switching) is resolved by {@link #applyLayer7d}: the parity of the
+ * active floating switch effects per permanent lands in {@code LayeredBoardState.switchedPt7d}
+ * and {@code GameQueryService} swaps the finished 7a-7c values (CR 613.4d). Sublayers 7a/7c
+ * still run through the legacy {@code StaticBonusAccumulator} in
  * {@link GameQueryService#computeStaticBonus}, with scope and filter checks reading the layered
  * states via {@link #activeStateFor} while a pass is active.
  *
@@ -156,9 +159,11 @@ public class LayerSystemService {
      * color/ability outputs the pass applied in timestamp order ({@code managedL56Effects} —
      * their legacy handlers run with layered outputs suppressed during assembly), the ids of
      * permanents whose layer 5/6 characteristics were modified ({@code l56Touched} — vetoes the
-     * assembly's {@code StaticBonus.NONE} early-out), and the timestamp-resolved sublayer-7b
+     * assembly's {@code StaticBonus.NONE} early-out), the timestamp-resolved sublayer-7b
      * base P/T per permanent ({@code basePt7b} — merged over the 7a/intrinsic base by the
-     * assembly; also vetoes the early-out).
+     * assembly; also vetoes the early-out), and the permanents with an ODD number of active
+     * sublayer-7d switch effects ({@code switchedPt7d} — the assembly's P/T swap flag; also
+     * vetoes the early-out).
      */
     /**
      * The layer-7b (base P/T setting) result for one permanent: the last-applied value per
@@ -177,7 +182,8 @@ public class LayerSystemService {
                                     Map<PermanentPredicate, Map<UUID, Boolean>> l4FilterVerdicts,
                                     Set<CardEffect> managedL56Effects,
                                     Set<UUID> l56Touched,
-                                    Map<UUID, BasePt> basePt7b) {
+                                    Map<UUID, BasePt> basePt7b,
+                                    Set<UUID> switchedPt7d) {
 
         /** True if the layer-4 pass owns this effect's application — the legacy static handler
          *  must be skipped and {@link #replayL4Contribution} used instead. */
@@ -328,7 +334,7 @@ public class LayerSystemService {
         LayeredBoardState board = new LayeredBoardState(states, new HashMap<>(), new HashSet<>(),
                 Collections.newSetFromMap(new IdentityHashMap<>()), new IdentityHashMap<>(),
                 new IdentityHashMap<>(), Collections.newSetFromMap(new IdentityHashMap<>()),
-                new HashSet<>(), new HashMap<>());
+                new HashSet<>(), new HashMap<>(), new HashSet<>());
         // Publish the in-flight board immediately: nested queries made by handlers during the
         // layer 5/6 passes read the states as of the layers applied so far.
         pass.board = board;
@@ -379,6 +385,10 @@ public class LayerSystemService {
         // Sublayer 7b (base P/T setting): every setter — static aura, one-shot floating,
         // animation, permanent exchange — ordered by one timestamp sequence.
         applyLayer7b(gameData, slots, slotsById, board);
+
+        // Sublayer 7d (P/T switching): each active switch is its own step on the finished
+        // 7a-7c values, so only the per-permanent parity matters.
+        applyLayer7d(gameData, slots, slotsById, board);
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
@@ -1016,6 +1026,34 @@ public class LayerSystemService {
             board.basePt7b().put(entry.targetId(), new BasePt(
                     entry.power() != null ? entry.power() : previous == null ? null : previous.power(),
                     entry.toughness() != null ? entry.toughness() : previous == null ? null : previous.toughness()));
+        }
+    }
+
+    /**
+     * Sublayer 7d (CR 613.4d): P/T switching. Every switch is a floating effect created by a
+     * resolving spell/ability (Twisted Image, Turtleshell Changeling) and applies as its own
+     * step on the P/T calculated by the layers before it — switches are never merged or
+     * reordered, so two switches cancel and only the per-permanent parity survives.
+     * {@code LayeredBoardState.switchedPt7d} holds the permanents with an ODD number of active
+     * switches; {@code GameQueryService.getEffectivePower/getEffectiveToughness} swap the
+     * finished 7a-7c values for them (a 7b setter or 7c pump resolving AFTER the switch still
+     * slots in before the swap — layers, not timestamps, order them).
+     */
+    private void applyLayer7d(GameData gameData, List<PermanentSlot> slots,
+                              Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
+        for (EffectInstance instance : collectInstances(gameData, slots, slotsById, Layer.L7D_SWITCH_PT)) {
+            if (instance.floating() == null) {
+                // SwitchPowerToughnessEffect has no static-slot producer; a switch is always
+                // the one-shot result of a resolved spell/ability.
+                continue;
+            }
+            UUID affectedId = instance.floating().affectedPermanentId();
+            if (affectedId == null || !slotsById.containsKey(affectedId)) {
+                continue;
+            }
+            if (!board.switchedPt7d().add(affectedId)) {
+                board.switchedPt7d().remove(affectedId);
+            }
         }
     }
 

@@ -63,7 +63,6 @@ public class Permanent {
      *  Keyed by EffectSlot so the trigger collection system can look up effects for the relevant slot.
      *  Cleared every turn by {@link #resetModifiers()}. */
     private final Map<EffectSlot, List<CardEffect>> temporaryTriggeredEffects = new EnumMap<>(EffectSlot.class);
-    @Setter private boolean powerToughnessSwitched;
     @Setter private boolean basePowerToughnessOverriddenUntilEndOfTurn;
     @Setter private int basePowerOverride;
     @Setter private int baseToughnessOverride;
@@ -279,7 +278,6 @@ public class Permanent {
         this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         source.temporaryTriggeredEffects.forEach((slot, effects) ->
                 this.temporaryTriggeredEffects.put(slot, new ArrayList<>(effects)));
-        this.powerToughnessSwitched = source.powerToughnessSwitched;
         this.basePowerToughnessOverriddenUntilEndOfTurn = source.basePowerToughnessOverriddenUntilEndOfTurn;
         this.basePowerOverride = source.basePowerOverride;
         this.baseToughnessOverride = source.baseToughnessOverride;
@@ -474,17 +472,19 @@ public class Permanent {
         return toughnessModifier + getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) - getCounterCount(CounterType.MINUS_ONE_MINUS_ONE);
     }
 
+    /**
+     * This permanent's power from its own stored state (base + modifiers + counters), WITHOUT
+     * layer-7d switches: P/T switching lives in floating continuous effects applied by the
+     * layered pass ({@code GameQueryService.getEffectivePower} swaps the finished values per
+     * CR 613.4d). This accessor is the legacy pre-switch fallback for direct {@code Permanent}
+     * readers (views' raw term, last-known-information reads, predicate leaves).
+     */
     public int getEffectivePower() {
-        if (powerToughnessSwitched) {
-            return getRawToughness();
-        }
         return getRawPower();
     }
 
+    /** The toughness counterpart of {@link #getEffectivePower()} — same pre-switch caveat. */
     public int getEffectiveToughness() {
-        if (powerToughnessSwitched) {
-            return getRawPower();
-        }
         return getRawToughness();
     }
 
@@ -583,7 +583,6 @@ public class Permanent {
     public void resetModifiers() {
         this.powerModifier = 0;
         this.toughnessModifier = 0;
-        this.powerToughnessSwitched = false;
         this.basePowerToughnessOverriddenUntilEndOfTurn = false;
         this.basePowerOverride = 0;
         this.baseToughnessOverride = 0;
