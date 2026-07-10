@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.effect.AnimateNoncreatureArtifactsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesChosenTypeEffect;
@@ -57,7 +58,12 @@ import java.util.UUID;
  * <b>layer 4</b> (types), <b>layer 5</b> (colors), and <b>layer 6</b> (ability adding/removing) —
  * one {@link CharacteristicState} per permanent, effects collected from every source (static
  * abilities, floating effects) and applied across the whole board in CDA-first, then timestamp
- * order (CR 613.2b/613.7, battlefield-position fallback for equal timestamps). Layer 5/6 static
+ * order (CR 613.2b/613.7, battlefield-position fallback for equal timestamps). <b>Layer 3</b>
+ * (text changes, CR 612) is applied at collection time: each source's {@code TextReplacement}s
+ * rewrite the color and basic-land-type words of the effect instances that source contributes
+ * (via {@link TextChangeTransformer}), and rewrite the source's own printed land types and
+ * protection colors when its state is seeded — so layers 4-7, protection, and mana abilities
+ * all see the rewritten text. Layer 5/6 static
  * effects are applied by invoking their legacy staticfx handlers into a throwaway accumulator and
  * harvesting the result into the states, so all scope/filter logic stays in one place; the
  * static-bonus assembly then suppresses those handlers' layered outputs (they are "managed") and
@@ -313,9 +319,12 @@ public class LayerSystemService {
      * One continuous-effect instance from one source, carrying the CR 613.7 timestamp it applies
      * with. {@code floating} is non-null for effects created by resolved spells/abilities
      * ({@code GameData.floatingEffects}); otherwise the effect comes from {@code source}'s
-     * STATIC slot.
+     * STATIC slot. {@code effect} is the layer-3 view of the ability — the source's text
+     * replacements already applied by {@link TextChangeTransformer} — while {@code original}
+     * is the untransformed instance from the card's slot, which keys the identity-based
+     * managed/contribution maps the static-bonus assembly looks effects up by.
      */
-    private record EffectInstance(PermanentSlot source, CardEffect effect,
+    private record EffectInstance(PermanentSlot source, CardEffect effect, CardEffect original,
                                   FloatingContinuousEffect floating,
                                   boolean characteristicDefining, long timestamp, int position) {
     }
@@ -355,6 +364,10 @@ public class LayerSystemService {
             // leaves answering from the states never see less than the intrinsic values
             // (colors and keywords are untouched by layer 4).
             seedLegacyColorAndAbilityState(permanent, state);
+            // Layer 3 on the object's own type line: a text change replacing a basic land
+            // type word (Mind Bend targeting a Forest) rewrites the printed subtype itself,
+            // and with it the land's intrinsic mana ability (CR 612, 305.6).
+            applyTextChangesToPrintedLandTypes(permanent, state, board.landTypeOverrides());
             states.put(permanent.getId(), state);
             slotsById.put(permanent.getId(), slot);
         }
@@ -431,7 +444,12 @@ public class LayerSystemService {
                 if (classification == null || !classification.layers().contains(layer)) {
                     continue;
                 }
-                instances.add(new EffectInstance(slot, effect, null,
+                // Layer 3 (CR 613.2c): the pass applies the WORDS of the ability as rewritten
+                // by the source's text changes; the transform preserves the effect's class, so
+                // the classification of the original stands.
+                CardEffect rewritten = TextChangeTransformer.transform(
+                        effect, slot.permanent().getTextReplacements());
+                instances.add(new EffectInstance(slot, rewritten, effect, null,
                         classification.characteristicDefining(),
                         slot.permanent().getTimestamp(), slot.position()));
             }
@@ -444,7 +462,7 @@ public class LayerSystemService {
                 }
                 PermanentSlot source = floating.sourcePermanentId() != null
                         ? slotsById.get(floating.sourcePermanentId()) : null;
-                instances.add(new EffectInstance(source, floating.effect(), floating,
+                instances.add(new EffectInstance(source, floating.effect(), floating.effect(), floating,
                         classification.characteristicDefining(),
                         floating.timestamp(), Integer.MAX_VALUE));
             }
@@ -604,10 +622,11 @@ public class LayerSystemService {
     }
 
     /** Marks a static-sourced pure-L4 effect as owned by the pass: the legacy handler is
-     *  skipped during assembly and the recorded contributions are replayed instead. */
+     *  skipped during assembly and the recorded contributions are replayed instead. Keyed by
+     *  the ORIGINAL (pre-text-change) instance — the assembly iterates the card's slots. */
     private static void manage(LayeredBoardState board, EffectInstance instance) {
         if (instance.floating() == null) {
-            board.managedL4Effects().add(instance.effect());
+            board.managedL4Effects().add(instance.original());
         }
     }
 
@@ -617,7 +636,7 @@ public class LayerSystemService {
             return;
         }
         board.l4Contributions()
-                .computeIfAbsent(instance.effect(), key -> new HashMap<>())
+                .computeIfAbsent(instance.original(), key -> new HashMap<>())
                 .put(target.permanent().getId(), contribution);
     }
 
@@ -804,10 +823,14 @@ public class LayerSystemService {
         }
 
         // The object's own printed protection is an ability: a layer-6 "loses all abilities"
-        // with any timestamp removes it (protection grants applied later re-add).
+        // with any timestamp removes it (protection grants applied later re-add). Seeded with
+        // the object's text changes applied (CR 613.2c): Mind Bend rewriting "black" to "blue"
+        // on Paladin en-Vec changes what its printed protection protects from.
         for (CardEffect effect : permanent.getCard().getEffects(EffectSlot.STATIC)) {
             if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
-                state.addProtectionColors(protection.colors());
+                ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
+                        TextChangeTransformer.transform(protection, permanent.getTextReplacements());
+                state.addProtectionColors(rewritten.colors());
             }
         }
 
@@ -826,6 +849,31 @@ public class LayerSystemService {
         }
 
         state.snapshotSeededCharacteristics();
+    }
+
+    /**
+     * Layer 3 applied to the object's own characteristics: a text replacement of one basic
+     * land type word for another (Mind Bend on a Forest) rewrites the type word on the type
+     * line, so the state's subtype — and, for a land, the intrinsic mana ability that type
+     * carries (CR 305.6) — follows the new word. Recorded as the land's type override so the
+     * tap funnel produces the new color; a later-layer L4 setter simply overwrites the entry
+     * (layer order: text changes apply before type changes). Replacements compose in
+     * application order, like everywhere else.
+     */
+    private void applyTextChangesToPrintedLandTypes(Permanent permanent, CharacteristicState state,
+                                                    Map<UUID, CardSubtype> landTypeOverrides) {
+        for (TextReplacement replacement : permanent.getTextReplacements()) {
+            CardSubtype from = TextChangeTransformer.basicLandTypeForWord(replacement.fromWord());
+            CardSubtype to = TextChangeTransformer.basicLandTypeForWord(replacement.toWord());
+            if (from == null || to == null || !state.hasSubtype(from)) {
+                continue;
+            }
+            state.removeSubtypesIf(subtype -> subtype == from);
+            state.addSubtype(to);
+            if (state.hasCardType(CardType.LAND)) {
+                landTypeOverrides.put(permanent.getId(), to);
+            }
+        }
     }
 
     /**
@@ -1086,7 +1134,9 @@ public class LayerSystemService {
             return;
         }
         if (manage) {
-            board.managedL56Effects().add(instance.effect());
+            // Keyed by the ORIGINAL (pre-text-change) instance — the assembly's suppression
+            // check looks up the effect it iterates off the card's slot.
+            board.managedL56Effects().add(instance.original());
         }
         PermanentSlot source = instance.source();
         if (source == null) {

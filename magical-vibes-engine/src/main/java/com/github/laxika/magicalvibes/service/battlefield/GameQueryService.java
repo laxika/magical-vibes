@@ -89,6 +89,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -1090,12 +1091,16 @@ public class GameQueryService {
                     // Layer 5/6 outputs of pass-managed instances were applied in timestamp
                     // order by the layered pass and merged in below; the handler still runs for
                     // its other-layer outputs (a lord's 7c boost) with those adds discarded.
+                    // The handler sees the layer-3 view of the ability — the source's text
+                    // changes applied — matching what the layered pass applied.
                     boolean layeredManaged = board.isManagedL56(effect);
                     if (layeredManaged) {
                         accumulator.setLayeredOutputsSuppressed(true);
                     }
                     try {
-                        handler.apply(context, effect, accumulator);
+                        handler.apply(context,
+                                TextChangeTransformer.transform(effect, source.getTextReplacements()),
+                                accumulator);
                     } finally {
                         if (layeredManaged) {
                             accumulator.setLayeredOutputsSuppressed(false);
@@ -1145,7 +1150,9 @@ public class GameQueryService {
                 }
                 try {
                     StaticEffectContext selfContext = new StaticEffectContext(target, target, true, gameData);
-                    selfHandler.apply(selfContext, effect, accumulator);
+                    selfHandler.apply(selfContext,
+                            TextChangeTransformer.transform(effect, target.getTextReplacements()),
+                            accumulator);
                 } finally {
                     if (layeredManaged) {
                         accumulator.setLayeredOutputsSuppressed(false);

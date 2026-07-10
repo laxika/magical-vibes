@@ -265,6 +265,50 @@ correctly follows the pre-switch power into toughness). `Permanent.getEffectiveP
 getEffectiveToughness()` are plain pre-switch accessors (base + modifiers + counters) for the
 debt-listed direct readers above.
 
+**Implementation status (step 9 — layer 3 text changes, CR 612/613.2c):** text changes rewrite
+the WORDS of an object's abilities and everything downstream (layers 4–7, protection, mana
+abilities) sees the rewritten text. Storage is unchanged — `Permanent.textReplacements`, written
+by Mind Bend's resolution (`ChoiceHandlerService`), surviving turns (`resetModifiers` does not
+clear it, verified) and NOT copiable (Clone copies the `Card`, never the target's replacements —
+CR 707.2). Application lives in `TextChangeTransformer` (engine `service/effect/`, static
+identity-preserving visitor): given a `CardEffect` and the source's replacement list (applied in
+order — they compose, replacement N applies to the output of N−1), it rewrites color parameters
+(`ProtectionFromColorsEffect` colors, `GrantColorEffect` color), basic-land-type parameters
+(`EnchantedPermanentBecomesTypeEffect`/`NonbasicLandsBecomeTypeEffect`/`GrantSubtypeEffect`
+subtypes), landwalk keywords inside `StaticBoostEffect`/`GrantKeywordEffect` keyword sets
+(via the reverse of `Keyword.LANDWALK_MAP`; no PLAINSWALK exists in the enum, so a walk
+targeted at Plains stays unchanged), land-type and color predicates inside filters
+(`PermanentHasSubtypePredicate`, `PermanentHasAnySubtypePredicate`, `PermanentColorInPredicate`,
+recursing through AllOf/AnyOf/Not), and the wrappers `GrantEffectEffect`/`ConditionalEffect`/
+`EnchantedPermanentConditionalEffect` (recursing into what they wrap). An unchanged effect
+comes back as the SAME instance — the pass's managed/filter-verdict maps are identity-keyed.
+Wiring: (a) `LayerSystemService.collectInstances` transforms every STATIC-slot effect with its
+source's replacements before any layer applies it; `EffectInstance` carries the transformed
+effect plus the `original`, which keys `managedL4Effects`/`l4Contributions`/`managedL56Effects`
+(the assembly looks effects up by the instance it iterates off the card's slot);
+(b) `seedLegacyColorAndAbilityState` seeds the object's own printed protection with its
+replacements applied; (c) `applyTextChangesToPrintedLandTypes` applies replacements to the
+object's own printed basic land types at seed time — a Mind Bent Forest IS an Island, recorded
+in `landTypeOverrides` so the tap funnel produces the new mana color (CR 305.6); a later L4
+setter simply overwrites the entry; (d) both handler loops in
+`GameQueryService.assembleStaticBonus` pass the transformed view to the legacy handlers (managed
+suppression still checks the original), so unmanaged outputs (7c boosts behind text-changed
+filters, self CDAs counting a text-changed land word) follow the rewritten text too.
+Chosen-as-enters colors stay handled by the resolution-time `chosenColor` update. **Known gaps**
+(effect types with color/basic-land-type words that are continuously read but NOT yet rewritten;
+extend the transformer's visitor when a card needs them): `PreventDamageFromColorsEffect`,
+`TargetingRestrictionEffect`, `GrantControllerCreaturesCantBeTargetedByColorsEffect`,
+`GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
+`BoostColorSourceDamageThisTurnEffect`, `DealDamageOnSpellLifeGainEffect`,
+`PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect`,
+`AwardAnyColorSubtypeSpellOrAbilityManaEffect`, and color/land-type words inside trigger
+predicates and activated-ability definitions. The remaining `CardColor`/`CardSubtype`-carrying
+effect types (token creators, one-shot damage/draw/return effects, costs) consume their
+parameters at resolution and are never re-read from a permanent's text, so they need no
+rewriting. A text-changed filter that is shared across an ability's parts (CR 613.6 memo) gets
+its layer-4 verdict recorded under the TRANSFORMED filter instance; the legacy funnel asks with
+the original, misses, and re-evaluates — acceptable drift, no current card hits it.
+
 ## 6. Sources of continuous effects
 
 Each source is classified into one or more layers:
@@ -705,3 +749,38 @@ and any deviations from this document.
    DamageTriggerCollector, PermanentRemoval, PermanentTimestamp, FloatingEffectLifecycle,
    Flicker, ReturnToHand, ExileUntilSourceLeaves, both graveyard-steal handlers) and the
    full AI module suite — all green.
+
+9. **2026-07-10 — Step 9: layer 3 text changes (CR 612/613.2c).** Added `TextChangeTransformer`
+   (engine `service/effect/`, static identity-preserving visitor — see the new §5 step-9 status
+   note for coverage, wiring, and the documented unhandled-type gaps): a source's
+   `Permanent.textReplacements` (unchanged storage; Mind Bend's resolution writes them, they
+   survive turns and are not copiable) now rewrite the color words, basic-land-type words,
+   landwalk keywords, and filter predicates of every effect instance that source contributes,
+   applied in composition order. Wiring: `LayerSystemService.collectInstances` transforms
+   STATIC-slot effects before ANY layer applies them (`EffectInstance` grew an `original` field
+   that keys the identity-based managed/contribution maps, since the assembly iterates the
+   card's untransformed slots); the object's own printed protection is seeded transformed
+   (`seedLegacyColorAndAbilityState`); the object's own printed basic land types are rewritten
+   at seed time and recorded as the land-type override so a Mind Bent Forest taps for blue
+   (`applyTextChangesToPrintedLandTypes` — CR 305.6; a later-timestamp L4 setter overwrites);
+   and `GameQueryService.assembleStaticBonus` hands both handler loops the transformed view
+   (managed-suppression checks still use the original), so unmanaged 7a/7c outputs follow the
+   rewritten words too. Verified pre-existing invariants: `resetModifiers` never touched
+   `textReplacements` (persists across turns) and Clone copies the `Card` only (not copiable).
+   No new `LayerClassifier` entries needed — `ChangeColorTextEffect` was already classified L3
+   and text changes apply at collection time rather than as a pass layer. SevenLayerTest 93 →
+   **100 green (0 red)**; flips are exactly the seven Layer3Text targets
+   (`textChangeRewritesProtectionColor`, `textChangeRewritesGrantedLandwalk`,
+   `textChangeOnAuraChangesGrantedLandType`, `textChangeOnBloodMoon`, `textChangeOnEvilPresence`,
+   `sequentialTextChangesCompose`, `textChangePersistsAcrossTurns`); `textChangeDoesNotChangeColor`,
+   `textChangeIsNotCopiable`, `textChangeUpdatesChosenColor` and every other group stayed green —
+   the CR 613 layered pass target spec is now fully green. New unit test:
+   `service/effect/TextChangeTransformerTest` (color/land-type/landwalk/filter rewriting,
+   composition order, identity preservation, wrapper recursion). Ran SevenLayerTest (100/100),
+   MindBend/BloodMoon/SeasClaim/EvilPresence/GoblinKing/PaladinEnVec/ChangeColorTextEffectHandler
+   tests, the adjacent unit suites (GameQueryService, PredicateEvaluationService, LayerClassifier,
+   FloatingEffectLifecycle, PermanentTimestamp), a static-effect regression batch (Lignify,
+   DeepFreeze, Xenograft, ElvishChampion, VoiceOfAll, Nightmare, DauntlessDourbark,
+   MarchOfTheMachines, CairnWanderer, AmoeboidChangeling, WingsOfVelisVel, MerfolkTrickster,
+   GrandArchitect, Incite, NimDeathmantle, BludgeonBrawl, FavorOfTheMighty, TideshaperMystic,
+   Maro) and the full AI module suite — all green.
